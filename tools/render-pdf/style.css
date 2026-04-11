@@ -1,0 +1,185 @@
+/* Page layout tuned for technical docs with wide tables and mermaid diagrams. */
+@page {
+  size: A4;
+  margin: 18mm 16mm 22mm 16mm;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #1f2328;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.markdown-body {
+  max-width: 100%;
+  padding: 0;
+  color: #1f2328;
+}
+
+/* Headings — tighter than GitHub defaults so multi-level outlines stay readable in print */
+.markdown-body h1 {
+  font-size: 22pt;
+  border-bottom: 2px solid #d0d7de;
+  padding-bottom: 6pt;
+  margin-top: 0;
+  margin-bottom: 14pt;
+  page-break-after: avoid;
+}
+.markdown-body h2 {
+  font-size: 16pt;
+  border-bottom: 1px solid #d0d7de;
+  padding-bottom: 4pt;
+  margin-top: 22pt;
+  margin-bottom: 10pt;
+  page-break-after: avoid;
+}
+.markdown-body h3 {
+  font-size: 13pt;
+  margin-top: 18pt;
+  margin-bottom: 8pt;
+  page-break-after: avoid;
+}
+.markdown-body h4 {
+  font-size: 11.5pt;
+  margin-top: 14pt;
+  margin-bottom: 6pt;
+  page-break-after: avoid;
+}
+
+/* Paragraphs and lists */
+.markdown-body p,
+.markdown-body ul,
+.markdown-body ol {
+  margin-top: 0;
+  margin-bottom: 9pt;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 18pt;
+}
+
+.markdown-body li {
+  margin-bottom: 3pt;
+}
+
+.markdown-body li > p {
+  margin-bottom: 4pt;
+}
+
+/* Inline code + code blocks */
+.markdown-body code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 9pt;
+  background: #f6f8fa;
+  padding: 1pt 4pt;
+  border-radius: 3pt;
+}
+
+.markdown-body pre {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 4pt;
+  padding: 8pt 10pt;
+  overflow: auto;
+  page-break-inside: avoid;
+  font-size: 8.5pt;
+  line-height: 1.4;
+  margin: 0 0 10pt 0;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 8.5pt;
+}
+
+/* Tables — center, don't overflow the page */
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 0 auto 12pt auto;
+  width: auto;
+  max-width: 100%;
+  font-size: 9.5pt;
+  page-break-inside: avoid;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid #d0d7de;
+  padding: 4pt 8pt;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-body th {
+  background: #f6f8fa;
+  font-weight: 600;
+}
+
+.markdown-body tr:nth-child(even) td {
+  background: #fcfcfd;
+}
+
+/* Blockquotes — callouts */
+.markdown-body blockquote {
+  border-left: 3px solid #d0d7de;
+  padding: 4pt 12pt;
+  color: #656d76;
+  background: #f6f8fa;
+  margin: 10pt 0;
+  page-break-inside: avoid;
+}
+
+.markdown-body blockquote p {
+  margin: 4pt 0;
+}
+
+/* Links — printable color, not bright blue */
+.markdown-body a {
+  color: #0969da;
+  text-decoration: none;
+}
+
+/* Horizontal rules */
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid #d0d7de;
+  margin: 16pt 0;
+}
+
+/* Mermaid diagrams — center and scale to page width */
+.markdown-body .mermaid,
+.markdown-body svg[id^="mermaid"],
+.markdown-body div.mermaid > svg {
+  display: block;
+  margin: 12pt auto;
+  max-width: 100%;
+  height: auto !important;
+  page-break-inside: avoid;
+}
+
+/* Keep mermaid code blocks from showing if mermaid fails to render — we want a clear signal instead */
+.markdown-body pre.language-mermaid,
+.markdown-body pre code.language-mermaid {
+  font-size: 7.5pt;
+  max-height: 400pt;
+  overflow: hidden;
+}
+
+/* Images */
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+}
+
+/* Break sensible places */
+.markdown-body h1 + p,
+.markdown-body h2 + p,
+.markdown-body h3 + p {
+  page-break-before: avoid;
+}

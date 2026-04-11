@@ -1,0 +1,72 @@
+# System Manifest — Greenfield Starter
+# Edit this file to match your project's domain structure.
+# See templates/system-manifest.schema.yaml for field documentation.
+
+version: "1.0"
+generated_at: "2026-01-01T00:00:00Z"
+
+domains:
+  api:
+    purpose: "REST API endpoints"  # [human] — edit this
+    files:  # [auto] — list your source files
+      - app/controllers/health.py
+      - app/controllers/users.py
+      - app/schemas/users.py
+    lld: docs/lld/api.md
+    tests:
+      - tests/test_health.py
+      - tests/test_users.py
+
+    boundary_entities:  # [human]
+      UserResponse:
+        shape: |
+          id: UUID
+          email: str
+          created_at: datetime
+        consumed_by: [frontend]
+
+    facade_apis:  # [human]
+      create_user:
+        signature: "POST /users → UserResponse"
+        blurb: "Creates a new user. Validates email uniqueness. Returns 409 on duplicate."
+        mutations:
+          - "INSERT into users table"
+        preconditions:
+          - "Email must be valid format"
+          - "Email must not already exist"
+        error_modes:
+          - "Duplicate email → 409 Conflict"
+          - "Invalid email format → 422 Unprocessable"
+
+    events_emitted: []
+    events_consumed: []
+    depends_on: []
+    conventions:
+      - input-validation
+      - parameterized-queries
+      - error-format
+
+    last_changed:
+      date: "2026-01-01"
+      summary: "Initial scaffold"
+
+cross_cutting:
+  - name: input-validation
+    rule: "All API endpoints must validate input with Pydantic schemas"
+    affected_domains: [api]
+    enforcement: "Code review + convention checker"
+
+  - name: parameterized-queries
+    rule: "All database queries must use parameterized queries"
+    affected_domains: [api]
+    enforcement: "Convention checker (pattern_check for f-strings in execute calls)"
+
+  - name: error-format
+    rule: "Error responses must follow RFC 7807"
+    affected_domains: [api]
+    enforcement: "Output middleware + code review"
+
+interaction_matrix:
+  "frontend -> api":
+    description: "Browser calls REST API"
+    entity_crossing: "JSON request/response bodies"

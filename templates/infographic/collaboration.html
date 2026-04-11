@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HITL AI-Driven Development — Team Collaboration</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    color: #1e293b;
+    width: 297mm;
+    height: 210mm;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: 297mm;
+    height: 210mm;
+    padding: 8mm 12mm;
+    display: flex;
+    flex-direction: column;
+    gap: 3mm;
+  }
+
+  /* ── Title ── */
+  .title { text-align: center; padding-bottom: 2mm; }
+  .title h1 { font-size: 15pt; font-weight: 700; color: #0f172a; }
+  .title p { font-size: 7.5pt; color: #64748b; margin-top: 1mm; }
+
+  /* ── Main layout: 3 columns ── */
+  .canvas {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 2.4fr 1.2fr;
+    grid-template-rows: 1fr;
+    gap: 4mm;
+  }
+
+  /* ── Left column: Team ── */
+  .col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3mm;
+  }
+
+  /* ── Center column: Slack + GitHub stacked ── */
+  .col-center {
+    display: flex;
+    flex-direction: column;
+    gap: 3mm;
+  }
+
+  /* ── Right column: GCP ── */
+  .col-right {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Panels ── */
+  .panel {
+    border-radius: 10px;
+    padding: 3.5mm 4mm;
+    display: flex;
+    flex-direction: column;
+    gap: 2mm;
+  }
+  .panel-label {
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    padding-bottom: 1.5mm;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  /* Panel themes */
+  .panel-team { background: #eff6ff; border: 1.5px solid #bfdbfe; }
+  .panel-team .panel-label { color: #1d4ed8; }
+  .panel-private { background: #faf5ff; border: 1.5px solid #e9d5ff; }
+  .panel-private .panel-label { color: #7e22ce; }
+  .panel-slack { background: #fef3c7; border: 1.5px solid #fde68a; }
+  .panel-slack .panel-label { color: #b45309; }
+  .panel-github { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+  .panel-github .panel-label { color: #15803d; }
+  .panel-gcp { background: #faf5ff; border: 1.5px solid #e9d5ff; flex: 1; }
+  .panel-gcp .panel-label { color: #7e22ce; }
+
+  /* ── Person cards ── */
+  .person {
+    background: white;
+    border-radius: 7px;
+    padding: 2.5mm 3mm;
+    display: flex;
+    align-items: center;
+    gap: 2.5mm;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .person-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: white;
+  }
+  .person-name { font-size: 7pt; font-weight: 600; color: #1e293b; }
+  .person-role { font-size: 5.5pt; color: #64748b; }
+
+  .icon-pm { background: #2563eb; }
+  .icon-arch { background: #16a34a; }
+  .icon-dev { background: #ea580c; }
+
+  /* ── Private Claude cards ── */
+  .private-card {
+    background: white;
+    border-radius: 6px;
+    padding: 2mm 3mm;
+    border: 1px solid #e9d5ff;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .private-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #9333ea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .private-info { font-size: 6pt; color: #581c87; line-height: 1.3; }
+
+  /* ── Slack content ── */
+  .slack-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2mm;
+    flex: 1;
+  }
+  .slack-logo {
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, #E01E5A 25%, #36C5F0 25%, #36C5F0 50%, #2EB67D 50%, #2EB67D 75%, #ECB22E 75%);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 13px;
+  }
+  .slack-channel {
+    font-size: 7.5pt; font-weight: 600; color: #92400e;
+    background: white; padding: 1.5mm 3mm; border-radius: 5px;
+    text-align: center; border: 1px solid rgba(0,0,0,0.06); width: 100%;
+  }
+  .slack-note { font-size: 5.5pt; color: #78716c; text-align: center; line-height: 1.3; }
+
+  .slack-people {
+    display: flex;
+    gap: 3mm;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .slack-avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1mm;
+  }
+  .slack-avatar-circle {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: white;
+  }
+  .slack-avatar-name { font-size: 5pt; color: #64748b; }
+
+  .bot-card {
+    background: white;
+    border-radius: 6px;
+    padding: 2mm 3mm;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+    border: 1.5px solid #fde68a;
+    width: 100%;
+  }
+  .bot-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #7e22ce; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; flex-shrink: 0;
+  }
+  .bot-info { font-size: 6pt; color: #581c87; line-height: 1.3; }
+
+  /* ── GitHub items ── */
+  .gh-content { display: flex; flex-direction: column; gap: 1.5mm; flex: 1; }
+  .gh-logo {
+    width: 22px; height: 22px; background: #24292e; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto;
+  }
+  .gh-logo svg { width: 14px; height: 14px; fill: white; }
+  .gh-item {
+    background: white; border-radius: 5px; padding: 1.5mm 3mm;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .gh-item-icon { font-size: 8pt; margin-right: 1.5mm; }
+  .gh-item-title { font-size: 6.5pt; font-weight: 600; color: #1e293b; }
+  .gh-item-desc { font-size: 5pt; color: #64748b; margin-top: 0.3mm; }
+
+  /* ── GCP items ── */
+  .gcp-content { display: flex; flex-direction: column; gap: 2mm; flex: 1; }
+  .gcp-logo { text-align: center; font-size: 18px; margin-bottom: 1mm; }
+  .gcp-item {
+    background: white; border-radius: 5px; padding: 2mm 3mm;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .gcp-item-icon { font-size: 8pt; margin-right: 1.5mm; }
+  .gcp-item-title { font-size: 6.5pt; font-weight: 600; color: #1e293b; }
+  .gcp-item-desc { font-size: 5pt; color: #64748b; margin-top: 0.3mm; }
+
+  /* ── Flow arrows ── */
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5mm;
+    padding: 1mm 0;
+  }
+  .arrow-line {
+    height: 2px;
+    flex: 1;
+    max-width: 20mm;
+  }
+  .arrow-label {
+    font-size: 5.5pt;
+    color: #64748b;
+    white-space: nowrap;
+    font-style: italic;
+  }
+  .arrow-head {
+    width: 0; height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  /* Horizontal arrow between columns */
+  .h-arrow {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2mm;
+    padding: 0 1mm;
+  }
+  .h-arrow-line {
+    display: flex;
+    align-items: center;
+    gap: 1mm;
+  }
+  .h-arrow-bar { width: 12mm; height: 2px; }
+  .h-arrow-head { width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+  .h-arrow-label { font-size: 5pt; color: #64748b; text-align: center; max-width: 16mm; line-height: 1.2; }
+
+  /* Vertical arrow between panels */
+  .v-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2mm;
+    height: 5mm;
+  }
+  .v-arrow-line { width: 2px; height: 8px; }
+  .v-arrow-head { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; }
+  .v-arrow-label { font-size: 5pt; color: #64748b; font-style: italic; }
+
+  /* ── Key rules bar ── */
+  .rules {
+    display: flex;
+    gap: 4mm;
+    padding-top: 2mm;
+    border-top: 1px solid #e2e8f0;
+  }
+  .rule {
+    flex: 1;
+    display: flex;
+    gap: 2mm;
+    align-items: flex-start;
+  }
+  .rule-icon { font-size: 10pt; flex-shrink: 0; }
+  .rule h4 { font-size: 6.5pt; font-weight: 700; color: #334155; }
+  .rule p { font-size: 5.5pt; color: #64748b; line-height: 1.3; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="title">
+    <h1>HITL AI-Driven Development — Team Collaboration</h1>
+    <p>Humans discuss and decide. @claude-bot writes conclusions to GitHub. Personal Claude instances talk to GitHub only.</p>
+  </div>
+
+  <div class="canvas">
+
+    <!-- ═══ LEFT COLUMN: Team + Private Claude ═══ -->
+    <div class="col-left">
+
+      <div class="panel panel-team" style="flex: 1;">
+        <div class="panel-label">Team (humans)</div>
+        <div class="person">
+          <div class="person-icon icon-pm">PM</div>
+          <div><div class="person-name">Product Manager</div><div class="person-role">Defines what and why</div></div>
+        </div>
+        <div class="person">
+          <div class="person-icon icon-arch">AR</div>
+          <div><div class="person-name">Architect</div><div class="person-role">Designs, reviews, gates PRs</div></div>
+        </div>
+        <div class="person">
+          <div class="person-icon icon-dev">D1</div>
+          <div><div class="person-name">Developer 1</div><div class="person-role">Vertical slice owner</div></div>
+        </div>
+        <div class="person">
+          <div class="person-icon icon-dev">D2</div>
+          <div><div class="person-name">Developer 2</div><div class="person-role">Vertical slice owner</div></div>
+        </div>
+      </div>
+
+      <div class="panel panel-private">
+        <div class="panel-label">Personal AI (GitHub only)</div>
+        <div class="private-card">
+          <div class="private-icon">AI</div>
+          <div class="private-info"><strong>Dev 1 — Claude Code</strong><br>Reads docs + code from GitHub. Writes code + tests to GitHub. Never posts to Slack.</div>
+        </div>
+        <div class="private-card">
+          <div class="private-icon">AI</div>
+          <div class="private-info"><strong>Dev 2 — Claude Code</strong><br>Reads docs + code from GitHub. Writes code + tests to GitHub. Never posts to Slack.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ CENTER COLUMN: Slack + GitHub stacked ═══ -->
+    <div class="col-center">
+
+      <!-- Slack -->
+      <div class="panel panel-slack" style="flex: 0.9;">
+        <div class="panel-label">Slack — where humans discuss</div>
+        <div class="slack-inner">
+          <div style="display:flex; align-items:center; gap:3mm; width:100%;">
+            <div class="slack-logo">S</div>
+            <div class="slack-channel">#design-room</div>
+          </div>
+
+          <div class="slack-people">
+            <div class="slack-avatar"><div class="slack-avatar-circle icon-pm">PM</div><div class="slack-avatar-name">PM</div></div>
+            <div class="slack-avatar"><div class="slack-avatar-circle icon-arch">AR</div><div class="slack-avatar-name">Architect</div></div>
+            <div class="slack-avatar"><div class="slack-avatar-circle icon-dev">D1</div><div class="slack-avatar-name">Dev 1</div></div>
+            <div class="slack-avatar"><div class="slack-avatar-circle icon-dev">D2</div><div class="slack-avatar-name">Dev 2</div></div>
+            <div style="border-left: 1px dashed #d97706; height: 24px; margin: 0 1mm;"></div>
+            <div class="slack-avatar"><div class="slack-avatar-circle" style="background:#7e22ce;">AI</div><div class="slack-avatar-name">@claude-bot</div></div>
+          </div>
+
+          <div class="slack-note">Humans talk to humans. @claude-bot is tagged one at a time when AI input is needed.</div>
+        </div>
+      </div>
+
+      <!-- Down arrow: Slack → GitHub -->
+      <div class="v-arrow">
+        <div class="v-arrow-line" style="background:#16a34a;"></div>
+        <div class="v-arrow-head" style="border-top: 5px solid #16a34a;"></div>
+        <div class="v-arrow-label">@claude-bot writes concluded decisions</div>
+        <div class="v-arrow-head" style="border-bottom: 5px solid #d97706;"></div>
+        <div class="v-arrow-line" style="background:#d97706;"></div>
+      </div>
+
+      <!-- GitHub -->
+      <div class="panel panel-github" style="flex: 1.1;">
+        <div class="panel-label">GitHub — source of truth</div>
+        <div class="gh-content">
+          <div class="gh-logo"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg></div>
+          <div class="gh-item"><span class="gh-item-icon">📝</span><span class="gh-item-title">Documentation</span><div class="gh-item-desc">HLDs, LLDs, ADRs, System Manifest, Training Plans</div></div>
+          <div class="gh-item"><span class="gh-item-icon">💻</span><span class="gh-item-title">Source Code + Tests</span><div class="gh-item-desc">Generated from docs. Convention-checked. 301 tests.</div></div>
+          <div class="gh-item"><span class="gh-item-icon">🏗️</span><span class="gh-item-title">IaC</span><div class="gh-item-desc">Terraform, Kustomize, ESO secrets, CronJobs</div></div>
+          <div class="gh-item"><span class="gh-item-icon">🔀</span><span class="gh-item-title">Pull Requests = Decision Gates</span><div class="gh-item-desc">Design PR merges before code. Every decision is a merged PR.</div></div>
+          <div class="gh-item"><span class="gh-item-icon">🎫</span><span class="gh-item-title">Issues + ROI Tracking</span><div class="gh-item-desc">ROI estimate at creation. 30/90-day verification checkpoints.</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ RIGHT COLUMN: GCP ═══ -->
+    <div class="col-right">
+      <div class="panel panel-gcp">
+        <div class="panel-label">Production — GCP</div>
+        <div class="gcp-content">
+          <div class="gcp-logo">☁️</div>
+          <div class="gcp-item"><span class="gcp-item-icon">🖥️</span><span class="gcp-item-title">Management Server</span><div class="gcp-item-desc">Traefik, Grafana, Prometheus, Loki, Tempo, OTEL, OpenCost, Lifecycle Controller</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">⚙️</span><span class="gcp-item-title">GKE Cluster</span><div class="gcp-item-desc">App + GPU node pools. Scale-to-zero. Deployed via IaC.</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">📦</span><span class="gcp-item-title">GCS Storage</span><div class="gcp-item-desc">Assets, state snapshots, model artifacts</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">📊</span><span class="gcp-item-title">Observability</span><div class="gcp-item-desc">Langfuse traces + Grafana dashboards. ROI metrics measured here.</div></div>
+          <div class="gcp-item" style="border: 1.5px dashed #d8b4fe;"><span class="gcp-item-icon">🚀</span><span class="gcp-item-title">Canary Deployment</span><div class="gcp-item-desc">Risk-rated rollout via mgmt server. AI monitors go/no-go criteria.</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ Arrows overlay ═══ -->
+  <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;" viewBox="0 0 1122 794" preserveAspectRatio="none">
+    <defs>
+      <marker id="arr-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#9333ea"/>
+      </marker>
+      <marker id="arr-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
+      </marker>
+      <marker id="arr-green-rev" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+        <polygon points="8 0, 0 3, 8 6" fill="#16a34a"/>
+      </marker>
+    </defs>
+    <!-- GitHub → GCP -->
+    <line x1="810" y1="560" x2="850" y2="560" stroke="#9333ea" stroke-width="2.5" marker-end="url(#arr-purple)"/>
+  </svg>
+
+  <!-- ═══ Key Rules ═══ -->
+  <div class="rules">
+    <div class="rule">
+      <div class="rule-icon">💬</div>
+      <div><h4>Slack is for humans</h4><p>People discuss with people. @claude-bot only speaks when tagged. No unsolicited AI chatter.</p></div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">🔒</div>
+      <div><h4>Personal Claude talks to GitHub only</h4><p>Each dev's Claude Code reads/writes code via GitHub. Never posts to Slack. The code in GitHub is what matters.</p></div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">✍️</div>
+      <div><h4>@claude-bot is the scribe</h4><p>Its job: translate concluded decisions into GitHub artifacts — issues, docs, PRs. Humans decide, bot writes it down.</p></div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">🎯</div>
+      <div><h4>Quality over speed</h4><p>The goal is fewer problems, not faster deployment. Every step prevents a specific failure mode.</p></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
