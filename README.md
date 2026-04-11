@@ -42,6 +42,66 @@ The result: any developer (or AI session) can pick up any part of the system, re
 
 ![Team Collaboration — How PM, Architect, Developers, and Claude work together](docs/images/team-collaboration.png)
 
+> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 22-step workflow, and the three boundaries.
+
+<details>
+<summary>View as Mermaid diagram (text-based, copy-pasteable)</summary>
+
+```mermaid
+graph TD
+    subgraph Slack["Slack #design-room — humans discuss"]
+        direction LR
+        PM["PM"]
+        Arch["Architect"]
+        D1["Dev 1"]
+        D2["Dev 2"]
+        Bot["@claude-bot — tagged one at a time"]
+    end
+
+    subgraph Private["Personal Claude instances — talk to GitHub only"]
+        direction LR
+        C1["Dev 1 Claude Code"]
+        C2["Dev 2 Claude Code"]
+    end
+
+    subgraph GitHub["GitHub — Source of Truth"]
+        direction LR
+        Docs["Docs + ADRs + Manifest"]
+        Code["Code + Tests"]
+        IaC["IaC: Terraform, K8s"]
+        PRs["PRs = Decision Gates"]
+    end
+
+    subgraph GCP["GCP — Production"]
+        direction LR
+        Mgmt["Management Server"]
+        GKE["GKE Cluster"]
+        GCS["GCS Storage"]
+    end
+
+    PM & Arch & D1 & D2 -->|"discuss"| Bot
+    Bot -->|"writes concluded decisions"| GitHub
+    C1 & C2 -->|"read + write code"| GitHub
+    GitHub -->|"context for discussions"| Slack
+    IaC -->|"terraform apply"| Mgmt
+    Mgmt -->|"deploy"| GKE
+    Code -->|"CI/CD"| GKE
+    GKE --> GCS
+
+    classDef human fill:#dbeafe,stroke:#2563eb
+    classDef bot fill:#fef3c7,stroke:#d97706
+    classDef private fill:#f3e8ff,stroke:#9333ea
+    classDef gh fill:#f0fdf4,stroke:#16a34a
+    classDef gcp fill:#faf5ff,stroke:#9333ea
+    class PM,Arch,D1,D2 human
+    class Bot bot
+    class C1,C2 private
+    class Docs,Code,IaC,PRs gh
+    class Mgmt,GKE,GCS gcp
+```
+
+</details>
+
 ---
 
 ## TL;DR
