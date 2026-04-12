@@ -147,7 +147,150 @@ The traditional objection — "detailed design docs get outdated" — assumed a 
 
 ---
 
-## 2. The 26-Step Workflow
+## 2. Role Definitions
+
+Every role shifts from "produce artifacts" to "review and decide." You are a reviewer and decision-maker, not a typist. If you are typing more than a few sentences of correction, let AI draft; you steer.
+
+| Role | Traditional Job | HITL AI-Driven Job |
+|------|---|---|
+| **PM** | Writes PRDs, manages backlog | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups |
+| **Dev Lead** | Writes architecture docs, reviews code | Reviews AI-generated architecture, verifies traceability, integration-tests features |
+| **Developer** | Writes code, writes tests, writes docs | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices |
+
+| Old habit | New expectation |
+|-----------|----------------|
+| Write docs by hand | AI writes all docs. You review, correct, approve. |
+| Start coding, figure it out as you go | Tell AI what you need. AI generates the LLD. You review. AI generates code. You review. |
+| Docs after the feature ships | Docs first. AI drafts them in minutes. You spend time thinking, not typing. |
+| One developer owns a feature end-to-end | The *doc* owns the feature. Any developer (or AI session) can pick it up. |
+
+### The Dev Lead's Integration Verification
+
+The lead's final verification step exists because AI code review, even in two rounds, catches *mechanical* issues but misses *intent* issues. Run the feature end-to-end and ask: "Does this actually do what the design said it would?" Check traceability: requirement, design, IaC, code, tests — is the chain unbroken? This catches the cases where each individual piece is correct but the whole does not match the intent.
+
+### Vertical Ownership
+
+Every developer owns a full vertical slice — not "the frontend part" or "the backend part." If you are building the monitoring feature, you own the doc, the backend endpoint, the frontend component, the tests, and the bugs. When one person owns the full slice, there is no "it works on my side" across teams. AI helps you move fast across layers you are less familiar with; teammates help with review.
+
+---
+
+## 3. Scaling AI Context: The System Manifest
+
+### Problem
+
+The process works well when the system is small. A single AI session can hold the full context — all the docs, all the code, all the patterns — and produce correct output. But systems grow. At 50+ source modules, 33 LLDs, 14 HLDs, 55 architectural decisions, and 300+ tests, no single context window can hold all of it productively. Even if it could, most of the content is noise for any given task.
+
+The two failure modes from Section 1 reappear at scale:
+- **Agent reads too much** — hallucinated connections between unrelated modules, changes outside its scope.
+- **Agent reads too little** — violated conventions it did not know about, produced interfaces that did not match what other parts of the system expected.
+
+### Solution: Hierarchical Knowledge Architecture
+
+Conway's Law (1967): "The structure of a system mirrors the communication structure of the organization that builds it." Applied to AI: **design the knowledge boundaries explicitly, and the quality of agent output mirrors those boundaries.** Scoped agents with clean facades produce modular, convention-honoring output. Unshaped agents with unlimited context produce monolithic, inconsistent output.
+
+### How It Works: The System Manifest
+
+A **System Manifest** is a single YAML file checked into the repo that describes the system at three levels of detail:
+
+| Level | What it captures | Who reads it | Size per domain |
+|-------|-----------------|-------------|-----------------|
+| **Topology** | Domain boundaries, dependency graph, convention assignments | Architect agent only | ~200 tokens |
+| **Facade** | Boundary entities, API blurbs, mutation descriptions, preconditions, error modes, events | Architect + any specialist that interacts with this domain | ~500-1500 tokens |
+| **Internals** | Source code, test files, LLD detail | Only that domain's specialist | ~5K-30K tokens |
+
+The manifest contains levels 1 and 2. Level 3 (internals) is loaded on demand from the actual source files.
+
+**Why YAML and not a knowledge graph?** Simpler to author, version, diff, and review in a pull request. A knowledge graph would be more powerful for complex cross-domain queries, but harder to maintain. Revisit if cross-domain queries become too complex for flat YAML.
+
+**Why three levels, not two?** Two levels (manifest + source) would force the architect to either include all source code (back to "reads too much") or include no cross-domain information (specialists cannot honor interfaces). The facade level is the resolution: **enough to call correctly and reason about side effects, not enough to understand the internal implementation.** Same principle as a Java or Go interface — the contract, not the body.
+
+### The Architect/Specialist Pattern
+
+```mermaid
+graph TB
+    subgraph Manifest["System Manifest (~15K tokens)"]
+        Domains["Domain registry"]
+        Facades["Facade layer boundary entities, API blurbs"]
+        Conventions["Cross-cutting conventions"]
+    end
+
+    subgraph Architect["Architect Agent"]
+        Read["Read manifest"]
+        Decompose["Decompose task"]
+        Dispatch["Dispatch to specialists"]
+        Validate["Validate results"]
+    end
+
+    subgraph Specialists["Domain Specialists"]
+        S1["Agent Framework"]
+        S2["Publishing"]
+        S3["Data Layer"]
+        S4["API Controllers"]
+    end
+
+    subgraph Gates["Human Gates"]
+        Lead["Lead reviews decomposition"]
+        PR["PR review"]
+    end
+
+    Manifest --> Read --> Decompose
+    Lead -.->|approve| Decompose
+    Decompose --> Dispatch
+    Dispatch --> S1 & S2 & S3 & S4
+    S1 & S2 & S3 & S4 --> Validate
+    Validate --> PR
+
+    classDef manifest fill:#fef3c7,stroke:#d97706
+    classDef arch fill:#dcfce7,stroke:#16a34a
+    classDef spec fill:#dbeafe,stroke:#2563eb
+    classDef human fill:#fecdd3,stroke:#e11d48
+    class Domains,Facades,Conventions manifest
+    class Read,Decompose,Dispatch,Validate arch
+    class S1,S2,S3,S4 spec
+    class Lead,PR human
+```
+
+1. **Architect reads the manifest** (~15K tokens) and decomposes the task into scoped task packets.
+2. **Human gate**: the lead reviews the decomposition before execution.
+3. **Specialists receive task packets** that include exactly the files they need, exactly the conventions to follow, exactly the facades of adjacent domains — and explicit boundaries on what they must *not* modify.
+4. **Specialists return result packets** that include files created/modified, conventions honored, interface compliance checks, and cross-cutting discoveries.
+5. **Architect validates** interface compliance, propagates cross-cutting discoveries, and updates the manifest.
+
+Specialists are stateless. They re-read their domain files each activation. This is simpler and more reproducible than maintaining warm state, and the cost is acceptable — reading a few source files is cheap compared to re-reading the whole codebase.
+
+### Facade-Level Interop
+
+The facade is how disjoint agents know about each other. When the publishing specialist needs to interact with the agent framework, it does not read the framework's source code. It reads a blurb like:
+
+> *"The tool loop in the base agent calls your tool via tool.execute(**args). It expects a ToolResult back. brand_id is auto-injected if not in args."*
+
+That is enough to produce a correct integration. The specialist does not need to understand the framework's internal state machine — just its boundary contract. This is the same principle as microservice API contracts, applied to AI agent context.
+
+---
+
+## 4. Collaborative Development: The Design Room
+
+### What It Is
+
+An **AI Design Room** is a per-feature thread where the team collaborates with AI as a participant, not just a tool. This is different from autonomous coding tools (which operate without human oversight) and different from simple AI assistants (which respond to individual prompts without maintaining conversation context across the team).
+
+### Three Boundaries
+
+| Boundary | Rule |
+|----------|------|
+| **Working medium** | Slack (or similar) — the thread where discussion, AI drafts, and human decisions happen in real time |
+| **Source of truth** | GitHub — every decision materializes as a commit, PR, or issue update |
+| **Decision gates** | PRs — the thread generates artifacts, but nothing ships without PR review and merge |
+
+### How It Works
+
+Multiple humans and AI participate in one thread. AI drafts; humans decide. The workflow steps, the manifest, and the role definitions provide the structure. The design room provides the collaboration layer.
+
+**Current state:** The workflow steps, the manifest, and the role definitions exist. A unified thread experience does not yet exist — coordination currently happens across Slack conversations, GitHub PRs, and separate AI sessions. Unifying that is an open project.
+
+---
+
+## 5. The 26-Step Workflow
 
 The workflow has 20 steps to merge + 2 post-ship verification checkpoints + 4 downstream assessment sub-steps. For truly small changes (a one-line config fix), this is too heavy — see "Common Pitfalls" (Section 8) for guidance on when to abbreviate. For non-trivial changes, these steps are the minimum that prevents the failure modes described above — including organizational failure modes (team mental model is wrong, ops does not know how to deploy safely) that most AI-dev processes ignore.
 
@@ -384,128 +527,7 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 
 ---
 
-## 3. Role Definitions
-
-Every role shifts from "produce artifacts" to "review and decide." You are a reviewer and decision-maker, not a typist. If you are typing more than a few sentences of correction, let AI draft; you steer.
-
-| Role | Traditional Job | HITL AI-Driven Job |
-|------|---|---|
-| **PM** | Writes PRDs, manages backlog | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups |
-| **Dev Lead** | Writes architecture docs, reviews code | Reviews AI-generated architecture, verifies traceability, integration-tests features |
-| **Developer** | Writes code, writes tests, writes docs | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices |
-
-| Old habit | New expectation |
-|-----------|----------------|
-| Write docs by hand | AI writes all docs. You review, correct, approve. |
-| Start coding, figure it out as you go | Tell AI what you need. AI generates the LLD. You review. AI generates code. You review. |
-| Docs after the feature ships | Docs first. AI drafts them in minutes. You spend time thinking, not typing. |
-| One developer owns a feature end-to-end | The *doc* owns the feature. Any developer (or AI session) can pick it up. |
-
-### The Dev Lead's Integration Verification
-
-The lead's final verification step exists because AI code review, even in two rounds, catches *mechanical* issues but misses *intent* issues. Run the feature end-to-end and ask: "Does this actually do what the design said it would?" Check traceability: requirement, design, IaC, code, tests — is the chain unbroken? This catches the cases where each individual piece is correct but the whole does not match the intent.
-
-### Vertical Ownership
-
-Every developer owns a full vertical slice — not "the frontend part" or "the backend part." If you are building the monitoring feature, you own the doc, the backend endpoint, the frontend component, the tests, and the bugs. When one person owns the full slice, there is no "it works on my side" across teams. AI helps you move fast across layers you are less familiar with; teammates help with review.
-
----
-
-## 4. Scaling AI Context: The System Manifest
-
-### Problem
-
-The process works well when the system is small. A single AI session can hold the full context — all the docs, all the code, all the patterns — and produce correct output. But systems grow. At 50+ source modules, 33 LLDs, 14 HLDs, 55 architectural decisions, and 300+ tests, no single context window can hold all of it productively. Even if it could, most of the content is noise for any given task.
-
-The two failure modes from Section 1 reappear at scale:
-- **Agent reads too much** — hallucinated connections between unrelated modules, changes outside its scope.
-- **Agent reads too little** — violated conventions it did not know about, produced interfaces that did not match what other parts of the system expected.
-
-### Solution: Hierarchical Knowledge Architecture
-
-Conway's Law (1967): "The structure of a system mirrors the communication structure of the organization that builds it." Applied to AI: **design the knowledge boundaries explicitly, and the quality of agent output mirrors those boundaries.** Scoped agents with clean facades produce modular, convention-honoring output. Unshaped agents with unlimited context produce monolithic, inconsistent output.
-
-### How It Works: The System Manifest
-
-A **System Manifest** is a single YAML file checked into the repo that describes the system at three levels of detail:
-
-| Level | What it captures | Who reads it | Size per domain |
-|-------|-----------------|-------------|-----------------|
-| **Topology** | Domain boundaries, dependency graph, convention assignments | Architect agent only | ~200 tokens |
-| **Facade** | Boundary entities, API blurbs, mutation descriptions, preconditions, error modes, events | Architect + any specialist that interacts with this domain | ~500-1500 tokens |
-| **Internals** | Source code, test files, LLD detail | Only that domain's specialist | ~5K-30K tokens |
-
-The manifest contains levels 1 and 2. Level 3 (internals) is loaded on demand from the actual source files.
-
-**Why YAML and not a knowledge graph?** Simpler to author, version, diff, and review in a pull request. A knowledge graph would be more powerful for complex cross-domain queries, but harder to maintain. Revisit if cross-domain queries become too complex for flat YAML.
-
-**Why three levels, not two?** Two levels (manifest + source) would force the architect to either include all source code (back to "reads too much") or include no cross-domain information (specialists cannot honor interfaces). The facade level is the resolution: **enough to call correctly and reason about side effects, not enough to understand the internal implementation.** Same principle as a Java or Go interface — the contract, not the body.
-
-### The Architect/Specialist Pattern
-
-```mermaid
-graph TB
-    subgraph Manifest["System Manifest (~15K tokens)"]
-        Domains["Domain registry"]
-        Facades["Facade layer boundary entities, API blurbs"]
-        Conventions["Cross-cutting conventions"]
-    end
-
-    subgraph Architect["Architect Agent"]
-        Read["Read manifest"]
-        Decompose["Decompose task"]
-        Dispatch["Dispatch to specialists"]
-        Validate["Validate results"]
-    end
-
-    subgraph Specialists["Domain Specialists"]
-        S1["Agent Framework"]
-        S2["Publishing"]
-        S3["Data Layer"]
-        S4["API Controllers"]
-    end
-
-    subgraph Gates["Human Gates"]
-        Lead["Lead reviews decomposition"]
-        PR["PR review"]
-    end
-
-    Manifest --> Read --> Decompose
-    Lead -.->|approve| Decompose
-    Decompose --> Dispatch
-    Dispatch --> S1 & S2 & S3 & S4
-    S1 & S2 & S3 & S4 --> Validate
-    Validate --> PR
-
-    classDef manifest fill:#fef3c7,stroke:#d97706
-    classDef arch fill:#dcfce7,stroke:#16a34a
-    classDef spec fill:#dbeafe,stroke:#2563eb
-    classDef human fill:#fecdd3,stroke:#e11d48
-    class Domains,Facades,Conventions manifest
-    class Read,Decompose,Dispatch,Validate arch
-    class S1,S2,S3,S4 spec
-    class Lead,PR human
-```
-
-1. **Architect reads the manifest** (~15K tokens) and decomposes the task into scoped task packets.
-2. **Human gate**: the lead reviews the decomposition before execution.
-3. **Specialists receive task packets** that include exactly the files they need, exactly the conventions to follow, exactly the facades of adjacent domains — and explicit boundaries on what they must *not* modify.
-4. **Specialists return result packets** that include files created/modified, conventions honored, interface compliance checks, and cross-cutting discoveries.
-5. **Architect validates** interface compliance, propagates cross-cutting discoveries, and updates the manifest.
-
-Specialists are stateless. They re-read their domain files each activation. This is simpler and more reproducible than maintaining warm state, and the cost is acceptable — reading a few source files is cheap compared to re-reading the whole codebase.
-
-### Facade-Level Interop
-
-The facade is how disjoint agents know about each other. When the publishing specialist needs to interact with the agent framework, it does not read the framework's source code. It reads a blurb like:
-
-> *"The tool loop in the base agent calls your tool via tool.execute(**args). It expects a ToolResult back. brand_id is auto-injected if not in args."*
-
-That is enough to produce a correct integration. The specialist does not need to understand the framework's internal state machine — just its boundary contract. This is the same principle as microservice API contracts, applied to AI agent context.
-
----
-
-## 5. Quality Improvement Without Fine-Tuning
+## 6. Quality Improvement Without Fine-Tuning
 
 A hard ceiling exists when using closed-API models (the major commercial LLM providers): you cannot fine-tune the model on your domain data. No RLHF, no DPO, no adapter layers. The model is what the provider ships.
 
@@ -530,28 +552,6 @@ Implementation tiers:
 Tiers 1-3 are implementable today with any API provider. Tier 4 is aspirational — a hedge for the day when fine-tuning closed models becomes viable, or when switching to an open-weight model.
 
 The broader point: **the platform gets better with every interaction** without touching model weights.
-
----
-
-## 6. Collaborative Development: The Design Room
-
-### What It Is
-
-An **AI Design Room** is a per-feature thread where the team collaborates with AI as a participant, not just a tool. This is different from autonomous coding tools (which operate without human oversight) and different from simple AI assistants (which respond to individual prompts without maintaining conversation context across the team).
-
-### Three Boundaries
-
-| Boundary | Rule |
-|----------|------|
-| **Working medium** | Slack (or similar) — the thread where discussion, AI drafts, and human decisions happen in real time |
-| **Source of truth** | GitHub — every decision materializes as a commit, PR, or issue update |
-| **Decision gates** | PRs — the thread generates artifacts, but nothing ships without PR review and merge |
-
-### How It Works
-
-Multiple humans and AI participate in one thread. AI drafts; humans decide. The workflow steps, the manifest, and the role definitions provide the structure. The design room provides the collaboration layer.
-
-**Current state:** The workflow steps, the manifest, and the role definitions exist. A unified thread experience does not yet exist — coordination currently happens across Slack conversations, GitHub PRs, and separate AI sessions. Unifying that is an open project.
 
 ---
 
