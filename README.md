@@ -600,16 +600,11 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Template | Test registry | [templates/test-registry-template.yaml](templates/test-registry-template.yaml) | Test case catalog (domain, risk, origin, incident link) |
 | Template | Incident registry | [templates/incident-registry-template.yaml](templates/incident-registry-template.yaml) | Incident catalog (root cause, fix, regression test, canary criteria) |
 | Template | ADR, Training plan | [templates/adr-template.md](templates/adr-template.md), [templates/training-plan-template.md](templates/training-plan-template.md) | Standard doc formats |
+| Skill | `/tdd` | [skills/tdd.md](skills/tdd.md) | TDD-as-design loop: generate tests → human review → improve LLD → RED → GREEN → refactor |
+| Skill | `/impact-brief` | [skills/impact-brief.md](skills/impact-brief.md) | Generate 5-section downstream impact brief from PR diff + manifest + incident registry |
+| Skill | `/check-conventions` | [skills/check-conventions.md](skills/check-conventions.md) | Run convention checker in-chat, offer to fix violations |
+| Tool | Manifest generator | [tools/generate-manifest/](tools/generate-manifest/) | Auto-generate system-manifest.yaml from codebase via AST scanning |
 | Infra | Agent platform | [agentic-platform repo](https://github.com/Prasad-Apparaju/agentic-platform) | BaseAgent, tools, resilience, routing, observability, 7 patterns |
-
-### Planned
-
-| Type | Name | What it would do | Value |
-|------|------|-----------------|-------|
-| Skill | `/tdd` | Orchestrate the full TDD-as-design loop: generate tests → pause for human review → identify LLD gaps → update LLD → verify RED → generate code → verify GREEN → refactor | Highest — automates the hardest part of the workflow |
-| Skill | `/impact-brief` | Read the PR diff + manifest + incident registry → draft the 5-section downstream impact brief | High — AI can draft most of it; human adds judgment |
-| Skill | `/check-conventions` | Wrap the convention checker as an in-chat skill so developers catch violations during development, not after PR | Medium — CI catches it anyway, but earlier is better |
-| Tool | `generate-manifest.py` | Auto-generate the system manifest from the codebase via AST scanning | High — currently manual |
 
 ---
 
