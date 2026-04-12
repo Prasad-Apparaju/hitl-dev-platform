@@ -324,7 +324,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
-For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 7) for when to abbreviate.
+For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
 ### 5.1 The Pipeline View
 
@@ -543,35 +543,7 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 
 ---
 
-## 6. Quality Improvement Without Fine-Tuning
-
-A hard ceiling exists when using closed-API models (the major commercial LLM providers): you cannot fine-tune the model on your domain data. No RLHF, no DPO, no adapter layers. The model is what the provider ships.
-
-Quality is not static. Use these techniques at the prompt and routing level:
-
-| Technique | What it does | Expected impact |
-|-----------|-------------|----------------|
-| **Best-of-N sampling** | Generate N candidate outputs, score each with an LLM judge, return the best. | Trades compute cost for quality. Worth it for high-value outputs (e.g., a marketing campaign that represents the brand). |
-| **Thompson-sampled model routing** | Maintain a Bayesian posterior over model performance per task type. Route each request to the model most likely to produce the best output based on historical performance. | The router naturally gravitates toward the best model for each task category as quality scores accumulate. |
-| **HITL preference datasets** | When humans approve, edit, or reject agent outputs, those signals become preference pairs: (chosen output, rejected output) for the same input. | Feeds into prompt refinement and eval function tuning. Becomes a training dataset if a fine-tunable model is ever adopted. |
-| **Eval-driven prompt iteration** | Every agent output is scored against a rubric. When scores trend downward, the system flags it. Review the failing traces, identify the pattern, update the prompt or guardrails. | The eval scores are the feedback loop, not vibes. |
-
-Implementation tiers:
-
-| Tier | Technique | Requires fine-tuning? |
-|------|-----------|:---------------------:|
-| 1 | Best-of-N sampling + LLM judges | No |
-| 2 | Thompson-sampled model routing | No |
-| 3 | HITL preference dataset collection | No (collection only) |
-| 4 | DPO/adapter fine-tuning (future) | Yes — when models allow it |
-
-Tiers 1-3 are implementable today with any API provider. Tier 4 is aspirational — a hedge for the day when fine-tuning closed models becomes viable, or when switching to an open-weight model.
-
-The broader point: **the platform gets better with every interaction** without touching model weights.
-
----
-
-## 7. Common Pitfalls
+## 6. Common Pitfalls
 
 | Pitfall | Symptom | Fix |
 |---------|---------|-----|
@@ -580,7 +552,7 @@ The broader point: **the platform gets better with every interaction** without t
 | **Using the full process for trivial changes** | A one-line config change goes through 20 steps. The overhead exceeds the value. | There is no clean answer. In practice, skip steps for trivial changes — but "trivial" is a judgment call, and sometimes what looks trivial has architectural implications that surface later. A formal "light path" (issue, code, review) for changes below some complexity threshold is worth defining, but setting that threshold reliably is hard. |
 | **Using the full process for cross-cutting changes** | A cross-cutting change (new convention, framework upgrade, security patch) is treated as a single pipeline. But it has n-domain impact, and the pipeline's single Design PR does not adequately capture the review burden. | The hierarchical knowledge architecture helps (the architect decomposes across domains), but the human review bottleneck at the integration verification step does not scale. If the lead has to verify integration across 8 domains in one PR, something will get missed. Break cross-cutting changes into domain-scoped PRs. |
 
-### 7.1 Open Questions
+### 6.1 Open Questions
 
 - **Exploratory work**: How to handle genuinely exploratory work where the design emerges from the code. The design-first approach has clear value, but some tasks require building before knowing what to build.
 - **Developer identity**: How to onboard developers who are uncomfortable with the "review, don't write" model. Some engineers derive identity from writing code. Telling them "your job is review" can feel like a demotion even when it is not.
@@ -589,7 +561,7 @@ The broader point: **the platform gets better with every interaction** without t
 
 ---
 
-## 8. Adoption Checklist
+## 7. Adoption Checklist
 
 Use this checklist when considering or implementing this process:
 
@@ -604,11 +576,11 @@ Use this checklist when considering or implementing this process:
 
 ---
 
-## 9. Brownfield: The One-Week Sprint
+## 8. Brownfield: The One-Week Sprint
 
 An architect working with AI can produce the full documentation baseline in one week. The bottleneck is the architect's review capacity (~6-8 hours/day of focused review), not the AI's generation capacity.
 
-### 9.1 What the Architect Brings vs. What AI Handles
+### 8.1 What the Architect Brings vs. What AI Handles
 
 | Architect contributes | AI handles |
 |----------------------|-----------|
@@ -619,7 +591,7 @@ An architect working with AI can produce the full documentation baseline in one 
 
 Everything in the right column is mechanical. Everything in the left column requires someone who has lived with the system.
 
-### 9.2 The Sprint
+### 8.2 The Sprint
 
 | What | AI does | Architect does |
 |------|---------|---------------|
@@ -631,7 +603,7 @@ Everything in the right column is mechanical. Everything in the left column requ
 
 The baseline will be ~70% accurate. That is sufficient — the process corrects the remaining 30% through normal use, because every change that follows the workflow also corrects the docs for the affected area.
 
-### 9.3 The Weekly Delta Re-run
+### 8.3 The Weekly Delta Re-run
 
 After the baseline sprint, the manifest generator runs weekly (or on every merge to main) and produces a delta report:
 
@@ -656,7 +628,7 @@ CONVENTION DRIFT:
 
 Review the delta (~15 minutes/week), accept or reject suggestions, and the manifest stays current. The re-run catches what the process misses — files added without updating the manifest, conventions that drifted silently, interfaces that changed without updating the facade description.
 
-### 9.4 Handling the "Nobody Knows Why" Areas
+### 8.4 Handling the "Nobody Knows Why" Areas
 
 Every brownfield codebase has areas where the original author left and the code works but nobody understands it. Do not try to document these with false confidence. Instead:
 
@@ -676,7 +648,7 @@ legacy_billing:
 
 Documenting "we don't understand this" is MORE valuable than a wrong LLD. It prevents an AI agent from confidently generating code in an area where confidence is unwarranted. The manifest entry functions as a warning sign, not a guide.
 
-### 9.5 The Expedited Path for Production Incidents
+### 8.5 The Expedited Path for Production Incidents
 
 The 20-step process is for planned work. Production incidents cannot wait:
 
@@ -688,7 +660,7 @@ The 20-step process is for planned work. Production incidents cannot wait:
 
 The retroactive documentation from P0/P1 fixes is surprisingly valuable. It captures failure modes, edge cases, and "never do this" knowledge that proactive documentation misses because nobody anticipated the failure.
 
-### 9.6 Common Objections
+### 8.6 Common Objections
 
 | "We don't have time to write docs" | You are not writing them — AI is. You are reviewing. 15-30 minutes per change. The architect's one-week sprint produces more docs than most teams write in a year. |
 |---|---|
@@ -697,7 +669,7 @@ The retroactive documentation from P0/P1 fixes is surprisingly valuable. It capt
 | "Nobody will read the docs" | The AI reads them. That is the primary consumer. The docs are input to code generation and review, not shelf decoration. |
 | "We tried documentation sprints and they didn't stick" | A documentation sprint separate from feature work is dead on arrival — it produces docs that are stale by the time features resume. This is different: the sprint produces a BASELINE, and the process keeps it current through daily work. The docs never drift because they are updated in every PR. |
 
-### 9.7 The Real Adoption Timeline
+### 8.7 The Real Adoption Timeline
 
 | When | What happens |
 |------|-------------|
