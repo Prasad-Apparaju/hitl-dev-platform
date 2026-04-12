@@ -8,11 +8,11 @@ audience: engineering leads, senior engineers, architects
 
 ## The Core Idea
 
-Design decisions are discussed as a team — PM, Dev Lead, Developers, and AI — in a shared thread. Once a decision is finalized, it is captured in documentation: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries. From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It is the specification that drives what gets built.
+Design decisions are discussed as a team — PM, Architect, Developers, QA, Ops, and AI — in a shared thread. Once a decision is finalized, it is captured in documentation: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries. From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It is the specification that drives what gets built.
 
 This inverts the traditional relationship between docs and code. Write documentation first — with AI's help, in minutes rather than weeks — and generate the code from it. When the code diverges from the docs, update the docs to match, not the other way around. Any developer (or AI session) can then pick up any part of the system, read the docs, and produce correct, convention-honoring code — because the docs capture not just *what* the system does, but *why* it does it that way, *what alternatives were considered*, and *what conventions must be followed*.
 
-![Team Collaboration — How PM, Architect, Developers, and Claude work together](docs/images/team-collaboration.png)
+![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](docs/images/team-collaboration.png)
 
 > **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 22-step workflow, and the three boundaries.
 
@@ -151,11 +151,14 @@ The traditional objection — "detailed design docs get outdated" — assumed a 
 
 Every role shifts from "produce artifacts" to "review and decide." You are a reviewer and decision-maker, not a typist. If you are typing more than a few sentences of correction, let AI draft; you steer.
 
-| Role | Traditional Job | HITL AI-Driven Job |
-|------|---|---|
-| **PM** | Writes PRDs, manages backlog | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups |
-| **Dev Lead** | Writes architecture docs, reviews code | Reviews AI-generated architecture, verifies traceability, integration-tests features |
-| **Developer** | Writes code, writes tests, writes docs | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices |
+| Role | Traditional Job | HITL AI-Driven Job | Blocking? |
+|------|---|---|:---:|
+| **PM** | Writes PRDs, manages backlog | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups | Yes — owns requirements |
+| **Architect** | Writes architecture docs, reviews code | Reviews AI-generated architecture, verifies traceability, integration-tests features, gates PR merges | Yes — gates design + merge |
+| **Developer** | Writes code, writes tests, writes docs | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices | Yes — owns implementation |
+| **QA** | Manual test execution, regression testing | Adds test scenarios from incident registry during TDD review (step 9). Exploratory testing during canary. | No — contributes to spec, not to gate |
+| **Ops** | Manual deployments, incident response | Reviews IaC in Design PR. Adjusts canary criteria from incident registry. Monitors during canary. | No — contributes to spec, not to gate |
+| **Claude (@claude-bot)** | N/A | Drafts docs, generates code, reviews PRs, monitors canary. Participates in Slack when tagged. Never decides. | No — proposes, never approves |
 
 | Old habit | New expectation |
 |-----------|----------------|
@@ -509,19 +512,17 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 
 | Step | Who | What happens |
 |------|-----|-------------|
-| 1 | PM + AI | PM describes the need. AI drafts PRD update with user stories, acceptance criteria. PM reviews and adjusts. |
-| 2 | Lead + AI | AI analyzes impact: publishing agent LLD needs a new channel, integration service needed, API contract needs new endpoint, test cases need new entries. IaC: new API secret required. Lead opens Design PR with all changes. |
-| 3 | Team | Developers review Design PR. Dev A checks the publishing LLD. Dev B checks the API contract + frontend impact. Discussion in PR comments. PR merged — design locked, code generation begins. |
-| 4 | Dev A + AI | Refines the publishing LLD section, AI generates test plan + integration code + tests. Dev reviews, corrects API specifics. |
-| 4 | Dev B + AI | Refines the frontend section, AI generates the UI component. Dev reviews, adjusts. |
-| 5 | Both devs | Integrate: frontend calls new endpoint, publishing agent routes to new channel. Test together. Fix integration issues. |
-| 6 | AI | Reviews both PRs against LLD + test plan. Flags missing error handling on rate limits, catches that tests don't cover a specific format. Devs fix. |
-| **7** | **Dev A + AI** | **Downstream impact brief**: (1) Flows changed: campaign creation now shows a new channel option; publishing agent routes to new API. (2) Risk: new API has stricter rate limits than existing channels — could hit 429s under burst load. (3) Manual verification: publish a real post to the new channel and verify it appears within 60s. (4) PM mental model update: "publishing now supports 3 channels, not 2; the new channel has a daily post limit of 100." (5) Rollout: HIGH risk (new external integration) — canary 10%, 4h monitor, promote. |
-| **8** | **Dev A** | **Rollout plan**: canary criteria — error rate < 0.5%, publish success rate > 95%, new channel API 429 rate < 2%. Rollback: revert canary, traffic falls back to existing channels only. |
-| 9 | Lead | Reviews traceability + impact brief + rollout plan. Confirms the PM mental model section is clear. |
-| 10 | Ops + AI | Canary deploy to 10%. AI monitors dashboards for 4h, produces go/no-go summary. Lead reviews. |
-| 11 | Lead | Promotes to 100%. |
-| 12 | Team to PM | Demo. PM: "Looks good, but add video format support." Back to step 1 for next iteration. |
+| 1 | PM + AI | PM describes the need. AI drafts PRD update. PM reviews. |
+| 2 | Architect + AI | AI analyzes impact across LLDs. Architect opens Design PR with HLD/LLD/IaC/test plan changes. |
+| 3 | Team + QA + Ops | Devs review LLD sections. QA adds test scenarios from incident registry. Ops reviews IaC. PR merged — design locked. |
+| 4 | Devs + AI | AI generates tests (RED). Dev + QA review, add edge cases. AI generates code (GREEN). Refactor. |
+| 5 | AI | Reviews both PRs against LLD. Flags gaps. Devs fix. |
+| 6 | Dev + AI | Downstream impact brief. QA adds manual verification scenarios. PM mental model update written. |
+| 7 | Dev + Ops | Rollout plan. Ops adjusts canary criteria from incident registry. |
+| 8 | Architect | Reviews traceability + impact brief + rollout plan. |
+| 9 | Ops + AI | Canary deploy. AI monitors go/no-go criteria. Ops watches infrastructure metrics. |
+| 10 | Architect | Promotes to 100% or rolls back. |
+| 11 | Team + PM | Demo. PM gives feedback. Next iteration if needed. |
 
 **Total time: days, not sprints.** The downstream impact brief adds ~30 minutes to the process. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
 
