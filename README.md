@@ -586,20 +586,21 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 
 ### Available now
 
-| Type | Name | What it does | Workflow steps |
-|------|------|-------------|---------------|
-| Skill | `/dev-practices` | The full workflow guide — phases, steps, TDD cycle, ROI, downstream impact | All |
-| Skill | `/apply-change` | Impact analysis — identifies affected components, APIs, docs, tests | Design phase |
-| Skill | `/generate-docs` | Generates HLD/LLD/ADRs from a feature description (new) or from existing code (reverse-engineer) | Design phase, Brownfield sprint |
-| Tool | `check-conventions/runner.py` | Pluggable convention checker — reads YAML config, runs AST-based checks, fails CI on violations | CI on every PR |
-| Tool | `fix-mermaid/fix_br_tags.py` | Removes `<br/>` from Mermaid blocks for Obsidian compatibility | One-time fix + CI |
-| Tool | `render-pdf/md-to-pdf.js` | Markdown to PDF with Mermaid diagram rendering | Documentation |
-| Template | `CLAUDE.md.template` | Project CLAUDE.md with placeholder sections for conventions and coding standards | Project setup |
-| Template | `system-manifest.schema.yaml` | Full schema definition for the system manifest | Manifest creation |
-| Template | `issue-template.md` | GitHub issue template with ROI estimation + downstream impact sections | Every issue |
-| Template | `test-registry-template.yaml` | Test case registry format (domain, risk, origin, incident link) | TDD review, impact analysis |
-| Template | `incident-registry-template.yaml` | Incident registry format (root cause, fix, regression test, canary criteria) | Post-incident, rollout planning |
-| Template | `adr-template.md`, `training-plan-template.md` | Standard formats for ADRs and training plans | Design phase |
+| Type | Name | Source | What it does |
+|------|------|--------|-------------|
+| Skill | `/dev-practices` | [skills/dev-practices.md](skills/dev-practices.md) | The full workflow — phases, steps, TDD cycle, ROI, downstream impact |
+| Skill | `/apply-change` | [skills/apply-change.md](skills/apply-change.md) | Impact analysis — affected components, APIs, docs, tests |
+| Skill | `/generate-docs` | [skills/generate-docs/](skills/generate-docs/) | HLD/LLD/ADRs from feature description (new) or from existing code (reverse-engineer) |
+| Tool | Convention checker | [tools/check-conventions/](tools/check-conventions/) | Pluggable YAML-driven checker — AST-based, fails CI on violations |
+| Tool | Mermaid fixer | [tools/fix-mermaid/](tools/fix-mermaid/) | Removes `<br/>` from Mermaid blocks for Obsidian compatibility |
+| Tool | PDF renderer | [tools/render-pdf/](tools/render-pdf/) | Markdown to PDF with Mermaid diagram rendering |
+| Template | CLAUDE.md | [templates/CLAUDE.md.template](templates/CLAUDE.md.template) | Project CLAUDE.md with placeholder sections for conventions |
+| Template | System manifest | [templates/system-manifest.schema.yaml](templates/system-manifest.schema.yaml) | Schema definition for the system manifest |
+| Template | Issue | [templates/issue-template.md](templates/issue-template.md) | GitHub issue template with ROI + downstream impact sections |
+| Template | Test registry | [templates/test-registry-template.yaml](templates/test-registry-template.yaml) | Test case catalog (domain, risk, origin, incident link) |
+| Template | Incident registry | [templates/incident-registry-template.yaml](templates/incident-registry-template.yaml) | Incident catalog (root cause, fix, regression test, canary criteria) |
+| Template | ADR, Training plan | [templates/adr-template.md](templates/adr-template.md), [templates/training-plan-template.md](templates/training-plan-template.md) | Standard doc formats |
+| Infra | Agent platform | [agentic-platform repo](https://github.com/Prasad-Apparaju/agentic-platform) | BaseAgent, tools, resilience, routing, observability, 7 patterns |
 
 ### Planned
 
