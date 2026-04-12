@@ -1,10 +1,3 @@
----
-title: "HITL AI-Driven Development: A Practitioner's Guide"
-subtitle: "How to organize documentation, agent knowledge, and team workflows to minimize problems — not maximize speed"
-status: draft
-created: 2026-04-09
-audience: engineering leads, senior engineers, architects
----
 
 # HITL AI-Driven Development
 
