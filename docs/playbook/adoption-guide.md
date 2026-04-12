@@ -26,52 +26,15 @@ The day-by-day plan below describes what happens at each phase. The skill handle
 
 A complete documentation baseline ready for the HITL process: system manifest, HLDs, LLDs, ADRs, and the process itself.
 
-## Day-by-Day Plan
+## The Sprint
 
-### Day 1: System Manifest from Code
-
-| Hour | Architect does | AI does |
-|------|---------------|---------|
-| 1-2 | Points AI at codebase. Answers "what is this module for?" | Scans directory tree, parses imports, produces draft domain boundary map |
-| 3-4 | Reviews boundaries, corrects ("billing and payments are one domain") | Generates full system-manifest.yaml with file lists, dependency graph, placeholder facades |
-| 5-6 | Fills in judgment-dependent fields: mutation descriptions, preconditions, risk notes | Produces cross-cutting conventions from code patterns (decorators, base classes) |
-| 7-8 | Reviews interaction matrix, corrects wrong edges | Final manifest committed |
-
-**End of Day 1:** working system-manifest.yaml — ~80% accurate, 100% coverage.
-
-### Days 2-3: HLDs from Infrastructure + Architecture
-
-AI reads deployment configs, database schemas, network policies, and the service layer. Produces 5-8 HLDs:
-
-- System architecture (components + deployment)
-- Data architecture (entity relationships, tenant isolation)
-- Service/agent architecture (component interactions)
-- Security posture (auth, secrets, network)
-- Observability (logging, tracing, metrics)
-
-Architect reviews each for 30-60 min. Corrects factual errors. Adds the "why" that code can't tell you.
-
-### Days 3-4: LLDs from Source Code
-
-AI generates one LLD per domain from the manifest's file list. Extracts class hierarchies, public methods, state machines, error handling patterns.
-
-Architect reviews in priority order: **hot domains first** (changed weekly), **cold domains last** (marked "DRAFT — not reviewed").
-
-### Days 4-5: ADRs from Tribal Knowledge
-
-Two sources:
-
-**Architect-driven**: architect tells AI about each decision. AI formats as ADR. High confidence.
-
-**AI-forensic**: for decisions nobody remembers, AI infers from code. Lower confidence, marked "NEEDS VERIFICATION."
-
-### Day 5 Afternoon: Process Setup
-
-1. Commit all docs
-2. Copy skills to `.claude/commands/`
-3. Copy and fill in CLAUDE.md template
-4. Set up convention checker + CI
-5. Apply the full process to ONE real change as proof-of-concept
+| What | AI does | Architect does |
+|------|---------|---------------|
+| **System manifest** | Scans directory tree + imports → produces domain boundaries, file lists, dependency graph, convention detection, placeholder facades | Reviews boundaries ("these two are one domain"), fills in mutation descriptions + preconditions + risk notes |
+| **HLDs** (5-8 docs) | Reads deployment configs, schemas, service layer → generates system/data/service/security/observability architecture docs | Reviews each for 30-60 min. Corrects facts. Adds the "why" that code can't tell you. |
+| **LLDs** (one per domain) | Reads source files per domain → extracts class hierarchies, method signatures, state machines, error patterns | Reviews hot domains first, marks cold domains "DRAFT — not reviewed" |
+| **ADRs** | Infers decisions from code patterns (framework choices, auth approach, error handling). Marks as "INFERRED — NEEDS VERIFICATION" | Verifies inferred ADRs. Adds decisions that aren't visible in code (tribal knowledge). |
+| **Process setup** | Generates CLAUDE.md from template, convention-checks.yaml from detected patterns, copies skills + CI actions | Reviews conventions, applies the process to ONE real change as proof-of-concept |
 
 ## The Quality Curve
 
