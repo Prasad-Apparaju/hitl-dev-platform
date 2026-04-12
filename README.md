@@ -215,56 +215,20 @@ graph LR
 
 Most steps are AI-driven. Human work is review and judgment, not production.
 
-```mermaid
-graph LR
-    subgraph Design["Design — lock the spec"]
-        D1["Issue"]:::both --> D2["Design spec"]:::human --> D3["Impact analysis"]:::ai
-        D3 --> D4["Update docs"]:::both --> D5["Update IaC"]:::both
-        D5 --> D6["Test plan"]:::both --> D7["Training plan"]:::both
-        D4 -.->|"iterate"| D4
-        D6 -.->|"iterate"| D6
-    end
+> 🤖 AI does it &nbsp; 👤🤖 AI drafts, human reviews &nbsp; 👤 Human only &nbsp; 🔁 Iterative until correct
 
-    subgraph TDD["Build (TDD) — tests drive the design"]
-        T1["Generate tests"]:::ai --> T2["Human + QA review"]:::human
-        T2 --> T3["Tests improve LLD"]:::ai --> T4["Verify RED"]:::ai
-        T4 --> T5["Generate code"]:::ai --> T6["Verify GREEN"]:::ai
-        T6 --> T7["Refactor"]:::both
-        T2 -.->|"iterate"| T2
-        T3 -.->|"iterate"| T3
-        T6 -.->|"fix"| T5
-        T7 -.->|"iterate"| T7
-    end
+| Phase | Steps |
+|-------|-------|
+| **Design** | Issue 👤🤖 → Design spec 👤 → Impact analysis 🤖 → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
+| **Build (TDD)** | Generate tests 🤖 → Human + QA review 👤 🔁 → Tests improve LLD 🤖 🔁 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 |
+| **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Reconcile docs 🤖 |
+| **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
+| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → Promote/rollback 👤 |
+| **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
 
-    subgraph Verify["Verify — catch what TDD missed"]
-        V1["Code review R1"]:::ai --> V2["Code review R2"]:::ai --> V3["Reconcile docs"]:::ai
-        V1 -.->|"fix"| V1
-        V2 -.->|"fix"| V2
-    end
+The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-    subgraph Assess["Assess — protect the org"]
-        A1["Impact brief"]:::both --> A2["Rollout plan"]:::human
-        A1 -.->|"iterate"| A1
-    end
-
-    subgraph Ship["Ship — deploy safely"]
-        S1["PR + verify"]:::human --> S2["Canary deploy"]:::ai --> S3["Promote / rollback"]:::human
-    end
-
-    subgraph Post["Post-ship — verify ROI"]
-        P1["30-day check"]:::human --> P2["90-day check"]:::human
-    end
-
-    Design --> TDD --> Verify --> Assess --> Ship --> Post
-
-    classDef ai fill:#dbeafe,stroke:#2563eb,color:#1e293b
-    classDef human fill:#fef3c7,stroke:#d97706,color:#1e293b
-    classDef both fill:#dcfce7,stroke:#16a34a,color:#1e293b
-```
-
-> 🟦 AI does it &nbsp; 🟨 Human only &nbsp; 🟩 AI drafts, human reviews &nbsp; Dashed arrows = iterate until correct
-
-Of 24 steps: **12 AI-driven** 🟦, **8 AI-assisted** 🟩, **4 human-only** 🟨.
+Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
 
 ### The Two-Round Code Review
 
