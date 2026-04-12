@@ -579,7 +579,10 @@ Use the `/generate-docs reverse-engineer` skill to automate the sprint. See [doc
 
 ## Skills and Tools
 
-Skills are Claude Code commands that automate parts of the workflow. Tools run in CI or from the command line. Templates provide the starting structure for project artifacts.
+Skills are Claude Code commands that automate parts of the workflow. Tools run in CI or from the command line. Templates provide the starting structure for project artifacts. Everything lives in two repos:
+
+- **[hitl-dev-platform](https://github.com/Prasad-Apparaju/hitl-dev-platform)** — the process, skills, tools, and templates (this repo)
+- **[agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform)** — reusable Python/LangGraph infrastructure for building agents (BaseAgent, tools, resilience, routing, observability) + [7 agentic patterns](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/docs/patterns) for transitioning from deterministic to agentic systems
 
 ### Available now
 
