@@ -219,7 +219,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 | Phase | Steps |
 |-------|-------|
-| **Design** | Issue 👤🤖 → Design spec 👤 → Impact analysis 🤖 → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
+| **Design** | Issue 👤🤖 → Design spec 👤🤖 (if exists) → Impact analysis 🤖 → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
 | **Build (TDD)** | Generate tests 🤖 → Human + QA review 👤 🔁 → Tests improve LLD 🤖 🔁 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 |
 | **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Reconcile docs 🤖 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
