@@ -40,7 +40,7 @@ graph TD
 
     subgraph GitHub["GitHub — Source of Truth"]
         direction LR
-        Docs["Docs + ADRs + Manifest"]
+        Docs["HLDs + LLDs + ADRs + Manifest (scoped context per domain)"]
         Code["Code + Tests"]
         IaC["IaC: Terraform, K8s"]
         PRs["PRs = Decision Gates"]
