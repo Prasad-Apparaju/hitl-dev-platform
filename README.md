@@ -163,7 +163,7 @@ Every role shifts from "produce artifacts" to "review and decide." You are a rev
 
 **The model:** Dev is empowered to do everything in dev — including QA-level testing and Ops-level IaC. Once the build is stable, Dev hands off with evidence (test registry results, impact brief, rollout plan). QA and Ops take it from there independently and pull Dev in as needed. Ops may refactor the IaC Dev provided; Dev retroactively applies those refinements back to the dev environment.
 
-| Old habit | New expectation |
+| Common practice | With this process |
 |-----------|----------------|
 | Write docs by hand | AI writes all docs. You review, correct, approve. |
 | Start coding, figure it out as you go | Tell AI what you need. AI drafts the LLD. You review. Iterate with AI — refine, add detail, challenge assumptions — until the doc reflects exactly what should happen. Only then does AI generate code from it. |
