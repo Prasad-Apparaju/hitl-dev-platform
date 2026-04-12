@@ -6,6 +6,18 @@ created: 2026-04-09
 audience: engineering leads, senior engineers, architects
 ---
 
+# HITL AI-Driven Development
+
+## What this is
+
+This is a development process for teams that use AI to generate code, tests, and documentation. It addresses a specific problem: **AI can produce code faster than teams can review it, and it does so confidently even when wrong.**
+
+In traditional development, the developer is the bottleneck — they write everything, and the pace of delivery is the pace of typing. With AI, the bottleneck shifts to **decision-making, review, and coordination.** The code writes itself; the hard part is making sure it builds the right thing, follows the agreed design, and doesn't break what already works.
+
+This process organizes the team — PM, Architect, Developers, QA, Ops, and AI — around documentation as the shared source of truth. AI generates artifacts (docs, code, tests) from that documentation. Humans review, decide, and approve at defined gates. The result is a coherent system where every piece traces back to a reviewed decision.
+
+If you are used to pre-AI development, the biggest shift is this: **your job changes from "write code" to "review what AI wrote and make sure it matches what the team agreed."** The process described here is how that review-and-decide model works in practice.
+
 ## The Core Idea
 
 Design decisions are discussed as a team — PM, Architect, Developers, QA, Ops, and AI — in a shared thread. Once a decision is finalized, it is captured in documentation: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries. From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It is the specification that drives what gets built.
