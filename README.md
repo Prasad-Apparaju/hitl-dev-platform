@@ -151,14 +151,14 @@ The traditional objection — "detailed design docs get outdated" — assumed a 
 
 Every role shifts from "produce artifacts" to "review and decide." You are a reviewer and decision-maker, not a typist. If you are typing more than a few sentences of correction, let AI draft; you steer.
 
-| Role | Traditional Job | HITL AI-Driven Job | Blocking? |
-|------|---|---|:---:|
-| **PM** | Writes PRDs, manages backlog | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups | Yes — owns requirements |
-| **Architect** | Writes architecture docs, reviews code | Reviews AI-generated architecture, verifies traceability, integration-tests features, gates PR merges | Yes — gates design + merge |
-| **Developer** | Writes code, writes tests, writes docs | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices | Yes — owns implementation |
-| **QA** | Manual test execution, regression testing | Adds test scenarios from incident registry during TDD review (step 9). Exploratory testing during canary. | No — contributes to spec, not to gate |
-| **Ops** | Manual deployments, incident response | Reviews IaC in Design PR. Adjusts canary criteria from incident registry. Monitors during canary. | No — contributes to spec, not to gate |
-| **Claude (@claude-bot)** | N/A | Drafts docs, generates code, reviews PRs, monitors canary. Participates in Slack when tagged. Never decides. | No — proposes, never approves |
+| Role | HITL AI-Driven Job | Gates design + build? | Gates deployment? |
+|------|---|:---:|:---:|
+| **PM** | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups | Yes — owns requirements | No |
+| **Architect** | Reviews AI-generated architecture, verifies traceability, integration-tests features, gates PR merges | Yes — gates design + merge | Yes — promotes canary |
+| **Developer** | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices | Yes — owns implementation | No |
+| **QA** | Adds test scenarios from incident registry during TDD review. Exploratory testing during canary. Verifies quality coverage before promotion. | No — contributes to spec | Yes — can block promotion if quality criteria not met |
+| **Ops** | Reviews IaC in Design PR. Adjusts canary criteria from incident registry. Monitors infrastructure during canary. Verifies stability before promotion. | No — contributes to spec | Yes — can block promotion if system not stable |
+| **Claude** | Drafts docs, generates code, reviews PRs, monitors canary metrics. Participates in Slack when tagged. | No — proposes, never approves | No — reports metrics, never promotes |
 
 | Old habit | New expectation |
 |-----------|----------------|
@@ -376,7 +376,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 | **Build (TDD)** | Generate tests 🤖 → Human + QA review 👤 🔁 → Tests improve LLD 🤖 🔁 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 |
 | **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Reconcile docs 🤖 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
-| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → Promote/rollback 👤 |
+| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → QA + Ops verify 👤 → Promote/rollback 👤 |
 | **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
@@ -520,8 +520,8 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 | 6 | Dev + AI | Downstream impact brief. QA adds manual verification scenarios. PM mental model update written. |
 | 7 | Dev + Ops | Rollout plan. Ops adjusts canary criteria from incident registry. |
 | 8 | Architect | Reviews traceability + impact brief + rollout plan. |
-| 9 | Ops + AI | Canary deploy. AI monitors go/no-go criteria. Ops watches infrastructure metrics. |
-| 10 | Architect | Promotes to 100% or rolls back. |
+| 9 | Ops + AI | Canary deploy. AI monitors go/no-go criteria. Ops watches infrastructure metrics. QA runs exploratory tests against canary. |
+| 10 | Architect + QA + Ops | Promotion gate. QA confirms quality criteria met. Ops confirms system stable. Architect promotes to 100% or rolls back. |
 | 11 | Team + PM | Demo. PM gives feedback. Next iteration if needed. |
 
 **Total time: days, not sprints.** The downstream impact brief adds ~30 minutes to the process. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
