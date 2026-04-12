@@ -76,20 +76,6 @@ graph TD
 
 ---
 
-## Quick Reference
-
-| Principle | What to do |
-|-----------|-----------|
-| Documentation drives code | Write the LLD before generating code. The doc IS the prompt. |
-| TDD as design | Generate tests first. Humans add edge cases. Tests reveal LLD gaps before code exists. |
-| 26-step workflow | Follow 20 steps to merge + 2 post-ship verification + 4 downstream assessment steps. AI does production work; humans hold gates. |
-| Hierarchical agent knowledge | Use a System Manifest to give agents scoped context instead of everything-or-nothing. |
-| Quality without fine-tuning | Apply prompt-level techniques — best-of-N sampling, bandit-routed model selection, HITL preference datasets — on closed-API models. |
-| Culture before tooling | Establish docs discipline first. AI tools amplify whatever habits already exist. |
-| Brownfield adoption | An architect + AI can produce a full documentation baseline in one week. The bottleneck is review capacity, not writing. |
-
----
-
 ## 1. The Problem This Solves
 
 Teams adopting AI code generation hit four failure modes:
