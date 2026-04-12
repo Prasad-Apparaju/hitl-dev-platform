@@ -81,12 +81,32 @@ This mode reads the existing codebase and generates the full documentation basel
    - Decorators + base classes → convention patterns
    - Test files → test coverage map
 
-2. **Generate `docs/system-manifest.yaml`** with:
-   - One domain entry per identified boundary
-   - File lists per domain (auto-generated)
-   - Placeholder facade APIs (signature + "DRAFT — needs human review" blurb)
-   - Dependency graph (from imports)
-   - Convention detection (any patterns that repeat across 3+ files → candidate convention)
+2. **Generate `docs/system-manifest.yaml`** with ALL sections from `templates/system-manifest.schema.yaml`:
+
+   **Per domain:**
+   - `purpose`: one-line description (infer from directory name + file contents)
+   - `files`: all source files in the domain (auto from directory scan)
+   - `lld`: path to LLD doc (will be created in Phase R3)
+   - `tests`: test files that cover this domain (match by name convention)
+   - `boundary_entities`: extract public dataclasses / Pydantic models / TypedDicts that are imported by OTHER domains. Include the field-level shape. Mark as "DRAFT".
+   - `facade_apis`: for each public method/endpoint that other domains call, generate:
+     - `signature`: actual method signature from code
+     - `blurb`: "DRAFT — [one sentence inferred from docstring or method name]"
+     - `mutations`: detect writes (DB inserts/updates, external API calls, file writes). Mark IRREVERSIBLE for external calls. Mark as "DRAFT — verify with architect".
+     - `preconditions`: infer from parameter validation, guard clauses, decorators
+     - `error_modes`: extract from try/except blocks, raise statements, HTTP status codes
+   - `events_emitted`: detect patterns like event dispatching, callback invocations, webhook sends. If none found, leave empty.
+   - `events_consumed`: detect event handler registrations, webhook receivers, message queue consumers.
+   - `depends_on`: from import graph
+   - `conventions`: which cross-cutting conventions apply (detected in step 1)
+   - `last_changed`: from git log (`git log -1 --format="%ai" -- <domain-dir>`)
+
+   **Cross-cutting section:**
+   - Detect repeating patterns across 3+ files → candidate conventions
+   - For each: `name`, `rule` (specific + enforceable), `affected_domains`, `enforcement` (how to check: decorator? base class? import? pattern?), `adr` (will link to ADR in Phase R4)
+
+   **Interaction matrix:**
+   - For each import that crosses a domain boundary: `"domain_a -> domain_b"` with `description` (inferred from the import context) and `entity_crossing` (the class/type being imported)
 
 3. **Present the manifest to the user for review.** Ask:
    - "Are these domain boundaries correct?"
@@ -123,9 +143,11 @@ This mode reads the existing codebase and generates the full documentation basel
 
 2. **Prioritize hot domains** (the ones with the most recent git commits or the most files). Mark cold domains as "DRAFT — not reviewed" if time is limited.
 
-3. **Update `docs/02-design/technical/lld/index.md`** and **`packages.md`**.
+3. **Update `docs/02-design/technical/lld/index.md`** — add a navigation table with one row per LLD, organized by domain.
 
-4. **STOP and ask the user to review the LLDs.**
+4. **Generate `docs/02-design/technical/lld/packages.md`** — a Mermaid `graph TD` showing the domain dependency structure with subgraphs for each domain's key components. Use the interaction matrix from the manifest to draw edges.
+
+5. **STOP and ask the user to review the LLDs.**
 
 ### Phase R4 — ADRs (Days 4-5 equivalent)
 
@@ -153,24 +175,82 @@ This mode reads the existing codebase and generates the full documentation basel
 ### Phase R5 — Process Setup (Day 5 equivalent)
 
 1. **Generate `CLAUDE.md`** from the template at `templates/CLAUDE.md.template`:
-   - Fill in the cross-cutting conventions discovered in Phase R1
-   - Fill in the coding standards detected from the codebase (formatter, linter, test framework)
+   - Fill in the cross-cutting conventions discovered in Phase R1 (inline, not just links)
+   - Fill in the coding standards detected from the codebase:
+     - Language + framework (from imports / package.json / pyproject.toml)
+     - Formatter (detect black, prettier, etc. from config files)
+     - Linter (detect ruff, eslint, etc.)
+     - Test framework (detect pytest, jest, etc.)
+     - Type checker (detect mypy, tsc, etc.)
+   - Include the 7-line preflight check (verbatim from template)
    - Reference the system manifest
 
-2. **Generate `convention-checks.yaml`** with project-specific checks based on the conventions discovered:
-   - For each detected convention, create a check definition
-   - Include all universal checks (manifest_drift, mermaid_br_tags, inline_comments)
+2. **Generate `convention-checks.yaml`** with project-specific checks:
+   - For each convention detected in Phase R1, create a check definition using the appropriate check type:
+     - Subclass pattern → `subclass_method_check`
+     - Required import pattern → `import_check`
+     - Required co-occurrence → `pattern_check`
+     - File content requirement → `file_contains`
+   - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
 3. **Copy the skills** to `.claude/commands/` if they don't exist:
-   - `skills/dev-practices.md`
-   - `workflows/apply-change.md`
+   - `skills/dev-practices.md` — the 22-step workflow
+   - `workflows/apply-change.md` — the impact analysis workflow
 
-4. **Present a summary** to the user:
-   - "Generated X HLDs, Y LLDs, Z ADRs, 1 system manifest, 1 CLAUDE.md"
-   - "Domain coverage: [list of domains]"
-   - "Convention coverage: [list of detected conventions]"
-   - "Items marked NEEDS VERIFICATION: [count]"
-   - "Recommended next step: review the manifest domain boundaries, then the HLDs"
+4. **Copy CI actions** to `.github/workflows/` if they don't exist:
+   - `convention-check.yml` — runs convention checker on every PR
+   - `manifest-check.yml` — checks manifest drift on every PR
+
+5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `templates/issue-template.md`:
+   - Pre-filled with the ROI estimation section
+   - Includes downstream impact brief prompts
+   - Includes training plan link placeholder
+
+6. **Set up Obsidian compatibility** (if docs/ exists):
+   - Create `docs/.obsidian/app.json` with `useMarkdownLinks: true`, `newLinkFormat: "relative"`
+   - Add `.obsidian/` and `docs/.obsidian/` to `.gitignore`
+
+7. **Identify training plan candidates** — scan the codebase for capabilities that would benefit from a training plan:
+   - Any custom framework or abstraction used across 3+ files
+   - Any external system integration (API clients, SDKs)
+   - Any architectural pattern that deviates from the framework default
+   - For each candidate, create a stub at `docs/03-engineering/training/<name>.md` using `templates/training-plan-template.md` with module outlines and reading lists pointing to the just-generated LLDs
+
+8. **Generate the docs README** — `docs/README.md` with:
+   - A table of contents linking to all HLDs, LLDs, ADRs, training plans
+   - The arc42-style directory structure explanation
+   - Quick links to the system manifest and CLAUDE.md
+
+9. **Present a completeness summary** to the user:
+
+   ```
+   ┌─────────────────────────────────────────────┐
+   │ BASELINE GENERATION COMPLETE                │
+   ├─────────────────────────────────────────────┤
+   │ System manifest:  1 file, N domains         │
+   │ HLDs:             X files                   │
+   │ LLDs:             Y files                   │
+   │ ADRs:             Z files (W forensic)       │
+   │ Training plans:   T stubs                   │
+   │ CLAUDE.md:        1 file, N conventions     │
+   │ Convention checks: 1 config, M checks       │
+   │ CI actions:       2 workflows               │
+   │ Issue template:   1 file                    │
+   ├─────────────────────────────────────────────┤
+   │ NEEDS HUMAN REVIEW:                         │
+   │ • Manifest facade blurbs (DRAFT): N items   │
+   │ • Manifest mutations (DRAFT): N items       │
+   │ • Manifest boundary entities: N items       │
+   │ • Forensic ADRs (INFERRED): W items         │
+   │ • Training plan stubs: T items              │
+   ├─────────────────────────────────────────────┤
+   │ RECOMMENDED NEXT STEPS:                     │
+   │ 1. Review manifest domain boundaries        │
+   │ 2. Fill in facade blurbs + mutations        │
+   │ 3. Verify forensic ADRs with the team       │
+   │ 4. Apply the process to one real change     │
+   └─────────────────────────────────────────────┘
+   ```
 
 ---
 
