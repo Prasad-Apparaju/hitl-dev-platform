@@ -213,76 +213,65 @@ graph LR
 
 ### Step-by-Step Checklist
 
-1. **GitHub Issue** — Describe the change, root cause, and proposed solution. This is the only step where a human writes from scratch (and even here, AI helps draft it).
+Most steps are AI-driven — the human role is review and judgment, not production.
 
-2. **Design spec review** (conditional) — If a visual design exists, extract requirements, interactions, and visual specs into the issue. This feeds into both the design phase and the final verification.
+> 🤖 = AI does the work &nbsp;&nbsp; 👤 = Human does the work &nbsp;&nbsp; 👤🤖 = AI drafts, human reviews
 
-3. **Impact analysis** — AI analyzes the existing docs to identify affected components, APIs, configs, and dependencies. Review and correct the analysis. This is where convention drift gets caught early — the AI reads the *whole* doc set, something no human does consistently.
+**Design phase** — lock the spec before any code exists
 
-4. **Update docs** — HLD, LLD, design decisions, test cases — all updated *before* code. AI drafts the updates; review and correct. This is the highest-leverage human step: 15 minutes of review here saves hours of rework later.
+| # | Step | Who | What happens |
+|---|------|:---:|-------------|
+| 1 | Issue | 👤🤖 | Describe the change. AI helps draft. |
+| 2 | Design spec | 👤 | If visual design exists, extract requirements into issue. |
+| 3 | Impact analysis | 🤖 | AI identifies affected components, APIs, configs. Human corrects. Queries test + incident registries. |
+| 4 | Update docs | 👤🤖 | AI drafts HLD/LLD/ADR updates. Human reviews — 15 min here saves hours later. |
+| 5 | Update IaC | 👤🤖 | AI drafts manifests/migrations. Human reviews. |
+| 6 | Test case planning | 👤🤖 | AI drafts test plan. Human adds edge cases. |
+| 7 | Training plan | 👤🤖 | If new capability → AI drafts stub. Human reviews. If not → skip explicitly. |
 
-5. **Update IaC** — Infrastructure manifests, migrations, configs. If the change needs a new secret, a new cron job, a new database migration, capture it here — not as an afterthought once the code is written.
+**Build phase (TDD)** — tests before code, tests drive the design
 
-6. **Test case planning** — Before writing any code, produce a test plan: new tests needed, existing tests to update, obsolete tests to remove, regression tests that must still pass. This locks in what "done" means.
+| # | Step | Who | What happens |
+|---|------|:---:|-------------|
+| 8 | Generate tests (RED) | 🤖 | AI generates maximum tests from LLD + manifest contracts. No code exists yet. |
+| 9 | Review tests | 👤 | Human + QA add edge cases, incident regressions, domain knowledge. Register in test registry. |
+| 10 | Tests improve design | 🤖 | AI finds LLD gaps revealed by tests → updates LLD before code. |
+| 11 | Verify RED | 🤖 | Run tests. All must fail (no implementation yet). |
+| 12 | Generate code (GREEN) | 🤖 | AI generates simplest code that passes all tests. |
+| 13 | Verify GREEN | 🤖 | Run full suite. All must pass. |
+| 14 | Refactor | 👤🤖 | AI proposes simplifications. Human reviews. Rerun tests after each change. |
 
-7. **Training plan stub** (conditional) — If the change introduces a new technical capability (a new framework, architectural pattern, or ML technique), draft a training plan alongside the design docs. This ensures the team can ramp on the new capability without rediscovering it from the code. Skip explicitly when the change does not introduce a new capability. Triggers:
-    - A new architectural pattern (e.g., bandit routing, plan-mode tools)
-    - A new external system integration
-    - A new framework or primitive
-    - A new ML/AI technique
-    - A significant refactor that changes how engineers reason about a subsystem
+**Verify phase** — catch what TDD missed
 
-    The plan follows a modular structure: 30-60 minute modules, each with reading list, key concepts, hands-on exercise, and checkpoint questions. The lead drafts the stub during design; the developer fills in working examples after implementation.
+| # | Step | Who | What happens |
+|---|------|:---:|-------------|
+| 15 | Code review R1 | 🤖 | AI reviews structure, security, LLD adherence. |
+| 16 | Code review R2 | 🤖 | AI reviews edge cases, regressions, completeness. |
+| 17 | Reconcile docs | 🤖 | AI updates docs if implementation diverged. Human confirms. |
 
-    What does NOT require a training plan: new endpoints on existing controllers, bug fixes, refactors that preserve the existing mental model, test-only or doc-only changes.
+**Assess phase** — protect the organization, not just the code
 
-8. **Code generation** — AI generates code from the updated LLD + test plan. Review and correct.
+| # | Step | Who | What happens |
+|---|------|:---:|-------------|
+| 18 | Impact brief | 👤🤖 | AI drafts from the diff. Human adds: PM mental model update, manual verification scenarios. |
+| 19 | Rollout plan | 👤 | Risk-rate the change (Low → direct deploy / Medium → feature flag / High → canary / Critical → manual gates). |
 
-9. **Code review Round 1** — AI reviews the generated code for structure, security, and LLD adherence. This happens *before* tests, so structural problems are caught before test effort is invested. Fix critical and high findings before proceeding.
+**Ship phase** — deploy safely
 
-10. **Test changes** — AI generates tests from the test plan. Review.
+| # | Step | Who | What happens |
+|---|------|:---:|-------------|
+| 20 | PR + integration verify | 👤 | Lead runs feature E2E, checks traceability, reviews impact brief. |
+| 21 | Canary deploy | 🤖 | AI monitors go/no-go criteria during canary window. |
+| 22 | Promote or rollback | 👤 | Lead promotes to production or reverts. |
 
-11. **Run full test suite** — All tests must pass.
+**Post-ship** — verify the investment paid off
 
-12. **Code review Round 2** — AI reviews again, this time for edge cases, regressions, and completeness. Round 1 catches shape problems; Round 2 catches behavior problems.
+| # | Step | Who | What happens |
+|---|------|:---:|-------------|
+| 23 | 30-day ROI check | 👤 | Developer + lead: is the metric moving in the right direction? |
+| 24 | 90-day ROI check | 👤 | Lead + PM: actual vs estimated ROI. Update ADR with outcome. |
 
-13. **Rerun tests** — After Round 2 fixes, confirm no regressions.
-
-14. **Reconcile docs** — If the implementation diverged from the design (it always does, at least slightly), update the docs. The docs stay the source of truth.
-
-15. **Create PR** — Link to the issue. Include docs + IaC + code + tests in the same PR.
-
-16. **Downstream impact assessment** — Before requesting review, produce a structured impact brief for every stakeholder group affected by this change. This is NOT the same as step 3 (which identifies affected *code*). This step identifies affected *people and processes*. The brief answers five questions:
-
-    - **What flows and components change?** — A concrete list of user-visible behaviors that differ after this change. Not code paths — user journeys. "Campaign creation now asks for a TikTok account ID" is useful; "`campaigns.py` line 47 changed" is not.
-    - **What can break?** — Risk assessment. Which existing features could regress? Which edge cases are untested? Which integrations are fragile? Severity x likelihood matrix, not just a list.
-    - **What needs to be tested beyond the automated suite?** — Manual verification scenarios that automated tests cannot cover. "Verify the Instagram post appears with the correct image within 60 seconds" is a deployment-time check, not a unit test.
-    - **How does the product team's mental model need to change?** — What assumptions does the PM currently hold that are no longer true? What new capabilities exist that the PM should know about for roadmap planning? Write for a non-engineer audience.
-    - **How does the deployment team derisk the rollout?** — Canary deployment strategy with explicit promotion criteria (see step 19).
-
-17. **Risk-rated rollout plan** — Based on the impact brief, produce a concrete rollout plan:
-
-    | Risk level | Rollout strategy |
-    |-----------|-----------------|
-    | **Low** (cosmetic, internal-only, no external side effects) | Direct merge, deploy to all environments |
-    | **Medium** (new feature, additive, no existing behavior changed) | Feature flag off by default, enable in staging, 24h soak, enable in production |
-    | **High** (changes existing behavior, touches external integrations, modifies data schema) | Canary deploy to 5-10% of traffic, monitor error rate + latency + business metrics for 4h, promote to 25%, monitor 4h, full rollout |
-    | **Critical** (irreversible side effects, billing/payment, data migration) | Canary to 1%, manual promotion gate with lead sign-off at each step, 24h soak at each tier, rollback plan tested before promotion |
-
-    Each promotion step has explicit **go/no-go criteria**:
-    - Error rate delta < 0.1% vs baseline
-    - p95 latency delta < 50ms vs baseline
-    - No increase in observability `failure_mode` scores
-    - No increase in HITL rejection rate (for agent changes)
-    - Business metric (campaign publish success rate, email delivery rate) within 2% of baseline
-
-    If any criterion fails, the rollout pauses and the team investigates before promoting. The rollback path is always "revert the canary, full traffic returns to the previous version."
-
-18. **Integration verification** — The team lead runs the feature end-to-end, verifies intent matches the design, checks traceability, and reviews the downstream impact brief for completeness. If a visual design exists, compare screen-by-screen. The lead also confirms the rollout plan matches the risk level.
-
-19. **Canary deploy** — Deploy to staging first, then canary to production per the risk-rated plan from step 17. The deployment team monitors the go/no-go criteria at each promotion step. AI assists by summarizing observability traces, error rates, and latency distributions for the canary cohort vs baseline.
-
-20. **Promote or rollback** — If all criteria pass at each tier, promote to full production. If any criterion fails, rollback to the previous version, open a follow-up issue with the failure details, and re-enter the workflow at step 3 (impact analysis) for the fix. Document the rollout plan, promotion decisions, and any rollback events on the GitHub issue as comments.
+**The count:** of 24 steps, **12 are fully AI-driven** (🤖), **8 are AI-assisted** (👤🤖), and **4 are human-only** (👤). The human workload is review and judgment — the production work is AI's job.
 
 ### The Two-Round Code Review
 
