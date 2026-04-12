@@ -297,14 +297,26 @@ Multiple humans and AI participate in one thread. AI drafts; humans decide. The 
 
 ## 5. The Workflow
 
-**Two entry points:**
+**Two phases — Unknown and Known:**
+
+Some changes have unknowns that must be resolved before the team can commit to a design. The workflow splits into an **exploration phase** (resolve the unknowns) and an **execution phase** (build the known).
+
+| Phase | When | What happens | Output |
+|-------|------|-------------|--------|
+| **Unknown (PoC / Spike)** | The team cannot write a precise LLD because a key question is unanswered — "will the API support this?", "can the model handle this latency?", "does this approach scale?" | Timeboxed PoC. AI generates the throwaway code. Developer validates the hypothesis. No production standards required — this is learning, not building. | Findings doc: what worked, what didn't, constraints discovered, revised assumptions. |
+| **Known (Execution)** | The design is understood well enough to write a precise LLD. | Full workflow below. The findings from the PoC feed directly into the LLD — they ARE the design input. | Production code, tests, docs, deployment. |
+
+The PoC phase is explicitly **not** held to the full workflow. Its purpose is to answer questions cheaply so the execution phase doesn't discover unknowns mid-build. But PoC findings MUST be documented — they become the basis for the LLD. A PoC without a findings doc is wasted learning.
+
+**Three entry points:**
 
 | Starting from | What happens first |
 |---------------|-------------------|
-| **A PRD (new system or major feature)** | AI helps decompose the PRD into HLD → LLDs → issues. Each issue becomes one pass through the workflow below. The PRD is the source of truth until the HLDs and LLDs replace it. |
-| **An issue (enhancement, bug fix, improvement)** | Enter the workflow directly at step 1. |
+| **A PRD (new system or major feature)** | AI helps decompose the PRD into HLD → LLDs → issues. Each issue enters the workflow. |
+| **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
+| **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
-For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 7) for when to abbreviate. For non-trivial changes, these steps prevent the failure modes described above — including organizational ones (team mental model is wrong, ops does not know how to deploy safely).
+For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 7) for when to abbreviate.
 
 ### 5.1 The Pipeline View
 
@@ -325,6 +337,12 @@ graph LR
             R1["Issue"]
             R2["Design spec"]
             R0 -.->|"decompose"| R1
+        end
+
+        subgraph PoC["Unknown (if needed)"]
+            P1["Timeboxed PoC"]
+            P2["Findings doc"]
+            P1 --> P2
         end
 
         subgraph Design["Design + QA/Ops input"]
@@ -356,7 +374,10 @@ graph LR
             S3["Promote / Rollback"]
         end
 
-        Requirements --> Design --> Build --> Verify --> Assess --> Ship
+        Requirements -.->|"unknowns?"| PoC
+        PoC -->|"findings feed design"| Design
+        Requirements -->|"known"| Design
+        Design --> Build --> Verify --> Assess --> Ship
     end
 
     TR -->|"coverage gaps?"| D1
@@ -368,6 +389,7 @@ graph LR
     style Pipeline fill:#fafafa,stroke:#616161
     style Registries fill:#f3e8ff,stroke:#9333ea
     style Requirements fill:#e3f2fd,stroke:#1565c0
+    style PoC fill:#fff3e0,stroke:#e65100
     style Design fill:#e3f2fd,stroke:#1565c0
     style Build fill:#e8f5e9,stroke:#2e7d32
     style Verify fill:#fff3e0,stroke:#e65100
