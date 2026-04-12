@@ -78,20 +78,39 @@ graph TD
 
 ## 1. The Problem This Solves
 
-Teams adopting AI code generation hit four failure modes:
+The goal is a **coherent, traceable implementation** where:
 
-| Failure mode | What happens | Root cause |
-|-------------|-------------|-----------|
-| **Convention drift** | Different developers use different prompts and context levels. Within weeks, the codebase has multiple error handling strategies, naming conventions, and architectural patterns. | No shared specification constraining AI output. |
-| **Untraceable decisions** | When someone asks "why does this work this way?", the answer is "the AI generated it." The actual tradeoff, alternatives, and constraints exist only in a lost chat transcript. | No link from code back to reasoning. |
-| **Hallucination from under-specification** | AI receives broad instructions ("implement campaign publishing") without precise system context. It generates plausible but wrong code — functions calling nonexistent APIs, duplicated model fields, contradictory integration patterns. | Insufficient context about the existing system. |
-| **Hallucination from over-specification** | AI receives the entire codebase as context. It makes connections between unrelated modules, modifies code outside its scope, and mixes patterns from different domains. | Too much context without scoping boundaries. |
+- The team **critically reviews requirements** before anyone writes or generates code
+- Design decisions are **thought through, discussed, and agreed** — not invented by individual AI sessions
+- Every piece of code **traces back to a reviewed design decision** — requirement → design → code → test → deployment
+- The team **communicates important decisions** to each other and to downstream stakeholders (PM, ops, QA)
+- **Everything is documented** — not as an afterthought, but as the specification that drives what gets built
+- AI generates code that **conforms to what the team agreed and documented** — it implements decisions, it does not make them
 
-These are the standard failure modes of unstructured AI-assisted development. Every team using these tools at scale encounters them.
+Without this discipline, AI code generation amplifies problems instead of solving them:
 
-### The Fix
+| What goes wrong | Why it happens | What it costs |
+|----------------|---------------|---------------|
+| **Incoherent codebase** — three error handling strategies, two naming conventions, inconsistent patterns | Each developer's AI session invents its own approach. No shared specification constrains the output. | Rework. Every new feature must untangle which pattern to follow. |
+| **Untraceable decisions** — "why does this work this way?" has no answer | Design decisions live in ephemeral AI chat transcripts, not in reviewed documents. | Debugging takes 10x longer. New team members can't understand the system. |
+| **AI invents instead of implementing** — plausible but wrong code that compiles and passes naive tests | AI was given a vague instruction ("implement publishing") instead of a precise spec. It filled the gaps with hallucinated assumptions. | Bugs surface in integration, not in unit tests. The fix requires re-examining the design. |
+| **Decisions don't reach stakeholders** — PM promises features that don't exist, ops deploys without knowing the failure modes | No formal step for communicating what changed, what can break, and how the team's mental model needs to update. | Organizational confusion. Support troubleshoots based on stale assumptions. |
 
-Write documentation first, generate code from it.
+These problems are not unique to AI-generated code — they exist in traditional development too. But AI makes them worse because it produces code faster than the team can review, and it does so confidently even when wrong.
+
+### How this process addresses each goal
+
+| Goal | How the process achieves it | Where in the workflow |
+|------|----------------------------|----------------------|
+| **Coherent implementation** | System manifest defines domain boundaries and conventions. CLAUDE.md inlines the rules into every AI session. Convention checker enforces in CI. | Manifest (pre-work), CLAUDE.md (every session), CI (every PR) |
+| **Critical review of requirements** | Design PR must merge before code starts. Team reviews HLD/LLD in PR comments. No code generation until design is locked. | Steps 3-5 (design phase), Design PR gate |
+| **Decisions thought through** | HLD captures architecture. LLD captures component design. ADRs capture trade-offs and alternatives. TDD tests reveal spec gaps before code exists. | Steps 3, 5 (docs), Steps 6-8 (TDD-as-design) |
+| **Traceability** | Issue → design PR → impl PR → traceability check. Lead verifies the chain is unbroken at integration verification. | Step 1 (issue), Step 20 (lead verification) |
+| **Team communication** | Downstream impact brief tells PM, QA, and ops what changed. PM mental model update section ensures product team stays current. | Steps 18-19 (assess phase) |
+| **Everything documented** | Docs written before code (steps 3-5). Reconciled after code if implementation diverged (step 16). Updated in every PR. | Steps 3-5 (before), Step 16 (after), every PR |
+| **AI conforms to agreements** | AI generates code from the LLD, not from a vague instruction. Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | Steps 6-8 (TDD), Steps 13-14 (review), CI |
+
+### Why documentation first
 
 ```mermaid
 graph LR
@@ -111,25 +130,11 @@ graph LR
     style AINative fill:#e8f5e9,stroke:#2e7d32
 ```
 
-The traditional argument against detailed LLDs was "they're outdated by the time the code is written." That argument assumed a human wrote both, sequentially, over weeks. When AI drafts the LLD in a 15-minute conversation with the developer, then generates code from that LLD in the next session, the "outdated" problem disappears. The doc is written minutes before the code, not months.
+The LLD is not a document for humans to read after the fact. It is the specification that AI executes. Precise interfaces, explicit edge cases, exact method signatures — vague prose produces vague code. When the LLD is precise enough, AI generates correct code on the first pass and the team reviews an implementation that matches what they agreed to.
 
-Reference output from the first two weeks of applying this approach:
+The traditional objection — "detailed design docs get outdated" — assumed a human wrote both docs and code, sequentially, over weeks. When AI drafts the LLD in a 15-minute conversation and generates code from it in the next session, the doc is written minutes before the code, not months. Staleness is no longer the failure mode.
 
-| Output | Volume | Time |
-|--------|--------|:----:|
-| Architecture + design docs | 35 (HLD + LLD) | ~6 days |
-| Data mapping + API contracts | 7 docs | 1 day |
-| Backlog | 32 stories, 125 tickets | 1 day |
-| Working code (foundation sprint) | 13 models, 5 controllers, 79 tests | 3 days |
-| **Total** | **58 docs + working code** | **~2 weeks** |
-
-Key proof point: **adding a new monitoring agent touched 12 documents and took 2 hours** — not two sprints. When the documentation is precise enough, code generation is fast and correct on the first pass.
-
-> The LLD is not a document for humans to read. It is a prompt for AI to execute. Treat it that way: precise interfaces, explicit edge cases, exact method signatures. Vague prose produces vague code.
-
-**Counterargument: "That sounds like waterfall."** It is, in the sense that design precedes implementation. The difference: the design takes 30 minutes, not 3 weeks, because AI helps write it too. And if the implementation diverges, update the doc — the doc stays the source of truth, not the code.
-
-**Known limitation:** This works best when the framework and language are stable. For genuinely exploratory work — where the API is being discovered through prototyping — there is no good doc-first pattern yet. Those cases still require freeform code with documentation written afterward.
+**Known limitation:** this works best when the domain and framework are well-understood. For genuinely exploratory work — where the API is being discovered through prototyping — writing a precise LLD first is premature. Those cases still require freeform code with documentation written afterward.
 
 ---
 
