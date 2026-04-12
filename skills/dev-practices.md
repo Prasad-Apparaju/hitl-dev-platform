@@ -170,44 +170,56 @@ graph TD
 5.  Test Case Planning      → identify tests to add, update, or remove (see §1b below)
 5a. 📚 Training Plan Stub  → if the change introduces a new technical capability, draft a training plan
                               in docs/03-engineering/training/<capability>.md and link from the issue (see §1c)
---- TDD cycle begins (see §1f below) ---
-6.  🔴 Generate Tests (RED) → AI generates test code from the LLD + test plan. Tests define the
-                              expected behavior BEFORE any implementation exists. These tests MUST
-                              fail because the implementation doesn't exist yet.
-7.  🔴 Verify RED           → run the new tests. They MUST fail. If any pass, either the test is
-                              wrong (testing something that already exists) or the LLD is describing
-                              existing behavior (not a new change). Investigate before proceeding.
-8.  🟢 Generate Code (GREEN)→ AI generates implementation code to make the failing tests pass.
-                              The goal is the SIMPLEST code that passes all tests — no extras.
-9.  🟢 Verify GREEN         → run the full test suite. ALL tests must pass (new + existing).
-                              If new tests pass but old tests break, the implementation has a
-                              regression. Fix before proceeding.
-10. 🔵 Refactor             → review the passing code for simplification. Remove duplication,
-                              improve naming, extract helpers — WITHOUT changing behavior.
-                              Rerun tests after each refactor to confirm nothing broke.
+--- TDD as a design tool (see §1f below) ---
+6.  🔴 AI Generates Tests   → AI generates as many tests as possible from the LLD + test plan +
+                              manifest facade contracts. No implementation code exists. Tests cover:
+                              happy paths, error paths, edge cases, preconditions, boundary entities,
+                              contract compliance. The goal is MAXIMUM test coverage of the SPEC.
+7.  👤 Human Reviews Tests  → developer reviews the AI-generated tests. This is the highest-value
+                              human step in the build phase. The developer:
+                              • Adds edge cases AI missed (domain knowledge, "what if X?")
+                              • Adds integration scenarios ("when this interacts with Y...")
+                              • Removes tests that are trivial or test the wrong thing
+                              • Challenges assumptions ("this test assumes Z, but actually...")
+                              The combined human + AI test suite IS the refined specification.
+8.  🔄 Tests Improve Design → AI analyzes the test suite for gaps in the LLD. If tests reveal
+                              behavior the LLD doesn't describe, UPDATE THE LLD FIRST. Examples:
+                              • A test for rate-limit handling but the LLD doesn't mention rate limits
+                              • A test for a retry path but the LLD doesn't specify retry behavior
+                              • A test for an edge case that implies a precondition not in the manifest
+                              The LLD and manifest are updated BEFORE any code is generated.
+9.  🔴 Verify RED           → run the full test suite. All new tests MUST fail (no implementation
+                              exists). If any pass, investigate — the test is wrong or the LLD
+                              describes existing behavior.
+10. 🟢 Generate Code (GREEN)→ AI generates implementation code to make ALL failing tests pass.
+                              The tests are the spec. The goal is the SIMPLEST code that passes.
+11. 🟢 Verify GREEN         → run the full test suite (new + existing). ALL must pass.
+                              If new pass but old fail → regression. Fix before proceeding.
+12. 🔵 Refactor             → simplify the passing code. Remove duplication, improve naming.
+                              Rerun tests after each change. If any test breaks → revert.
 --- TDD cycle ends ---
-11. Code Review Round 1     → AI reviews structure, security, LLD adherence
-12. Code Review Round 2     → AI reviews edge cases, regressions, completeness
-13. Rerun Tests             → confirm no regressions from review fixes
-14. Reconcile Docs + Training → if implementation diverged, update docs + IaC + training plan examples
-15. Create PR               → link to GitHub issue, include docs + IaC + training plan + code + tests in same PR
-16. 👤 Downstream Impact    → developer + AI produce impact brief: flows changed, risks, PM mental model
+13. Code Review Round 1     → AI reviews structure, security, LLD adherence
+14. Code Review Round 2     → AI reviews edge cases, regressions, completeness
+15. Rerun Tests             → confirm no regressions from review fixes
+16. Reconcile Docs + Training → if implementation diverged beyond the step-8 updates, reconcile again
+17. Create PR               → link to GitHub issue, include docs + IaC + training plan + code + tests in same PR
+18. 👤 Downstream Impact    → developer + AI produce impact brief: flows changed, risks, PM mental model
                               update, manual verification scenarios (see §1e below)
-17. 📋 Rollout Plan         → risk-rated canary strategy with go/no-go criteria (see §1e below)
-18. 👤 Integration Verification → team lead runs feature E2E, verifies intent matches HLD/LLD,
+19. 📋 Rollout Plan         → risk-rated canary strategy with go/no-go criteria (see §1e below)
+20. 👤 Integration Verification → team lead runs feature E2E, verifies intent matches HLD/LLD,
                               reviews impact brief + rollout plan for completeness
-19. 👤 Figma Comparison     → if Figma design exists, compare implementation, list & resolve differences
-20. 🚀 Canary Deploy        → deploy per the risk-rated plan; AI monitors go/no-go criteria
-21. ✅ Promote or Rollback   → lead promotes to full production or reverts canary
-22. Merge + Demo            → after lead sign-off; demo to PM
+21. 👤 Figma Comparison     → if Figma design exists, compare implementation, list & resolve differences
+22. 🚀 Canary Deploy        → deploy per the risk-rated plan; AI monitors go/no-go criteria
+23. ✅ Promote or Rollback   → lead promotes to full production or reverts canary
+24. Merge + Demo            → after lead sign-off; demo to PM
 --- post-ship ---
-23. 📊 30-day ROI Check     → developer + lead review: is the metric moving in the right direction?
-24. 📊 90-day ROI Check     → lead + PM review: actual vs estimated ROI; update ADR with Actual Outcome
+25. 📊 30-day ROI Check     → developer + lead review: is the metric moving in the right direction?
+26. 📊 90-day ROI Check     → lead + PM review: actual vs estimated ROI; update ADR with Actual Outcome
 ```
 
 **Never skip steps 1-5.** Documentation is the source of truth, not code.
 
-**Steps 6-10 are the TDD cycle** — Red (generate tests, verify they fail) → Green (generate code, verify all pass) → Refactor (simplify without changing behavior). This is mandatory, not optional. See §1f for the full explanation + contract test pattern.
+**Steps 6-12 are TDD-as-design** — AI generates maximum tests (step 6) → humans add domain-expertise tests (step 7) → tests reveal LLD gaps → LLD is improved (step 8) → verify RED (step 9) → generate code (step 10) → verify GREEN (step 11) → refactor (step 12). This is mandatory. See §1f for the full explanation + contract tests + the "tests improve the design" loop.
 
 **Step 2a is conditional** — it fires for any change costing more than ~1 day of effort. For smaller changes, state "ROI estimate not required — change is <1 day." See §1d for the template.
 
@@ -334,76 +346,108 @@ The 90-day reviews create a calibration loop: over 5-10 verified changes, the te
 
 **When step 2a is skipped:** for changes under ~1 day (config fix, doc update, small refactor), state "ROI estimate not required — change is <1 day" so the skip is explicit and auditable.
 
-### 1f. Red/Green TDD Cycle (Steps 6-10)
+### 1f. TDD as a Design Tool (Steps 6-12)
 
-Every implementation follows the Red → Green → Refactor cycle. This is not optional — it's how the process ensures the LLD is precise enough to generate from, and how it catches interface mismatches before they propagate.
+TDD in this process is not just about test-first coding. **Tests are a design refinement loop** where AI generates maximum test coverage from the spec, humans inject domain expertise by adding and correcting tests, and the combined test suite reveals gaps in the design — BEFORE any implementation code is written.
 
-**Why TDD matters MORE with AI-generated code:**
+**The insight:** writing "test that publishing fails gracefully when Instagram rate-limits at 100 posts/day" is more precise than writing that requirement in an LLD paragraph — and it's executable. Tests are a higher-fidelity spec language than prose.
 
-In traditional development, TDD forces the developer to think about the interface before implementation. With AI-generated code, the LLD already defines the interface — but AI can silently produce code that "works" while violating subtle contracts. Tests-first catches this: if the test can't be written from the LLD alone, the LLD isn't precise enough. If the test passes before any implementation exists, the test is wrong.
-
-**The cycle:**
+**The three-phase loop:**
 
 ```
-Step 6:  🔴 RED — AI generates tests from LLD + test plan
-         Tests define expected behavior. No implementation exists.
+Phase A — AI generates tests (step 6)
+    AI reads the LLD + test plan + manifest facade contracts.
+    Generates as many tests as possible: happy paths, error paths,
+    edge cases, preconditions, boundary entity validation, contract
+    compliance. The goal is MAXIMUM coverage of the SPEC, not the code
+    (which doesn't exist yet).
 
-Step 7:  🔴 VERIFY RED — run the new tests
-         They MUST fail. If any pass → investigate:
-         • Test is wrong (testing existing behavior, not new)
-         • LLD describes something that already exists
-         • The test is trivially satisfied (e.g., testing a constant)
+Phase B — Humans refine tests (step 7)
+    The developer reviews every test. This is the highest-value
+    human step in the build phase:
+    • Adds edge cases AI missed ("what if the API returns 429
+      mid-carousel but the first 2 images already published?")
+    • Adds integration scenarios from domain knowledge
+    • Removes trivial or wrong tests
+    • Challenges assumptions ("this test assumes retry will
+      succeed, but what if the budget is exhausted?")
 
-Step 8:  🟢 GREEN — AI generates implementation code
-         The SIMPLEST code that makes all failing tests pass.
-         No premature abstractions, no "while we're here" extras.
+Phase C — Tests improve the design (step 8)
+    AI analyzes the combined test suite for LLD gaps:
+    • A test for rate-limit handling but no rate-limit section in LLD
+      → ADD rate-limit behavior to the LLD
+    • A test for a retry path but no retry spec in the LLD
+      → ADD retry behavior to the LLD
+    • A test implying a precondition not in the manifest
+      → ADD the precondition to the manifest facade
 
-Step 9:  🟢 VERIFY GREEN — run the FULL test suite
-         New tests + existing tests must ALL pass.
-         • New pass + old pass → proceed to refactor
-         • New pass + old FAIL → regression. Fix before proceeding.
-         • New FAIL → implementation is incomplete. Continue step 8.
-
-Step 10: 🔵 REFACTOR — simplify the passing code
-         Remove duplication, improve naming, extract helpers.
-         Rerun tests AFTER EACH refactor change.
-         If any test breaks → revert the refactor, it changed behavior.
+    The LLD and manifest are UPDATED before any code is generated.
+    The tests drove the design improvement.
 ```
 
-**What the developer reviews at each step:**
+Then: verify RED (step 9), generate code (step 10), verify GREEN (step 11), refactor (step 12).
 
-| Step | Developer checks |
-|------|-----------------|
-| 🔴 RED | "Do these tests match the LLD spec? Are edge cases covered? Are preconditions from the manifest tested?" |
-| 🔴 VERIFY | "Did they all fail? If any passed, why?" |
-| 🟢 GREEN | "Is this the simplest code that passes? Did AI over-engineer?" |
-| 🟢 VERIFY | "Do all existing tests still pass? Any regressions?" |
-| 🔵 REFACTOR | "Is the code clean? Can it be simpler without changing behavior?" |
+**Why this order matters:**
+
+| Without TDD-as-design | With TDD-as-design |
+|-----------------------|---------------------|
+| LLD is written → code is generated → tests are written → gaps found → code is rewritten | LLD is written → tests are generated → humans add cases → gaps found → LLD is improved → code is generated right the first time |
+| The LLD-to-code gap is discovered AFTER the code exists | The LLD-to-code gap is discovered BEFORE the code exists |
+| Humans review prose (LLD) for completeness | Humans review executable tests for completeness — more concrete, less ambiguous |
+| Edge cases are added after the fact | Edge cases drive the design before implementation |
+
+**What the developer reviews at step 7:**
+
+The developer is NOT reviewing code. They are reviewing the SPECIFICATION expressed as tests. The questions to ask:
+
+- "Does this test cover the behavior I actually need?"
+- "What scenario would break this feature that no test covers?"
+- "What does the PM expect to happen when [edge case]?"
+- "What happened last time we deployed something similar?" (institutional knowledge → new test)
+- "What does the manifest say about preconditions for this facade API? Are they all tested?"
+
+Every test the developer adds is a piece of domain expertise that AI couldn't derive from the LLD. This is where the human-AI collaboration produces something neither could alone.
 
 **Contract tests from the manifest:**
 
-For changes that cross domain boundaries, the RED step should also generate **contract tests** from the manifest's facade APIs:
+For changes that touch domain boundaries, step 6 should also generate **contract tests** from the manifest's facade APIs:
 
 ```python
-# Generated from the manifest's publishing.facade_apis.instagram_publish
+# Generated from the manifest facade: publishing.instagram_publish
 def test_instagram_publish_returns_tool_result_with_external_id():
-    """Contract: PublishResult must contain external_id (from manifest)."""
-    result = await tool.execute(image_url="...", caption="...", idempotency_key="test:0:ig")
+    """Contract: PublishResult must contain external_id."""
+    result = await tool.execute(
+        image_url="...", caption="...", idempotency_key="test:0:ig"
+    )
     assert result.success
     assert "external_id" in result.data
 
 def test_instagram_publish_rejects_missing_idempotency_key():
-    """Contract: precondition from manifest — idempotency_key required."""
+    """Contract: precondition — idempotency_key required."""
     result = await tool.execute(image_url="...", caption="...")
     assert not result.success
     assert "idempotency_key" in result.error
+
+def test_instagram_publish_returns_cached_on_duplicate_key():
+    """Contract: idempotent — second call with same key returns cached."""
+    await tool.execute(image_url="...", caption="...", idempotency_key="test:0:ig")
+    result = await tool.execute(image_url="...", caption="...", idempotency_key="test:0:ig")
+    assert result.data["cached"] is True
 ```
 
-These contract tests verify the manifest's facade promises are kept. They should fail (RED) before implementation and pass (GREEN) after — same cycle, but the spec comes from the manifest instead of the LLD.
+These tests are generated FROM the manifest, not from the LLD. They verify that the domain's promises to other domains are kept.
 
-**When the cycle surfaces LLD gaps:**
+**When tests surface LLD gaps (step 8):**
 
-If AI can't generate a test because the LLD is ambiguous → STOP. Update the LLD to resolve the ambiguity before continuing. This is the TDD forcing function: vague specs produce untestable code. The RED step reveals vague specs before any implementation is written.
+This is the TDD forcing function. Examples:
+
+| Test the developer added | LLD gap revealed | LLD update |
+|--------------------------|------------------|------------|
+| `test_publish_fails_on_rate_limit` | LLD doesn't mention rate limits | Add "rate-limited requests return 429; caller retries via resilience.retry_external_call" |
+| `test_carousel_with_11_images_rejected` | LLD doesn't specify image count limit | Add "carousel accepts 2-10 images; >10 raises ValueError" |
+| `test_publish_in_plan_mode_returns_preview` | LLD doesn't mention plan mode | Add "in PLAN mode, returns dry-run preview via _describe_plan()" |
+
+Each gap → LLD update → the spec gets more precise → the generated code will be more correct. The tests DROVE the design improvement.
 
 ### 1e. Downstream Impact Assessment + Rollout Plan (Steps 16-17)
 
