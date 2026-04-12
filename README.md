@@ -16,7 +16,7 @@ In traditional development, the developer is the bottleneck — they write every
 
 This process organizes the team — PM, Architect, Developers, QA, Ops, and AI — around documentation as the shared source of truth. AI generates artifacts (docs, code, tests) from that documentation. Humans review, decide, and approve at defined gates. The result is a coherent system where every piece traces back to a reviewed decision.
 
-If you are used to pre-AI development, the biggest shift is this: **your job changes from "write code" to "review what AI wrote and make sure it matches what the team agreed."** The process described here is how that review-and-decide model works in practice.
+If you are used to pre-AI development, the biggest shift is this: **your job changes from producing artifacts to shaping them.** You tell AI what you need. AI drafts it. You review, challenge, refine — iterating with AI until the design, the code, or the test plan reflects exactly what should happen. Your domain expertise, judgment, and taste are what make the output correct. AI handles the volume; you handle the direction. The more precisely you can articulate what you want, the better the output. That skill — knowing what right looks like and steering AI toward it — is more valuable than typing code from scratch.
 
 ## The Core Idea
 
