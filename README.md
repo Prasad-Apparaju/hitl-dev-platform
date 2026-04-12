@@ -211,67 +211,22 @@ graph LR
     style Ship fill:#ffcdd2,stroke:#c62828
 ```
 
-### Step-by-Step Checklist
+### The Steps
 
-Most steps are AI-driven — the human role is review and judgment, not production.
+Most steps are AI-driven. Human work is review and judgment, not production.
 
-> 🤖 = AI does the work &nbsp;&nbsp; 👤 = Human does the work &nbsp;&nbsp; 👤🤖 = AI drafts, human reviews
+> 🤖 AI does it &nbsp; 👤🤖 AI drafts, human reviews &nbsp; 👤 Human only
 
-**Design phase** — lock the spec before any code exists
+| Phase | Steps | Who |
+|-------|-------|:---:|
+| **Design** | Issue 👤🤖 → Design spec 👤 → Impact analysis 🤖 → Update docs 👤🤖 → Update IaC 👤🤖 → Test plan 👤🤖 → Training plan 👤🤖 | Spec is locked before code. AI drafts everything; human reviews for 15 min per artifact. |
+| **Build (TDD)** | Generate tests 🤖 → Human + QA review tests 👤 → Tests improve LLD 🤖 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 → Refactor 👤🤖 | Tests first, code second. Human adds domain edge cases; AI writes the code to pass them. |
+| **Verify** | Code review R1 🤖 → Code review R2 🤖 → Reconcile docs 🤖 | Fully AI-driven. Two rounds: R1 catches structure, R2 catches behavior. |
+| **Assess** | Impact brief 👤🤖 → Rollout plan 👤 | Who is affected? How to deploy safely? Human judgment, AI-assisted drafting. |
+| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → Promote/rollback 👤 | Lead verifies traceability. AI monitors canary. Lead promotes. |
+| **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 | Did the change deliver expected value? Update ADR with actual outcome. |
 
-| # | Step | Who | What happens |
-|---|------|:---:|-------------|
-| 1 | Issue | 👤🤖 | Describe the change. AI helps draft. |
-| 2 | Design spec | 👤 | If visual design exists, extract requirements into issue. |
-| 3 | Impact analysis | 🤖 | AI identifies affected components, APIs, configs. Human corrects. Queries test + incident registries. |
-| 4 | Update docs | 👤🤖 | AI drafts HLD/LLD/ADR updates. Human reviews — 15 min here saves hours later. |
-| 5 | Update IaC | 👤🤖 | AI drafts manifests/migrations. Human reviews. |
-| 6 | Test case planning | 👤🤖 | AI drafts test plan. Human adds edge cases. |
-| 7 | Training plan | 👤🤖 | If new capability → AI drafts stub. Human reviews. If not → skip explicitly. |
-
-**Build phase (TDD)** — tests before code, tests drive the design
-
-| # | Step | Who | What happens |
-|---|------|:---:|-------------|
-| 8 | Generate tests (RED) | 🤖 | AI generates maximum tests from LLD + manifest contracts. No code exists yet. |
-| 9 | Review tests | 👤 | Human + QA add edge cases, incident regressions, domain knowledge. Register in test registry. |
-| 10 | Tests improve design | 🤖 | AI finds LLD gaps revealed by tests → updates LLD before code. |
-| 11 | Verify RED | 🤖 | Run tests. All must fail (no implementation yet). |
-| 12 | Generate code (GREEN) | 🤖 | AI generates simplest code that passes all tests. |
-| 13 | Verify GREEN | 🤖 | Run full suite. All must pass. |
-| 14 | Refactor | 👤🤖 | AI proposes simplifications. Human reviews. Rerun tests after each change. |
-
-**Verify phase** — catch what TDD missed
-
-| # | Step | Who | What happens |
-|---|------|:---:|-------------|
-| 15 | Code review R1 | 🤖 | AI reviews structure, security, LLD adherence. |
-| 16 | Code review R2 | 🤖 | AI reviews edge cases, regressions, completeness. |
-| 17 | Reconcile docs | 🤖 | AI updates docs if implementation diverged. Human confirms. |
-
-**Assess phase** — protect the organization, not just the code
-
-| # | Step | Who | What happens |
-|---|------|:---:|-------------|
-| 18 | Impact brief | 👤🤖 | AI drafts from the diff. Human adds: PM mental model update, manual verification scenarios. |
-| 19 | Rollout plan | 👤 | Risk-rate the change (Low → direct deploy / Medium → feature flag / High → canary / Critical → manual gates). |
-
-**Ship phase** — deploy safely
-
-| # | Step | Who | What happens |
-|---|------|:---:|-------------|
-| 20 | PR + integration verify | 👤 | Lead runs feature E2E, checks traceability, reviews impact brief. |
-| 21 | Canary deploy | 🤖 | AI monitors go/no-go criteria during canary window. |
-| 22 | Promote or rollback | 👤 | Lead promotes to production or reverts. |
-
-**Post-ship** — verify the investment paid off
-
-| # | Step | Who | What happens |
-|---|------|:---:|-------------|
-| 23 | 30-day ROI check | 👤 | Developer + lead: is the metric moving in the right direction? |
-| 24 | 90-day ROI check | 👤 | Lead + PM: actual vs estimated ROI. Update ADR with outcome. |
-
-**The count:** of 24 steps, **12 are fully AI-driven** (🤖), **8 are AI-assisted** (👤🤖), and **4 are human-only** (👤). The human workload is review and judgment — the production work is AI's job.
+Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
 
 ### The Two-Round Code Review
 
