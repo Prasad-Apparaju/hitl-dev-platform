@@ -295,7 +295,7 @@ Multiple humans and AI participate in one thread. AI drafts; humans decide. The 
 
 ---
 
-## 5. The 26-Step Workflow
+## 5. The Workflow
 
 The workflow has 20 steps to merge + 2 post-ship verification checkpoints + 4 downstream assessment sub-steps. For truly small changes (a one-line config fix), this is too heavy — see "Common Pitfalls" (Section 8) for guidance on when to abbreviate. For non-trivial changes, these steps are the minimum that prevents the failure modes described above — including organizational failure modes (team mental model is wrong, ops does not know how to deploy safely) that most AI-dev processes ignore.
 
