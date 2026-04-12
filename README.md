@@ -650,64 +650,17 @@ An architect working with AI can produce the full documentation baseline in one 
 
 Everything in the right column is mechanical. Everything in the left column requires someone who has lived with the system. That is why this takes a week with an architect and would not work with a junior developer — the judgment is the bottleneck, not the typing.
 
-### Day-by-Day Sprint Plan
+### The Sprint
 
-**Day 1 — System manifest from code**
+| What | AI does | Architect does |
+|------|---------|---------------|
+| **System manifest** | Scans directory tree + imports → domain boundaries, file lists, dependency graph, convention detection, placeholder facades | Reviews boundaries, fills in mutation descriptions + preconditions + risk notes |
+| **HLDs** (5-8 docs) | Reads deployment configs, schemas, service layer → generates architecture docs | Reviews each for 30-60 min. Corrects facts. Adds the "why" that code can't tell you. |
+| **LLDs** (one per domain) | Reads source files → extracts class hierarchies, method signatures, state machines | Reviews hot domains first, marks cold domains "DRAFT — not reviewed" |
+| **ADRs** | Infers decisions from code patterns. Marks as "INFERRED — NEEDS VERIFICATION" | Verifies inferred ADRs. Adds tribal knowledge decisions not visible in code. |
+| **Process setup** | Generates CLAUDE.md, convention-checks.yaml, copies skills + CI actions | Reviews conventions, applies the process to one real change as proof-of-concept |
 
-1. AI scans the directory tree and import graph, produces a draft domain boundary map
-2. Architect corrects: "billing and payments are one domain, not two" / "this utils folder is actually three unrelated domains"
-3. AI generates the full manifest: file lists per domain, dependency graph, cross-cutting convention detection (from decorators, base classes, shared patterns)
-4. Architect fills in the judgment-dependent fields: mutation descriptions ("IRREVERSIBLE"), preconditions, risk notes, and the "DO NOT MODIFY WITHOUT" warnings for fragile areas
-
-End of Day 1: a working system manifest — ~80% accurate, 100% coverage.
-
-**Days 2-3 — HLDs from infrastructure + architecture**
-
-AI reads deployment configs, database schemas, network policies, and the service layer to produce system-level architecture docs. Five to eight HLDs covering:
-
-- System architecture (components + deployment topology)
-- Data architecture (entity relationships, tenant isolation, data flow)
-- Service/agent architecture (how components interact)
-- Security posture (auth, secrets, network boundaries)
-- Observability (logging, tracing, metrics)
-
-Review each HLD for 30-60 minutes, correcting factual errors and adding the "why" that code cannot tell you: "we chose Redis for sessions because of the connection pool exhaustion incident in Q3."
-
-**Days 3-4 — LLDs from source code**
-
-AI generates one LLD per domain from the manifest's file list:
-
-- Extract class hierarchy, public methods, state machines, error handling patterns
-- Produce class diagrams, method signature tables, sequence diagrams for key flows
-- Cross-reference facade APIs from adjacent domains
-
-Review in priority order: hot domains first (the ones the team changes weekly), cold domains last. Mark cold domains "DRAFT — not reviewed" rather than holding up the sprint.
-
-**Days 4-5 — ADRs from tribal knowledge + forensics**
-
-Two sources of ADRs:
-
-*Architect-driven* — Tell AI about each significant decision: "We use JWT with 15-minute expiry because of the session fixation audit in 2024." AI formats it as an ADR with context, decision, alternatives, consequences. These are high-confidence because they are verified by the person who made or witnessed the decision.
-
-*AI-forensic* — For decisions nobody remembers, AI produces an inferred ADR: "Based on the code, this system uses eventual consistency for campaign metrics via a background poller rather than real-time aggregation. The likely rationale was latency reduction under load. NEEDS VERIFICATION." These are lower-confidence but still useful — they surface implicit decisions that would otherwise remain invisible.
-
-**Day 5 afternoon — Process setup + first real change**
-
-Commit everything, set up the manifest generator as a CI action, and apply the full 20-step process to one real change as a proof-of-concept.
-
-### The Quality Curve
-
-The docs will not be perfect on day 5. They do not need to be.
-
-| Timeframe | Accuracy | What drives improvement |
-|-----------|----------|------------------------|
-| Day 1 (manifest) | ~80% | Architect review |
-| Day 5 (full baseline) | ~70% overall | Mix of architect-verified (90%) and AI-drafted (60%) |
-| Week 2 | ~75% | First weekly re-run corrects drift + first real changes improve hot-path docs |
-| Month 1 | ~85% | 10-15 changes have each corrected their area's docs |
-| Month 3 | ~95% | Hot paths are battle-tested; cold paths filled in deliberately |
-
-The key insight: **70% accurate docs on day 5 are infinitely more useful than 100% accurate docs on month 6.** The process corrects the remaining 30% through natural use — every change that follows the workflow is a correction pass on the affected area's docs.
+The baseline will be ~70% accurate. That is sufficient — the process corrects the remaining 30% through normal use, because every change that follows the workflow also corrects the docs for the affected area.
 
 ### The Weekly Delta Re-run
 
