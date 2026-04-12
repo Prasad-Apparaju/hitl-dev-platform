@@ -400,36 +400,9 @@ Finding structural problems after tests pass means the tests are now wrong too. 
 
 If a visual design (Figma or similar) exists, it appears twice in the workflow: at the start it feeds requirements into the issue, and at the end it verifies the implementation matches the original intent. The design is both the input and the acceptance criteria. This prevents the common drift where the implemented feature gradually diverges from the original design during implementation.
 
-### 5.5 ROI Estimation Template
+### 5.5 ROI Estimation
 
-Before a technical change enters the build phase, add a measurable thesis to the GitHub issue with three items:
-
-1. **The expected outcome** — specific and falsifiable. "Best-of-N sampling should improve `self_eval/overall` by 15-25% within 30 days" is good. "Best-of-N will improve quality" is not — it cannot be proven wrong, so it cannot be verified.
-
-2. **The baseline metric** — the current value of whatever you are trying to improve. Measured before the change ships, not estimated. "Current `self_eval/overall` mean = 0.72 (last 30 days from the observability dashboard)."
-
-3. **The measurement plan** — how and when to check. "Compare 30-day rolling mean, same agent, same task type, before vs. after rollout. 30-day checkpoint on May 10, 90-day checkpoint on July 10."
-
-Include expected cost (build + ongoing + maintenance) and **what happens if ROI is not realized** ("disable the feature and reallocate compute budget to prompt optimization").
-
-| Value dimension | Example changes | How to measure |
-|----------------|----------------|----------------|
-| **Quality** | Best-of-N sampling, context compression | Eval score lift, HITL rejection rate |
-| **Reliability** | Retry policy, idempotency, DLQ | Error rate, incident count, MTTR |
-| **Developer velocity** | System manifest, training plans | Time-to-first-PR, rework rate, PR cycle time |
-| **Cost efficiency** | Model routing optimization, prompt caching | Cost per generation, tokens per output |
-| **Risk reduction** | Brand isolation, canary deployment | Blast radius, cross-tenant events, rollback frequency |
-
-Most changes target one primary dimension. Name it explicitly — it determines which metrics to track.
-
-**Post-ship verification** happens at two checkpoints:
-
-- **30 days**: Is the metric moving in the right direction? On track / inconclusive / off track.
-- **90 days**: Did it achieve the expected magnitude? The lead + PM review actual vs. estimated ROI. Document the outcome — whether positive, partial, or negative — in the ADR as an "Actual Outcome" section, right alongside the original estimate.
-
-The 90-day reviews create a calibration loop: the team learns whether it systematically overestimates value, underestimates cost, or misses the timeline. Over 5-10 verified changes, the estimates get measurably better — because each one is compared to reality, not just filed and forgotten.
-
-> **The uncomfortable truth about ROI verification:** sometimes the answer is "this didn't work." A feature that cost two weeks to build and shows no improvement at 90 days should be reverted or rearchitected, not defended. The ROI checkpoint makes that decision explicit rather than letting underperforming features accumulate silently.
+For changes costing more than a day of effort, add three items to the GitHub issue before build starts: (1) a specific, falsifiable expected outcome with timeframe, (2) the current baseline metric (measured, not estimated), and (3) what happens if ROI is not realized. Verify at 30 days (direction check) and 90 days (magnitude check). Document the actual outcome in the ADR so future estimates calibrate against reality.
 
 ### 5.6 Downstream Impact Assessment
 
