@@ -105,7 +105,7 @@ Without this discipline, AI code generation amplifies problems instead of solvin
 
 These problems are not unique to AI-generated code — they exist in traditional development too. But AI makes them worse because it produces code faster than the team can review, and it does so confidently even when wrong.
 
-### How this process addresses each goal
+### 1.1 How this process addresses each goal
 
 | Goal | How the process achieves it | Where in the workflow |
 |------|----------------------------|----------------------|
@@ -119,7 +119,7 @@ These problems are not unique to AI-generated code — they exist in traditional
 | **Everything documented** | Docs written before code (steps 3-5). Reconciled after code if implementation diverged (step 16). Updated in every PR. | Steps 3-5 (before), Step 16 (after), every PR |
 | **AI conforms to agreements** | AI generates code from the LLD, not from a vague instruction. Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | Steps 6-8 (TDD), Steps 13-14 (review), CI |
 
-### Why documentation first
+### 1.2 Why documentation first
 
 ```mermaid
 graph LR
@@ -169,11 +169,11 @@ Every role shifts from "produce artifacts" to "review and decide." You are a rev
 | Docs after the feature ships | Docs first. AI drafts them in minutes. You spend time thinking, not typing. |
 | One developer owns a feature end-to-end | The *doc* owns the feature. Any developer (or AI session) can pick it up. |
 
-### The Dev Lead's Integration Verification
+### 2.1 The Dev Lead's Integration Verification
 
 The lead's final verification step exists because AI code review, even in two rounds, catches *mechanical* issues but misses *intent* issues. Run the feature end-to-end and ask: "Does this actually do what the design said it would?" Check traceability: requirement, design, IaC, code, tests — is the chain unbroken? This catches the cases where each individual piece is correct but the whole does not match the intent.
 
-### Vertical Ownership
+### 2.2 Vertical Ownership
 
 Every developer owns a full vertical slice — not "the frontend part" or "the backend part." If you are building the monitoring feature, you own the doc, the backend endpoint, the frontend component, the tests, and the bugs. When one person owns the full slice, there is no "it works on my side" across teams. AI helps you move fast across layers you are less familiar with; teammates help with review.
 
@@ -181,7 +181,7 @@ Every developer owns a full vertical slice — not "the frontend part" or "the b
 
 ## 3. Scaling AI Context: The System Manifest
 
-### Problem
+### 3.1 Problem
 
 The process works well when the system is small. A single AI session can hold the full context — all the docs, all the code, all the patterns — and produce correct output. But systems grow. At 50+ source modules, 33 LLDs, 14 HLDs, 55 architectural decisions, and 300+ tests, no single context window can hold all of it productively. Even if it could, most of the content is noise for any given task.
 
@@ -189,11 +189,11 @@ The two failure modes from Section 1 reappear at scale:
 - **Agent reads too much** — hallucinated connections between unrelated modules, changes outside its scope.
 - **Agent reads too little** — violated conventions it did not know about, produced interfaces that did not match what other parts of the system expected.
 
-### Solution: Hierarchical Knowledge Architecture
+### 3.2 Solution: Hierarchical Knowledge Architecture
 
 Conway's Law (1967): "The structure of a system mirrors the communication structure of the organization that builds it." Applied to AI: **design the knowledge boundaries explicitly, and the quality of agent output mirrors those boundaries.** Scoped agents with clean facades produce modular, convention-honoring output. Unshaped agents with unlimited context produce monolithic, inconsistent output.
 
-### How It Works: The System Manifest
+### 3.3 How It Works: The System Manifest
 
 A **System Manifest** is a single YAML file checked into the repo that describes the system at three levels of detail:
 
@@ -209,7 +209,7 @@ The manifest contains levels 1 and 2. Level 3 (internals) is loaded on demand fr
 
 **Why three levels, not two?** Two levels (manifest + source) would force the architect to either include all source code (back to "reads too much") or include no cross-domain information (specialists cannot honor interfaces). The facade level is the resolution: **enough to call correctly and reason about side effects, not enough to understand the internal implementation.** Same principle as a Java or Go interface — the contract, not the body.
 
-### The Architect/Specialist Pattern
+### 3.4 The Architect/Specialist Pattern
 
 ```mermaid
 graph TB
@@ -263,7 +263,7 @@ graph TB
 
 Specialists are stateless. They re-read their domain files each activation. This is simpler and more reproducible than maintaining warm state, and the cost is acceptable — reading a few source files is cheap compared to re-reading the whole codebase.
 
-### Facade-Level Interop
+### 3.5 Facade-Level Interop
 
 The facade is how disjoint agents know about each other. When the publishing specialist needs to interact with the agent framework, it does not read the framework's source code. It reads a blurb like:
 
@@ -275,11 +275,11 @@ That is enough to produce a correct integration. The specialist does not need to
 
 ## 4. Collaborative Development: The Design Room
 
-### What It Is
+### 4.1 What It Is
 
 An **AI Design Room** is a per-feature thread where the team collaborates with AI as a participant, not just a tool. This is different from autonomous coding tools (which operate without human oversight) and different from simple AI assistants (which respond to individual prompts without maintaining conversation context across the team).
 
-### Three Boundaries
+### 4.2 Three Boundaries
 
 | Boundary | Rule |
 |----------|------|
@@ -287,7 +287,7 @@ An **AI Design Room** is a per-feature thread where the team collaborates with A
 | **Source of truth** | GitHub — every decision materializes as a commit, PR, or issue update |
 | **Decision gates** | PRs — the thread generates artifacts, but nothing ships without PR review and merge |
 
-### How It Works
+### 4.3 How It Works
 
 Multiple humans and AI participate in one thread. AI drafts; humans decide. The workflow steps, the manifest, and the role definitions provide the structure. The design room provides the collaboration layer.
 
@@ -299,7 +299,7 @@ Multiple humans and AI participate in one thread. AI drafts; humans decide. The 
 
 The workflow has 20 steps to merge + 2 post-ship verification checkpoints + 4 downstream assessment sub-steps. For truly small changes (a one-line config fix), this is too heavy — see "Common Pitfalls" (Section 8) for guidance on when to abbreviate. For non-trivial changes, these steps are the minimum that prevents the failure modes described above — including organizational failure modes (team mental model is wrong, ops does not know how to deploy safely) that most AI-dev processes ignore.
 
-### The Pipeline View
+### 5.1 The Pipeline View
 
 Each shippable unit — a vertical slice of backend + frontend + tests + docs — goes through this pipeline:
 
@@ -366,7 +366,7 @@ graph LR
     style Ship fill:#ffcdd2,stroke:#c62828
 ```
 
-### The Steps
+### 5.2 The Steps
 
 Most steps are AI-driven. Human work is review and judgment, not production.
 
@@ -385,7 +385,7 @@ The 🔁 steps loop until the human is satisfied — AI revises, human re-review
 
 Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
 
-### The Two-Round Code Review
+### 5.3 The Two-Round Code Review
 
 | | Round 1 (pre-test) | Round 2 (post-test) |
 |---|---|---|
@@ -396,11 +396,11 @@ Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only**
 
 Finding structural problems after tests pass means the tests are now wrong too. Round 1 catches those early.
 
-### The Design Spec Bookend
+### 5.4 The Design Spec Bookend
 
 If a visual design exists for the feature, it appears twice in the workflow: once at the beginning (feeding requirements) and once at the end (verification). The design is both the input and the acceptance criteria. This prevents the common drift where the implemented feature gradually diverges from the original intent during implementation.
 
-### ROI Estimation Template
+### 5.5 ROI Estimation Template
 
 Before a technical change enters the build phase, add a measurable thesis to the GitHub issue with three items:
 
@@ -431,7 +431,7 @@ The 90-day reviews create a calibration loop: the team learns whether it systema
 
 > **The uncomfortable truth about ROI verification:** sometimes the answer is "this didn't work." A feature that cost two weeks to build and shows no improvement at 90 days should be reverted or rearchitected, not defended. The ROI checkpoint makes that decision explicit rather than letting underperforming features accumulate silently.
 
-### Downstream Impact Assessment
+### 5.6 Downstream Impact Assessment
 
 This step solves a problem that most AI-assisted development processes ignore entirely: **the people downstream of the code change need to understand what happened and why.**
 
@@ -493,7 +493,7 @@ graph TD
 
 **When it is reviewed**: by the team lead during integration verification (step 18). The lead checks: "Is this brief complete? Would the PM understand what changed from reading this? Would ops know how to deploy it safely?"
 
-### Canary Deployment Strategy
+### 5.7 Canary Deployment Strategy
 
 The rollout plan at step 17 is risk-rated — not every change gets the full canary treatment:
 
@@ -510,7 +510,7 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 
 > **Canary deployment is not new.** What is new is making it a formal step in the dev workflow with AI-generated monitoring summaries. AI reads the observability dashboards during the canary window and produces a go/no-go recommendation — the human still makes the call, but the analysis is pre-digested.
 
-### Worked Example: "Add a New Publishing Channel"
+### 5.8 Worked Example: "Add a New Publishing Channel"
 
 | Step | Who | What happens |
 |------|-----|-------------|
@@ -568,7 +568,7 @@ The broader point: **the platform gets better with every interaction** without t
 | **Using the full process for trivial changes** | A one-line config change goes through 20 steps. The overhead exceeds the value. | There is no clean answer. In practice, skip steps for trivial changes — but "trivial" is a judgment call, and sometimes what looks trivial has architectural implications that surface later. A formal "light path" (issue, code, review) for changes below some complexity threshold is worth defining, but setting that threshold reliably is hard. |
 | **Using the full process for cross-cutting changes** | A cross-cutting change (new convention, framework upgrade, security patch) is treated as a single pipeline. But it has n-domain impact, and the pipeline's single Design PR does not adequately capture the review burden. | The hierarchical knowledge architecture helps (the architect decomposes across domains), but the human review bottleneck at the integration verification step does not scale. If the lead has to verify integration across 8 domains in one PR, something will get missed. Break cross-cutting changes into domain-scoped PRs. |
 
-### Open Questions
+### 7.1 Open Questions
 
 - **Exploratory work**: How to handle genuinely exploratory work where the design emerges from the code. The design-first approach has clear value, but some tasks require building before knowing what to build.
 - **Developer identity**: How to onboard developers who are uncomfortable with the "review, don't write" model. Some engineers derive identity from writing code. Telling them "your job is review" can feel like a demotion even when it is not.
@@ -596,7 +596,7 @@ Use this checklist when considering or implementing this process:
 
 An architect working with AI can produce the full documentation baseline in one week. The bottleneck is the architect's review capacity (~6-8 hours/day of focused review), not the AI's generation capacity.
 
-### What the Architect Brings vs. What AI Handles
+### 9.1 What the Architect Brings vs. What AI Handles
 
 | Architect contributes | AI handles |
 |----------------------|-----------|
@@ -607,7 +607,7 @@ An architect working with AI can produce the full documentation baseline in one 
 
 Everything in the right column is mechanical. Everything in the left column requires someone who has lived with the system. That is why this takes a week with an architect and would not work with a junior developer — the judgment is the bottleneck, not the typing.
 
-### The Sprint
+### 9.2 The Sprint
 
 | What | AI does | Architect does |
 |------|---------|---------------|
@@ -619,7 +619,7 @@ Everything in the right column is mechanical. Everything in the left column requ
 
 The baseline will be ~70% accurate. That is sufficient — the process corrects the remaining 30% through normal use, because every change that follows the workflow also corrects the docs for the affected area.
 
-### The Weekly Delta Re-run
+### 9.3 The Weekly Delta Re-run
 
 After the baseline sprint, the manifest generator runs weekly (or on every merge to main) and produces a delta report:
 
@@ -644,7 +644,7 @@ CONVENTION DRIFT:
 
 Review the delta (~15 minutes/week), accept or reject suggestions, and the manifest stays current. The re-run catches what the process misses — files added without updating the manifest, conventions that drifted silently, interfaces that changed without updating the facade description.
 
-### Handling the "Nobody Knows Why" Areas
+### 9.4 Handling the "Nobody Knows Why" Areas
 
 Every brownfield codebase has areas where the original author left and the code works but nobody understands it. Do not try to document these with false confidence. Instead:
 
@@ -664,7 +664,7 @@ legacy_billing:
 
 Documenting "we don't understand this" is MORE valuable than a wrong LLD. It prevents an AI agent from confidently generating code in an area where confidence is unwarranted. The manifest entry functions as a warning sign, not a guide.
 
-### The Expedited Path for Production Incidents
+### 9.5 The Expedited Path for Production Incidents
 
 The 20-step process is for planned work. Production incidents cannot wait:
 
@@ -676,7 +676,7 @@ The 20-step process is for planned work. Production incidents cannot wait:
 
 The retroactive documentation from P0/P1 fixes is surprisingly valuable. It captures failure modes, edge cases, and "never do this" knowledge that proactive documentation misses because nobody anticipated the failure.
 
-### Common Objections
+### 9.6 Common Objections
 
 | "We don't have time to write docs" | You are not writing them — AI is. You are reviewing. 15-30 minutes per change. The architect's one-week sprint produces more docs than most teams write in a year. |
 |---|---|
@@ -685,7 +685,7 @@ The retroactive documentation from P0/P1 fixes is surprisingly valuable. It capt
 | "Nobody will read the docs" | The AI reads them. That is the primary consumer. The docs are input to code generation and review, not shelf decoration. |
 | "We tried documentation sprints and they didn't stick" | A documentation sprint separate from feature work is dead on arrival — it produces docs that are stale by the time features resume. This is different: the sprint produces a BASELINE, and the process keeps it current through daily work. The docs never drift because they are updated in every PR. |
 
-### The Real Adoption Timeline
+### 9.7 The Real Adoption Timeline
 
 | When | What happens |
 |------|-------------|
