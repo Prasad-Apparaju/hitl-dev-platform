@@ -577,6 +577,38 @@ Use the `/generate-docs reverse-engineer` skill to automate the sprint. See [doc
 
 ---
 
+## Skills and Tools
+
+Skills are Claude Code commands that automate parts of the workflow. Tools run in CI or from the command line. Templates provide the starting structure for project artifacts.
+
+### Available now
+
+| Type | Name | What it does | Workflow steps |
+|------|------|-------------|---------------|
+| Skill | `/dev-practices` | The full workflow guide — phases, steps, TDD cycle, ROI, downstream impact | All |
+| Skill | `/apply-change` | Impact analysis — identifies affected components, APIs, docs, tests | Design phase |
+| Skill | `/generate-docs` | Generates HLD/LLD/ADRs from a feature description (new) or from existing code (reverse-engineer) | Design phase, Brownfield sprint |
+| Tool | `check-conventions/runner.py` | Pluggable convention checker — reads YAML config, runs AST-based checks, fails CI on violations | CI on every PR |
+| Tool | `fix-mermaid/fix_br_tags.py` | Removes `<br/>` from Mermaid blocks for Obsidian compatibility | One-time fix + CI |
+| Tool | `render-pdf/md-to-pdf.js` | Markdown to PDF with Mermaid diagram rendering | Documentation |
+| Template | `CLAUDE.md.template` | Project CLAUDE.md with placeholder sections for conventions and coding standards | Project setup |
+| Template | `system-manifest.schema.yaml` | Full schema definition for the system manifest | Manifest creation |
+| Template | `issue-template.md` | GitHub issue template with ROI estimation + downstream impact sections | Every issue |
+| Template | `test-registry-template.yaml` | Test case registry format (domain, risk, origin, incident link) | TDD review, impact analysis |
+| Template | `incident-registry-template.yaml` | Incident registry format (root cause, fix, regression test, canary criteria) | Post-incident, rollout planning |
+| Template | `adr-template.md`, `training-plan-template.md` | Standard formats for ADRs and training plans | Design phase |
+
+### Planned
+
+| Type | Name | What it would do | Value |
+|------|------|-----------------|-------|
+| Skill | `/tdd` | Orchestrate the full TDD-as-design loop: generate tests → pause for human review → identify LLD gaps → update LLD → verify RED → generate code → verify GREEN → refactor | Highest — automates the hardest part of the workflow |
+| Skill | `/impact-brief` | Read the PR diff + manifest + incident registry → draft the 5-section downstream impact brief | High — AI can draft most of it; human adds judgment |
+| Skill | `/check-conventions` | Wrap the convention checker as an in-chat skill so developers catch violations during development, not after PR | Medium — CI catches it anyway, but earlier is better |
+| Tool | `generate-manifest.py` | Auto-generate the system manifest from the codebase via AST scanning | High — currently manual |
+
+---
+
 ## Further Reading
 
 - **Conway's Law (1967)** — Melvin Conway, "How Do Committees Invent?" — the architectural principle behind the knowledge hierarchy
