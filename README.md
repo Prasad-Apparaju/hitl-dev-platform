@@ -396,9 +396,9 @@ Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only**
 
 Finding structural problems after tests pass means the tests are now wrong too. Round 1 catches those early.
 
-### 5.4 The Design Spec Bookend
+### 5.4 Design Spec: Input at the Start, Verification at the End
 
-If a visual design exists for the feature, it appears twice in the workflow: once at the beginning (feeding requirements) and once at the end (verification). The design is both the input and the acceptance criteria. This prevents the common drift where the implemented feature gradually diverges from the original intent during implementation.
+If a visual design (Figma or similar) exists, it appears twice in the workflow: at the start it feeds requirements into the issue, and at the end it verifies the implementation matches the original intent. The design is both the input and the acceptance criteria. This prevents the common drift where the implemented feature gradually diverges from the original design during implementation.
 
 ### 5.5 ROI Estimation Template
 
