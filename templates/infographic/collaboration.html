@@ -334,6 +334,14 @@
           <div class="person-icon icon-dev">D2</div>
           <div><div class="person-name">Developer 2</div><div class="person-role">Vertical slice owner</div></div>
         </div>
+        <div class="person" style="border: 1.5px solid #16a34a;">
+          <div class="person-icon" style="background:#16a34a;">QA</div>
+          <div><div class="person-name">QA</div><div class="person-role">Tests + incident regressions (non-blocking)</div></div>
+        </div>
+        <div class="person" style="border: 1.5px solid #0284c7;">
+          <div class="person-icon" style="background:#0284c7;">OP</div>
+          <div><div class="person-name">Ops</div><div class="person-role">Canary criteria + monitoring (non-blocking)</div></div>
+        </div>
       </div>
 
       <div class="panel panel-private">
@@ -367,6 +375,8 @@
             <div class="slack-avatar"><div class="slack-avatar-circle icon-arch">AR</div><div class="slack-avatar-name">Architect</div></div>
             <div class="slack-avatar"><div class="slack-avatar-circle icon-dev">D1</div><div class="slack-avatar-name">Dev 1</div></div>
             <div class="slack-avatar"><div class="slack-avatar-circle icon-dev">D2</div><div class="slack-avatar-name">Dev 2</div></div>
+            <div class="slack-avatar"><div class="slack-avatar-circle" style="background:#16a34a;">QA</div><div class="slack-avatar-name">QA</div></div>
+            <div class="slack-avatar"><div class="slack-avatar-circle" style="background:#0284c7;">OP</div><div class="slack-avatar-name">Ops</div></div>
             <div style="border-left: 1px dashed #d97706; height: 24px; margin: 0 1mm;"></div>
             <div class="slack-avatar"><div class="slack-avatar-circle" style="background:#7e22ce;">AI</div><div class="slack-avatar-name">@claude-bot</div></div>
           </div>
@@ -393,7 +403,7 @@
           <div class="gh-item"><span class="gh-item-icon">💻</span><span class="gh-item-title">Source Code + Tests</span><div class="gh-item-desc">Generated from docs. Convention-checked. 301 tests.</div></div>
           <div class="gh-item"><span class="gh-item-icon">🏗️</span><span class="gh-item-title">IaC</span><div class="gh-item-desc">Terraform, Kustomize, ESO secrets, CronJobs</div></div>
           <div class="gh-item"><span class="gh-item-icon">🔀</span><span class="gh-item-title">Pull Requests = Decision Gates</span><div class="gh-item-desc">Design PR merges before code. Every decision is a merged PR.</div></div>
-          <div class="gh-item"><span class="gh-item-icon">🎫</span><span class="gh-item-title">Issues + ROI Tracking</span><div class="gh-item-desc">ROI estimate at creation. 30/90-day verification checkpoints.</div></div>
+          <div class="gh-item" style="border: 1.5px solid #9333ea;"><span class="gh-item-icon">🧪</span><span class="gh-item-title">Test Registry + Incident Registry</span><div class="gh-item-desc">Institutional memory. Grows with every change + incident. Feeds impact analysis + canary criteria.</div></div>
         </div>
       </div>
 
