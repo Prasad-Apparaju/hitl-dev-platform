@@ -409,17 +409,22 @@
 
     </div>
 
-    <!-- ═══ RIGHT COLUMN: GCP ═══ -->
+    <!-- ═══ RIGHT COLUMN: Dev + Prod ═══ -->
     <div class="col-right">
-      <div class="panel panel-gcp">
-        <div class="panel-label">Production — GCP</div>
+      <div class="panel" style="background:#fff3e0; border:1.5px solid #e65100; border-radius:10px; padding:3.5mm 4mm; margin-bottom:3mm;">
+        <div class="panel-label" style="color:#e65100;">🛠️ Dev environment — Dev owns</div>
         <div class="gcp-content">
-          <div class="gcp-logo">☁️</div>
-          <div class="gcp-item"><span class="gcp-item-icon">🖥️</span><span class="gcp-item-title">Management Server</span><div class="gcp-item-desc">Traefik, Grafana, Prometheus, Loki, Tempo, OTEL, OpenCost, Lifecycle Controller</div></div>
-          <div class="gcp-item"><span class="gcp-item-icon">⚙️</span><span class="gcp-item-title">GKE Cluster</span><div class="gcp-item-desc">App + GPU node pools. Scale-to-zero. Deployed via IaC.</div></div>
-          <div class="gcp-item"><span class="gcp-item-icon">📦</span><span class="gcp-item-title">GCS Storage</span><div class="gcp-item-desc">Assets, state snapshots, model artifacts</div></div>
-          <div class="gcp-item"><span class="gcp-item-icon">📊</span><span class="gcp-item-title">Observability</span><div class="gcp-item-desc">Langfuse traces + Grafana dashboards. ROI metrics measured here.</div></div>
-          <div class="gcp-item" style="border: 1.5px dashed #d8b4fe;"><span class="gcp-item-icon">🚀</span><span class="gcp-item-title">Canary Deployment</span><div class="gcp-item-desc">Risk-rated rollout via mgmt server. AI monitors go/no-go criteria.</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">⚙️</span><span class="gcp-item-title">Dev Cluster</span><div class="gcp-item-desc">Dev deploys via IaC from GitHub. Full stack for testing.</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">🗄️</span><span class="gcp-item-title">Dev Database</span><div class="gcp-item-desc">Dev data. QA tests against this before handoff.</div></div>
+        </div>
+      </div>
+      <div class="panel panel-gcp" style="flex:1;">
+        <div class="panel-label">☁️ Production — Ops owns</div>
+        <div class="gcp-content">
+          <div class="gcp-item"><span class="gcp-item-icon">🖥️</span><span class="gcp-item-title">Management Server</span><div class="gcp-item-desc">Traefik, Grafana, Prometheus, Loki, Tempo, OTEL</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">⚙️</span><span class="gcp-item-title">Prod Cluster</span><div class="gcp-item-desc">Ops deploys + refactors IaC. Canary + promote.</div></div>
+          <div class="gcp-item"><span class="gcp-item-icon">📦</span><span class="gcp-item-title">Storage</span><div class="gcp-item-desc">Assets, state snapshots, model artifacts</div></div>
+          <div class="gcp-item" style="border: 1.5px dashed #d8b4fe;"><span class="gcp-item-icon">🚀</span><span class="gcp-item-title">Canary Deployment</span><div class="gcp-item-desc">Risk-rated rollout. AI monitors go/no-go criteria.</div></div>
         </div>
       </div>
     </div>
