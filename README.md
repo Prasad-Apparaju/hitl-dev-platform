@@ -215,16 +215,18 @@ graph LR
 
 Most steps are AI-driven. Human work is review and judgment, not production.
 
-> 🤖 AI does it &nbsp; 👤🤖 AI drafts, human reviews &nbsp; 👤 Human only
+> 🤖 AI does it &nbsp; 👤🤖 AI drafts, human reviews &nbsp; 👤 Human only &nbsp; 🔁 Iterative until correct
 
-| Phase | Steps | Who |
-|-------|-------|:---:|
-| **Design** | Issue 👤🤖 → Design spec 👤 → Impact analysis 🤖 → Update docs 👤🤖 → Update IaC 👤🤖 → Test plan 👤🤖 → Training plan 👤🤖 | Spec is locked before code. AI drafts everything; human reviews for 15 min per artifact. |
-| **Build (TDD)** | Generate tests 🤖 → Human + QA review tests 👤 → Tests improve LLD 🤖 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 → Refactor 👤🤖 | Tests first, code second. Human adds domain edge cases; AI writes the code to pass them. |
-| **Verify** | Code review R1 🤖 → Code review R2 🤖 → Reconcile docs 🤖 | Fully AI-driven. Two rounds: R1 catches structure, R2 catches behavior. |
-| **Assess** | Impact brief 👤🤖 → Rollout plan 👤 | Who is affected? How to deploy safely? Human judgment, AI-assisted drafting. |
-| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → Promote/rollback 👤 | Lead verifies traceability. AI monitors canary. Lead promotes. |
-| **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 | Did the change deliver expected value? Update ADR with actual outcome. |
+| Phase | Steps |
+|-------|-------|
+| **Design** | Issue 👤🤖 → Design spec 👤 → Impact analysis 🤖 → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
+| **Build (TDD)** | Generate tests 🤖 → Human + QA review 👤 🔁 → Tests improve LLD 🤖 🔁 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 |
+| **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Reconcile docs 🤖 |
+| **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
+| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → Promote/rollback 👤 |
+| **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
+
+The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
 Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
 
