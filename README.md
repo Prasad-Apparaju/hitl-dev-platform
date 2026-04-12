@@ -113,7 +113,7 @@ Without this discipline, AI code generation amplifies problems instead of solvin
 | **AI invents instead of implementing** — plausible but wrong code that compiles and passes naive tests | AI was given a vague instruction ("implement publishing") instead of a precise spec. It filled the gaps with hallucinated assumptions. | Bugs surface in integration, not in unit tests. The fix requires re-examining the design. |
 | **Decisions don't reach stakeholders** — PM promises features that don't exist, ops deploys without knowing the failure modes | No formal step for communicating what changed, what can break, and how the team's mental model needs to update. | Organizational confusion. Support troubleshoots based on stale assumptions. |
 
-These problems are not unique to AI-generated code — they exist in traditional development too. But AI makes them worse because it produces code faster than the team can review, and it does so confidently even when wrong.
+These problems exist in traditional development too, but AI amplifies them because of the sheer volume of code it produces.
 
 ### 1.1 How this process addresses each goal
 
@@ -127,7 +127,7 @@ These problems are not unique to AI-generated code — they exist in traditional
 | **Institutional memory** | Test registry catalogs every test by domain, risk, and origin. Incident registry connects past failures to regression tests and canary criteria. Both are queryable during impact analysis so the team doesn't repeat past mistakes. | Step 2 (impact analysis), Step 7 (TDD review), Step 19 (rollout plan), post-incident |
 | **QA + Ops without bottlenecks** | QA and Ops contribute to specs (design time) and monitoring (canary time), not to gates (merge time). Their past inputs live in the registries — available even when the individuals are not. | Design PR review, TDD review (step 7), rollout plan (step 19), canary monitoring |
 | **Everything documented** | Docs written before code (steps 3-5). Reconciled after code if implementation diverged (step 16). Updated in every PR. | Steps 3-5 (before), Step 16 (after), every PR |
-| **AI conforms to agreements** | AI generates code from the LLD, not from a vague instruction. Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | Steps 6-8 (TDD), Steps 13-14 (review), CI |
+| **AI conforms to agreements** | Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | Steps 6-8 (TDD), Steps 13-14 (review), CI |
 
 ### 1.2 Why documentation first
 
@@ -149,11 +149,9 @@ graph LR
     style AINative fill:#e8f5e9,stroke:#2e7d32
 ```
 
-The LLD is not a document for humans to read after the fact. It is the specification that AI executes. Precise interfaces, explicit edge cases, exact method signatures — vague prose produces vague code. When the LLD is precise enough, AI generates correct code on the first pass and the team reviews an implementation that matches what they agreed to.
+Treat the LLD as a spec, not a narrative: precise interfaces, explicit edge cases, exact method signatures. Vague prose produces vague code.
 
-The traditional objection — "detailed design docs get outdated" — assumed a human wrote both docs and code, sequentially, over weeks. When AI drafts the LLD in a 15-minute conversation and generates code from it in the next session, the doc is written minutes before the code, not months. Staleness is no longer the failure mode.
-
-**Known limitation:** this works best when the domain and framework are well-understood. For genuinely exploratory work — where the API is being discovered through prototyping — writing a precise LLD first is premature. Those cases still require freeform code with documentation written afterward.
+**Known limitation:** this works best when the domain and framework are well-understood. For exploratory work, see the Unknown (PoC) phase in Section 5.
 
 ---
 
@@ -619,7 +617,7 @@ An architect working with AI can produce the full documentation baseline in one 
 | Risk calibration — which mutations are irreversible, which areas are fragile | Sequence diagrams, data flow analysis, convention detection |
 | Tribal knowledge — "don't change X without Y," "the vendor API lies about its rate limits" | Formatting, cross-referencing, producing consistent doc structure |
 
-Everything in the right column is mechanical. Everything in the left column requires someone who has lived with the system. That is why this takes a week with an architect and would not work with a junior developer — the judgment is the bottleneck, not the typing.
+Everything in the right column is mechanical. Everything in the left column requires someone who has lived with the system.
 
 ### 9.2 The Sprint
 
