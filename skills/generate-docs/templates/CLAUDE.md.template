@@ -1,0 +1,84 @@
+# Claude Code Instructions
+
+These rules apply to EVERY Claude Code session that opens this repo. They ensure all team members' Claude instances follow the same standards, conventions, and workflow.
+
+## Preflight Check (MANDATORY)
+
+Before making ANY code or doc change, output these 7 lines in the chat BEFORE the first state-modifying tool call:
+
+1. **Issue**: Is there a GitHub issue? If no → `gh issue create` now.
+2. **Workflow**: Have I run `/workflows:apply-change`? If no → run it now.
+3. **Docs**: Does HLD/LLD/ADR cover this change? If no → update BEFORE code.
+4. **ROI estimate**: Change costs >1 day? If yes → add ROI Estimate section to the issue.
+5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
+6. **Downstream impact**: Affects other teams' mental models or deployment? If yes → impact brief required.
+7. **Plan**: State the order (docs → IaC → training plan → code → tests → impact brief → reconcile docs).
+
+Only after all 7 lines are in the chat may you start editing. No exceptions.
+
+## Development Practices
+
+Before any code change (feature, bug fix, refactor, improvement), load `/skills:dev-practices` and follow its 22-step workflow. For structured impact analysis and test planning, use `/workflows:apply-change`.
+
+## System Manifest — Read Before Every Change
+
+Before modifying any code, read `docs/system-manifest.yaml`:
+- The `cross_cutting` section lists conventions that apply to all code
+- The domain entry for the area you're modifying lists its specific conventions + facade APIs
+- Follow every convention listed. If unsure whether a convention applies, it applies.
+
+## Cross-Cutting Conventions
+
+<!-- ═══ PROJECT-SPECIFIC ═══
+     Replace the examples below with your project's actual conventions.
+     Each convention should be specific and enforceable.
+     Extract the key rules from your ADRs and put them here so every
+     Claude instance sees them without needing to read the full ADR.
+-->
+
+{{#conventions}}
+### {{number}}. {{name}}
+{{description}}
+{{/conventions}}
+
+<!-- Example conventions (replace with your own):
+
+### 1. Input Validation
+All API endpoints must validate input with Pydantic schemas. Raw request bodies must never reach business logic unvalidated.
+
+### 2. Parameterized Queries
+All database queries must use parameterized queries. No string interpolation in SQL. Enforced by code review + SQL linter.
+
+### 3. Error Response Format
+Error responses must follow RFC 7807 problem detail format. Every error includes: type, title, status, detail. Enforced by output middleware.
+-->
+
+## Coding Standards
+
+<!-- ═══ PROJECT-SPECIFIC ═══
+     Replace with your project's language-specific standards.
+-->
+
+{{coding_standards}}
+
+<!-- Example standards (replace with your own):
+
+### Python
+- Formatter: black (line length 100)
+- Linter: ruff
+- Type hints: required on all public function signatures
+- Async: use async def for all endpoints and services
+- Tests: pytest + pytest-asyncio
+
+### Documentation
+- All diagrams use Mermaid (no ASCII art)
+- No <br/> tags inside Mermaid code blocks (Obsidian incompatible)
+-->
+
+## Domain Boundaries
+
+When modifying code, stay within your domain boundary. The domains and their files are defined in `docs/system-manifest.yaml` under `domains:`. Key rule: **do NOT modify files outside your domain's file list without explicit approval.**
+
+## Quality Over Speed
+
+The goal of this process is meticulous system evolution with minimized problems — NOT maximum deployment velocity. Frame every decision around problem prevention, not throughput.

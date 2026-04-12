@@ -10,6 +10,18 @@ One architect (or senior dev who knows the system), working with Claude full-tim
 
 Whatever exists — code, old wiki pages, Confluence docs, Swagger specs, README files, Slack threads, Jira tickets, architecture diagrams. Even stale docs are useful — they show intent even if they've drifted.
 
+## The Skill
+
+The `/generate-docs` skill (at `skills/generate-docs/`) automates most of this sprint. Run it in **reverse-engineer mode**:
+
+```
+/generate-docs reverse-engineer the existing system
+```
+
+It scans the codebase, generates the manifest, HLDs, LLDs, and forensic ADRs, and sets up the process — with approval gates at each phase. The architect reviews and corrects at each gate.
+
+The day-by-day plan below describes what happens at each phase. The skill handles the AI side; the architect handles the judgment.
+
 ## Output
 
 A complete documentation baseline ready for the HITL process: system manifest, HLDs, LLDs, ADRs, and the process itself.
