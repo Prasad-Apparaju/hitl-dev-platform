@@ -150,52 +150,64 @@ Each shippable unit — a vertical slice of backend + frontend + tests + docs �
 
 ```mermaid
 graph LR
+    subgraph Registries["Institutional Knowledge"]
+        TR["Test Registry"]
+        IR["Incident Registry"]
+    end
+
     subgraph Pipeline["Shippable Slice"]
         direction LR
 
         subgraph Requirements["Requirements"]
             R1["Issue"]
-            R2["Design spec (if exists)"]
+            R2["Design spec"]
         end
 
-        subgraph Design["Design"]
+        subgraph Design["Design + QA/Ops input"]
             D1["Impact Analysis"]
             D2["HLD/LLD + Test Plan"]
             D3["IaC"]
         end
 
-        subgraph Build["Build"]
-            B1["Code"]
-            B2["Review Round 1"]
-            B3["Tests"]
+        subgraph Build["Build (TDD)"]
+            B1["Tests first (RED)"]
+            B2["Human + QA review"]
+            B3["Code (GREEN)"]
+            B4["Refactor"]
         end
 
         subgraph Verify["Verify"]
-            V1["Review Round 2"]
-            V2["Rerun Tests"]
-            V3["Reconcile Docs"]
+            V1["Review Round 1 + 2"]
+            V2["Reconcile Docs"]
         end
 
         subgraph Assess["Assess"]
             A1["Downstream Impact"]
-            A2["Risk + Rollout Plan"]
+            A2["Rollout Plan"]
         end
 
         subgraph Ship["Ship"]
-            S1["PR"]
-            S2["Integration Verify"]
-            S3["Canary Deploy"]
-            S4["Promote / Rollback"]
+            S1["PR + Integration Verify"]
+            S2["Canary Deploy"]
+            S3["Promote / Rollback"]
         end
 
         Requirements --> Design --> Build --> Verify --> Assess --> Ship
     end
 
+    TR -->|"coverage gaps?"| D1
+    IR -->|"past incidents?"| D1
+    IR -->|"canary criteria"| A2
+    B2 -->|"new tests"| TR
+    S3 -->|"new incidents"| IR
+
     style Pipeline fill:#fafafa,stroke:#616161
+    style Registries fill:#f3e8ff,stroke:#9333ea
     style Requirements fill:#e3f2fd,stroke:#1565c0
     style Design fill:#e3f2fd,stroke:#1565c0
     style Build fill:#e8f5e9,stroke:#2e7d32
     style Verify fill:#fff3e0,stroke:#e65100
+    style Assess fill:#fce7f3,stroke:#db2777
     style Ship fill:#ffcdd2,stroke:#c62828
 ```
 
@@ -330,23 +342,46 @@ The impact brief has five sections, each aimed at a different stakeholder:
 graph TD
     subgraph Brief["Downstream Impact Brief"]
         direction TB
-        Flows["1. Flows + Components Changed (user-visible behaviors)"]
-        Risk["2. Risk Assessment (what can break, severity x likelihood)"]
-        Test["3. Manual Verification Scenarios (what automated tests can't cover)"]
-        Mental["4. Product Mental Model Update (what assumptions changed)"]
-        Deploy["5. Rollout Strategy (canary tiers + go/no-go criteria)"]
+        Flows["1. Flows + Components Changed"]
+        Risk["2. Risk Assessment"]
+        Test["3. Manual Verification Scenarios"]
+        Mental["4. Product Mental Model Update"]
+        Deploy["5. Rollout Strategy + Canary Criteria"]
     end
 
-    Flows --> PM["PM reads 1 + 4"]
-    Risk --> Lead["Lead reads 2 + 5"]
-    Test --> QA["QA reads 3"]
-    Deploy --> Ops["Ops reads 5"]
+    subgraph Readers["Who reads"]
+        PM["PM: sections 1 + 4"]
+        Lead["Lead: sections 2 + 5"]
+    end
+
+    subgraph Contributors["Who contributes (non-blocking)"]
+        QA["QA: adds test scenarios from incident registry"]
+        Ops["Ops: adjusts canary criteria from incident registry"]
+    end
+
+    subgraph Registries["Institutional Knowledge"]
+        IR["Incident Registry"]
+        TR["Test Registry"]
+    end
+
+    Flows --> PM
     Mental --> PM
+    Risk --> Lead
+    Deploy --> Lead
+    Test --> QA
+    Deploy --> Ops
+    IR -->|"past failures shape"| Deploy
+    IR -->|"regression scenarios"| QA
+    TR -->|"coverage check"| Test
 
     classDef brief fill:#fef3c7,stroke:#d97706
-    classDef role fill:#dbeafe,stroke:#2563eb
+    classDef reader fill:#dbeafe,stroke:#2563eb
+    classDef contributor fill:#dcfce7,stroke:#16a34a
+    classDef registry fill:#f3e8ff,stroke:#9333ea
     class Flows,Risk,Test,Mental,Deploy brief
-    class PM,Lead,QA,Ops role
+    class PM,Lead reader
+    class QA,Ops contributor
+    class IR,TR registry
 ```
 
 **Section 4 — the mental model update — is the one most often skipped and most often regretted.** Example: if you change the campaign approval flow so that "approved" no longer triggers publishing (instead it queues for scheduled delivery), the PM's mental model of "approve = publish" is now wrong. Every roadmap discussion, every customer promise, every support playbook that assumed "approve = publish" is silently incorrect. Writing "approve now queues for scheduled delivery instead of publishing immediately" in the impact brief takes 30 seconds and prevents weeks of downstream confusion.
