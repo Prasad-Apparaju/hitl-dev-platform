@@ -151,14 +151,16 @@ The traditional objection — "detailed design docs get outdated" — assumed a 
 
 Every role shifts from "produce artifacts" to "review and decide." You are a reviewer and decision-maker, not a typist. If you are typing more than a few sentences of correction, let AI draft; you steer.
 
-| Role | HITL AI-Driven Job | Gates design + build? | Gates deployment? |
-|------|---|:---:|:---:|
-| **PM** | Reviews AI-drafted PRDs, decides what to build, creates/reviews mockups | Yes — owns requirements | No |
-| **Architect** | Reviews AI-generated architecture, verifies traceability, integration-tests features, gates PR merges | Yes — gates design + merge | Yes — promotes canary |
-| **Developer** | Reviews AI-generated code/tests/docs, corrects domain logic, owns vertical slices | Yes — owns implementation | No |
-| **QA** | Adds test scenarios from incident registry during TDD review. Exploratory testing during canary. Verifies quality coverage before promotion. | No — contributes to spec | Yes — can block promotion if quality criteria not met |
-| **Ops** | Reviews IaC in Design PR. Adjusts canary criteria from incident registry. Monitors infrastructure during canary. Verifies stability before promotion. | No — contributes to spec | Yes — can block promotion if system not stable |
-| **Claude** | Drafts docs, generates code, reviews PRs, monitors canary metrics. Participates in Slack when tagged. | No — proposes, never approves | No — reports metrics, never promotes |
+| Role | In Dev | After handoff to QA/Prod |
+|------|--------|------------------------|
+| **PM** | Defines requirements. Reviews AI-drafted PRDs. | Reviews demo. Accepts or requests changes. |
+| **Architect** | Designs, reviews, gates PRs. Verifies traceability. | Available if QA/Ops need design clarification. |
+| **Developer** | Owns everything in dev: code, tests, IaC, docs, QA-level testing, infra setup. Builds until the change is stable enough to hand off. | Pulled in by QA/Ops as needed for fixes. Retroactively applies Ops IaC refinements back to dev. |
+| **QA** | Contributes test scenarios from incident registry to the dev test plan (non-blocking input). | Takes the handoff. Runs independent quality verification. Can block promotion if criteria not met. |
+| **Ops** | Contributes canary criteria from incident registry (non-blocking input). | Takes the handoff. Refactors baseline IaC Dev provides. Monitors + promotes to production. Can block if system not stable. |
+| **Claude** | Drafts docs, generates code + tests, reviews PRs, monitors metrics. Proposes, never decides. | Reports canary metrics. Available to QA/Ops for analysis. |
+
+**The model:** Dev is empowered to do everything in dev — including QA-level testing and Ops-level IaC. Once the build is stable, Dev hands off with evidence (test registry results, impact brief, rollout plan). QA and Ops take it from there independently and pull Dev in as needed. Ops may refactor the IaC Dev provided; Dev retroactively applies those refinements back to the dev environment.
 
 | Old habit | New expectation |
 |-----------|----------------|
@@ -376,7 +378,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 | **Build (TDD)** | Generate tests 🤖 → Human + QA review 👤 🔁 → Tests improve LLD 🤖 🔁 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 |
 | **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Reconcile docs 🤖 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
-| **Ship** | PR + integration verify 👤 → Canary deploy 🤖 → QA + Ops verify 👤 → Promote/rollback 👤 |
+| **Ship** | PR + integration verify 👤 → Handoff to QA + Ops 👤 → QA verifies quality 👤 → Ops deploys + monitors 👤🤖 → Promote/rollback 👤 |
 | **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
@@ -520,9 +522,10 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 | 6 | Dev + AI | Downstream impact brief. QA adds manual verification scenarios. PM mental model update written. |
 | 7 | Dev + Ops | Rollout plan. Ops adjusts canary criteria from incident registry. |
 | 8 | Architect | Reviews traceability + impact brief + rollout plan. |
-| 9 | Ops + AI | Canary deploy. AI monitors go/no-go criteria. Ops watches infrastructure metrics. QA runs exploratory tests against canary. |
-| 10 | Architect + QA + Ops | Promotion gate. QA confirms quality criteria met. Ops confirms system stable. Architect promotes to 100% or rolls back. |
-| 11 | Team + PM | Demo. PM gives feedback. Next iteration if needed. |
+| 9 | Dev → QA + Ops | **Handoff.** Dev delivers stable build with evidence: test registry results, impact brief, rollout plan, baseline IaC. QA and Ops take it from here. |
+| 10 | QA | Independent quality verification. Exploratory testing. Blocks promotion if criteria not met. Pulls Dev in for fixes if needed. |
+| 11 | Ops + AI | Deploys to canary. Refactors IaC if needed (Dev applies refinements back to dev). AI monitors go/no-go criteria. Promotes or rolls back. |
+| 12 | Team + PM | Demo. PM gives feedback. Next iteration if needed. |
 
 **Total time: days, not sprints.** The downstream impact brief adds ~30 minutes to the process. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
 
