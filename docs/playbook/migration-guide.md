@@ -145,6 +145,36 @@ Once all slices are migrated and stable:
 | "How long does the full migration take?" | Depends on system size. Each vertical slice takes days to weeks. A typical backend migration is 6-12 slices. |
 | "What tools do we use?" | Claude Code for each developer. GitHub for everything. The skills and convention checker from this repo. |
 
+## Using a reference implementation
+
+If someone has already done this migration (or a similar one), their repo is the most valuable asset the team has. It shows what "done" looks like at every step — not in theory, but with real code and real docs.
+
+Give the team READ access to the reference repo and point them to these specific files:
+
+| What to look at | What it shows | File to study |
+|----------------|---------------|---------------|
+| **System manifest** | The format, the level of detail per domain, what a facade API looks like, how conventions are listed | `docs/system-manifest.yaml` |
+| **An HLD** | How architecture is documented — diagrams, component tables, integration points, security considerations | Any file in `docs/02-design/technical/hld/` |
+| **An LLD** | The level of precision needed for AI to generate correct code — method signatures, class diagrams, sequence diagrams, error handling | Any file in `docs/02-design/technical/lld/` |
+| **An ADR** | How a design decision is documented — context, decision, alternatives, consequences, ROI estimate | Any file in `docs/02-design/technical/adrs/` |
+| **CLAUDE.md** | How conventions are inlined so every Claude session follows the same rules | `CLAUDE.md` at the repo root |
+| **Convention checker results** | What compliance looks like — which checks pass, which fail, how violations are reported | Run `python scripts/check_conventions.py --verbose` |
+| **The test registry** | How tests are cataloged by domain, risk, origin, and incident link | `docs/test-registry.yaml` |
+| **The migration docs** | How the current-to-target mapping was structured (if the reference repo IS a migration) | `docs/05-migration/` |
+
+The team should NOT copy the reference docs into their repo — the content is specific to that system. They should use them as FORMAT EXAMPLES: "my LLD should look like this, at this level of detail, with this kind of diagram." Then they run `/generate-docs reverse-engineer` on their own codebase and produce their own version.
+
+**What transfers directly vs what doesn't:**
+
+| Transfers (copy it) | Doesn't transfer (use as reference only) |
+|---------------------|------------------------------------------|
+| CLAUDE.md template | The specific conventions (yours are different) |
+| Skills (dev-practices, apply-change, tdd, etc.) | The specific HLDs/LLDs/ADRs (yours describe a different system) |
+| Convention checker + CI actions | The specific convention checks (yours enforce different patterns) |
+| Issue template with ROI section | The system manifest content (yours has different domains) |
+| Test registry + incident registry FORMAT | The specific test cases and incidents |
+| The agentic-platform code (if building agents) | The domain-specific agent implementations |
+
 ## Reference
 
 - [Process overview](process-overview.md) — the full workflow
