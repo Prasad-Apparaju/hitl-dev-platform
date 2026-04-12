@@ -159,7 +159,12 @@ graph TD
 ```
 1.  GitHub Issue            → describe the change, root cause, proposed solution
 1a. 🎨 Review Figma Design → if Figma exists, extract requirements, interactions, visual specs into issue
-2.  Impact Analysis         → identify affected components, APIs, configs, dependencies
+2.  Impact Analysis         → identify affected components, APIs, configs, dependencies.
+                              ALSO query the test registry and incident registry for the affected domain:
+                              • Test registry: "which tests cover this area? are there coverage gaps?"
+                              • Incident registry: "what has gone wrong here before? are the regression
+                                tests and canary criteria from past incidents still in place?"
+                              (see §1g below)
 2a. 📊 ROI Estimate        → if the change costs >1 day of effort, add an ROI Estimate section to the
                               issue: value dimension, expected outcome (specific + falsifiable), baseline
                               metric (measured, not guessed), cost (build + ongoing + maintenance),
@@ -175,13 +180,19 @@ graph TD
                               manifest facade contracts. No implementation code exists. Tests cover:
                               happy paths, error paths, edge cases, preconditions, boundary entities,
                               contract compliance. The goal is MAXIMUM test coverage of the SPEC.
-7.  👤 Human Reviews Tests  → developer reviews the AI-generated tests. This is the highest-value
+7.  👤 Human Reviews Tests  → developer + QA review the AI-generated tests. This is the highest-value
                               human step in the build phase. The developer:
                               • Adds edge cases AI missed (domain knowledge, "what if X?")
                               • Adds integration scenarios ("when this interacts with Y...")
                               • Removes tests that are trivial or test the wrong thing
                               • Challenges assumptions ("this test assumes Z, but actually...")
-                              The combined human + AI test suite IS the refined specification.
+                              QA (if available, non-blocking):
+                              • Adds regression scenarios from the incident registry for this domain
+                              • Adds acceptance criteria from the user's perspective
+                              • Cross-references the test registry: "is the test for INC-X here?"
+                              Every new test case gets registered in the test registry with metadata
+                              (domain, risk level, origin, incident ref). See §1g.
+                              The combined human + AI + QA test suite IS the refined specification.
 8.  🔄 Tests Improve Design → AI analyzes the test suite for gaps in the LLD. If tests reveal
                               behavior the LLD doesn't describe, UPDATE THE LLD FIRST. Examples:
                               • A test for rate-limit handling but the LLD doesn't mention rate limits
@@ -205,7 +216,9 @@ graph TD
 17. Create PR               → link to GitHub issue, include docs + IaC + training plan + code + tests in same PR
 18. 👤 Downstream Impact    → developer + AI produce impact brief: flows changed, risks, PM mental model
                               update, manual verification scenarios (see §1e below)
-19. 📋 Rollout Plan         → risk-rated canary strategy with go/no-go criteria (see §1e below)
+19. 📋 Rollout Plan         → risk-rated canary strategy with go/no-go criteria (see §1e below).
+                              Query the incident registry for the affected domain — past incidents
+                              shape the canary criteria. Ops reviews (non-blocking) if available.
 20. 👤 Integration Verification → team lead runs feature E2E, verifies intent matches HLD/LLD,
                               reviews impact brief + rollout plan for completeness
 21. 👤 Figma Comparison     → if Figma design exists, compare implementation, list & resolve differences
@@ -485,6 +498,78 @@ Each promotion step checks explicit go/no-go criteria calibrated to the specific
 If any criterion fails, the canary pauses for investigation. Rollback path: revert canary, full traffic returns to the previous version.
 
 The developer proposes the criteria in the rollout plan; the lead reviews them during integration verification (step 16).
+
+### 1g. Test Registry + Incident Registry (Steps 2, 7, 19, post-incident)
+
+Two knowledge bases that grow with every change and every incident. They prevent the team from making the same mistake twice and make impact analysis concrete instead of guesswork.
+
+**Test Case Registry** (`docs/test-registry.yaml`)
+
+A catalog of test cases with metadata — not the test code itself (that stays in `tests/`), but an index that makes tests queryable by domain, risk level, origin, and linked incident.
+
+Each entry has:
+
+| Field | Purpose |
+|-------|---------|
+| `id` | Unique identifier (TC-NNN) |
+| `name` | Human-readable test name |
+| `domain` | Which manifest domain this test covers |
+| `risk` | low / medium / high / critical |
+| `type` | unit / integration / contract / e2e / exploratory |
+| `origin` | How the test was created: tdd / qa-review / incident-regression / design-pr |
+| `incident_ref` | If added after an incident, which one (INC-NNN) |
+| `file` | Path to the actual test file + function |
+
+**How it grows:**
+- Step 7 (TDD review): every test added by developer or QA gets registered
+- Post-incident: the regression test is registered with `origin: incident-regression` and `incident_ref: INC-NNN`
+
+**How it's consumed:**
+- Step 2 (impact analysis): "which tests cover the affected domain? are there coverage gaps?"
+- Step 6 (AI generates tests): AI reads relevant entries to inform what to generate — especially incident-regression tests that must not be accidentally removed
+- Step 7 (QA review): QA cross-references — "is the regression test for INC-X in the plan?"
+
+**Incident Registry** (`docs/incident-registry.yaml`)
+
+A catalog of production incidents with root cause, affected domain, fix applied, regression test added, and canary criteria updated.
+
+Each entry has:
+
+| Field | Purpose |
+|-------|---------|
+| `id` | Unique identifier (INC-NNN) |
+| `date`, `severity` | When and how bad |
+| `domain` | Which manifest domain was affected |
+| `summary` | One-line description |
+| `root_cause` | What actually went wrong (not symptoms) |
+| `fix` | What was done — PR link, ADR link if applicable |
+| `regression_test` | TC-NNN linking to the test registry |
+| `canary_criteria_added` | What monitoring was added to prevent recurrence |
+| `lessons` | What the team learned — this is the institutional memory |
+
+**How it grows:**
+- Within 48 hours of incident resolution, Ops + the developer who fixed it write the entry
+- When the regression test merges, the `regression_test` field is linked
+- When canary criteria are updated, the `canary_criteria_added` field is linked
+
+**How it's consumed:**
+- Step 2 (impact analysis): "what has gone wrong in this domain before?" — shapes the risk assessment
+- Step 19 (rollout plan): past incidents shape the canary go/no-go criteria. If INC-001 was a duplicate publish, the canary for any publish change monitors for duplicate keys.
+- QA review (step 7): "is there a test covering the scenario that caused INC-X?"
+- Onboarding: new team members learn what broke and why, grounded in real incidents
+
+**QA and Ops integration (non-blocking):**
+
+QA and Ops are contributors to these registries, not gatekeepers in the workflow:
+
+| Role | Contributes | When | Blocking? |
+|------|------------|------|-----------|
+| **QA** | Test cases (step 7), acceptance criteria, edge cases from the incident registry | Design PR review + TDD review | No — if QA is unavailable, developer proceeds. QA adds tests in a follow-up. |
+| **Ops** | Incident entries (post-incident), canary criteria (step 19), infrastructure-specific go/no-go thresholds | Post-incident + rollout plan review | No — if Ops is unavailable, developer uses the incident registry to self-serve past criteria. |
+
+The registries make QA and Ops expertise available even when the individuals are not — because their past inputs are captured in queryable form.
+
+See `templates/test-registry-template.yaml` and `templates/incident-registry-template.yaml` for the full format with examples.
 
 ---
 

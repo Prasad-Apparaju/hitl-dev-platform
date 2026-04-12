@@ -1,0 +1,93 @@
+# Incident Registry
+#
+# Structured record of production incidents. Not a postmortem — a concise
+# entry that connects the incident to its root cause, the fix, the
+# regression test, and any canary criteria changes.
+#
+# Consumed at:
+#   - Impact analysis (step 2): "what has gone wrong in this domain before?"
+#   - Rollout plan (step 19): "what canary criteria should we use?"
+#   - QA review (step 7): "is there a regression test for this incident?"
+#   - Onboarding: new team members learn what broke and why
+#
+# Updated at:
+#   - Within 48 hours of incident resolution
+#   - When the regression test is merged (link the test)
+#   - When canary criteria are updated (link the criteria)
+
+incidents:
+  # ── Example: external side effect fired twice ──
+  - id: INC-001
+    date: "2026-03-15"
+    severity: P1              # P0 | P1 | P2 | P3
+    domain: publishing
+    summary: "Double Instagram post published after timeout + retry"
+    detection: "User reported duplicate post via support ticket"
+    time_to_detect: "45min"
+    time_to_fix: "2hr"
+
+    root_cause: >
+      No idempotency key on the publish tool. After a timeout,
+      the retry mechanism re-executed the Instagram API call.
+      The first call had actually succeeded — the timeout was
+      on the response, not the request. Result: two identical posts.
+
+    fix:
+      description: "Added MutatingTool base class with idempotency key dedup via external_side_effect_logs table"
+      pr: "PR-52"
+      adr: "adrs/idempotency-keys.md"
+
+    regression_test:
+      test_id: TC-002
+      file: "tests/test_idempotency_keys.py::test_race_condition_returns_cached"
+
+    canary_criteria_added:
+      - "Monitor external_side_effect_logs for duplicate (tool_name, idempotency_key) within 5min window"
+      - "Alert if any publish tool returns cached=true more than 3x in 1 hour (indicates retry storm)"
+
+    lessons:
+      - "Any tool that calls an external API must be idempotent. The timeout is on the HTTP response, not on whether the side effect occurred."
+      - "The user saw the duplicate before monitoring did. Detection time (45min) was too long — add the duplicate-key alert to the canary criteria."
+
+    status: resolved           # open | investigating | resolved
+
+  # ── Example: rate limit hit during burst publishing ──
+  - id: INC-002
+    date: "2026-04-02"
+    severity: P2
+    domain: publishing
+    summary: "Instagram 429 errors during batch campaign publish (5 posts in 2 minutes)"
+    detection: "Langfuse failure_mode score spiked to 'external_rate_limit'"
+    time_to_detect: "5min"
+    time_to_fix: "30min"
+
+    root_cause: >
+      No per-brand rate limiting on the publish endpoint. A brand
+      with 5 scheduled posts hit Instagram's rate limit (100/day
+      is fine, but burst of 5 in 2 min triggers the per-minute limit).
+
+    fix:
+      description: "Added BrandRateLimiter with 'publish' bucket (3 burst, 0.3/s sustained)"
+      pr: "PR-52"
+      adr: "adrs/per-brand-resource-isolation.md"
+
+    regression_test:
+      test_id: TC-010
+      file: "tests/test_brand_isolation.py::test_rate_limiter_denies_over_capacity"
+
+    canary_criteria_added:
+      - "Monitor 429 rate per brand per 5min window. Alert if >2 in any window."
+
+    lessons:
+      - "Per-brand rate limiting should be in place BEFORE the first brand scales to burst publishing."
+      - "Langfuse failure_mode detection (5min) was faster than user-reported detection (45min in INC-001). The observability investment paid off."
+
+    status: resolved
+
+# ── How to query this registry ──
+#
+# By domain:     grep "domain: publishing" incident-registry.yaml
+# By severity:   grep "severity: P0\|severity: P1" incident-registry.yaml
+# By status:     grep "status: open" incident-registry.yaml
+# Impact check:  "I'm changing domain X" → find all incidents for domain X
+#                → check regression tests exist → check canary criteria cover the failure mode
