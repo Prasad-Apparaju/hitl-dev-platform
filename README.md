@@ -165,7 +165,7 @@ Every role shifts from "produce artifacts" to "review and decide." You are a rev
 | Old habit | New expectation |
 |-----------|----------------|
 | Write docs by hand | AI writes all docs. You review, correct, approve. |
-| Start coding, figure it out as you go | Tell AI what you need. AI generates the LLD. You review. AI generates code. You review. |
+| Start coding, figure it out as you go | Tell AI what you need. AI drafts the LLD. You review. Iterate with AI — refine, add detail, challenge assumptions — until the doc reflects exactly what should happen. Only then does AI generate code from it. |
 | Docs after the feature ships | Docs first. AI drafts them in minutes. You spend time thinking, not typing. |
 | One developer owns a feature end-to-end | The *doc* owns the feature. Any developer (or AI session) can pick it up. |
 
