@@ -65,11 +65,17 @@ graph TD
         Reg["🧪 Test + Incident Registries"]
     end
 
-    subgraph GCP["☁️ GCP — production"]
+    subgraph Dev["🛠️ Dev environment — Dev owns"]
+        direction LR
+        DevK8s["⚙️ Dev cluster"]
+        DevDB["🗄️ Dev database"]
+    end
+
+    subgraph Prod["☁️ Production — Ops owns"]
         direction LR
         Mgmt["🖥️ Management Server"]
-        GKE["⚙️ GKE Cluster"]
-        GCS["📦 GCS Storage"]
+        GKE["⚙️ Prod cluster"]
+        GCS["📦 Storage"]
     end
 
     PM & Arch & D1 & D2 & QA & Ops -->|"discuss"| Bot
@@ -78,15 +84,18 @@ graph TD
     GitHub -->|"context"| Slack
     QA -->|"test scenarios"| Reg
     Ops -->|"canary criteria"| Reg
-    IaC -->|"deploy via"| Mgmt
-    Mgmt --> GKE
+    IaC -->|"Dev deploys"| Dev
+    IaC -->|"Ops deploys + refactors"| Prod
+    Code -->|"CI/CD"| Dev
     Code -->|"CI/CD"| GKE
+    Mgmt --> GKE
     GKE --> GCS
 
     style Slack fill:#fef3c7,stroke:#d97706,color:#1e293b
     style Private fill:#f3e8ff,stroke:#9333ea,color:#1e293b
     style GitHub fill:#f0fdf4,stroke:#16a34a,color:#1e293b
-    style GCP fill:#dbeafe,stroke:#2563eb,color:#1e293b
+    style Dev fill:#fff3e0,stroke:#e65100,color:#1e293b
+    style Prod fill:#dbeafe,stroke:#2563eb,color:#1e293b
 ```
 
 </details>
