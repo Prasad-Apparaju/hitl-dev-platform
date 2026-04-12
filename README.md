@@ -39,62 +39,54 @@ This inverts the traditional relationship between docs and code. Write documenta
 
 ```mermaid
 graph TD
-    subgraph Slack["Slack #design-room — humans discuss"]
+    subgraph Slack["💬 Slack — where humans discuss"]
         direction LR
-        PM["PM"]
-        Arch["Architect"]
-        D1["Dev 1"]
-        D2["Dev 2"]
-        QA["QA (non-blocking)"]
-        Ops["Ops (non-blocking)"]
-        Bot["@claude-bot — tagged one at a time"]
+        PM["👤 PM"]
+        Arch["👤 Architect"]
+        D1["👤 Dev 1"]
+        D2["👤 Dev 2"]
+        QA["👤 QA"]
+        Ops["👤 Ops"]
+        Bot["🤖 @claude-bot"]
     end
 
-    subgraph Private["Personal Claude instances — talk to GitHub only"]
+    subgraph Private["🔮 Personal Claude — talks to GitHub only"]
         direction LR
-        C1["Dev 1 Claude Code"]
-        C2["Dev 2 Claude Code"]
+        C1["🤖 Dev 1 Claude Code"]
+        C2["🤖 Dev 2 Claude Code"]
     end
 
-    subgraph GitHub["GitHub — Source of Truth"]
+    subgraph GitHub["📂 GitHub — source of truth"]
         direction LR
-        Docs["HLDs + LLDs + ADRs + Manifest (scoped context per domain)"]
-        Code["Code + Tests"]
-        IaC["IaC: Terraform, K8s"]
-        PRs["PRs = Decision Gates"]
-        Reg["Test + Incident Registries"]
+        Docs["📝 HLDs + LLDs + ADRs + Manifest"]
+        Code["💻 Code + Tests"]
+        IaC["🏗️ IaC: Terraform, K8s"]
+        PRs["🔀 PRs = Decision Gates"]
+        Reg["🧪 Test + Incident Registries"]
     end
 
-    subgraph GCP["GCP — Production"]
+    subgraph GCP["☁️ GCP — production"]
         direction LR
-        Mgmt["Management Server"]
-        GKE["GKE Cluster"]
-        GCS["GCS Storage"]
+        Mgmt["🖥️ Management Server"]
+        GKE["⚙️ GKE Cluster"]
+        GCS["📦 GCS Storage"]
     end
 
     PM & Arch & D1 & D2 & QA & Ops -->|"discuss"| Bot
-    Bot -->|"writes concluded decisions"| GitHub
-    C1 & C2 -->|"read + write code"| GitHub
-    GitHub -->|"context for discussions"| Slack
-    QA -->|"test scenarios from incidents"| Reg
-    Ops -->|"canary criteria from incidents"| Reg
-    IaC -->|"terraform apply"| Mgmt
-    Mgmt -->|"deploy"| GKE
+    Bot -->|"writes decisions"| GitHub
+    C1 & C2 -->|"read + write"| GitHub
+    GitHub -->|"context"| Slack
+    QA -->|"test scenarios"| Reg
+    Ops -->|"canary criteria"| Reg
+    IaC -->|"deploy via"| Mgmt
+    Mgmt --> GKE
     Code -->|"CI/CD"| GKE
     GKE --> GCS
 
-    classDef human fill:#dbeafe,stroke:#2563eb
-    classDef contributor fill:#dcfce7,stroke:#16a34a
-    classDef bot fill:#fef3c7,stroke:#d97706
-    classDef private fill:#f3e8ff,stroke:#9333ea
-    classDef gh fill:#f0fdf4,stroke:#16a34a
-    classDef gcp fill:#faf5ff,stroke:#9333ea
-    class PM,Arch,D1,D2 human
-    class QA,Ops contributor
-    class Bot bot
-    class C1,C2 private
-    class Docs,Code,IaC,PRs,Reg gh
-    class Mgmt,GKE,GCS gcp
+    style Slack fill:#fef3c7,stroke:#d97706,color:#1e293b
+    style Private fill:#f3e8ff,stroke:#9333ea,color:#1e293b
+    style GitHub fill:#f0fdf4,stroke:#16a34a,color:#1e293b
+    style GCP fill:#dbeafe,stroke:#2563eb,color:#1e293b
 ```
 
 </details>
