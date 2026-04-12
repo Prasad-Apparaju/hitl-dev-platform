@@ -1,6 +1,6 @@
 # Brownfield Adoption Guide — The One-Week Baseline Sprint
 
-An architect working with AI can produce the full documentation baseline for an existing codebase in one week. This guide covers the day-by-day plan.
+An architect working with AI can produce the full documentation baseline for an existing codebase in one week.
 
 ## Who
 
@@ -20,7 +20,7 @@ The `/generate-docs` skill (at `skills/generate-docs/`) automates most of this s
 
 It scans the codebase, generates the manifest, HLDs, LLDs, and forensic ADRs, and sets up the process — with approval gates at each phase. The architect reviews and corrects at each gate.
 
-The day-by-day plan below describes what happens at each phase. The skill handles the AI side; the architect handles the judgment.
+The skill handles the AI side; the architect handles the judgment.
 
 ## Output
 
@@ -40,17 +40,17 @@ A complete documentation baseline ready for the HITL process: system manifest, H
 
 | When | Accuracy | What improves it |
 |------|----------|------------------|
-| Day 1 (manifest) | ~80% | Architect review |
-| Day 5 (full baseline) | ~70% overall | Mix of verified (90%) and AI-drafted (60%) |
+| After manifest | ~80% | Architect review |
+| After full sprint | ~70% overall | Mix of verified (90%) and AI-drafted (60%) |
 | Week 2 | ~75% | First re-run + first real changes |
 | Month 1 | ~85% | 10-15 changes each corrected their area |
 | Month 3 | ~95% | Hot paths battle-tested |
 
-**70% accurate docs on day 5 are infinitely more useful than 100% accurate docs on month 6.**
+**70% accurate docs after one sprint are infinitely more useful than 100% accurate docs after six months.**
 
 ## After the Sprint: Assessing and Closing the Gaps
 
-The sprint reveals every gap between the system's current state and what the process requires. Run the convention checker + manifest completeness check + lethal trifecta audit on day 5. Bucket the findings:
+The sprint reveals every gap between the system's current state and what the process requires. Run the convention checker + manifest completeness check + lethal trifecta audit at the end of the sprint. Bucket the findings:
 
 | Tier | Gate | AI does | Architect does |
 |------|------|---------|---------------|
