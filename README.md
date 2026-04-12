@@ -16,7 +16,7 @@ This inverts the traditional relationship between docs and code. Write documenta
 
 > **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 22-step workflow, and the three boundaries.
 
-<details>
+<details open>
 <summary>View as Mermaid diagram (text-based, copy-pasteable)</summary>
 
 ```mermaid
@@ -27,6 +27,8 @@ graph TD
         Arch["Architect"]
         D1["Dev 1"]
         D2["Dev 2"]
+        QA["QA (non-blocking)"]
+        Ops["Ops (non-blocking)"]
         Bot["@claude-bot — tagged one at a time"]
     end
 
@@ -42,6 +44,7 @@ graph TD
         Code["Code + Tests"]
         IaC["IaC: Terraform, K8s"]
         PRs["PRs = Decision Gates"]
+        Reg["Test + Incident Registries"]
     end
 
     subgraph GCP["GCP — Production"]
@@ -51,24 +54,28 @@ graph TD
         GCS["GCS Storage"]
     end
 
-    PM & Arch & D1 & D2 -->|"discuss"| Bot
+    PM & Arch & D1 & D2 & QA & Ops -->|"discuss"| Bot
     Bot -->|"writes concluded decisions"| GitHub
     C1 & C2 -->|"read + write code"| GitHub
     GitHub -->|"context for discussions"| Slack
+    QA -->|"test scenarios from incidents"| Reg
+    Ops -->|"canary criteria from incidents"| Reg
     IaC -->|"terraform apply"| Mgmt
     Mgmt -->|"deploy"| GKE
     Code -->|"CI/CD"| GKE
     GKE --> GCS
 
     classDef human fill:#dbeafe,stroke:#2563eb
+    classDef contributor fill:#dcfce7,stroke:#16a34a
     classDef bot fill:#fef3c7,stroke:#d97706
     classDef private fill:#f3e8ff,stroke:#9333ea
     classDef gh fill:#f0fdf4,stroke:#16a34a
     classDef gcp fill:#faf5ff,stroke:#9333ea
     class PM,Arch,D1,D2 human
+    class QA,Ops contributor
     class Bot bot
     class C1,C2 private
-    class Docs,Code,IaC,PRs gh
+    class Docs,Code,IaC,PRs,Reg gh
     class Mgmt,GKE,GCS gcp
 ```
 
