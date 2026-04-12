@@ -297,7 +297,14 @@ Multiple humans and AI participate in one thread. AI drafts; humans decide. The 
 
 ## 5. The Workflow
 
-The workflow has 20 steps to merge + 2 post-ship verification checkpoints + 4 downstream assessment sub-steps. For truly small changes (a one-line config fix), this is too heavy — see "Common Pitfalls" (Section 8) for guidance on when to abbreviate. For non-trivial changes, these steps are the minimum that prevents the failure modes described above — including organizational failure modes (team mental model is wrong, ops does not know how to deploy safely) that most AI-dev processes ignore.
+**Two entry points:**
+
+| Starting from | What happens first |
+|---------------|-------------------|
+| **A PRD (new system or major feature)** | AI helps decompose the PRD into HLD → LLDs → issues. Each issue becomes one pass through the workflow below. The PRD is the source of truth until the HLDs and LLDs replace it. |
+| **An issue (enhancement, bug fix, improvement)** | Enter the workflow directly at step 1. |
+
+For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 7) for when to abbreviate. For non-trivial changes, these steps prevent the failure modes described above — including organizational ones (team mental model is wrong, ops does not know how to deploy safely).
 
 ### 5.1 The Pipeline View
 
@@ -314,8 +321,10 @@ graph LR
         direction LR
 
         subgraph Requirements["Requirements"]
+            R0["PRD (if new system)"]
             R1["Issue"]
             R2["Design spec"]
+            R0 -.->|"decompose"| R1
         end
 
         subgraph Design["Design + QA/Ops input"]
