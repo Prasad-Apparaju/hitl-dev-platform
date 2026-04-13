@@ -632,6 +632,7 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Tool | Convention checker | [tools/check-conventions/](tools/check-conventions/) | Pluggable YAML-driven checker — AST-based, fails CI on violations |
 | Tool | Mermaid fixer | [tools/fix-mermaid/](tools/fix-mermaid/) | Removes `<br/>` from Mermaid blocks for Obsidian compatibility |
 | Tool | PDF renderer | [tools/render-pdf/](tools/render-pdf/) | Markdown to PDF with Mermaid diagram rendering |
+| Template | PRD | [templates/prd-template.md](templates/prd-template.md) | Product requirements with inline guidance on writing for AI |
 | Template | CLAUDE.md | [templates/CLAUDE.md.template](templates/CLAUDE.md.template) | Project CLAUDE.md with placeholder sections for conventions |
 | Template | System manifest | [templates/system-manifest.schema.yaml](templates/system-manifest.schema.yaml) | Schema definition for the system manifest |
 | Template | Issue | [templates/issue-template.md](templates/issue-template.md) | GitHub issue template with ROI + downstream impact sections |

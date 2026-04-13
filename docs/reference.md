@@ -410,6 +410,7 @@ Feature work proceeds when blockers are zero.
 
 | Template | Source | Use when |
 |----------|--------|----------|
+| PRD | [templates/prd-template.md](../templates/prd-template.md) | Writing product requirements |
 | CLAUDE.md | [templates/CLAUDE.md.template](../templates/CLAUDE.md.template) | Setting up a new project |
 | System manifest schema | [templates/system-manifest.schema.yaml](../templates/system-manifest.schema.yaml) | Creating a manifest |
 | Issue template | [templates/issue-template.md](../templates/issue-template.md) | Every issue |
@@ -443,6 +444,7 @@ Architectural patterns for common challenges. Especially relevant for agentic sy
 
 | Guide | When to use |
 |-------|-------------|
+| [PM guide](playbook/pm-guide.md) | How PMs input requirements and participate in the process |
 | [Process overview](playbook/process-overview.md) | Understanding the full workflow |
 | [Adoption guide](playbook/adoption-guide.md) | Brownfield one-week sprint + gap assessment |
 | [Migration guide](playbook/migration-guide.md) | Migrating a backend to a new architecture |
