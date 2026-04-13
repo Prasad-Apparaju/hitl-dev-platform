@@ -52,16 +52,38 @@ The output answers: "What does the current system actually do, and why?"
 | Bucket findings into tiers | Follow [adoption-guide.md §After the Sprint](adoption-guide.md) — Blocker / Near-term / Medium-term / Long-term |
 | Fix blockers before migration starts | AI generates the fix; architect reviews. See the gap assessment table in the adoption guide. |
 
-### Step 4: Design the target architecture
+### Step 4: Adopt the target architecture
 
-| What to do | Skill / tool to use | Reference to study |
-|-----------|---------------------|-------------------|
-| Create HLDs for the target system | `/generate-docs` in new-feature mode for each area ([skills/generate-docs/](../../skills/generate-docs/)) — uses [templates/hld-template.md](../../skills/generate-docs/templates/hld-template.md) | Reference repo's `docs/02-design/technical/hld/` — especially `system.md`, `agents.md`, `data.md` |
-| Create LLDs for each target component | `/generate-docs` phase 2 — uses [templates/lld-component-template.md](../../skills/generate-docs/templates/lld-component-template.md) | Reference repo's `docs/02-design/technical/lld/` — especially `agents/framework.md` for the level of precision needed |
-| Document each decision that differs from current | Use [templates/adr-template.md](../../templates/adr-template.md) | Reference repo's `docs/02-design/technical/adrs/` — 55 decisions show the format and depth |
-| Create migration mapping table | Manual — AI can draft from the two manifests (current vs target) | Reference repo's `docs/05-migration/` — data-model-mapping, api-contract-mapping, architecture |
-| Set up the target agent infrastructure (if agentic) | Install [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) (`pip install agentic-platform`) | Reference repo's agent implementations + the [minimal agent example](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/examples/minimal_agent) |
-| Extract JS agent prompts into skill files | Create `skills/<agent>/system-prompt.md` for each agent — see [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) | Reference repo's `skills/` directory structure |
+If the target architecture already exists as a reference implementation (another repo with HLDs, LLDs, ADRs, system manifest, and working code), **do not design from scratch** — adopt it as the spec. The reference repo's architecture IS the target.
+
+| What to do | How | What you get |
+|-----------|-----|-------------|
+| **Copy the target HLDs** into your repo | Copy `docs/02-design/technical/hld/` from the reference repo. Adapt domain-specific content (entity names, endpoints) but keep the architecture decisions. | The architecture is decided — no design debates needed |
+| **Copy the target LLDs** | Copy `docs/02-design/technical/lld/`. Adapt component names to your codebase. The level of detail, the patterns, the conventions stay the same. | Each component has a precise spec AI can generate from |
+| **Copy the ADRs** | Copy `docs/02-design/technical/adrs/`. These are the decisions already made — the team follows them, not reinvents them. | 55+ decisions with rationale — no need to rediscover "why" |
+| **Copy the system manifest structure** | Copy the manifest YAML structure. Replace file paths and domain names with yours. Keep the facade API format, boundary entities, cross-cutting conventions. | Domain boundaries and conventions are consistent with the reference |
+| **Copy the CLAUDE.md conventions** | Copy the inline conventions from the reference CLAUDE.md. Adapt language-specific standards (if the reference is Python and you're also going to Python, keep them verbatim). | Every developer's AI session follows the same rules as the reference |
+| **Copy the migration docs** | Copy `docs/05-migration/` — data-model-mapping, api-contract-mapping, architecture. Adapt to your source system's specifics. | The migration mapping template is already proven |
+| **Install the agentic-platform** (if agentic) | `pip install agentic-platform` — [repo](https://github.com/Prasad-Apparaju/agentic-platform). Study the [minimal agent example](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/examples/minimal_agent). | BaseAgent, MutatingTool, resilience, routing, observability — ready to use |
+| **Extract prompts into skill files** | Create `skills/<agent>/system-prompt.md` for each agent — see [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) | Prompts are version-controlled, PM-editable, reviewable as PRs |
+
+**What transfers directly from the reference repo:**
+
+| Copy it | Adapt it | Don't copy it |
+|---------|----------|--------------|
+| Architecture patterns (layers, boundaries, conventions) | Entity names, endpoint paths, domain-specific logic | The actual business logic (campaigns, publishing, etc.) |
+| ADRs (the decisions) | File paths in the manifest | Domain-specific tools (Instagram, SendGrid integrations) |
+| CLAUDE.md conventions | Coding standards (if changing language) | Test data, fixtures, seed scripts |
+| System manifest structure | Domain names, file lists | Domain-specific eval criteria, prompts |
+| Migration doc templates | The actual field-by-field mapping | — |
+
+**Create a migration mapping** from the reverse-engineered current system (Step 2) to the target architecture:
+
+| Current (your system) | Target (reference architecture) | Strategy |
+|----------------------|--------------------------------|----------|
+| Each current component | The matching target component from the reference LLDs | Rewrite / translate / migrate data |
+
+AI can draft this mapping by comparing the two manifests (current vs target). The architect reviews.
 
 ### Step 5: Sequence the migration into vertical slices
 
