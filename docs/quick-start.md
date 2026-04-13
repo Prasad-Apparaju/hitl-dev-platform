@@ -44,7 +44,8 @@ An architect working with AI can produce the full documentation baseline in one 
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | **Skills** | `skills/` | Claude Code skills: 22-step dev workflow + impact analysis. Copy to `.claude/commands/` |
-| **Templates** | `templates/` | CLAUDE.md template, system manifest schema, ADR/HLD/LLD/training plan templates, issue template with ROI section |
+| **Templates** | `templates/` | 15 templates: CLAUDE.md, system manifest, ADR, training plan, issue, test strategy, security audit, best practices, cost analysis, performance, data model mapping, API contract mapping, decision catalog, test registry, incident registry |
+| **Patterns** | `docs/patterns/` | Architectural patterns: failure mode taxonomy, idempotency keys |
 | **Tools** | `tools/` | Convention checker (pluggable, config-driven), Mermaid fixer, Markdown-to-PDF with Mermaid support |
 | **CI Actions** | `ci/` | GitHub Actions for convention checking + manifest drift detection |
 | **Examples** | `examples/` | Greenfield starter with minimal CLAUDE.md, manifest, and convention config |

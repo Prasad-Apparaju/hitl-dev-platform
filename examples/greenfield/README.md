@@ -22,11 +22,13 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
 
 ## What you get
 
-- Every Claude Code session follows the same 22-step workflow automatically
-- The system manifest scopes AI context per domain (no "reads too much" hallucinations)
+- Every AI coding session follows the same workflow automatically
+- The system manifest scopes AI context per domain (no "reads too much" hallucinations) — see `docs/system-manifest.yaml` for a realistic 3-domain example
 - Convention checks run on every PR via CI
 - Issue template includes ROI estimation + downstream impact brief
-- Training plan requirement for new capabilities
+- Training plan requirement for new capabilities — see `docs/03-engineering/training/agent-architecture-example.md` for a worked example
+- 15 templates for common artifacts (test strategy, security audit, best practices, cost analysis, performance, migration mappings, decision catalog, and more)
+- Architectural patterns for agentic systems (failure mode taxonomy, idempotency keys)
 
 ## Next steps
 

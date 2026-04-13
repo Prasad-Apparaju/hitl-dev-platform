@@ -414,9 +414,28 @@ Feature work proceeds when blockers are zero.
 | System manifest schema | [templates/system-manifest.schema.yaml](../templates/system-manifest.schema.yaml) | Creating a manifest |
 | Issue template | [templates/issue-template.md](../templates/issue-template.md) | Every issue |
 | ADR template | [templates/adr-template.md](../templates/adr-template.md) | Every architectural decision |
-| Training plan template | [templates/training-plan-template.md](../templates/training-plan-template.md) | New capability introduced |
+| Training plan | [templates/training-plan-template.md](../templates/training-plan-template.md) | New capability introduced |
+| Test strategy | [templates/test-strategy-template.md](../templates/test-strategy-template.md) | Planning tests for a vertical slice |
+| Security audit | [templates/security-audit-template.md](../templates/security-audit-template.md) | Security assessment |
+| Best practices | [templates/best-practices-template.md](../templates/best-practices-template.md) | Documenting domain practices |
+| Cost analysis | [templates/cost-analysis-template.md](../templates/cost-analysis-template.md) | Infrastructure cost comparison |
+| Performance optimization | [templates/performance-optimization-template.md](../templates/performance-optimization-template.md) | Tiered optimization plan |
+| Data model mapping | [templates/data-model-mapping-template.md](../templates/data-model-mapping-template.md) | Schema migration (field-by-field) |
+| API contract mapping | [templates/api-contract-mapping-template.md](../templates/api-contract-mapping-template.md) | Endpoint migration mapping |
+| Decision catalog | [templates/consolidated-decisions-template.md](../templates/consolidated-decisions-template.md) | Consolidated decision reference |
 | Test registry | [templates/test-registry-template.yaml](../templates/test-registry-template.yaml) | Setting up test tracking |
 | Incident registry | [templates/incident-registry-template.yaml](../templates/incident-registry-template.yaml) | Setting up incident tracking |
+
+---
+
+## Patterns
+
+Architectural patterns for common challenges. Especially relevant for agentic systems.
+
+| Pattern | Source | What it covers |
+|---------|--------|---------------|
+| Failure mode taxonomy | [docs/patterns/failure-mode-taxonomy.md](patterns/failure-mode-taxonomy.md) | Classify HOW agents fail — enables directional iteration |
+| Idempotency keys | [docs/patterns/idempotency-keys.md](patterns/idempotency-keys.md) | Exactly-once external side effects across retries |
 
 ---
 

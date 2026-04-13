@@ -202,6 +202,8 @@ Order by dependency. Each slice is a shippable unit migrated end-to-end. A typic
 | Workflow step | Skill / tool | What it produces |
 |--------------|-------------|-----------------|
 | Create issue | Use [templates/issue-template.md](../../templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
+| Data model mapping | Use [templates/data-model-mapping-template.md](../../templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
+| API contract mapping | Use [templates/api-contract-mapping-template.md](../../templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
 | Impact analysis | `/apply-change` ([skills/apply-change.md](../../skills/apply-change.md)) | Affected components in BOTH current and target system |
 | TDD | `/tdd` ([skills/tdd.md](../../skills/tdd.md)) | Tests from the target LLD + manifest contracts |
 | Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Code using agentic-platform infrastructure (if agentic) |
