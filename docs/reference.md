@@ -2,6 +2,8 @@
 
 Look up any part of the process. Each section is self-contained.
 
+> **AI tool note:** This guide uses Claude Code and `CLAUDE.md` as examples. The process works with any AI coding assistant that supports auto-loaded project rules (Cursor, Windsurf, Cline, etc.).
+
 ---
 
 ## Process overview

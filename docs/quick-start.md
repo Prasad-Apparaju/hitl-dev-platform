@@ -1,6 +1,8 @@
 # HITL AI-Driven Development Platform
 
-A repeatable process + tooling for teams adopting AI-native development. Copy the templates, fill in your project's conventions, and every developer's Claude instance follows the same standards from day one.
+A repeatable process + tooling for teams adopting AI-native development. Copy the templates, fill in your project's conventions, and every developer's AI coding assistant follows the same standards from day one.
+
+> **AI tool note:** This guide uses Claude Code and `CLAUDE.md` as examples. The process works with any AI coding assistant that supports auto-loaded project rules (Cursor, Windsurf, Cline, etc.).
 
 ## The Core Idea
 

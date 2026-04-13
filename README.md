@@ -9,6 +9,8 @@ A development process for teams using AI to generate code, tests, and documentat
 
 **This process works for any system** — REST APIs, data pipelines, agentic AI, frontend apps, infrastructure. "AI-driven" refers to how the team develops (using AI to generate code, tests, and docs), not what they're building. The system under development does not need to contain agents or LLMs.
 
+> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the AI coding tool and `CLAUDE.md` for project-level AI configuration. The process works with any AI coding assistant that supports auto-loaded project rules (e.g., Cursor rules, Windsurf rules, Cline memory banks). Substitute your tool of choice — the principles and workflow are tool-agnostic.
+
 **Yes, this looks like waterfall.** Design before code. That is intentional. Waterfall failed because the gap between "design done" and "working software" was months. With AI, that gap is minutes. You get waterfall's rigor (coherent design, traced decisions) without the wait. And it turns out AI is exceptionally good at reading precise documentation and generating code that follows it — which makes document-driven development a natural fit for how AI works. Without this discipline, AI-generated code drifts — each session invents its own patterns, and by the time you have customers, you face a rewrite that is orders of magnitude harder than designing coherently from the start.
 
 ## What you get by adopting this
