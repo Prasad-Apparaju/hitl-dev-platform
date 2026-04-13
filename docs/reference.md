@@ -400,7 +400,6 @@ Feature work proceeds when blockers are zero.
 | `/tdd` | [skills/tdd.md](../skills/tdd.md) | TDD-as-design loop |
 | `/impact-brief` | [skills/impact-brief.md](../skills/impact-brief.md) | 5-section downstream impact brief |
 | `/check-conventions` | [skills/check-conventions.md](../skills/check-conventions.md) | Convention checker in-chat |
-| `/conclude` | [skills/conclude.md](../skills/conclude.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention checker | [tools/check-conventions/](../tools/check-conventions/) | YAML-driven, AST-based, CI-ready |
 | Mermaid fixer | [tools/fix-mermaid/](../tools/fix-mermaid/) | Remove `<br/>` for Obsidian |
