@@ -9,6 +9,8 @@ For teams migrating an existing system (e.g., NestJS/Spring Boot) to a new backe
 - The existing system's source code
 - A reference architecture for the target system (if one exists)
 
+> **Migration workspace available:** If you are migrating PSR-Works (or a similar JS system) to Python/FastAPI, use the [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration) repo. It bundles all target architecture docs (14 HLDs, 33 LLDs, 55+ ADRs, 6 migration docs), skills, tools, and CI actions into a ready-to-use workspace. Check out your current code into `V1/`, and AI generates the migrated version into `V2/`. Steps 1-4 below are already done for you.
+
 ## The Steps
 
 ### Step 1: Set up the process on your repo
@@ -254,3 +256,4 @@ The team should NOT copy the reference docs into their repo — the content is s
 - [Adoption guide](adoption-guide.md) — the brownfield sprint + gap assessment
 - [hitl-dev-platform README](https://github.com/Prasad-Apparaju/hitl-dev-platform) — the practitioner's guide
 - [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) — reusable agent infrastructure (if the target system includes agents)
+- [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration) — bundled migration workspace with all target docs, skills, and tools
