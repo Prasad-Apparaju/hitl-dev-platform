@@ -2,18 +2,117 @@
 
 For teams migrating an existing system (e.g., NestJS/Spring Boot) to a new backend architecture (e.g., Python/FastAPI) using the HITL AI-Driven Development process.
 
-## Prerequisites
+## Which path are you on?
 
-- Access to the [hitl-dev-platform](https://github.com/Prasad-Apparaju/hitl-dev-platform) repo
-- Claude Code (or equivalent AI coding tool) for each developer
-- The existing system's source code
-- A reference architecture for the target system (if one exists)
+| Path | You have | Start at |
+|------|----------|----------|
+| **A — Bundled workspace** | A migration workspace repo (like [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration)) with target docs, skills, tools, and V1/V2 structure already set up | [Path A](#path-a--bundled-migration-workspace) |
+| **B — Starting from scratch** | Only your existing codebase and access to [hitl-dev-platform](https://github.com/Prasad-Apparaju/hitl-dev-platform) | [Path B](#path-b--starting-from-scratch) |
 
-> **Migration workspace available:** If you are migrating PSR-Works (or a similar JS system) to Python/FastAPI, use the [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration) repo. It bundles all target architecture docs (14 HLDs, 33 LLDs, 55+ ADRs, 6 migration docs), skills, tools, and CI actions into a ready-to-use workspace. Check out your current code into `V1/`, and AI generates the migrated version into `V2/`. Steps 1-4 below are already done for you.
+---
 
-## The Steps
+## Path A — Bundled migration workspace
 
-### Step 1: Set up the process on your repo
+Your workspace already contains the target architecture docs, skills, tools, CI actions, CLAUDE.md, and system manifest. The setup and architecture adoption steps are done.
+
+### A1. Setup
+
+```bash
+git clone https://github.com/Prasad-Apparaju/PSR-Works-Migration.git
+cd PSR-Works-Migration
+
+# Check out the current system into V1/
+cd V1 && git clone https://github.com/dilipkpoluru/PSR-Works.git . && cd ..
+
+# Install the agentic platform (if building agents)
+pip install agentic-platform
+
+# Open in Claude Code — CLAUDE.md auto-loads the conventions
+claude
+```
+
+**Time: 30 minutes.** Every developer who clones the repo gets the process, the target architecture, and the migration docs.
+
+### A2. Understand the current system
+
+```bash
+/generate-docs reverse-engineer the existing system
+```
+
+AI scans `V1/`, produces a manifest and docs for the CURRENT system. Compare against the TARGET docs already in `docs/` to see exactly what needs to change.
+
+Also populate:
+- `docs/test-registry.yaml` — catalog existing tests using the template already in the repo
+- `docs/incident-registry.yaml` — ask the team: "what broke in the last 6 months?" Each answer is an entry.
+
+### A3. Assess the gaps
+
+```bash
+/check-conventions
+```
+
+Bucket findings into tiers (Blocker / Near-term / Medium-term / Long-term) using the [gap assessment](adoption-guide.md) criteria. Fix blockers before migration starts.
+
+### A4. Read the target architecture
+
+These docs are already in your repo — no external access needed:
+
+| What to read | Local path | What it tells you |
+|-------------|-----------|------------------|
+| Migration plan | `docs/05-migration/migration-plan.md` | The proven sequence for this exact migration |
+| Architecture mapping | `docs/05-migration/architecture.md` | How V1 components map to V2 |
+| Data model mapping | `docs/05-migration/data-model-mapping.md` | Old schema → new schema, field by field |
+| API contract mapping | `docs/05-migration/api-contract-mapping.md` | Old endpoints → new endpoints |
+| Target HLDs | `docs/02-design/technical/hld/` | 14 architecture specs (system, agents, data, AI inference, observability, security, infrastructure, etc.) |
+| Target LLDs | `docs/02-design/technical/lld/` | 33 component specs — the detail level AI generates code from |
+| Design decisions | `docs/02-design/technical/adrs/` | 55+ ADRs with rationale — follow these, don't reinvent them |
+| System manifest | `docs/system-manifest.yaml` | Domain boundaries, facade APIs, conventions |
+| Frontend reuse | `docs/05-migration/frontend-reuse.md` | What stays, what changes in the UI |
+
+### A5. Sequence into vertical slices
+
+Order by dependency. Each slice is a shippable unit migrated end-to-end. Use the migration plan's sequence as your starting point — adapt to your team's priorities.
+
+### A6. Execute one slice at a time
+
+| Step | What to do | Skill |
+|------|-----------|-------|
+| 1 | Read the target LLD for this slice | Study `docs/02-design/technical/lld/` |
+| 2 | Read the migration mapping for this slice | Study `docs/05-migration/` |
+| 3 | Generate tests from the target LLD | `/tdd` |
+| 4 | Human + QA review tests, add edge cases | Manual |
+| 5 | AI generates Python code in `V2/` that passes tests | `/tdd` continues |
+| 6 | Code review against the target LLD | Two rounds |
+| 7 | Downstream impact brief | `/impact-brief` |
+| 8 | Convention check | `/check-conventions` |
+| 9 | Ship the slice | PR, canary, promote |
+
+### A7. Verify behavioral equivalence
+
+**For migrated agents:**
+- Run the same inputs through V1 (JS) and V2 (Python)
+- Compare outputs — differences are either bugs (fix) or improvements (document as ADRs)
+
+**For migrated APIs:**
+- Run the existing frontend E2E tests against V2
+- Every test that passes against V1 must also pass against V2
+
+### A8. Cut over and retire
+
+1. Route traffic gradually: V1 → V2 per endpoint (feature flags)
+2. Keep V1 as rollback for 30 days
+3. After 30 days stable, decommission V1
+4. Update the system manifest to reflect the final architecture
+
+**→ Continue to [Language migration considerations](#language--framework-migration) if migrating across languages.**
+
+---
+
+## Path B — Starting from scratch
+
+You have your existing codebase and access to hitl-dev-platform. You need to set up the process, reverse-engineer your system, and adopt or design the target architecture.
+
+### B1. Set up the process on your repo
 
 ```bash
 # Copy the skills so every developer's Claude follows the same workflow
@@ -35,148 +134,108 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 
 **Time: 1 hour.** After this, every developer who clones the repo gets the process.
 
-### Step 2: Reverse-engineer the existing system
+### B2. Reverse-engineer the existing system
 
-| What to do | Skill / tool to use | Reference to study first |
-|-----------|---------------------|-------------------------|
-| Generate manifest, HLDs, LLDs, ADRs from the current codebase | Run `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the reference repo's `docs/system-manifest.yaml` to see the target format and level of detail |
-| Generate the system manifest standalone | Run `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study the reference repo's manifest — especially `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
-| Populate the test registry from existing tests | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | Study the reference repo's test registry — how tests are tagged by domain, risk, origin |
-| Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" — each answer is an entry |
+| What to do | Skill / tool | Reference to study first |
+|-----------|-------------|-------------------------|
+| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [styleflow manifest](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/system-manifest.yaml) to see the target format |
+| Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
+| Populate the test registry | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
+| Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
 
-The output answers: "What does the current system actually do, and why?"
+### B3. Assess the gaps
 
-### Step 3: Assess the gaps
-
-| What to do | Skill / tool to use |
-|-----------|---------------------|
+| What to do | Skill / tool |
+|-----------|-------------|
 | Run all convention checks | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
 | Bucket findings into tiers | Follow [adoption-guide.md §After the Sprint](adoption-guide.md) — Blocker / Near-term / Medium-term / Long-term |
-| Fix blockers before migration starts | AI generates the fix; architect reviews. See the gap assessment table in the adoption guide. |
+| Fix blockers before migration starts | AI generates the fix; architect reviews |
 
-### Step 4: Adopt the target architecture
+### B4. Adopt the target architecture
 
-The target architecture already exists — it was built and proven during a prior migration of the same system. **Do not design from scratch.** Use these docs as your spec.
+Two sub-paths:
 
-**Target architecture docs** (from [styleflow repo](https://github.com/Prasad-Apparaju/styleflow)):
+**B4a — A reference implementation exists** (e.g., someone already migrated this system or a similar one):
 
-| What to use | Location | What it gives you |
-|-----------|----------|------------------|
-| **System architecture** | [hld/system.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/system.md) | Overall component topology, layers, deployment model |
-| **Agent architecture** | [hld/agents.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/agents.md) | Agent maturity levels, tool library, HITL, memory, eval |
-| **Data architecture** | [hld/data.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/data.md) | PostgreSQL + Qdrant, tenant isolation, RAG pipeline |
-| **AI inference layer** | [hld/ai-inference.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/ai-inference.md) | Model router, profiles, dual-mode (API + GPU) |
-| **Observability** | [hld/observability.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/observability.md) | Langfuse tracing, eval dashboards, SME review |
-| **Security** | [hld/security.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/security.md) | Auth, guardrails, lethal trifecta analysis |
-| **Infrastructure** | [hld/infrastructure.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/infrastructure.md) | K8s, ephemeral compute, IaC, leader election |
-| **All 14 HLDs** | [hld/index.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/index.md) | Full index |
+The reference repo is the most valuable asset the team has. Give them READ access and point them to:
 
-**Target component designs:**
+| What to study | What it shows |
+|--------------|---------------|
+| `docs/system-manifest.yaml` | The format, detail level per domain, what a facade API looks like |
+| Any HLD in `docs/02-design/technical/hld/` | How architecture is documented — diagrams, component tables, security |
+| Any LLD in `docs/02-design/technical/lld/` | The precision needed for AI to generate correct code |
+| Any ADR in `docs/02-design/technical/adrs/` | How decisions are documented with rationale and consequences |
+| `CLAUDE.md` | How conventions are inlined so every Claude session follows the same rules |
+| `docs/test-registry.yaml` | How tests are cataloged by domain, risk, origin |
 
-| What to use | Location | What it gives you |
-|-----------|----------|------------------|
-| **Agent framework** | [lld/agents/framework.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/agents/framework.md) | BaseAgent pipeline, tool system, self-eval, memory, checkpointing — the spec AI generates from |
-| **Publishing tools** | [lld/agents/publishing.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/agents/publishing.md) | MutatingTool, idempotency, plan mode |
-| **All 33 LLDs** | [lld/index.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/index.md) | Full index covering models, controllers, services, agents, config, security |
-| **Package dependency graph** | [lld/packages.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/packages.md) | Who depends on who |
+Use these as FORMAT EXAMPLES — "my LLD should look like this, at this level of detail." The specific content describes a different system; yours will differ.
 
-**Target design decisions:**
+What transfers directly vs. what doesn't:
 
-| What to use | Location | What it gives you |
-|-----------|----------|------------------|
-| **55 architectural decisions** | [adrs/design-decisions.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/adrs/design-decisions.md) | Every decision with rationale — the team follows these, not reinvents them |
-| **8 resilience + agent ADRs** | [adrs/README.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/adrs/README.md) | Retry policy, idempotency, leader election, brand isolation, DLQ, failure taxonomy, context compression, plan mode |
+| Copy it | Use as reference only |
+|---------|----------------------|
+| CLAUDE.md template | The specific conventions (yours are different) |
+| Skills (dev-practices, apply-change, tdd, etc.) | The specific HLDs/LLDs/ADRs (yours describe a different system) |
+| Convention checker + CI actions | The specific convention checks (yours enforce different patterns) |
+| Issue template with ROI section | The system manifest content (yours has different domains) |
+| Test/incident registry FORMAT | The specific test cases and incidents |
+| agentic-platform code (if building agents) | Domain-specific agent implementations |
 
-**Migration docs that already exist for this exact migration:**
+> **Tip:** If the reference implementation migrated the exact same system, consider building a bundled migration workspace (like [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration)) — copy all target docs into the migration repo so the team doesn't need separate access. This converts your Path B into a Path A for the next team.
 
-| What to use | Location | What it gives you |
-|-----------|----------|------------------|
-| **Migration architecture** | [05-migration/architecture.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/architecture.md) | How the old system maps to the new — component by component |
-| **Data model mapping** | [05-migration/data-model-mapping.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/data-model-mapping.md) | Old schema → new schema, field by field |
-| **API contract mapping** | [05-migration/api-contract-mapping.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/api-contract-mapping.md) | Old endpoints → new endpoints, request/response shapes |
-| **Migration plan** | [05-migration/migration-plan.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/migration-plan.md) | Sequencing, dependencies, rollout strategy |
-| **Frontend reuse plan** | [05-migration/frontend-reuse.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/frontend-reuse.md) | What stays, what changes in the UI |
-| **Team responsibilities** | [05-migration/team-responsibilities.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/team-responsibilities.md) | Who does what during the migration |
+**B4b — No reference implementation exists:**
 
-**Other target specs:**
+Design the target architecture from scratch using `/generate-docs`:
+1. Write HLDs for the target system
+2. Get architect approval
+3. Write LLDs for each component
+4. Document decisions as ADRs
 
-| What to use | Location | What it gives you |
-|-----------|----------|------------------|
-| **System manifest** | [docs/system-manifest.yaml](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/system-manifest.yaml) | The target domain boundaries, facade APIs, conventions — copy the structure, adapt the names |
-| **CLAUDE.md** | [CLAUDE.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/CLAUDE.md) | The target conventions — use as-is if going to the same Python/FastAPI stack |
-| **Convention checker** | [scripts/check_conventions.py](https://github.com/Prasad-Apparaju/styleflow/blob/main/scripts/check_conventions.py) | The target convention checks — copy and adapt |
-| **Agent infrastructure** | [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) | BaseAgent, MutatingTool, resilience, routing, observability — `pip install` and use |
-| **Agent example** | [minimal_agent](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/examples/minimal_agent) | Working agent showing every platform feature |
+### B5. Sequence into vertical slices
 
-**What the team actually has to do in Step 4:**
+Order by dependency. Each slice is a shippable unit migrated end-to-end. A typical backend migration is 6-12 slices.
 
-1. Get read access to the [styleflow repo](https://github.com/Prasad-Apparaju/styleflow)
-2. Read the migration docs (`docs/05-migration/`) — this IS the migration plan for your codebase
-3. Read the HLDs — this IS the target architecture
-4. Read the LLDs for the components you're building first — this IS the spec AI generates from
-5. Copy the CLAUDE.md and system manifest structure into your repo
-6. Map your current components (from Step 2's reverse-engineering) to the target components using the migration docs as the template
-
-The architecture is decided. The migration path is documented. The infrastructure is packaged. The team's job is execution — follow the docs, run the skills, review AI output.
-
-### Step 5: Sequence the migration into vertical slices
-
-Order by dependency. Each slice is a shippable unit migrated end-to-end.
-
-Use the reference repo's showcase sequence as a model — it went: Foundation → Auth + Infra → AI Core → Content → Automation → Observability. Adapt the order to your system's dependency graph.
-
-Each slice follows the full workflow. The skills that drive each slice:
-
-### Step 6: Execute one slice at a time
+### B6. Execute one slice at a time
 
 | Workflow step | Skill / tool | What it produces |
 |--------------|-------------|-----------------|
 | Create issue | Use [templates/issue-template.md](../../templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
 | Impact analysis | `/apply-change` ([skills/apply-change.md](../../skills/apply-change.md)) | Affected components in BOTH current and target system |
-| TDD — generate tests, human review, improve LLD | `/tdd` ([skills/tdd.md](../../skills/tdd.md)) | Tests from the target LLD + manifest contracts. Tests registered in test registry. |
-| Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Python code using agentic-platform infrastructure (if agentic) |
+| TDD | `/tdd` ([skills/tdd.md](../../skills/tdd.md)) | Tests from the target LLD + manifest contracts |
+| Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Code using agentic-platform infrastructure (if agentic) |
 | Code review | Two rounds — AI reviews against LLD | Structure (R1) then behavior (R2) |
 | Downstream impact brief | `/impact-brief` ([skills/impact-brief.md](../../skills/impact-brief.md)) | 5-section brief from PR diff + manifest + incident registry |
-| Convention check before PR | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) | Violations caught before CI |
+| Convention check | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) | Violations caught before CI |
 
-### Step 7: Run old and new in parallel
+### B7. Run old and new in parallel
 
 - **Route by feature flag** — new endpoints serve from the new backend; old from the old
 - **Compare outputs** — for migrated endpoints, run both and compare (shadow mode)
 - **Migrate traffic gradually** — 5% → 25% → 50% → 100% per endpoint
 - **Keep the old system as rollback** until the new one is stable for 30 days
 
-### Step 8: Retire the old system
+### B8. Retire the old system
 
 1. All traffic on the new backend
 2. Old system available as rollback for 30 days
 3. After 30 days with zero rollbacks, decommission
 4. Update the system manifest to reflect the final architecture
 
-## What the team needs to know
+---
 
-| Question | Answer |
-|----------|--------|
-| "Do we need to document the old system?" | Yes — Step 2. Run `/generate-docs reverse-engineer`. AI does the drafting; architect reviews. ~1 week. |
-| "Can we skip the docs and just rewrite?" | AI will generate inconsistent code without a shared spec. The rewrite will need its own rewrite. |
-| "What if we don't have an architect?" | The most senior dev who knows the current system plays that role. Their job is reviewing, not writing. |
-| "How long does the full migration take?" | Each vertical slice takes days to weeks. A typical backend migration is 6-12 slices. |
-| "What tools do we use?" | Claude Code + the skills from this repo (`/generate-docs`, `/tdd`, `/apply-change`, `/impact-brief`, `/check-conventions`) + the convention checker in CI + the agentic-platform (if building agents). |
-| "Where do I look to see what 'done' looks like?" | The reference repo — study its manifest, HLDs, LLDs, ADRs, CLAUDE.md, test registry. |
+## Language + framework migration
 
-## Language + framework migration (e.g., JavaScript → Python)
-
-When migrating across languages (not just refactoring within the same language), additional steps are needed:
+When migrating across languages (not just refactoring within the same language), additional considerations apply regardless of which path you're on.
 
 ### API contract preservation
 
 The existing frontend expects specific API shapes. Before writing any backend code:
 
 1. **Extract the API contract** from the current system — every endpoint, request shape, response shape, status codes, error format. AI can generate this from the existing route handlers.
-2. **Write contract tests** against the current backend — these become the acceptance criteria for the new backend. The new Python API must pass the same contract tests.
+2. **Write contract tests** against the current backend — these become the acceptance criteria for the new backend.
 3. **Decide: same contract or new contract?**
    - **Same contract** — frontend doesn't change. New backend implements the existing API exactly. Simplest migration path.
-   - **New contract** — frontend adapts. Requires a v1-compat shim in the new backend during migration (serves old shape, delegates to new internals) OR frontend changes in parallel.
+   - **New contract** — frontend adapts. Requires a v1-compat shim during migration OR frontend changes in parallel.
 
 Document this decision as an ADR.
 
@@ -191,20 +250,18 @@ If the database changes (e.g., MongoDB → PostgreSQL):
 
 ### Agent behavior verification (for agentic systems)
 
-When migrating agents from one language/framework to another, the hardest part is verifying that the new agents behave the same as the old ones:
-
-1. **Capture golden outputs** from the current JS agents — run them against a fixed set of inputs, record the outputs. These become the behavioral baseline.
-2. **Build the new Python agents** using the [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) infrastructure (BaseAgent, MutatingTool, AgentEvaluator, etc.)
+1. **Capture golden outputs** from the current agents — run them against a fixed set of inputs, record the outputs. These become the behavioral baseline.
+2. **Build the new agents** using [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) infrastructure (BaseAgent, MutatingTool, AgentEvaluator, etc.)
 3. **Run the same inputs through the new agents** — compare outputs against the golden baseline. Differences are either bugs (fix) or intentional improvements (document as ADRs).
-4. **Migrate prompts to skill files** — if the JS agents have prompts embedded as string literals in code, extract them into versioned `skills/<agent>/system-prompt.md` files. This is the right time to do it — the prompts are being touched anyway.
+4. **Migrate prompts to skill files** — if agents have prompts embedded as string literals in code, extract them into versioned `skills/<agent>/system-prompt.md` files.
 
 ### Frontend preservation
 
 If keeping the existing UI:
 
-1. **The frontend points to a single API base URL** — during migration, this URL routes to either the old or new backend per endpoint (feature-flag routing or path-based routing via a reverse proxy)
-2. **Auth must be compatible** — if switching from one JWT implementation to another, the frontend's token handling must work with both during the transition
-3. **Test the frontend against the new backend** — run the existing E2E tests (Playwright, Cypress) against the new backend. Every test that passes against the old backend must also pass against the new one.
+1. **The frontend points to a single API base URL** — during migration, route to either backend per endpoint (feature-flag or path-based routing via reverse proxy)
+2. **Auth must be compatible** — if switching JWT implementations, the frontend's token handling must work with both during the transition
+3. **Test the frontend against the new backend** — run the existing E2E tests against the new backend. Every test that passes against the old must also pass against the new.
 
 ### Dependency mapping
 
@@ -220,35 +277,16 @@ AI generates the bulk of this mapping. The architect verifies the equivalences a
 
 ---
 
-## Using a reference implementation
+## FAQ
 
-If someone has already done this migration (or a similar one), their repo is the most valuable asset the team has. It shows what "done" looks like at every step — not in theory, but with real code and real docs.
-
-Give the team READ access to the reference repo and point them to these specific files:
-
-| What to look at | What it shows | File to study |
-|----------------|---------------|---------------|
-| **System manifest** | The format, the level of detail per domain, what a facade API looks like, how conventions are listed | `docs/system-manifest.yaml` |
-| **An HLD** | How architecture is documented — diagrams, component tables, integration points, security considerations | Any file in `docs/02-design/technical/hld/` |
-| **An LLD** | The level of precision needed for AI to generate correct code — method signatures, class diagrams, sequence diagrams, error handling | Any file in `docs/02-design/technical/lld/` |
-| **An ADR** | How a design decision is documented — context, decision, alternatives, consequences, ROI estimate | Any file in `docs/02-design/technical/adrs/` |
-| **CLAUDE.md** | How conventions are inlined so every Claude session follows the same rules | `CLAUDE.md` at the repo root |
-| **Convention checker results** | What compliance looks like — which checks pass, which fail, how violations are reported | Run `python scripts/check_conventions.py --verbose` |
-| **The test registry** | How tests are cataloged by domain, risk, origin, and incident link | `docs/test-registry.yaml` |
-| **The migration docs** | How the current-to-target mapping was structured (if the reference repo IS a migration) | `docs/05-migration/` |
-
-The team should NOT copy the reference docs into their repo — the content is specific to that system. They should use them as FORMAT EXAMPLES: "my LLD should look like this, at this level of detail, with this kind of diagram." Then they run `/generate-docs reverse-engineer` on their own codebase and produce their own version.
-
-**What transfers directly vs what doesn't:**
-
-| Transfers (copy it) | Doesn't transfer (use as reference only) |
-|---------------------|------------------------------------------|
-| CLAUDE.md template | The specific conventions (yours are different) |
-| Skills (dev-practices, apply-change, tdd, etc.) | The specific HLDs/LLDs/ADRs (yours describe a different system) |
-| Convention checker + CI actions | The specific convention checks (yours enforce different patterns) |
-| Issue template with ROI section | The system manifest content (yours has different domains) |
-| Test registry + incident registry FORMAT | The specific test cases and incidents |
-| The agentic-platform code (if building agents) | The domain-specific agent implementations |
+| Question | Answer |
+|----------|--------|
+| "Do we need to document the old system?" | Yes — run `/generate-docs reverse-engineer`. AI does the drafting; architect reviews. ~1 week. |
+| "Can we skip the docs and just rewrite?" | AI will generate inconsistent code without a shared spec. The rewrite will need its own rewrite. |
+| "What if we don't have an architect?" | The most senior dev who knows the current system plays that role. Their job is reviewing, not writing. |
+| "How long does the full migration take?" | Each vertical slice takes days to weeks. A typical backend migration is 6-12 slices. |
+| "What tools do we use?" | Claude Code + the skills (`/generate-docs`, `/tdd`, `/apply-change`, `/impact-brief`, `/check-conventions`) + the convention checker in CI + agentic-platform (if building agents). |
+| "Where do I look to see what 'done' looks like?" | The reference repo (or bundled workspace) — study its manifest, HLDs, LLDs, ADRs, CLAUDE.md, test registry. |
 
 ## Reference
 
@@ -256,4 +294,4 @@ The team should NOT copy the reference docs into their repo — the content is s
 - [Adoption guide](adoption-guide.md) — the brownfield sprint + gap assessment
 - [hitl-dev-platform README](https://github.com/Prasad-Apparaju/hitl-dev-platform) — the practitioner's guide
 - [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) — reusable agent infrastructure (if the target system includes agents)
-- [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration) — bundled migration workspace with all target docs, skills, and tools
+- [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration) — bundled migration workspace (Path A example)
