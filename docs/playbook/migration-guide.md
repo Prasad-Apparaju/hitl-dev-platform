@@ -37,10 +37,10 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 
 | What to do | Skill / tool to use | Reference to study first |
 |-----------|---------------------|-------------------------|
-| Generate manifest, HLDs, LLDs, ADRs from the current codebase | Run `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../skills/generate-docs/)) | Study the reference repo's `docs/system-manifest.yaml` to see the target format and level of detail |
-| Generate the system manifest standalone | Run `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../tools/generate-manifest/)) | Study the reference repo's manifest — especially `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
-| Populate the test registry from existing tests | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../templates/test-registry-template.yaml)) | Study the reference repo's test registry — how tests are tagged by domain, risk, origin |
-| Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" — each answer is an entry |
+| Generate manifest, HLDs, LLDs, ADRs from the current codebase | Run `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the reference repo's `docs/system-manifest.yaml` to see the target format and level of detail |
+| Generate the system manifest standalone | Run `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study the reference repo's manifest — especially `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
+| Populate the test registry from existing tests | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | Study the reference repo's test registry — how tests are tagged by domain, risk, origin |
+| Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" — each answer is an entry |
 
 The output answers: "What does the current system actually do, and why?"
 
@@ -48,7 +48,7 @@ The output answers: "What does the current system actually do, and why?"
 
 | What to do | Skill / tool to use |
 |-----------|---------------------|
-| Run all convention checks | `/check-conventions` ([skills/check-conventions.md](../skills/check-conventions.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
+| Run all convention checks | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
 | Bucket findings into tiers | Follow [adoption-guide.md §After the Sprint](adoption-guide.md) — Blocker / Near-term / Medium-term / Long-term |
 | Fix blockers before migration starts | AI generates the fix; architect reviews. See the gap assessment table in the adoption guide. |
 
@@ -56,9 +56,9 @@ The output answers: "What does the current system actually do, and why?"
 
 | What to do | Skill / tool to use | Reference to study |
 |-----------|---------------------|-------------------|
-| Create HLDs for the target system | `/generate-docs` in new-feature mode for each area ([skills/generate-docs/](../skills/generate-docs/)) — uses [templates/hld-template.md](../skills/generate-docs/templates/hld-template.md) | Reference repo's `docs/02-design/technical/hld/` — especially `system.md`, `agents.md`, `data.md` |
-| Create LLDs for each target component | `/generate-docs` phase 2 — uses [templates/lld-component-template.md](../skills/generate-docs/templates/lld-component-template.md) | Reference repo's `docs/02-design/technical/lld/` — especially `agents/framework.md` for the level of precision needed |
-| Document each decision that differs from current | Use [templates/adr-template.md](../templates/adr-template.md) | Reference repo's `docs/02-design/technical/adrs/` — 55 decisions show the format and depth |
+| Create HLDs for the target system | `/generate-docs` in new-feature mode for each area ([skills/generate-docs/](../../skills/generate-docs/)) — uses [templates/hld-template.md](../../skills/generate-docs/templates/hld-template.md) | Reference repo's `docs/02-design/technical/hld/` — especially `system.md`, `agents.md`, `data.md` |
+| Create LLDs for each target component | `/generate-docs` phase 2 — uses [templates/lld-component-template.md](../../skills/generate-docs/templates/lld-component-template.md) | Reference repo's `docs/02-design/technical/lld/` — especially `agents/framework.md` for the level of precision needed |
+| Document each decision that differs from current | Use [templates/adr-template.md](../../templates/adr-template.md) | Reference repo's `docs/02-design/technical/adrs/` — 55 decisions show the format and depth |
 | Create migration mapping table | Manual — AI can draft from the two manifests (current vs target) | Reference repo's `docs/05-migration/` — data-model-mapping, api-contract-mapping, architecture |
 | Set up the target agent infrastructure (if agentic) | Install [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) (`pip install agentic-platform`) | Reference repo's agent implementations + the [minimal agent example](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/examples/minimal_agent) |
 | Extract JS agent prompts into skill files | Create `skills/<agent>/system-prompt.md` for each agent — see [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) | Reference repo's `skills/` directory structure |
@@ -75,13 +75,13 @@ Each slice follows the full workflow. The skills that drive each slice:
 
 | Workflow step | Skill / tool | What it produces |
 |--------------|-------------|-----------------|
-| Create issue | Use [templates/issue-template.md](../templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
-| Impact analysis | `/apply-change` ([skills/apply-change.md](../skills/apply-change.md)) | Affected components in BOTH current and target system |
-| TDD — generate tests, human review, improve LLD | `/tdd` ([skills/tdd.md](../skills/tdd.md)) | Tests from the target LLD + manifest contracts. Tests registered in test registry. |
+| Create issue | Use [templates/issue-template.md](../../templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
+| Impact analysis | `/apply-change` ([skills/apply-change.md](../../skills/apply-change.md)) | Affected components in BOTH current and target system |
+| TDD — generate tests, human review, improve LLD | `/tdd` ([skills/tdd.md](../../skills/tdd.md)) | Tests from the target LLD + manifest contracts. Tests registered in test registry. |
 | Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Python code using agentic-platform infrastructure (if agentic) |
 | Code review | Two rounds — AI reviews against LLD | Structure (R1) then behavior (R2) |
-| Downstream impact brief | `/impact-brief` ([skills/impact-brief.md](../skills/impact-brief.md)) | 5-section brief from PR diff + manifest + incident registry |
-| Convention check before PR | `/check-conventions` ([skills/check-conventions.md](../skills/check-conventions.md)) | Violations caught before CI |
+| Downstream impact brief | `/impact-brief` ([skills/impact-brief.md](../../skills/impact-brief.md)) | 5-section brief from PR diff + manifest + incident registry |
+| Convention check before PR | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) | Violations caught before CI |
 
 ### Step 7: Run old and new in parallel
 
