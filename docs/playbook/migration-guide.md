@@ -145,6 +145,62 @@ Once all slices are migrated and stable:
 | "How long does the full migration take?" | Depends on system size. Each vertical slice takes days to weeks. A typical backend migration is 6-12 slices. |
 | "What tools do we use?" | Claude Code for each developer. GitHub for everything. The skills and convention checker from this repo. |
 
+## Language + framework migration (e.g., JavaScript → Python)
+
+When migrating across languages (not just refactoring within the same language), additional steps are needed:
+
+### API contract preservation
+
+The existing frontend expects specific API shapes. Before writing any backend code:
+
+1. **Extract the API contract** from the current system — every endpoint, request shape, response shape, status codes, error format. AI can generate this from the existing route handlers.
+2. **Write contract tests** against the current backend — these become the acceptance criteria for the new backend. The new Python API must pass the same contract tests.
+3. **Decide: same contract or new contract?**
+   - **Same contract** — frontend doesn't change. New backend implements the existing API exactly. Simplest migration path.
+   - **New contract** — frontend adapts. Requires a v1-compat shim in the new backend during migration (serves old shape, delegates to new internals) OR frontend changes in parallel.
+
+Document this decision as an ADR.
+
+### Data migration
+
+If the database changes (e.g., MongoDB → PostgreSQL):
+
+1. **Map the data model** — current schema → target schema, field by field
+2. **Write migration scripts** — AI generates from the mapping. Test against a copy of production data.
+3. **Plan the cutover** — can you run dual-write during migration? Or is it a single-cutover with downtime?
+4. **Verify data integrity** — row counts, checksums, referential integrity checks after migration
+
+### Agent behavior verification (for agentic systems)
+
+When migrating agents from one language/framework to another, the hardest part is verifying that the new agents behave the same as the old ones:
+
+1. **Capture golden outputs** from the current JS agents — run them against a fixed set of inputs, record the outputs. These become the behavioral baseline.
+2. **Build the new Python agents** using the [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) infrastructure (BaseAgent, MutatingTool, AgentEvaluator, etc.)
+3. **Run the same inputs through the new agents** — compare outputs against the golden baseline. Differences are either bugs (fix) or intentional improvements (document as ADRs).
+4. **Migrate prompts to skill files** — if the JS agents have prompts embedded as string literals in code, extract them into versioned `skills/<agent>/system-prompt.md` files. This is the right time to do it — the prompts are being touched anyway.
+
+### Frontend preservation
+
+If keeping the existing UI:
+
+1. **The frontend points to a single API base URL** — during migration, this URL routes to either the old or new backend per endpoint (feature-flag routing or path-based routing via a reverse proxy)
+2. **Auth must be compatible** — if switching from one JWT implementation to another, the frontend's token handling must work with both during the transition
+3. **Test the frontend against the new backend** — run the existing E2E tests (Playwright, Cypress) against the new backend. Every test that passes against the old backend must also pass against the new one.
+
+### Dependency mapping
+
+| JavaScript | Python equivalent | Notes |
+|-----------|------------------|-------|
+| Express / NestJS | FastAPI | Route structure, middleware, DI patterns differ |
+| Prisma / Mongoose | SQLAlchemy | ORM patterns differ; model definitions need rewriting |
+| Jest | pytest + pytest-asyncio | Test structure is similar; async patterns differ |
+| LangChain.js | LangGraph (Python) | Agent framework; use agentic-platform's BaseAgent |
+| npm packages | pip packages | Map each dependency; some have no Python equivalent |
+
+AI generates the bulk of this mapping. The architect verifies the equivalences are correct.
+
+---
+
 ## Using a reference implementation
 
 If someone has already done this migration (or a similar one), their repo is the most valuable asset the team has. It shows what "done" looks like at every step — not in theory, but with real code and real docs.
