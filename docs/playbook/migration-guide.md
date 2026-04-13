@@ -54,36 +54,68 @@ The output answers: "What does the current system actually do, and why?"
 
 ### Step 4: Adopt the target architecture
 
-If the target architecture already exists as a reference implementation (another repo with HLDs, LLDs, ADRs, system manifest, and working code), **do not design from scratch** — adopt it as the spec. The reference repo's architecture IS the target.
+The target architecture already exists — it was built and proven during a prior migration of the same system. **Do not design from scratch.** Use these docs as your spec.
 
-| What to do | How | What you get |
-|-----------|-----|-------------|
-| **Copy the target HLDs** into your repo | Copy `docs/02-design/technical/hld/` from the reference repo. Adapt domain-specific content (entity names, endpoints) but keep the architecture decisions. | The architecture is decided — no design debates needed |
-| **Copy the target LLDs** | Copy `docs/02-design/technical/lld/`. Adapt component names to your codebase. The level of detail, the patterns, the conventions stay the same. | Each component has a precise spec AI can generate from |
-| **Copy the ADRs** | Copy `docs/02-design/technical/adrs/`. These are the decisions already made — the team follows them, not reinvents them. | 55+ decisions with rationale — no need to rediscover "why" |
-| **Copy the system manifest structure** | Copy the manifest YAML structure. Replace file paths and domain names with yours. Keep the facade API format, boundary entities, cross-cutting conventions. | Domain boundaries and conventions are consistent with the reference |
-| **Copy the CLAUDE.md conventions** | Copy the inline conventions from the reference CLAUDE.md. Adapt language-specific standards (if the reference is Python and you're also going to Python, keep them verbatim). | Every developer's AI session follows the same rules as the reference |
-| **Copy the migration docs** | Copy `docs/05-migration/` — data-model-mapping, api-contract-mapping, architecture. Adapt to your source system's specifics. | The migration mapping template is already proven |
-| **Install the agentic-platform** (if agentic) | `pip install agentic-platform` — [repo](https://github.com/Prasad-Apparaju/agentic-platform). Study the [minimal agent example](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/examples/minimal_agent). | BaseAgent, MutatingTool, resilience, routing, observability — ready to use |
-| **Extract prompts into skill files** | Create `skills/<agent>/system-prompt.md` for each agent — see [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) | Prompts are version-controlled, PM-editable, reviewable as PRs |
+**Target architecture docs** (from [styleflow repo](https://github.com/Prasad-Apparaju/styleflow)):
 
-**What transfers directly from the reference repo:**
+| What to use | Location | What it gives you |
+|-----------|----------|------------------|
+| **System architecture** | [hld/system.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/system.md) | Overall component topology, layers, deployment model |
+| **Agent architecture** | [hld/agents.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/agents.md) | Agent maturity levels, tool library, HITL, memory, eval |
+| **Data architecture** | [hld/data.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/data.md) | PostgreSQL + Qdrant, tenant isolation, RAG pipeline |
+| **AI inference layer** | [hld/ai-inference.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/ai-inference.md) | Model router, profiles, dual-mode (API + GPU) |
+| **Observability** | [hld/observability.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/observability.md) | Langfuse tracing, eval dashboards, SME review |
+| **Security** | [hld/security.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/security.md) | Auth, guardrails, lethal trifecta analysis |
+| **Infrastructure** | [hld/infrastructure.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/infrastructure.md) | K8s, ephemeral compute, IaC, leader election |
+| **All 14 HLDs** | [hld/index.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/hld/index.md) | Full index |
 
-| Copy it | Adapt it | Don't copy it |
-|---------|----------|--------------|
-| Architecture patterns (layers, boundaries, conventions) | Entity names, endpoint paths, domain-specific logic | The actual business logic (campaigns, publishing, etc.) |
-| ADRs (the decisions) | File paths in the manifest | Domain-specific tools (Instagram, SendGrid integrations) |
-| CLAUDE.md conventions | Coding standards (if changing language) | Test data, fixtures, seed scripts |
-| System manifest structure | Domain names, file lists | Domain-specific eval criteria, prompts |
-| Migration doc templates | The actual field-by-field mapping | — |
+**Target component designs:**
 
-**Create a migration mapping** from the reverse-engineered current system (Step 2) to the target architecture:
+| What to use | Location | What it gives you |
+|-----------|----------|------------------|
+| **Agent framework** | [lld/agents/framework.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/agents/framework.md) | BaseAgent pipeline, tool system, self-eval, memory, checkpointing — the spec AI generates from |
+| **Publishing tools** | [lld/agents/publishing.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/agents/publishing.md) | MutatingTool, idempotency, plan mode |
+| **All 33 LLDs** | [lld/index.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/index.md) | Full index covering models, controllers, services, agents, config, security |
+| **Package dependency graph** | [lld/packages.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/lld/packages.md) | Who depends on who |
 
-| Current (your system) | Target (reference architecture) | Strategy |
-|----------------------|--------------------------------|----------|
-| Each current component | The matching target component from the reference LLDs | Rewrite / translate / migrate data |
+**Target design decisions:**
 
-AI can draft this mapping by comparing the two manifests (current vs target). The architect reviews.
+| What to use | Location | What it gives you |
+|-----------|----------|------------------|
+| **55 architectural decisions** | [adrs/design-decisions.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/adrs/design-decisions.md) | Every decision with rationale — the team follows these, not reinvents them |
+| **8 resilience + agent ADRs** | [adrs/README.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/02-design/technical/adrs/README.md) | Retry policy, idempotency, leader election, brand isolation, DLQ, failure taxonomy, context compression, plan mode |
+
+**Migration docs that already exist for this exact migration:**
+
+| What to use | Location | What it gives you |
+|-----------|----------|------------------|
+| **Migration architecture** | [05-migration/architecture.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/architecture.md) | How the old system maps to the new — component by component |
+| **Data model mapping** | [05-migration/data-model-mapping.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/data-model-mapping.md) | Old schema → new schema, field by field |
+| **API contract mapping** | [05-migration/api-contract-mapping.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/api-contract-mapping.md) | Old endpoints → new endpoints, request/response shapes |
+| **Migration plan** | [05-migration/migration-plan.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/migration-plan.md) | Sequencing, dependencies, rollout strategy |
+| **Frontend reuse plan** | [05-migration/frontend-reuse.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/frontend-reuse.md) | What stays, what changes in the UI |
+| **Team responsibilities** | [05-migration/team-responsibilities.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/05-migration/team-responsibilities.md) | Who does what during the migration |
+
+**Other target specs:**
+
+| What to use | Location | What it gives you |
+|-----------|----------|------------------|
+| **System manifest** | [docs/system-manifest.yaml](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/system-manifest.yaml) | The target domain boundaries, facade APIs, conventions — copy the structure, adapt the names |
+| **CLAUDE.md** | [CLAUDE.md](https://github.com/Prasad-Apparaju/styleflow/blob/main/CLAUDE.md) | The target conventions — use as-is if going to the same Python/FastAPI stack |
+| **Convention checker** | [scripts/check_conventions.py](https://github.com/Prasad-Apparaju/styleflow/blob/main/scripts/check_conventions.py) | The target convention checks — copy and adapt |
+| **Agent infrastructure** | [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) | BaseAgent, MutatingTool, resilience, routing, observability — `pip install` and use |
+| **Agent example** | [minimal_agent](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/examples/minimal_agent) | Working agent showing every platform feature |
+
+**What the team actually has to do in Step 4:**
+
+1. Get read access to the [styleflow repo](https://github.com/Prasad-Apparaju/styleflow)
+2. Read the migration docs (`docs/05-migration/`) — this IS the migration plan for your codebase
+3. Read the HLDs — this IS the target architecture
+4. Read the LLDs for the components you're building first — this IS the spec AI generates from
+5. Copy the CLAUDE.md and system manifest structure into your repo
+6. Map your current components (from Step 2's reverse-engineering) to the target components using the migration docs as the template
+
+The architecture is decided. The migration path is documented. The infrastructure is packaged. The team's job is execution — follow the docs, run the skills, review AI output.
 
 ### Step 5: Sequence the migration into vertical slices
 
