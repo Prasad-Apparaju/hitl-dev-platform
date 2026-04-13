@@ -1,44 +1,80 @@
-# System Manifest — Greenfield Starter
-# Edit this file to match your project's domain structure.
+# System Manifest — Example (E-Commerce API)
+#
+# This is a worked example showing realistic manifest content for a
+# small e-commerce system. Replace with your project's actual domains.
+#
 # See templates/system-manifest.schema.yaml for field documentation.
+# See docs/patterns/idempotency-keys.md for the idempotency convention.
 
 version: "1.0"
-generated_at: "2026-01-01T00:00:00Z"
+generated_at: "2026-01-15T00:00:00Z"
 
 domains:
-  api:
-    purpose: "REST API endpoints"  # [human] — edit this
-    files:  # [auto] — list your source files
-      - app/controllers/health.py
-      - app/controllers/users.py
-      - app/schemas/users.py
-    lld: docs/lld/api.md
+  auth:
+    purpose: "User authentication, JWT token management, password reset"
+    files:
+      - app/controllers/auth.py
+      - app/services/auth.py
+      - app/models/user.py
+      - app/schemas/auth.py
+    lld: docs/02-design/technical/lld/controllers/auth.md
     tests:
-      - tests/test_health.py
-      - tests/test_users.py
+      - tests/test_auth.py
 
-    boundary_entities:  # [human]
-      UserResponse:
+    boundary_entities:
+      UserProfile:
         shape: |
           id: UUID
           email: str
+          display_name: str
+          role: enum(customer, admin)
           created_at: datetime
+        consumed_by: [orders, catalog-admin]
+      TokenPair:
+        shape: |
+          access_token: str (JWT, 15min expiry)
+          refresh_token: str (opaque, 7d expiry)
         consumed_by: [frontend]
 
-    facade_apis:  # [human]
-      create_user:
-        signature: "POST /users → UserResponse"
-        blurb: "Creates a new user. Validates email uniqueness. Returns 409 on duplicate."
+    facade_apis:
+      register:
+        signature: "POST /v1/auth/register → TokenPair"
+        blurb: "Creates a new user account. Validates email uniqueness. Returns JWT token pair."
         mutations:
           - "INSERT into users table"
+          - "Hash password with bcrypt"
         preconditions:
           - "Email must be valid format"
           - "Email must not already exist"
         error_modes:
           - "Duplicate email → 409 Conflict"
-          - "Invalid email format → 422 Unprocessable"
+          - "Invalid email → 422 Unprocessable"
+      login:
+        signature: "POST /v1/auth/login → TokenPair"
+        blurb: "Authenticates user by email + password. Returns JWT token pair."
+        mutations: []
+        preconditions:
+          - "Email must exist"
+          - "Password must match hash"
+        error_modes:
+          - "Invalid credentials → 401 Unauthorized"
+          - "Account locked → 403 Forbidden"
+      refresh:
+        signature: "POST /v1/auth/refresh → TokenPair"
+        blurb: "Exchanges a valid refresh token for a new token pair. Old refresh token is revoked."
+        mutations:
+          - "Revoke old refresh token"
+          - "Issue new refresh token"
+        preconditions:
+          - "Refresh token must be valid and not revoked"
+        error_modes:
+          - "Expired or revoked token → 401 Unauthorized"
 
-    events_emitted: []
+    events_emitted:
+      - name: user.registered
+        payload: "{ user_id: UUID, email: str }"
+      - name: user.logged_in
+        payload: "{ user_id: UUID, timestamp: datetime }"
     events_consumed: []
     depends_on: []
     conventions:
@@ -47,26 +83,204 @@ domains:
       - error-format
 
     last_changed:
-      date: "2026-01-01"
-      summary: "Initial scaffold"
+      date: "2026-01-15"
+      summary: "Initial auth domain setup"
+
+  catalog:
+    purpose: "Product catalog — CRUD, search, categorization"
+    files:
+      - app/controllers/products.py
+      - app/services/catalog.py
+      - app/models/product.py
+      - app/models/category.py
+      - app/schemas/products.py
+    lld: docs/02-design/technical/lld/services/catalog.md
+    tests:
+      - tests/test_catalog.py
+      - tests/test_products.py
+
+    boundary_entities:
+      Product:
+        shape: |
+          id: UUID
+          name: str
+          description: str
+          price_cents: int
+          currency: str (ISO 4217)
+          category_id: UUID
+          image_urls: list[str]
+          in_stock: bool
+          created_at: datetime
+        consumed_by: [orders, search, frontend]
+      Category:
+        shape: |
+          id: UUID
+          name: str
+          parent_id: UUID | null
+        consumed_by: [frontend, search]
+
+    facade_apis:
+      list_products:
+        signature: "GET /v1/products?category={id}&page={n} → Page[Product]"
+        blurb: "Paginated product listing with optional category filter. 20 items per page."
+        mutations: []
+        preconditions: []
+        error_modes:
+          - "Invalid category_id → 404"
+      get_product:
+        signature: "GET /v1/products/{id} → Product"
+        blurb: "Single product detail."
+        mutations: []
+        preconditions: []
+        error_modes:
+          - "Product not found → 404"
+      create_product:
+        signature: "POST /v1/products → Product (admin only)"
+        blurb: "Creates a new product. Validates price > 0, category exists."
+        mutations:
+          - "INSERT into products table"
+        preconditions:
+          - "Authenticated as admin"
+          - "Category must exist"
+          - "Price must be > 0"
+        error_modes:
+          - "Not admin → 403"
+          - "Invalid category → 422"
+
+    events_emitted:
+      - name: product.created
+        payload: "{ product_id: UUID, category_id: UUID }"
+      - name: product.updated
+        payload: "{ product_id: UUID, changed_fields: list[str] }"
+    events_consumed: []
+    depends_on: []
+    conventions:
+      - input-validation
+      - parameterized-queries
+      - error-format
+      - soft-delete
+
+    last_changed:
+      date: "2026-01-15"
+      summary: "Initial catalog domain"
+
+  orders:
+    purpose: "Order creation, payment processing, fulfillment tracking"
+    files:
+      - app/controllers/orders.py
+      - app/services/orders.py
+      - app/services/payment.py
+      - app/models/order.py
+      - app/schemas/orders.py
+    lld: docs/02-design/technical/lld/services/orders.md
+    tests:
+      - tests/test_orders.py
+      - tests/test_payment.py
+
+    boundary_entities:
+      Order:
+        shape: |
+          id: UUID
+          user_id: UUID
+          items: list[OrderItem]
+          total_cents: int
+          status: enum(pending, paid, shipped, delivered, cancelled)
+          created_at: datetime
+        consumed_by: [frontend, notifications]
+      OrderItem:
+        shape: |
+          product_id: UUID
+          quantity: int
+          unit_price_cents: int
+        consumed_by: []
+
+    facade_apis:
+      create_order:
+        signature: "POST /v1/orders → Order"
+        blurb: "Creates an order from the user's cart. Validates stock availability. Initiates payment."
+        mutations:
+          - "INSERT into orders table"
+          - "Decrement product stock"
+          - "Charge payment via Stripe API"
+        preconditions:
+          - "Authenticated"
+          - "All products in stock"
+          - "Valid payment method on file"
+        error_modes:
+          - "Product out of stock → 409"
+          - "Payment declined → 402"
+          - "Invalid cart → 422"
+      get_order:
+        signature: "GET /v1/orders/{id} → Order"
+        blurb: "Order detail. Users see only their own orders; admins see any."
+        mutations: []
+        preconditions:
+          - "Authenticated"
+          - "Order belongs to user (or user is admin)"
+        error_modes:
+          - "Not found or not authorized → 404"
+
+    events_emitted:
+      - name: order.created
+        payload: "{ order_id: UUID, user_id: UUID, total_cents: int }"
+      - name: order.paid
+        payload: "{ order_id: UUID, payment_id: str }"
+      - name: order.shipped
+        payload: "{ order_id: UUID, tracking_number: str }"
+    events_consumed:
+      - name: product.updated
+        from: catalog
+        action: "Re-validate pending orders if stock changed"
+    depends_on: [auth, catalog]
+    conventions:
+      - input-validation
+      - parameterized-queries
+      - error-format
+      - idempotency-keys
+
+    last_changed:
+      date: "2026-01-15"
+      summary: "Initial orders domain"
 
 cross_cutting:
   - name: input-validation
-    rule: "All API endpoints must validate input with Pydantic schemas"
-    affected_domains: [api]
-    enforcement: "Code review + convention checker"
+    rule: "All API endpoints must validate input with Pydantic schemas. Raw request bodies must never reach business logic unvalidated."
+    affected_domains: [auth, catalog, orders]
+    enforcement: "Convention checker (subclass_method_check on route handlers)"
 
   - name: parameterized-queries
-    rule: "All database queries must use parameterized queries"
-    affected_domains: [api]
+    rule: "All database queries must use parameterized queries. No string interpolation in SQL."
+    affected_domains: [auth, catalog, orders]
     enforcement: "Convention checker (pattern_check for f-strings in execute calls)"
 
   - name: error-format
-    rule: "Error responses must follow RFC 7807"
-    affected_domains: [api]
+    rule: "Error responses must follow RFC 7807 problem detail format: type, title, status, detail."
+    affected_domains: [auth, catalog, orders]
     enforcement: "Output middleware + code review"
 
+  - name: soft-delete
+    rule: "Customer-facing entities use soft-delete with a 30-day grace period before hard deletion."
+    affected_domains: [catalog, orders]
+    enforcement: "Convention checker (file_contains for deleted_at column in models)"
+
+  - name: idempotency-keys
+    rule: "All external API calls that produce side effects (payment charges, email sends) require a stable idempotency_key derived from business state, not runtime state."
+    affected_domains: [orders]
+    enforcement: "Convention checker (subclass_method_check on MutatingTool)"
+
 interaction_matrix:
-  "frontend -> api":
-    description: "Browser calls REST API"
-    entity_crossing: "JSON request/response bodies"
+  "frontend -> auth":
+    description: "Login, register, token refresh"
+    entity_crossing: "TokenPair, UserProfile"
+  "frontend -> catalog":
+    description: "Browse products, categories"
+    entity_crossing: "Product, Category"
+  "frontend -> orders":
+    description: "Place and track orders"
+    entity_crossing: "Order"
+  "orders -> catalog":
+    description: "Validate stock, get product prices"
+    entity_crossing: "Product (read-only)"
+  "orders -> auth":
+    description: "Validate user identity for order ownership"
+    entity_crossing: "UserProfile (read-only)"

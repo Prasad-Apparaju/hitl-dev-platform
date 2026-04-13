@@ -29,11 +29,26 @@ Before modifying any code, read `docs/system-manifest.yaml`:
 
 ## Cross-Cutting Conventions
 
-<!-- ═══ PROJECT-SPECIFIC ═══
-     Replace the examples below with your project's actual conventions.
-     Each convention should be specific and enforceable.
-     Extract the key rules from your ADRs and put them here so every
-     Claude instance sees them without needing to read the full ADR.
+<!-- ═══ PROJECT-SPECIFIC — HOW TO FILL THIS IN ═══
+
+     Step 1: Read your ADRs (docs/02-design/technical/adrs/)
+     Step 2: For each accepted ADR, extract the ONE rule that all code must follow
+     Step 3: Write it here as 2-3 sentences: what the rule is, where it applies, how it's enforced
+     Step 4: Keep this section in sync — when an ADR changes, update the convention here
+
+     Good conventions are:
+     - Specific: "All MutatingTool subclasses require an idempotency_key parameter"
+     - Enforceable: can be checked by code review, linter, or convention checker
+     - Scoped: says which code it applies to (all code, specific domain, specific base class)
+
+     Bad conventions are:
+     - Vague: "Write clean code" (not enforceable)
+     - Redundant with the framework: "Use async/await" (FastAPI already requires this)
+     - Too detailed: copy-paste the full ADR (defeats the purpose — keep it to the rule)
+
+     Aim for 5-15 conventions. Fewer means some ADRs aren't enforced. More means
+     developers stop reading them. The system manifest's cross_cutting section should
+     mirror this list.
 -->
 
 {{#conventions}}
@@ -44,13 +59,19 @@ Before modifying any code, read `docs/system-manifest.yaml`:
 <!-- Example conventions (replace with your own):
 
 ### 1. Input Validation
-All API endpoints must validate input with Pydantic schemas. Raw request bodies must never reach business logic unvalidated.
+All API endpoints must validate input with Pydantic schemas. Raw request bodies must never reach business logic unvalidated. Enforced by convention checker (subclass_method_check on route handlers).
 
 ### 2. Parameterized Queries
-All database queries must use parameterized queries. No string interpolation in SQL. Enforced by code review + SQL linter.
+All database queries must use parameterized queries. No string interpolation in SQL. Enforced by convention checker (pattern_check for f-strings in execute calls).
 
 ### 3. Error Response Format
-Error responses must follow RFC 7807 problem detail format. Every error includes: type, title, status, detail. Enforced by output middleware.
+Error responses must follow RFC 7807 problem detail format. Every error includes: type, title, status, detail. Enforced by output middleware + code review.
+
+### 4. Idempotency Keys (for systems with external side effects)
+All tools that call external APIs must accept a stable idempotency_key derived from business state (e.g., campaign_id:post_index:channel), not runtime state. The tool raises ValueError if the key is missing. See docs/patterns/idempotency-keys.md.
+
+### 5. Tenant Isolation (for multi-tenant systems)
+Every database query and vector search must filter by tenant_id. No cross-tenant data leakage. Enforced by convention checker (pattern_check on query methods).
 -->
 
 ## Coding Standards

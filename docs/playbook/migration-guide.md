@@ -140,7 +140,7 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 
 | What to do | Skill / tool | Reference to study first |
 |-----------|-------------|-------------------------|
-| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [styleflow manifest](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/system-manifest.yaml) to see the target format |
+| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [example manifest](../../examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
 | Populate the test registry | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
 | Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |

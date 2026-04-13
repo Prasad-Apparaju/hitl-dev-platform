@@ -276,7 +276,7 @@ If the change introduces a new technical capability, draft a training plan along
 
 When in doubt, write one — training plans are cheap. When the answer is no, state it explicitly in the chat (`no new capability — training plan not required`) so the decision is visible.
 
-**Location:** `docs/03-engineering/training/<capability-name>.md` — match the existing [`agent-architecture.md`](https://github.com/Prasad-Apparaju/styleflow/blob/main/docs/03-engineering/training/agent-architecture.md) template.
+**Location:** `docs/03-engineering/training/<capability-name>.md` — follow the structure in the [training plan template](templates/training-plan-template.md) and the [worked example](examples/greenfield/docs/03-engineering/training/agent-architecture-example.md).
 
 **Shape:**
 
