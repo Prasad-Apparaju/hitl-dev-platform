@@ -280,7 +280,27 @@ graph TB
 
 Specialists are stateless. They re-read their domain files each activation. This is simpler and more reproducible than maintaining warm state, and the cost is acceptable — reading a few source files is cheap compared to re-reading the whole codebase.
 
-### 3.5 Facade-Level Interop
+### 3.5 Prompt Management (for agentic systems)
+
+For systems that include AI agents, the agent's prompts are design artifacts — not string literals buried in code. A different system prompt produces different agent behavior, so prompt changes go through the same review process as code changes.
+
+Prompts live in git-managed skill files alongside the agent they belong to:
+
+```
+skills/
+  campaign-generation/
+    system-prompt.md        # The agent's personality and instructions
+    guardrails.md           # Input/output validation rules
+    eval-criteria.yaml      # Quality dimensions + weights + pass threshold
+    tools.yaml              # Which tools this agent can use
+    examples/               # Few-shot examples for the prompt
+```
+
+The skill loader reads these at agent init time. Changes are PRs — reviewed, version-controlled, rollback-able. PMs can iterate on prompts without engineering involvement. A/B testing becomes "change the prompt file, run eval, compare scores."
+
+See the [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) in the agentic-platform repo for the full implementation guide.
+
+### 3.6 Facade-Level Interop
 
 The facade is how disjoint agents know about each other. When the publishing specialist needs to interact with the agent framework, it does not read the framework's source code. It reads a blurb like:
 
