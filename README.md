@@ -641,6 +641,7 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/tdd` | [skills/tdd.md](skills/tdd.md) | TDD-as-design loop: generate tests → human review → improve LLD → RED → GREEN → refactor |
 | Skill | `/impact-brief` | [skills/impact-brief.md](skills/impact-brief.md) | Generate 5-section downstream impact brief from PR diff + manifest + incident registry |
 | Skill | `/check-conventions` | [skills/check-conventions.md](skills/check-conventions.md) | Run convention checker in-chat, offer to fix violations |
+| Skill | `/conclude` | [skills/conclude.md](skills/conclude.md) | Turn a Slack design-room thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Tool | Manifest generator | [tools/generate-manifest/](tools/generate-manifest/) | Auto-generate system-manifest.yaml from codebase via AST scanning |
 | Infra | Agent platform | [agentic-platform repo](https://github.com/Prasad-Apparaju/agentic-platform) | BaseAgent, tools, resilience, routing, observability, 7 patterns |
 
