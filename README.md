@@ -630,7 +630,7 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/apply-change` | [skills/apply-change.md](skills/apply-change.md) | Impact analysis — affected components, APIs, docs, tests |
 | Skill | `/generate-docs` | [skills/generate-docs/](skills/generate-docs/) | HLD/LLD/ADRs from feature description (new) or from existing code (reverse-engineer) |
 | Tool | Convention checker | [tools/check-conventions/](tools/check-conventions/) | Pluggable YAML-driven checker — AST-based, fails CI on violations |
-| Tool | Mermaid fixer | [tools/fix-mermaid/](tools/fix-mermaid/) | Removes `<br/>` from Mermaid blocks for Obsidian compatibility |
+| Script | Mermaid fixer | [scripts/fix_mermaid_br_tags.py](scripts/fix_mermaid_br_tags.py) | Removes `<br/>` from Mermaid blocks for Obsidian compatibility |
 | Tool | PDF renderer | [tools/render-pdf/](tools/render-pdf/) | Markdown to PDF with Mermaid diagram rendering |
 | Template | PRD | [templates/prd-template.md](templates/prd-template.md) | Product requirements with inline guidance on writing for AI |
 | Template | CLAUDE.md | [templates/CLAUDE.md.template](templates/CLAUDE.md.template) | Project CLAUDE.md with placeholder sections for conventions |

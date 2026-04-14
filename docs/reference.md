@@ -402,7 +402,7 @@ Feature work proceeds when blockers are zero.
 | `/check-conventions` | [skills/check-conventions.md](../skills/check-conventions.md) | Convention checker in-chat |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention checker | [tools/check-conventions/](../tools/check-conventions/) | YAML-driven, AST-based, CI-ready |
-| Mermaid fixer | [tools/fix-mermaid/](../tools/fix-mermaid/) | Remove `<br/>` for Obsidian |
+| Mermaid fixer | [scripts/fix_mermaid_br_tags.py](../scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
 
 ---
 
