@@ -2,7 +2,16 @@ name: Convention Check
 on: [pull_request]
 
 jobs:
-  check:
+  semgrep:
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run project convention rules
+        run: semgrep scan --config .semgrep/ --error
+
+  manifest-drift:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -10,5 +19,15 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pyyaml
-      - name: Run convention checks
-        run: python tools/check-conventions/runner.py --config convention-checks.yaml --verbose
+      - name: Check manifest drift
+        run: python scripts/check_manifest_drift.py
+
+  mermaid-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Mermaid br tags
+        run: find docs/ -name "*.md" -exec python scripts/fix_mermaid_br_tags.py --check {} +

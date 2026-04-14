@@ -6,7 +6,9 @@ Obsidian's Mermaid renderer treats <br/> as unsupported HTML, showing
 a space inside ```mermaid blocks only — regular HTML <br/> outside
 mermaid blocks is left untouched.
 
-Usage: python3 fix_mermaid_br.py <file1.md> [file2.md ...]
+Usage:
+    python3 fix_mermaid_br_tags.py <file1.md> [file2.md ...]         # fix in place
+    python3 fix_mermaid_br_tags.py --check <file1.md> [file2.md ...] # report only, exit 1 if found
 """
 
 import re
@@ -29,12 +31,16 @@ def fix_mermaid_br_tags(content: str) -> str:
 
 
 def main():
-    files = sys.argv[1:]
+    check_only = "--check" in sys.argv
+    files = [f for f in sys.argv[1:] if f != "--check"]
+
     if not files:
-        print("Usage: fix_mermaid_br.py <file1.md> [file2.md ...]")
+        print("Usage: fix_mermaid_br_tags.py [--check] <file1.md> [file2.md ...]")
         sys.exit(1)
 
+    violations = 0
     total_fixed = 0
+
     for filepath in files:
         with open(filepath, 'r') as f:
             original = f.read()
@@ -42,17 +48,27 @@ def main():
         fixed = fix_mermaid_br_tags(original)
 
         if fixed != original:
-            with open(filepath, 'w') as f:
-                f.write(fixed)
-            # Count how many replacements
             count = original.count('<br/>') + original.count('<br>') + original.count('<br />')
             fixed_count = fixed.count('<br/>') + fixed.count('<br>') + fixed.count('<br />')
             removed = count - fixed_count
-            print(f"  Fixed {filepath} ({removed} <br/> tags removed from mermaid blocks)")
-            total_fixed += 1
-        # else: file had <br/> only outside mermaid blocks, skip silently
 
-    print(f"\nDone. {total_fixed} files modified.")
+            if check_only:
+                print(f"  {filepath}: {removed} <br/> tags in mermaid blocks")
+                violations += 1
+            else:
+                with open(filepath, 'w') as f:
+                    f.write(fixed)
+                print(f"  Fixed {filepath} ({removed} <br/> tags removed from mermaid blocks)")
+                total_fixed += 1
+
+    if check_only:
+        if violations:
+            print(f"\n{violations} files have <br/> tags in mermaid blocks. Run without --check to fix.")
+            sys.exit(1)
+        else:
+            print("No <br/> tags in mermaid blocks.")
+    else:
+        print(f"\nDone. {total_fixed} files modified.")
 
 
 if __name__ == '__main__':

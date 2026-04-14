@@ -1,0 +1,16 @@
+rules:
+  - id: qdrant-must-filter-brand-id
+    message: >
+      Qdrant queries must filter by brand_id for tenant isolation.
+      Every search call should include a brand_id filter condition.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $CLIENT.search(...)
+      - pattern-not: $CLIENT.search(..., query_filter=..., ...)
+    paths:
+      include:
+        - "V2/app/services/rag*.py"
+    metadata:
+      category: security
+      confidence: MEDIUM

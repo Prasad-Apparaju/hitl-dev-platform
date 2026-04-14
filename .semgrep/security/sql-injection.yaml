@@ -1,0 +1,30 @@
+rules:
+  - id: no-fstring-in-sql-execute
+    message: >
+      Do not use f-strings or .format() in SQL execute() calls.
+      Use parameterized queries: cursor.execute("SELECT ... WHERE id = %s", (id,))
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: $CURSOR.execute(f"...", ...)
+      - pattern: $CURSOR.execute("...".format(...), ...)
+      - pattern: $CURSOR.execute("..." + $X, ...)
+      - pattern: $SESSION.execute(f"...", ...)
+      - pattern: $SESSION.execute(text(f"..."), ...)
+    metadata:
+      category: security
+      confidence: HIGH
+
+  - id: no-fstring-in-sqlalchemy-text
+    message: >
+      Never pass raw f-strings to SQLAlchemy text().
+      Use bound parameters: text("SELECT * WHERE id = :id").bindparams(id=val)
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: text(f"...")
+      - pattern: text("...".format(...))
+      - pattern: text("..." + ...)
+    metadata:
+      category: security
+      confidence: HIGH

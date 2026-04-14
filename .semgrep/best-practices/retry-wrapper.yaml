@@ -1,0 +1,23 @@
+rules:
+  - id: external-calls-must-use-retry-wrapper
+    message: >
+      External API calls should be wrapped in retry_external_call()
+      for transient failure handling with exponential backoff.
+      See the transient failure retry policy convention.
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern: await $CLIENT.$METHOD(...)
+      - pattern-not-inside: retry_external_call(...)
+      - metavariable-regex:
+          metavariable: $CLIENT
+          regex: "(httpx_client|http_client|external_client)"
+    paths:
+      include:
+        - "V2/app/services/**"
+        - "V2/app/agents/**"
+      exclude:
+        - "V2/app/services/resilience.py"
+    metadata:
+      category: best-practice
+      confidence: MEDIUM

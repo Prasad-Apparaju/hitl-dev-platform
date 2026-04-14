@@ -233,27 +233,40 @@ The manifest scopes AI context per domain. Each domain entry contains:
 
 ---
 
-## Convention checker — quick reference
+## Convention checking — quick reference
+
+Uses [semgrep](https://semgrep.dev/) for code rules and standalone scripts for manifest/Mermaid checks.
 
 ```bash
-# Run all checks
-python tools/check-conventions/runner.py --config convention-checks.yaml --verbose
+# Run all semgrep rules
+semgrep scan --config .semgrep/ --error
 
-# Run one check
-python tools/check-conventions/runner.py --config convention-checks.yaml --only manifest_drift
+# Check manifest drift
+python scripts/check_manifest_drift.py
+
+# Check Mermaid br tags
+find docs/ -name "*.md" -exec python scripts/fix_mermaid_br_tags.py --check {} +
+
+# Run all via pre-commit
+pre-commit run --all-files
 ```
 
-Check types available:
+Semgrep rules in `.semgrep/`:
 
-| Type | What it verifies |
-|------|-----------------|
-| `subclass_method_check` | Subclasses of X implement methods Y |
-| `import_check` | Files that import A also import B |
-| `pattern_check` | Files with pattern X also have pattern Y (or don't have forbidden Z) |
-| `file_contains` | File X contains text Y |
-| `manifest_drift` | Files listed in manifest exist on disk |
-| `mermaid_br_tags` | No `<br/>` in Mermaid code blocks |
-| `inline_comments` | Files >50 lines have >5% comment density (warning) |
+| Category | Rules |
+|----------|-------|
+| `security/` | SQL injection (f-strings in execute/text calls) |
+| `correctness/` | Subclass contracts (MutatingTool must implement _describe_plan) |
+| `best-practices/` | Pydantic validation, retry wrappers, tenant isolation |
+
+Standalone checks:
+
+| Script | What it verifies |
+|--------|-----------------|
+| `scripts/check_manifest_drift.py` | Files listed in manifest exist on disk |
+| `scripts/fix_mermaid_br_tags.py --check` | No `<br/>` in Mermaid code blocks |
+
+To add a new rule, create a YAML file in the appropriate `.semgrep/` subdirectory. See [semgrep docs](https://semgrep.dev/docs/writing-rules/overview/) for the rule format.
 
 ---
 
@@ -401,7 +414,7 @@ Feature work proceeds when blockers are zero.
 | `/impact-brief` | [skills/impact-brief.md](../skills/impact-brief.md) | 5-section downstream impact brief |
 | `/check-conventions` | [skills/check-conventions.md](../skills/check-conventions.md) | Convention checker in-chat |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
-| Convention checker | [tools/check-conventions/](../tools/check-conventions/) | YAML-driven, AST-based, CI-ready |
+| Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
 | Mermaid fixer | [scripts/fix_mermaid_br_tags.py](../scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
 
 ---

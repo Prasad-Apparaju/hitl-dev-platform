@@ -1,0 +1,48 @@
+rules:
+  - id: mutating-tool-must-implement-describe-plan
+    message: >
+      All MutatingTool subclasses must implement _describe_plan().
+      This method returns a dry-run preview for PLAN mode.
+      See docs/patterns/idempotency-keys.md.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: |
+          class $CLASS(MutatingTool):
+              ...
+      - pattern-not: |
+          class $CLASS(MutatingTool):
+              ...
+              def _describe_plan(self, ...):
+                  ...
+    paths:
+      include:
+        - "V2/app/**"
+    metadata:
+      category: correctness
+      confidence: HIGH
+
+  - id: mutating-tool-must-have-idempotency-key
+    message: >
+      MutatingTool.execute() must accept an idempotency_key parameter
+      derived from business state, not runtime state.
+      See docs/patterns/idempotency-keys.md.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: |
+          class $CLASS(MutatingTool):
+              ...
+              def execute(self, ...):
+                  ...
+      - pattern-not: |
+          class $CLASS(MutatingTool):
+              ...
+              def execute(self, ..., idempotency_key=..., ...):
+                  ...
+    paths:
+      include:
+        - "V2/app/**"
+    metadata:
+      category: correctness
+      confidence: HIGH

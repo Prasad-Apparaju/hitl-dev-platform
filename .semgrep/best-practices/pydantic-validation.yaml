@@ -1,0 +1,22 @@
+rules:
+  - id: controller-must-use-pydantic-models
+    message: >
+      API endpoints should use Pydantic request models for input validation.
+      Raw request bodies must never reach business logic unvalidated.
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern: |
+          @$ROUTER.$METHOD("...")
+          async def $FUNC(..., $REQ: Request, ...):
+              ...
+      - pattern-not: |
+          @$ROUTER.$METHOD("...")
+          async def $FUNC(..., $BODY: $MODEL, ...):
+              ...
+    paths:
+      include:
+        - "V2/app/controllers/**"
+    metadata:
+      category: best-practice
+      confidence: MEDIUM

@@ -1,0 +1,31 @@
+repos:
+  # Semgrep — runs custom rules from .semgrep/
+  - repo: https://github.com/semgrep/semgrep
+    rev: v1.110.0
+    hooks:
+      - id: semgrep
+        args:
+          - --config
+          - .semgrep/
+          - --error
+          - --skip-unknown-extensions
+        types: [python]
+
+  # Mermaid br tag check — flags <br/> inside mermaid blocks
+  - repo: local
+    hooks:
+      - id: mermaid-br-tags
+        name: Check Mermaid br tags
+        entry: python scripts/fix_mermaid_br_tags.py --check
+        language: python
+        types: [markdown]
+
+  # Manifest drift — verifies manifest matches codebase
+  - repo: local
+    hooks:
+      - id: manifest-drift
+        name: Check manifest drift
+        entry: python scripts/check_manifest_drift.py
+        language: python
+        types_or: [python, yaml]
+        additional_dependencies: [pyyaml]

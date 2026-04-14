@@ -1,0 +1,6 @@
+tests/fixtures/
+*.min.js
+node_modules/
+.venv/
+__pycache__/
+V1/
