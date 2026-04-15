@@ -439,6 +439,7 @@ Feature work proceeds when blockers are zero.
 | Decision catalog | [templates/consolidated-decisions-template.md](../templates/consolidated-decisions-template.md) | Consolidated decision reference |
 | Test registry | [templates/test-registry-template.yaml](../templates/test-registry-template.yaml) | Setting up test tracking |
 | Incident registry | [templates/incident-registry-template.yaml](../templates/incident-registry-template.yaml) | Setting up incident tracking |
+| Deployment manifest | [templates/deployment-manifest-template.yaml](../templates/deployment-manifest-template.yaml) | Service inventory with health checks |
 
 ---
 

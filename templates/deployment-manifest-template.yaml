@@ -1,0 +1,210 @@
+# Deployment Manifest Template
+#
+# Defines every service the system requires, its health check, and
+# expected state. Use this to verify any deployment is complete.
+#
+# How to use:
+#   1. Copy this file to docs/04-operations/deployment-manifest.yaml
+#   2. Fill in your services, ports, health checks
+#   3. After each deployment, run the verification commands
+#   4. All required services must pass before declaring deployment healthy
+#
+# Consumed at:
+#   - After every deployment (verify all services are up)
+#   - During incident response (which services are expected to be running?)
+#   - Onboarding (new team members understand the full stack)
+#   - CI/CD (automated post-deploy health check)
+
+deployment:
+  name: "[Project Name]"
+  version: "1.0"
+  environments:
+    - name: local
+      host: localhost
+      type: local
+    - name: dev
+      host: "[dev host IP or domain]"
+      type: "[local | vm | gcp | aws | k8s]"
+    - name: production
+      host: "[prod host or domain]"
+      type: "[gcp | aws | k8s]"
+
+services:
+
+  # ═══ Application Layer ═══
+  #
+  # The services your team built. Required for the product to work.
+
+  - name: "[project]-api"
+    description: "[What this service does — 1 sentence]"
+    image: "[project]-api:latest
+    port: 8000
+    required: true
+    healthcheck:
+      endpoint: /healthz       # or /health, /api/health
+      method: GET
+      expected_status: 200
+      expected_body: '{"status":"ok"}'
+    verify: |
+      curl -sf http://{host}:8000/healthz
+    depends_on:
+      - "[project]-postgres"
+    env_vars:
+      - DATABASE_URL
+      - JWT_SECRET_KEY
+      # List all required env vars so missing ones are caught early
+
+  - name: "[project]-frontend"
+    description: "[What the frontend does]"
+    image: "[project]-frontend:latest"
+    port: 3000
+    required: true
+    healthcheck:
+      endpoint: /login         # or / or /health
+      method: GET
+      expected_status: 200
+    verify: |
+      curl -sf -o /dev/null -w '%{http_code}' http://{host}:3000/login
+    depends_on:
+      - "[project]-api"
+    build_args:
+      # NEXT_PUBLIC_* vars are baked at build time in Next.js
+      - NEXT_PUBLIC_API_URL=http://{host}:8000
+      - NEXT_PUBLIC_APP_URL=http://{host}:3000
+
+  # ═══ Data Layer ═══
+
+  - name: "[project]-postgres"
+    description: "PostgreSQL — application database"
+    image: postgres:16-alpine
+    port: 5432
+    required: true
+    healthcheck:
+      command: "pg_isready -U [user] -d [database]"
+      expected_exit: 0
+    verify: |
+      docker exec [project]-postgres pg_isready -U [user] -d [database]
+    databases:
+      - name: "[project]_app"
+        purpose: "Application data"
+        migration: "alembic upgrade head"  # or prisma migrate, knex migrate, etc.
+
+  # Uncomment if using vector search:
+  # - name: "[project]-qdrant"
+  #   description: "Qdrant — vector database for semantic search"
+  #   image: qdrant/qdrant:latest
+  #   port: 6333
+  #   required: false  # true if RAG is core to the product
+  #   healthcheck:
+  #     endpoint: /healthz
+  #     method: GET
+  #     expected_status: 200
+
+  # ═══ AI Observability ═══
+  #
+  # Required for agentic systems. Optional for deterministic systems.
+
+  - name: "[project]-langfuse"
+    description: "Langfuse — AI trace viewer, eval scores, prompt management"
+    image: langfuse/langfuse:2.95.1
+    port: 3001
+    required: true   # set to false if not using AI/LLM features
+    healthcheck:
+      endpoint: /
+      method: GET
+      expected_status: 200
+    verify: |
+      curl -sf -o /dev/null -w '%{http_code}' http://{host}:3001
+    depends_on:
+      - "[project]-postgres"
+    first_login:
+      url: "http://{host}:3001"
+      action: "Create account on first visit. Then create API keys under Settings > API Keys."
+    env_vars:
+      - LANGFUSE_PUBLIC_KEY  # created in Langfuse UI
+      - LANGFUSE_SECRET_KEY  # created in Langfuse UI
+
+  # ═══ Log Aggregation ═══
+  #
+  # Recommended for any deployment beyond localhost.
+  # Loki + Promtail + Grafana = centralized logging without SSH tailing.
+
+  - name: "[project]-loki"
+    description: "Loki — log storage backend"
+    image: grafana/loki:3.4.2
+    port: 3100     # internal only — not exposed externally
+    required: true
+    healthcheck:
+      endpoint: /ready
+      method: GET
+      expected_status: 200
+    config: observability/loki-config.yml
+
+  - name: "[project]-promtail"
+    description: "Promtail — scrapes Docker container logs, ships to Loki"
+    image: grafana/promtail:3.4.2
+    port: none     # log shipper, no exposed port
+    required: true
+    verify: |
+      docker logs [project]-promtail 2>&1 | grep -c "target added"
+    config: observability/promtail-config.yml
+    volumes:
+      - /var/lib/docker/containers (read-only)
+      - /var/run/docker.sock
+
+  - name: "[project]-grafana"
+    description: "Grafana — log viewer and dashboards"
+    image: grafana/grafana:11.5.2
+    port: 3002
+    required: true
+    healthcheck:
+      endpoint: /api/health
+      method: GET
+      expected_status: 200
+    verify: |
+      curl -sf http://{host}:3002/api/health
+    depends_on:
+      - "[project]-loki"
+    usage: |
+      Explore > Loki > {container="[project]-api"} for API logs
+
+  # ═══ Production Only (add when scaling) ═══
+  #
+  # These services are defined in the target architecture but not needed
+  # for dev/demo deployments. Uncomment when ready.
+
+  # - name: "[project]-otel-collector"
+  #   description: "OpenTelemetry Collector — distributed tracing"
+  #   image: otel/opentelemetry-collector:latest
+  #   port: 4317
+  #   required: false
+  #   status: not-deployed
+  #   needed_for: "Production — correlate traces across services"
+
+  # - name: "[project]-tempo"
+  #   description: "Grafana Tempo — trace storage"
+  #   image: grafana/tempo:latest
+  #   port: 3200
+  #   required: false
+  #   status: not-deployed
+
+  # - name: "[project]-prometheus"
+  #   description: "Prometheus — metrics and alerting"
+  #   image: prom/prometheus:latest
+  #   port: 9090
+  #   required: false
+  #   status: not-deployed
+
+# ═══ Verification ═══
+#
+# After deployment, verify all required services are healthy:
+#
+# HOST=<deployment IP or domain>
+# curl -sf http://$HOST:8000/healthz          # API
+# curl -sf http://$HOST:3000/login            # Frontend
+# curl -sf http://$HOST:3001                  # Langfuse
+# curl -sf http://$HOST:3002/api/health       # Grafana
+# docker exec [project]-postgres pg_isready   # Database
+#
+# Then run E2E tests:
+# API_URL=http://$HOST:8000 python -m pytest tests/e2e/ -v
