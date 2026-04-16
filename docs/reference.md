@@ -440,6 +440,7 @@ Feature work proceeds when blockers are zero.
 | Test registry | [templates/test-registry-template.yaml](../templates/test-registry-template.yaml) | Setting up test tracking |
 | Incident registry | [templates/incident-registry-template.yaml](../templates/incident-registry-template.yaml) | Setting up incident tracking |
 | Deployment manifest | [templates/deployment-manifest-template.yaml](../templates/deployment-manifest-template.yaml) | Service inventory with health checks |
+| Admin guide | [templates/admin-guide-template.md](../templates/admin-guide-template.md) | Admin UI documentation for operators |
 
 ---
 

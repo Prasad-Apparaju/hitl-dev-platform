@@ -302,6 +302,24 @@ When in doubt, write one — training plans are cheap. When the answer is no, st
 
 This pattern makes it grep-able across the repo and easy to audit during traceability reviews.
 
+### 1c-ii. Admin Guide Update (conditional)
+
+If the change adds or modifies admin-facing features (feature flags, model profiles, user management, settings), update the admin guide at `docs/04-operations/admin-guide.md`.
+
+**Required when:**
+- New admin endpoint or UI toggle
+- New feature flag
+- New model profile or provider
+- Changes to user management behavior
+
+**Template:** [admin-guide-template.md](templates/admin-guide-template.md)
+
+**What to add:**
+- What the new feature does (one sentence, non-technical)
+- How to use it (step-by-step from the admin UI)
+- When to use it (scenarios)
+- What happens when you change it (side effects)
+
 ### 1d. ROI Estimation (Step 2a — conditional)
 
 If the change costs more than ~1 day of effort, add an ROI Estimate section to the GitHub issue during the design phase. This ensures every significant technical investment has a measurable thesis that can be verified after shipping.
