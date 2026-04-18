@@ -1,0 +1,35 @@
+# Incident Registry — Template
+#
+# A catalog of production incidents with root cause, affected domain,
+# fix applied, regression test added, and canary criteria updated.
+#
+# Location: docs/04-operations/incident-registry.yaml (or similar)
+#
+# How it grows:
+# - Within 48 hours of incident resolution, the fixer writes the entry
+# - When the regression test merges, link it in regression_test
+# - When canary criteria are updated, link in canary_criteria_added
+#
+# How it's consumed:
+# - Step 3 (impact analysis): "what has gone wrong in this domain before?"
+# - Step 22 (rollout plan): past incidents shape canary go/no-go criteria
+# - Step 10 (QA review): "is there a test covering the scenario that caused INC-X?"
+# - Onboarding: new team members learn what broke and why
+
+incidents:
+  - id: INC-001
+    date: "2026-01-15"
+    severity: high          # low | medium | high | critical
+    domain: publishing      # matches a domain in system-manifest.yaml
+    summary: "Duplicate Instagram posts published on retry"
+    root_cause: >
+      No idempotency check before calling Instagram Graph API.
+      Timeout on first call triggered retry, which published a second post.
+    fix: "Added ExternalSideEffectLog with idempotency key check before publish. PR #42."
+    regression_test: TC-002
+    canary_criteria_added: "Monitor for duplicate external_id in side_effect_log during canary"
+    lessons: >
+      All external writes need idempotency checks, not just "important" ones.
+      Added as cross-cutting convention #5 in the system manifest.
+
+  # Add entries within 48 hours of each incident resolution.

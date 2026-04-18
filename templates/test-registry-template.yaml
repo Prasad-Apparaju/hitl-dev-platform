@@ -1,0 +1,37 @@
+# Test Registry — Template
+#
+# A catalog of test cases with metadata. Not the test code itself (that stays
+# in your test files), but an index that makes tests queryable by domain,
+# risk level, origin, and linked incident.
+#
+# Location: docs/03-engineering/testing/test-registry.yaml (or similar)
+#
+# How it grows:
+# - Step 10 (TDD review): every test added by developer or QA gets registered
+# - Post-incident: regression test registered with origin: incident-regression
+#
+# How it's consumed:
+# - Step 3 (impact analysis): "which tests cover the affected domain?"
+# - Step 9 (AI generates tests): AI reads entries to avoid removing incident-regression tests
+# - Step 10 (QA review): "is the regression test for INC-X in the plan?"
+
+test_cases:
+  - id: TC-001
+    name: "Example: user login with valid credentials returns JWT"
+    domain: auth           # matches a domain in system-manifest.yaml
+    risk: high             # low | medium | high | critical
+    type: integration      # unit | integration | contract | e2e | exploratory
+    origin: tdd            # tdd | qa-review | incident-regression | design-pr
+    incident_ref: null     # INC-NNN if added after an incident, else null
+    file: "tests/test_auth.py::test_login_valid_credentials"
+
+  - id: TC-002
+    name: "Example: duplicate publish returns cached result"
+    domain: publishing
+    risk: critical
+    type: integration
+    origin: incident-regression
+    incident_ref: INC-001
+    file: "tests/test_publishing.py::test_idempotent_publish"
+
+  # Add entries as tests are created. Keep in sync with actual test files.

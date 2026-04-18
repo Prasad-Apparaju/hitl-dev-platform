@@ -31,31 +31,27 @@ Every change — feature, bug fix, improvement, refactor — follows this sequen
 
 ### Design (Steps 3-8)
 
-3. **Impact analysis** — identify affected components, APIs, configs, dependencies. Query the test registry (`docs/03-engineering/testing/test-registry.yaml`) and incident registry (`docs/04-operations/incident-registry.yaml`) for the affected domain.
+3. **Impact analysis** — identify affected components, APIs, configs, dependencies. Query the test registry and incident registry for the affected domain.
 4. **ROI estimate** (conditional, >1 day changes) — add to the issue: value dimension, expected outcome (falsifiable), baseline metric (measured), cost, measurement plan, 30/90-day checkpoints.
 5. **Update docs** — HLD, LLD, ADRs, test cases BEFORE code. Reference Figma specs if they exist.
 6. **Update IaC** — infrastructure manifests, migrations, configs if affected.
 7. **Test case planning** — identify tests to add, update, remove, and regression tests to verify.
-8. **Training plan stub** (conditional) — if the change introduces a new architectural pattern, external system, framework, or ML technique, create `docs/03-engineering/training/<capability>.md`. When not required, state it explicitly.
+8. **Training plan stub** (conditional) — if the change introduces a new architectural pattern, external system, framework, or ML technique, create a training plan. When not required, state it explicitly.
 
 ### Build — TDD Cycle (Steps 9-16)
 
 9. **AI generates tests (RED)** — read the LLD + test plan + manifest facade contracts. Generate maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance. No implementation code exists yet.
-10. **Human reviews tests** — developer adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial/wrong tests, challenges assumptions. Register every test in `docs/03-engineering/testing/test-registry.yaml`.
+10. **Human reviews tests** — developer adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial/wrong tests, challenges assumptions. Register every test in the test registry.
 11. **Tests improve the design** — AI analyzes the test suite for gaps in the LLD. If tests cover behavior the LLD doesn't describe, UPDATE THE LLD FIRST, before any code.
 12. **Verify RED** — run the full test suite. All new tests MUST fail (no implementation exists). If any pass, investigate.
 13. **Generate code (GREEN)** — AI generates the simplest implementation that makes all failing tests pass. Follow the LLD and cross-cutting conventions.
 14. **Verify GREEN** — run the full test suite (new + existing). ALL must pass. If new pass but old fail → regression, fix first.
 15. **Refactor** — simplify passing code. Remove duplication, improve naming. Rerun tests after each change; if any break, revert.
-16. **Convention checks** — run locally before proposing the change:
-    - `semgrep scan --config .semgrep/ --error` (if semgrep installed)
-    - `ruff check <changed-files>`
-    - `python3 -c "import ast; ast.parse(open('<file>').read())"` (syntax check)
-    - Fix any violations in-session. Do NOT defer to CI.
+16. **Convention checks** — run locally before proposing the change. Fix any violations in-session. Do NOT defer to CI.
 
 ### Verify (Steps 17-20)
 
-17. **Code review Round 1** — AI reviews structure, security, LLD adherence (before claiming done).
+17. **Code review Round 1** — AI reviews structure, security, LLD adherence.
 18. **Code review Round 2** — AI reviews edge cases, regressions, completeness.
 19. **Rerun tests** — confirm no regressions from review fixes.
 20. **Reconcile docs** — update HLD/LLD/training plan if implementation diverged.
@@ -87,61 +83,71 @@ Every change — feature, bug fix, improvement, refactor — follows this sequen
 ## System Manifest — Read Before Every Change
 
 Before modifying any code, read `docs/system-manifest.yaml`:
-- The `cross_cutting` section lists 10 conventions that apply to all code
+- The `cross_cutting` section lists your project's conventions that apply to all code
 - The domain entry for the area you're modifying lists its specific conventions + facade APIs
 - Follow every convention listed. If unsure whether a convention applies, it applies.
 
 ## Cross-Cutting Conventions (enforced on ALL code)
 
-### 1. Idempotency Keys
-All `MutatingTool` subclasses require a stable `idempotency_key` parameter derived from intent (e.g., `campaign_id:post_index:channel`), NOT from runtime state like `trace_id`. The `MutatingTool.execute()` method raises `ValueError` if the key is missing.
+<!--
+INSTRUCTIONS: Replace the examples below with YOUR project's conventions.
+Aim for 7-10 conventions. Each should be specific and enforceable — not aspirational.
+Good: "All external API calls MUST be wrapped in retry_with_backoff()"
+Bad: "Code should be well-structured"
 
-### 2. Plan-Mode Tools (JIT Tool Permissions)
-`MutatingTool.execute()` is decorated with `@plan_aware_tool`. Every `MutatingTool` subclass MUST implement `_describe_plan(**kwargs) -> dict` that returns a dry-run preview for PLAN mode. The decorator short-circuits BEFORE any DB work in plan mode.
+These conventions are extracted from your system manifest and inlined here
+so Claude always has them in context. Keep them in sync.
+-->
 
-### 3. Per-Brand Resource Isolation
-Agent-invoking endpoints MUST use `brand_isolation_dependency(bucket_type)` from `app/services/brand_isolation.py`. This provides rate limiting (token bucket) + concurrency limiting (bulkhead) per brand.
+### 1. Input Validation
+All API endpoints MUST validate input using Pydantic models (Python) or Zod schemas (TypeScript). Raw request bodies are never accessed directly. Validation errors return 422 with structured error details.
 
-### 4. Transient Failure Retry Policy
-ALL external API calls (LLM providers, Instagram, SendGrid, FASHN) MUST be wrapped in `retry_external_call()` from `app/services/resilience.py`. Exponential backoff with jitter. Budget-capped to prevent infinite retry loops.
+### 2. Parameterized Queries
+ALL database queries MUST use parameterized queries or ORM methods. No f-strings, string concatenation, or format() in SQL. This prevents SQL injection.
 
-### 5. Work-Claiming Leases
-Singleton background workers (trigger scheduler, failed-run reprocessor) MUST use `leader_lock()` from `app/utils/leader_election.py` with a registered lock key. Prevents duplicate execution when HPA scales the deployment beyond 1 pod.
+### 3. Structured Error Responses
+All error responses MUST follow a consistent format: `{"detail": "<message>", "code": "<error_code>"}`. Controllers catch domain exceptions and map to HTTP status codes. Services raise typed exceptions, never HTTPException.
 
-### 6. Failure Mode Taxonomy
-`AgentEvaluator.evaluate()` accepts an optional `agent_name` parameter. When provided and the trace fails the quality threshold, it calls `classify_failure()` from `app/services/failure_mode_taxonomy.py` and tags the Langfuse trace with a `failure_mode` score.
+### 4. Tenant Isolation
+<!-- Example for multi-tenant apps: -->
+Every database query and search MUST filter by `tenant_id`. The service layer requires `tenant_id` as a mandatory parameter. No cross-tenant data leakage.
 
-### 7. Context Compression
-`BaseAgent.__init__` accepts an optional `memory_processor: MemoryProcessorChain`. When provided, `BaseAgent._compress_context_view()` runs the chain over `gathered_context` before each `model_router.generate()` call in the tool loop. Original state is preserved for the replay log.
+### 5. Idempotent Side Effects
+<!-- Example for apps with external integrations: -->
+All external writes (API calls, email sends, webhook dispatches) MUST check an idempotency log before executing. The idempotency key is derived from intent (e.g., `order_id:action`), NOT from runtime state.
 
-### 8. Tenant Isolation (brand_id)
-Every Qdrant query and most DB queries MUST filter by `brand_id`. The `RAGService.search()` method requires `brand_id` as a mandatory parameter. Most models have a `brand_id` foreign key with an index.
+### 6. Retry with Backoff
+ALL external API calls MUST be wrapped in a retry function with exponential backoff and jitter. Budget-capped to prevent infinite retry loops.
 
-### 9. Soft-Delete with 30-Day Grace
-Customer data uses soft-delete with a 30-day grace period before hard deletion. The deletion service workflow handles the cascade across PostgreSQL, Qdrant, GCS, and Langfuse.
-
-### 10. Inline Comments
+### 7. Inline Comments
 ALL generated code MUST have inline comments explaining non-obvious logic. Not every line — but every block where a reader would ask "why?" needs a comment.
+
+<!--
+Add more conventions specific to your project:
+### 8. [Your convention]
+### 9. [Your convention]
+### 10. [Your convention]
+-->
 
 ---
 
 ## Coding Standards
 
-### Python (backend — V2/)
+<!-- INSTRUCTIONS: Replace with your project's tech stack and standards -->
+
+### Python
 - **Formatter**: black (line length 100)
 - **Linter**: ruff
 - **Type hints**: required on all public function signatures
-- **Async**: use `async def` for all endpoints and services (FastAPI + asyncpg + httpx are all async-native)
+- **Async**: use `async def` for all I/O-bound operations
 - **Imports**: standard library → third-party → local, separated by blank lines
-- **Error handling**: `HTTPException` in controllers, domain exceptions in services. Services raise typed exceptions; controllers catch and map to HTTP status.
-- **Models**: SQLAlchemy ORM with `UUIDPrimaryKeyMixin` + `TimestampMixin` from `app/models/base.py`
-- **Tests**: pytest + pytest-asyncio. Test files mirror source structure: `app/services/foo.py` → `tests/test_foo.py`
+- **Error handling**: domain exceptions in services, HTTP mapping in controllers
+- **Tests**: pytest. Test files mirror source structure.
 
 ### Documentation
 - ALL diagrams use Mermaid (no ASCII art)
-- No `<br/>` tags inside Mermaid code blocks (Obsidian incompatible — use single-line labels)
+- No `<br/>` tags inside Mermaid code blocks (Obsidian incompatible)
 - ADRs follow the format in `docs/02-design/technical/adrs/README.md`
-- LLDs follow the module format in `docs/03-engineering/training/agent-architecture.md`
 
 ### Git
 - Commit messages: imperative mood, explain WHY not WHAT
@@ -154,7 +160,7 @@ ALL generated code MUST have inline comments explaining non-obvious logic. Not e
 
 ## Domain Boundaries
 
-When modifying code, stay within your domain boundary. The domains and their files are defined in `docs/system-manifest.yaml` under `domains:`. Key rule: **do NOT modify files outside your domain's file list without explicit approval.** If you need something from another domain, reference its facade API from the manifest — don't read its source code.
+When modifying code, stay within your domain boundary. The domains and their files are defined in `docs/system-manifest.yaml` under `domains:`. Key rule: **do NOT modify files outside your domain's file list without explicit approval.** If you need something from another domain, reference its facade API from the manifest.
 
 ---
 
@@ -170,9 +176,12 @@ For verbose explanations, examples, Mermaid diagrams, and subsection details, se
 
 | Topic | File |
 |---|---|
-| Full 22-step workflow with Mermaid + subsections §1b-§1g | `.claude/commands/skills/dev-practices.md` |
+| Full 22-step workflow with Mermaid + subsections | `.claude/commands/skills/dev-practices.md` |
 | Impact analysis template | `.claude/commands/skills/apply-change.md` |
 | Convention check commands | `.claude/commands/skills/check-conventions.md` |
 | Downstream impact brief (5-section template) | `.claude/commands/skills/impact-brief.md` |
 | TDD Red→Green→Refactor cycle (detailed) | `.claude/commands/skills/tdd.md` |
 | Full process overview with pipeline diagram | `docs/playbook/process-overview.md` |
+| Adding a new feature | `docs/playbook/adding-a-feature.md` |
+| Fixing bugs and refactoring | `docs/playbook/fixing-and-refactoring.md` |
+| PM workflow and commands | `docs/playbook/pm-guide.md` |
