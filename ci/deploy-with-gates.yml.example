@@ -36,8 +36,8 @@ jobs:
       - name: Determine risk level from decision packet
         id: risk
         run: |
-          # Look for a decision packet in the diff (added or modified)
-          PACKET=$(git diff --name-only HEAD~1 HEAD | grep "decision-packet" | head -1)
+          # Look for a decision packet (docs/decisions/issue-NNN.yaml) in the diff
+          PACKET=$(git diff --name-only HEAD~1 HEAD | grep "docs/decisions/issue-.*\.yaml" | head -1)
 
           if [ -n "$PACKET" ] && [ -f "$PACKET" ]; then
             RISK=$(grep -oP 'risk_level:\s*\K\w+' "$PACKET" || echo "medium")

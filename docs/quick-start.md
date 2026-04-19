@@ -31,6 +31,25 @@ cp examples/greenfield/convention-checks.yaml your-repo/
 
 # 5. Copy CI actions
 cp ci/*.yml your-repo/.github/workflows/
+
+# 6. Copy preflight script (required by traceability-check.yml)
+cp -r tools/preflight/ your-repo/tools/preflight/
+
+# 7. Copy manifest drift checker (required by convention-check.yml)
+cp -r tools/manifest-drift/ your-repo/tools/manifest-drift/
+
+# 8. Copy Semgrep rules (required by convention-check.yml)
+cp -r .semgrep/ your-repo/.semgrep/
+
+# 9. Copy PR template
+mkdir -p your-repo/.github
+cp .github/PULL_REQUEST_TEMPLATE.md your-repo/.github/PULL_REQUEST_TEMPLATE.md
+
+# 10. Copy decision packet template (reference for impact analysis)
+cp templates/decision-packet-template.yaml your-repo/templates/decision-packet-template.yaml
+
+# 11. Copy legacy scripts if referenced by your CI
+cp -r scripts/ your-repo/scripts/
 ```
 
 Every developer who clones the repo now gets the same process.
@@ -62,6 +81,12 @@ cp -r hitl-dev-platform/skills/ your-repo/.claude/commands/
 
 # Update CI actions
 cp hitl-dev-platform/ci/*.yml your-repo/.github/workflows/
+
+# Update preflight, manifest-drift, semgrep rules, scripts
+cp -r hitl-dev-platform/tools/preflight/ your-repo/tools/preflight/
+cp -r hitl-dev-platform/tools/manifest-drift/ your-repo/tools/manifest-drift/
+cp -r hitl-dev-platform/.semgrep/ your-repo/.semgrep/
+cp -r hitl-dev-platform/scripts/ your-repo/scripts/
 
 # DON'T overwrite: CLAUDE.md, system-manifest.yaml, convention-checks.yaml
 # Those are project-specific content

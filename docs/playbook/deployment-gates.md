@@ -53,14 +53,14 @@ To configure the `production` environment: **Settings > Environments > productio
 
 #### Reading risk level from a decision packet
 
-The deploy workflow looks for a `decision-packet.yaml` in the PR's changed files:
+The deploy workflow looks for a `docs/decisions/issue-NNN.yaml` decision packet in the PR's changed files:
 
 ```yaml
 - name: Determine risk level
   id: risk
   run: |
-    PACKET=$(find . -name "decision-packet.yaml" -path "*/decisions/*" | head -1)
-    if [ -n "$PACKET" ]; then
+    PACKET=$(git diff --name-only HEAD~1 HEAD | grep "docs/decisions/issue-.*\.yaml" | head -1)
+    if [ -n "$PACKET" ] && [ -f "$PACKET" ]; then
       RISK=$(grep -oP 'risk_level:\s*\K\w+' "$PACKET" || echo "medium")
     else
       RISK="medium"

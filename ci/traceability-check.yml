@@ -15,5 +15,29 @@ jobs:
       - name: Get changed files
         id: changed
         run: echo "files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
+      - name: Extract linked issue from PR body or decision packet
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Try to extract issue number from PR body (Fixes #NNN, Closes #NNN, Relates to #NNN)
+          BODY=$(gh pr view ${{ github.event.pull_request.number }} --json body -q .body 2>/dev/null || echo "")
+          ISSUE=$(echo "$BODY" | grep -oiE '(fixes|closes|relates to) #[0-9]+' | head -1 | grep -oE '[0-9]+')
+
+          # If not found in PR body, check decision packets for issue: field
+          if [ -z "$ISSUE" ] && [ -d docs/decisions ]; then
+            for packet in docs/decisions/issue-*.yaml; do
+              [ -f "$packet" ] || continue
+              ISSUE=$(grep -oE '^issue:\s*[0-9]+' "$packet" | head -1 | grep -oE '[0-9]+')
+              [ -n "$ISSUE" ] && break
+            done
+          fi
+
+          echo "number=$ISSUE" >> $GITHUB_OUTPUT
       - name: Run traceability check
-        run: python tools/preflight/check_change.py --changed-files ${{ steps.changed.outputs.files }}
+        run: |
+          ISSUE_ARG=""
+          if [ -n "${{ steps.issue.outputs.number }}" ]; then
+            ISSUE_ARG="--issue ${{ steps.issue.outputs.number }}"
+          fi
+          python tools/preflight/check_change.py --changed-files ${{ steps.changed.outputs.files }} $ISSUE_ARG

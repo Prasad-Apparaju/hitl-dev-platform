@@ -444,16 +444,17 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 | Phase | Steps |
 |-------|-------|
-| **Design** | Issue 👤🤖 → Design spec 👤🤖 (if exists) → Impact analysis 🤖 → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
-| **Build (TDD)** | Generate tests 🤖 → Human + QA review 👤 🔁 → Tests improve LLD 🤖 🔁 → Verify RED 🤖 → Generate code 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 |
-| **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Reconcile docs 🤖 |
+| **Requirements** | Issue 👤🤖 → Figma review 👤🤖 (if exists) |
+| **Design** | Impact analysis 🤖 → ROI estimate 👤🤖 (conditional) → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
+| **Build (TDD)** | Generate tests (RED) 🤖 → Human reviews tests 👤 🔁 → Tests improve design 🤖 🔁 → Verify RED 🤖 → Generate code (GREEN) 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 → Convention checks 🤖 |
+| **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Rerun tests 🤖 → Reconcile docs 👤🤖 🔁 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
-| **Ship** | PR + integration verify 👤 → Handoff to QA + Ops 👤 → QA verifies quality 👤 → Ops deploys + monitors 👤🤖 → Promote/rollback 👤 |
+| **Ship** | Create PR 👤🤖 → Integration verify 👤 → Figma comparison 👤🤖 (if exists) → Merge + canary deploy 👤🤖 |
 | **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 28 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
+Of 28 steps: **10 AI-driven** 🤖, **13 AI-assisted** 👤🤖, **5 human-only** 👤.
 
 ### 5.3 The Two-Round Code Review
 

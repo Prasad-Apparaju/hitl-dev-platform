@@ -242,7 +242,7 @@ Uses [semgrep](https://semgrep.dev/) for code rules and standalone scripts for m
 semgrep scan --config .semgrep/ --error
 
 # Check manifest drift
-python scripts/check_manifest_drift.py
+python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
 
 # Check Mermaid br tags
 find docs/ -name "*.md" -exec python scripts/fix_mermaid_br_tags.py --check {} +
@@ -263,7 +263,7 @@ Standalone checks:
 
 | Script | What it verifies |
 |--------|-----------------|
-| `scripts/check_manifest_drift.py` | Files listed in manifest exist on disk |
+| `tools/manifest-drift/check_manifest_drift.py` | Manifest drift: missing files, unlisted files, cross-domain imports, facade coverage |
 | `scripts/fix_mermaid_br_tags.py --check` | No `<br/>` in Mermaid code blocks |
 
 To add a new rule, create a YAML file in the appropriate `.semgrep/` subdirectory. See [semgrep docs](https://semgrep.dev/docs/writing-rules/overview/) for the rule format.

@@ -91,6 +91,33 @@ def _is_manifest_domain_file(path: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Issue discovery from decision packets
+# ---------------------------------------------------------------------------
+
+def _discover_issue_from_decision_packets(changed: list[str]) -> str | None:
+    """Try to find an issue number from decision packets in changed files or docs/decisions/."""
+    if yaml is None:
+        return None
+
+    # First check decision packets among changed files
+    packet_paths = [f for f in changed if f.startswith("docs/decisions/issue-") and f.endswith(".yaml")]
+    # Then fall back to any packet in docs/decisions/
+    decisions_dir = Path("docs/decisions")
+    if not packet_paths and decisions_dir.exists():
+        packet_paths = [str(p) for p in decisions_dir.glob("issue-*.yaml")]
+
+    for packet_path in packet_paths:
+        try:
+            with open(packet_path) as f:
+                data = yaml.safe_load(f)
+            if data and "issue" in data:
+                return str(data["issue"])
+        except Exception:
+            continue
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Individual checks
 # ---------------------------------------------------------------------------
 
@@ -121,25 +148,87 @@ def check_linked_issue(changed: list[str], issue: str | None) -> CheckResult:
             return CheckResult("linked-issue", False, f"Issue #{issue} not found via gh CLI.")
         return CheckResult("linked-issue", True, f"Issue #{issue} provided (gh not installed — skipped remote check).")
 
+    # Try to discover the issue from decision packets in changed files or docs/decisions/
+    discovered_issue = _discover_issue_from_decision_packets(changed)
+    if discovered_issue:
+        return CheckResult(
+            "linked-issue", True,
+            f"Issue #{discovered_issue} discovered from decision packet.",
+        )
+
     return CheckResult(
         "linked-issue", False,
-        "Source files changed but no --issue provided.  Create or link a GitHub issue.",
+        "No linked issue found. Add 'Fixes #NNN' to PR description or create a decision packet.",
     )
 
 
-def check_decision_packet(changed: list[str]) -> CheckResult:
-    """If manifest-domain files changed, a decision packet must exist."""
+def check_decision_packet(changed: list[str], issue: str | None = None) -> CheckResult:
+    """If manifest-domain files changed, a decision packet must exist and be valid."""
     domain_files = [f for f in changed if _is_manifest_domain_file(f)]
     if not domain_files:
         return CheckResult("decision-packet", True, "No manifest-domain files changed — skipped.")
 
     packets = list(Path("docs/decisions").glob("issue-*.yaml")) if Path("docs/decisions").exists() else []
-    if packets:
-        return CheckResult("decision-packet", True, f"Found {len(packets)} decision packet(s).")
-    return CheckResult(
-        "decision-packet", False,
-        "Manifest-domain files changed but no decision packet found at docs/decisions/issue-*.yaml.",
-    )
+    if not packets:
+        return CheckResult(
+            "decision-packet", False,
+            "Manifest-domain files changed but no decision packet found at docs/decisions/issue-*.yaml.",
+        )
+
+    # Validate the contents of each packet
+    if yaml is None:
+        return CheckResult("decision-packet", True, f"Found {len(packets)} decision packet(s) (PyYAML not installed — skipped validation).")
+
+    errors: list[str] = []
+    for packet in packets:
+        try:
+            with open(packet) as f:
+                data = yaml.safe_load(f)
+        except Exception as exc:
+            errors.append(f"{packet.name}: failed to parse YAML ({exc})")
+            continue
+
+        if not data:
+            errors.append(f"{packet.name}: file is empty")
+            continue
+
+        prefix = packet.name
+
+        # issue field must be present
+        if "issue" not in data:
+            errors.append(f"{prefix}: missing 'issue' field")
+        elif issue and str(data["issue"]) != str(issue):
+            errors.append(f"{prefix}: 'issue' is {data['issue']} but expected {issue} (from --issue)")
+
+        # domains field must be present and non-empty
+        domains = data.get("domains")
+        if not domains:
+            errors.append(f"{prefix}: missing or empty 'domains' field")
+
+        # source_docs must have at least one entry (hld, lld, or adr)
+        source_docs = data.get("source_docs")
+        if not source_docs:
+            errors.append(f"{prefix}: missing 'source_docs' field")
+        elif isinstance(source_docs, dict):
+            has_entry = any(source_docs.get(key) for key in ("hld", "lld", "adr"))
+            if not has_entry:
+                errors.append(f"{prefix}: 'source_docs' must have at least one of: hld, lld, adr")
+
+        # rollout.risk must be present
+        rollout = data.get("rollout")
+        if not rollout or not isinstance(rollout, dict) or "risk" not in rollout:
+            errors.append(f"{prefix}: missing 'rollout.risk' field")
+
+        # tests.registry_updated must be present
+        tests = data.get("tests")
+        if not tests or not isinstance(tests, dict) or "registry_updated" not in tests:
+            errors.append(f"{prefix}: missing 'tests.registry_updated' field")
+
+    if errors:
+        detail = "; ".join(errors)
+        return CheckResult("decision-packet", False, f"Decision packet validation failed: {detail}")
+
+    return CheckResult("decision-packet", True, f"Found and validated {len(packets)} decision packet(s).")
 
 
 def check_lld_adr_for_api(changed: list[str]) -> CheckResult:
@@ -229,7 +318,7 @@ def main() -> int:
 
     results = [
         check_linked_issue(changed, args.issue),
-        check_decision_packet(changed),
+        check_decision_packet(changed, args.issue),
         check_lld_adr_for_api(changed),
         check_test_registry(changed),
         check_rollout_plan(changed),

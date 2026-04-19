@@ -20,9 +20,9 @@ graph LR
 
 ### Requirements (steps 1-2)
 1. **GitHub Issue** — describe the change, root cause, proposed solution
-2. **Design spec review** — if Figma/visual design exists, extract requirements into the issue
+2. **Figma review** (if design exists) — extract requirements, interactions, visual specs into the issue
 
-### Design (steps 3-7)
+### Design (steps 3-8)
 3. **Impact analysis** — AI identifies affected components, APIs, configs, dependencies
 4. **ROI estimate** (conditional) — if change costs >1 day, add ROI section to issue: expected outcome, baseline metric, measurement plan, 30/90-day checkpoints
 5. **Update docs** — HLD, LLD, ADRs, test cases BEFORE code
@@ -30,28 +30,35 @@ graph LR
 7. **Test case planning** — new tests, updated tests, removed tests, regression tests
 8. **Training plan stub** (conditional) — if change introduces a new capability
 
-### Build (steps 9-13)
-9. **Code generation** — AI generates from updated LLD + test plan
-10. **Code review Round 1** — AI reviews structure, security, LLD adherence (before tests)
-11. **Test generation** — AI generates from test plan
-12. **Run full test suite** — all must pass
-13. **Code review Round 2** — AI reviews edge cases, regressions, completeness (after tests)
-14. **Rerun tests** — confirm no regressions from Round 2 fixes
-15. **Reconcile docs** — if implementation diverged, explicitly decide: update the docs (better design discovered) or fix the code (unintended drift). Document the decision.
+### Build — TDD Cycle (steps 9-16)
+9. **AI generates tests (RED)** — read LLD + test plan + manifest facade contracts. Generate maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance. No implementation code exists yet.
+10. **Human reviews tests** — developer adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial/wrong tests, challenges assumptions.
+11. **Tests improve the design** — AI analyzes the test suite for gaps in the LLD. If tests cover behavior the LLD doesn't describe, update the LLD first, before any code.
+12. **Verify RED** — run the full test suite. All new tests must fail (no implementation exists). If any pass, investigate.
+13. **Generate code (GREEN)** — AI generates the simplest implementation that makes all failing tests pass. Follow the LLD and cross-cutting conventions.
+14. **Verify GREEN** — run the full test suite (new + existing). All must pass. If new pass but old fail, that is a regression — fix first.
+15. **Refactor** — simplify passing code. Remove duplication, improve naming. Rerun tests after each change; if any break, revert.
+16. **Convention checks** — run locally before proposing the change. Fix any violations in-session. Do not defer to CI.
 
-### Assess (steps 16-17)
-16. **Downstream impact brief** — flows changed, risk assessment, manual verification scenarios, PM mental model update, rollout strategy
-17. **Risk-rated rollout plan** — Low (direct deploy) / Medium (feature flag + soak) / High (canary 5-10% + monitor) / Critical (canary 1% + manual gates)
+### Verify (steps 17-20)
+17. **Code review Round 1** — AI reviews structure, security, LLD adherence.
+18. **Code review Round 2** — AI reviews edge cases, regressions, completeness.
+19. **Rerun tests** — confirm no regressions from review fixes.
+20. **Reconcile docs** — if implementation diverged from design docs, pause and decide: does the implementation reveal a better design (update the docs), or did the implementation drift from the intended design (fix the code)? The decision is explicit and documented.
 
-### Ship (steps 18-22)
-18. **Create PR** — links to issue, includes docs + IaC + code + tests
-19. **Integration verification** — lead runs feature E2E, verifies traceability, reviews impact brief
-20. **Canary deploy** — deploy per risk-rated plan, AI monitors go/no-go criteria
-21. **Promote or rollback** — lead decision based on metrics
+### Assess (steps 21-22)
+21. **Downstream impact brief** — flows changed, risk assessment, manual verification scenarios, PM mental model update, rollout strategy
+22. **Risk-rated rollout plan** — Low (direct deploy) / Medium (feature flag + soak) / High (canary 5-10% + monitor) / Critical (canary 1% + manual gates)
 
-### Post-ship (steps 21-22)
-22. **30-day ROI check** — developer + lead: is the metric moving?
-23. **90-day ROI check** — lead + PM: actual vs estimated ROI, update ADR with Actual Outcome
+### Ship (steps 23-26)
+23. **Create PR** — links to issue, includes docs + IaC + code + tests
+24. **Integration verification** — lead runs feature E2E, verifies traceability, reviews impact brief + rollout plan
+25. **Figma comparison** (if design exists) — compare implementation to Figma, list and resolve differences
+26. **Merge + canary deploy** — deploy per risk-rated plan; monitor go/no-go criteria
+
+### Post-ship (steps 27-28)
+27. **30-day ROI check** — developer + lead: is the metric moving?
+28. **90-day ROI check** — lead + PM: actual vs estimated ROI, update ADR with Actual Outcome
 
 ## Key Concepts
 
