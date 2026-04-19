@@ -1,0 +1,59 @@
+# Decision Packet — Issue #NNN
+#
+# This file is created BEFORE code generation. It proves that the change
+# traces back to approved decisions. Claude generates code FROM this packet.
+#
+# Location: docs/decisions/issue-<number>.yaml
+# Created by: developer or Claude during the design phase (step 3-8)
+# Consumed by: preflight script, CI traceability check, code review
+
+issue: NNN                          # GitHub issue number
+title: "Short description"
+change_type: feature                # feature | bugfix | refactor | infrastructure
+risk_level: medium                  # low | medium | high | critical
+
+# Which manifest domains does this change touch?
+domains:
+  - publishing
+  - data_layer
+
+# What design documents govern this change?
+source_docs:
+  prd: "docs/01-product/prd.md#FR-CAMP-3"        # PRD requirement reference
+  hld:
+    - "docs/02-design/technical/hld/system.md"
+  lld:
+    - "docs/02-design/technical/lld/services/publishing.md"
+  adr:
+    - "docs/02-design/technical/adrs/idempotency-keys.md"
+
+# Test plan
+tests:
+  plan: "Regression test for idempotent publish + happy path for new channel"
+  new_tests:
+    - "tests/test_publishing.py::test_tiktok_publish_idempotent"
+    - "tests/test_publishing.py::test_tiktok_publish_happy_path"
+  registry_updated: true            # test-registry.yaml entries added?
+
+# Incident registry
+incidents:
+  checked: true                     # did you check the incident registry?
+  relevant: "INC-001"               # relevant past incident, or null
+
+# Rollout
+rollout:
+  risk: medium
+  strategy: "Feature flag + 24h soak"
+  go_no_go:
+    - "Error rate delta < 1%"
+    - "No duplicate side effects in idempotency log"
+
+# ROI (if change > 1 day)
+roi:
+  required: false                   # true if change > 1 day
+  estimate: null                    # link to ROI section in issue, or null
+
+# Impact brief
+impact_brief:
+  pm_mental_model: "TikTok is now a supported publishing channel alongside Instagram and email"
+  risk_assessment: "New external API; TikTok rate limits differ from Instagram"

@@ -1,0 +1,155 @@
+# Deploy with Risk-Based Gates
+#
+# This is a SAMPLE workflow — rename to .yml and customize for your project.
+# It reads the risk level from a decision packet (if present) and enforces
+# progressively stricter gates.
+#
+# Prerequisites:
+#   1. Create a "production" environment in Settings > Environments
+#   2. Add required reviewers to the "production" environment
+#   3. Create the "rollout-approved" label in the repo
+
+name: Deploy with Gates
+
+on:
+  push:
+    branches: [main]
+
+# Cancel in-flight deploys when a new commit lands on main
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------
+  # Step 1: Determine the risk level for this deploy
+  # ---------------------------------------------------------------
+  determine-risk:
+    runs-on: ubuntu-latest
+    outputs:
+      risk: ${{ steps.risk.outputs.risk }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # need parent to diff
+
+      - name: Determine risk level from decision packet
+        id: risk
+        run: |
+          # Look for a decision packet in the diff (added or modified)
+          PACKET=$(git diff --name-only HEAD~1 HEAD | grep "decision-packet" | head -1)
+
+          if [ -n "$PACKET" ] && [ -f "$PACKET" ]; then
+            RISK=$(grep -oP 'risk_level:\s*\K\w+' "$PACKET" || echo "medium")
+            echo "Found decision packet: $PACKET — risk=$RISK"
+          else
+            RISK="medium"
+            echo "No decision packet found — defaulting to risk=$RISK"
+          fi
+
+          echo "risk=$RISK" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------
+  # Step 2: Gate check — verify label exists for medium+ risk
+  # ---------------------------------------------------------------
+  gate-check:
+    needs: determine-risk
+    runs-on: ubuntu-latest
+    if: needs.determine-risk.outputs.risk != 'low'
+    steps:
+      - name: Check for rollout-approved label
+        run: |
+          # Find the PR that was merged in this push
+          PR_NUMBER=$(gh pr list \
+            --state merged \
+            --search "${{ github.sha }}" \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::warning::Could not find merged PR for this commit"
+            exit 0
+          fi
+
+          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
+          echo "PR #$PR_NUMBER labels: $LABELS"
+
+          if ! echo "$LABELS" | grep -q "rollout-approved"; then
+            echo "::error::Deployment blocked — PR #$PR_NUMBER needs the 'rollout-approved' label (risk: ${{ needs.determine-risk.outputs.risk }})"
+            exit 1
+          fi
+
+          echo "Label check passed"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------
+  # Step 3a: Low risk — deploy directly, no gates
+  # ---------------------------------------------------------------
+  deploy-low:
+    needs: determine-risk
+    if: needs.determine-risk.outputs.risk == 'low'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy (low risk — no gate)
+        run: |
+          echo "Deploying with risk level: low"
+          # Replace with your actual deploy command:
+          # ./scripts/deploy.sh --env production
+          echo "Deploy complete"
+
+  # ---------------------------------------------------------------
+  # Step 3b: Medium risk — deploy after label check passes
+  # ---------------------------------------------------------------
+  deploy-medium:
+    needs: [determine-risk, gate-check]
+    if: needs.determine-risk.outputs.risk == 'medium'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy (medium risk — label verified)
+        run: |
+          echo "Deploying with risk level: medium"
+          # Replace with your actual deploy command:
+          # ./scripts/deploy.sh --env production
+          echo "Deploy complete"
+
+  # ---------------------------------------------------------------
+  # Step 3c: High/Critical risk — require manual approval
+  # ---------------------------------------------------------------
+  deploy-high:
+    needs: [determine-risk, gate-check]
+    if: needs.determine-risk.outputs.risk == 'high' || needs.determine-risk.outputs.risk == 'critical'
+    runs-on: ubuntu-latest
+
+    # This environment must have required reviewers configured in
+    # Settings > Environments > production > Required reviewers
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy (high/critical risk — manually approved)
+        run: |
+          echo "Deploying with risk level: ${{ needs.determine-risk.outputs.risk }}"
+          # Replace with your actual deploy command:
+          # ./scripts/deploy.sh --env production
+          echo "Deploy complete"
+
+  # ---------------------------------------------------------------
+  # Post-deploy: notify and record
+  # ---------------------------------------------------------------
+  post-deploy:
+    needs: [determine-risk, deploy-low, deploy-medium, deploy-high]
+    if: always() && (needs.deploy-low.result == 'success' || needs.deploy-medium.result == 'success' || needs.deploy-high.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record deployment
+        run: |
+          echo "Deployment succeeded at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Risk level: ${{ needs.determine-risk.outputs.risk }}"
+          echo "Commit: ${{ github.sha }}"
+          # Add Slack notification, deployment log entry, etc.

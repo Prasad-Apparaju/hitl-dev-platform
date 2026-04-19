@@ -30,6 +30,10 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
 - 15 templates for common artifacts (test strategy, security audit, best practices, cost analysis, performance, migration mappings, decision catalog, and more)
 - Architectural patterns for agentic systems (failure mode taxonomy, idempotency keys)
 
+6. **PR template** is already in place at `.github/PULL_REQUEST_TEMPLATE.md` — it enforces traceability on every pull request (linked issue, manifest domains, design docs, test plan, rollout plan, impact brief)
+
+7. **Decision packets** go in `docs/decisions/issue-NNN.yaml` — Claude generates one per change before writing code. The template is at `../../templates/decision-packet-template.yaml`
+
 ## Next steps
 
 - Read [../../docs/playbook/adoption-guide.md](../../docs/playbook/adoption-guide.md) for the full brownfield adoption guide
