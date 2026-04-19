@@ -249,12 +249,21 @@ def main() -> None:
         default=False,
         help="Treat missing facade coverage as errors (exit 1) instead of warnings",
     )
+    parser.add_argument(
+        "--require-manifest",
+        action="store_true",
+        default=False,
+        help="Exit 1 if the manifest file does not exist (useful in CI to ensure it is always present)",
+    )
     args = parser.parse_args()
 
     root = Path.cwd()
     manifest_path = root / args.manifest
 
     if not manifest_path.exists():
+        if args.require_manifest:
+            print(f"ERROR: No manifest at {args.manifest} — required by --require-manifest.")
+            sys.exit(1)
         print(f"No manifest at {args.manifest} — skipping drift check.")
         sys.exit(0)
 

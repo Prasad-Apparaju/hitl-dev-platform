@@ -53,22 +53,35 @@ To configure the `production` environment: **Settings > Environments > productio
 
 #### Reading risk level from a decision packet
 
-The deploy workflow looks for a `docs/decisions/issue-NNN.yaml` decision packet in the PR's changed files:
+The deploy workflow looks for a `docs/decisions/issue-NNN.yaml` decision packet in the PR's changed files. It reads `rollout.risk` as the canonical field (falling back to the legacy `risk_level` top-level key):
 
 ```yaml
 - name: Determine risk level
   id: risk
   run: |
     PACKET=$(git diff --name-only HEAD~1 HEAD | grep "docs/decisions/issue-.*\.yaml" | head -1)
+
     if [ -n "$PACKET" ] && [ -f "$PACKET" ]; then
-      RISK=$(grep -oP 'risk_level:\s*\K\w+' "$PACKET" || echo "medium")
-    else
-      RISK="medium"
+      # Prefer rollout.risk (canonical); fall back to top-level risk_level
+      RISK=$(python3 -c "
+    import yaml, sys
+    data = yaml.safe_load(open('$PACKET'))
+    rollout = data.get('rollout') or {}
+    risk = rollout.get('risk') or data.get('risk_level') or ''
+    print(risk)
+    " 2>/dev/null)
+      echo "Found decision packet: $PACKET — risk=$RISK"
     fi
-    echo "risk=$RISK" >> "$GITHUB_OUTPUT"
+
+    if [ -z "$RISK" ]; then
+      echo "::warning::Could not determine risk level — defaulting to manual approval"
+      echo "risk=high" >> "$GITHUB_OUTPUT"
+    else
+      echo "risk=$RISK" >> "$GITHUB_OUTPUT"
+    fi
 ```
 
-If no decision packet exists, the workflow defaults to **high** (requires manual approval). This is intentional: unknown risk should not bypass gates silently.
+If no decision packet exists or the risk field is missing, the workflow defaults to **high** (requires manual approval). This is intentional: unknown risk should not bypass gates silently.
 
 ---
 

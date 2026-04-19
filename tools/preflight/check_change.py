@@ -132,7 +132,7 @@ class CheckResult:
         return f"[{status}] {self.name}: {self.message}"
 
 
-def check_linked_issue(changed: list[str], issue: str | None) -> CheckResult:
+def check_linked_issue(changed: list[str], issue: str | None, *, strict: bool = False) -> CheckResult:
     """Source files changed -> a linked issue must exist."""
     source_files = [f for f in changed if _is_source_file(f)]
     if not source_files:
@@ -140,14 +140,21 @@ def check_linked_issue(changed: list[str], issue: str | None) -> CheckResult:
 
     # If caller supplied --issue, trust it
     if issue:
-        # Optionally verify via gh CLI — treat failure as a warning, not an error,
-        # because the issue link was already verified by the CI extraction step
-        # and gh may fail due to missing GH_TOKEN or network issues.
+        # Verify via gh CLI if available.  In strict mode, a failed verification
+        # is an error (bogus issue numbers must not pass CI).  In non-strict mode
+        # treat failure as a warning since gh may fail due to missing GH_TOKEN or
+        # network issues.
         if shutil.which("gh"):
             result = _run(["gh", "issue", "view", issue, "--json", "number"])
             if result.returncode == 0:
                 return CheckResult("linked-issue", True, f"Issue #{issue} exists.")
-            # gh failed — warn but still pass since the issue number was provided
+            # gh is available but verification failed
+            if strict:
+                return CheckResult(
+                    "linked-issue", False,
+                    f"Issue #{issue} could not be verified (gh issue view failed) — strict mode treats this as an error.",
+                )
+            # non-strict: warn but still pass
             return CheckResult(
                 "linked-issue", True,
                 f"Issue #{issue} provided (gh CLI verification failed — treating as warning).",
@@ -337,17 +344,20 @@ def check_lld_adr_for_api(changed: list[str]) -> CheckResult:
     )
 
 
-def check_test_registry(changed: list[str]) -> CheckResult:
+TEST_REGISTRY_PATH = "docs/03-engineering/testing/test-registry.yaml"
+
+
+def check_test_registry(changed: list[str], registry_path: str = TEST_REGISTRY_PATH) -> CheckResult:
     """If test files changed, test-registry.yaml must also be updated."""
     test_files = [f for f in changed if _is_test_file(f)]
     if not test_files:
         return CheckResult("test-registry", True, "No test files changed — skipped.")
 
-    if "test-registry.yaml" in " ".join(changed):
+    if any(f == registry_path or f.endswith(registry_path) for f in changed):
         return CheckResult("test-registry", True, "Test files changed and test-registry.yaml updated.")
     return CheckResult(
         "test-registry", False,
-        "Test files changed but test-registry.yaml was not updated.",
+        f"Test files changed but {registry_path} was not updated.",
     )
 
 
@@ -361,22 +371,43 @@ def check_rollout_plan(changed: list[str], issue: str | None = None) -> CheckRes
     if not iac_files:
         return CheckResult("rollout-plan", True, "No IaC/deployment files changed — skipped.")
 
-    # Look for rollout plan in the active/changed decision packets only
+    # Look for a structurally valid rollout section in decision packets
     has_plan = False
+    errors: list[str] = []
     packets = _resolve_packets_to_validate(changed, issue)
     for packet in packets:
         try:
             with open(packet) as f:
                 data = yaml.safe_load(f) if yaml else {}
-            if data and "rollout" in str(data).lower():
-                has_plan = True
-                break
         except Exception:
-            pass
+            continue
+
+        if not data:
+            continue
+
+        rollout = data.get("rollout")
+        if not isinstance(rollout, dict) or not rollout.get("risk"):
+            # rollout section missing or has no risk level — not valid
+            continue
+
+        # For medium/high/critical risk, a rollout strategy is required
+        risk = str(rollout["risk"]).lower()
+        if risk in ("medium", "high", "critical") and not rollout.get("strategy"):
+            errors.append(
+                f"{packet.name}: rollout.risk is '{risk}' but rollout.strategy is missing"
+            )
+            continue
+
+        has_plan = True
+        break
 
     # Also accept a rollout-plan.md in the PR
-    if any("rollout" in f.lower() for f in changed):
+    if not has_plan and any("rollout" in f.lower() for f in changed):
         has_plan = True
+
+    if errors and not has_plan:
+        detail = "; ".join(errors)
+        return CheckResult("rollout-plan", False, f"Rollout plan incomplete: {detail}")
 
     if has_plan:
         return CheckResult("rollout-plan", True, "IaC files changed and rollout plan found.")
@@ -415,7 +446,7 @@ def main() -> int:
     print(f"Checking {len(changed)} changed file(s)...\n")
 
     results = [
-        check_linked_issue(changed, args.issue),
+        check_linked_issue(changed, args.issue, strict=args.strict),
         check_decision_packet(changed, args.issue, strict=args.strict),
         check_lld_adr_for_api(changed),
         check_test_registry(changed),

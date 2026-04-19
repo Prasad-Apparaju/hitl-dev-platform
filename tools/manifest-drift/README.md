@@ -25,6 +25,9 @@ python tools/manifest-drift/check_manifest_drift.py --manifest path/to/manifest.
 # Custom source directories to scan for unlisted files
 python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ lib/ services/
 
+# Require manifest to exist — exit 1 if docs/system-manifest.yaml is missing
+python tools/manifest-drift/check_manifest_drift.py --require-manifest
+
 # Strict mode — unlisted files become errors (exit 1) instead of warnings
 python tools/manifest-drift/check_manifest_drift.py --strict
 
@@ -62,7 +65,7 @@ manifest-drift:
         python-version: '3.12'
     - run: pip install pyyaml
     - name: Check manifest drift
-      run: python tools/manifest-drift/check_manifest_drift.py
+      run: python tools/manifest-drift/check_manifest_drift.py --require-manifest
 ```
 
 ## Pre-Commit Hook
