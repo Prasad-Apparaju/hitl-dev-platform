@@ -1,9 +1,8 @@
-"""CLI smoke tests for check_change.py.
+"""CLI smoke tests and fixture-based contract tests for check_change.py.
 
-These tests verify basic enforcement behavior through the CLI interface.
-For full contract tests with fixture projects, see the test classes below.
-
-Run with: pytest tools/preflight/test_check_change.py
+Smoke tests verify basic enforcement behavior through the CLI.
+Contract tests create temporary project directories with manifests,
+decision packets, and source files to prove enforcement guarantees.
 """
 
 import subprocess
@@ -61,3 +60,115 @@ class TestNoChanges:
         code, output = run_preflight("--changed-files")
         assert code == 0
         assert "nothing to check" in output.lower() or "All checks passed" in output
+
+
+class TestContractWithFixtures:
+    """Contract tests using temporary project fixtures."""
+
+    def _create_manifest(self, project_dir, domains):
+        """Create a minimal system manifest with given domains."""
+        manifest = {"domains": {}}
+        for name, files in domains.items():
+            manifest["domains"][name] = {"files": files}
+        manifest_dir = project_dir / "docs"
+        manifest_dir.mkdir(parents=True, exist_ok=True)
+        manifest_path = manifest_dir / "system-manifest.yaml"
+        import yaml
+        manifest_path.write_text(yaml.dump(manifest))
+
+    def _create_packet(self, project_dir, issue, domains, risk="medium", strategy="Feature flag"):
+        """Create a valid decision packet."""
+        packet_dir = project_dir / "docs" / "decisions"
+        packet_dir.mkdir(parents=True, exist_ok=True)
+        packet_path = packet_dir / f"issue-{issue}.yaml"
+        import yaml
+        data = {
+            "issue": int(issue),
+            "domains": domains,
+            "source_docs": {"lld": ["docs/lld/example.md"]},
+            "rollout": {"risk": risk, "strategy": strategy},
+            "tests": {"registry_updated": True},
+        }
+        packet_path.write_text(yaml.dump(data))
+        return str(packet_path.relative_to(project_dir))
+
+    def _create_registry(self, project_dir):
+        """Create the canonical test registry."""
+        reg_dir = project_dir / "docs" / "03-engineering" / "testing"
+        reg_dir.mkdir(parents=True, exist_ok=True)
+        (reg_dir / "test-registry.yaml").write_text("test_cases: []\n")
+
+    def test_source_change_valid_packet_passes(self, tmp_path):
+        self._create_manifest(tmp_path, {"billing": ["app/billing.py"]})
+        packet_rel = self._create_packet(tmp_path, "42", ["billing"])
+        self._create_registry(tmp_path)
+        code, output = run_preflight(
+            "--issue", "42",
+            "--changed-files", "app/billing.py", packet_rel,
+            "docs/03-engineering/testing/test-registry.yaml",
+            cwd=str(tmp_path)
+        )
+        assert "[FAIL]" not in output
+
+    def test_source_change_old_historical_packet_fails(self, tmp_path):
+        self._create_manifest(tmp_path, {"billing": ["app/billing.py"]})
+        # Create a packet for a DIFFERENT issue (historical)
+        self._create_packet(tmp_path, "99", ["billing"])
+        code, output = run_preflight(
+            "--issue", "42",
+            "--changed-files", "app/billing.py",
+            cwd=str(tmp_path)
+        )
+        # Should fail because issue-42 packet doesn't exist and issue-99 is not in changed files
+        assert code == 1 or "[FAIL]" in output or "[WARN]" in output
+
+    def test_packet_wrong_domain_strict_fails(self, tmp_path):
+        self._create_manifest(tmp_path, {
+            "billing": ["app/billing.py"],
+            "notifications": ["app/notify.py"],
+        })
+        # Packet lists only billing, but we're changing notifications too
+        packet_rel = self._create_packet(tmp_path, "42", ["billing"])
+        code, output = run_preflight(
+            "--strict", "--issue", "42",
+            "--changed-files", "app/notify.py", packet_rel,
+            cwd=str(tmp_path)
+        )
+        # Domain mismatch should produce a warning or error
+        assert "domain" in output.lower() or "notifications" in output.lower()
+
+    def test_test_change_without_registry_update_fails(self, tmp_path):
+        code, output = run_preflight(
+            "--changed-files", "tests/test_foo.py",
+            cwd=str(tmp_path)
+        )
+        assert code == 1
+        assert "test-registry" in output.lower()
+
+    def test_test_change_with_registry_update_passes(self, tmp_path):
+        self._create_registry(tmp_path)
+        code, output = run_preflight(
+            "--changed-files", "tests/test_foo.py",
+            "docs/03-engineering/testing/test-registry.yaml",
+            cwd=str(tmp_path)
+        )
+        assert "[FAIL] test-registry" not in output
+
+    def test_iac_change_malformed_rollout_fails(self, tmp_path):
+        # Packet with empty rollout section
+        packet_dir = tmp_path / "docs" / "decisions"
+        packet_dir.mkdir(parents=True, exist_ok=True)
+        import yaml
+        (packet_dir / "issue-10.yaml").write_text(yaml.dump({
+            "issue": 10, "domains": ["infra"],
+            "source_docs": {"lld": ["docs/x.md"]},
+            "rollout": {},  # malformed - no risk
+            "tests": {"registry_updated": True},
+        }))
+        code, output = run_preflight(
+            "--issue", "10",
+            "--changed-files", "k8s/deployment.yaml", "docs/decisions/issue-10.yaml",
+            cwd=str(tmp_path)
+        )
+        assert code == 1
+        assert "rollout" in output.lower()

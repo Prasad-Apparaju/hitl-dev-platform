@@ -61,25 +61,12 @@ The deploy workflow looks for a `docs/decisions/issue-NNN.yaml` decision packet 
   run: |
     PACKET=$(git diff --name-only HEAD~1 HEAD | grep "docs/decisions/issue-.*\.yaml" | head -1)
 
-    if [ -n "$PACKET" ] && [ -f "$PACKET" ]; then
-      # Prefer rollout.risk (canonical); fall back to top-level risk_level
-      RISK=$(python3 -c "
-    import yaml, sys
-    data = yaml.safe_load(open('$PACKET'))
-    rollout = data.get('rollout') or {}
-    risk = rollout.get('risk') or data.get('risk_level') or ''
-    print(risk)
-    " 2>/dev/null)
-      echo "Found decision packet: $PACKET — risk=$RISK"
-    fi
-
-    if [ -z "$RISK" ]; then
-      echo "::warning::Could not determine risk level — defaulting to manual approval"
-      echo "risk=high" >> "$GITHUB_OUTPUT"
-    else
-      echo "risk=$RISK" >> "$GITHUB_OUTPUT"
-    fi
+    RISK=$(python tools/read-risk.py "$PACKET")
+    echo "Found decision packet: $PACKET — risk=$RISK"
+    echo "risk=$RISK" >> "$GITHUB_OUTPUT"
 ```
+
+The `tools/read-risk.py` helper handles all edge cases: missing packet path defaults to `high`, missing YAML library defaults to `medium`, missing or unreadable risk field defaults to `high`. It prefers `rollout.risk` (canonical) and falls back to the legacy `risk_level` top-level key.
 
 If no decision packet exists or the risk field is missing, the workflow defaults to **high** (requires manual approval). This is intentional: unknown risk should not bypass gates silently.
 

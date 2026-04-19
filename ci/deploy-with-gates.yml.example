@@ -41,21 +41,9 @@ jobs:
           # using `gh pr view` / GitHub API to get changed files instead.
           PACKET=$(git diff --name-only HEAD~1 HEAD | grep "docs/decisions/issue-.*\.yaml" | head -1)
 
-          if [ -n "$PACKET" ] && [ -f "$PACKET" ]; then
-            # Prefer rollout.risk (canonical); fall back to top-level risk_level
-            RISK=$(grep -oP '^\s*risk:\s*\K\w+' "$PACKET" | head -1)
-            if [ -z "$RISK" ]; then
-              RISK=$(grep -oP 'risk_level:\s*\K\w+' "$PACKET" || true)
-            fi
-            echo "Found decision packet: $PACKET — risk=$RISK"
-          fi
-
-          if [ -z "$RISK" ]; then
-            echo "::warning::Could not determine risk level from decision packet — defaulting to manual approval"
-            echo "risk=high" >> "$GITHUB_OUTPUT"
-          else
-            echo "risk=$RISK" >> "$GITHUB_OUTPUT"
-          fi
+          RISK=$(python tools/read-risk.py "$PACKET")
+          echo "Found decision packet: $PACKET — risk=$RISK"
+          echo "risk=$RISK" >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------
   # Step 2: Gate check — verify label exists for medium+ risk

@@ -159,6 +159,8 @@ def check_linked_issue(changed: list[str], issue: str | None, *, strict: bool = 
                 "linked-issue", True,
                 f"Issue #{issue} provided (gh CLI verification failed — treating as warning).",
             )
+        if strict:
+            return CheckResult("linked-issue", False, "gh CLI is required for strict issue verification.")
         return CheckResult("linked-issue", True, f"Issue #{issue} provided (gh not installed — skipped remote check).")
 
     # Try to discover the issue from decision packets in changed files or docs/decisions/

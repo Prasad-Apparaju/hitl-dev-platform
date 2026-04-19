@@ -113,7 +113,7 @@ docs/
 
 1. Copy this structure into your project's `docs/` folder
 2. Start with `01-product/prd.md` (use `templates/prd-template.md`)
-3. Create `docs/system-manifest.yaml` (use `templates/system-manifest-example.yaml`)
+3. Create `docs/system-manifest.yaml` (use `templates/system-manifest-template.yaml`)
 4. Add `docs/README.md` as the navigation index
 5. Fill in docs as you design and build — the 28-step process drives doc creation
 

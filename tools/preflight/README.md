@@ -34,7 +34,7 @@ python tools/preflight/check_change.py --issue 42 --strict
 
 - Python 3.10+
 - `pyyaml` (`pip install pyyaml`) — needed for manifest-domain and rollout-plan checks
-- `gh` CLI (optional) — used to verify issue existence; skipped with a warning if missing
+- `gh` CLI - optional for local non-strict runs; required for strict issue verification in CI
 
 ## How Claude uses it
 
@@ -52,6 +52,6 @@ The `ci/traceability-check.yml` GitHub Actions workflow runs the same script on 
 
 1. Checks out the repo with full history (`fetch-depth: 0`).
 2. Computes changed files via `git diff --name-only origin/$BASE_REF...HEAD`.
-3. Runs `python tools/preflight/check_change.py --changed-files <files>`.
+3. Runs `python tools/preflight/check_change.py --strict --changed-files <files>`.
 
 The job fails the PR status check if any traceability rule is violated, blocking merge until the issue is fixed.

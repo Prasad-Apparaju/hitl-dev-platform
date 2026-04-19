@@ -1,0 +1,58 @@
+# System Manifest — Template
+#
+# Copy this to docs/system-manifest.yaml and customize for your project.
+# For a fully worked example, see examples/greenfield/docs/system-manifest.yaml
+#
+# The manifest defines domain boundaries, file ownership, facade APIs,
+# and cross-cutting conventions. AI tools read it to stay scoped.
+
+cross_cutting:
+  # Conventions that apply to ALL code in this project.
+  # List 7-10. Each should be specific and enforceable.
+  - name: input-validation
+    rule: "All API endpoints validate input using Pydantic/Zod. No raw request body access."
+  - name: parameterized-queries
+    rule: "All DB queries use parameterized queries or ORM. No string interpolation in SQL."
+  - name: structured-errors
+    rule: "All error responses follow {detail, code} format. Controllers catch domain exceptions."
+  - name: tenant-isolation
+    rule: "All queries filter by tenant_id. No cross-tenant data leakage."
+  - name: retry-with-backoff
+    rule: "All external API calls wrapped in retry with exponential backoff + jitter."
+  - name: inline-comments
+    rule: "All generated code has inline comments on non-obvious logic."
+  # Add your project-specific conventions here
+
+domains:
+  api_controllers:
+    description: "REST API endpoints"
+    files:
+      - app/controllers/auth.py
+      - app/controllers/users.py
+      # Add all controller files
+    facade_apis:
+      - name: create_user
+        description: "Register a new user account"
+        preconditions: ["valid email", "unique email"]
+        error_modes: ["duplicate_email", "validation_error"]
+    mutations:
+      - "Creates user records"
+    side_effects: []
+
+  services:
+    description: "Business logic layer"
+    files:
+      - app/services/auth.py
+      - app/services/users.py
+      # Add all service files
+    facade_apis:
+      - name: authenticate
+        description: "Verify credentials and return token"
+    mutations:
+      - "Reads and writes user data"
+    side_effects: []
+
+  # Add more domains as your codebase grows:
+  # data_layer:
+  # background_workers:
+  # integrations:

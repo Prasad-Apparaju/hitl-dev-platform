@@ -35,6 +35,9 @@ cp examples/greenfield/convention-checks.yaml your-repo/
 # Edit: add your project-specific checks
 
 # 5. Copy CI actions
+# NOTE: These are copyable templates, not active workflows for the platform repo.
+# They are designed to run inside your product repo after docs/system-manifest.yaml
+# has been generated.
 cp ci/*.yml your-repo/.github/workflows/
 
 # 6. Copy preflight script (required by traceability-check.yml)
@@ -72,6 +75,8 @@ An architect working with AI can produce the full documentation baseline in one 
 | **Patterns** | `docs/patterns/` | Architectural patterns: failure mode taxonomy, idempotency keys |
 | **Tools** | `tools/` | Convention checker (pluggable, config-driven), Mermaid fixer, Markdown-to-PDF with Mermaid support |
 | **CI Actions** | `ci/` | GitHub Actions for convention checking + manifest drift detection |
+
+> **CI note:** The workflows under `ci/` are copyable templates, not active workflows for this platform repo. They are designed to run inside your product repo after `docs/system-manifest.yaml` has been generated. Copy them to `.github/workflows/` in your target repo.
 | **Examples** | `examples/` | Greenfield starter with minimal CLAUDE.md, manifest, and convention config |
 | **Playbook** | `docs/playbook/` | Adoption guide (brownfield one-week sprint) + process overview |
 | **Infographics** | `templates/infographic/` | HTML templates for team collaboration diagrams (renderable to PDF) |
