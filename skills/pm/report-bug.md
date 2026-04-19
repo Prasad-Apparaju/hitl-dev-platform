@@ -38,7 +38,7 @@ If `$ARGUMENTS` is empty, ask: "What went wrong? Describe what you did, what you
    **Expected:** <what should have happened>
    **Actual:** <what happened instead>
 
-   **Environment:** http://34.60.225.241:3000 (alpha deployment)
+   **Environment:** <deployment URL>
    **Additional context:** <error messages, screenshots, URLs>
    ```
 

@@ -81,7 +81,7 @@ graph LR
 | Current index | Target index | Notes |
 |--------------|-------------|-------|
 | `{ email: 1 }` unique | `UNIQUE INDEX ON users(email)` | |
-| `{ brand_id: 1, created_at: -1 }` | `INDEX ON items(brand_id, created_at DESC)` | |
+| `{ tenant_id: 1, created_at: -1 }` | `INDEX ON items(tenant_id, created_at DESC)` | |
 
 ---
 

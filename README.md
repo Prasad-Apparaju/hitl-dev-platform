@@ -30,11 +30,11 @@ A development process for teams using AI to generate code, tests, and documentat
 
 Design decisions are discussed as a team — PM, Architect, Developers, QA, Ops, and AI — in a shared thread. Once a decision is finalized, it is captured in documentation: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries. From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It is the specification that drives what gets built.
 
-This inverts the traditional relationship between docs and code. Write documentation first — with AI's help, in minutes rather than weeks — and generate the code from it. When the code diverges from the docs, update the docs to match, not the other way around. Any developer (or AI session) can then pick up any part of the system, read the docs, and produce correct, convention-honoring code — because the docs capture not just *what* the system does, but *why* it does it that way, *what alternatives were considered*, and *what conventions must be followed*.
+This inverts the traditional relationship between docs and code. Write documentation first — with AI's help, significantly faster (observed in pilot projects) — and generate the code from it. When the code diverges from the docs, pause and decide: does the implementation reveal a better design (update the docs), or did the implementation drift from the intended design (fix the code)? The decision is explicit and documented — never silently normalize drift. Any developer (or AI session) can then pick up any part of the system, read the docs, and produce correct, convention-honoring code — because the docs capture not just *what* the system does, but *why* it does it that way, *what alternatives were considered*, and *what conventions must be followed*.
 
 ![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](docs/images/team-collaboration.png)
 
-> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 22-step workflow, and the three boundaries.
+> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 28-step workflow, and the three boundaries.
 
 <details open>
 <summary>View as Mermaid diagram (text-based, copy-pasteable)</summary>
@@ -120,7 +120,7 @@ Without this discipline, AI code generation amplifies problems instead of solvin
 | What goes wrong | Why it happens | What it costs |
 |----------------|---------------|---------------|
 | **Incoherent codebase** — three error handling strategies, two naming conventions, inconsistent patterns | Each developer's AI session invents its own approach. No shared specification constrains the output. | Rework. Every new feature must untangle which pattern to follow. |
-| **Untraceable decisions** — "why does this work this way?" has no answer | Design decisions live in ephemeral AI chat transcripts, not in reviewed documents. | Debugging takes 10x longer. New team members can't understand the system. |
+| **Untraceable decisions** — "why does this work this way?" has no answer | Design decisions live in ephemeral AI chat transcripts, not in reviewed documents. | Debugging is significantly more expensive than prevention (industry consensus). New team members can't understand the system. |
 | **AI invents instead of implementing** — plausible but wrong code that compiles and passes naive tests | AI was given a vague instruction ("implement publishing") instead of a precise spec. It filled the gaps with hallucinated assumptions. | Bugs surface in integration, not in unit tests. The fix requires re-examining the design. |
 | **Decisions don't reach stakeholders** — PM promises features that don't exist, ops deploys without knowing the failure modes | No formal step for communicating what changed, what can break, and how the team's mental model needs to update. | Organizational confusion. Support troubleshoots based on stale assumptions. |
 
@@ -137,7 +137,7 @@ These problems exist in traditional development too, but AI amplifies them becau
 | **Team communication** | Downstream impact brief tells PM, QA, and ops what changed. PM mental model update section ensures product team stays current. | Steps 18-19 (assess phase) |
 | **Institutional memory** | Test registry catalogs every test by domain, risk, and origin. Incident registry connects past failures to regression tests and canary criteria. Both are queryable during impact analysis so the team doesn't repeat past mistakes. | Step 2 (impact analysis), Step 7 (TDD review), Step 19 (rollout plan), post-incident |
 | **QA + Ops without bottlenecks** | QA and Ops contribute to specs (design time) and monitoring (canary time), not to gates (merge time). Their past inputs live in the registries — available even when the individuals are not. | Design PR review, TDD review (step 7), rollout plan (step 19), canary monitoring |
-| **Everything documented** | Docs written before code (steps 3-5). Reconciled after code if implementation diverged (step 16). Updated in every PR. | Steps 3-5 (before), Step 16 (after), every PR |
+| **Everything documented** | Docs written before code (steps 3-5). If implementation diverged, the team explicitly decides whether to update docs or fix the code (step 16). Updated in every PR. | Steps 3-5 (before), Step 16 (after), every PR |
 | **AI conforms to agreements** | Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | Steps 6-8 (TDD), Steps 13-14 (review), CI |
 
 ### 1.2 Why documentation first
@@ -300,13 +300,13 @@ skills/
 
 The skill loader reads these at agent init time. Changes are PRs — reviewed, version-controlled, rollback-able. PMs can iterate on prompts without engineering involvement. A/B testing becomes "change the prompt file, run eval, compare scores."
 
-See the [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) in the agentic-platform repo for the full implementation guide.
+See the Skill System pattern in the companion agentic-platform repo for the full implementation guide.
 
 ### 3.6 Facade-Level Interop
 
 The facade is how disjoint agents know about each other. When the publishing specialist needs to interact with the agent framework, it does not read the framework's source code. It reads a blurb like:
 
-> *"The tool loop in the base agent calls your tool via tool.execute(**args). It expects a ToolResult back. brand_id is auto-injected if not in args."*
+> *"The tool loop in the base agent calls your tool via tool.execute(**args). It expects a ToolResult back. tenant_id is auto-injected if not in args."*
 
 That is enough to produce a correct integration. The specialist does not need to understand the framework's internal state machine — just its boundary contract. This is the same principle as microservice API contracts, applied to AI agent context.
 
@@ -453,7 +453,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 24 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
+Of 28 steps: **12 AI-driven** 🤖, **8 AI-assisted** 👤🤖, **4 human-only** 👤.
 
 ### 5.3 The Two-Round Code Review
 
@@ -570,7 +570,7 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 | 11 | Ops + AI | Deploys to canary. Refactors IaC if needed (Dev applies refinements back to dev). AI monitors go/no-go criteria. Promotes or rolls back. |
 | 12 | Team + PM | Demo. PM gives feedback. Next iteration if needed. |
 
-**Total time: days, not sprints.** The downstream impact brief adds ~30 minutes to the process. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
+**Total time: days rather than sprints (based on internal experience).** The downstream impact brief adds ~30 minutes to the process. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
 
 ---
 
@@ -580,10 +580,47 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 |---------|---------|-----|
 | **Shipping without issues** | Code works, tests pass, but there is zero traceability. No link from requirements to design to code. When someone later asks "why does this integration use this retry strategy?", the answer is buried in a chat transcript. | Add a preflight check that blocks code generation if no issue is linked. GitHub issue first, always (step 1). |
 | **Skipping the training plan** | Architectural decisions around new techniques (e.g., Thompson sampling, bandit routing) ship without training materials. A developer encountering the new pattern for the first time has to reverse-engineer it from code. | Use the conditional step 7 (training plan stub). The trigger list is explicit. |
-| **Using the full process for trivial changes** | A one-line config change goes through 20 steps. The overhead exceeds the value. | There is no clean answer. In practice, skip steps for trivial changes — but "trivial" is a judgment call, and sometimes what looks trivial has architectural implications that surface later. A formal "light path" (issue, code, review) for changes below some complexity threshold is worth defining, but setting that threshold reliably is hard. |
+| **Using the full process for trivial changes** | A one-line config change goes through 20 steps. The overhead exceeds the value. | Use the light path decision table below. |
 | **Using the full process for cross-cutting changes** | A cross-cutting change (new convention, framework upgrade, security patch) is treated as a single pipeline. But it has n-domain impact, and the pipeline's single Design PR does not adequately capture the review burden. | The hierarchical knowledge architecture helps (the architect decomposes across domains), but the human review bottleneck at the integration verification step does not scale. If the lead has to verify integration across 8 domains in one PR, something will get missed. Break cross-cutting changes into domain-scoped PRs. |
 
-### 6.1 Open Questions
+### 6.1 Light Path Decision Table
+
+Not every change needs the full workflow. Use this table to decide the right process weight:
+
+| Change Type | Process |
+|---|---|
+| **Trivial** (typo, config value, log message) | GitHub issue or linked task &rarr; code &rarr; tests if applicable &rarr; review &rarr; merge |
+| **Bug fix** | Issue &rarr; regression test first &rarr; fix &rarr; risk note &rarr; registry update if incident-related |
+| **Normal feature** | Full workflow (all steps) |
+| **Cross-cutting / security / data migration** | Decomposition plan &rarr; domain-scoped PRs &rarr; full workflow per PR |
+| **P0 incident** | Fix first &rarr; full docs within 48 hours &rarr; incident registry entry |
+
+When in doubt, use the heavier process. "Trivial" is a judgment call, and sometimes what looks trivial has architectural implications that surface later. If you find yourself writing more than a few lines or touching more than one domain, escalate to the full workflow.
+
+### 6.2 Architect Capacity and Delegation
+
+The architect/lead is a bottleneck by design — they are the quality gate. But the bottleneck must scale with team size and handle unavailability gracefully.
+
+**Scaling by team size:**
+
+- **Teams of 3-5:** One architect can handle all gates (design approval, code review, integration verification).
+- **Teams of 6-10:** Architect delegates code review Round 1 to senior engineers, retains design approval and integration verification.
+- **Teams of 10+:** Consider splitting into domain leads, each owning their manifest domain's gates. The architect retains cross-domain design approval.
+
+**When the architect is unavailable:**
+
+| Gate | Substitute | Constraint |
+|---|---|---|
+| **Design approval** | Technical advisor (or most senior engineer if advisor unavailable) | Must have context on the affected domain |
+| **Code review Round 1** | Any team member can perform Round 1 | Round 2 waits for architect return (max 24h) |
+| **Integration verification** | Most experienced engineer on the affected domain | Documents any judgment calls for architect post-review |
+| **Emergency (P0)** | Any senior engineer can approve | Architect reviews post-merge within 48h |
+
+Gates should not block progress for more than 24 hours. When a substitute approves, the decision is documented and the architect reviews within the specified window.
+
+See [templates/team-responsibilities-template.md](templates/team-responsibilities-template.md) for the full delegation framework.
+
+### 6.3 Open Questions
 
 - **Exploratory work**: How to handle genuinely exploratory work where the design emerges from the code. The design-first approach has clear value, but some tasks require building before knowing what to build.
 - **Developer identity**: How to onboard developers who are uncomfortable with the "review, don't write" model. Some engineers derive identity from writing code. Telling them "your job is review" can feel like a demotion even when it is not.
@@ -609,7 +646,7 @@ Use this checklist when considering or implementing this process:
 
 ## 8. Brownfield: Adopting This on an Existing Codebase
 
-An architect working with AI can produce the full documentation baseline — manifest, HLDs, LLDs, ADRs, CLAUDE.md, convention checks — in one sprint. AI does the mechanical work (scanning code, generating drafts). The architect does the judgment (correcting boundaries, adding "why" knowledge, verifying inferred decisions). The baseline will be ~70% accurate; the process corrects the rest through normal use.
+An architect working with AI can produce the full documentation baseline — manifest, HLDs, LLDs, ADRs, CLAUDE.md, convention checks — in one sprint. AI does the mechanical work (scanning code, generating drafts). The architect does the judgment (correcting boundaries, adding "why" knowledge, verifying inferred decisions). The baseline will be approximately 70% accurate (observed in initial projects; accuracy improves as conventions are documented); the process corrects the rest through normal use.
 
 Use the `/generate-docs reverse-engineer` skill to automate the sprint. See [docs/playbook/adoption-guide.md](docs/playbook/adoption-guide.md) for the full guide including: the sprint structure, gap assessment and closure plan, handling areas nobody understands, the expedited path for production incidents, and common objections.
 
@@ -619,8 +656,8 @@ Use the `/generate-docs reverse-engineer` skill to automate the sprint. See [doc
 
 Skills are Claude Code commands that automate parts of the workflow. Tools run in CI or from the command line. Templates provide the starting structure for project artifacts. Everything lives in two repos:
 
-- **[hitl-dev-platform](https://github.com/Prasad-Apparaju/hitl-dev-platform)** — the process, skills, tools, and templates (this repo)
-- **[agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform)** — reusable Python/LangGraph infrastructure for building agents (BaseAgent, tools, resilience, routing, observability) + [7 agentic patterns](https://github.com/Prasad-Apparaju/agentic-platform/tree/main/docs/patterns) for transitioning from deterministic to agentic systems
+- **hitl-dev-platform** — the process, skills, tools, and templates (this repo)
+- **agentic-platform** — reusable Python/LangGraph infrastructure for building agents (BaseAgent, tools, resilience, routing, observability) + 7 agentic patterns for transitioning from deterministic to agentic systems
 
 ### Available now
 
@@ -634,7 +671,7 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Tool | PDF renderer | [tools/render-pdf/](tools/render-pdf/) | Markdown to PDF with Mermaid diagram rendering |
 | Template | PRD | [templates/prd-template.md](templates/prd-template.md) | Product requirements with inline guidance on writing for AI |
 | Template | CLAUDE.md | [templates/CLAUDE.md.template](templates/CLAUDE.md.template) | Project CLAUDE.md with placeholder sections for conventions |
-| Template | System manifest | [templates/system-manifest.schema.yaml](templates/system-manifest.schema.yaml) | Schema definition for the system manifest |
+| Template | System manifest | [skills/generate-docs/templates/system-manifest.schema.yaml](skills/generate-docs/templates/system-manifest.schema.yaml) | Schema definition for the system manifest |
 | Template | Issue | [templates/issue-template.md](templates/issue-template.md) | GitHub issue template with ROI + downstream impact sections |
 | Template | Test registry | [templates/test-registry-template.yaml](templates/test-registry-template.yaml) | Test case catalog (domain, risk, origin, incident link) |
 | Template | Incident registry | [templates/incident-registry-template.yaml](templates/incident-registry-template.yaml) | Incident catalog (root cause, fix, regression test, canary criteria) |
@@ -655,7 +692,8 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/impact-brief` | [skills/impact-brief.md](skills/impact-brief.md) | Generate 5-section downstream impact brief from PR diff + manifest + incident registry |
 | Skill | `/check-conventions` | [skills/check-conventions.md](skills/check-conventions.md) | Run convention checker in-chat, offer to fix violations |
 | Tool | Manifest generator | [tools/generate-manifest/](tools/generate-manifest/) | Auto-generate system-manifest.yaml from codebase via AST scanning |
-| Infra | Agent platform | [agentic-platform repo](https://github.com/Prasad-Apparaju/agentic-platform) | BaseAgent, tools, resilience, routing, observability, 7 patterns |
+| Guide | AI governance | [docs/playbook/ai-governance.md](docs/playbook/ai-governance.md) | What AI can access, secrets protection, generated code ownership, audit trail |
+| Infra | Agent platform | agentic-platform repo (companion) | BaseAgent, tools, resilience, routing, observability, 7 patterns |
 
 ---
 

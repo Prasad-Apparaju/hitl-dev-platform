@@ -12,7 +12,7 @@ Before making ANY code or doc change, output these 7 lines:
 4. **ROI estimate**: Change costs >1 day? If yes → add ROI Estimate section to the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
 6. **Downstream impact**: Affects other teams? If yes → impact brief required.
-7. **Plan**: State the order (docs → IaC → code → tests → reconcile docs).
+7. **Plan**: State the order (docs → IaC → code → tests → reconcile docs). Reconcile means: explicitly decide whether divergence reflects a better design (update docs) or unintended drift (fix code).
 
 ## Development Practices
 Before any code change, load `/skills:dev-practices` and follow its workflow.

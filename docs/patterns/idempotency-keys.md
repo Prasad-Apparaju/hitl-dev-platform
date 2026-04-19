@@ -97,5 +97,5 @@ CREATE INDEX idx_side_effect_created ON external_side_effect_log(created_at);
 
 ## Related
 
-- [Transient failure retry policy](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/agent-observability.md) — retry logic that works with idempotency
-- [Agent maturity levels](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/agent-maturity-levels.md) — idempotency is required at L2+ (tool-using agents)
+- Transient failure retry policy (see agentic-platform patterns) — retry logic that works with idempotency
+- Agent maturity levels (see agentic-platform patterns) — idempotency is required at L2+ (tool-using agents)

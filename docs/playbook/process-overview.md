@@ -1,4 +1,4 @@
-# Process Overview — The 22-Step HITL AI-Driven Workflow
+# Process Overview — The 28-Step HITL AI-Driven Workflow
 
 Every change — feature, bug fix, improvement — follows this pipeline. AI does the production work. Humans hold gates at every decision point.
 
@@ -16,7 +16,7 @@ graph LR
     end
 ```
 
-## The 22 Steps
+## The 28 Steps
 
 ### Requirements (steps 1-2)
 1. **GitHub Issue** — describe the change, root cause, proposed solution
@@ -37,7 +37,7 @@ graph LR
 12. **Run full test suite** — all must pass
 13. **Code review Round 2** — AI reviews edge cases, regressions, completeness (after tests)
 14. **Rerun tests** — confirm no regressions from Round 2 fixes
-15. **Reconcile docs** — update docs if implementation diverged
+15. **Reconcile docs** — if implementation diverged, explicitly decide: update the docs (better design discovered) or fix the code (unintended drift). Document the decision.
 
 ### Assess (steps 16-17)
 16. **Downstream impact brief** — flows changed, risk assessment, manual verification scenarios, PM mental model update, rollout strategy

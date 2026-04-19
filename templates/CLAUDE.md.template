@@ -14,13 +14,13 @@ Before making ANY code or doc change, output these 7 lines in the chat BEFORE th
 4. **ROI estimate**: Change costs >1 day? If yes → add ROI Estimate section to the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
 6. **Downstream impact**: Affects other teams' mental models or deployment? If yes → impact brief required.
-7. **Plan**: State the order (docs → IaC → training plan → tests → code → review → impact brief → reconcile docs).
+7. **Plan**: State the order (docs → IaC → training plan → tests → code → review → impact brief → reconcile docs). Reconcile means: explicitly decide whether divergence reflects a better design (update docs) or unintended drift (fix code).
 
 Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ---
 
-## Change Workflow (22 Steps — MANDATORY ORDER)
+## Change Workflow (28 Steps — MANDATORY ORDER)
 
 Every change — feature, bug fix, improvement, refactor — follows this sequence. Never skip steps 1-5. Documentation is the source of truth, not code.
 
@@ -54,7 +54,7 @@ Every change — feature, bug fix, improvement, refactor — follows this sequen
 17. **Code review Round 1** — AI reviews structure, security, LLD adherence.
 18. **Code review Round 2** — AI reviews edge cases, regressions, completeness.
 19. **Rerun tests** — confirm no regressions from review fixes.
-20. **Reconcile docs** — update HLD/LLD/training plan if implementation diverged.
+20. **Reconcile docs** — if implementation diverged from design docs, pause and decide: does the implementation reveal a better design (update the docs), or did the implementation drift from the intended design (fix the code)? The decision is explicit and documented — never silently normalize drift.
 
 ### Assess (Steps 21-22)
 
@@ -176,7 +176,7 @@ For verbose explanations, examples, Mermaid diagrams, and subsection details, se
 
 | Topic | File |
 |---|---|
-| Full 22-step workflow with Mermaid + subsections | `.claude/commands/skills/dev-practices.md` |
+| Full 28-step workflow with Mermaid + subsections | `.claude/commands/skills/dev-practices.md` |
 | Impact analysis template | `.claude/commands/skills/apply-change.md` |
 | Convention check commands | `.claude/commands/skills/check-conventions.md` |
 | Downstream impact brief (5-section template) | `.claude/commands/skills/impact-brief.md` |

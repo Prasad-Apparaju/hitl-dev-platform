@@ -81,7 +81,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Decorators + base classes → convention patterns
    - Test files → test coverage map
 
-2. **Generate `docs/system-manifest.yaml`** with ALL sections from `templates/system-manifest.schema.yaml`:
+2. **Generate `docs/system-manifest.yaml`** with ALL sections from `skills/generate-docs/templates/system-manifest.schema.yaml`:
 
    **Per domain:**
    - `purpose`: one-line description (infer from directory name + file contents)
@@ -131,7 +131,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 3. **Update `docs/02-design/technical/hld/index.md`** with all new HLDs.
 
-4. **STOP and ask the user to review the HLDs.** These don't need to be perfect — 70% accurate is the target. The user corrects the 30%.
+4. **STOP and ask the user to review the HLDs.** These don't need to be perfect — approximately 70% accurate is the target (observed in initial projects; accuracy improves as conventions are documented). The user corrects the remainder.
 
 ### Phase R3 — LLDs (Days 3-4 equivalent)
 
@@ -194,12 +194,11 @@ This mode reads the existing codebase and generates the full documentation basel
    - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
 3. **Copy the skills** to `.claude/commands/` if they don't exist:
-   - `skills/dev-practices.md` — the 22-step workflow
+   - `skills/dev-practices.md` — the 28-step workflow
    - `workflows/apply-change.md` — the impact analysis workflow
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
-   - `convention-check.yml` — runs convention checker on every PR
-   - `manifest-check.yml` — checks manifest drift on every PR
+   - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR
 
 5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `templates/issue-template.md`:
    - Pre-filled with the ROI estimation section

@@ -1,11 +1,11 @@
 # PM Guide — Using Claude to Drive Product Requirements
 
-**Audience:** Dilip (Product Owner)
+**Audience:** Product Owner
 **Setup:** Clone the repo, open in your IDE with Claude Code (VS Code, Cursor, or CLI).
 
 ```bash
-git clone https://github.com/Prasad-Apparaju/PSR-Works-Migration.git
-cd PSR-Works-Migration
+git clone https://github.com/your-org/your-project.git
+cd your-project
 ```
 
 Claude auto-loads the PRD, architecture, and process docs — you don't need to read them manually.

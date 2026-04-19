@@ -52,17 +52,14 @@ graph LR
 
     subgraph Showcases["📦 Showcase Roadmap"]
         direction TB
-        SC0["S0 ✅ Foundation<br/>DB · Schemas · Migration"]
-        SC1["S1 ✅ Auth + Infra<br/>CSV · JWT · GCS · Billing"]
-        SC2["S2 ✅ AI Core<br/>Planner · Skills · Langfuse"]
-        SC3["S3 ✅ Content<br/>Copilot · Style Transfer · RAG"]
-        SC4["S4 ✅ Automation<br/>Orchestrator · Publishing · Monitor"]
-        SC5["S5 ✅ Observability<br/>Metrics · E2E Tests · GCP Deploy"]
-        SC6["S6 🔄 Model Swap<br/>Profiles · A/B Eval · Admin UI"]
-        SC7["S7 ⏳ Doc Ingestion<br/>Docling · ColQwen2 · Video"]
-        SC8["S8 ⏳ Scale<br/>vLLM GPU · Feature Flags"]
+        SC0["S0 Foundation<br/>DB · Schemas · Auth"]
+        SC1["S1 Core Features<br/>Primary use cases"]
+        SC2["S2 Integrations<br/>External APIs · Webhooks"]
+        SC3["S3 Automation<br/>Background jobs · Scheduling"]
+        SC4["S4 Observability<br/>Metrics · Logs · Alerts"]
+        SC5["S5 Polish<br/>Performance · Edge cases · Docs"]
 
-        SC0 --> SC1 --> SC2 --> SC3 --> SC4 --> SC5 --> SC6 --> SC7 --> SC8
+        SC0 --> SC1 --> SC2 --> SC3 --> SC4 --> SC5
     end
 
     Showcase -.-|"Each showcase<br/>follows this pipeline"| Showcases
@@ -128,7 +125,7 @@ graph TD
     O -->|No| F
     O -->|Yes| P
 
-    P["12. 📄 Reconcile Docs<br/>Update docs + IaC if implementation diverged"] --> Q
+    P["12. 📄 Reconcile Docs<br/>Pause: update docs OR fix code"] --> Q
     Q["13. 📬 Create PR<br/>Link to issue, include docs + IaC + code + tests"] --> R
 
     R["14. 👤 Team Lead — Integration Verification<br/>Run feature E2E, verify intent matches HLD/LLD"]
@@ -176,7 +173,7 @@ graph TD
 9.  Run Full Suite          → all tests must pass, no regressions
 10. Code Review Round 2     → AI reviews edge cases, regressions, completeness (after tests pass)
 11. Rerun Tests             → confirm no regressions from Round 2 fixes
-12. Reconcile Docs + Training → if implementation diverged, update docs + IaC + training plan examples
+12. Reconcile Docs + Training → if implementation diverged, pause and decide: does the implementation reveal a better design (update docs) or did it drift (fix code)? The decision is explicit.
 13. Create PR               → link to GitHub issue, include docs + IaC + training plan + code + tests in same PR
 14. 👤 Downstream Impact    → developer + AI produce impact brief: flows changed, risks, PM mental model
                               update, manual verification scenarios (see §1e below)

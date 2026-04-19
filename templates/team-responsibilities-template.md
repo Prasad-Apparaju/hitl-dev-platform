@@ -72,7 +72,7 @@ graph TD
 
 | Responsibility | Details |
 |---|---|
-| **Implementation** | Build from approved LLDs following the 22-step process |
+| **Implementation** | Build from approved LLDs following the 28-step process |
 | **Testing** | Write tests (TDD), run suites, fix regressions |
 | **Deployment** | Deploy their own work, verify in target environment |
 | **End-to-end ownership** | Whoever builds it owns it: build, test, fix, deploy |
@@ -116,7 +116,28 @@ All escalations must use prescribed documentation formats. No undocumented decis
 
 ---
 
-## 5. Conflict Resolution
+## 5. Capacity and Delegation
+
+### Scaling the Architect Role
+
+- **Teams of 3-5:** One architect can handle all gates (design approval, code review, integration verification).
+- **Teams of 6-10:** Architect delegates code review Round 1 to senior engineers, retains design approval and integration verification.
+- **Teams of 10+:** Consider splitting into domain leads, each owning their manifest domain's gates. The architect retains cross-domain design approval.
+
+### When the Architect is Unavailable
+
+| Gate | Substitute | Constraint |
+|---|---|---|
+| **Design approval** | Technical advisor (or most senior engineer if advisor unavailable) | Must have context on the affected domain |
+| **Code review Round 1** | Any team member can perform Round 1 | Round 2 waits for architect return (max 24h) |
+| **Integration verification** | Most experienced engineer on the affected domain | Documents any judgment calls for architect post-review |
+| **Emergency (P0)** | Any senior engineer can approve | Architect reviews post-merge within 48h |
+
+The principle: gates should not block progress for more than 24 hours. When a substitute approves, the decision is documented and the architect reviews within the specified window. If the architect finds issues post-merge, they are tracked as follow-up issues, not reverted (unless the issue is a production risk).
+
+---
+
+## 6. Conflict Resolution
 
 | Scenario | Resolution |
 |---|---|

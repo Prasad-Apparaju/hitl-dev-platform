@@ -12,13 +12,13 @@ Before making ANY code or doc change, output these 7 lines in the chat BEFORE th
 4. **ROI estimate**: Change costs >1 day? If yes → add ROI Estimate section to the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
 6. **Downstream impact**: Affects other teams' mental models or deployment? If yes → impact brief required.
-7. **Plan**: State the order (docs → IaC → training plan → code → tests → impact brief → reconcile docs).
+7. **Plan**: State the order (docs → IaC → training plan → code → tests → impact brief → reconcile docs). Reconcile means: explicitly decide whether divergence reflects a better design (update docs) or unintended drift (fix code).
 
 Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/skills:dev-practices` and follow its 22-step workflow. For structured impact analysis and test planning, use `/workflows:apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/skills:dev-practices` and follow its 28-step workflow. For structured impact analysis and test planning, use `/workflows:apply-change`.
 
 ## System Manifest — Read Before Every Change
 

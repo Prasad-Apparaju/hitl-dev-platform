@@ -31,7 +31,7 @@ The generator uses AST analysis to extract:
 | **File lists** | All `.py` files grouped by domain |
 | **Dependencies** | Import graph — which domains import from which |
 | **Facade APIs** | Public classes and functions (detected from decorators, base classes) |
-| **Conventions** | Known patterns (e.g., `MutatingTool` subclasses → idempotency convention) |
+| **Conventions** | Known patterns (e.g., mutating tool subclasses → idempotency convention) |
 
 ## Output
 
@@ -47,7 +47,7 @@ Use `--check` to compare the existing manifest against the current codebase with
 - Deleted files still listed in the manifest
 - New imports that change the dependency graph
 
-This runs in CI via `.github/workflows/manifest-check.yml`.
+This runs in CI via `ci/convention-check.yml` (the `manifest-drift` job).
 
 ## After Generating
 

@@ -32,4 +32,4 @@ If `$ARGUMENTS` is empty, ask: "Which requirement do you want to update? Provide
 
 - Never silently change requirements — always show old vs new
 - Flag ripple effects even if the user didn't ask about them
-- If the change contradicts an ADR, flag it: "This conflicts with ADR D-X.Y — the architect and Prasad need to weigh in"
+- If the change contradicts an ADR, flag it: "This conflicts with ADR D-X.Y — the architect and technical advisor need to weigh in"

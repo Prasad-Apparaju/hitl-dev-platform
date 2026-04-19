@@ -46,7 +46,7 @@ A complete documentation baseline ready for the HITL process: system manifest, H
 | Month 1 | ~85% | 10-15 changes each corrected their area |
 | Month 3 | ~95% | Hot paths battle-tested |
 
-**70% accurate docs after one sprint are infinitely more useful than 100% accurate docs after six months.**
+**Approximately 70% accurate docs after one sprint (observed in initial projects) are infinitely more useful than 100% accurate docs after six months.**
 
 ## After the Sprint: Assessing and Closing the Gaps
 
@@ -93,7 +93,7 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 |---------|---------|-----------------|
 | P0 (system down) | Fix first | Write LLD for affected area within 48 hours |
 | P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Write LLD during PR review |
-| P2+ (everything else) | Full 22-step process | Standard docs-before-code |
+| P2+ (everything else) | Full 28-step process | Standard docs-before-code |
 
 ## Common Objections
 

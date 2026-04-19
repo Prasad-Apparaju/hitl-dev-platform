@@ -84,7 +84,7 @@ docs/
 | Product vision, requirements, personas | `01-product/` | PM |
 | Architecture diagrams, component design | `02-design/technical/hld/` | Architect |
 | Method signatures, class diagrams, sequence diagrams | `02-design/technical/lld/` | Architect |
-| Why we chose X over Y | `02-design/technical/adrs/` | Architect (Prasad approves) |
+| Why we chose X over Y | `02-design/technical/adrs/` | Architect (technical advisor approves) |
 | Coding standards, testing strategy | `03-engineering/` | Architect |
 | Training plans for new patterns | `03-engineering/training/` | Developer who built it |
 | Deployment, runbooks, monitoring | `04-operations/` | Architect (owns IaC/Ops) |
@@ -115,6 +115,6 @@ docs/
 2. Start with `01-product/prd.md` (use `templates/prd-template.md`)
 3. Create `docs/system-manifest.yaml` (use `templates/system-manifest-example.yaml`)
 4. Add `docs/README.md` as the navigation index
-5. Fill in docs as you design and build — the 22-step process drives doc creation
+5. Fill in docs as you design and build — the 28-step process drives doc creation
 
 The numbered folders represent a logical progression: understand the product (01) → design the solution (02) → build it (03) → run it (04). Not every project needs all folders on day one.

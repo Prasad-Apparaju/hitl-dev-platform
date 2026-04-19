@@ -1,0 +1,51 @@
+# Convention Checks Configuration
+# Project-specific checks for the pluggable convention checker.
+# Replace the sample checks below with your project's actual conventions.
+#
+# Check types:
+#   subclass_method_check — verify subclasses implement required methods
+#   import_check          — verify required imports in matching files
+#   pattern_check         — verify co-occurrence of patterns
+#   file_contains         — verify file content requirements
+#
+# See also: ci/convention-check.yml for CI integration
+
+checks:
+  # --- Universal checks (keep these) ---
+
+  manifest_drift:
+    type: manifest_drift
+    description: "System manifest matches the current codebase"
+    manifest: docs/system-manifest.yaml
+
+  mermaid_br_tags:
+    type: mermaid_br_tags
+    description: "No <br/> tags inside Mermaid blocks (Obsidian incompatible)"
+    glob: "docs/**/*.md"
+
+  inline_comments:
+    type: inline_comments
+    description: "Generated code has inline comments explaining non-obvious logic"
+
+  # --- Project-specific checks (replace with your own) ---
+
+  # example_subclass_check:
+  #   type: subclass_method_check
+  #   description: "All MutatingTool subclasses implement _describe_plan"
+  #   base_class: MutatingTool
+  #   required_method: _describe_plan
+  #   glob: "app/**/*.py"
+
+  # example_import_check:
+  #   type: import_check
+  #   description: "All external API calls use retry wrapper"
+  #   pattern: "requests\\.get|requests\\.post|httpx\\."
+  #   required_import: "from app.services.resilience import retry_external_call"
+  #   glob: "app/**/*.py"
+
+  # example_pattern_check:
+  #   type: pattern_check
+  #   description: "All DB queries filter by brand_id"
+  #   pattern: "\\.query\\("
+  #   must_cooccur: "brand_id"
+  #   glob: "app/services/**/*.py"

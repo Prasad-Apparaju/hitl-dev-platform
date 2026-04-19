@@ -68,5 +68,5 @@ For a **code generation agent** (4 modes + `none`):
 
 ## Related
 
-- [Agent maturity levels](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/agent-maturity-levels.md) — failure taxonomy applies at L3 (self-evaluating agents)
-- [Agent observability](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/agent-observability.md) — how to instrument traces for taxonomy tagging
+- Agent maturity levels (see agentic-platform patterns) — failure taxonomy applies at L3 (self-evaluating agents)
+- Agent observability (see agentic-platform patterns) — how to instrument traces for taxonomy tagging

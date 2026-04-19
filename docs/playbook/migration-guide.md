@@ -8,8 +8,8 @@ For teams migrating an existing system (e.g., NestJS/Spring Boot) to a new backe
 
 | Path | You have | Start at |
 |------|----------|----------|
-| **A — Bundled workspace** | A migration workspace repo (like [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration)) with target docs, skills, tools, and V1/V2 structure already set up | [Path A](#path-a--bundled-migration-workspace) |
-| **B — Starting from scratch** | Only your existing codebase and access to [hitl-dev-platform](https://github.com/Prasad-Apparaju/hitl-dev-platform) | [Path B](#path-b--starting-from-scratch) |
+| **A — Bundled workspace** | A migration workspace repo with target docs, skills, tools, and V1/V2 structure already set up | [Path A](#path-a--bundled-migration-workspace) |
+| **B — Starting from scratch** | Only your existing codebase and access to hitl-dev-platform | [Path B](#path-b--starting-from-scratch) |
 
 ---
 
@@ -20,11 +20,11 @@ Your workspace already contains the target architecture docs, skills, tools, CI 
 ### A1. Setup
 
 ```bash
-git clone https://github.com/Prasad-Apparaju/PSR-Works-Migration.git
-cd PSR-Works-Migration
+git clone https://github.com/your-org/your-migration-workspace.git
+cd your-migration-workspace
 
 # Check out the current system into V1/
-cd V1 && git clone https://github.com/dilipkpoluru/PSR-Works.git . && cd ..
+cd V1 && git clone https://github.com/your-org/your-v1-system.git . && cd ..
 
 # Install the agentic platform (if building agents)
 pip install agentic-platform
@@ -140,7 +140,7 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 
 | What to do | Skill / tool | Reference to study first |
 |-----------|-------------|-------------------------|
-| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [example manifest](../../examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../templates/system-manifest.schema.yaml) to see the target format |
+| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [example manifest](../../examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../skills/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
 | Populate the test registry | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
 | Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
@@ -183,7 +183,7 @@ What transfers directly vs. what doesn't:
 | Test/incident registry FORMAT | The specific test cases and incidents |
 | agentic-platform code (if building agents) | Domain-specific agent implementations |
 
-> **Tip:** If the reference implementation migrated the exact same system, consider building a bundled migration workspace (like [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration)) — copy all target docs into the migration repo so the team doesn't need separate access. This converts your Path B into a Path A for the next team.
+> **Tip:** If the reference implementation migrated the exact same system, consider building a bundled migration workspace — copy all target docs into the migration repo so the team doesn't need separate access. This converts your Path B into a Path A for the next team.
 
 **B4b — No reference implementation exists:**
 
@@ -255,7 +255,7 @@ If the database changes (e.g., MongoDB → PostgreSQL):
 ### Agent behavior verification (for agentic systems)
 
 1. **Capture golden outputs** from the current agents — run them against a fixed set of inputs, record the outputs. These become the behavioral baseline.
-2. **Build the new agents** using [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) infrastructure (BaseAgent, MutatingTool, AgentEvaluator, etc.)
+2. **Build the new agents** using the agentic-platform infrastructure (BaseAgent, tool base classes, AgentEvaluator, etc.)
 3. **Run the same inputs through the new agents** — compare outputs against the golden baseline. Differences are either bugs (fix) or intentional improvements (document as ADRs).
 4. **Migrate prompts to skill files** — if agents have prompts embedded as string literals in code, extract them into versioned `skills/<agent>/system-prompt.md` files.
 
@@ -296,6 +296,5 @@ AI generates the bulk of this mapping. The architect verifies the equivalences a
 
 - [Process overview](process-overview.md) — the full workflow
 - [Adoption guide](adoption-guide.md) — the brownfield sprint + gap assessment
-- [hitl-dev-platform README](https://github.com/Prasad-Apparaju/hitl-dev-platform) — the practitioner's guide
-- [agentic-platform](https://github.com/Prasad-Apparaju/agentic-platform) — reusable agent infrastructure (if the target system includes agents)
-- [PSR-Works-Migration](https://github.com/Prasad-Apparaju/PSR-Works-Migration) — bundled migration workspace (Path A example)
+- hitl-dev-platform README — the practitioner's guide
+- agentic-platform — reusable agent infrastructure (if the target system includes agents)

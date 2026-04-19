@@ -1,8 +1,24 @@
 # Adding a New Feature
 
-This guide walks through adding a new feature to PSR-Works V2, from idea to production. It applies to any functional change — new endpoint, new agent capability, new integration, new UI flow.
+This guide walks through adding a new feature, from idea to production. It applies to any functional change — new endpoint, new agent capability, new integration, new UI flow.
 
 For bug fixes and refactors, see [Fixing a Bug or Refactoring](./fixing-and-refactoring.md).
+
+---
+
+## Which Process Do I Need?
+
+Not every change needs the full workflow below. Use this table to pick the right weight:
+
+| Change Type | Process |
+|---|---|
+| **Trivial** (typo, config value, log message) | GitHub issue or linked task &rarr; code &rarr; tests if applicable &rarr; review &rarr; merge |
+| **Bug fix** | Issue &rarr; regression test first &rarr; fix &rarr; risk note &rarr; registry update if incident-related |
+| **Normal feature** | Full workflow (all steps below) |
+| **Cross-cutting / security / data migration** | Decomposition plan &rarr; domain-scoped PRs &rarr; full workflow per PR |
+| **P0 incident** | Fix first &rarr; full docs within 48 hours &rarr; incident registry entry |
+
+When in doubt, use the heavier process. If you are here, you probably need the full workflow.
 
 ---
 
@@ -12,7 +28,7 @@ Read these once. They define the rules of the game:
 
 | Document | What it gives you |
 |---|---|
-| `CLAUDE.md` | 22-step workflow, preflight check, coding standards, cross-cutting conventions |
+| `CLAUDE.md` | 28-step workflow, preflight check, coding standards, cross-cutting conventions |
 | `docs/system-manifest.yaml` | Domain boundaries, facade APIs, 10 conventions that apply to all code |
 | `docs/playbook/process-overview.md` | Visual pipeline + detailed step descriptions |
 | `docs/02-design/technical/adrs/design-decisions.md` | 55 decisions — understand WHY things are the way they are before proposing changes |
@@ -153,7 +169,7 @@ Fix any violations before proceeding.
 
 **19. Rerun tests** — confirm no regressions from review fixes.
 
-**20. Reconcile docs** — if implementation diverged from the LLD, update the LLD to match reality.
+**20. Reconcile docs** — if implementation diverged from the design docs, pause and decide: does the implementation reveal a better design (update the docs), or did the implementation drift from the intended design (fix the code)? The decision is explicit and documented — never silently normalize drift.
 
 ---
 
@@ -219,13 +235,13 @@ Deploy per the risk-rated rollout plan. Monitor go/no-go criteria. The system mu
 
 ## Escalation
 
-Architectural trade-offs, PRD scope changes, and cross-team decisions → discuss with Prasad (technical advisor) and Dilip (product owner) using the prescribed documentation formats. See [Architect Playbook — Escalation Path](../05-migration/architect-playbook.md#escalation-path).
+Architectural trade-offs, PRD scope changes, and cross-team decisions → discuss with the technical advisor and product owner using the prescribed documentation formats. See [Architect Playbook — Escalation Path](../05-migration/architect-playbook.md#escalation-path).
 
 ## Quick Reference
 
 | I need to... | Go to... |
 |---|---|
-| Understand the 22-step workflow | `CLAUDE.md` (inlined) or `docs/playbook/process-overview.md` (visual) |
+| Understand the 28-step workflow | `CLAUDE.md` (inlined) or `docs/playbook/process-overview.md` (visual) |
 | Check domain boundaries | `docs/system-manifest.yaml` |
 | Look up an architectural decision | `docs/02-design/technical/adrs/design-decisions.md` |
 | Find the HLD for a component | `docs/02-design/technical/hld/index.md` |

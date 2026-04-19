@@ -1,6 +1,6 @@
-# Architect Playbook — PSR-Works V1 → V2 Migration
+# Architect Playbook — V1 → V2 Migration
 
-**Context:** You built V1. Your mission is to rebuild it as V2 (Python/FastAPI) using the PRD, existing designs, and ADRs in this repo. Prasad is the technical advisor and Dilip is the product owner. You own the day-to-day execution and team delegation.
+**Context:** You built V1. Your mission is to rebuild it as V2 using the PRD, existing designs, and ADRs in this repo. The technical advisor provides architectural guidance and the product owner defines scope. You own the day-to-day execution and team delegation.
 
 ---
 
@@ -28,7 +28,7 @@ change management process you must follow for every change.
 Read the HLDs at docs/02-design/technical/hld/ and compare against 
 the PRD and current V1 code. Flag gaps, inconsistencies, and anything 
 new in V1 not yet reflected. Propose improvements. Update the HLD 
-documents. Escalate architectural trade-offs to Prasad and Dilip 
+documents. Escalate architectural trade-offs to the technical advisor and product owner
 with supporting documentation (see Escalation Path below).
 ```
 
@@ -53,7 +53,7 @@ phase is a shippable slice. Identify which phases you build yourself
 
 ```
 Implement the LLD at docs/02-design/technical/lld/<component>.md.
-Follow the 22-step process in CLAUDE.md. You review at each gate — 
+Follow the 28-step process in CLAUDE.md. You review at each gate — 
 design, tests, code review Round 1, code review Round 2.
 Do not proceed past a gate without your approval.
 ```
@@ -62,7 +62,7 @@ Do not proceed past a gate without your approval.
 
 ```
 You're implementing <component> yourself using its LLD. Claude 
-proposes code, you approve each piece. Follow the 22-step process, 
+proposes code, you approve each piece. Follow the 28-step process, 
 starting with the GitHub issue.
 ```
 
@@ -91,7 +91,7 @@ requirement: Done / Partial / Not started. What's next?
 
 ## Escalation Path
 
-Architectural trade-offs, ADR changes, PRD scope changes, and cross-team decisions must be discussed with Prasad (technical advisor) and Dilip (product owner).
+Architectural trade-offs, ADR changes, PRD scope changes, and cross-team decisions must be discussed with the technical advisor and product owner.
 
 All escalations must use the prescribed documentation formats — no Slack messages or verbal escalations without supporting docs. The docs ARE the discussion.
 
@@ -111,4 +111,4 @@ All escalations must use the prescribed documentation formats — no Slack messa
 | Add a new feature | [Adding a New Feature](./adding-a-feature.md) — full 28-step process from issue to post-ship ROI check |
 | Fix a bug | [Fixing a Bug or Refactoring](./fixing-and-refactoring.md) — streamlined process with regression-test-first |
 | Refactor code | [Fixing a Bug or Refactoring](./fixing-and-refactoring.md) — tests must pass before AND after |
-| Understand the full pipeline | [Process Overview](./process-overview.md) — visual pipeline + 22-step detail |
+| Understand the full pipeline | [Process Overview](./process-overview.md) — visual pipeline + 28-step detail |

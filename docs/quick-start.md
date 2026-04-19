@@ -10,7 +10,7 @@ The team — PM, Architect, Developers, and AI — discusses every design decisi
 
 From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It's the specification that drives what gets built.
 
-This inverts the traditional relationship between docs and code. In most teams, documentation is written after the code (if at all) and drifts almost immediately. In this process, documentation is written first — with AI's help, in minutes rather than weeks — and the code is generated from it.
+This inverts the traditional relationship between docs and code. In most teams, documentation is written after the code (if at all) and drifts almost immediately. In this process, documentation is written first — with AI's help, significantly faster (observed in pilot projects) — and the code is generated from it.
 
 ## Quick Start — New Project
 
@@ -43,7 +43,7 @@ An architect working with AI can produce the full documentation baseline in one 
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| **Skills** | `skills/` | Claude Code skills: 22-step dev workflow + impact analysis. Copy to `.claude/commands/` |
+| **Skills** | `skills/` | Claude Code skills: 28-step dev workflow + impact analysis. Copy to `.claude/commands/` |
 | **Templates** | `templates/` | 15 templates: CLAUDE.md, system manifest, ADR, training plan, issue, test strategy, security audit, best practices, cost analysis, performance, data model mapping, API contract mapping, decision catalog, test registry, incident registry |
 | **Patterns** | `docs/patterns/` | Architectural patterns: failure mode taxonomy, idempotency keys |
 | **Tools** | `tools/` | Convention checker (pluggable, config-driven), Mermaid fixer, Markdown-to-PDF with Mermaid support |
@@ -71,7 +71,7 @@ When the platform adds a new workflow step or improves the convention checker, p
 
 ## Philosophy
 
-**Quality over speed.** The goal is meticulous system evolution with minimized problems — not maximum deployment velocity. Every step in the 22-step workflow prevents a specific failure mode.
+**Quality over speed.** The goal is meticulous system evolution with minimized problems — not maximum deployment velocity. Every step in the 28-step workflow prevents a specific failure mode.
 
 **Inverse Conway Maneuver for AI agents.** Design the knowledge boundaries explicitly in a System Manifest, and the quality of what agents produce mirrors those boundaries. Scoped agents with clean facades produce modular, convention-honoring output.
 

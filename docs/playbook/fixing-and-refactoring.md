@@ -1,8 +1,24 @@
 # Fixing a Bug or Refactoring
 
-This guide covers bug fixes and refactors. The same 22-step workflow applies, but several steps are shortened or skipped because the scope is smaller.
+This guide covers bug fixes and refactors. The same 28-step workflow applies, but several steps are shortened or skipped because the scope is smaller.
 
 For new features, see [Adding a New Feature](./adding-a-feature.md).
+
+---
+
+## Which Process Do I Need?
+
+Not every change needs the full workflow. Use this table to pick the right weight:
+
+| Change Type | Process |
+|---|---|
+| **Trivial** (typo, config value, log message) | GitHub issue or linked task &rarr; code &rarr; tests if applicable &rarr; review &rarr; merge |
+| **Bug fix** | Issue &rarr; regression test first &rarr; fix &rarr; risk note &rarr; registry update if incident-related |
+| **Normal feature** | Full workflow — see [Adding a New Feature](./adding-a-feature.md) |
+| **Cross-cutting / security / data migration** | Decomposition plan &rarr; domain-scoped PRs &rarr; full workflow per PR |
+| **P0 incident** | Fix first &rarr; full docs within 48 hours &rarr; incident registry entry |
+
+When in doubt, use the heavier process.
 
 ---
 

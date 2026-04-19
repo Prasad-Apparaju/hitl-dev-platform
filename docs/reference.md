@@ -256,7 +256,7 @@ Semgrep rules in `.semgrep/`:
 | Category | Rules |
 |----------|-------|
 | `security/` | SQL injection (f-strings in execute/text calls) |
-| `correctness/` | Subclass contracts (MutatingTool must implement _describe_plan) |
+| `correctness/` | Subclass contracts (e.g., mutating tool must implement _describe_plan) |
 | `best-practices/` | Pydantic validation, retry wrappers, tenant isolation |
 
 Standalone checks:
@@ -386,7 +386,7 @@ skills/<agent-name>/
   examples/                # Few-shot examples
 ```
 
-Changes go through PRs. PMs can edit without code deploys. See [Skill System pattern](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md).
+Changes go through PRs. PMs can edit without code deploys. See the Skill System pattern in the companion agentic-platform repo.
 
 ---
 
@@ -425,7 +425,7 @@ Feature work proceeds when blockers are zero.
 |----------|--------|----------|
 | PRD | [templates/prd-template.md](../templates/prd-template.md) | Writing product requirements |
 | CLAUDE.md | [templates/CLAUDE.md.template](../templates/CLAUDE.md.template) | Setting up a new project |
-| System manifest schema | [templates/system-manifest.schema.yaml](../templates/system-manifest.schema.yaml) | Creating a manifest |
+| System manifest schema | [skills/generate-docs/templates/system-manifest.schema.yaml](../skills/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
 | Issue template | [templates/issue-template.md](../templates/issue-template.md) | Every issue |
 | ADR template | [templates/adr-template.md](../templates/adr-template.md) | Every architectural decision |
 | Training plan | [templates/training-plan-template.md](../templates/training-plan-template.md) | New capability introduced |
@@ -468,14 +468,14 @@ Architectural patterns for common challenges. Especially relevant for agentic sy
 
 ## Agentic patterns
 
-For teams building systems that include AI agents, see the [agentic-platform repo](https://github.com/Prasad-Apparaju/agentic-platform):
+For teams building systems that include AI agents, see the companion agentic-platform repo:
 
 | Pattern | What it covers |
 |---------|---------------|
-| [Agent Maturity Levels](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/agent-maturity-levels.md) | L0-L3 progression |
-| [Progressive Rollout](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/progressive-rollout.md) | Shadow → canary → GA |
-| [Lethal Trifecta Audit](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/lethal-trifecta-audit.md) | Prompt injection risk assessment |
-| [Dormant Workflows](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/dormant-workflows.md) | Long-running per-entity agent processes |
-| [Skill System](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/skill-system.md) | PM-editable agent behavior |
-| [Agent Observability](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/agent-observability.md) | What to trace, score, alert on |
-| [Showcase-Based Delivery](https://github.com/Prasad-Apparaju/agentic-platform/blob/main/docs/patterns/showcase-delivery.md) | Vertical slices, not horizontal layers |
+| Agent Maturity Levels | L0-L3 progression |
+| Progressive Rollout | Shadow → canary → GA |
+| Lethal Trifecta Audit | Prompt injection risk assessment |
+| Dormant Workflows | Long-running per-entity agent processes |
+| Skill System | PM-editable agent behavior |
+| Agent Observability | What to trace, score, alert on |
+| Showcase-Based Delivery | Vertical slices, not horizontal layers |
