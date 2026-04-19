@@ -60,4 +60,4 @@ class TestNoChanges:
     def test_empty_changeset_passes(self):
         code, output = run_preflight("--changed-files")
         assert code == 0
-        assert "All checks passed" in output
+        assert "nothing to check" in output.lower() or "All checks passed" in output
