@@ -24,12 +24,15 @@ jobs:
           BODY=$(gh pr view ${{ github.event.pull_request.number }} --json body -q .body 2>/dev/null || echo "")
           ISSUE=$(echo "$BODY" | grep -oiE '(fixes|closes|relates to) #[0-9]+' | head -1 | grep -oE '[0-9]+')
 
-          # If not found in PR body, check decision packets for issue: field
-          if [ -z "$ISSUE" ] && [ -d docs/decisions ]; then
-            for packet in docs/decisions/issue-*.yaml; do
-              [ -f "$packet" ] || continue
-              ISSUE=$(grep -oE '^issue:\s*[0-9]+' "$packet" | head -1 | grep -oE '[0-9]+')
-              [ -n "$ISSUE" ] && break
+          # Fallback: check decision packets in THIS PR only
+          if [ -z "$ISSUE" ]; then
+            for packet in ${{ steps.changed.outputs.files }}; do
+              case "$packet" in
+                docs/decisions/issue-*.yaml)
+                  ISSUE=$(grep -oE '^issue:\s*[0-9]+' "$packet" | head -1 | grep -oE '[0-9]+')
+                  [ -n "$ISSUE" ] && break
+                  ;;
+              esac
             done
           fi
 
@@ -42,4 +45,4 @@ jobs:
           if [ -n "${{ steps.issue.outputs.number }}" ]; then
             ISSUE_ARG="--issue ${{ steps.issue.outputs.number }}"
           fi
-          python tools/preflight/check_change.py --changed-files ${{ steps.changed.outputs.files }} $ISSUE_ARG
+          python tools/preflight/check_change.py --strict --changed-files ${{ steps.changed.outputs.files }} $ISSUE_ARG

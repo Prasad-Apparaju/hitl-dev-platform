@@ -48,6 +48,18 @@ Click **"Create"** (or **"Save changes"** if editing an existing rule).
 
 After saving, open a test PR against `main`.  You should see the **traceability** status check listed as "Required" in the merge box.  The PR cannot be merged until it reports success.
 
+## Manifest Drift Checks by Team Maturity
+
+Teams can progressively tighten manifest drift enforcement as they mature:
+
+| Stage | Flags | What blocks CI |
+|---|---|---|
+| Early adoption | `--strict` | Unlisted files |
+| Maturing | `--strict --fail-cross-domain-imports` | Unlisted files + cross-domain imports |
+| Mature | `--strict --fail-cross-domain-imports --fail-missing-facade` | All categories |
+
+Update the `manifest-drift` step in your CI workflow to add the appropriate flags for your team's stage.
+
 ## Summary of enabled protections
 
 | Setting | Purpose |

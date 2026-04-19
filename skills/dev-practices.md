@@ -227,21 +227,21 @@ graph TD
 26. 📊 90-day ROI Check     → lead + PM review: actual vs estimated ROI; update ADR with Actual Outcome
 ```
 
-**Never skip steps 1-5.** Documentation is the source of truth, not code.
+**Never skip steps 1-8 (GitHub Issue through Training plan stub).** Documentation is the source of truth, not code.
 
-**Steps 6-12 are TDD-as-design** — AI generates maximum tests (step 6) → humans add domain-expertise tests (step 7) → tests reveal LLD gaps → LLD is improved (step 8) → verify RED (step 9) → generate code (step 10) → verify GREEN (step 11) → refactor (step 12). This is mandatory. See §1f for the full explanation + contract tests + the "tests improve the design" loop.
+**Steps 9-15 are TDD-as-design** — AI generates maximum tests (step 9, AI generates tests RED) → humans add domain-expertise tests (step 10, Human reviews tests) → tests reveal LLD gaps → LLD is improved (step 11, Tests improve the design) → verify RED (step 12, Verify RED) → generate code (step 13, Generate code GREEN) → verify GREEN (step 14, Verify GREEN) → refactor (step 15, Refactor). This is mandatory. See §1f for the full explanation + contract tests + the "tests improve the design" loop.
 
-**Step 2a is conditional** — it fires for any change costing more than ~1 day of effort. For smaller changes, state "ROI estimate not required — change is <1 day." See §1d for the template.
+**Step 4 (ROI estimate) is conditional** — it fires for any change costing more than ~1 day of effort. For smaller changes, state "ROI estimate not required — change is <1 day." See §1d for the template.
 
-**Step 5a is conditional** — it fires only when the change introduces a new technical capability (see §1c below for the trigger list). When it doesn't fire, make the decision explicit in the chat: "no new capability — training plan not required."
+**Step 8 (Training plan stub) is conditional** — it fires only when the change introduces a new technical capability (see §1c below for the trigger list). When it doesn't fire, make the decision explicit in the chat: "no new capability — training plan not required."
 
-**Steps 14-15 are the downstream assessment** — impact brief + rollout plan. These protect against organizational risk (team's mental model is wrong, ops doesn't know how to deploy). See §1e.
+**Steps 21-22 (Downstream impact brief + Risk-rated rollout plan) are the downstream assessment** — impact brief + rollout plan. These protect against organizational risk (team's mental model is wrong, ops doesn't know how to deploy). See §1e.
 
-**Steps 21-22 are post-ship** — they don't block the merge but ARE mandatory follow-ups. The 30/90-day checkpoints are scheduled at issue creation time and tracked as checklist items on the issue.
+**Steps 27-28 (30-day ROI check + 90-day ROI check) are post-ship** — they don't block the merge but ARE mandatory follow-ups. The 30/90-day checkpoints are scheduled at issue creation time and tracked as checklist items on the issue.
 
-**Figma bookends the workflow:** Figma feeds into requirements and design at step 1a, and closes the loop as a verification check at step 17. The design is both the input and the acceptance criteria.
+**Figma bookends the workflow:** Figma feeds into requirements and design at step 2 (Figma review), and closes the loop as a verification check at step 25 (Figma comparison). The design is both the input and the acceptance criteria.
 
-### 1b. Test Case Planning (Step 5)
+### 1b. Test Case Planning (Step 7)
 
 Before writing any code, analyze the change and produce a test plan:
 
@@ -252,7 +252,7 @@ Before writing any code, analyze the change and produce a test plan:
 
 Document this in the GitHub issue or PR description. The test plan is reviewed alongside the design, not added as an afterthought.
 
-### 1c. Training Plan (Step 5a — conditional)
+### 1c. Training Plan (Step 8 — conditional)
 
 If the change introduces a new technical capability, draft a training plan alongside the design docs so the team can ramp on the new capability without rediscovering it from the code.
 
@@ -284,10 +284,10 @@ When in doubt, write one — training plans are cheap. When the answer is no, st
 
 **Who writes it, when:**
 
-1. **Dev Lead drafts the stub** during step 5a, as part of the Design PR. Module outlines, reading list, learning goals — no working code examples yet (the implementation does not exist).
+1. **Dev Lead drafts the stub** during step 8 (Training plan stub), as part of the Design PR. Module outlines, reading list, learning goals — no working code examples yet (the implementation does not exist).
 2. **Developer fleshes it out** in the implementation PR. Working code examples from the shipped code replace placeholders. Hands-on exercises are validated against the final code.
-3. **AI code review (step 11)** checks the training plan compiles — referenced files exist, code examples run, reading list is accurate, exercises have known-good answers.
-4. **Dev Lead traceability check (step 18)** verifies the implementation issue body has a link to the training plan doc.
+3. **AI code review (step 17, Code review Round 1)** checks the training plan compiles — referenced files exist, code examples run, reading list is accurate, exercises have known-good answers.
+4. **Dev Lead traceability check (step 24, Integration verification)** verifies the implementation issue body has a link to the training plan doc.
 
 **Issue link format:** add a dedicated section in the implementation issue body:
 
@@ -317,7 +317,7 @@ If the change adds or modifies admin-facing features (feature flags, model profi
 - When to use it (scenarios)
 - What happens when you change it (side effects)
 
-### 1d. ROI Estimation (Step 2a — conditional)
+### 1d. ROI Estimation (Step 4 — conditional)
 
 If the change costs more than ~1 day of effort, add an ROI Estimate section to the GitHub issue during the design phase. This ensures every significant technical investment has a measurable thesis that can be verified after shipping.
 
@@ -372,9 +372,9 @@ If the change costs more than ~1 day of effort, add an ROI Estimate section to t
 
 The 90-day reviews create a calibration loop: over 5-10 verified changes, the team learns whether it systematically overestimates value, underestimates cost, or misses timelines. Each estimate gets compared to reality, not just filed and forgotten.
 
-**When step 2a is skipped:** for changes under ~1 day (config fix, doc update, small refactor), state "ROI estimate not required — change is <1 day" so the skip is explicit and auditable.
+**When step 4 (ROI estimate) is skipped:** for changes under ~1 day (config fix, doc update, small refactor), state "ROI estimate not required — change is <1 day" so the skip is explicit and auditable.
 
-### 1f. TDD as a Design Tool (Steps 6-12)
+### 1f. TDD as a Design Tool (Steps 9-15)
 
 TDD in this process is not just about test-first coding. **Tests are a design refinement loop** where AI generates maximum test coverage from the spec, humans inject domain expertise by adding and correcting tests, and the combined test suite reveals gaps in the design — BEFORE any implementation code is written.
 
@@ -383,14 +383,14 @@ TDD in this process is not just about test-first coding. **Tests are a design re
 **The three-phase loop:**
 
 ```
-Phase A — AI generates tests (step 6)
+Phase A — AI generates tests (step 9)
     AI reads the LLD + test plan + manifest facade contracts.
     Generates as many tests as possible: happy paths, error paths,
     edge cases, preconditions, boundary entity validation, contract
     compliance. The goal is MAXIMUM coverage of the SPEC, not the code
     (which doesn't exist yet).
 
-Phase B — Humans refine tests (step 7)
+Phase B — Humans refine tests (step 10)
     The developer reviews every test. This is the highest-value
     human step in the build phase:
     • Adds edge cases AI missed ("what if the API returns 429
@@ -400,7 +400,7 @@ Phase B — Humans refine tests (step 7)
     • Challenges assumptions ("this test assumes retry will
       succeed, but what if the budget is exhausted?")
 
-Phase C — Tests improve the design (step 8)
+Phase C — Tests improve the design (step 11)
     AI analyzes the combined test suite for LLD gaps:
     • A test for rate-limit handling but no rate-limit section in LLD
       → ADD rate-limit behavior to the LLD
@@ -413,7 +413,7 @@ Phase C — Tests improve the design (step 8)
     The tests drove the design improvement.
 ```
 
-Then: verify RED (step 9), generate code (step 10), verify GREEN (step 11), refactor (step 12).
+Then: verify RED (step 12), generate code (step 13), verify GREEN (step 14), refactor (step 15).
 
 **Why this order matters:**
 
@@ -424,7 +424,7 @@ Then: verify RED (step 9), generate code (step 10), verify GREEN (step 11), refa
 | Humans review prose (LLD) for completeness | Humans review executable tests for completeness — more concrete, less ambiguous |
 | Edge cases are added after the fact | Edge cases drive the design before implementation |
 
-**What the developer reviews at step 7:**
+**What the developer reviews at step 10 (Human reviews tests):**
 
 The developer is NOT reviewing code. They are reviewing the SPECIFICATION expressed as tests. The questions to ask:
 
@@ -438,7 +438,7 @@ Every test the developer adds is a piece of domain expertise that AI couldn't de
 
 **Contract tests from the manifest:**
 
-For changes that touch domain boundaries, step 6 should also generate **contract tests** from the manifest's facade APIs:
+For changes that touch domain boundaries, step 9 (AI generates tests) should also generate **contract tests** from the manifest's facade APIs:
 
 ```python
 # Generated from the manifest facade: publishing.instagram_publish
@@ -465,7 +465,7 @@ def test_instagram_publish_returns_cached_on_duplicate_key():
 
 These tests are generated FROM the manifest, not from the LLD. They verify that the domain's promises to other domains are kept.
 
-**When tests surface LLD gaps (step 8):**
+**When tests surface LLD gaps (step 11, Tests improve the design):**
 
 This is the TDD forcing function. Examples:
 
@@ -477,11 +477,11 @@ This is the TDD forcing function. Examples:
 
 Each gap → LLD update → the spec gets more precise → the generated code will be more correct. The tests DROVE the design improvement.
 
-### 1e. Downstream Impact Assessment + Rollout Plan (Steps 16-17)
+### 1e. Downstream Impact Assessment + Rollout Plan (Steps 21-22)
 
-After all code + tests + docs are ready (steps 6-14), and before creating the PR (step 15), produce two artifacts:
+After all code + tests + docs are ready (steps 9-20, AI generates tests through Reconcile docs), and before creating the PR (step 23, Create PR), produce two artifacts:
 
-**Downstream impact brief (step 14):**
+**Downstream impact brief (step 21):**
 
 The developer + AI produce a structured brief answering five questions, each aimed at a different stakeholder:
 
@@ -495,7 +495,7 @@ The developer + AI produce a structured brief answering five questions, each aim
 
 Section 4 (mental model update) is the one teams most often skip and most often regret. Writing "approve now queues for scheduled delivery instead of publishing immediately" takes 30 seconds and prevents weeks of downstream confusion.
 
-**Risk-rated rollout plan (step 15):**
+**Risk-rated rollout plan (step 22):**
 
 | Risk level | Example | Rollout |
 |-----------|---------|---------|
@@ -512,9 +512,9 @@ Each promotion step checks explicit go/no-go criteria calibrated to the specific
 
 If any criterion fails, the canary pauses for investigation. Rollback path: revert canary, full traffic returns to the previous version.
 
-The developer proposes the criteria in the rollout plan; the lead reviews them during integration verification (step 16).
+The developer proposes the criteria in the rollout plan; the lead reviews them during integration verification (step 24, Integration verification).
 
-### 1g. Test Registry + Incident Registry (Steps 2, 7, 19, post-incident)
+### 1g. Test Registry + Incident Registry (Steps 3, 10, 22, post-incident)
 
 Two knowledge bases that grow with every change and every incident. They prevent the team from making the same mistake twice and make impact analysis concrete instead of guesswork.
 
@@ -536,13 +536,13 @@ Each entry has:
 | `file` | Path to the actual test file + function |
 
 **How it grows:**
-- Step 7 (TDD review): every test added by developer or QA gets registered
+- Step 10 (Human reviews tests): every test added by developer or QA gets registered
 - Post-incident: the regression test is registered with `origin: incident-regression` and `incident_ref: INC-NNN`
 
 **How it's consumed:**
-- Step 2 (impact analysis): "which tests cover the affected domain? are there coverage gaps?"
-- Step 6 (AI generates tests): AI reads relevant entries to inform what to generate — especially incident-regression tests that must not be accidentally removed
-- Step 7 (QA review): QA cross-references — "is the regression test for INC-X in the plan?"
+- Step 3 (Impact analysis): "which tests cover the affected domain? are there coverage gaps?"
+- Step 9 (AI generates tests): AI reads relevant entries to inform what to generate — especially incident-regression tests that must not be accidentally removed
+- Step 10 (Human reviews tests): QA cross-references — "is the regression test for INC-X in the plan?"
 
 **Incident Registry** (`docs/incident-registry.yaml`)
 
@@ -568,9 +568,9 @@ Each entry has:
 - When canary criteria are updated, the `canary_criteria_added` field is linked
 
 **How it's consumed:**
-- Step 2 (impact analysis): "what has gone wrong in this domain before?" — shapes the risk assessment
-- Step 19 (rollout plan): past incidents shape the canary go/no-go criteria. If INC-001 was a duplicate publish, the canary for any publish change monitors for duplicate keys.
-- QA review (step 7): "is there a test covering the scenario that caused INC-X?"
+- Step 3 (Impact analysis): "what has gone wrong in this domain before?" — shapes the risk assessment
+- Step 22 (Risk-rated rollout plan): past incidents shape the canary go/no-go criteria. If INC-001 was a duplicate publish, the canary for any publish change monitors for duplicate keys.
+- Step 10 (Human reviews tests): "is there a test covering the scenario that caused INC-X?"
 - Onboarding: new team members learn what broke and why, grounded in real incidents
 
 **QA and Ops integration (non-blocking):**
@@ -579,8 +579,8 @@ QA and Ops are contributors to these registries, not gatekeepers in the workflow
 
 | Role | Contributes | When | Blocking? |
 |------|------------|------|-----------|
-| **QA** | Test cases (step 7), acceptance criteria, edge cases from the incident registry | Design PR review + TDD review | No — if QA is unavailable, developer proceeds. QA adds tests in a follow-up. |
-| **Ops** | Incident entries (post-incident), canary criteria (step 19), infrastructure-specific go/no-go thresholds | Post-incident + rollout plan review | No — if Ops is unavailable, developer uses the incident registry to self-serve past criteria. |
+| **QA** | Test cases (step 10, Human reviews tests), acceptance criteria, edge cases from the incident registry | Design PR review + TDD review | No — if QA is unavailable, developer proceeds. QA adds tests in a follow-up. |
+| **Ops** | Incident entries (post-incident), canary criteria (step 22, Risk-rated rollout plan), infrastructure-specific go/no-go thresholds | Post-incident + rollout plan review | No — if Ops is unavailable, developer uses the incident registry to self-serve past criteria. |
 
 The registries make QA and Ops expertise available even when the individuals are not — because their past inputs are captured in queryable form.
 

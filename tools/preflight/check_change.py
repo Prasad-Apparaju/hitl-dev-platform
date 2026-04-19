@@ -222,7 +222,7 @@ def _domains_for_changed_files(changed: list[str]) -> set[str]:
     return touched
 
 
-def check_decision_packet(changed: list[str], issue: str | None = None) -> CheckResult:
+def check_decision_packet(changed: list[str], issue: str | None = None, *, strict: bool = False) -> CheckResult:
     """If manifest-domain files changed, a decision packet must exist and be valid.
 
     Only validates the packet for the active issue (and any packets in the
@@ -277,10 +277,14 @@ def check_decision_packet(changed: list[str], issue: str | None = None) -> Check
             packet_domain_set = set(packet_domains) if isinstance(packet_domains, list) else set()
             missing = touched_domains - packet_domain_set
             if missing:
-                warnings.append(
+                msg = (
                     f"{prefix}: changed files touch domain(s) {sorted(missing)} "
-                    f"not listed in packet 'domains' field (advisory)"
+                    f"not listed in packet 'domains' field"
                 )
+                if strict:
+                    errors.append(msg)
+                else:
+                    warnings.append(f"{msg} (advisory)")
 
         # source_docs must have at least one entry (hld, lld, or adr)
         source_docs = data.get("source_docs")
@@ -295,6 +299,12 @@ def check_decision_packet(changed: list[str], issue: str | None = None) -> Check
         rollout = data.get("rollout")
         if not rollout or not isinstance(rollout, dict) or "risk" not in rollout:
             errors.append(f"{prefix}: missing 'rollout.risk' field")
+
+        # risk_level and rollout.risk must agree when both are present
+        top_level_risk = data.get("risk_level")
+        rollout_risk = rollout.get("risk") if isinstance(rollout, dict) else None
+        if top_level_risk and rollout_risk and top_level_risk != rollout_risk:
+            errors.append(f"risk_level ({top_level_risk}) and rollout.risk ({rollout_risk}) disagree — use the same value in both fields")
 
         # tests.registry_updated must be present
         tests = data.get("tests")
@@ -341,25 +351,28 @@ def check_test_registry(changed: list[str]) -> CheckResult:
     )
 
 
-def check_rollout_plan(changed: list[str]) -> CheckResult:
-    """If IaC/deployment files changed, a rollout plan must exist."""
+def check_rollout_plan(changed: list[str], issue: str | None = None) -> CheckResult:
+    """If IaC/deployment files changed, a rollout plan must exist.
+
+    Only checks decision packets relevant to the current change (via
+    _resolve_packets_to_validate), not all historical packets.
+    """
     iac_files = [f for f in changed if _is_iac_file(f)]
     if not iac_files:
         return CheckResult("rollout-plan", True, "No IaC/deployment files changed — skipped.")
 
-    # Look for rollout plan in decision packets or a dedicated file
+    # Look for rollout plan in the active/changed decision packets only
     has_plan = False
-    decisions_dir = Path("docs/decisions")
-    if decisions_dir.exists():
-        for packet in decisions_dir.glob("issue-*.yaml"):
-            try:
-                with open(packet) as f:
-                    data = yaml.safe_load(f) if yaml else {}
-                if data and "rollout" in str(data).lower():
-                    has_plan = True
-                    break
-            except Exception:
-                pass
+    packets = _resolve_packets_to_validate(changed, issue)
+    for packet in packets:
+        try:
+            with open(packet) as f:
+                data = yaml.safe_load(f) if yaml else {}
+            if data and "rollout" in str(data).lower():
+                has_plan = True
+                break
+        except Exception:
+            pass
 
     # Also accept a rollout-plan.md in the PR
     if any("rollout" in f.lower() for f in changed):
@@ -388,6 +401,10 @@ def main() -> int:
         "--base-ref", default="origin/main",
         help="Git base ref for diff (default: origin/main).",
     )
+    parser.add_argument(
+        "--strict", action="store_true", default=False,
+        help="Treat domain mismatches as errors instead of warnings.",
+    )
     args = parser.parse_args()
 
     changed = args.changed_files if args.changed_files else _git_changed_files(args.base_ref)
@@ -399,10 +416,10 @@ def main() -> int:
 
     results = [
         check_linked_issue(changed, args.issue),
-        check_decision_packet(changed, args.issue),
+        check_decision_packet(changed, args.issue, strict=args.strict),
         check_lld_adr_for_api(changed),
         check_test_registry(changed),
-        check_rollout_plan(changed),
+        check_rollout_plan(changed, args.issue),
     ]
 
     for r in results:

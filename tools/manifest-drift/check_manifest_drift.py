@@ -237,6 +237,18 @@ def main() -> None:
         default=False,
         help="Treat unlisted files as errors (exit 1) instead of warnings",
     )
+    parser.add_argument(
+        "--fail-cross-domain-imports",
+        action="store_true",
+        default=False,
+        help="Treat cross-domain imports as errors (exit 1) instead of warnings",
+    )
+    parser.add_argument(
+        "--fail-missing-facade",
+        action="store_true",
+        default=False,
+        help="Treat missing facade coverage as errors (exit 1) instead of warnings",
+    )
     args = parser.parse_args()
 
     root = Path.cwd()
@@ -263,13 +275,19 @@ def main() -> None:
         else:
             warnings.append(("UNLISTED FILE", item))
 
-    # 3. Cross-domain imports (WARNING — should use facade API)
+    # 3. Cross-domain imports (ERROR with --fail-cross-domain-imports, WARNING otherwise)
     for item in check_cross_domain_imports(root, manifest):
-        warnings.append(("CROSS-DOMAIN IMPORT", item))
+        if args.fail_cross_domain_imports:
+            errors.append(("CROSS-DOMAIN IMPORT", item))
+        else:
+            warnings.append(("CROSS-DOMAIN IMPORT", item))
 
-    # 4. Missing facade coverage (WARNING — facade name not found in code)
+    # 4. Missing facade coverage (ERROR with --fail-missing-facade, WARNING otherwise)
     for item in check_facade_coverage(root, manifest):
-        warnings.append(("MISSING FACADE", item))
+        if args.fail_missing_facade:
+            errors.append(("MISSING FACADE", item))
+        else:
+            warnings.append(("MISSING FACADE", item))
 
     # -- Output --
     has_errors = len(errors) > 0

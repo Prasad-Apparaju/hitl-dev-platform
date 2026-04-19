@@ -68,7 +68,7 @@ The deploy workflow looks for a `docs/decisions/issue-NNN.yaml` decision packet 
     echo "risk=$RISK" >> "$GITHUB_OUTPUT"
 ```
 
-If no decision packet exists, the workflow defaults to **medium** (requires label but not manual approval).
+If no decision packet exists, the workflow defaults to **high** (requires manual approval). This is intentional: unknown risk should not bypass gates silently.
 
 ---
 

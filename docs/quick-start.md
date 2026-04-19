@@ -16,7 +16,7 @@ This inverts the traditional relationship between docs and code. In most teams, 
 
 ```bash
 # 0. Create target directories (idempotent — safe to re-run)
-mkdir -p your-repo/tools your-repo/templates your-repo/.github/workflows your-repo/.github your-repo/.semgrep your-repo/scripts
+mkdir -p your-repo/.claude/commands your-repo/tools your-repo/templates your-repo/.github/workflows your-repo/.github your-repo/.semgrep your-repo/scripts
 
 # 1. Copy skills to your repo (shared workflow for every developer's Claude)
 cp -r skills/ your-repo/.claude/commands/

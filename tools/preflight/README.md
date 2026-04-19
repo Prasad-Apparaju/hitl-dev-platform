@@ -25,6 +25,9 @@ python tools/preflight/check_change.py --issue 42 --changed-files src/api/users.
 
 # Custom base ref
 python tools/preflight/check_change.py --issue 42 --base-ref origin/develop
+
+# Strict mode — domain mismatches in decision packets become errors (exit 1)
+python tools/preflight/check_change.py --issue 42 --strict
 ```
 
 ### Prerequisites

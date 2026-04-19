@@ -8,8 +8,8 @@ Detects four categories of drift between `docs/system-manifest.yaml` and the act
 |---|---|---|
 | **Deleted files** | ERROR | Manifest lists a file that no longer exists on disk |
 | **Unlisted files** | WARNING (ERROR with `--strict`) | A source file exists but is not tracked by any domain |
-| **Cross-domain imports** | WARNING | A file in domain A imports directly from domain B (should use facade API) |
-| **Missing facade coverage** | WARNING | A `facade_apis` entry names a function/class that doesn't exist in the domain's files |
+| **Cross-domain imports** | WARNING (ERROR with `--fail-cross-domain-imports`) | A file in domain A imports directly from domain B (should use facade API) |
+| **Missing facade coverage** | WARNING (ERROR with `--fail-missing-facade`) | A `facade_apis` entry names a function/class that doesn't exist in the domain's files |
 
 ERRORS cause exit code 1 (blocks CI). WARNINGS cause exit code 0 (advisory only).
 
@@ -27,6 +27,12 @@ python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ lib/ serv
 
 # Strict mode — unlisted files become errors (exit 1) instead of warnings
 python tools/manifest-drift/check_manifest_drift.py --strict
+
+# Fail on cross-domain imports — imports across domain boundaries become errors
+python tools/manifest-drift/check_manifest_drift.py --strict --fail-cross-domain-imports
+
+# Fail on missing facade coverage — missing facade API definitions become errors
+python tools/manifest-drift/check_manifest_drift.py --strict --fail-cross-domain-imports --fail-missing-facade
 
 # Python-only mode (default, currently the only mode)
 python tools/manifest-drift/check_manifest_drift.py --python-only
