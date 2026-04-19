@@ -28,9 +28,48 @@ A development process for teams using AI to generate code, tests, and documentat
 
 ## The Core Idea
 
+> AI makes code cheap. This process makes decisions durable.
+
 Design decisions are discussed as a team — PM, Architect, Developers, QA, Ops, and AI — in a shared thread. Once a decision is finalized, it is captured in documentation: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries. From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It is the specification that drives what gets built.
 
 This inverts the traditional relationship between docs and code. Write documentation first — with AI's help, significantly faster (observed in pilot projects) — and generate the code from it. When the code diverges from the docs, pause and decide: does the implementation reveal a better design (update the docs), or did the implementation drift from the intended design (fix the code)? The decision is explicit and documented — never silently normalize drift. Any developer (or AI session) can then pick up any part of the system, read the docs, and produce correct, convention-honoring code — because the docs capture not just *what* the system does, but *why* it does it that way, *what alternatives were considered*, and *what conventions must be followed*.
+
+### The Core Loop
+
+The process is not "AI writes docs, then AI writes code."
+
+The process is:
+
+1. A human states intent.
+2. AI turns that intent into a concrete artifact: PRD, HLD, LLD, ADR, test plan, decision packet, or code.
+3. Humans review the artifact and disagree with it where needed.
+4. AI revises the artifact.
+5. The team repeats until the artifact expresses the decision accurately.
+6. Only then does AI use that artifact to generate the next downstream artifact.
+
+Design is reviewed through generated documents. LLD is reviewed through precise interfaces, edge cases, and tests. Code is reviewed against the LLD and tests. Each layer is an iterative human-AI convergence loop before it becomes input to the next layer.
+
+**The value is not that AI produces artifacts. The value is that AI makes intent visible fast enough for humans to correct it before it becomes code.**
+
+### Shared Memory Across AI Harnesses
+
+Every developer's AI harness has its own context window, chat history, local memory, and assumptions. If decisions live inside those private sessions, the team fragments.
+
+This process moves team knowledge out of private AI memory and into version-controlled artifacts:
+
+- Requirements live in issues and PRDs.
+- Architecture lives in HLDs.
+- Component behavior lives in LLDs.
+- Tradeoffs live in ADRs.
+- Domain boundaries and facade contracts live in the system manifest.
+- Standards live in `CLAUDE.md` and convention checks.
+- Past failures live in the incident registry.
+- Test expectations live in the test registry.
+- Per-change intent lives in decision packets.
+
+Any human or AI harness can read the same artifacts and continue from the same agreed context. The unit of collaboration is not the chat session. **The unit of collaboration is the documented decision.**
+
+> Private AI context does not scale. Version-controlled decisions do.
 
 ![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](docs/images/team-collaboration.png)
 
@@ -642,6 +681,20 @@ Use this checklist when considering or implementing this process:
 - [ ] **Accept that the process will evolve.** Steps will be added, reordered, and entire concepts introduced late. Treat the process as a living system, not a fixed standard.
 
 > The goal is not to ship faster. The goal is to minimize the problems that come from AI-generated code — convention drift, untraceable decisions, hallucination — so the system evolves correctly. Speed is a side effect of correctness, not a goal in itself.
+
+### Adoption Ladder
+
+You don't need to adopt the full process on day one. Start where it hurts most and add layers as the team matures:
+
+| Level | What you adopt | What you get | Effort |
+|---|---|---|---|
+| **1. Shared AI rules** | `CLAUDE.md` with coding standards + conventions | Every AI session follows the same rules. Convention drift stops. | 1 hour |
+| **2. Docs-first for non-trivial changes** | HLD/LLD before code. ADRs for decisions. | Design is reviewed before code exists. Rework drops. | 1 day |
+| **3. Decision packets + traceability** | Decision packet per change. PR template with checkboxes. Traceability CI. | Every PR traces to a reviewed decision. Nothing ships undocumented. | 1 day |
+| **4. System manifest + domain facades** | Manifest with domains, files, facades, conventions. Manifest drift checker. | AI stays scoped. Cross-domain drift detected. New team members onboard from the manifest. | 1 week |
+| **5. Full workflow** | Incident registry, test registry, rollout planning, ROI checks, deployment gates. | Past mistakes don't repeat. Deployments are risk-rated. Investments are measured. | 1-2 weeks |
+
+Each level is independently valuable. Level 1 alone eliminates the most common AI coding problem (every session invents its own conventions). Level 2 prevents the second most common problem (code that doesn't match what the team agreed). Levels 3-5 add enforcement and organizational safety.
 
 ---
 
