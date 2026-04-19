@@ -7,7 +7,7 @@ Detects four categories of drift between `docs/system-manifest.yaml` and the act
 | Check | Severity | What it detects |
 |---|---|---|
 | **Deleted files** | ERROR | Manifest lists a file that no longer exists on disk |
-| **Unlisted files** | WARNING | A source file exists but is not tracked by any domain |
+| **Unlisted files** | WARNING (ERROR with `--strict`) | A source file exists but is not tracked by any domain |
 | **Cross-domain imports** | WARNING | A file in domain A imports directly from domain B (should use facade API) |
 | **Missing facade coverage** | WARNING | A `facade_apis` entry names a function/class that doesn't exist in the domain's files |
 
@@ -24,6 +24,9 @@ python tools/manifest-drift/check_manifest_drift.py --manifest path/to/manifest.
 
 # Custom source directories to scan for unlisted files
 python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ lib/ services/
+
+# Strict mode — unlisted files become errors (exit 1) instead of warnings
+python tools/manifest-drift/check_manifest_drift.py --strict
 
 # Python-only mode (default, currently the only mode)
 python tools/manifest-drift/check_manifest_drift.py --python-only

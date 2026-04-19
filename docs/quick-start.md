@@ -15,6 +15,9 @@ This inverts the traditional relationship between docs and code. In most teams, 
 ## Quick Start — New Project
 
 ```bash
+# 0. Create target directories (idempotent — safe to re-run)
+mkdir -p your-repo/tools your-repo/templates your-repo/.github/workflows your-repo/.github your-repo/.semgrep your-repo/scripts
+
 # 1. Copy skills to your repo (shared workflow for every developer's Claude)
 cp -r skills/ your-repo/.claude/commands/
 
@@ -43,7 +46,7 @@ cp -r .semgrep/ your-repo/.semgrep/
 
 # 9. Copy PR template
 mkdir -p your-repo/.github
-cp .github/PULL_REQUEST_TEMPLATE.md your-repo/.github/PULL_REQUEST_TEMPLATE.md
+cp templates/pull-request-template.md your-repo/.github/PULL_REQUEST_TEMPLATE.md
 
 # 10. Copy decision packet template (reference for impact analysis)
 cp templates/decision-packet-template.yaml your-repo/templates/decision-packet-template.yaml

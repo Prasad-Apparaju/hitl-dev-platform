@@ -20,7 +20,7 @@ jobs:
           python-version: '3.12'
       - run: pip install pyyaml
       - name: Check manifest drift
-        run: python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
+        run: python tools/manifest-drift/check_manifest_drift.py --strict --source-dirs app/ src/
 
   mermaid-check:
     runs-on: ubuntu-latest

@@ -26,7 +26,7 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
    - Contract tests from facade APIs (verify the domain's promises to other domains)
    - Convention tests (e.g., if `idempotency-keys` convention applies, test that the tool rejects missing keys)
 
-4. **Register each test** in the test registry (`docs/test-registry.yaml`) with:
+4. **Register each test** in the test registry (`docs/03-engineering/testing/test-registry.yaml`) with:
    - domain, risk level, type (unit/integration/contract), origin: `tdd`
 
 5. **Present all generated tests** to the user. Do NOT proceed to Phase 2 until the user reviews.

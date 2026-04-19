@@ -83,7 +83,7 @@ Organize test cases by the vertical slice (feature/showcase) they belong to. Eac
 
 ## Test Registry Integration
 
-Every test case in this strategy should have a corresponding entry in `docs/test-registry.yaml`. The registry tracks:
+Every test case in this strategy should have a corresponding entry in `docs/03-engineering/testing/test-registry.yaml`. The registry tracks:
 - Which domain each test covers
 - Risk level (what breaks if this test is absent)
 - Origin (from requirements, from incidents, from code review)

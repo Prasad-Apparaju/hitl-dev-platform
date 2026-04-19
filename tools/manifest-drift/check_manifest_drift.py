@@ -231,6 +231,12 @@ def main() -> None:
         default=True,
         help="Only check Python files (default: true)",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        default=False,
+        help="Treat unlisted files as errors (exit 1) instead of warnings",
+    )
     args = parser.parse_args()
 
     root = Path.cwd()
@@ -250,9 +256,12 @@ def main() -> None:
     for item in check_deleted_files(root, manifest):
         errors.append(("DELETED FILE", item))
 
-    # 2. Unlisted files (WARNING — new file not yet in manifest)
+    # 2. Unlisted files (ERROR in --strict mode, WARNING otherwise)
     for item in check_unlisted_files(root, manifest, args.source_dirs):
-        warnings.append(("UNLISTED FILE", item))
+        if args.strict:
+            errors.append(("UNLISTED FILE", item))
+        else:
+            warnings.append(("UNLISTED FILE", item))
 
     # 3. Cross-domain imports (WARNING — should use facade API)
     for item in check_cross_domain_imports(root, manifest):

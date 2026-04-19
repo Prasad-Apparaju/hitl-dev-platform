@@ -518,7 +518,7 @@ The developer proposes the criteria in the rollout plan; the lead reviews them d
 
 Two knowledge bases that grow with every change and every incident. They prevent the team from making the same mistake twice and make impact analysis concrete instead of guesswork.
 
-**Test Case Registry** (`docs/test-registry.yaml`)
+**Test Case Registry** (`docs/03-engineering/testing/test-registry.yaml`)
 
 A catalog of test cases with metadata — not the test code itself (that stays in `tests/`), but an index that makes tests queryable by domain, risk level, origin, and linked incident.
 

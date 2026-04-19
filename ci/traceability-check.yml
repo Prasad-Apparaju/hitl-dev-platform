@@ -35,6 +35,8 @@ jobs:
 
           echo "number=$ISSUE" >> $GITHUB_OUTPUT
       - name: Run traceability check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           ISSUE_ARG=""
           if [ -n "${{ steps.issue.outputs.number }}" ]; then

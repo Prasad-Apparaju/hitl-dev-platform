@@ -95,16 +95,16 @@ def _is_manifest_domain_file(path: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def _discover_issue_from_decision_packets(changed: list[str]) -> str | None:
-    """Try to find an issue number from decision packets in changed files or docs/decisions/."""
+    """Try to find an issue number from decision packets in the changed files ONLY.
+
+    Does NOT fall back to scanning all historical packets — that would pick up
+    stale packets unrelated to the current change.
+    """
     if yaml is None:
         return None
 
-    # First check decision packets among changed files
+    # Only look at decision packets that are part of this changeset
     packet_paths = [f for f in changed if f.startswith("docs/decisions/issue-") and f.endswith(".yaml")]
-    # Then fall back to any packet in docs/decisions/
-    decisions_dir = Path("docs/decisions")
-    if not packet_paths and decisions_dir.exists():
-        packet_paths = [str(p) for p in decisions_dir.glob("issue-*.yaml")]
 
     for packet_path in packet_paths:
         try:
@@ -140,12 +140,18 @@ def check_linked_issue(changed: list[str], issue: str | None) -> CheckResult:
 
     # If caller supplied --issue, trust it
     if issue:
-        # Optionally verify via gh CLI
+        # Optionally verify via gh CLI — treat failure as a warning, not an error,
+        # because the issue link was already verified by the CI extraction step
+        # and gh may fail due to missing GH_TOKEN or network issues.
         if shutil.which("gh"):
             result = _run(["gh", "issue", "view", issue, "--json", "number"])
             if result.returncode == 0:
                 return CheckResult("linked-issue", True, f"Issue #{issue} exists.")
-            return CheckResult("linked-issue", False, f"Issue #{issue} not found via gh CLI.")
+            # gh failed — warn but still pass since the issue number was provided
+            return CheckResult(
+                "linked-issue", True,
+                f"Issue #{issue} provided (gh CLI verification failed — treating as warning).",
+            )
         return CheckResult("linked-issue", True, f"Issue #{issue} provided (gh not installed — skipped remote check).")
 
     # Try to discover the issue from decision packets in changed files or docs/decisions/
@@ -158,28 +164,90 @@ def check_linked_issue(changed: list[str], issue: str | None) -> CheckResult:
 
     return CheckResult(
         "linked-issue", False,
-        "No linked issue found. Add 'Fixes #NNN' to PR description or create a decision packet.",
+        "No linked issue found. Add 'Fixes #NNN' to PR description or include a decision packet in this PR.",
     )
 
 
+def _resolve_packets_to_validate(
+    changed: list[str], issue: str | None,
+) -> list[Path]:
+    """Return the specific decision packet(s) that should be validated.
+
+    Strategy:
+    1. If we know the active issue number, look for docs/decisions/issue-<N>.yaml
+    2. Additionally include any decision packets that appear in the changed files
+    3. Never scan all historical packets — they belong to other issues
+    """
+    seen: set[str] = set()
+    packets: list[Path] = []
+
+    # Packets explicitly changed in this PR
+    for f in changed:
+        if f.startswith("docs/decisions/issue-") and f.endswith(".yaml"):
+            p = Path(f)
+            if p.exists() and str(p) not in seen:
+                packets.append(p)
+                seen.add(str(p))
+
+    # The packet for the active issue (may not be in the changed files)
+    if issue:
+        target = Path(f"docs/decisions/issue-{issue}.yaml")
+        if target.exists() and str(target) not in seen:
+            packets.append(target)
+            seen.add(str(target))
+
+    return packets
+
+
+def _domains_for_changed_files(changed: list[str]) -> set[str]:
+    """Determine which system-manifest domains are touched by *changed* source files."""
+    if yaml is None:
+        return set()
+    manifest = Path("docs/system-manifest.yaml")
+    if not manifest.exists():
+        return set()
+    try:
+        with open(manifest) as f:
+            data = yaml.safe_load(f)
+    except Exception:
+        return set()
+    touched: set[str] = set()
+    domains = data.get("domains", {})
+    for domain_name, domain_def in domains.items():
+        domain_files = domain_def.get("files", [])
+        for path in changed:
+            if any(path.startswith(df) for df in domain_files):
+                touched.add(domain_name)
+                break
+    return touched
+
+
 def check_decision_packet(changed: list[str], issue: str | None = None) -> CheckResult:
-    """If manifest-domain files changed, a decision packet must exist and be valid."""
+    """If manifest-domain files changed, a decision packet must exist and be valid.
+
+    Only validates the packet for the active issue (and any packets in the
+    changed files list) — never scans all historical packets.
+    """
     domain_files = [f for f in changed if _is_manifest_domain_file(f)]
     if not domain_files:
         return CheckResult("decision-packet", True, "No manifest-domain files changed — skipped.")
 
-    packets = list(Path("docs/decisions").glob("issue-*.yaml")) if Path("docs/decisions").exists() else []
+    packets = _resolve_packets_to_validate(changed, issue)
     if not packets:
         return CheckResult(
             "decision-packet", False,
-            "Manifest-domain files changed but no decision packet found at docs/decisions/issue-*.yaml.",
+            "Manifest-domain files changed but no decision packet found at docs/decisions/issue-<N>.yaml.",
         )
 
     # Validate the contents of each packet
     if yaml is None:
         return CheckResult("decision-packet", True, f"Found {len(packets)} decision packet(s) (PyYAML not installed — skipped validation).")
 
+    # Determine which domains the changed source files actually touch (for Issue 3)
+    touched_domains = _domains_for_changed_files(changed)
+
     errors: list[str] = []
+    warnings: list[str] = []
     for packet in packets:
         try:
             with open(packet) as f:
@@ -201,9 +269,18 @@ def check_decision_packet(changed: list[str], issue: str | None = None) -> Check
             errors.append(f"{prefix}: 'issue' is {data['issue']} but expected {issue} (from --issue)")
 
         # domains field must be present and non-empty
-        domains = data.get("domains")
-        if not domains:
+        packet_domains = data.get("domains")
+        if not packet_domains:
             errors.append(f"{prefix}: missing or empty 'domains' field")
+        elif touched_domains:
+            # Advisory check: warn if a touched domain is missing from the packet
+            packet_domain_set = set(packet_domains) if isinstance(packet_domains, list) else set()
+            missing = touched_domains - packet_domain_set
+            if missing:
+                warnings.append(
+                    f"{prefix}: changed files touch domain(s) {sorted(missing)} "
+                    f"not listed in packet 'domains' field (advisory)"
+                )
 
         # source_docs must have at least one entry (hld, lld, or adr)
         source_docs = data.get("source_docs")
@@ -223,6 +300,10 @@ def check_decision_packet(changed: list[str], issue: str | None = None) -> Check
         tests = data.get("tests")
         if not tests or not isinstance(tests, dict) or "registry_updated" not in tests:
             errors.append(f"{prefix}: missing 'tests.registry_updated' field")
+
+    # Print warnings (advisory, don't fail the check)
+    for w in warnings:
+        print(f"[WARN] decision-packet: {w}")
 
     if errors:
         detail = "; ".join(errors)

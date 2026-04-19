@@ -44,7 +44,7 @@ claude
 AI scans `V1/`, produces a manifest and docs for the CURRENT system. Compare against the TARGET docs already in `docs/` to see exactly what needs to change.
 
 Also populate:
-- `docs/test-registry.yaml` — catalog existing tests using the template already in the repo
+- `docs/03-engineering/testing/test-registry.yaml` — catalog existing tests using the template already in the repo
 - `docs/incident-registry.yaml` — ask the team: "what broke in the last 6 months?" Each answer is an entry.
 
 ### A3. Assess the gaps
@@ -142,7 +142,7 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 |-----------|-------------|-------------------------|
 | Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [example manifest](../../examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../skills/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
-| Populate the test registry | Create `docs/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
+| Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
 | Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
 
 ### B3. Assess the gaps
@@ -168,7 +168,7 @@ The reference repo is the most valuable asset the team has. Give them READ acces
 | Any LLD in `docs/02-design/technical/lld/` | The precision needed for AI to generate correct code |
 | Any ADR in `docs/02-design/technical/adrs/` | How decisions are documented with rationale and consequences |
 | `CLAUDE.md` | How conventions are inlined so every Claude session follows the same rules |
-| `docs/test-registry.yaml` | How tests are cataloged by domain, risk, origin |
+| `docs/03-engineering/testing/test-registry.yaml` | How tests are cataloged by domain, risk, origin |
 
 Use these as FORMAT EXAMPLES — "my LLD should look like this, at this level of detail." The specific content describes a different system; yours will differ.
 

@@ -13,7 +13,7 @@ If `$ARGUMENTS` is empty, check for unstaged changes via `git diff` and use thos
 1. **Read the diff** — `git diff main...HEAD` or the PR diff
 2. **Read the system manifest** (`docs/system-manifest.yaml`) — identify which domains are affected
 3. **Read the incident registry** (`docs/incident-registry.yaml`) — find past incidents in the affected domains
-4. **Read the test registry** (`docs/test-registry.yaml`) — check coverage for the affected areas
+4. **Read the test registry** (`docs/03-engineering/testing/test-registry.yaml`) — check coverage for the affected areas
 
 ---
 
