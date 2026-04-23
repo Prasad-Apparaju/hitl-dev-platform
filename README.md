@@ -31,6 +31,14 @@ Pick the path that matches where you are:
 | **Just the conventions layer** — one `CLAUDE.md` and shared AI rules, nothing else | [Adoption Ladder — Level 1](#adoption-ladder) | 1 hour |
 | **Not sure** — want to understand what you're getting into first | [Adoption Ladder](#adoption-ladder) → pick a level | Start at Level 1 |
 
+### What it looks like after setup
+
+Once the skills are copied and `CLAUDE.md` is in place, Claude Code auto-loads your project conventions and exposes the workflow commands:
+
+![Claude Code after setup — CLAUDE.md loaded, skills available as slash commands](docs/images/claude-code-setup.png)
+
+> **To add this screenshot:** run `claude` in a repo that has the skills installed, type `/` to show available commands, and screenshot the result. Save as `docs/images/claude-code-setup.png`.
+
 ### Minimum viable start (Level 1 — 1 hour)
 
 If you want one thing from this repo, copy the `CLAUDE.md` template into your project and fill in your conventions. Every developer's AI assistant will follow the same rules from the next session onward.
