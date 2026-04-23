@@ -111,7 +111,7 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 
 | Objection | Response |
 |-----------|----------|
-| "No time for docs" | AI writes them. You review. 15 min per change. |
+| "No time for docs" | AI drafts them; you review and correct. For Tier 2 changes the overhead is real but front-loaded — it prevents larger rework later. For Tier 0-1, the process is lightweight by design. |
 | "Code changes too fast" | Docs change WITH the code in the same PR (step 14). |
 | "AI won't understand legacy code" | It doesn't need to understand all of it. Just the manifest + the area being changed. |
 | "Nobody will read the docs" | The AI reads them. Docs are input to code generation, not shelf decoration. |

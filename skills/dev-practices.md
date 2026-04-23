@@ -1,12 +1,22 @@
 # Development Practices
 
-Apply these practices for ALL coding work — features, bug fixes, refactors, improvements. When the user asks to implement, build, fix, change, or modify code, follow the change workflow and standards defined here. These are mandatory, not suggestions.
+This skill defines the full change workflow. **Apply it based on the change tier:**
+
+| Tier | Change type | Use this skill? |
+|------|-------------|----------------|
+| 0 — Trivial | Typo, config value, log message | No — standard PR only |
+| 1 — Bug fix | Regression fix, minor behavioral correction | Partial — start at step 2, skip training plan |
+| 2 — Normal feature | Bounded, well-understood change within one domain | Yes — full workflow |
+| 3 — Non-trivial / cross-domain | Migrations, cross-domain, AI systems, security, data model | Yes — full workflow, add HLD review gate |
+| 4 — Incident / P0 | Active production problem | Fix first, then full docs within 48 hours |
+
+When in doubt about the tier, use the heavier process. If you are touching more than one domain or writing more than a few dozen lines, treat it as Tier 2 or above.
 
 ---
 
-## 1. Change Workflow (MANDATORY ORDER)
+## 1. Change Workflow
 
-Every change — feature, bug fix, improvement, refactor — follows this exact sequence:
+Tier 2 and above follow this sequence. Tier 1 (bug fixes) start at step 2 and skip the training plan stub.
 
 ### Pipeline View
 
@@ -227,7 +237,7 @@ graph TD
 26. 📊 90-day ROI Check     → lead + PM review: actual vs estimated ROI; update ADR with Actual Outcome
 ```
 
-**Never skip steps 1-8 (GitHub Issue through Training plan stub).** Documentation is the source of truth, not code.
+**For Tier 2 and above, steps 1-8 (GitHub Issue through Training plan stub) are required.** For Tier 1 bug fixes, steps 1, 2, and the code/test steps are required — impact analysis and training plan are optional. Documentation is the source of truth, not code.
 
 **Steps 9-15 are TDD-as-design** — AI generates maximum tests (step 9, AI generates tests RED) → humans add domain-expertise tests (step 10, Human reviews tests) → tests reveal LLD gaps → LLD is improved (step 11, Tests improve the design) → verify RED (step 12, Verify RED) → generate code (step 13, Generate code GREEN) → verify GREEN (step 14, Verify GREEN) → refactor (step 15, Refactor). This is mandatory. See §1f for the full explanation + contract tests + the "tests improve the design" loop.
 
