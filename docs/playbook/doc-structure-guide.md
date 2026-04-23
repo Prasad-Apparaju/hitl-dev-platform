@@ -50,19 +50,21 @@ docs/
 │   ├── cost-analysis.md
 │   └── incident-registry.yaml  ← past failures + lessons learned
 │
-├── 05-<project-specific>/  Time-bounded or project-specific docs
+├── 05-<project-specific>/  Time-bounded docs — archive after completion
 │   ├── migration-plan.md       (e.g., for a V1→V2 migration)
 │   ├── team-responsibilities.md
 │   └── gap-analysis.md
 │
-├── 06-team/             WHO does what
-│   └── README.md        Team roster, roles, escalation path
+├── 06-team/             WHO does what + how each role works
+│   ├── README.md        Team roster, roles, escalation path
+│   ├── pm-playbook.md           ← PM: requirements, design reviews, deploy approvals
+│   ├── developer-playbook.md    ← Developer: issue to PR workflow
+│   └── architect-playbook.md   ← Architect: architecture governance, ADR process
 │
-├── playbook/            HOW-TO guides (general purpose)
+├── playbook/            HOW-TO guides for system-wide processes
 │   ├── process-overview.md
 │   ├── adding-a-feature.md
-│   ├── fixing-and-refactoring.md
-│   └── pm-guide.md
+│   └── fixing-and-refactoring.md
 │
 ├── patterns/            Reusable architecture patterns
 │   ├── idempotency-keys.md
@@ -90,9 +92,9 @@ docs/
 | Deployment, runbooks, monitoring | `04-operations/` | Architect (owns IaC/Ops) |
 | Past incidents + lessons | `04-operations/incident-registry.yaml` | Whoever fixed it |
 | Test coverage index | `03-engineering/testing/test-registry.yaml` | Developers |
-| Migration-specific plans | `05-<project-specific>/` | Architect |
-| Team structure, roles | `06-team/` | Architect + PM |
-| Step-by-step process guides | `playbook/` | Shared |
+| Time-bounded project docs (migrations, launches) | `05-<project-specific>/` | Architect — archive after completion |
+| Team structure, roles, and role playbooks | `06-team/` | Architect + PM |
+| System-wide process guides (feature workflow, fix workflow) | `playbook/` | Shared |
 
 ---
 
