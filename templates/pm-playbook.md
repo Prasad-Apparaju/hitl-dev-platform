@@ -1,227 +1,182 @@
 # PM Playbook
 
-**Context:** You're the PM on [Project Name]. Your job is to write requirements, review and approve designs, track progress, review impact briefs before deploys, and translate technical changes into product language for stakeholders. Claude Code helps you do all of this — you don't need to read code.
+**Context:** You're the PM on [Project Name]. You work entirely through Claude Code — type a command, Claude does the work. You don't run terminal commands, you don't edit files manually, and you don't need to read code. Everything below is something you type into Claude Code.
 
 ---
 
-## Step 1 — Set up your environment
+## Step 1 — Set up (one time)
 
 ```bash
 git clone <repo-url>
 cd <project>
-claude   # CLAUDE.md auto-loads on startup — no config needed
+claude
 ```
 
-Verify Claude loaded the project context:
+Once Claude Code is open, verify it loaded correctly:
 
 ```
 What product does this system build, what are the main user-facing
 capabilities, and what does the current PRD say about priorities?
 ```
 
----
-
-## Step 2 — Understand the system
-
-```
-Give me a non-technical summary of what [Product Name] does,
-who the users are, and what the key product capabilities are.
-Reference docs/01-product/prd.md.
-```
-
-To understand current development status:
-
-```
-Read docs/01-product/prd.md and give me a plain-English status update:
-1. What has been built and is working?
-2. What's in progress right now?
-3. What's blocked and why?
-4. What's the next thing to ship?
-```
+Claude should describe the product, main features, and product goals. If it doesn't, check you're in the repo root.
 
 ---
 
-## Step 3 — Write or update a product requirement
-
-When you need to capture a new feature or change a requirement:
+## Step 2 — Check progress at any time
 
 ```
-/generate-docs
-
-I need to document a new product requirement for [feature name].
-Here's what I need it to do: [describe in plain English].
-
-Generate an HLD first so I can review the proposed design before
-the team starts detailed work.
+/pm/review-progress
 ```
 
-Once the HLD is generated, ask Claude to explain anything unclear:
-
-```
-Explain what the [component name] does in plain English.
-What does a user experience when this component is working correctly,
-and what do they experience when it fails?
-```
-
-When you're satisfied, approve the HLD:
-
-```
-Approved — proceed to LLD for [feature name].
-```
+Claude reads the PRD and scans the codebase. Gives you a table of every requirement: Done / Partial / Not started, with notes on what's missing.
 
 ---
 
-## Step 4 — Review a design before the team implements it
+## Step 3 — Design a new feature from scratch
 
-When an HLD or LLD is ready for your review:
-
-```
-Read the HLD at docs/02-design/technical/hld/[feature].md.
-Explain it to me as a product manager — what does this design
-do, what are the main user-facing behaviors it enables,
-and what are the key trade-offs the team made?
-```
-
-To check the design matches what you had in mind:
+When you have a rough idea and want to think it through properly:
 
 ```
-Here's what I expected this feature to do: [describe].
-Read the LLD at docs/02-design/technical/lld/[path].md and tell me:
-1. Does the design match my expectation?
-2. What edge cases does the design handle that I might not have thought of?
-3. What is explicitly out of scope in this design?
+/pm/design-feature [describe your idea]
 ```
 
-To understand why a technical decision was made:
-
-```
-Why did we choose [technology/approach]? Where is that decision
-documented? What alternatives did we consider and why did we reject them?
-```
+Claude walks you through 7 phases — discovery, user journey, edge cases, UX mockup, acceptance criteria, impact analysis, and writing to the PRD. You approve each phase before it moves to the next. At the end, the PRD is updated and a GitHub issue is created.
 
 ---
 
-## Step 5 — Create a well-scoped GitHub issue
+## Step 4 — Add a quick requirement
 
-Before the team starts any work, there must be a GitHub issue:
+When you already know what you want and just need it in the PRD:
 
 ```
-I want the team to [describe the work]. Help me write a GitHub issue with:
-1. A clear one-line title
-2. User story: "As a [persona], I want [capability] so that [outcome]"
-3. Acceptance criteria — bullet list of what "done" looks like
-4. Out of scope — what this issue explicitly does NOT cover
-5. Dependencies — what must be done before this can start
+/pm/add-feature [describe the requirement]
 ```
+
+Claude drafts the requirement in the right format, checks for conflicts with existing requirements, gets your approval, updates the PRD, and creates the GitHub issue.
 
 ---
 
-## Step 6 — Track progress and prepare status updates
-
-For a sprint status update:
+## Step 5 — Update an existing requirement
 
 ```
-Read docs/01-product/prd.md and the recent git log (last 2 weeks).
-Produce a stakeholder update covering:
-1. What shipped this sprint (user-visible impact, not code details)
-2. What's in flight (ETA if known)
-3. Any blockers the product team needs to know about
-4. Key decisions made and why (plain English, not technical)
+/pm/update-requirement FR-[ID] [describe what to change]
+```
+
+Claude shows you the current requirement, drafts the change, flags any ripple effects on other requirements, and updates the PRD on your approval.
+
+---
+
+## Step 6 — Review a scope change from the team
+
+When a developer opens a PR that changes the PRD:
+
+```
+/pm/review-scope-change [PR number]
+```
+
+Claude summarises what changed, assesses the impact, generates review questions for you to ask the team, and lets you approve or request changes — all within Claude Code.
+
+---
+
+## Step 7 — Work through open questions
+
+When the PRD has unresolved questions blocking the team:
+
+```
+/pm/answer-questions
+```
+
+Claude walks through each open question one at a time, takes your answer, and updates the PRD.
+
+---
+
+## Step 8 — Report a bug
+
+```
+/pm/report-bug [describe what went wrong]
+```
+
+Claude gathers the details, checks for duplicates, and creates a well-structured GitHub issue.
+
+---
+
+## Step 9 — Review an impact brief before a deploy
+
+Every non-trivial change produces an impact brief before it ships. Section 4 is the product mental model update — written for you. Ask Claude to surface it:
+
+```
+/impact-brief [PR number or describe the change]
+```
+
+Then ask follow-up questions before you approve:
+
+```
+What does a user see if this fails mid-way?
+What is the rollback plan?
+Which users see this first in the canary?
 ```
 
 ---
 
-## Step 7 — Review an impact brief before a deploy
-
-Every non-trivial change produces an impact brief. Your job is to review Section 4 (product mental model) before approving:
+## Step 10 — Prepare a demo
 
 ```
-/impact-brief
-
-What is changing in [PR number / branch / describe change]?
-Focus on Section 4 — what assumptions do I currently hold
-about this feature that will no longer be true after this ships?
+/pm/prep-demo [feature or sprint you're demoing]
 ```
 
-Ask follow-up questions before approving:
-
-```
-What does a user see if this change fails mid-way through?
-Is there a rollback plan and how long does rollback take?
-What is the canary strategy — which users will see this first?
-```
+Claude produces a structured demo script: what to show, in what order, what to say at each step, and what edge cases to avoid.
 
 ---
 
-## Step 8 — Validate a feature before sign-off
-
-When testing a feature before approval:
+## Step 11 — Prioritize the backlog
 
 ```
-I'm about to test [feature]. Read the LLD at
-docs/02-design/technical/lld/[path].md and give me a manual
-test script for a non-technical tester:
-1. What to set up before testing
-2. Step-by-step actions to take
-3. What the expected outcome is for each step
-4. What failure looks like
+/pm/prioritize
 ```
+
+Claude reads the PRD and open issues, summarises the options, and helps you work through trade-offs. You decide — Claude documents.
 
 ---
 
-## Step 9 — Ask about anything you're unsure of
+## Step 12 — Ask anything about the system
 
 ```
-Why does [thing] work this way? What would happen if we did [alternative]?
-Where is that decision documented?
-```
-
-```
-I want to change [requirement]. What parts of the system would be
-affected? Read the relevant HLD/LLD and tell me the blast radius
-in plain language.
+Why did we choose [technology]? What alternatives did we consider?
 ```
 
 ```
-A user reported [problem]. Is this a known issue? Check
-docs/04-operations/incident-registry.yaml and tell me if we've
-seen this before and what we did about it.
+I want to change [requirement]. What parts of the system would be affected?
+```
+
+```
+A user reported [problem]. Have we seen this before?
+Check docs/04-operations/incident-registry.yaml.
 ```
 
 ---
 
 ## Ownership Rules
 
-**You own product clarity end-to-end.** Requirements, design approvals, impact brief sign-off, staging validation, stakeholder updates.
+**You own product clarity end-to-end.** Requirements, design approvals, impact brief sign-off, staging validation, stakeholder updates. Claude does the drafting; you decide.
 
-**Review impact briefs before every significant deploy.** Section 4 of every brief is written for you — if it's wrong, say so before the ship goes out.
+**Review impact briefs before every significant deploy.** Section 4 is written for you — if it's wrong, say so before the ship goes out.
 
 **If you can't explain a design decision in plain English, ask.** A design you can't explain is a design you can't own.
 
 ---
 
-## Key Files
+## Command Reference
 
-| File | What it is |
-|------|-----------|
-| `CLAUDE.md` | Conventions and workflow — auto-loaded every session |
-| `docs/01-product/prd.md` | Product requirements — the source of truth for scope |
-| `docs/02-design/technical/hld/` | High-level architecture — your design approval gate |
-| `docs/02-design/technical/adrs/design-decisions.md` | Why every major decision was made |
-| `docs/04-operations/incident-registry.yaml` | Past failures and lessons learned |
-| `templates/prd-template.md` | PRD template with AI-friendly writing tips |
-
----
-
-## PM How-To Summary
-
-| I want to... | Step |
+| I want to... | Command |
 |---|---|
-| Understand system status | Step 2 |
-| Write a new requirement | Step 3 (`/generate-docs`) |
-| Review a design | Step 4 |
-| Create a GitHub issue | Step 5 |
-| Write a stakeholder update | Step 6 |
-| Review a change before deploy | Step 7 (`/impact-brief`) |
-| Validate a feature | Step 8 |
-| Understand a trade-off | Step 9 |
+| Check what's been built | `/pm/review-progress` |
+| Design a feature from scratch | `/pm/design-feature [idea]` |
+| Add a quick requirement | `/pm/add-feature [description]` |
+| Update a requirement | `/pm/update-requirement [FR-ID] [change]` |
+| Review a scope change PR | `/pm/review-scope-change [PR number]` |
+| Work through open questions | `/pm/answer-questions` |
+| Report a bug | `/pm/report-bug [description]` |
+| Review an impact brief | `/impact-brief [PR or change]` |
+| Prepare a demo | `/pm/prep-demo [feature]` |
+| Prioritize the backlog | `/pm/prioritize` |
