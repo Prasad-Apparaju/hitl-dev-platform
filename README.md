@@ -3,17 +3,21 @@
 
 ## What this is
 
-A development process for teams using AI to generate code, tests, and documentation. AI produces code faster than teams can review it — and does so confidently even when wrong. This process makes that speed safe by organizing the team around documentation as the shared source of truth. AI generates; humans shape, review, and decide.
+A document-driven delivery model for teams that use AI heavily in non-trivial software work. AI produces code faster than teams can review it — and does so confidently even when wrong. This process makes that speed safe by organizing the team around documentation as the shared source of truth. AI generates; humans shape, review, and decide.
 
-**Your job changes from producing artifacts to shaping them.** You tell AI what you need. AI drafts it. You iterate — refine, challenge, steer — until it reflects exactly what should happen. That skill is more valuable than typing code from scratch.
+**AI-assisted drafting works best for low-ambiguity artifacts.** For high-ambiguity work, debugging, security-sensitive design, or anything where the right answer requires judgment that the AI cannot yet reason about reliably — human-led design and writing is the better default. The process blends AI drafting with human-led work depending on what the task requires.
 
-**This process works for any system** — REST APIs, data pipelines, agentic AI, frontend apps, infrastructure. "AI-driven" refers to how the team develops (using AI to generate code, tests, and docs), not what they're building. The system under development does not need to contain agents or LLMs.
+**Where this is especially useful:** migrations, cross-domain feature work, AI/agentic systems, regulated or high-audit environments, and platform teams introducing shared conventions. It is also useful for non-trivial features in any backend-heavy or architecture-heavy codebase.
+
+**Where a reduced version is more realistic:** normal SaaS feature teams, internal tools, and full-stack product teams shipping weekly. For these teams, the most valuable subset is: shared AI rules, docs-first for non-trivial changes, traceability for important decisions, and explicit rollout notes for risky releases. See the [Adoption Ladder](#adoption-ladder) for a lightweight entry path.
+
+**Where this is not a good fit as written:** understaffed startups, teams without good CI or test discipline, teams where most work is small bugfixes and iterative UX changes, or teams without an architect or senior lead who can own the review gates.
 
 > **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the AI coding tool and `CLAUDE.md` for project-level AI configuration. The process works with any AI coding assistant that supports auto-loaded project rules (e.g., Cursor rules, Windsurf rules, Cline memory banks). Substitute your tool of choice — the principles and workflow are tool-agnostic.
 
 > **Language note:** The enforcement tooling (manifest drift checker, import analysis, Semgrep rules) currently targets Python codebases. The process and documentation workflow are language-agnostic — only the automated checks are Python-first. TypeScript and other language support is planned.
 
-**Yes, this looks like waterfall.** Design before code. That is intentional. Waterfall failed because the gap between "design done" and "working software" was months. With AI, that gap is minutes. You get waterfall's rigor (coherent design, traced decisions) without the wait. And it turns out AI is exceptionally good at reading precise documentation and generating code that follows it — which makes document-driven development a natural fit for how AI works. Without this discipline, AI-generated code drifts — each session invents its own patterns, and by the time you have customers, you face a rewrite that is orders of magnitude harder than designing coherently from the start.
+**Yes, this looks like waterfall.** Design before code. That is intentional. Waterfall failed because the gap between "design done" and "working software" was months. With AI, that gap is often much shorter. You get waterfall's rigor (coherent design, traced decisions) with less wait — though how much less depends on the team, tooling maturity, and change complexity. Without this discipline, AI-generated code drifts — each session invents its own patterns, and by the time you have customers, you face a rewrite that is much harder than designing coherently from the start.
 
 ## What you get by adopting this
 
@@ -209,7 +213,9 @@ Treat the LLD as a spec, not a narrative: precise interfaces, explicit edge case
 
 ## 2. Role Definitions
 
-Every role shifts from "produce artifacts" to "review and decide." You are a reviewer and decision-maker, not a typist. If you are typing more than a few sentences of correction, let AI draft; you steer.
+Every role is a mix of producing artifacts, reviewing AI drafts, and making decisions. For well-understood, low-ambiguity work, AI drafts and humans review. For ambiguous design problems, debugging depth, security-sensitive decisions, or anything where the right answer requires judgment the AI cannot reliably exercise — humans lead and AI assists. The balance shifts by task, not by role.
+
+> **On "review, don't write":** The goal is not for engineers to stop writing. The goal is that low-value mechanical production (boilerplate, obvious patterns, predictable transforms) does not consume the hours that should go to design, debugging, and judgment. Many experienced engineers find the shift uncomfortable at first; that discomfort is worth naming explicitly.
 
 | Role | In Dev | After handoff to QA/Prod |
 |------|--------|------------------------|
@@ -224,9 +230,9 @@ Every role shifts from "produce artifacts" to "review and decide." You are a rev
 
 | Common practice | With this process |
 |-----------|----------------|
-| Write docs by hand | AI writes all docs. You review, correct, approve. |
-| Start coding, figure it out as you go | Tell AI what you need. AI drafts the LLD. You review. Iterate with AI — refine, add detail, challenge assumptions — until the doc reflects exactly what should happen. Only then does AI generate code from it. |
-| Docs after the feature ships | Docs first. AI drafts them in minutes. You spend time thinking, not typing. |
+| Write docs by hand | AI drafts most docs. You review, correct, approve — and write the parts that require judgment. |
+| Start coding, figure it out as you go | Tell AI what you need. AI drafts the LLD. You review. Iterate — refine, add detail, challenge assumptions — until the doc reflects exactly what should happen. Only then does AI generate code from it. |
+| Docs after the feature ships | Docs first. AI drafts them quickly. You spend time thinking and deciding, not formatting. |
 | One developer owns a feature end-to-end | The *doc* owns the feature. Any developer (or AI session) can pick it up. |
 
 ### 2.1 The Dev Lead's Integration Verification
@@ -514,7 +520,9 @@ If a visual design (Figma or similar) exists, it appears twice in the workflow: 
 
 ### 5.5 ROI Estimation
 
-For changes costing more than a day of effort, add three items to the GitHub issue before build starts: (1) a specific, falsifiable expected outcome with timeframe, (2) the current baseline metric (measured, not estimated), and (3) what happens if ROI is not realized. Verify at 30 days (direction check) and 90 days (magnitude check). Document the actual outcome in the ADR so future estimates calibrate against reality.
+**When it applies (Tier 3 changes and above):** initiatives larger than one sprint, infrastructure spend, reliability investments, or major architecture bets. Not required for ordinary feature work — applying it to every change makes it feel like paperwork and teams will stop filling it out.
+
+When it applies, add three items to the GitHub issue before build starts: (1) a specific, falsifiable expected outcome with timeframe, (2) the current baseline metric (measured, not estimated), and (3) what happens if ROI is not realized. Verify at 30 days (direction check) and 90 days (magnitude check). Document the actual outcome in the ADR so future estimates calibrate against reality.
 
 ### 5.6 Downstream Impact Assessment
 
@@ -612,7 +620,7 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 | 11 | Ops + AI | Deploys to canary. Refactors IaC if needed (Dev applies refinements back to dev). AI monitors go/no-go criteria. Promotes or rolls back. |
 | 12 | Team + PM | Demo. PM gives feedback. Next iteration if needed. |
 
-**Total time: days rather than sprints (based on internal experience).** The downstream impact brief adds ~30 minutes to the process. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
+**Total time: varies by team and change complexity.** In practice, the process often compresses implementation time compared to informal approaches — but that depends on how precisely the LLD is written and how familiar the team is with the workflow. The downstream impact brief adds ~30 minutes of active work. The canary monitoring adds ~4 hours of wall-clock time (mostly waiting, not working). Both prevent classes of problems that would otherwise take days to diagnose and fix.
 
 ---
 
@@ -625,19 +633,19 @@ Calibrate the criteria to the specific change, not universal thresholds. A chang
 | **Using the full process for trivial changes** | A one-line config change goes through 20 steps. The overhead exceeds the value. | Use the light path decision table below. |
 | **Using the full process for cross-cutting changes** | A cross-cutting change (new convention, framework upgrade, security patch) is treated as a single pipeline. But it has n-domain impact, and the pipeline's single Design PR does not adequately capture the review burden. | The hierarchical knowledge architecture helps (the architect decomposes across domains), but the human review bottleneck at the integration verification step does not scale. If the lead has to verify integration across 8 domains in one PR, something will get missed. Break cross-cutting changes into domain-scoped PRs. |
 
-### 6.1 Light Path Decision Table
+### 6.1 Process Tiers by Change Type
 
-Not every change needs the full workflow. Use this table to decide the right process weight:
+Not every change needs the full workflow. Use this table to decide the right process weight. **The full 28-step workflow is for Tier 3.** Most routine work is Tier 1 or Tier 2.
 
-| Change Type | Process |
-|---|---|
-| **Trivial** (typo, config value, log message) | GitHub issue or linked task &rarr; code &rarr; tests if applicable &rarr; review &rarr; merge |
-| **Bug fix** | Issue &rarr; regression test first &rarr; fix &rarr; risk note &rarr; registry update if incident-related |
-| **Normal feature** | Full workflow (all steps) |
-| **Cross-cutting / security / data migration** | Decomposition plan &rarr; domain-scoped PRs &rarr; full workflow per PR |
-| **P0 incident** | Fix first &rarr; full docs within 48 hours &rarr; incident registry entry |
+| Tier | Change type | Required artifacts | Required human gates | Overhead |
+|------|-------------|-------------------|---------------------|----------|
+| **0 — Trivial** | Typo, config value, log message | Linked issue or task | Standard PR review | Minutes |
+| **1 — Bug fix** | Regression fix, minor behavioral correction | Issue + regression test first + risk note | PR review | 30-60 min |
+| **2 — Normal feature** | Bounded, well-understood change within one domain | Issue + LLD update + test plan + impact brief | Design review + PR review | Hours to 1-2 days |
+| **3 — Non-trivial / cross-domain** | Migrations, cross-domain changes, AI/agentic systems, security, data model changes | Full workflow: HLD/LLD + ADR + test plan + downstream impact brief + rollout plan | Design PR + two-round code review + integration verify | Days to weeks |
+| **4 — Incident / P0** | Active production problem | Fix first + incident registry entry + full docs within 48 hours | Senior sign-off on fix + post-mortem | Immediate fix, deferred docs |
 
-When in doubt, use the heavier process. "Trivial" is a judgment call, and sometimes what looks trivial has architectural implications that surface later. If you find yourself writing more than a few lines or touching more than one domain, escalate to the full workflow.
+When in doubt, use the heavier tier. "Trivial" is a judgment call — sometimes what looks trivial has cross-domain or architectural implications that surface later. If you find yourself writing more than a few lines or touching more than one domain, move up a tier.
 
 ### 6.2 Architect Capacity and Delegation
 
@@ -662,12 +670,39 @@ Gates should not block progress for more than 24 hours. When a substitute approv
 
 See [templates/team-responsibilities-template.md](templates/team-responsibilities-template.md) for the full delegation framework.
 
-### 6.3 Open Questions
+### 6.3 Evidence Taxonomy
+
+The claims in this repo have different levels of support. They are labeled here to avoid overstating certainty.
+
+| Status | Meaning |
+|--------|---------|
+| **Measured** | Quantified outcome from at least one real project |
+| **Observed** | Directional pattern seen in practice, not formally measured |
+| **Hypothesis** | Reasonable expectation based on mechanism, not yet validated |
+| **Open question** | Genuinely unknown; research or case studies needed |
+
+Selected claims and their status:
+
+| Claim | Status |
+|-------|--------|
+| AI-generated code drifts across sessions without shared conventions | Observed — consistent pattern in pilot projects |
+| The manifest reduces hallucinated cross-domain dependencies | Observed — fewer cross-domain violations after manifest adoption |
+| Documentation-first reduces mid-build rework | Observed — fewer design-level rewrites after the design PR gate was introduced |
+| The baseline sprint produces an accurate-enough starting point | Observed — initial accuracy varies widely; 70% is a rough midpoint, not a floor |
+| Two-round code review saves time vs. one thorough review | Open question — directional intuition, no measurement |
+| The process improves lead time or defect escape rate | Open question — anecdotally positive, not formally measured |
+| "Days rather than sprints" for a bounded feature | Hypothesis — depends heavily on LLD precision and team familiarity with the workflow |
+| One architect can baseline any brownfield system in one week | Hypothesis — feasible for small-to-medium systems; larger systems take longer |
+
+See [docs/playbook/evidence.md](docs/playbook/evidence.md) for a fuller breakdown.
+
+### 6.4 Open Questions
 
 - **Exploratory work**: How to handle genuinely exploratory work where the design emerges from the code. The design-first approach has clear value, but some tasks require building before knowing what to build.
-- **Developer identity**: How to onboard developers who are uncomfortable with the "review, don't write" model. Some engineers derive identity from writing code. Telling them "your job is review" can feel like a demotion even when it is not.
+- **Developer identity**: How to onboard developers who are uncomfortable with the shift away from writing as primary output. Some engineers derive identity from writing code; the process should acknowledge this explicitly.
 - **Manifest accuracy**: How to keep the manifest accurate as the system evolves fast. The generator script helps, but human-authored blurbs (mutation descriptions, preconditions, the "IRREVERSIBLE" annotation on side effects) require judgment that cannot be automated yet.
 - **Two-round review ROI**: Whether the two-round code review actually saves time compared to a single thorough review is an open question without data.
+- **Measurement**: How to quantify the process's impact on lead time, defect rates, and onboarding speed. Without measurement, the strongest claims remain hypotheses.
 
 ---
 
@@ -686,7 +721,11 @@ Use this checklist when considering or implementing this process:
 
 ### Adoption Ladder
 
-You don't need to adopt the full process on day one. Start where it hurts most and add layers as the team matures:
+**Start here.** You do not need the full process on day one. The repo is designed to be adopted incrementally. Pick the level that matches where your team is right now; add layers as the team matures and you see value.
+
+After 2 weeks at Level 1: every developer's AI assistant follows the same rules; the most common convention drift problem is solved.
+After 2 weeks at Level 2: design decisions are captured before code is written; mid-build rework becomes rarer.
+After 1 month at Level 3-4: the team has a traceable, enforceable process for non-trivial changes.
 
 | Level | What you adopt | What you get | Effort |
 |---|---|---|---|
@@ -696,13 +735,17 @@ You don't need to adopt the full process on day one. Start where it hurts most a
 | **4. System manifest + domain facades** | Manifest with domains, files, facades, conventions. Manifest drift checker. | AI stays scoped. Cross-domain drift detected. New team members onboard from the manifest. | 1 week |
 | **5. Full workflow** | Incident registry, test registry, rollout planning, ROI checks, deployment gates. | Past mistakes don't repeat. Deployments are risk-rated. Investments are measured. | 1-2 weeks |
 
+**For teams not ready for Level 5:** Levels 1-3 are the minimum viable adoption. They give you shared conventions, docs-first design, and basic traceability — the three things that prevent the worst outcomes from AI-assisted development — without the full overhead of the 28-step workflow.
+
 Each level is independently valuable. Level 1 alone eliminates the most common AI coding problem (every session invents its own conventions). Level 2 prevents the second most common problem (code that doesn't match what the team agreed). Levels 3-5 add enforcement and organizational safety.
 
 ---
 
 ## 8. Brownfield: Adopting This on an Existing Codebase
 
-An architect working with AI can produce the full documentation baseline — manifest, HLDs, LLDs, ADRs, CLAUDE.md, convention checks — in one sprint. AI does the mechanical work (scanning code, generating drafts). The architect does the judgment (correcting boundaries, adding "why" knowledge, verifying inferred decisions). The baseline will be approximately 70% accurate (observed in initial projects; accuracy improves as conventions are documented); the process corrects the rest through normal use.
+An architect working with AI can often produce the documentation baseline — manifest, HLDs, LLDs, ADRs, CLAUDE.md, convention checks — in a sprint. AI does the mechanical work (scanning code, generating drafts). The architect does the judgment (correcting boundaries, adding "why" knowledge, verifying inferred decisions). Elapsed effort depends on system size, architecture sprawl, integration count, and how much tribal knowledge is missing from the code.
+
+The initial baseline will be incomplete and partially inaccurate. That is expected. It is more useful than having nothing, and the process corrects it through normal use. See [docs/playbook/adoption-guide.md](docs/playbook/adoption-guide.md) for a breakdown by system complexity and an honest accounting of what the sprint produces.
 
 Use the `/generate-docs reverse-engineer` skill to automate the sprint. See [docs/playbook/adoption-guide.md](docs/playbook/adoption-guide.md) for the full guide including: the sprint structure, gap assessment and closure plan, handling areas nobody understands, the expedited path for production incidents, and common objections.
 
@@ -749,6 +792,9 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/check-conventions` | [skills/check-conventions.md](skills/check-conventions.md) | Run convention checker in-chat, offer to fix violations |
 | Tool | Manifest generator | [tools/generate-manifest/](tools/generate-manifest/) | Auto-generate system-manifest.yaml from codebase via AST scanning |
 | Guide | AI governance | [docs/playbook/ai-governance.md](docs/playbook/ai-governance.md) | What AI can access, secrets protection, generated code ownership, audit trail |
+| Guide | Evidence + observations | [docs/playbook/evidence.md](docs/playbook/evidence.md) | What has been observed, what is hypothetical, what is unknown |
+| Guide | Manifest governance | [docs/playbook/manifest-governance.md](docs/playbook/manifest-governance.md) | Ownership model, update triggers, what CI enforces vs. what requires judgment |
+| Guide | Migration hard parts | [docs/playbook/migration-guide.md#the-hard-parts](docs/playbook/migration-guide.md) | Cutover strategies, dual-write, rollback, data integrity, observability parity |
 | Infra | Agent platform | agentic-platform repo (companion) | BaseAgent, tools, resilience, routing, observability, 7 patterns |
 
 > **CI note:** The workflows under `ci/` are copyable templates, not active workflows for this platform repo. They are designed to run inside your product repo after `docs/system-manifest.yaml` has been generated. Copy them to `.github/workflows/` in your target repo.

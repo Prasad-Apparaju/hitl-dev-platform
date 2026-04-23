@@ -281,6 +281,111 @@ AI generates the bulk of this mapping. The architect verifies the equivalences a
 
 ---
 
+---
+
+## The Hard Parts
+
+These are the areas most migration guides skip. They are also the ones most likely to cause production incidents.
+
+### Cutover options
+
+| Strategy | When to use | Risk | Rollback difficulty |
+|----------|-------------|------|---------------------|
+| **Gradual (feature-flag routing)** | API-level migration, stateless endpoints | Low | Easy — flip flag back |
+| **Shadow mode (dual-run, V1 wins)** | Verifying correctness without customer impact | Low | N/A — V1 always wins |
+| **Canary (% traffic to V2)** | After shadow mode validates correctness | Medium | Moderate — drain V2 traffic |
+| **Big-bang cutover** | Unavoidable (e.g., DB migration with no dual-write possible) | High | Hard — requires rollback runbook |
+
+**Recommendation:** Use gradual routing as long as possible. Reserve big-bang for cases where the data model change makes dual-write impossible.
+
+### Dual-write correctness
+
+If you run V1 and V2 in parallel and both write to storage, you must decide:
+
+- **V1 is authoritative:** V2 writes are shadowed, not committed. V2 reads from V1. Safe, but V2 never gets real traffic exposure.
+- **V2 is authoritative for selected entities:** Requires partitioning writes by entity ID or tenant. Complex to reason about during incidents.
+- **Both commit (dual-write):** Both systems write to their own stores. Reconciliation job keeps them in sync. Risk: reconciliation drift, conflict resolution ambiguity.
+
+Document the dual-write decision as an ADR before implementing. The wrong choice is much harder to reverse after traffic starts.
+
+### Rollback after partial cutover
+
+Define the rollback plan before the cutover starts. For each stage of traffic migration, answer:
+
+1. What is the rollback trigger? (error rate threshold, latency spike, data assertion failure)
+2. What is the rollback mechanism? (feature flag flip, DNS switch, load-balancer weight)
+3. How long does rollback take? (seconds? minutes? requires a deploy?)
+4. What state is left behind in V2 after rollback? (is it safe? does it need cleanup?)
+5. Who is authorized to trigger rollback without escalation?
+
+If V2 has already written side effects (emails sent, payments charged, webhooks fired), rollback does not undo those. The runbook must include side-effect handling steps.
+
+### Data integrity verification
+
+After any migration that moves or transforms data:
+
+- **Row/document counts:** V1 count == V2 count for every migrated table or collection.
+- **Checksums on critical fields:** Hash-compare identity, financial, and compliance-sensitive fields.
+- **Referential integrity:** Foreign key consistency, orphaned records, broken joins.
+- **Sampling:** Random sample of 1-5% of records: manual or automated field-by-field comparison.
+- **Business invariants:** Domain-specific rules (e.g., every order has at least one line item, every user has a valid tenant).
+
+Run these checks before promoting traffic to V2 and again 24 hours after promotion.
+
+### Background job and scheduler migration
+
+Background workers are harder to migrate than API endpoints because:
+
+- They consume from queues that may have in-flight messages from V1.
+- They produce side effects (emails, payments, file writes) that are not reversible.
+- Two workers (V1 and V2) processing the same queue produce duplicates.
+
+**Migration steps:**
+1. Drain the V1 queue before starting V2 workers. If zero-downtime is required, use a work-claiming lease (see [patterns/idempotency-keys.md](../patterns/idempotency-keys.md)) to prevent double-processing.
+2. Make V2 workers idempotent for any side effect — if a job is processed twice, the outcome should be the same.
+3. Verify job output by comparing V1 and V2 on a shadow queue before routing production jobs.
+4. Migrate scheduler entries (cron jobs, delayed jobs) one at a time, not all at once.
+
+### Queue and retry semantics
+
+If the queue contract changes between V1 and V2 (message schema, retry policy, dead-letter routing):
+
+- V1 messages in flight at cutover may not deserialize correctly in V2. Add a schema version field and handle both in V2 during the transition window.
+- V2 retry policies may differ from V1 (max attempts, backoff strategy). Ensure consumers are not more aggressive under V2 — unexpected retry storms on migration day are common.
+- Dead-letter queues from V1 may need replaying through V2 after cutover. Document whether to replay, discard, or handle manually.
+
+### Auth and session compatibility
+
+If the auth system changes (JWT issuer, signing key, token format, session store):
+
+- Existing active sessions issued by V1 must be accepted by V2 during the transition. Either maintain dual signing key sets or run the old auth layer as a sidecar validator until sessions expire.
+- Token lifetimes matter: if V1 issues 30-day tokens and you rotate the signing key, users get silently logged out 30 days later unless you handle both keys.
+- Mobile clients hold tokens longer than web clients. Mobile-safe cutover requires keeping V1 token validation working for at least one app release cycle.
+
+### Observability parity before cutover
+
+Do not promote traffic to V2 without first verifying:
+
+- [ ] V2 emits the same structured log fields as V1 for shared dashboards.
+- [ ] V2 metrics are visible in the same Grafana/Datadog/etc. dashboards used for V1.
+- [ ] Alerting rules have been updated to cover V2 signal sources.
+- [ ] Distributed traces propagate correctly from the load balancer through V2 services.
+- [ ] On-call runbooks reference V2 service names and log locations.
+
+Cutting over without observability parity means the first production incident is invisible until a customer reports it.
+
+### Async side-effect safety
+
+Any operation that triggers an external side effect (email, SMS, payment, webhook, third-party API call) must be idempotent before cutover. During a partial cutover or rollback, the same trigger may fire in both systems. Side effects that fire twice are at best annoying (duplicate email) and at worst dangerous (duplicate charge).
+
+Checklist for each async side effect:
+- Is the call wrapped in an idempotency key?
+- Does the receiver handle duplicate delivery safely?
+- Is there a deduplication window in the downstream system?
+- Is there a way to observe and audit how many times the effect fired?
+
+---
+
 ## FAQ
 
 | Question | Answer |

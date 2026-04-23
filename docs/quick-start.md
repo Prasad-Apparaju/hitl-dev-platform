@@ -64,7 +64,7 @@ Every developer who clones the repo now gets the same process.
 
 ## Quick Start — Existing Project (Brownfield)
 
-An architect working with AI can produce the full documentation baseline in one week. See [docs/playbook/adoption-guide.md](docs/playbook/adoption-guide.md) for the day-by-day sprint plan.
+An architect working with AI can produce the documentation baseline in a sprint — typically one to two weeks for a medium-sized system, longer for larger platforms. See [docs/playbook/adoption-guide.md](docs/playbook/adoption-guide.md) for scope expectations by system size.
 
 ## What's Included
 

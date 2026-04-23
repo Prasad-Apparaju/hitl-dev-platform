@@ -1,10 +1,20 @@
-# Brownfield Adoption Guide — The One-Week Baseline Sprint
+# Brownfield Adoption Guide — The Baseline Sprint
 
-An architect working with AI can produce the full documentation baseline for an existing codebase in one week.
+An architect working with AI can produce the documentation baseline for an existing codebase in a sprint — typically one to two weeks for a medium-sized system. Larger platforms, systems with significant tribal knowledge gaps, or codebases with heavy integration surface area take longer. The goal is an honest starting point, not a finished product.
+
+## Realistic scope expectations by system size
+
+| System | Characteristics | Sprint estimate |
+|--------|----------------|-----------------|
+| Small service | <20 source modules, 1-2 integrations, well-documented | 3-5 days |
+| Medium service ecosystem | 20-80 modules, 4-8 integrations, partial docs | 1-2 weeks |
+| Large legacy platform | 80+ modules, many integrations, heavy tribal knowledge | 2-4 weeks |
+
+The estimate assumes an architect who knows the system. A developer who does not know the system adds 30-50% to each range.
 
 ## Who
 
-One architect (or senior dev who knows the system), working with Claude full-time for a week.
+One architect (or senior dev who knows the system), working with Claude full-time for the sprint.
 
 ## Input
 
@@ -38,15 +48,17 @@ A complete documentation baseline ready for the HITL process: system manifest, H
 
 ## The Quality Curve
 
-| When | Accuracy | What improves it |
-|------|----------|------------------|
-| After manifest | ~80% | Architect review |
-| After full sprint | ~70% overall | Mix of verified (90%) and AI-drafted (60%) |
-| Week 2 | ~75% | First re-run + first real changes |
-| Month 1 | ~85% | 10-15 changes each corrected their area |
-| Month 3 | ~95% | Hot paths battle-tested |
+These are rough directional estimates from initial projects, not precise benchmarks. Accuracy depends heavily on how well-documented the existing system is, how much tribal knowledge the architect can supply, and how many hot paths the team touches in the first weeks.
 
-**Approximately 70% accurate docs after one sprint (observed in initial projects) are infinitely more useful than 100% accurate docs after six months.**
+| When | Accuracy (rough range) | What improves it |
+|------|------------------------|------------------|
+| After manifest | 60-80% | Architect review |
+| After full sprint | 55-75% overall | Mix of verified (80-90%) and AI-drafted (50-65%) |
+| Week 2 | 65-80% | First re-run + first real changes |
+| Month 1 | 75-90% | 10-15 changes each corrected their area |
+| Month 3 | 85-95% | Hot paths battle-tested |
+
+**Treat the sprint output as a starting point, not a finished product.** Incomplete-but-existing docs are more useful than no docs, because the process corrects them through normal use. Mark unverified sections explicitly (see [Handling "Nobody Knows Why" Areas](#handling-nobody-knows-why-areas)) so the team knows what to trust.
 
 ## After the Sprint: Assessing and Closing the Gaps
 
