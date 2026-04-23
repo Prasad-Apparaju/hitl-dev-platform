@@ -35,9 +35,7 @@ Pick the path that matches where you are:
 
 Once the skills are copied and `CLAUDE.md` is in place, Claude Code auto-loads your project conventions and exposes the workflow commands:
 
-![Claude Code after setup — CLAUDE.md loaded, skills available as slash commands](docs/images/claude-code-setup.png)
-
-> **To add this screenshot:** run `claude` in a repo that has the skills installed, type `/` to show available commands, and screenshot the result. Save as `docs/images/claude-code-setup.png`.
+![Claude Code after setup — CLAUDE.md loaded, skills available as slash commands](docs/images/claude-code-setup.svg)
 
 ### Minimum viable start (Level 1 — 1 hour)
 

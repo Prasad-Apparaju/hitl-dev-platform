@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 520" width="780" height="520" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <!-- Terminal window background -->
+  <rect width="780" height="520" rx="10" fill="#1e1e2e"/>
+
+  <!-- Title bar -->
+  <rect width="780" height="38" rx="10" fill="#313244"/>
+  <rect y="28" width="780" height="10" fill="#313244"/>
+
+  <!-- Traffic light buttons -->
+  <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
+  <circle cx="40" cy="19" r="6" fill="#f9e2af"/>
+  <circle cx="60" cy="19" r="6" fill="#a6e3a1"/>
+
+  <!-- Title -->
+  <text x="390" y="24" text-anchor="middle" fill="#cdd6f4" font-size="13" opacity="0.7">Claude Code — your-project</text>
+
+  <!-- CLAUDE.md loaded banner -->
+  <rect x="16" y="52" width="748" height="28" rx="4" fill="#1e3a1e" stroke="#a6e3a1" stroke-width="1" opacity="0.9"/>
+  <text x="28" y="70" fill="#a6e3a1" font-size="12">✓</text>
+  <text x="44" y="70" fill="#a6e3a1" font-size="12">CLAUDE.md loaded — project conventions active (Python · FastAPI · domain boundaries enforced)</text>
+
+  <!-- Session lines -->
+  <text x="28" y="104" fill="#6c7086" font-size="12">Claude Code v1.x  |  Model: claude-sonnet-4-6  |  Context: your-project/</text>
+
+  <text x="28" y="132" fill="#89b4fa" font-size="13">╭─────────────────────────────────────────╮</text>
+  <text x="28" y="150" fill="#89b4fa" font-size="13">│  How can I help with your-project today? │</text>
+  <text x="28" y="168" fill="#89b4fa" font-size="13">╰─────────────────────────────────────────╯</text>
+
+  <!-- Input line with / typed -->
+  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /</text>
+  <rect x="46" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
+
+  <!-- Slash command dropdown panel -->
+  <rect x="16" y="212" width="748" height="262" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+
+  <!-- Dropdown header -->
+  <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
+  <rect x="16" y="228" width="748" height="12" fill="#313244"/>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (6)</text>
+
+  <!-- Command rows -->
+  <!-- Row 1 highlighted -->
+  <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/dev-practices</text>
+  <text x="175" y="261" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="261" fill="#a6adc8" font-size="12">Full 28-step change workflow — issue → design → TDD → review → ship</text>
+  <text x="728" y="261" fill="#45475a" font-size="11">Tier 2+</text>
+
+  <!-- Row 2 -->
+  <rect x="17" y="276" width="746" height="36" fill="transparent"/>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/generate-docs</text>
+  <text x="175" y="297" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="297" fill="#a6adc8" font-size="12">HLD + LLD from feature description, or reverse-engineer existing code</text>
+  <text x="728" y="297" fill="#45475a" font-size="11">Tier 2+</text>
+
+  <!-- Row 3 -->
+  <rect x="17" y="312" width="746" height="36" fill="transparent"/>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/tdd</text>
+  <text x="175" y="333" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="333" fill="#a6adc8" font-size="12">TDD-as-design loop — generate tests (RED) → review → improve LLD → code (GREEN)</text>
+
+  <!-- Row 4 -->
+  <rect x="17" y="348" width="746" height="36" fill="transparent"/>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/apply-change</text>
+  <text x="175" y="369" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="369" fill="#a6adc8" font-size="12">Impact analysis — affected components, APIs, docs, tests across domains</text>
+
+  <!-- Row 5 -->
+  <rect x="17" y="384" width="746" height="36" fill="transparent"/>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/check-conventions</text>
+  <text x="175" y="405" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="405" fill="#a6adc8" font-size="12">Run convention checker in-chat, offer to fix violations before CI</text>
+
+  <!-- Row 6 -->
+  <rect x="17" y="420" width="746" height="36" fill="transparent"/>
+  <text x="28" y="441" fill="#cba6f7" font-size="13">/impact-brief</text>
+  <text x="175" y="441" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="441" fill="#a6adc8" font-size="12">Generate downstream impact brief from PR diff + manifest + incident registry</text>
+
+  <!-- Divider -->
+  <line x1="16" y1="458" x2="764" y2="458" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+
+  <!-- Footer hint -->
+  <text x="28" y="478" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="478" fill="#45475a" font-size="11">from .claude/commands/</text>
+
+  <!-- Bottom status bar -->
+  <rect x="0" y="494" width="780" height="26" rx="0" fill="#181825"/>
+  <rect x="0" y="494" width="780" height="26" rx="0" fill="#313244" opacity="0.5"/>
+  <text x="16" y="511" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  6 skills loaded  ·  convention checks: active</text>
+</svg>
