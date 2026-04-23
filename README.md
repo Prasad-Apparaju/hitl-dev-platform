@@ -19,6 +19,39 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 **Yes, this looks like waterfall.** Design before code. That is intentional. Waterfall failed because the gap between "design done" and "working software" was months. With AI, that gap is often much shorter. You get waterfall's rigor (coherent design, traced decisions) with less wait — though how much less depends on the team, tooling maturity, and change complexity. Without this discipline, AI-generated code drifts — each session invents its own patterns, and by the time you have customers, you face a rewrite that is much harder than designing coherently from the start.
 
+## Use This In Your Project
+
+Pick the path that matches where you are:
+
+| Situation | Start here | Time |
+|-----------|-----------|------|
+| **New project** — want conventions and docs-first from day one | [Quick Start — New Project](docs/quick-start.md#quick-start--new-project) | 1-2 hours |
+| **Existing project** — want to adopt the process on a live codebase | [Quick Start — Existing Project](docs/quick-start.md#quick-start--existing-project) | 1 day to set up; see baseline sprint below |
+| **Migrating a backend** — using AI to rewrite or modernise a system | [Migration Guide](docs/playbook/migration-guide.md) | Varies by system size |
+| **Just the conventions layer** — one `CLAUDE.md` and shared AI rules, nothing else | [Adoption Ladder — Level 1](#adoption-ladder) | 1 hour |
+| **Not sure** — want to understand what you're getting into first | [Adoption Ladder](#adoption-ladder) → pick a level | Start at Level 1 |
+
+### Minimum viable start (Level 1 — 1 hour)
+
+If you want one thing from this repo, copy the `CLAUDE.md` template into your project and fill in your conventions. Every developer's AI assistant will follow the same rules from the next session onward.
+
+```bash
+# Copy the CLAUDE.md template into your repo
+cp templates/CLAUDE.md.template your-repo/CLAUDE.md
+# Edit: fill in your project's coding standards and conventions
+
+# Optionally copy the skills so every developer gets the same workflow
+cp -r skills/ your-repo/.claude/commands/
+```
+
+That is Level 1 of the [Adoption Ladder](#adoption-ladder). You can stop there or add layers incrementally as the team sees value.
+
+### Full setup (Levels 2–5)
+
+See **[docs/quick-start.md](docs/quick-start.md)** for the complete copy-and-configure steps: manifest generator, convention checker, CI templates, preflight traceability tool, and PR template.
+
+---
+
 ## What you get by adopting this
 
 | Outcome | How |
