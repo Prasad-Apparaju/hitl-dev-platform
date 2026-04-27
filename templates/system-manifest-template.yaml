@@ -26,6 +26,7 @@ cross_cutting:
 domains:
   api_controllers:
     description: "REST API endpoints"
+    lld: docs/02-design/technical/lld/controllers/api-controllers.md  # path to governing LLD
     files:
       - app/controllers/auth.py
       - app/controllers/users.py
@@ -41,6 +42,7 @@ domains:
 
   services:
     description: "Business logic layer"
+    lld: docs/02-design/technical/lld/services/services.md  # path to governing LLD
     files:
       - app/services/auth.py
       - app/services/users.py
@@ -54,5 +56,11 @@ domains:
 
   # Add more domains as your codebase grows:
   # data_layer:
+  #   lld: docs/02-design/technical/lld/models/data-layer.md
+  #   files: [...]
   # background_workers:
+  #   lld: docs/02-design/technical/lld/services/workers.md
+  #   files: [...]
   # integrations:
+  #   lld: docs/02-design/technical/lld/services/integrations.md
+  #   files: [...]

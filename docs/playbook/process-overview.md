@@ -80,3 +80,15 @@ Not the same as impact analysis (which identifies affected code). This identifie
 ## Full Detail
 
 See [skills/dev-practices.md](../../skills/dev-practices.md) for the complete workflow with subsections on test planning (§1b), training plans (§1c), ROI estimation (§1d), and downstream impact (§1e).
+
+## LLD Enforcement
+
+Code generation is strictly gated on LLD existence. Three mechanisms work together:
+
+| Mechanism | Where | What it does |
+|---|---|---|
+| LLD Confirmation Gate | `skills/apply-change.md` Step 3 | Claude reads the LLD and presents scope for human approval before any code is written |
+| PreToolUse Hook | `.claude/settings.json` + `scripts/check-lld-exists.sh` | Blocks file writes at the OS level when no LLD exists for the target domain |
+| LLD Adherence Review | `skills/review-lld-adherence.md` | Post-generation check — verifies every LLD element is implemented and no unspecified public interfaces were added. Required before PR. |
+
+See [hooks-setup.md](hooks-setup.md) for hook installation instructions.
