@@ -20,6 +20,21 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ---
 
+## LLD Enforcement (MANDATORY)
+
+Before writing ANY implementation code:
+
+1. Read `docs/system-manifest.yaml` — identify which domain(s) this change belongs to and which LLD file governs each domain
+2. Read the governing LLD file in full
+3. If no LLD exists for the affected domain → **STOP**. Do not write code. Tell the developer: "No LLD found for [domain]. The architect must create it first."
+4. State explicitly what you will implement, citing the LLD section: "Per LLD section [X], I will implement [Y]."
+5. Generate code that implements **exactly** what the LLD specifies — no more, no less
+6. If the LLD is ambiguous or missing a detail → **STOP and ask the architect**, do not invent behavior
+
+After code generation, run `/review-lld-adherence` before opening any PR. Any ❌ items in that report are merge blockers.
+
+---
+
 ## Change Workflow (28 Steps — MANDATORY ORDER)
 
 Every change — feature, bug fix, improvement, refactor — follows this sequence. Never skip steps 1-5. Documentation is the source of truth, not code.
