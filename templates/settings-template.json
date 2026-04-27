@@ -1,0 +1,64 @@
+{
+  "_comment": "Copy this to .claude/settings.json in your project root. Adjust SOURCE_DIRS in scripts/check-lld-exists.sh to match your layout.",
+
+  "env": {
+    "LLD_HOOK_MODE": "warn"
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-lld-exists.sh \"$CLAUDE_TOOL_INPUT_PATH\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/log-bash-output.sh \"$CLAUDE_TOOL_OUTPUT\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/write-session-log.sh"
+          }
+        ]
+      }
+    ]
+  },
+
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(semgrep *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(pip *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(black *)",
+      "Bash(find docs/*)",
+      "Bash(cat docs/*)"
+    ]
+  },
+
+  "_hook_modes": {
+    "_comment": "Set LLD_HOOK_MODE in env above. warn = log but allow writes. block = hard block writes with no LLD.",
+    "warn": "Use during initial rollout — teams see the warning but can still write",
+    "block": "Use once manifest + LLDs are complete for all active domains"
+  }
+}
