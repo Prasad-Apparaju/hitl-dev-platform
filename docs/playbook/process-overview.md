@@ -165,3 +165,15 @@ Every artifact class has exactly one canonical location. Path drift undermines e
 ## Full Detail
 
 See [ai/claude/dev-practices/SKILL.md](../../ai/claude/dev-practices/SKILL.md) for the complete workflow with subsections on test planning (§1b), training plans (§1c), ROI estimation (§1d), and downstream impact (§1e).
+
+## LLD Enforcement
+
+Code generation is strictly gated on LLD existence. Three mechanisms work together:
+
+| Mechanism | Where | What it does |
+|---|---|---|
+| LLD Confirmation Gate | `ai/claude/apply-change/SKILL.md` Step 2 | Claude reads the LLD and presents scope for human approval before any code is written |
+| PreToolUse Hook | `.claude/settings.json` + `tools/scripts/check-lld-exists.sh` | Blocks file writes at the OS level when no LLD exists for the target domain |
+| LLD Adherence Review | `ai/claude/review-lld-adherence.md` | Post-generation check — verifies every LLD element is implemented and no unspecified public interfaces were added. Required before PR. |
+
+See [hooks-setup.md](hooks-setup.md) for hook installation instructions.
