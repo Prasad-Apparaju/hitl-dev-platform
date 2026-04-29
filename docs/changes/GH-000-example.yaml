@@ -1,0 +1,36 @@
+# Example HITL change context file
+# Copy to .hitl/current-change.yaml at the start of each change.
+# The /apply-change skill generates this automatically.
+
+change_id: GH-000
+tier: 2
+status: implementation-approved
+
+source_artifacts:
+  issue: https://github.com/org/repo/issues/000
+  prd: docs/01-product/prd.md
+  hld: docs/02-design/technical/hld/payments.md
+  lld: docs/02-design/technical/lld/payments/refund-flow.md
+  adr: docs/02-design/technical/adrs/ADR-004-refunds.md
+
+manifest:
+  path: docs/system-manifest.yaml
+  domain: payments
+
+allowed_paths:
+  - src/payments/**
+  - tests/payments/**
+  - docs/02-design/technical/lld/payments/**
+
+required_evidence:
+  - tests_red
+  - tests_green
+  - spec_conformance_review
+  - downstream_impact_brief
+  - rollout_plan
+
+approvals:
+  product: approved
+  architecture: approved
+  qa: pending
+  ops: not-required

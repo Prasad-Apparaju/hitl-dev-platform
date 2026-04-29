@@ -1,0 +1,25 @@
+{
+  "name": "hitl-dev-platform",
+  "version": "1.0.0",
+  "description": "HITL delivery methodology packaged as Claude Code skills, subagents, slash commands, hooks, and templates. Enforces doc-driven development, TDD-as-design, spec conformance review, and role-separated AI assistance.",
+  "skills": [
+    "../skills/dev-practices",
+    "../skills/apply-change",
+    "../skills/check-conventions",
+    "../skills/impact-brief",
+    "../skills/tdd",
+    "../skills/generate-docs",
+    "../skills/pm/add-feature",
+    "../skills/pm/answer-questions",
+    "../skills/pm/design-feature",
+    "../skills/pm/prep-demo",
+    "../skills/pm/prioritize",
+    "../skills/pm/report-bug",
+    "../skills/pm/review-progress",
+    "../skills/pm/review-scope-change",
+    "../skills/pm/update-requirement"
+  ],
+  "agents": "agents/",
+  "commands": "commands/",
+  "hooks": "hooks/hooks.json"
+}

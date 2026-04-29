@@ -1,0 +1,143 @@
+# HITL Change Context Schema
+# One file per active change. Place at .hitl/current-change.yaml in the product repo.
+# This file is the bridge between human HITL process and Claude tool enforcement.
+# Required by: hooks/check-hitl-context.sh, hooks/check-domain-boundary.sh, skills/apply-change, skills/impact-brief
+
+$schema:
+  version: "1.0"
+  description: "HITL change context — machine-readable source of truth for one active change"
+
+# --- Required fields ---
+
+change_id:
+  type: string
+  description: "GitHub issue number or identifier. Format: GH-NNN"
+  example: "GH-123"
+  required: true
+
+tier:
+  type: integer
+  enum: [0, 1, 2, 3, 4]
+  description: |
+    Change tier from dev-practices skill:
+    0 = Trivial (typo, config value)
+    1 = Bug fix
+    2 = Normal feature
+    3 = Non-trivial / cross-domain / migration
+    4 = Incident / P0
+  required: true
+
+status:
+  type: string
+  enum:
+    - planning             # apply-change run, context initialized
+    - design-review        # LLD submitted, awaiting architect approval
+    - implementation-approved  # LLD approved, code generation may begin
+    - conformance-review-pending  # implementation done, spec conformance not yet run
+    - qa-review-pending    # conformance passed, QA review not yet run
+    - pr-ready             # all evidence complete, PR may be created
+    - merged               # change is merged
+  required: true
+
+# --- Source artifacts (required for Tier 2+) ---
+
+source_artifacts:
+  issue:
+    type: string
+    description: "GitHub issue URL"
+    example: "https://github.com/org/repo/issues/123"
+    required: true
+
+  prd:
+    type: string
+    description: "Path to PRD or product requirements doc"
+    example: "docs/01-product/prd.md"
+    required_for_tier: [2, 3]
+
+  hld:
+    type: string
+    description: "Path to approved HLD"
+    example: "docs/02-design/technical/hld/payments.md"
+    required_for_tier: [2, 3]
+
+  lld:
+    type: string
+    description: "Path to approved LLD"
+    example: "docs/02-design/technical/lld/payments/refund-flow.md"
+    required_for_tier: [2, 3]
+
+  adr:
+    type: string
+    description: "Path to relevant ADR(s), comma-separated"
+    example: "docs/02-design/technical/adrs/ADR-004-refunds.md"
+
+  decision_packet:
+    type: string
+    description: "Path to decision packet YAML"
+    example: "docs/decisions/GH-123-refund-flow.yaml"
+
+# --- Manifest domain (required for Tier 2+) ---
+
+manifest:
+  path:
+    type: string
+    description: "Path to the system manifest"
+    default: "docs/system-manifest.yaml"
+
+  domain:
+    type: string
+    description: "Manifest domain name this change belongs to"
+    example: "payments"
+    required_for_tier: [2, 3]
+
+# --- Scope enforcement ---
+
+allowed_paths:
+  type: array
+  items: string
+  description: |
+    Glob patterns for files this change is approved to modify.
+    The check-domain-boundary hook warns when edits fall outside these paths.
+  example:
+    - "src/payments/**"
+    - "tests/payments/**"
+    - "docs/02-design/technical/lld/payments/**"
+
+# --- Evidence tracking ---
+
+required_evidence:
+  type: array
+  items:
+    type: string
+    enum:
+      - tests_red              # TDD RED phase complete
+      - tests_green            # TDD GREEN phase complete
+      - spec_conformance_review  # spec-conformance-reviewer has run
+      - qa_review              # qa-reviewer has approved
+      - downstream_impact_brief  # impact-brief skill has run
+      - rollout_plan           # rollout plan in impact brief
+      - ops_review             # ops-release-reviewer has approved (Tier 3+)
+  description: "Evidence items that must be completed before PR creation"
+
+# --- Approvals ---
+
+approvals:
+  product:
+    type: string
+    enum: [pending, approved, not-required]
+    description: "PM or product approval"
+
+  architecture:
+    type: string
+    enum: [pending, approved, not-required]
+    description: "Architect approval of HLD/LLD"
+
+  qa:
+    type: string
+    enum: [pending, approved, not-required]
+    description: "QA review approval"
+
+  ops:
+    type: string
+    enum: [pending, approved, not-required]
+    description: "Ops release review approval (required for Tier 3+)"
