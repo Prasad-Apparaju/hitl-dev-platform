@@ -200,9 +200,10 @@ This mode reads the existing codebase and generates the full documentation basel
      - File content requirement → `file_contains`
    - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
-3. **Copy the skills** to `.claude/commands/` if they don't exist:
-   - `skills/dev-practices.md` — the 28-step workflow
-   - `workflows/apply-change.md` — the impact analysis workflow
+3. **Install the plugin** (preferred) or copy skills to `.claude/skills/` if they don't exist:
+   - Install: add this repo as a Claude Code plugin so skills are auto-discovered
+   - Manual copy: `cp -r skills/ <your-repo>/.claude/skills/`
+   - Key skills: `skills/dev-practices/SKILL.md` — the 28-step workflow; `skills/apply-change/SKILL.md` — impact analysis
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR

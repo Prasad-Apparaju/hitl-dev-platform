@@ -56,9 +56,8 @@ PYEOF
 PYEXIT=$?
 if [[ $PYEXIT -ne 0 ]]; then
   echo "HITL BOUNDARY CHECK ERROR: failed to parse .hitl/current-change.yaml" >&2
-  echo "  Boundary enforcement is disabled for this edit." >&2
-  echo "  Fix the context file and re-run to restore enforcement." >&2
-  exit 0  # warn but don't block on parse failure
+  echo "  Fix the context file before proceeding." >&2
+  exit 2
 fi
 
 if [[ -z "$ALLOWED_PATHS" ]]; then

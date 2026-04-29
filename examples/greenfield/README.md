@@ -4,9 +4,11 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
 
 ## Setup (15 minutes)
 
-1. **Copy skills** to your repo so every developer's Claude Code gets the workflow:
+1. **Install the plugin** (preferred) or copy skills manually:
+   - **Plugin install (recommended):** add the hitl-dev-platform repo as a Claude Code plugin — skills, agents, hooks, and commands are auto-discovered.
+   - **Manual copy:** copy skills into your repo:
    ```bash
-   cp -r ../../skills/ .claude/commands/
+   cp -r ../../skills/ .claude/skills/
    ```
 
 2. **Edit `CLAUDE.md`** — replace the sample conventions with your project's actual rules

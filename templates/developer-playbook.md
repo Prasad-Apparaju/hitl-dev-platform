@@ -185,8 +185,8 @@ is a test bug, an implementation bug, or an LLD gap.
 
 | I want to... | Guide |
 |---|---|
-| Understand the full workflow | `.claude/commands/skills/dev-practices.md` |
-| Run TDD on a component | `.claude/commands/skills/tdd.md` |
-| Analyse impact of a change | `.claude/commands/skills/apply-change.md` |
-| Write a downstream impact brief | `.claude/commands/skills/impact-brief.md` |
-| Check convention violations | `.claude/commands/skills/check-conventions.md` |
+| Understand the full workflow | `skills/dev-practices/SKILL.md` |
+| Run TDD on a component | `skills/tdd/SKILL.md` |
+| Analyse impact of a change | `skills/apply-change/SKILL.md` |
+| Write a downstream impact brief | `skills/impact-brief/SKILL.md` |
+| Check convention violations | `skills/check-conventions/SKILL.md` |

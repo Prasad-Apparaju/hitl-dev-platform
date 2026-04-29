@@ -407,13 +407,13 @@ Feature work proceeds when blockers are zero.
 
 | Name | Source | What it does |
 |------|--------|-------------|
-| `/dev-practices` | [skills/dev-practices.md](../skills/dev-practices.md) | Full workflow |
-| `/apply-change` | [skills/apply-change.md](../skills/apply-change.md) | Impact analysis |
-| `/generate-docs` | [skills/generate-docs/](../skills/generate-docs/) | HLD/LLD/ADR generation + reverse-engineer mode |
-| `/tdd` | [skills/tdd.md](../skills/tdd.md) | TDD-as-design loop |
-| `/impact-brief` | [skills/impact-brief.md](../skills/impact-brief.md) | 5-section downstream impact brief |
-| `/check-conventions` | [skills/check-conventions.md](../skills/check-conventions.md) | Convention checker in-chat |
-| `/conclude` | [skills/conclude.md](../skills/conclude.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
+| `/dev-practices` | [skills/dev-practices/SKILL.md](../skills/dev-practices/SKILL.md) | Full workflow |
+| `/apply-change` | [skills/apply-change/SKILL.md](../skills/apply-change/SKILL.md) | Impact analysis |
+| `/generate-docs` | [skills/generate-docs/SKILL.md](../skills/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
+| `/tdd` | [skills/tdd/SKILL.md](../skills/tdd/SKILL.md) | TDD-as-design loop |
+| `/impact-brief` | [skills/impact-brief/SKILL.md](../skills/impact-brief/SKILL.md) | 5-section downstream impact brief |
+| `/check-conventions` | [skills/check-conventions/SKILL.md](../skills/check-conventions/SKILL.md) | Convention checker in-chat |
+| `/conclude` | [skills/conclude/SKILL.md](../skills/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
 | Mermaid fixer | [scripts/fix_mermaid_br_tags.py](../scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
