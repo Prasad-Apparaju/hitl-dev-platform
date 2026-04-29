@@ -18,10 +18,13 @@ This inverts the traditional relationship between docs and code. In most teams, 
 
 ```bash
 # 0. Create target directories (idempotent — safe to re-run)
-mkdir -p your-repo/.claude/commands your-repo/tools your-repo/templates your-repo/.github/workflows your-repo/.github your-repo/.semgrep your-repo/scripts
+mkdir -p your-repo/.claude/skills your-repo/.claude/agents your-repo/.claude/commands \
+  your-repo/tools your-repo/templates your-repo/.github/workflows your-repo/.github \
+  your-repo/.semgrep your-repo/scripts your-repo/.hitl
 
-# 1. Copy skills to your repo (shared workflow for every developer's Claude)
-cp -r skills/ your-repo/.claude/commands/
+# 1. Copy skills and agents to your repo
+cp -r skills/ your-repo/.claude/skills/
+cp -r .claude/agents/ your-repo/.claude/agents/
 
 # 2. Copy and customize the CLAUDE.md template
 cp templates/CLAUDE.md.template your-repo/CLAUDE.md
@@ -70,7 +73,8 @@ An architect working with AI can produce the documentation baseline in a sprint 
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| **Skills** | `skills/` | Claude Code skills: 28-step dev workflow + impact analysis. Copy to `.claude/commands/` |
+| **Skills** | `skills/` | Claude Code skills: dev workflow, TDD, impact brief, conventions. Copy to `.claude/skills/` |
+| **Agents** | `.claude/agents/` | Role subagents: PM reviewer, architect, developer, QA, ops, conformance reviewer. Copy to `.claude/agents/` |
 | **Templates** | `templates/` | 15 templates: CLAUDE.md, system manifest, ADR, training plan, issue, test strategy, security audit, best practices, cost analysis, performance, data model mapping, API contract mapping, decision catalog, test registry, incident registry |
 | **Patterns** | `docs/patterns/` | Architectural patterns: failure mode taxonomy, idempotency keys |
 | **Tools** | `tools/` | Convention checker (pluggable, config-driven), Mermaid fixer, Markdown-to-PDF with Mermaid support |
@@ -86,8 +90,9 @@ An architect working with AI can produce the documentation baseline in a sprint 
 The update model is **copy, not dependency.** Each project gets its own copy of the skills and tools. Updates are explicit pulls, not automatic:
 
 ```bash
-# Update skills (overwrite — skills are platform-owned)
-cp -r hitl-dev-platform/skills/ your-repo/.claude/commands/
+# Update skills and agents (overwrite — platform-owned)
+cp -r hitl-dev-platform/skills/ your-repo/.claude/skills/
+cp -r hitl-dev-platform/.claude/agents/ your-repo/.claude/agents/
 
 # Update CI actions
 cp hitl-dev-platform/ci/*.yml your-repo/.github/workflows/
