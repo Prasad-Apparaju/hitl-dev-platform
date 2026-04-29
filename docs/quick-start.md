@@ -92,7 +92,7 @@ The update model is **copy, not dependency.** Each project gets its own copy of 
 ```bash
 # Update skills and agents (overwrite — platform-owned)
 cp -r hitl-dev-platform/skills/ your-repo/.claude/skills/
-cp -r hitl-dev-platform/.claude/agents/ your-repo/.claude/agents/
+cp -r hitl-dev-platform/agents/ your-repo/.claude/agents/
 
 # Update CI actions
 cp hitl-dev-platform/ci/*.yml your-repo/.github/workflows/

@@ -118,7 +118,7 @@ You have your existing codebase and access to hitl-dev-platform. You need to set
 
 ```bash
 # Copy the skills so every developer's Claude follows the same workflow
-cp -r hitl-dev-platform/skills/ your-repo/.claude/commands/
+cp -r hitl-dev-platform/skills/ your-repo/.claude/skills/
 
 # Copy and customize CLAUDE.md
 cp hitl-dev-platform/templates/CLAUDE.md.template your-repo/CLAUDE.md
@@ -149,7 +149,7 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 
 | What to do | Skill / tool |
 |-----------|-------------|
-| Run all convention checks | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
+| Run all convention checks | `/check-conventions` ([skills/check-conventions/SKILL.md](../../skills/check-conventions/SKILL.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
 | Bucket findings into tiers | Follow [adoption-guide.md §After the Sprint](adoption-guide.md) — Blocker / Near-term / Medium-term / Long-term |
 | Fix blockers before migration starts | AI generates the fix; architect reviews |
 
@@ -204,12 +204,12 @@ Order by dependency. Each slice is a shippable unit migrated end-to-end. A typic
 | Create issue | Use [templates/issue-template.md](../../templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
 | Data model mapping | Use [templates/data-model-mapping-template.md](../../templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
 | API contract mapping | Use [templates/api-contract-mapping-template.md](../../templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
-| Impact analysis | `/apply-change` ([skills/apply-change.md](../../skills/apply-change.md)) | Affected components in BOTH current and target system |
-| TDD | `/tdd` ([skills/tdd.md](../../skills/tdd.md)) | Tests from the target LLD + manifest contracts |
+| Impact analysis | `/apply-change` ([skills/apply-change/SKILL.md](../../skills/apply-change/SKILL.md)) | Affected components in BOTH current and target system |
+| TDD | `/tdd` ([skills/tdd/SKILL.md](../../skills/tdd/SKILL.md)) | Tests from the target LLD + manifest contracts |
 | Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Code using agentic-platform infrastructure (if agentic) |
 | Code review | Two rounds — AI reviews against LLD | Structure (R1) then behavior (R2) |
-| Downstream impact brief | `/impact-brief` ([skills/impact-brief.md](../../skills/impact-brief.md)) | 5-section brief from PR diff + manifest + incident registry |
-| Convention check | `/check-conventions` ([skills/check-conventions.md](../../skills/check-conventions.md)) | Violations caught before CI |
+| Downstream impact brief | `/impact-brief` ([skills/impact-brief/SKILL.md](../../skills/impact-brief/SKILL.md)) | 5-section brief from PR diff + manifest + incident registry |
+| Convention check | `/check-conventions` ([skills/check-conventions/SKILL.md](../../skills/check-conventions/SKILL.md)) | Violations caught before CI |
 
 ### B7. Run old and new in parallel
 

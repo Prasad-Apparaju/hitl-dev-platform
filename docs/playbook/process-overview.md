@@ -79,4 +79,4 @@ Not the same as impact analysis (which identifies affected code). This identifie
 
 ## Full Detail
 
-See [skills/dev-practices.md](../../skills/dev-practices.md) for the complete workflow with subsections on test planning (§1b), training plans (§1c), ROI estimation (§1d), and downstream impact (§1e).
+See [skills/dev-practices/SKILL.md](../../skills/dev-practices/SKILL.md) for the complete workflow with subsections on test planning (§1b), training plans (§1c), ROI estimation (§1d), and downstream impact (§1e).
