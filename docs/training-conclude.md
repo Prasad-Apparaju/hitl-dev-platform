@@ -44,7 +44,7 @@ Run `/conclude` against a real or example thread and produce artifacts.
 ### Reading
 | File | What to focus on |
 |------|-----------------|
-| `skills/conclude.md` | The 6 steps and the human gates at each step |
+| `skills/conclude/SKILL.md` | The 6 steps and the human gates at each step |
 | `templates/adr-template.md` | The ADR structure — especially Context, Decision, Alternatives, ROI |
 | `docs/system-manifest.yaml` (in your project) | How domains and facade APIs are listed — `/conclude` cross-references this |
 
@@ -79,5 +79,5 @@ Run `/conclude` against a real or example thread and produce artifacts.
 
 ## Related
 - [Issue #2](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/2) — Implementation issue
-- `skills/conclude.md` — The skill definition
+- `skills/conclude/SKILL.md` — The skill definition
 - `templates/adr-template.md` — ADR format the skill generates
