@@ -26,7 +26,7 @@ Claude should describe the product, main features, and product goals. If it does
 ## Step 2 — Check progress at any time
 
 ```
-/pm/review-progress
+/pm:review-progress
 ```
 
 Claude reads the PRD and scans the codebase. Gives you a table of every requirement: Done / Partial / Not started, with notes on what's missing.
@@ -38,7 +38,7 @@ Claude reads the PRD and scans the codebase. Gives you a table of every requirem
 When you have a rough idea and want to think it through properly:
 
 ```
-/pm/design-feature [describe your idea]
+/pm:design-feature [describe your idea]
 ```
 
 Claude walks you through 7 phases — discovery, user journey, edge cases, UX mockup, acceptance criteria, impact analysis, and writing to the PRD. You approve each phase before it moves to the next. At the end, the PRD is updated and a GitHub issue is created.
@@ -50,7 +50,7 @@ Claude walks you through 7 phases — discovery, user journey, edge cases, UX mo
 When you already know what you want and just need it in the PRD:
 
 ```
-/pm/add-feature [describe the requirement]
+/pm:add-feature [describe the requirement]
 ```
 
 Claude drafts the requirement in the right format, checks for conflicts with existing requirements, gets your approval, updates the PRD, and creates the GitHub issue.
@@ -60,7 +60,7 @@ Claude drafts the requirement in the right format, checks for conflicts with exi
 ## Step 5 — Update an existing requirement
 
 ```
-/pm/update-requirement FR-[ID] [describe what to change]
+/pm:update-requirement FR-[ID] [describe what to change]
 ```
 
 Claude shows you the current requirement, drafts the change, flags any ripple effects on other requirements, and updates the PRD on your approval.
@@ -72,7 +72,7 @@ Claude shows you the current requirement, drafts the change, flags any ripple ef
 When a developer opens a PR that changes the PRD:
 
 ```
-/pm/review-scope-change [PR number]
+/pm:review-scope-change [PR number]
 ```
 
 Claude summarises what changed, assesses the impact, generates review questions for you to ask the team, and lets you approve or request changes — all within Claude Code.
@@ -84,7 +84,7 @@ Claude summarises what changed, assesses the impact, generates review questions 
 When the PRD has unresolved questions blocking the team:
 
 ```
-/pm/answer-questions
+/pm:answer-questions
 ```
 
 Claude walks through each open question one at a time, takes your answer, and updates the PRD.
@@ -94,7 +94,7 @@ Claude walks through each open question one at a time, takes your answer, and up
 ## Step 8 — Report a bug
 
 ```
-/pm/report-bug [describe what went wrong]
+/pm:report-bug [describe what went wrong]
 ```
 
 Claude gathers the details, checks for duplicates, and creates a well-structured GitHub issue.
@@ -122,7 +122,7 @@ Which users see this first in the canary?
 ## Step 10 — Prepare a demo
 
 ```
-/pm/prep-demo [feature or sprint you're demoing]
+/pm:prep-demo [feature or sprint you're demoing]
 ```
 
 Claude produces a structured demo script: what to show, in what order, what to say at each step, and what edge cases to avoid.
@@ -132,7 +132,7 @@ Claude produces a structured demo script: what to show, in what order, what to s
 ## Step 11 — Prioritize the backlog
 
 ```
-/pm/prioritize
+/pm:prioritize
 ```
 
 Claude reads the PRD and open issues, summarises the options, and helps you work through trade-offs. You decide — Claude documents.
@@ -170,13 +170,13 @@ Check docs/04-operations/incident-registry.yaml.
 
 | I want to... | Command |
 |---|---|
-| Check what's been built | `/pm/review-progress` |
-| Design a feature from scratch | `/pm/design-feature [idea]` |
-| Add a quick requirement | `/pm/add-feature [description]` |
-| Update a requirement | `/pm/update-requirement [FR-ID] [change]` |
-| Review a scope change PR | `/pm/review-scope-change [PR number]` |
-| Work through open questions | `/pm/answer-questions` |
-| Report a bug | `/pm/report-bug [description]` |
+| Check what's been built | `/pm:review-progress` |
+| Design a feature from scratch | `/pm:design-feature [idea]` |
+| Add a quick requirement | `/pm:add-feature [description]` |
+| Update a requirement | `/pm:update-requirement [FR-ID] [change]` |
+| Review a scope change PR | `/pm:review-scope-change [PR number]` |
+| Work through open questions | `/pm:answer-questions` |
+| Report a bug | `/pm:report-bug [description]` |
 | Review an impact brief | `/impact-brief [PR or change]` |
-| Prepare a demo | `/pm/prep-demo [feature]` |
-| Prioritize the backlog | `/pm/prioritize` |
+| Prepare a demo | `/pm:prep-demo [feature]` |
+| Prioritize the backlog | `/pm:prioritize` |

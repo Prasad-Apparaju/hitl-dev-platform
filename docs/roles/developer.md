@@ -25,7 +25,7 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 5. Run `/tdd` — tests first, then code
 6. Run `/check-conventions` — fix violations before PR
 7. Run `/impact-brief` — downstream impact brief + rollout plan
-8. Create the PR — architect runs `/architect:verify-traceability` and `/architect:review-tests` before merge
+8. Create the PR — QA runs `/qa:review-tests`, then architect runs `/architect:verify-traceability` before merge
 
 ## Further Reading
 
