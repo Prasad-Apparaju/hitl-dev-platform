@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# post-commit: write a HITL session summary after each commit
+
+set -euo pipefail
+
+CONTEXT_FILE=".hitl/current-change.yaml"
+if [[ ! -f "$CONTEXT_FILE" ]]; then
+  exit 0
+fi
+
+CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' 2>/dev/null || echo "unknown")
+STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' 2>/dev/null || echo "unknown")
+TIER=$(grep "^tier:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' 2>/dev/null || echo "unknown")
+COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+CHANGED_FILES=$(git show --name-only --format="" HEAD 2>/dev/null || echo "")
+
+REQUIRED_EVIDENCE=$(python3 - << 'PYEOF' 2>/dev/null || echo "- error reading context file"
+import yaml
+try:
+    with open(".hitl/current-change.yaml") as f:
+        data = yaml.safe_load(f)
+    ev = data.get("required_evidence", [])
+    print("\n".join("- [ ] " + e for e in ev) if ev else "- none specified")
+except Exception as e:
+    print(f"- error: {e}")
+PYEOF
+)
+
+SUMMARY_DIR="docs/session-logs"
+mkdir -p "$SUMMARY_DIR"
+TIMESTAMP=$(date +"%Y-%m-%d-%H%M%S")
+SUMMARY_FILE="$SUMMARY_DIR/hitl-session-${CHANGE_ID}-${TIMESTAMP}.md"
+
+cat > "$SUMMARY_FILE" << SUMMARY
+# HITL Session Summary
+
+- **Change:** $CHANGE_ID
+- **Tier:** $TIER
+- **Status at commit:** $STATUS
+- **Commit:** $COMMIT_SHA
+- **Timestamp:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+## Files in This Commit
+
+$(if [[ -n "$CHANGED_FILES" ]]; then echo "$CHANGED_FILES" | sed 's/^/- /'; else echo "_No tracked changes._"; fi)
+
+## Required Evidence Status
+
+$REQUIRED_EVIDENCE
+
+## Next Steps
+
+Review the evidence checklist. Run convention checks before creating the PR:
+
+\`\`\`bash
+bash codex/scripts/hitl-conventions.sh
+\`\`\`
+SUMMARY
+
+echo "HITL session summary: $SUMMARY_FILE" >&2
+
+exit 0

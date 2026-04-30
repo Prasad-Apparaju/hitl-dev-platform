@@ -1,0 +1,5 @@
+{
+  "model": "codex-mini-latest",
+  "approval": "unless-allow-listed",
+  "notify": false
+}

@@ -13,7 +13,7 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 **Where this is not a good fit as written:** understaffed startups, teams without good CI or test discipline, teams where most work is small bugfixes and iterative UX changes, or teams without an architect or senior lead who can own the review gates.
 
-> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the AI coding tool and `CLAUDE.md` for project-level AI configuration. The process works with any AI coding assistant that supports auto-loaded project rules (e.g., Cursor rules, Windsurf rules, Cline memory banks). Substitute your tool of choice — the principles and workflow are tool-agnostic.
+> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool with `CLAUDE.md` for project-level AI configuration. A [Codex CLI](https://github.com/openai/codex) version is also provided — see [Install for Codex CLI](#install-for-codex-cli) below. The process works with any AI coding assistant that supports auto-loaded project rules (e.g., Cursor rules, Windsurf rules, Cline memory banks). The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
 
 > **Language note:** The enforcement tooling (manifest drift checker, import analysis, Semgrep rules) currently targets Python codebases. The process and documentation workflow are language-agnostic — only the automated checks are Python-first. TypeScript and other language support is planned.
 
@@ -78,6 +78,29 @@ cp -r commands/ your-repo/.claude/commands/
 
 That is Level 1 of the [Adoption Ladder](#adoption-ladder). You can stop there or add layers incrementally as the team sees value.
 
+### Install for Codex CLI
+
+Codex CLI uses `AGENTS.md` instead of `CLAUDE.md`, and does not have Claude Code's plugin or hook system. Enforcement is handled by git hooks instead.
+
+```bash
+# Run the installer — copies AGENTS.md and installs git hooks into your repo
+bash /path/to/hitl-dev-platform/codex/install.sh /path/to/your-repo
+```
+
+The installer:
+- Copies `codex/AGENTS.md` to your project root (Codex reads it automatically)
+- Installs a `pre-commit` hook that blocks commits on source files without `.hitl/current-change.yaml`
+- Installs a `post-commit` hook that writes session summaries to `docs/session-logs/`
+- Copies `codex/scripts/hitl-conventions.sh` for running convention checks
+
+After install, open `AGENTS.md` and fill in your project's coding standards (look for the placeholder sections).
+
+**Tradeoff vs Claude Code:** git hooks fire at commit time, not at individual file-edit time. Codex can edit source files freely within a session and is blocked at commit if no HITL context exists. The `AGENTS.md` instructions tell Codex to check for the context file before editing, providing a second line of defence.
+
+See [`codex/`](codex/) for all Codex-specific artifacts.
+
+---
+
 ### Minimum viable: CLAUDE.md only
 
 If you want a single thing from this repo, copy the `CLAUDE.md` template and fill in your conventions. Every developer's AI assistant will follow the same rules from the next session onward — no other tooling required.
@@ -123,9 +146,9 @@ Design decisions are discussed as a team and captured in version-controlled docu
 4. **Verify**: Two-round AI code review → reconcile docs against implementation
 5. **Assess + Ship**: Downstream impact brief → risk-rated rollout plan → PR + lead integration verification → canary deploy
 
-Of 28 steps: 10 AI-driven, 13 AI-assisted, 5 human-only. Not every change uses all 28 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
+Of 30 steps: 10 AI-driven, 11 AI-assisted, 9 human-only. Not every change uses all 30 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
 
-→ [Full 28-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
+→ [Full 30-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
 
 ---
 
@@ -141,7 +164,7 @@ Of 28 steps: 10 AI-driven, 13 AI-assisted, 5 human-only. Not every change uses a
 | **4. System manifest + domain facades** | Manifest with domains, files, facades, conventions. Manifest drift checker. | AI stays scoped. Cross-domain drift detected. New team members onboard from the manifest. | 1 week |
 | **5. Full workflow** | Incident registry, test registry, rollout planning, ROI checks, deployment gates. | Past mistakes don't repeat. Deployments are risk-rated. Investments are measured. | 1-2 weeks |
 
-Levels 1-3 are the minimum viable adoption — shared conventions, docs-first design, and basic traceability, without the full 28-step workflow.
+Levels 1-3 are the minimum viable adoption — shared conventions, docs-first design, and basic traceability, without the full 30-step workflow.
 
 ---
 
@@ -152,7 +175,7 @@ Levels 1-3 are the minimum viable adoption — shared conventions, docs-first de
 | Why this process exists + the problem it solves | [Core concepts](docs/playbook/core-concepts.md) |
 | Role definitions and responsibilities | [Roles](docs/playbook/roles.md) |
 | System manifest and AI context management | [System manifest](docs/playbook/system-manifest.md) |
-| Full 28-step workflow + design room | [Workflow reference](docs/playbook/workflow-reference.md) |
+| Full 30-step workflow + design room | [Workflow reference](docs/playbook/workflow-reference.md) |
 | Process tiers, pitfalls, architect scaling | [Common pitfalls](docs/playbook/common-pitfalls.md) |
 | Adoption checklist | [Adoption checklist](docs/playbook/adoption-checklist.md) |
 | Brownfield adoption baseline sprint | [Adoption guide](docs/playbook/adoption-guide.md) |
