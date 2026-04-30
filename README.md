@@ -39,7 +39,9 @@ Each role has its own command set and setup guide:
 |------|----------|-------|
 | **Developer** | `/dev-practices`, `/generate-docs`, `/tdd`, `/apply-change`, `/check-conventions`, `/impact-brief`, `/conclude` | [Developer guide](docs/roles/developer.md) |
 | **Product Manager** | `/pm:add-feature`, `/pm:design-feature`, `/pm:prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
-| **Architect** (also covers QA + Ops) | `/architect:review-design`, `/architect:review-tests`, `/architect:review-release`, `/architect:verify-traceability` | [Architect guide](docs/roles/architect.md) |
+| **Architect** | `/architect:review-design`, `/architect:verify-traceability` | [Architect guide](docs/roles/architect.md) |
+| **QA Engineer** | `/qa:review-tests`, `/qa:verify-quality` | [QA guide](docs/roles/qa.md) |
+| **Ops Engineer** | `/ops:review-release`, `/ops:monitor-canary` | [Ops guide](docs/roles/ops.md) |
 
 ### What it looks like after setup
 
