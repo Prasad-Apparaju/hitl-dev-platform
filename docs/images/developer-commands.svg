@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 538" width="780" height="538" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <rect width="780" height="538" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="38" rx="10" fill="#313244"/>
+  <rect y="28" width="780" height="10" fill="#313244"/>
+  <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
+  <circle cx="40" cy="19" r="6" fill="#f9e2af"/>
+  <circle cx="60" cy="19" r="6" fill="#a6e3a1"/>
+  <text x="390" y="24" text-anchor="middle" fill="#cdd6f4" font-size="13" opacity="0.7">Claude Code — your-project · Developer</text>
+
+  <rect x="16" y="52" width="748" height="28" rx="4" fill="#1e3a1e" stroke="#a6e3a1" stroke-width="1" opacity="0.9"/>
+  <text x="28" y="70" fill="#a6e3a1" font-size="12">✓</text>
+  <text x="44" y="70" fill="#a6e3a1" font-size="12">CLAUDE.md loaded — conventions active · role: developer</text>
+
+  <text x="28" y="104" fill="#6c7086" font-size="12">Claude Code v1.x  |  Model: claude-sonnet-4-6  |  Context: your-project/</text>
+  <text x="28" y="132" fill="#89b4fa" font-size="13">╭─────────────────────────────────────────╮</text>
+  <text x="28" y="150" fill="#89b4fa" font-size="13">│  How can I help with your-project today? │</text>
+  <text x="28" y="168" fill="#89b4fa" font-size="13">╰─────────────────────────────────────────╯</text>
+
+  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /</text>
+  <rect x="46" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
+
+  <rect x="16" y="212" width="748" height="280" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
+  <rect x="16" y="228" width="748" height="12" fill="#313244"/>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (7)</text>
+
+  <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/dev-practices</text>
+  <text x="175" y="261" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="261" fill="#a6adc8" font-size="12">Load the HITL workflow for a change — tiers, TDD, review, ship</text>
+
+  <rect x="17" y="276" width="746" height="36" fill="transparent"/>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/generate-docs</text>
+  <text x="175" y="297" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="297" fill="#a6adc8" font-size="12">Generate HLD, LLD, ADR from feature description or existing code</text>
+
+  <rect x="17" y="312" width="746" height="36" fill="transparent"/>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/tdd</text>
+  <text x="175" y="333" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="333" fill="#a6adc8" font-size="12">TDD-as-design loop — tests first (RED) → review → code (GREEN) → refactor</text>
+
+  <rect x="17" y="348" width="746" height="36" fill="transparent"/>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/apply-change</text>
+  <text x="175" y="369" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="369" fill="#a6adc8" font-size="12">Impact analysis — affected components, APIs, docs, tests</text>
+
+  <rect x="17" y="384" width="746" height="36" fill="transparent"/>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/check-conventions</text>
+  <text x="175" y="405" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="405" fill="#a6adc8" font-size="12">Run semgrep, manifest drift, and convention checks in-chat</text>
+
+  <rect x="17" y="420" width="746" height="36" fill="transparent"/>
+  <text x="28" y="441" fill="#cba6f7" font-size="13">/impact-brief</text>
+  <text x="175" y="441" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="441" fill="#a6adc8" font-size="12">Generate downstream impact brief and rollout plan for a PR</text>
+
+  <rect x="17" y="456" width="746" height="36" fill="transparent"/>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/conclude</text>
+  <text x="175" y="477" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="477" fill="#a6adc8" font-size="12">Turn a concluded Slack design-room thread into ADR, issue, HLD/LLD updates</text>
+
+  <line x1="16" y1="494" x2="764" y2="494" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="508" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="508" fill="#45475a" font-size="11">from .claude/commands/</text>
+
+  <rect x="0" y="520" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="533" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  7 commands loaded  ·  convention checks: active</text>
+</svg>

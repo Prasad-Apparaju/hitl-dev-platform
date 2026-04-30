@@ -31,9 +31,19 @@ Pick the path that matches where you are:
 | **Just the conventions layer** — one `CLAUDE.md` and shared AI rules, nothing else | [Adoption Ladder — Level 1](#adoption-ladder) | 1 hour |
 | **Not sure** — want to understand what you're getting into first | [Adoption Ladder](#adoption-ladder) → pick a level | Start at Level 1 |
 
+### By Role
+
+Each role has its own command set and setup guide:
+
+| Role | Commands | Guide |
+|------|----------|-------|
+| **Developer** | `/dev-practices`, `/generate-docs`, `/tdd`, `/apply-change`, `/check-conventions`, `/impact-brief`, `/conclude` | [Developer guide](docs/roles/developer.md) |
+| **Product Manager** | `/pm:add-feature`, `/pm:design-feature`, `/pm:prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
+| **Architect** (also covers QA + Ops) | `/architect:review-design`, `/architect:review-tests`, `/architect:review-release`, `/architect:verify-traceability` | [Architect guide](docs/roles/architect.md) |
+
 ### What it looks like after setup
 
-Once the skills are copied and `CLAUDE.md` is in place, Claude Code auto-loads your project conventions and exposes the workflow commands:
+Once the plugin is installed or commands are copied, Claude Code auto-loads your project conventions and exposes the workflow commands:
 
 ![Claude Code after setup — CLAUDE.md loaded, skills available as slash commands](docs/images/claude-code-setup.svg)
 
