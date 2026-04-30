@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 520" width="780" height="520" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 538" width="780" height="538" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
   <!-- Terminal window background -->
-  <rect width="780" height="520" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="538" rx="10" fill="#1e1e2e"/>
 
   <!-- Title bar -->
   <rect width="780" height="38" rx="10" fill="#313244"/>
@@ -31,12 +31,12 @@
   <rect x="46" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
   <!-- Slash command dropdown panel -->
-  <rect x="16" y="212" width="748" height="262" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="280" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
 
   <!-- Dropdown header -->
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (6)</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (7)</text>
 
   <!-- Command rows -->
   <!-- Row 1 highlighted -->
@@ -77,15 +77,21 @@
   <text x="175" y="441" fill="#6c7086" font-size="12">  ·</text>
   <text x="188" y="441" fill="#a6adc8" font-size="12">Generate downstream impact brief from PR diff + manifest + incident registry</text>
 
+  <!-- Row 7 -->
+  <rect x="17" y="456" width="746" height="36" fill="transparent"/>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/conclude</text>
+  <text x="175" y="477" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="477" fill="#a6adc8" font-size="12">Turn a concluded Slack design-room thread into ADR, issue, and HLD/LLD updates</text>
+
   <!-- Divider -->
-  <line x1="16" y1="458" x2="764" y2="458" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <line x1="16" y1="494" x2="764" y2="494" stroke="#45475a" stroke-width="1" opacity="0.5"/>
 
   <!-- Footer hint -->
-  <text x="28" y="478" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
-  <text x="600" y="478" fill="#45475a" font-size="11">from .claude/commands/</text>
+  <text x="28" y="508" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="508" fill="#45475a" font-size="11">from .claude/commands/</text>
 
   <!-- Bottom status bar -->
-  <rect x="0" y="494" width="780" height="26" rx="0" fill="#181825"/>
-  <rect x="0" y="494" width="780" height="26" rx="0" fill="#313244" opacity="0.5"/>
-  <text x="16" y="511" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  6 skills loaded  ·  convention checks: active</text>
+  <rect x="0" y="520" width="780" height="18" rx="0" fill="#181825"/>
+  <rect x="0" y="520" width="780" height="18" rx="0" fill="#313244" opacity="0.5"/>
+  <text x="16" y="533" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  7 skills loaded  ·  convention checks: active</text>
 </svg>
