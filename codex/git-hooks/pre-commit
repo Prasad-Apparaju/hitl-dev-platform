@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# pre-commit: verify HITL context exists before source code commits
+# Blocks the commit if source files are staged without .hitl/current-change.yaml
+
+set -euo pipefail
+
+STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || echo "")
+
+if [[ -z "$STAGED_FILES" ]]; then
+  exit 0
+fi
+
+# Check if any staged files are source code
+SOURCE_STAGED=false
+while IFS= read -r file; do
+  case "$file" in
+    *.py|*.ts|*.js|*.tsx|*.jsx|*.go|*.java|*.rb|*.rs|*.cpp|*.c|*.h)
+      SOURCE_STAGED=true
+      break
+      ;;
+  esac
+done <<< "$STAGED_FILES"
+
+if [[ "$SOURCE_STAGED" == "false" ]]; then
+  exit 0
+fi
+
+CONTEXT_FILE=".hitl/current-change.yaml"
+if [[ ! -f "$CONTEXT_FILE" ]]; then
+  echo "" >&2
+  echo "HITL CONTEXT MISSING: No .hitl/current-change.yaml found." >&2
+  echo "" >&2
+  echo "Before committing source code, initialize the change context:" >&2
+  echo "  codex 'Initialize the HITL change context for: [your change description]'" >&2
+  echo "" >&2
+  echo "See codex/AGENTS.md § Change Initialization for required fields." >&2
+  echo "" >&2
+  exit 1
+fi
+
+# Verify required fields are present
+REQUIRED_FIELDS=("change_id" "tier" "status" "manifest")
+for field in "${REQUIRED_FIELDS[@]}"; do
+  if ! grep -q "^${field}:" "$CONTEXT_FILE" 2>/dev/null; then
+    echo "HITL CONTEXT INCOMPLETE: .hitl/current-change.yaml is missing required field: ${field}" >&2
+    echo "Re-run the Change Initialization workflow to regenerate the context file." >&2
+    exit 1
+  fi
+done
+
+# Warn on non-implementation-ready status
+STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
+if [[ "$STATUS" == "planning" || "$STATUS" == "design-review" ]]; then
+  echo "HITL WARNING: Change status is '${STATUS}' — design approval is still pending." >&2
+  echo "Commits are allowed, but ensure LLD is approved before requesting code review." >&2
+fi
+
+# Domain boundary check — warn (not block) on out-of-boundary files
+ALLOWED_PATHS=$(python3 - << 'PYEOF' 2>/dev/null || echo ""
+import sys, re
+
+try:
+    import yaml
+    with open(".hitl/current-change.yaml") as f:
+        data = yaml.safe_load(f)
+    paths = data.get("allowed_paths", [])
+    print("\n".join(paths))
+except ImportError:
+    in_block = False
+    with open(".hitl/current-change.yaml") as f:
+        for line in f:
+            if line.startswith("allowed_paths:"):
+                in_block = True
+                continue
+            if in_block:
+                m = re.match(r"^\s+-\s+(.+)", line)
+                if m:
+                    print(m.group(1).strip())
+                elif line and not line[0].isspace():
+                    break
+except Exception:
+    pass
+PYEOF
+)
+
+if [[ -n "$ALLOWED_PATHS" ]]; then
+  CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
+  BOUNDARY_WARNINGS=()
+  while IFS= read -r file; do
+    case "$file" in
+      *.py|*.ts|*.js|*.tsx|*.jsx|*.go|*.java|*.rb|*.rs|*.cpp|*.c|*.h) ;;
+      *) continue ;;
+    esac
+    MATCHED=false
+    while IFS= read -r pattern; do
+      [[ -z "$pattern" ]] && continue
+      case "$file" in
+        $pattern) MATCHED=true; break ;;
+      esac
+      PATTERN_DIR="${pattern%%\**}"
+      if [[ "$file" == "$PATTERN_DIR"* ]]; then
+        MATCHED=true
+        break
+      fi
+    done <<< "$ALLOWED_PATHS"
+    if [[ "$MATCHED" == "false" ]]; then
+      BOUNDARY_WARNINGS+=("$file")
+    fi
+  done <<< "$STAGED_FILES"
+
+  if [[ ${#BOUNDARY_WARNINGS[@]} -gt 0 ]]; then
+    echo "" >&2
+    echo "HITL DOMAIN BOUNDARY WARNING (change: $CHANGE_ID):" >&2
+    for f in "${BOUNDARY_WARNINGS[@]}"; do
+      echo "  $f is outside allowed_paths" >&2
+    done
+    echo "" >&2
+    echo "If intentional, update allowed_paths in .hitl/current-change.yaml" >&2
+    echo "and confirm the domain boundary expansion with the architect." >&2
+    echo "" >&2
+    # Warn only — do not block
+  fi
+fi
+
+exit 0
