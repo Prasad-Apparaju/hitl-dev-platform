@@ -213,24 +213,25 @@ Treat the LLD as a spec, not a narrative: precise interfaces, explicit edge case
 
 ### 1.3 Long-Term Coherence — What This Is Actually For
 
-The value of this process is not most visible in the first sprint. It compounds over months.
+**Teams ship continuously from the first change.** Every change goes through the workflow and ships at the end of that change. There is no setup period before delivery starts. The per-change overhead (impact analysis, LLD update, TDD cycle) is real — especially for Tier 2/3 changes — but it is paid per change, not as a months-long prerequisite.
 
-Without documented discipline, AI-assisted codebases degrade on a predictable schedule. By month 3–4, multiple competing patterns exist because each developer's sessions invented their own. By month 6, architectural decisions made early are invisible — they live in departed developers' chat transcripts, not in reviewed documents. By month 12, onboarding a new developer means weeks of archaeology; onboarding a new AI session means hoping it infers the right conventions from code that already drifted from them.
+What the process is designed for is *institutional knowledge that compounds over time*, on top of that continuous delivery. Without documented discipline, AI-assisted codebases degrade on a predictable schedule: by month 3–4, multiple competing patterns exist because each session invented its own; by month 6, architectural decisions are invisible because they lived in departed developers' chat transcripts; by month 12, onboarding a new AI session means hoping it infers the right conventions from code that already drifted.
 
-HITL's compounding benefits appear over this same timeline:
+The registries and ADRs accumulate in parallel with normal delivery:
 
-| Time horizon | What accumulates | What it enables |
+| What accumulates | When it starts paying | What it enables |
 |---|---|---|
-| Month 1 | Manifest, LLDs, ADRs, convention checker | New AI sessions start with correct context. Convention drift detectable in CI. |
-| Month 3 | Incident registry with regression tests | Past failure modes are encoded as tests. They cannot silently reappear. |
-| Month 6 | ADRs with verified rationale, calibrated canary criteria | Architectural debates reference past decisions with known outcomes. Deployments use rollout criteria from real incidents, not guesses. |
-| Month 12 | 30/90-day ROI checks completed; doc set covers the whole system | New developers onboard from docs, not from "ask the senior dev." Technical investments have measured returns. The system has a written memory of why it is the way it is. |
+| Manifest, LLDs, ADRs, convention checker | From the first change | New AI sessions start with correct context. Convention drift caught in CI. |
+| Incident registry with regression tests | After the first incident or near-miss | Past failure modes become tests. They cannot silently reappear in future changes. |
+| ADRs with verified 30/90-day outcomes | After the first few non-trivial changes | Architectural debates reference past decisions with known real-world results, not speculation. |
+| Calibrated canary criteria from past incidents | After the first incident-driven canary | Deployments use rollout criteria derived from actual failure modes, not generic thresholds. |
+| Full doc coverage + developer turnover resilience | After the system reaches steady state | New developers onboard from docs. New AI sessions produce correct, convention-honoring code from day one. |
 
-**The primary risk to long-term coherence is LLD drift.** Code changes that don't flow through the LLD update step leave the docs stale. Stale LLDs don't fail loudly — they silently degrade from "AI reads spec and implements correctly" to "AI infers from code and may guess wrong." The reconcile-docs step (step 20) and same-PR doc updates exist to prevent this, but they require sustained discipline.
+**The primary risk to long-term coherence is LLD drift.** Code changes that don't flow through the LLD update step leave the docs stale silently — the process doesn't fail loudly, it degrades from "AI implements from spec" to "AI infers from code and may guess wrong." The reconcile-docs step (step 20) and same-PR doc updates are the safeguard; they require sustained discipline.
 
-**The secondary risk is process fatigue.** The 30-step workflow has real overhead for non-trivial changes. Teams under deadline pressure skip steps — and the steps most often skipped (incident registry queries, ROI checks) are the ones with compounding long-term value. The process tiers exist to give teams a defensible reduced path; using them consciously is better than silently skipping steps.
+**The secondary risk is process fatigue.** Under deadline pressure, teams skip steps — and the ones most often skipped (incident registry queries, ROI checks) are the ones with the most compounding long-term value. The process tiers give teams a defensible reduced path; using them consciously is better than silently skipping steps.
 
-**The right fit:** mid-sized systems (20–80 modules), teams of 3–8 developers, timelines measured in quarters not sprints, and developer turnover as a real risk. For a solo developer on a single-domain service, the overhead is not worth it. For a platform team whose output other teams depend on, the contract-enforcement and traceability properties are essential.
+**The right fit:** mid-sized systems (20–80 modules), teams of 3–8 developers, timelines measured in quarters, and developer turnover as a real risk. For a solo developer on a single-domain service, the overhead is not worth it. For a platform team whose output other teams depend on, the contract-enforcement and traceability properties are essential.
 
 ---
 
