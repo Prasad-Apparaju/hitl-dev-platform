@@ -211,27 +211,35 @@ Treat the LLD as a spec, not a narrative: precise interfaces, explicit edge case
 
 **Known limitation:** this works best when the domain and framework are well-understood. For exploratory work, see the Unknown (PoC) phase in Section 5.
 
-### 1.3 Long-Term Coherence — What This Is Actually For
+### 1.3 Long-Term Coherence — The Problem Vibe-Coding Creates at Company Scale
 
-**Teams ship continuously from the first change.** Every change goes through the workflow and ships at the end of that change. There is no setup period before delivery starts. The per-change overhead is real — especially for Tier 2/3 changes — but it is paid per change, not as a months-long prerequisite. The overhead is review and approval time, not authorship time: AI drafts the HLD from a design conversation, generates the LLD from the HLD, generates tests from the LLD, and generates code from the tests. Humans review, correct, and approve at each step. The architect and developer are shaping and judging AI output, not producing documents from scratch.
+Vibe-coding works. For a prototype, a spike, a solo project with a short horizon, it is the right tool. The failure modes appear when a team tries to use the same approach to build and evolve a real system over years:
 
-What the process is designed for is *institutional knowledge that compounds over time*, on top of that continuous delivery. Without documented discipline, AI-assisted codebases degrade on a predictable schedule: by month 3–4, multiple competing patterns exist because each session invented its own; by month 6, architectural decisions are invisible because they lived in departed developers' chat transcripts; by month 12, onboarding a new AI session means hoping it infers the right conventions from code that already drifted.
+- **Incoherence accumulates fast.** Each session invents its own patterns with no shared spec constraining output. One developer for one week is fine. Six developers over twelve months produces a codebase with three error handling strategies, two naming conventions, and no canonical answer to "how does this work."
+- **Decisions become unrecoverable.** Architectural choices live in chat transcripts. When the context ends or the developer leaves, the reasoning is gone. The next session inherits code without understanding why it works that way — and changes it.
+- **AI fills underspecified gaps confidently.** Without a precise spec, AI makes plausible design assumptions. The code compiles, passes AI-authored tests, and fails at integration because the assumptions weren't yours.
+- **Speed amplifies all three problems.** Vibe-coding produces code fast. That means incoherence, undocumented decisions, and assumption-filled implementations accumulate fast. The mess scales with the team's velocity.
 
-The registries and ADRs accumulate in parallel with normal delivery:
+HITL is not a general improvement on vibe-coding. It is the answer to this specific failure mode: building and evolving a system coherently when the timeline is years, the team is more than two people, and the cost of incoherence compounds.
+
+**Teams ship continuously from the first change.** There is no setup period before delivery starts. The per-change overhead is real — especially for Tier 2/3 changes — but it is *review and approval time, not authorship time*. AI generates the HLD from the design conversation, the LLD from the HLD, tests from the LLD, and code from the tests. The extra time humans pay, beyond what vibe-coding costs, is: reviewing the AI-generated test plan, approving the spec before code is written, and running a conformance review after. Those are judgment gates, not production work.
+
+The fairer comparison is full-cycle time, not sprint velocity. Vibe-coding skips those gates but pays the equivalent time later as debugging, integration failures, and rework. For simple isolated changes, vibe-coding is faster. For cross-domain changes on a system with history, HITL is often faster when you count what the gates prevented.
+
+Institutional knowledge accumulates in the registries and ADRs in parallel with delivery — not as a prerequisite to it:
 
 | What accumulates | When it starts paying | What it enables |
 |---|---|---|
-| Manifest, LLDs, ADRs, convention checker | From the first change | New AI sessions start with correct context. Convention drift caught in CI. |
-| Incident registry with regression tests | After the first incident or near-miss | Past failure modes become tests. They cannot silently reappear in future changes. |
-| ADRs with verified 30/90-day outcomes | After the first few non-trivial changes | Architectural debates reference past decisions with known real-world results, not speculation. |
-| Calibrated canary criteria from past incidents | After the first incident-driven canary | Deployments use rollout criteria derived from actual failure modes, not generic thresholds. |
-| Full doc coverage + developer turnover resilience | After the system reaches steady state | New developers onboard from docs. New AI sessions produce correct, convention-honoring code from day one. |
+| Manifest, LLDs, ADRs, convention checker | From the first change | New AI sessions start from the agreed spec, not from inference. Convention drift caught in CI. |
+| Incident registry with regression tests | After the first incident | Past failure modes become tests. They cannot silently reappear. |
+| ADRs with verified outcomes | After the first few non-trivial changes | Architectural debates reference past decisions with known real results, not speculation. |
+| Developer turnover resilience | After the doc set covers the system | New developers and new AI sessions onboard from docs, not from "ask the person who was here." |
 
-**The primary risk to long-term coherence is LLD drift.** Code changes that don't flow through the LLD update step leave the docs stale silently — the process doesn't fail loudly, it degrades from "AI implements from spec" to "AI infers from code and may guess wrong." The reconcile-docs step (step 20) and same-PR doc updates are the safeguard; they require sustained discipline.
+**Primary risk: LLD drift.** Changes that skip the LLD update step leave docs stale silently. The process degrades from "AI implements from spec" to "AI infers from code and may guess wrong" — with no loud failure signal. The reconcile-docs step (step 20) is the safeguard; it requires sustained discipline.
 
-**The secondary risk is process fatigue.** Under deadline pressure, teams skip steps — and the ones most often skipped (incident registry queries, ROI checks) are the ones with the most compounding long-term value. The process tiers give teams a defensible reduced path; using them consciously is better than silently skipping steps.
+**Secondary risk: process fatigue.** Under deadline pressure, teams skip steps. The steps most often skipped — incident registry queries, ROI checks — are the ones with the most long-term value. Use the process tiers consciously rather than silently skipping.
 
-**The right fit:** mid-sized systems (20–80 modules), teams of 3–8 developers, timelines measured in quarters, and developer turnover as a real risk. For a solo developer on a single-domain service, the overhead is not worth it. For a platform team whose output other teams depend on, the contract-enforcement and traceability properties are essential.
+**The right fit:** mid-sized systems (20–80 modules), teams of 3–8 developers, timelines in quarters, developer turnover a real risk. Not the right fit for solo projects, pure discovery-phase work, or teams where most changes are small isolated fixes.
 
 ---
 
