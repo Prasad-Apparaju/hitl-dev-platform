@@ -39,9 +39,11 @@ Architect manually assembles `docs/decisions/issue-<N>.yaml` using `templates/de
 
 ---
 
-## Recording Token Costs (recurring — after every Claude Code session)
+## Recording Token Costs (optional — for mature teams and pilots)
 
-At the end of each Claude Code session, Claude Code displays the session cost. Record it in `.hitl/current-change.yaml` under `token_tracking.actual.sessions`:
+Token-cost tracking is a calibration layer, not a baseline requirement. Teams that are just adopting the process should skip this step until the workflow itself is running smoothly. Once established, it produces the data that makes ROI estimates credible and lets teams identify which workflow phases are disproportionately expensive.
+
+If your team is tracking costs: at the end of each Claude Code session, Claude Code displays the session cost. Record it in `.hitl/current-change.yaml` under `token_tracking.actual.sessions`:
 
 ```yaml
 token_tracking:

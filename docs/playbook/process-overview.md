@@ -1,6 +1,8 @@
 # Process Overview — The 30-Step HITL AI-Driven Workflow
 
-Every change — feature, bug fix, improvement — follows this pipeline. AI does the production work. Humans hold gates at every decision point.
+**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 30 steps.
+
+The process relocates human judgment to higher-leverage checkpoints — reviewing AI-generated specs before code exists, approving test plans before implementation, verifying traceability before merge — rather than eliminating it. AI does the production work. Humans hold the gates that matter.
 
 ## The Pipeline View
 
@@ -123,6 +125,33 @@ Every change with a step 3 effort estimate > 1 day gets a measurable thesis: exp
 
 ### Downstream Impact Assessment
 Not the same as impact analysis (which identifies affected code). This identifies affected *people and processes*: what flows changed, what can break, how the PM's mental model needs to update, and how to derisk the deployment.
+
+### The Change-Context File
+
+`.hitl/current-change.yaml` is the runtime contract of the workflow — the handoff between human process decisions and AI enforcement. It is created by `/apply-change` (step 3) and updated at each phase gate. Hooks, skills, and commands read it to know: what change is in flight, which domain is approved, what evidence is complete, and whether the current action is permitted.
+
+Every field in the file has a purpose: `tier` determines which steps apply; `status` gates what AI is allowed to do next; `allowed_paths` constrains domain boundary enforcement; `required_evidence` tracks what must exist before a PR can be created. If this file is absent or stale, the process has no enforcement. See [`docs/changes/change-context.schema.yaml`](../../docs/changes/change-context.schema.yaml) for the full schema.
+
+### Graph-First Retrieval
+
+One of the distinctive ideas in this platform: AI steps prefer graph queries over full-file reads for design docs. The combination of Graphify for retrieval and repo files as source-of-truth means AI always works from the agreed spec — and on large doc sets, retrieves only the relevant domain slice rather than loading everything. The fallback to direct file reads ensures the process works without Graphify. See the when-to-use table in `CLAUDE.md` for which situations call for each approach.
+
+### Canonical Artifact Locations
+
+Every artifact class has exactly one canonical location. Path drift undermines enforcement.
+
+| Artifact | Canonical location |
+|---|---|
+| Change runtime state | `.hitl/current-change.yaml` |
+| System manifest | `docs/system-manifest.yaml` |
+| HLDs | `docs/02-design/technical/hld/<feature>.md` |
+| LLDs | `docs/02-design/technical/lld/<component>.md` |
+| ADRs | `docs/02-design/technical/adrs/` |
+| Decision packets | `docs/decisions/issue-<N>.yaml` |
+| Test registry | `docs/03-engineering/testing/test-registry.yaml` |
+| Incident registry | `docs/incident-registry.yaml` |
+| Test files | `tests/` |
+| Token cost registry | `docs/03-engineering/costs/token-cost-registry.yaml` |
 
 ## Full Detail
 

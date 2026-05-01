@@ -117,6 +117,45 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 | P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Use `/generate-docs` to produce LLD during PR review |
 | P2+ (everything else) | Full 30-step process | Standard docs-before-code |
 
+## Staying Operational — Week 2 and Beyond
+
+The baseline sprint produces the starting state. Keeping the process working over weeks and months requires knowing what must stay in sync, who owns it, and which parts are hard requirements versus optional.
+
+### Ownership
+
+| Artifact | Owner | Update trigger |
+|---|---|---|
+| `docs/system-manifest.yaml` | Architect | Any PR that adds files, changes domain boundaries, or modifies a facade API |
+| `docs/02-design/technical/lld/` | Domain lead (developer) | Same PR as the code change — docs and code move together |
+| `docs/03-engineering/testing/test-registry.yaml` | Developer + QA | Every test added, removed, or renamed |
+| `docs/incident-registry.yaml` | Ops + Lead | After every production incident |
+| `docs/decisions/issue-<N>.yaml` | Architect | Created at step 9; updated only if scope changes before merge |
+| `.hitl/current-change.yaml` | Developer | Created by `/apply-change`; updated at each phase gate; deleted after merge |
+
+### Hard requirements vs. optional
+
+**Hard requirements — the process breaks without these:**
+- `.hitl/current-change.yaml` present and current before any code edit
+- LLDs updated in the same PR as the code change (reconcile-docs step)
+- Manifest updated when domain boundaries or facade APIs change
+- Test registry updated when tests change
+
+**Optional — adds value but the process works without them:**
+- Graphify (skills fall back to direct reads)
+- Token-cost tracking (valuable for ROI calibration; skip until the workflow is running smoothly)
+- 30/90-day ROI checks (only triggered when step 4 ROI estimate was done)
+- Training plan stubs (only triggered by new architectural patterns)
+
+### Signals that the process is drifting
+
+- LLDs that describe the old behavior — code and docs have separated
+- Convention checker violations accumulating across PRs instead of being fixed in-session
+- `.hitl/current-change.yaml` missing or showing a stale `status`
+- Test registry entries without `domain` or `risk` fields — registration discipline has slipped
+- Incident registry entries without a `regression_test_ref` — past failures are not being encoded
+
+The manifest delta re-run (weekly, ~15 min) and convention checker (every PR) are the two routine signals that catch drift before it compounds.
+
 ## Common Objections
 
 | Objection | Response |
