@@ -376,10 +376,10 @@ Run before implementation on any Tier 2+ change. This replaces the `/generate-do
 ### New Feature Mode
 
 1. Determine the feature name (kebab-case).
-2. Create `docs/02-design/technical/hld/<feature-name>.md` using `templates/hld-template.md`. Must include: executive summary, Mermaid architecture diagram (`graph TB`), component overview, data flow sequence diagrams, integration points, security architecture, scalability considerations.
+2. Create `docs/02-design/technical/hld/<feature-name>.md` using `templates/hld-template.md` (installed by `codex/install.sh`). Must include: executive summary, Mermaid architecture diagram (`graph TB`), component overview, data flow sequence diagrams, integration points, security architecture, scalability considerations.
 3. Update `docs/02-design/technical/hld/index.md`.
 4. **Stop — ask the user to review and approve the HLD** before creating the LLD.
-5. After HLD approval, create LLD files under `docs/02-design/technical/lld/` with Mermaid class and sequence diagrams, method signatures, error modes, preconditions, and usage examples.
+5. After HLD approval, create LLD files under `docs/02-design/technical/lld/` using `templates/lld-component-template.md` (installed by `codex/install.sh`). Include Mermaid class and sequence diagrams, method signatures, error modes, preconditions, and usage examples.
 6. Update `docs/02-design/technical/lld/index.md` and `packages.md`.
 
 All diagrams must use Mermaid. No `<br/>` tags inside Mermaid blocks.
@@ -419,13 +419,29 @@ A git post-commit hook also writes `docs/session-logs/hitl-session-<change-id>-<
 
 ## Important Notes for Codex Users
 
-Unlike Claude Code, Codex CLI does not have PreToolUse/PostToolUse hooks. Enforcement is handled by:
+Enforcement runs at two levels. Use both for the strongest guarantees:
 
-1. **These instructions** — Codex will check for `.hitl/current-change.yaml` before source edits
-2. **Git pre-commit hook** — installed by `codex/install.sh` — blocks commits on source files when no context file exists
-3. **Git post-commit hook** — writes session summaries on each commit
+### Codex lifecycle hooks (preferred — same timing as Claude Code)
 
-Install the hooks in your project:
+When `codex_hooks = true` is set in `.codex/config.toml`, Codex loads `.codex/hooks.json` and runs HITL context checks before each Write/Edit and boundary checks after — the same real-time enforcement as Claude Code's PreToolUse/PostToolUse hooks.
+
+Both files are installed by `codex/install.sh`. The hook scripts live in `codex/hook-scripts/`.
+
+### Git hooks (portable fallback)
+
+The `pre-commit` hook blocks commits on source files when no `.hitl/current-change.yaml` exists, and warns (or blocks in strict mode) on domain boundary violations.
+
+Enable strict mode to match the full HITL enforcement rules:
+```bash
+git config hitl.strict true   # project-level
+# or
+HITL_STRICT=1 git commit ...  # one-off
+```
+
+Strict mode additionally blocks Tier 2+ commits without `implementation-approved` status and blocks boundary violations.
+
+### Install everything
+
 ```bash
 bash /path/to/hitl-dev-platform/codex/install.sh
 ```

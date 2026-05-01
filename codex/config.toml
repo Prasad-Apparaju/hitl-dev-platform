@@ -1,0 +1,13 @@
+# Reference Codex CLI config — copy to ~/.codex/config.toml (global)
+# or .codex/config.toml (project-scoped, requires trusted-project setup).
+# See: https://developers.openai.com/codex/config-reference
+
+model = "codex-mini-latest"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[features]
+# Enable lifecycle hooks loaded from .codex/hooks.json.
+# When enabled, HITL context checks run before every Write/Edit — same
+# enforcement timing as Claude Code's PreToolUse hooks.
+codex_hooks = true
