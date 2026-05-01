@@ -2,7 +2,7 @@
 # or .codex/config.toml (project-scoped, requires trusted-project setup).
 # See: https://developers.openai.com/codex/config-reference
 
-model = "codex-mini-latest"
+model = "gpt-5.4"
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 

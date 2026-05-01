@@ -83,6 +83,8 @@ if [[ "$ONLY" == "all" || "$ONLY" == "mermaid" ]]; then
   echo "--- Mermaid br tags ---"
   if [[ ! -f "scripts/fix_mermaid_br_tags.py" ]]; then
     skip_check "mermaid br tags" "scripts/fix_mermaid_br_tags.py not found — copy from hitl-dev-platform/scripts/"
+  elif [[ ! -d "docs" ]]; then
+    skip_check "mermaid br tags" "no docs/ directory found"
   else
     run_check "mermaid br tags" "find docs/ -name '*.md' -exec python scripts/fix_mermaid_br_tags.py --check {} +"
   fi
