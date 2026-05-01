@@ -21,22 +21,48 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 
 1. **Read the LLD** for the component being implemented. If no LLD exists, stop (see refusal rule above).
 
-2. **Read the system manifest** (`docs/system-manifest.yaml`) for:
-   - The domain this component belongs to
-   - The `facade_apis` for this domain (contract tests)
-   - The `cross_cutting` conventions that apply (convention tests)
-   - The `boundary_entities` that cross this domain (entity shape tests)
+2. **Get manifest data** for the domain. Prefer graph queries if available:
+   ```
+   /graphify query "domain: <domain-name> facade_apis for contract tests"
+   /graphify query "domain: <domain-name> boundary_entities and cross_cutting conventions"
+   ```
+   Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable. Extract:
+   - `facade_apis` for this domain → contract tests
+   - `cross_cutting` conventions → convention tests
+   - `boundary_entities` → entity shape tests
 
-3. **Generate maximum test coverage** from the LLD + manifest:
+3. **Check existing test coverage** for this domain before generating new tests — avoid duplicating what already exists:
+   ```
+   /graphify query "existing tests for domain: <domain-name>"
+   /graphify query "test coverage gaps in <component-name>"
+   ```
+   Fall back to reading `docs/03-engineering/testing/test-registry.yaml` directly if the graph is unavailable. Note which behaviors are already tested so you don't regenerate them.
+
+4. **Check the incident registry** for past failures in this domain — these must become regression tests:
+   ```
+   /graphify query "past incidents affecting domain: <domain-name>"
+   /graphify query "incident failure modes in <domain-name>"
+   ```
+   Fall back to reading `docs/04-operations/incident-registry.yaml` directly. For each relevant incident, add a regression test named `test_<incident_id>_<failure_description>`.
+
+5. **Check the test strategy** for domain-specific constraints:
+   ```
+   /graphify query "test strategy constraints for <domain-name>"
+   ```
+   Fall back to reading `docs/03-engineering/testing/strategy.md` if the graph is unavailable or returns nothing specific.
+
+6. **Generate maximum test coverage** from the LLD + manifest, filling gaps not already covered:
    - Happy path tests for every method in the LLD
    - Error path tests for every `error_modes` entry in the facade
    - Precondition tests for every `preconditions` entry
    - Boundary entity shape tests (verify the entity matches the manifest shape)
    - Contract tests from facade APIs (verify the domain's promises to other domains)
    - Convention tests (e.g., if `idempotency-keys` convention applies, test that the tool rejects missing keys)
+   - Regression tests for every incident found in step 4
 
-4. **Register each test** in the test registry (`docs/03-engineering/testing/test-registry.yaml`) with:
+7. **Register each new test** in the test registry (`docs/03-engineering/testing/test-registry.yaml`) with:
    - domain, risk level, type (unit/integration/contract), origin: `tdd`
+   - For incident regression tests: include `incident_ref`
 
 5. **Present all generated tests** to the user. Do NOT proceed to Phase 2 until the user reviews.
 
