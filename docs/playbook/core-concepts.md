@@ -213,7 +213,7 @@ Treat the LLD as a spec, not a narrative: precise interfaces, explicit edge case
 
 ### 1.3 Long-Term Coherence — What This Is Actually For
 
-**Teams ship continuously from the first change.** Every change goes through the workflow and ships at the end of that change. There is no setup period before delivery starts. The per-change overhead (impact analysis, LLD update, TDD cycle) is real — especially for Tier 2/3 changes — but it is paid per change, not as a months-long prerequisite.
+**Teams ship continuously from the first change.** Every change goes through the workflow and ships at the end of that change. There is no setup period before delivery starts. The per-change overhead is real — especially for Tier 2/3 changes — but it is paid per change, not as a months-long prerequisite. The overhead is review and approval time, not authorship time: AI drafts the HLD from a design conversation, generates the LLD from the HLD, generates tests from the LLD, and generates code from the tests. Humans review, correct, and approve at each step. The architect and developer are shaping and judging AI output, not producing documents from scratch.
 
 What the process is designed for is *institutional knowledge that compounds over time*, on top of that continuous delivery. Without documented discipline, AI-assisted codebases degrade on a predictable schedule: by month 3–4, multiple competing patterns exist because each session invented its own; by month 6, architectural decisions are invisible because they lived in departed developers' chat transcripts; by month 12, onboarding a new AI session means hoping it infers the right conventions from code that already drifted.
 
