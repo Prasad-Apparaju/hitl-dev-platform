@@ -38,9 +38,17 @@ These are commonly missed and must be verified for any endpoint or data-modifyin
 4. **Idempotency** — if the operation has side effects, is there a test that verifies repeating it doesn't duplicate effects?
 5. **Concurrent access** — if two requests arrive simultaneously, is the outcome correct?
 
-### Registry Check
+### Registry and Incident Check
+Use graph queries where available — direct reads for smaller registries if the graph is unavailable:
+
+```
+/graphify query "test coverage for domain: <domain-name>"
+/graphify query "past incidents affecting domain: <domain-name>"
+```
+
 1. **All new tests are in the test registry** — with domain, risk, type, and origin
 2. **Incident regression tests have `incident_ref` set** — so they can never be accidentally removed
+3. **Incident registry was actively queried** — do not assume it is empty. If the graph query returns incidents, verify each one has a regression test. If a relevant incident has no test and no documented reason to skip it, that is a gap.
 
 ## Probing Questions You Must Ask
 

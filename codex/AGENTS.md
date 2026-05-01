@@ -472,8 +472,12 @@ graphify . --update --no-viz --directed
 | Finding which domain a component belongs to | ✓ | |
 | Getting facade APIs for a domain | ✓ | |
 | Tracing cross-component dependencies | ✓ | |
+| Checking existing test coverage for a domain | ✓ | |
+| Finding past incidents for a domain | ✓ | |
+| Getting test strategy constraints for a domain | ✓ | |
 | Reading full method signatures from an LLD | | ✓ |
 | Verifying a specific precondition or error mode | | ✓ |
+| Reading the full test registry to register a new test | | ✓ |
 | Graph is missing or stale | | ✓ |
 
 ---
