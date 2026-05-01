@@ -17,10 +17,18 @@ Apply the dev-practices workflow to analyze and plan a change before writing cod
 
 ## Steps
 
-### Step 1: Understand the Change
+### Step 1: Understand and Challenge the Change
+
 - Parse the change description from $ARGUMENTS
 - If unclear, ask clarifying questions before proceeding
 - Identify the change tier (0–4) from the dev-practices skill tier table
+
+**Before accepting the tier at face value, challenge it:**
+- Does the scope described match the tier? Cross-domain, multi-service, or migration changes are Tier 3 even when described as simple.
+- Is this change too large to implement safely in one slice? If it touches more than one domain or requires more than one LLD update, ask: "Should this be split into smaller, independently-deployable changes?" A change that can be split should be split.
+- Is this a pattern we've implemented before? Search the codebase before planning — reusing an existing pattern is better than designing a new one.
+
+State the tier with justification. If the change should be split, say so and stop until the PM or developer confirms the scope.
 
 ### Step 2: Identify Source Artifacts
 Before any analysis, locate and confirm these exist:
@@ -37,8 +45,11 @@ Identify and list:
 - **Affected infrastructure** — do manifests, configs, secrets, or migrations need updating?
 - **Affected documentation** — which HLD/LLD docs describe the changed behavior?
 - **Affected tests** — which existing tests cover the changed code?
+- **Backwards compatibility** — if any facade API signature, boundary entity shape, or public interface is changing, which callers break? Is there a migration or versioning plan?
 
 Search the codebase to verify each item. Don't guess — read the files.
+
+If backwards-incompatible changes are identified, flag them explicitly in the summary and do not proceed to planning without a compatibility strategy.
 
 ### Step 4: Documentation Plan
 Based on the impact analysis, identify which docs need updating:

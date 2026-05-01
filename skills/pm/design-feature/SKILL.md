@@ -16,15 +16,18 @@ This is a guided, multi-phase process. Do NOT skip phases. Do NOT jump to writin
 
 ## Phase 1 — Discovery
 
-Ask the PM these questions one at a time. Wait for answers before moving on.
+Ask the PM these questions one at a time. Wait for answers before moving on. Do not accept vague or aspirational answers — push for specifics.
 
 1. **Who is this for?** Which persona from the PRD (`docs/01-product/prd.md` §3) is the primary user? Is there a secondary user?
-2. **What problem does this solve?** What pain exists today? What happens if we don't build this?
-3. **What does success look like?** How would you measure whether this feature worked? (metric, behavior change, user feedback)
-4. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP.
-5. **What's explicitly out of scope?** What should this feature NOT do?
+2. **What evidence confirms this is a real problem?** Cite specific data: support tickets, user research sessions, usage analytics, churn feedback. "We think users want this" is not evidence — ask until a specific data point is provided.
+3. **What problem does this solve?** What pain exists today? What is the user doing right now as a workaround?
+4. **What happens if we don't build this?** Is this blocking users, causing churn, or just a nice-to-have? The answer determines priority.
+5. **What does success look like?** Name a specific metric with its current measured value and a target. "Improve engagement" is not an answer. "Increase campaign creation rate from 2.3/week to 4/week, measured by analytics event X" is.
+6. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP — and it's probably what you should validate first.
+7. **What's explicitly out of scope?** What should this feature NOT do? Unstated non-goals become scope creep.
+8. **Does this conflict with anything we've already built or committed to?** Read `docs/01-product/prd.md` now. Flag any requirement this extends, contradicts, or duplicates.
 
-Summarize the answers back to the PM. Get confirmation before proceeding.
+Summarize the answers back to the PM. If any answer is vague, ask for the specific data point before summarizing. Get confirmation before proceeding.
 
 ---
 
@@ -96,14 +99,16 @@ Present the full list. Get confirmation before proceeding.
 
 ## Phase 6 — Impact Analysis
 
-Before writing to the PRD, assess:
+Before writing to the PRD, assess honestly. Surface risks and costs — do not make the feature sound easier than it is.
 
-1. **Existing requirements affected** — read `docs/01-product/prd.md` and flag any requirements this feature changes, extends, or conflicts with.
-2. **Architecture implications** — read `docs/02-design/technical/hld/index.md`. Does this need a new HLD? New LLD? New ADR?
-3. **Dependencies** — does this feature depend on something not yet built? Or does something else depend on this?
-4. **Effort estimate** — is this a 1-day, 1-week, or multi-week feature? (inform the PM, don't decide priority for them)
+1. **Existing requirements affected** — read `docs/01-product/prd.md` carefully. Flag any requirement this feature changes, extends, or conflicts with. If a conflict exists, it must be resolved before writing to the PRD.
+2. **Architecture implications** — read `docs/02-design/technical/hld/index.md`. Does this need a new HLD? New LLD? New ADR? Will this require changes to the system manifest?
+3. **Dependencies** — does this feature depend on something not yet built? If yes, which features are blocked until that dependency is resolved?
+4. **Effort estimate** — is this a 1-day, 1-week, or multi-week feature? Provide a range, not a single number. (Inform the PM; do not decide priority for them.)
+5. **Scope check** — given the effort estimate, ask the PM: "Is the validated hypothesis from Phase 1 actually worth this effort? Could a smaller experiment test the same assumption first?"
+6. **Technical debt** — will this feature create technical debt that slows future work? If yes, quantify it (e.g., "this adds a third auth path that will need consolidation in the next quarter").
 
-Present the analysis. Get confirmation before proceeding.
+Present the analysis including any concerns. Do not soften the effort estimate or risk assessment to make the feature more appealing. Get confirmation before proceeding.
 
 ---
 
@@ -138,8 +143,10 @@ Only after ALL phases are approved:
 ## Important Rules
 
 - **Never skip phases.** The due diligence IS the value. A requirement without edge cases and a mockup is incomplete.
-- **Challenge the PM.** If the feature sounds vague, ask "what does success look like?" If it sounds too big, ask "what's the simplest version?" If it duplicates something, say so.
+- **Challenge the PM.** If the feature sounds vague, ask "what does success look like?" If it sounds too big, ask "what's the simplest version?" If it duplicates something, say so. If you can't find the supporting data, ask for it before continuing.
+- **Do not validate what the PM hasn't justified.** Enthusiasm is not a requirement. If the PM says "users will love this," ask what evidence supports that. Accept data; not optimism.
 - **Use Claude Design for every feature that has a UI.** Text-only requirements for UI features are not acceptable.
 - **The PM approves each phase before the next.** No phase is auto-approved.
 - **Acceptance criteria must be testable.** "User-friendly" is not a criterion. "Empty state shows message X with button Y" is.
 - **Read the existing PRD first.** Every feature exists in the context of what's already there. Don't propose something that contradicts or duplicates existing requirements without flagging it.
+- **Surface the real cost.** Do not let a feature sound easy in Phase 6 if the architecture implies it isn't. The PM needs accurate information to prioritize.
