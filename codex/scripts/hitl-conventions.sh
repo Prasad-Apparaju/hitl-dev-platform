@@ -1,12 +1,31 @@
 #!/usr/bin/env bash
-# Run all HITL convention checks. Pass --only semgrep|manifest|mermaid to run a subset.
+# Run all HITL convention checks.
+#
+# Options:
+#   --only semgrep|manifest|mermaid   Run a subset of checks
+#   --strict                          Exit non-zero if any check was skipped/unavailable
 
 set -euo pipefail
 
-ONLY="${1:-all}"
+ONLY="all"
+STRICT=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --only) ;;
+    semgrep|manifest|mermaid) ONLY="$arg" ;;
+    --strict) STRICT=true ;;
+  esac
+done
+
+# Allow --only <value> positional form
+if [[ "${1:-}" == "--only" && -n "${2:-}" ]]; then
+  ONLY="$2"
+fi
+
 PASS_COUNT=0
 FAIL_COUNT=0
-WARN_COUNT=0
+SKIP_COUNT=0
 
 run_check() {
   local name="$1"
@@ -20,6 +39,13 @@ run_check() {
   fi
 }
 
+skip_check() {
+  local name="$1"
+  local reason="$2"
+  echo "  SKIP: $name — $reason"
+  SKIP_COUNT=$((SKIP_COUNT + 1))
+}
+
 echo ""
 echo "=== HITL Convention Checks ==="
 echo ""
@@ -27,11 +53,9 @@ echo ""
 if [[ "$ONLY" == "all" || "$ONLY" == "semgrep" ]]; then
   echo "--- Semgrep (code conventions) ---"
   if ! command -v semgrep &>/dev/null; then
-    echo "  SKIP: semgrep not installed. Install with: pip install semgrep  OR  brew install semgrep"
-    WARN_COUNT=$((WARN_COUNT + 1))
+    skip_check "semgrep" "not installed (pip install semgrep  OR  brew install semgrep)"
   elif [[ ! -d ".semgrep" ]]; then
-    echo "  SKIP: no .semgrep/ directory in project root"
-    WARN_COUNT=$((WARN_COUNT + 1))
+    skip_check "semgrep" "no .semgrep/ directory — copy from hitl-dev-platform/.semgrep/"
   else
     run_check "semgrep scan" "semgrep scan --config .semgrep/ --error"
   fi
@@ -41,15 +65,13 @@ fi
 if [[ "$ONLY" == "all" || "$ONLY" == "manifest" ]]; then
   echo "--- Manifest drift ---"
   if [[ ! -f "tools/manifest-drift/check_manifest_drift.py" ]]; then
-    echo "  SKIP: tools/manifest-drift/check_manifest_drift.py not found"
-    WARN_COUNT=$((WARN_COUNT + 1))
+    skip_check "manifest drift" "tools/manifest-drift/check_manifest_drift.py not found — copy from hitl-dev-platform/tools/manifest-drift/"
   else
     SOURCE_DIRS=""
     [[ -d "app" ]] && SOURCE_DIRS="$SOURCE_DIRS app/"
     [[ -d "src" ]] && SOURCE_DIRS="$SOURCE_DIRS src/"
     if [[ -z "$SOURCE_DIRS" ]]; then
-      echo "  SKIP: no app/ or src/ directory found"
-      WARN_COUNT=$((WARN_COUNT + 1))
+      skip_check "manifest drift" "no app/ or src/ directory found"
     else
       run_check "manifest drift" "python tools/manifest-drift/check_manifest_drift.py --source-dirs $SOURCE_DIRS"
     fi
@@ -60,19 +82,28 @@ fi
 if [[ "$ONLY" == "all" || "$ONLY" == "mermaid" ]]; then
   echo "--- Mermaid br tags ---"
   if [[ ! -f "scripts/fix_mermaid_br_tags.py" ]]; then
-    echo "  SKIP: scripts/fix_mermaid_br_tags.py not found"
-    WARN_COUNT=$((WARN_COUNT + 1))
+    skip_check "mermaid br tags" "scripts/fix_mermaid_br_tags.py not found — copy from hitl-dev-platform/scripts/"
   else
     run_check "mermaid br tags" "find docs/ -name '*.md' -exec python scripts/fix_mermaid_br_tags.py --check {} +"
   fi
   echo ""
 fi
 
-echo "=== Results: $PASS_COUNT passed, $FAIL_COUNT failed, $WARN_COUNT skipped/warned ==="
+echo "=== Results: $PASS_COUNT passed, $FAIL_COUNT failed, $SKIP_COUNT skipped ==="
 echo ""
 
 if [[ $FAIL_COUNT -gt 0 ]]; then
   echo "Convention violations found. Fix before creating the PR."
+  exit 1
+fi
+
+if [[ $SKIP_COUNT -gt 0 && $PASS_COUNT -eq 0 ]]; then
+  echo "All checks were skipped — no conventions verified."
+  if [[ "$STRICT" == "true" ]]; then
+    echo "Use --strict requires at least one check to pass. Install missing dependencies."
+    exit 1
+  fi
+  echo "Run with --strict to treat this as a failure, or install missing tools."
   exit 1
 fi
 

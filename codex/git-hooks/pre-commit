@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
-# pre-commit: verify HITL context exists before source code commits
-# Blocks the commit if source files are staged without .hitl/current-change.yaml
+# pre-commit: verify HITL context before source code commits.
+#
+# Default mode: blocks missing/incomplete context; warns on status and boundary issues.
+# Strict mode:  also blocks Tier 2+ commits without implementation-approved status
+#               and blocks boundary violations.
+# Enable strict mode: set HITL_STRICT=1 in the environment or git config.
+#
+#   git config hitl.strict true   (project-level)
+#   HITL_STRICT=1 git commit ...  (one-off)
 
 set -euo pipefail
+
+# Resolve strict mode from env or git config
+STRICT=false
+if [[ "${HITL_STRICT:-}" == "1" ]] || git config --bool hitl.strict 2>/dev/null | grep -q "true"; then
+  STRICT=true
+fi
 
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || echo "")
 
@@ -33,7 +46,7 @@ if [[ ! -f "$CONTEXT_FILE" ]]; then
   echo "Before committing source code, initialize the change context:" >&2
   echo "  codex 'Initialize the HITL change context for: [your change description]'" >&2
   echo "" >&2
-  echo "See codex/AGENTS.md § Change Initialization for required fields." >&2
+  echo "See AGENTS.md § Change Initialization for required fields." >&2
   echo "" >&2
   exit 1
 fi
@@ -48,14 +61,47 @@ for field in "${REQUIRED_FIELDS[@]}"; do
   fi
 done
 
-# Warn on non-implementation-ready status
+TIER=$(grep "^tier:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "0")
 STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
-if [[ "$STATUS" == "planning" || "$STATUS" == "design-review" ]]; then
-  echo "HITL WARNING: Change status is '${STATUS}' — design approval is still pending." >&2
-  echo "Commits are allowed, but ensure LLD is approved before requesting code review." >&2
+CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
+
+# Status gate
+APPROVED_STATUSES=("implementation-approved" "conformance-review-pending" "review-complete" "pr-ready")
+STATUS_APPROVED=false
+for s in "${APPROVED_STATUSES[@]}"; do
+  [[ "$STATUS" == "$s" ]] && STATUS_APPROVED=true && break
+done
+
+if [[ "$STATUS_APPROVED" == "false" ]]; then
+  if [[ "$STRICT" == "true" && "$TIER" -ge 2 ]]; then
+    echo "" >&2
+    echo "HITL BLOCKED (strict mode): Change $CHANGE_ID is Tier $TIER with status '$STATUS'." >&2
+    echo "Tier 2+ source commits require status: implementation-approved or later." >&2
+    echo "Get architecture approval or set HITL_STRICT=0 to commit in warn-only mode." >&2
+    echo "" >&2
+    exit 1
+  else
+    echo "HITL WARNING: Change status is '${STATUS}' — design approval is still pending." >&2
+    if [[ "$TIER" -ge 2 ]]; then
+      echo "  Tier $TIER change: ensure LLD is approved before requesting code review." >&2
+      echo "  Enable strict mode (HITL_STRICT=1 or git config hitl.strict true) to block at this point." >&2
+    fi
+  fi
 fi
 
-# Domain boundary check — warn (not block) on out-of-boundary files
+# LLD existence check for Tier 2+ (strict mode)
+if [[ "$STRICT" == "true" && "$TIER" -ge 2 ]]; then
+  LLD_PATH=$(grep "^  lld:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "")
+  if [[ -n "$LLD_PATH" && "$LLD_PATH" != "pending" && ! -f "$LLD_PATH" ]]; then
+    echo "" >&2
+    echo "HITL BLOCKED (strict mode): LLD not found at '$LLD_PATH'." >&2
+    echo "Create or approve the LLD before committing Tier $TIER source code." >&2
+    echo "" >&2
+    exit 1
+  fi
+fi
+
+# Domain boundary check
 ALLOWED_PATHS=$(python3 - << 'PYEOF' 2>/dev/null || echo ""
 import sys, re
 
@@ -84,8 +130,7 @@ PYEOF
 )
 
 if [[ -n "$ALLOWED_PATHS" ]]; then
-  CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
-  BOUNDARY_WARNINGS=()
+  BOUNDARY_VIOLATIONS=()
   while IFS= read -r file; do
     case "$file" in
       *.py|*.ts|*.js|*.tsx|*.jsx|*.go|*.java|*.rb|*.rs|*.cpp|*.c|*.h) ;;
@@ -104,21 +149,27 @@ if [[ -n "$ALLOWED_PATHS" ]]; then
       fi
     done <<< "$ALLOWED_PATHS"
     if [[ "$MATCHED" == "false" ]]; then
-      BOUNDARY_WARNINGS+=("$file")
+      BOUNDARY_VIOLATIONS+=("$file")
     fi
   done <<< "$STAGED_FILES"
 
-  if [[ ${#BOUNDARY_WARNINGS[@]} -gt 0 ]]; then
+  if [[ ${#BOUNDARY_VIOLATIONS[@]} -gt 0 ]]; then
     echo "" >&2
-    echo "HITL DOMAIN BOUNDARY WARNING (change: $CHANGE_ID):" >&2
-    for f in "${BOUNDARY_WARNINGS[@]}"; do
+    echo "HITL DOMAIN BOUNDARY (change: $CHANGE_ID):" >&2
+    for f in "${BOUNDARY_VIOLATIONS[@]}"; do
       echo "  $f is outside allowed_paths" >&2
     done
     echo "" >&2
-    echo "If intentional, update allowed_paths in .hitl/current-change.yaml" >&2
-    echo "and confirm the domain boundary expansion with the architect." >&2
-    echo "" >&2
-    # Warn only — do not block
+    if [[ "$STRICT" == "true" ]]; then
+      echo "BLOCKED (strict mode): update allowed_paths in .hitl/current-change.yaml" >&2
+      echo "and confirm the domain boundary expansion with the architect." >&2
+      echo "" >&2
+      exit 1
+    else
+      echo "If intentional, update allowed_paths in .hitl/current-change.yaml" >&2
+      echo "and confirm with the architect. Enable strict mode (HITL_STRICT=1) to block." >&2
+      echo "" >&2
+    fi
   fi
 fi
 

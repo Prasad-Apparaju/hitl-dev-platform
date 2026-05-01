@@ -95,7 +95,7 @@ The installer:
 
 After install, open `AGENTS.md` and fill in your project's coding standards (look for the placeholder sections).
 
-**Tradeoff vs Claude Code:** git hooks fire at commit time, not at individual file-edit time. Codex can edit source files freely within a session and is blocked at commit if no HITL context exists. The `AGENTS.md` instructions tell Codex to check for the context file before editing, providing a second line of defence.
+**Enforcement:** When `codex_hooks = true` is set in `.codex/config.toml`, Codex loads `.codex/hooks.json` and enforces HITL context checks before every Write/Edit — the same real-time timing as Claude Code's PreToolUse hooks. Git hooks provide a portable fallback that fires at commit time. Both are installed by `install.sh`.
 
 See [`codex/`](codex/) for all Codex-specific artifacts.
 
