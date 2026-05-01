@@ -67,6 +67,14 @@ for script in check-hitl-context.sh check-domain-boundary.sh write-session-summa
   fi
 done
 
+# Hook smoke test script
+TEST_SCRIPT_SRC="$SCRIPT_DIR/hook-scripts/test-hooks.sh"
+if [[ -f "$TEST_SCRIPT_SRC" ]]; then
+  cp "$TEST_SCRIPT_SRC" "$TARGET_DIR/codex/hook-scripts/test-hooks.sh"
+  chmod +x "$TARGET_DIR/codex/hook-scripts/test-hooks.sh"
+  echo "✓ Copied codex/hook-scripts/test-hooks.sh"
+fi
+
 # --- Convention check script and its dependencies ---
 
 mkdir -p "$TARGET_DIR/codex/scripts"

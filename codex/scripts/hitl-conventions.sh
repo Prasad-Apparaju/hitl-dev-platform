@@ -101,11 +101,7 @@ fi
 
 if [[ $SKIP_COUNT -gt 0 && $PASS_COUNT -eq 0 ]]; then
   echo "All checks were skipped — no conventions verified."
-  if [[ "$STRICT" == "true" ]]; then
-    echo "Use --strict requires at least one check to pass. Install missing dependencies."
-    exit 1
-  fi
-  echo "Run with --strict to treat this as a failure, or install missing tools."
+  echo "Install missing tools or add source/docs directories before using this as a PR gate."
   exit 1
 fi
 

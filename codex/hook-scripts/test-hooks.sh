@@ -144,6 +144,11 @@ INPUT='{"tool_name":"Edit","tool_input":{"file_path":"src/other.py","old_string"
 OUTPUT=$(echo "$INPUT" | bash "$BOUNDARY_SCRIPT" 2>&1)
 assert_stderr_contains "Claude Edit src/other.py outside allowed_paths → boundary warning" "DOMAIN BOUNDARY WARNING" "$OUTPUT"
 
+# T12: apply_patch moves src/old.py → src/new.py; new path is outside allowed_paths → boundary warning
+INPUT='{"hook_event_name":"PostToolUse","tool_name":"apply_patch","tool_input":{"command":"*** Begin Patch\n*** Update File: src/old.py\n*** Move to: src/new.py\n*** End Patch\n"}}'
+OUTPUT=$(echo "$INPUT" | bash "$BOUNDARY_SCRIPT" 2>&1)
+assert_stderr_contains "apply_patch Move to destination src/new.py outside allowed_paths → boundary warning" "DOMAIN BOUNDARY WARNING" "$OUTPUT"
+
 popd > /dev/null
 
 echo ""
