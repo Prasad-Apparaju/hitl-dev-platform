@@ -32,6 +32,16 @@ It scans the codebase, generates the manifest, HLDs, LLDs, and forensic ADRs, an
 
 The skill handles the AI side; the architect handles the judgment.
 
+**For medium and large systems, install Graphify before starting the sprint.** The design doc set produced by this sprint (HLDs + LLDs + manifest + ADRs) can reach hundreds of kilobytes — exceeding the context window on large platforms. Graphify indexes those docs as a knowledge graph so subsequent queries retrieve only the relevant slice.
+
+```bash
+pip install graphifyy && graphify install
+graphify . --directed --no-viz          # run from repo root after the sprint completes
+python3 -m graphify.serve graphify-out/graph.json
+```
+
+The PostToolUse hook rebuilds the graph incrementally after each doc edit, so it stays current as the sprint produces output. See `CLAUDE.md` in your project for query syntax.
+
 ## Output
 
 A complete documentation baseline ready for the HITL process: system manifest, HLDs, LLDs, ADRs, and the process itself.
@@ -105,7 +115,7 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 |---------|---------|-----------------|
 | P0 (system down) | Fix first | Write LLD for affected area within 48 hours |
 | P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Write LLD during PR review |
-| P2+ (everything else) | Full 28-step process | Standard docs-before-code |
+| P2+ (everything else) | Full 30-step process | Standard docs-before-code |
 
 ## Common Objections
 

@@ -33,6 +33,17 @@ cp templates/CLAUDE.md.template your-repo/CLAUDE.md
 # 3. Generate a system manifest from your codebase
 python tools/generate-manifest/generator.py --source your-repo/src --output your-repo/docs/system-manifest.yaml
 
+# 3a. (Recommended) Install Graphify — builds a knowledge graph over your design docs
+# so AI skills use targeted queries instead of reading the full manifest every time.
+# Required once per environment; not re-run per project.
+pip install graphifyy && graphify install
+# Then from your repo root, build the initial graph:
+cd your-repo && graphify . --directed --no-viz
+# Start the MCP server so Claude Code can query it:
+python3 -m graphify.serve graphify-out/graph.json &
+# On large codebases (50+ domains), this step pays off immediately. Skip it on small
+# repos — skills fall back to direct file reads automatically.
+
 # 4. Copy convention checker config
 cp examples/greenfield/convention-checks.yaml your-repo/
 # Edit: add your project-specific checks
@@ -111,7 +122,7 @@ When the platform adds a new workflow step or improves the convention checker, p
 
 ## Philosophy
 
-**Quality over speed.** The goal is meticulous system evolution with minimized problems — not maximum deployment velocity. Every step in the 28-step workflow prevents a specific failure mode.
+**Quality over speed.** The goal is meticulous system evolution with minimized problems — not maximum deployment velocity. Every step in the 30-step workflow prevents a specific failure mode.
 
 **Inverse Conway Maneuver for AI agents.** Design the knowledge boundaries explicitly in a System Manifest, and the quality of what agents produce mirrors those boundaries. Scoped agents with clean facades produce modular, convention-honoring output.
 
