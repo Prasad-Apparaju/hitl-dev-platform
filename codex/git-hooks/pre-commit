@@ -66,7 +66,7 @@ STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo 
 CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
 
 # Status gate
-APPROVED_STATUSES=("implementation-approved" "conformance-review-pending" "review-complete" "pr-ready")
+APPROVED_STATUSES=("implementation-approved" "conformance-review-pending" "qa-review-pending" "pr-ready")
 STATUS_APPROVED=false
 for s in "${APPROVED_STATUSES[@]}"; do
   [[ "$STATUS" == "$s" ]] && STATUS_APPROVED=true && break

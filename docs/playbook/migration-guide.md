@@ -45,7 +45,7 @@ AI scans `V1/`, produces a manifest and docs for the CURRENT system. Compare aga
 
 Also populate:
 - `docs/03-engineering/testing/test-registry.yaml` — catalog existing tests using the template already in the repo
-- `docs/incident-registry.yaml` — ask the team: "what broke in the last 6 months?" Each answer is an entry.
+- `docs/04-operations/incident-registry.yaml` — ask the team: "what broke in the last 6 months?" Each answer is an entry.
 
 ### A3. Assess the gaps
 
@@ -143,7 +143,7 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 | Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([skills/generate-docs/](../../skills/generate-docs/)) | Study the [example manifest](../../examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../skills/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
 | Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
-| Start the incident registry | Create `docs/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
+| Start the incident registry | Create `docs/04-operations/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
 
 ### B3. Assess the gaps
 

@@ -32,7 +32,7 @@ See `templates/test-registry-template.yaml` for the full format with examples.
 
 ## Incident Registry
 
-**Location:** `docs/incident-registry.yaml`
+**Location:** `docs/04-operations/incident-registry.yaml`
 
 A catalog of production incidents with root cause, affected domain, fix, regression test, and canary criteria.
 

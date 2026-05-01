@@ -49,7 +49,7 @@ The developer proposes the criteria; the lead reviews them at integration verifi
   ```
   /graphify query "past incidents affecting domain: <domain-name>"
   ```
-  Fall back to reading `docs/incident-registry.yaml` directly if the graph is unavailable.
+  Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the graph is unavailable.
 - **Coverage for affected areas** — prefer graph queries:
   ```
   /graphify query "test coverage for domain: <domain-name>"

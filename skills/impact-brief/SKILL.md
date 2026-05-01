@@ -32,7 +32,7 @@ If `$ARGUMENTS` is empty, check for unstaged changes via `git diff` and use thos
    /graphify query "past incidents affecting domain: <domain-name>"
    /graphify query "incident failure modes in <domain-name>"
    ```
-   Fall back to reading `docs/incident-registry.yaml` directly if the graph is unavailable. If no incidents exist for this domain, say so explicitly — do not skip the check.
+   Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the graph is unavailable. If no incidents exist for this domain, say so explicitly — do not skip the check.
 5. **Check test coverage for the affected areas** — prefer a graph query:
    ```
    /graphify query "test coverage for domain: <domain-name>"
