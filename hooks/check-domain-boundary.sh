@@ -27,9 +27,10 @@ if tool in ("Edit", "Write"):
         paths.append(fp)
 elif tool == "apply_patch":
     cmd = data.get("tool_input", {}).get("command", "")
-    pattern = r'^\*\*\* (?:Add|Update|Delete) File: (.+)$|^\*\*\* Rename File: .+ => (.+)$'
+    # Capture Add/Update/Delete paths, Rename destinations, and Move to destinations.
+    pattern = r'^\*\*\* (?:Add|Update|Delete) File: (.+)$|^\*\*\* Rename File: .+ => (.+)$|^\*\*\* Move to: (.+)$'
     for m in re.finditer(pattern, cmd, re.MULTILINE):
-        p = (m.group(1) or m.group(2) or "").strip()
+        p = (m.group(1) or m.group(2) or m.group(3) or "").strip()
         if p:
             paths.append(p)
 
