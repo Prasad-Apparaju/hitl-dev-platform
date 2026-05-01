@@ -144,6 +144,8 @@ See **[docs/quick-start.md](docs/quick-start.md)** for the complete steps: manif
 | **Past mistakes don't repeat** | Test registry and incident registry capture every lesson. Impact analysis queries them before every change. |
 | **You know whether a technical investment paid off** | ROI estimation at the start, 30/90-day verification after. Actual outcomes documented in the ADR. |
 | **The system doesn't need a rewrite as it scales** | Coherent from the start because every AI session follows the same conventions and domain boundaries |
+| **Architects delegate without losing coherence** | HLD → LLD decomposition creates disjoint knowledge packets. Developers implement from their LLD alone. Architect reviews contracts and boundaries, not every line of code. |
+| **The system has a written memory at 12 months** | Incident registry, ADRs with actual outcomes, calibrated canary criteria — institutional knowledge that survives developer turnover and accumulates with each change. |
 
 ## Core Concepts in Brief
 
