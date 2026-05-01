@@ -65,9 +65,11 @@ cp templates/CLAUDE.md.template your-repo/CLAUDE.md
 # Edit: fill in your project's coding standards and conventions
 ```
 
-### Recommended: Install Graphify (knowledge graph for design docs)
+### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
 
-On projects with many domains or large design doc sets, the HITL skills use [Graphify](https://github.com/safishamsi/graphify) to run targeted graph queries instead of reading the full `system-manifest.yaml` on every operation. This cuts token cost significantly and improves reliability on docs that exceed the context window.
+The HITL process works fully without Graphify. Skills fall back to direct file reads automatically if it is not installed.
+
+On systems with many domains or large design doc sets, [Graphify](https://github.com/safishamsi/graphify) acts as a retrieval accelerator: skills run targeted graph queries instead of reading the full `system-manifest.yaml` on every operation, cutting token cost and keeping AI grounded on docs that would otherwise exceed the context window. It is the right addition once a repo has enough domains that full-manifest reads become expensive or noisy — not from day one.
 
 ```bash
 # Install once per environment
@@ -80,7 +82,7 @@ graphify . --directed --no-viz
 python3 -m graphify.serve graphify-out/graph.json
 ```
 
-The PostToolUse hook (included in the plugin) triggers an incremental graph rebuild automatically after every design doc edit — no manual re-runs needed. Skills fall back to direct file reads automatically if Graphify is unavailable, so this step is optional but recommended for Level 4+ adoption.
+The PostToolUse hook (included in the plugin) triggers an incremental graph rebuild automatically after every design doc edit — no manual re-runs needed.
 
 ### Fallback: Manual copy (without plugin)
 
