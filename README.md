@@ -65,6 +65,23 @@ cp templates/CLAUDE.md.template your-repo/CLAUDE.md
 # Edit: fill in your project's coding standards and conventions
 ```
 
+### Recommended: Install Graphify (knowledge graph for design docs)
+
+On projects with many domains or large design doc sets, the HITL skills use [Graphify](https://github.com/safishamsi/graphify) to run targeted graph queries instead of reading the full `system-manifest.yaml` on every operation. This cuts token cost significantly and improves reliability on docs that exceed the context window.
+
+```bash
+# Install once per environment
+pip install graphifyy && graphify install
+
+# From your repo root — build the initial graph
+graphify . --directed --no-viz
+
+# Start the MCP server so Claude Code can query it (keep running in background)
+python3 -m graphify.serve graphify-out/graph.json
+```
+
+The PostToolUse hook (included in the plugin) triggers an incremental graph rebuild automatically after every design doc edit — no manual re-runs needed. Skills fall back to direct file reads automatically if Graphify is unavailable, so this step is optional but recommended for Level 4+ adoption.
+
 ### Fallback: Manual copy (without plugin)
 
 If you prefer to own local copies of the skills and agents rather than using the plugin:
@@ -200,6 +217,7 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/apply-change` | [skills/apply-change/SKILL.md](skills/apply-change/SKILL.md) | Impact analysis — affected components, APIs, docs, tests |
 | Skill | `/generate-docs` | [skills/generate-docs/SKILL.md](skills/generate-docs/SKILL.md) | HLD/LLD/ADRs from feature description (new) or from existing code (reverse-engineer) |
 | Tool | Convention rules (semgrep) | [.semgrep/](.semgrep/) | Project convention rules — runs via semgrep in CI and pre-commit |
+| Tool | Graphify (knowledge graph) | `pip install graphifyy` · [github.com/safishamsi/graphify](https://github.com/safishamsi/graphify) | Indexes design docs as a knowledge graph; HITL skills query it instead of reading full `system-manifest.yaml` on every operation. Reduces token cost on large doc sets. PostToolUse hook keeps graph current after every doc edit. |
 | Script | Mermaid fixer | [scripts/fix_mermaid_br_tags.py](scripts/fix_mermaid_br_tags.py) | Removes `<br/>` from Mermaid blocks for Obsidian compatibility |
 | Tool | PDF renderer | [tools/render-pdf/](tools/render-pdf/) | Markdown to PDF with Mermaid diagram rendering |
 | Template | PRD | [templates/prd-template.md](templates/prd-template.md) | Product requirements with inline guidance on writing for AI |

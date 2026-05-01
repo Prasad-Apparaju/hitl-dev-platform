@@ -43,11 +43,13 @@ This process moves team knowledge out of private AI memory and into version-cont
 
 Any human or AI harness can read the same artifacts and continue from the same agreed context. The unit of collaboration is not the chat session. **The unit of collaboration is the documented decision.**
 
+On large projects, the full artifact set can exceed the AI's context window. [Graphify](https://github.com/safishamsi/graphify) indexes these artifacts as a knowledge graph, so AI skills retrieve only the relevant domain slice via graph queries instead of reading entire files. This keeps token cost predictable as the doc set grows. Skills fall back to direct file reads automatically if Graphify is unavailable.
+
 > Private AI context does not scale. Version-controlled decisions do.
 
 ![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](docs/images/team-collaboration.png)
 
-> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 28-step workflow, and the three boundaries.
+> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 30-step workflow, and the three boundaries.
 
 <details open>
 <summary>View as Mermaid diagram (text-based, copy-pasteable)</summary>

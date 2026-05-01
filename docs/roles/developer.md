@@ -27,9 +27,21 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 7. Run `/impact-brief` — downstream impact brief + rollout plan
 8. Create the PR — QA runs `/qa:review-tests`, then architect runs `/architect:verify-traceability` before merge
 
+## Setup Note: Graphify (recommended for large codebases)
+
+On projects with many domains, install [Graphify](https://github.com/safishamsi/graphify) so the HITL skills query the knowledge graph instead of reading the full `system-manifest.yaml` each time. This is especially valuable for `/apply-change`, `/tdd`, and `/impact-brief` on large systems.
+
+```bash
+pip install graphifyy && graphify install
+graphify . --directed --no-viz          # run from your repo root
+python3 -m graphify.serve graphify-out/graph.json   # keep running in background
+```
+
+Skills fall back to direct file reads automatically if Graphify is not running — no action needed on small repos.
+
 ## Further Reading
 
-- [Full 28-step workflow](../playbook/workflow-reference.md)
+- [Full 30-step workflow](../playbook/workflow-reference.md)
 - [TDD as design](../../skills/dev-practices/tdd-design.md)
 - [Downstream impact](../../skills/dev-practices/downstream-impact.md)
 - [Developer playbook template](../../templates/developer-playbook.md)
