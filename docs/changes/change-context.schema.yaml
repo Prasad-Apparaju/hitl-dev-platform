@@ -141,3 +141,51 @@ approvals:
     type: string
     enum: [pending, approved, not-required]
     description: "Ops release review approval (required for Tier 3+)"
+
+# --- Token cost tracking ---
+
+token_tracking:
+  description: "AI dev token cost for this change — used for ROI tracking and step-level optimization"
+
+  estimated:
+    description: "Populated by /apply-change at step 3. Derived from artifact file sizes × model rates."
+    total_cost_usd:
+      type: number
+      description: "Estimated total token cost in USD across all AI steps"
+      example: 0.85
+    by_phase:
+      type: object
+      description: "Phase-level cost breakdown"
+      properties:
+        design:
+          type: number
+          description: "Steps 3 and 5 — manifest + LLD reads and doc generation"
+        build:
+          type: number
+          description: "Steps 10, 12, 14, 17 — test gen, design refinement, code gen, convention check"
+        verify:
+          type: number
+          description: "Steps 18 and 19 — two code review rounds"
+        assess:
+          type: number
+          description: "Step 22 — impact brief generation"
+
+  actual:
+    description: "Filled in from Claude Code session summaries as sessions complete. Sum sessions to get total."
+    total_cost_usd:
+      type: number
+      description: "Sum of all session costs below"
+    sessions:
+      type: array
+      description: "One entry per Claude Code session worked on this change"
+      items:
+        date:
+          type: string
+          description: "YYYY-MM-DD"
+        steps_covered:
+          type: array
+          items: integer
+          description: "Workflow step numbers run during this session"
+        cost_usd:
+          type: number
+          description: "Session cost from Claude Code session summary"

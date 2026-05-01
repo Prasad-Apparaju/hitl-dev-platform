@@ -34,3 +34,24 @@ approvals:
   architecture: approved
   qa: pending
   ops: not-required
+
+token_tracking:
+  estimated:
+    total_cost_usd: 0.85
+    by_phase:
+      design: 0.15
+      build: 0.45
+      verify: 0.20
+      assess: 0.05
+  actual:
+    total_cost_usd: 0.97
+    sessions:
+      - date: "2026-04-30"
+        steps_covered: [3, 5, 9]
+        cost_usd: 0.18
+      - date: "2026-05-01"
+        steps_covered: [10, 11, 12, 13, 14, 15, 16, 17]
+        cost_usd: 0.52
+      - date: "2026-05-02"
+        steps_covered: [18, 19, 20, 21, 22, 23]
+        cost_usd: 0.27

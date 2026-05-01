@@ -11,7 +11,7 @@
 
 ### 6.1 Process Tiers by Change Type
 
-Not every change needs the full workflow. Use this table to decide the right process weight. **The full 28-step workflow is for Tier 3.** Most routine work is Tier 1 or Tier 2.
+Not every change needs the full workflow. Use this table to decide the right process weight. **The full 30-step workflow is for Tier 3.** Most routine work is Tier 1 or Tier 2.
 
 | Tier | Change type | Required artifacts | Required human gates | Overhead |
 |------|-------------|-------------------|---------------------|----------|

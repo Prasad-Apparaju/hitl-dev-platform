@@ -1,0 +1,56 @@
+# Token Cost Registry — AI dev token spend across changes
+# Place at docs/03-engineering/costs/token-cost-registry.yaml in your product repo.
+#
+# Updated at step 24 (PR creation) — add entry from .hitl/current-change.yaml actuals.
+# Reviewed at steps 29/30 (ROI checks) — compare actual vs estimated; update notes.
+# Source data: token_tracking.actual in each .hitl/current-change.yaml.
+
+schema_version: "1.0"
+
+# Recompute after each new entry.
+aggregate:
+  changes_tracked: 0
+  total_spent_usd: 0.00
+  avg_per_change_usd: null
+  avg_by_tier:
+    "1": {count: 0, avg_usd: null}  # Bug fixes
+    "2": {count: 0, avg_usd: null}  # Normal features
+    "3": {count: 0, avg_usd: null}  # Cross-domain / non-trivial
+  highest_cost_phase: null          # design | build | verify | assess — populate after 5+ entries
+
+# Optimization signals to watch for (review when changes_tracked >= 5):
+#
+# verify phase cost > build phase cost
+#   → LLDs are under-specified. AI is doing expensive inference at review time
+#     that should have been resolved in the LLD. Tighten LLD method signatures
+#     and error modes before starting the TDD cycle.
+#
+# actual > estimated by >50% consistently
+#   → Estimation model needs recalibration. Check which phase drifts most
+#     (usually build — LLDs are larger than file-size proxy suggests).
+#
+# Tier 3 avg < 2× Tier 2 avg
+#   → Slices are not granular enough. Cross-domain changes should be split
+#     into smaller domain-independent packets (step 9 constraint).
+#
+# Single session covering 10+ steps with high cost
+#   → Session is too large. Split into shorter focused sessions per phase.
+#     Smaller context = fewer wasted input tokens on irrelevant history.
+
+entries: []
+
+# Entry schema — copy from .hitl/current-change.yaml at step 24:
+#
+# - change_id: GH-NNN
+#   tier: 1|2|3|4
+#   domain: string                   # from manifest.domain
+#   estimated_usd: 0.85
+#   actual_usd: 0.97
+#   variance_pct: 14.1               # (actual - estimated) / estimated * 100
+#   by_phase:
+#     design: 0.18                   # from actual sessions covering steps 3,5
+#     build: 0.52                    # steps 10-17
+#     verify: 0.22                   # steps 18-19
+#     assess: 0.05                   # step 22
+#   completed_date: YYYY-MM-DD
+#   notes: ""                        # e.g., "LLD was 3× normal size; split next time"

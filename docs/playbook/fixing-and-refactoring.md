@@ -1,6 +1,6 @@
 # Fixing a Bug or Refactoring
 
-This guide covers bug fixes and refactors. The same 28-step workflow applies, but several steps are shortened or skipped because the scope is smaller.
+This guide covers bug fixes and refactors. The same 30-step workflow applies, but several steps are shortened or skipped because the scope is smaller.
 
 For new features, see [Adding a New Feature](./adding-a-feature.md).
 
