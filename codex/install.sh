@@ -75,6 +75,13 @@ if [[ -f "$TEST_SCRIPT_SRC" ]]; then
   echo "✓ Copied codex/hook-scripts/test-hooks.sh"
 fi
 
+# Graphify rebuild hook (triggers incremental graph rebuild on doc writes)
+if [[ -f "$PLATFORM_ROOT/hooks/rebuild-graph.sh" ]]; then
+  cp "$PLATFORM_ROOT/hooks/rebuild-graph.sh" "$TARGET_DIR/codex/hook-scripts/rebuild-graph.sh"
+  chmod +x "$TARGET_DIR/codex/hook-scripts/rebuild-graph.sh"
+  echo "✓ Copied codex/hook-scripts/rebuild-graph.sh"
+fi
+
 # --- Convention check script and its dependencies ---
 
 mkdir -p "$TARGET_DIR/codex/scripts"
@@ -112,6 +119,43 @@ for tmpl in hld-template.md lld-component-template.md; do
     echo "✓ Copied templates/$tmpl"
   fi
 done
+
+# --- Graphify knowledge graph (optional) ---
+
+if [[ ! -f "$TARGET_DIR/.graphifyignore" ]]; then
+  if [[ -f "$PLATFORM_ROOT/.graphifyignore" ]]; then
+    cp "$PLATFORM_ROOT/.graphifyignore" "$TARGET_DIR/.graphifyignore"
+    echo "✓ Copied .graphifyignore"
+  fi
+fi
+
+if [[ ! -f "$TARGET_DIR/.mcp.json" ]]; then
+  cat > "$TARGET_DIR/.mcp.json" << 'JSON'
+{
+  "mcpServers": {
+    "graphify": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "graphify.serve", "graphify-out/graph.json"]
+    }
+  }
+}
+JSON
+  echo "✓ Created .mcp.json (Graphify MCP server — requires: pip install 'graphifyy[mcp]')"
+else
+  echo "  .mcp.json already exists — add Graphify server entry manually if needed"
+fi
+
+if command -v graphify &>/dev/null; then
+  echo "  Graphify detected. After setup, build the initial graph:"
+  echo "    cd $TARGET_DIR && graphify . --directed --no-viz"
+  echo "  Then start the MCP server for AI queries:"
+  echo "    python3 -m graphify.serve graphify-out/graph.json"
+else
+  echo "  Graphify not installed. Install with:"
+  echo "    pip install graphifyy && graphify install"
+  echo "  Then run: graphify . --directed --no-viz"
+fi
 
 # --- Git hooks ---
 
