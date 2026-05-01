@@ -47,6 +47,37 @@ On large projects, the full artifact set can exceed the AI's context window. [Gr
 
 > Private AI context does not scale. Version-controlled decisions do.
 
+### Hierarchical Delegation Without Coherence Loss
+
+The Architecture → HLD → LLD decomposition is not just a documentation hierarchy. It is a responsibility decomposition mechanism.
+
+The architect works at the HLD level: system shape, domain boundaries, inter-domain contracts defined in the system manifest. Each HLD decomposition produces disjoint knowledge packets — one LLD per domain, each a self-contained specification. A developer (or AI session) can implement an LLD without reading any other part of the system. The LLD contains everything needed: method signatures, preconditions, error modes, boundary entity shapes, and the facade contracts that define what this domain promises its callers.
+
+This means the architect does not need to review implementations. They review interfaces and invariants. At integration verification, the question is not "does this code look right?" — it is "does the code keep the contracts the LLD specified, and do the domain boundaries hold?" The spec-conformance reviewer handles implementation-vs-spec comparison in a separate context window. The manifest drift checker handles boundary enforcement in CI. The architect's attention stays at the level where system coherence actually lives.
+
+```mermaid
+graph TD
+    A["Architect — system shape + contracts"] --> HLD1["HLD: Auth domain"]
+    A --> HLD2["HLD: Billing domain"]
+    A --> HLD3["HLD: Notifications domain"]
+    HLD1 --> LLD1["LLD: auth service\n(self-contained packet)"]
+    HLD2 --> LLD2["LLD: billing service\n(self-contained packet)"]
+    HLD3 --> LLD3["LLD: notification dispatcher\n(self-contained packet)"]
+    LLD1 --> Dev1["Developer + AI\n(no cross-domain context needed)"]
+    LLD2 --> Dev2["Developer + AI\n(no cross-domain context needed)"]
+    LLD3 --> Dev3["Developer + AI\n(no cross-domain context needed)"]
+    Dev1 & Dev2 & Dev3 -->|"contracts enforced by CI"| A
+
+    style A fill:#dbeafe,stroke:#2563eb,color:#1e293b
+    style Dev1 fill:#f0fdf4,stroke:#16a34a,color:#1e293b
+    style Dev2 fill:#f0fdf4,stroke:#16a34a,color:#1e293b
+    style Dev3 fill:#f0fdf4,stroke:#16a34a,color:#1e293b
+```
+
+This is the same structural pattern used in multi-agent orchestration: the orchestrator defines task boundaries and contracts; each agent operates within its boundary; contracts are the coordination mechanism. Here, the "agents" are developer + AI pairs, and the contracts are facade APIs in a version-controlled manifest.
+
+**Where it breaks:** if the LLD is underspecified, the implementation fills gaps with assumptions, and those assumptions may not compose correctly across domains. The architect's most important job is reviewing LLDs for precision before they become delegation packets — not reviewing code after it is written.
+
 ![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](docs/images/team-collaboration.png)
 
 > **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 30-step workflow, and the three boundaries.
@@ -179,6 +210,27 @@ graph LR
 Treat the LLD as a spec, not a narrative: precise interfaces, explicit edge cases, exact method signatures. Vague prose produces vague code.
 
 **Known limitation:** this works best when the domain and framework are well-understood. For exploratory work, see the Unknown (PoC) phase in Section 5.
+
+### 1.3 Long-Term Coherence — What This Is Actually For
+
+The value of this process is not most visible in the first sprint. It compounds over months.
+
+Without documented discipline, AI-assisted codebases degrade on a predictable schedule. By month 3–4, multiple competing patterns exist because each developer's sessions invented their own. By month 6, architectural decisions made early are invisible — they live in departed developers' chat transcripts, not in reviewed documents. By month 12, onboarding a new developer means weeks of archaeology; onboarding a new AI session means hoping it infers the right conventions from code that already drifted from them.
+
+HITL's compounding benefits appear over this same timeline:
+
+| Time horizon | What accumulates | What it enables |
+|---|---|---|
+| Month 1 | Manifest, LLDs, ADRs, convention checker | New AI sessions start with correct context. Convention drift detectable in CI. |
+| Month 3 | Incident registry with regression tests | Past failure modes are encoded as tests. They cannot silently reappear. |
+| Month 6 | ADRs with verified rationale, calibrated canary criteria | Architectural debates reference past decisions with known outcomes. Deployments use rollout criteria from real incidents, not guesses. |
+| Month 12 | 30/90-day ROI checks completed; doc set covers the whole system | New developers onboard from docs, not from "ask the senior dev." Technical investments have measured returns. The system has a written memory of why it is the way it is. |
+
+**The primary risk to long-term coherence is LLD drift.** Code changes that don't flow through the LLD update step leave the docs stale. Stale LLDs don't fail loudly — they silently degrade from "AI reads spec and implements correctly" to "AI infers from code and may guess wrong." The reconcile-docs step (step 20) and same-PR doc updates exist to prevent this, but they require sustained discipline.
+
+**The secondary risk is process fatigue.** The 30-step workflow has real overhead for non-trivial changes. Teams under deadline pressure skip steps — and the steps most often skipped (incident registry queries, ROI checks) are the ones with compounding long-term value. The process tiers exist to give teams a defensible reduced path; using them consciously is better than silently skipping steps.
+
+**The right fit:** mid-sized systems (20–80 modules), teams of 3–8 developers, timelines measured in quarters not sprints, and developer turnover as a real risk. For a solo developer on a single-domain service, the overhead is not worth it. For a platform team whose output other teams depend on, the contract-enforcement and traceability properties are essential.
 
 ---
 
