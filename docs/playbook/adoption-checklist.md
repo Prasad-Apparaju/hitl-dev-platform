@@ -29,7 +29,7 @@ After 1 month at Level 3-4: the team has a traceable, enforceable process for no
 | **4. System manifest + domain facades** | Manifest with domains, files, facades, conventions. Manifest drift checker. | AI stays scoped. Cross-domain drift detected. New team members onboard from the manifest. | 1 week |
 | **5. Full workflow** | Incident registry, test registry, rollout planning, ROI checks, deployment gates. | Past mistakes don't repeat. Deployments are risk-rated. Investments are measured. | 1-2 weeks |
 
-**For teams not ready for Level 5:** Levels 1-3 are the minimum viable adoption. They give you shared conventions, docs-first design, and basic traceability — the three things that prevent the worst outcomes from AI-assisted development — without the full overhead of the 28-step workflow.
+**For teams not ready for Level 5:** Levels 1-3 are the minimum viable adoption. They give you shared conventions, docs-first design, and basic traceability — the three things that prevent the worst outcomes from AI-assisted development — without the full overhead of the 30-step workflow.
 
 Each level is independently valuable. Level 1 alone eliminates the most common AI coding problem (every session invents its own conventions). Level 2 prevents the second most common problem (code that doesn't match what the team agreed). Levels 3-5 add enforcement and organizational safety.
 

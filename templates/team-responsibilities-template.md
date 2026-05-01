@@ -72,7 +72,7 @@ graph TD
 
 | Responsibility | Details |
 |---|---|
-| **Implementation** | Build from approved LLDs following the 28-step process |
+| **Implementation** | Build from approved LLDs following the 30-step process |
 | **Testing** | Write tests (TDD), run suites, fix regressions |
 | **Deployment** | Deploy their own work, verify in target environment |
 | **End-to-end ownership** | Whoever builds it owns it: build, test, fix, deploy |

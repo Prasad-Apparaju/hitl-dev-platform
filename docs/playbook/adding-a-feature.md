@@ -28,7 +28,7 @@ Read these once. They define the rules of the game:
 
 | Document | What it gives you |
 |---|---|
-| `CLAUDE.md` | 28-step workflow, preflight check, coding standards, cross-cutting conventions |
+| `CLAUDE.md` | 30-step workflow, preflight check, coding standards, cross-cutting conventions |
 | `docs/system-manifest.yaml` | Domain boundaries, facade APIs, 10 conventions that apply to all code |
 | `docs/playbook/process-overview.md` | Visual pipeline + detailed step descriptions |
 | `docs/02-design/technical/adrs/design-decisions.md` | 55 decisions — understand WHY things are the way they are before proposing changes |
@@ -241,7 +241,7 @@ Architectural trade-offs, PRD scope changes, and cross-team decisions → discus
 
 | I need to... | Go to... |
 |---|---|
-| Understand the 28-step workflow | `CLAUDE.md` (inlined) or `docs/playbook/process-overview.md` (visual) |
+| Understand the 30-step workflow | `CLAUDE.md` (inlined) or `docs/playbook/process-overview.md` (visual) |
 | Check domain boundaries | `docs/system-manifest.yaml` |
 | Look up an architectural decision | `docs/02-design/technical/adrs/design-decisions.md` |
 | Find the HLD for a component | `docs/02-design/technical/hld/index.md` |

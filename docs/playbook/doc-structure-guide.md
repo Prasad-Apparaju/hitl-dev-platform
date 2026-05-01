@@ -117,6 +117,6 @@ docs/
 2. Start with `01-product/prd.md` (use `templates/prd-template.md`)
 3. Create `docs/system-manifest.yaml` (use `templates/system-manifest-template.yaml`)
 4. Add `docs/README.md` as the navigation index
-5. Fill in docs as you design and build — the 28-step process drives doc creation
+5. Fill in docs as you design and build — the 30-step process drives doc creation
 
 The numbered folders represent a logical progression: understand the product (01) → design the solution (02) → build it (03) → run it (04). Not every project needs all folders on day one.

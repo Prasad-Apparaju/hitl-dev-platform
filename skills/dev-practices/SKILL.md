@@ -35,28 +35,49 @@ When in doubt, use the heavier process. If you are touching more than one domain
 ## Workflow Summary (Tier 2)
 
 ```
-1.  GitHub Issue         → describe the change, root cause, proposed solution
-2.  Impact Analysis      → /apply-change skill — also queries test + incident registry
-2a. ROI Estimate         → if >1 day effort, add to issue (see workflow-steps.md §ROI)
-3.  Update Docs          → HLD/LLD/ADR before code
-4.  Update IaC           → manifests, migrations, configs
-5.  Test Case Planning   → identify tests to add, update, remove
-5a. Training Plan Stub   → if new capability introduced (see workflow-steps.md §Training)
-6–8. TDD Cycle           → /tdd skill: RED → GREEN → Refactor
-9.  Code Review Round 1  → structure, security, LLD adherence
-10. Code Review Round 2  → edge cases, regressions, completeness
-11. Rerun Tests          → confirm no regressions from review fixes
-12. Reconcile Docs       → drift is a decision, not silence
-13. PR                   → links issue + docs + IaC + code + tests
-14. Downstream Impact    → /impact-brief skill
-15. Rollout Plan         → risk-rated canary with go/no-go criteria
-16. Integration Verify   → team lead runs E2E, checks traceability
-17. Figma Comparison     → if design exists, compare and resolve differences
-18. Canary Deploy        → per the rollout plan
-19. Promote or Rollback  → lead decision
-20. Merge + Demo         → after lead sign-off; demo to PM
-21. 30-day ROI Check     → metric direction, cost vs estimate
-22. 90-day ROI Check     → actual vs estimated ROI; update ADR
+Requirements
+1.  GitHub Issue           → /pm/add-feature or /pm/report-bug
+2.  Figma Review           → manual extraction into issue (conditional)
+
+Design
+3.  Impact Analysis        → /apply-change — reads system-manifest.yaml, registries; outputs .hitl/current-change.yaml
+4.  ROI Estimate           → if >1 day effort, add to issue; see roi-estimation.md (conditional)
+5.  Update Docs            → /generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
+6.  Update IaC             → manifests, migrations, configs (conditional)
+7.  Test Case Planning     → reads LLD + registries; records in issue and .hitl/current-change.yaml
+8.  Training Plan Stub     → if new capability introduced (conditional)
+9.  Package Decision Packet → architect assembles docs/decisions/issue-<N>.yaml; one per domain-independent slice
+
+Build (TDD)
+10. Generate Tests (RED)   → /tdd — reads LLD path from packet + system-manifest.yaml; writes to tests/
+11. Human Reviews Tests    → /qa/review-tests — reads same LLD + incident registry; updates test registry
+12. Tests Improve Design   → /tdd — updates LLD at same path if gaps found; architect re-reviews if significant
+13. Verify RED             → all new tests must fail; resolve any that pass before proceeding
+14. Generate Code (GREEN)  → /tdd — reads tests/, LLD (step 12), system-manifest.yaml, CLAUDE.md
+15. Verify GREEN           → all tests pass; regression fix loops back to step 14
+16. Refactor               → rerun tests after each change; done when no further simplification possible
+17. Convention Checks      → /check-conventions — zero violations required before proceeding
+
+Verify
+18. Code Review Round 1    → /check-implementation — reads implementation + LLD (step 12) + system-manifest.yaml
+19. Code Review Round 2    → /check-implementation — reads implementation + tests/ + test plan from .hitl/current-change.yaml
+20. Rerun Tests            → confirm no regressions from review fixes
+21. Reconcile Docs         → update LLD (/generate-docs) or fix code; document decision; if fix code, rerun 18–20
+
+Assess
+22. Downstream Impact Brief → /impact-brief — reads .hitl/current-change.yaml, diff, manifest, registries
+23. Rollout Plan            → /ops/review-release — ops reviews section 5 of step 22; approves before PR
+
+Ship
+24. Create PR              → issue + HLD/LLD + IaC + code + tests + packet + brief + plan
+25. Integration Verify     → /architect/verify-traceability — each slice E2E + cross-slice composition
+26. Figma Comparison       → lead compares to Figma from step 2; zero unresolved differences (conditional)
+27. Merge + Canary Deploy  → /ops/monitor-canary — lead merges; remaining slices rebase + rerun 17–19
+28. Promote or Rollback    → verify go/no-go criteria from step 23; pause on failure, lead decides
+
+Post-Ship
+29. 30-day ROI Check       → reads baseline from step 4 issue; see roi-estimation.md (conditional)
+30. 90-day ROI Check       → reads step 4 + step 29; update ADR Actual Outcome; see roi-estimation.md (conditional)
 ```
 
 ## Reference Files
@@ -65,7 +86,7 @@ Detailed procedures are in supporting files — load only what you need:
 
 | File | Contains |
 |------|---------|
-| `workflow-steps.md` | Full step-by-step detail for each of the 22 steps |
+| `workflow-steps.md` | Full step-by-step detail for each of the 30 steps |
 | `tdd-design.md` | TDD-as-design three-phase loop, contract tests, worked examples |
 | `roi-estimation.md` | ROI template, value dimensions, verification cadence |
 | `downstream-impact.md` | Impact brief 5 sections, risk-rated rollout plan table |
@@ -79,6 +100,6 @@ Detailed procedures are in supporting files — load only what you need:
 
 **API design:** endpoints scoped to owning entity; consistent auth; 404 not 403 for ownership failures; version for backwards compatibility.
 
-**Code review:** two rounds — Round 1 before tests (structure/security/LLD adherence), Round 2 after all tests pass (edge cases/regressions/completeness).
+**Code review:** two rounds using `/check-implementation` (`spec-conformance-reviewer` agent) — Round 1 reads implementation + LLD + system-manifest (structure/security/LLD adherence); Round 2 reads implementation + tests + test plan (edge cases/regressions/completeness). Both rounds read from repo files, not from memory.
 
 **Integration verification (team lead only):** run feature E2E; compare against HLD/LLD; check full traceability chain; Figma comparison if design exists.
