@@ -71,7 +71,7 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
    > **Tests need your review before I write any code. Work through this list:**
    >
    > 1. **Coverage gaps** — I generated tests from the LLD. What domain knowledge or business rules do you know that aren't in the LLD? Add tests for those now.
-   > 2. **Incident registry** — Check for past failures in this domain (graph query preferred: `/graphify query "past incidents affecting domain: <domain-name>"`, or read `docs/03-engineering/testing/incident-registry.yaml` directly). Are any of those failure modes missing from the tests above?
+   > 2. **Incident registry** — Check for past failures in this domain (graph query preferred: `/graphify query "past incidents affecting domain: <domain-name>"`, or read `docs/04-operations/incident-registry.yaml` directly). Are any of those failure modes missing from the tests above?
    > 3. **Security edge cases** — Is there a test for: unauthenticated access rejected? User A cannot access User B's data? Input at max length / empty / null?
    > 4. **Realistic failure modes** — What's the most likely way this breaks in production that I haven't tested? (network timeout? partial write? concurrent requests?)
    > 5. **Test quality** — Read 3 random tests from the list. Does the assertion actually verify the behavior described in the test name? If not, those tests need to be rewritten.
@@ -155,7 +155,7 @@ When the user says "tests approved" and has addressed the checklist, proceed to 
 
 4. **Update `.hitl/current-change.yaml`** — mark `tests_red: done` and `tests_green: done` in `required_evidence`.
 
-5. **Say:** "TDD cycle complete. Tests: [count passing]. Code ready for code review (steps 13-14 of the workflow)."
+5. **Say:** "TDD cycle complete. Tests: [count passing]. Code ready for code review (steps 18-19 of the workflow)."
 
 ---
 

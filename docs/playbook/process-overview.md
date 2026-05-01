@@ -149,7 +149,7 @@ Every artifact class has exactly one canonical location. Path drift undermines e
 | ADRs | `docs/02-design/technical/adrs/` |
 | Decision packets | `docs/decisions/issue-<N>.yaml` |
 | Test registry | `docs/03-engineering/testing/test-registry.yaml` |
-| Incident registry | `docs/incident-registry.yaml` |
+| Incident registry | `docs/04-operations/incident-registry.yaml` |
 | Test files | `tests/` |
 | Token cost registry | `docs/03-engineering/costs/token-cost-registry.yaml` |
 

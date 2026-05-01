@@ -207,7 +207,7 @@ graph LR
 | System manifest | `docs/system-manifest.yaml` | Domain boundaries, facade APIs, conventions, interaction matrix. |
 | CLAUDE.md | Repo root | Auto-loaded rules for every Claude session. Conventions inlined. |
 | Test registry | `docs/03-engineering/testing/test-registry.yaml` | Test catalog by domain, risk, origin, incident link. |
-| Incident registry | `docs/incident-registry.yaml` | Production incidents linked to regression tests and canary criteria. |
+| Incident registry | `docs/04-operations/incident-registry.yaml` | Production incidents linked to regression tests and canary criteria. |
 | Training plan | `docs/03-engineering/training/` | Onboarding material for new capabilities. Module-based format. |
 | Convention checks | `convention-checks.yaml` | YAML config for the pluggable convention checker. |
 | Issue template | `.github/ISSUE_TEMPLATE/` | ROI estimation + downstream impact sections. |

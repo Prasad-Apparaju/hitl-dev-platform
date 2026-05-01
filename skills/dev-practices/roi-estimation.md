@@ -1,6 +1,6 @@
 # ROI Estimation Reference
 
-## When it fires (Step 2a)
+## When it fires (Step 4 — conditional)
 
 ROI estimation is required for any change costing more than ~1 day of effort. For smaller changes, state "ROI estimate not required — change is <1 day" explicitly so the skip is auditable.
 
@@ -102,7 +102,7 @@ At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/
 
 Estimates are intentionally rough. The registry calibrates them over time — if actual consistently exceeds estimated by >50%, adjust the ratio for that phase.
 
-## Training Plan (Step 5a — conditional)
+## Training Plan (Step 8 — conditional)
 
 Training plan required when the change introduces:
 - A new architectural pattern

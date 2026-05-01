@@ -347,7 +347,7 @@ Run after the TDD cycle is complete, before creating a PR.
    ```
    /graphify query "past incidents affecting domain: <domain-name>"
    ```
-   Fall back to reading `docs/03-engineering/testing/incident-registry.yaml` directly if the graph is unavailable. Do not assume the registry is empty — actively query it.
+   Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the graph is unavailable. Do not assume the registry is empty — actively query it.
 5. Tests assert on behavior, not implementation (test names describe scenarios)
 6. Tests are independent (no shared mutable state)
 7. External APIs mocked; internal logic not mocked

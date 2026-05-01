@@ -17,7 +17,7 @@ If a Figma design exists, the PM or developer reads the Figma file directly and 
 ## Steps 3–9: Design
 
 **3. Impact Analysis** — use `/apply-change`
-Reads `system-manifest.yaml`, test registry (`docs/03-engineering/testing/test-registry.yaml`), and incident registry (`docs/incident-registry.yaml`) to identify affected components, APIs, configs, and dependencies. Produces an effort estimate. Outputs `.hitl/current-change.yaml` with change ID, tier, affected domains, source artifact paths, and `token_tracking.estimated` — a phase-level token cost estimate based on artifact file sizes. See `roi-estimation.md` for the estimation method.
+Reads `system-manifest.yaml`, test registry (`docs/03-engineering/testing/test-registry.yaml`), and incident registry (`docs/04-operations/incident-registry.yaml`) to identify affected components, APIs, configs, and dependencies. Produces an effort estimate. Outputs `.hitl/current-change.yaml` with change ID, tier, affected domains, source artifact paths, and `token_tracking.estimated` — a phase-level token cost estimate based on artifact file sizes. See `roi-estimation.md` for the estimation method.
 
 **4. ROI Estimate (conditional)**
 If the step 3 effort estimate exceeds 1 day, add an ROI section to the GitHub issue: expected outcome (specific and falsifiable), baseline metric (measured now, not estimated), measurement plan, 30/90-day checkpoints. Include `token_tracking.estimated.total_cost_usd` from `.hitl/current-change.yaml` as the "AI dev tokens" cost line item. See `roi-estimation.md` for the template. No command.

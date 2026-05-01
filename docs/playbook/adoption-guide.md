@@ -128,7 +128,7 @@ The baseline sprint produces the starting state. Keeping the process working ove
 | `docs/system-manifest.yaml` | Architect | Any PR that adds files, changes domain boundaries, or modifies a facade API |
 | `docs/02-design/technical/lld/` | Domain lead (developer) | Same PR as the code change — docs and code move together |
 | `docs/03-engineering/testing/test-registry.yaml` | Developer + QA | Every test added, removed, or renamed |
-| `docs/incident-registry.yaml` | Ops + Lead | After every production incident |
+| `docs/04-operations/incident-registry.yaml` | Ops + Lead | After every production incident |
 | `docs/decisions/issue-<N>.yaml` | Architect | Created at step 9; updated only if scope changes before merge |
 | `.hitl/current-change.yaml` | Developer | Created by `/apply-change`; updated at each phase gate; deleted after merge |
 
