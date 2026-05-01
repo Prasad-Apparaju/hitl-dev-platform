@@ -24,7 +24,12 @@ If `$ARGUMENTS` is empty, ask: "Which design-room thread should I conclude? Past
    - **Alternatives considered:** What other options were discussed and why were they rejected?
    - **Participants:** Who contributed to the discussion?
    - **Open questions:** Anything left unresolved or flagged for later?
-   - **Affected components:** Which domains/services does this touch? (Cross-reference with `docs/system-manifest.yaml`)
+   - **Affected components:** Which domains/services does this touch? Prefer a graph query:
+     ```
+     /graphify query "domain: <topic-keyword> components and dependencies"
+     /graphify query "facade APIs affected by <decision-topic>"
+     ```
+     Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable or stale.
 
 3. **Present the summary** to the user:
 

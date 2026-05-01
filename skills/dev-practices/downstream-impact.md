@@ -40,7 +40,19 @@ The developer proposes the criteria; the lead reviews them at integration verifi
 ## Inputs Required
 
 - `git diff main...HEAD` — the actual diff
-- `docs/system-manifest.yaml` — affected domains
-- `docs/incident-registry.yaml` — past failures in the affected domains
-- `docs/03-engineering/testing/test-registry.yaml` — coverage for affected areas
+- **Affected domains** — prefer graph queries:
+  ```
+  /graphify query "domain: <domain-name> components and facade APIs"
+  ```
+  Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable.
+- **Past failures in the affected domains** — prefer graph queries:
+  ```
+  /graphify query "past incidents affecting domain: <domain-name>"
+  ```
+  Fall back to reading `docs/incident-registry.yaml` directly if the graph is unavailable.
+- **Coverage for affected areas** — prefer graph queries:
+  ```
+  /graphify query "test coverage for domain: <domain-name>"
+  ```
+  Fall back to reading `docs/03-engineering/testing/test-registry.yaml` directly if the graph is unavailable.
 - `.hitl/current-change.yaml` — change tier and approved domain

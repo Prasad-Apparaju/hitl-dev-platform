@@ -14,7 +14,11 @@ If `$ARGUMENTS` is empty, ask: "Which requirement do you want to update? Provide
 
 ## Steps
 
-1. **Read the PRD** at `docs/01-product/prd.md`. Find the requirement by ID.
+1. **Find the requirement by ID** — prefer a graph query if available:
+   ```
+   /graphify query "requirement <ID> from PRD with acceptance criteria"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable or stale.
 
 2. **Show the current requirement** to the user — full row including acceptance criteria.
 

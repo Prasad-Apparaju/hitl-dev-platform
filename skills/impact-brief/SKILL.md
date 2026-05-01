@@ -21,9 +21,24 @@ If `$ARGUMENTS` is empty, check for unstaged changes via `git diff` and use thos
 
 1. **Read `.hitl/current-change.yaml`** — get the change ID, tier, source artifacts, and manifest domain
 2. **Read the diff** — `git diff main...HEAD` or the PR diff
-3. **Read the system manifest** (`docs/system-manifest.yaml`) — identify which domains are affected
-4. **Read the incident registry** (`docs/incident-registry.yaml`) — find past incidents in the affected domains
-5. **Read the test registry** (`docs/03-engineering/testing/test-registry.yaml`) — check coverage for the affected areas
+3. **Identify affected domains** — prefer a graph query if the graph is available:
+   ```
+   /graphify query "domain: <domain-name> components and facade APIs"
+   /graphify query "cross-component dependencies for <domain-name>"
+   ```
+   Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable or stale.
+4. **Find past incidents in the affected domains** — prefer a graph query:
+   ```
+   /graphify query "past incidents affecting domain: <domain-name>"
+   /graphify query "incident failure modes in <domain-name>"
+   ```
+   Fall back to reading `docs/incident-registry.yaml` directly if the graph is unavailable. If no incidents exist for this domain, say so explicitly — do not skip the check.
+5. **Check test coverage for the affected areas** — prefer a graph query:
+   ```
+   /graphify query "test coverage for domain: <domain-name>"
+   /graphify query "existing tests for <component-name>"
+   ```
+   Fall back to reading `docs/03-engineering/testing/test-registry.yaml` directly if the graph is unavailable.
 
 ---
 
