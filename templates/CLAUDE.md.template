@@ -20,7 +20,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ---
 
-## Change Workflow (28 Steps — MANDATORY ORDER)
+## Change Workflow (30 Steps — MANDATORY ORDER)
 
 Every change — feature, bug fix, improvement, refactor — follows this sequence. Never skip steps 1-5. Documentation is the source of truth, not code.
 
@@ -40,7 +40,7 @@ Every change — feature, bug fix, improvement, refactor — follows this sequen
 
 ### Build — TDD Cycle (Steps 9-16)
 
-9. **AI generates tests (RED)** — read the LLD + test plan + manifest facade contracts. Generate maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance. No implementation code exists yet.
+9. **AI generates tests (RED)** — read the LLD + test plan. Get manifest facade contracts via graph query if available: `/graphify query "domain: <domain-name> facade_apis and boundary_entities"`. Generate maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance. No implementation code exists yet.
 10. **Human reviews tests** — developer adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial/wrong tests, challenges assumptions. Register every test in the test registry.
 11. **Tests improve the design** — AI analyzes the test suite for gaps in the LLD. If tests cover behavior the LLD doesn't describe, UPDATE THE LLD FIRST, before any code.
 12. **Verify RED** — run the full test suite. All new tests MUST fail (no implementation exists). If any pass, investigate.
@@ -82,7 +82,15 @@ Every change — feature, bug fix, improvement, refactor — follows this sequen
 
 ## System Manifest — Read Before Every Change
 
-Before modifying any code, read `docs/system-manifest.yaml`:
+Before modifying any code, get the relevant domain's conventions and facade APIs. Prefer a graph query if available — `docs/system-manifest.yaml` is large and the graph surfaces just the relevant slice:
+
+```
+/graphify query "domain: <domain-name> facade APIs and boundary entities"
+/graphify query "cross-cutting conventions for <domain-name>"
+```
+
+Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable or stale (`graphify check-update docs/`).
+
 - The `cross_cutting` section lists your project's conventions that apply to all code
 - The domain entry for the area you're modifying lists its specific conventions + facade APIs
 - Follow every convention listed. If unsure whether a convention applies, it applies.
@@ -158,6 +166,39 @@ Add more conventions specific to your project:
 
 ---
 
+## Knowledge Graph (Graphify)
+
+The HITL platform integrates Graphify to reduce token cost when querying design docs. On large projects, the full doc set (HLDs + LLDs + system-manifest + ADRs) can exceed the context window. The graph gives you relevant nodes without reading whole files.
+
+### Setup (one-time)
+
+```bash
+pip install graphifyy && graphify install
+graphify . --directed --no-viz          # build initial graph
+python3 -m graphify.serve graphify-out/graph.json   # start MCP server (separate terminal)
+```
+
+### Keeping the graph current
+
+The PostToolUse hook (`rebuild-graph.sh`) triggers an incremental rebuild automatically after every design doc write. To verify freshness before querying:
+
+```bash
+graphify check-update docs/
+```
+
+### When to use the graph vs read files directly
+
+| Situation | Use graph | Read file directly |
+|---|---|---|
+| Finding which domain a component belongs to | ✓ | |
+| Getting facade APIs for a domain | ✓ | |
+| Tracing cross-component dependencies | ✓ | |
+| Reading full method signatures from an LLD | | ✓ |
+| Verifying a specific precondition or error mode | | ✓ |
+| Graph is missing or stale | | ✓ |
+
+---
+
 ## Domain Boundaries
 
 When modifying code, stay within your domain boundary. The domains and their files are defined in `docs/system-manifest.yaml` under `domains:`. Key rule: **do NOT modify files outside your domain's file list without explicit approval.** If you need something from another domain, reference its facade API from the manifest.
@@ -176,7 +217,7 @@ For verbose explanations, examples, Mermaid diagrams, and subsection details, se
 
 | Topic | File |
 |---|---|
-| Full 28-step workflow with Mermaid + subsections | `skills/dev-practices/SKILL.md` |
+| Full 30-step workflow with Mermaid + subsections | `skills/dev-practices/SKILL.md` |
 | Impact analysis template | `skills/apply-change/SKILL.md` |
 | Convention check commands | `skills/check-conventions/SKILL.md` |
 | Downstream impact brief (5-section template) | `skills/impact-brief/SKILL.md` |
