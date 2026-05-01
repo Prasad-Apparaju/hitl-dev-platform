@@ -57,6 +57,13 @@ Run this workflow when starting any Tier 1+ change. This replaces the `/apply-ch
    - HLD/LLD at `docs/02-design/technical/hld/` and `docs/02-design/technical/lld/` (note which exist or need to be created)
    - Relevant domain in `docs/system-manifest.yaml`
 
+   If `graphify-out/graph.json` exists, query the graph first — it reduces token cost significantly on large doc sets:
+   ```
+   /graphify query "domain: <domain-name> — facade APIs, boundary entities, dependencies"
+   /graphify query "what components does <component-name> depend on?"
+   ```
+   Fall back to reading the full file if the graph is missing or the `graphify check-update docs/` command reports it is stale.
+
    For Tier 2+: if the LLD does not exist, stop — "LLD required before implementation. Run the Generate Documentation workflow first."
 
 4. **Impact analysis** — read the codebase to identify:
@@ -106,7 +113,12 @@ When implementing a change with an approved context file, follow this process:
 
 1. Read `.hitl/current-change.yaml` — verify `status` is `implementation-approved`.
 2. Read the approved LLD at the path in the context file.
-3. Read `docs/system-manifest.yaml` for the relevant domain — understand the facade APIs, boundary entities, and cross-cutting conventions.
+3. Get the relevant domain's facade APIs, boundary entities, and cross-cutting conventions. Prefer a graph query if the graph is available — `docs/system-manifest.yaml` is large and the graph surfaces just the relevant slice:
+   ```
+   /graphify query "domain: <domain-name> facade APIs and boundary entities"
+   /graphify query "cross-cutting conventions for <domain-name>"
+   ```
+   Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable.
 
 ### During Implementation
 
@@ -138,10 +150,13 @@ Use after the LLD is approved, before writing any implementation code. This repl
 ### Phase 1 — Generate Tests (RED)
 
 1. Read the LLD for the component.
-2. Read `docs/system-manifest.yaml`:
-   - `facade_apis` for this domain → contract tests
-   - `cross_cutting` conventions → convention tests
-   - `boundary_entities` → entity shape tests
+2. Get the manifest data needed for test generation. Prefer graph queries over reading the full manifest:
+   ```
+   /graphify query "domain: <domain-name> facade_apis for contract tests"
+   /graphify query "domain: <domain-name> boundary_entities and cross_cutting conventions"
+   ```
+   Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable.
+   Extract: `facade_apis` → contract tests, `cross_cutting` conventions → convention tests, `boundary_entities` → entity shape tests.
 3. Generate maximum coverage:
    - Happy path for every method
    - Error path for every `error_modes` entry
@@ -414,6 +429,52 @@ When you finish a session (user says "done", "that's all for now", or similar), 
 - Next steps to complete before the PR
 
 A git post-commit hook also writes `docs/session-logs/hitl-session-<change-id>-<timestamp>.md` automatically on each commit.
+
+---
+
+## Knowledge Graph (Graphify)
+
+The HITL platform integrates Graphify to reduce token cost when querying design docs. On large projects, the full doc set (HLDs + LLDs + system-manifest + ADRs) can exceed the context window. The graph gives you relevant nodes without reading whole files.
+
+### Setup (one-time per project)
+
+```bash
+# Install
+pip install graphifyy && graphify install
+
+# Build the initial graph (run from project root)
+graphify . --directed --no-viz
+
+# Start the MCP server (keep running in a separate terminal)
+python3 -m graphify.serve graphify-out/graph.json
+```
+
+`.mcp.json` is created by `codex/install.sh` — it wires the MCP server so Codex can call `query_graph`, `get_node`, and `get_neighbors` as tools.
+
+### Keeping the graph current
+
+The PostToolUse hook (`rebuild-graph.sh`) triggers an incremental rebuild automatically after every design doc write. Code file writes do not trigger a rebuild.
+
+To verify the graph is fresh before querying:
+```bash
+graphify check-update docs/
+```
+
+To rebuild manually:
+```bash
+graphify . --update --no-viz --directed
+```
+
+### When to use the graph vs read files directly
+
+| Situation | Use graph | Read file directly |
+|---|---|---|
+| Finding which domain a component belongs to | ✓ | |
+| Getting facade APIs for a domain | ✓ | |
+| Tracing cross-component dependencies | ✓ | |
+| Reading full method signatures from an LLD | | ✓ |
+| Verifying a specific precondition or error mode | | ✓ |
+| Graph is missing or stale | | ✓ |
 
 ---
 

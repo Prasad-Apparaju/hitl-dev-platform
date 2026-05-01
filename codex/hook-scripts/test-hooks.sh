@@ -151,6 +151,36 @@ assert_stderr_contains "apply_patch Move to destination src/new.py outside allow
 
 popd > /dev/null
 
+# --- rebuild-graph.sh ---
+
+REBUILD_SCRIPT=$(resolve_script "rebuild-graph.sh")
+
+if [[ -z "$REBUILD_SCRIPT" ]]; then
+  echo ""
+  echo "  SKIP: rebuild-graph.sh not found — skipping graph rebuild tests"
+else
+  echo ""
+  echo "=== rebuild-graph.sh ==="
+  echo ""
+
+  TMPDIR_GRAPH=$(mktemp -d)
+  trap "rm -rf $TMPDIR_GRAPH" EXIT
+  pushd "$TMPDIR_GRAPH" > /dev/null
+  git init -q
+
+  # T13: Edit on a doc file — should exit 0 (graphify absent → silent skip)
+  INPUT='{"tool_name":"Edit","tool_input":{"file_path":"docs/02-design/technical/lld/services/model-router.md","old_string":"a","new_string":"b"}}'
+  echo "$INPUT" | bash "$REBUILD_SCRIPT" 2>/dev/null; R=$?
+  assert_exit "Edit docs/lld file, graphify absent → exit 0 (silent skip)" 0 $R
+
+  # T14: Edit on a source file — should exit 0 (non-doc path, skip immediately)
+  INPUT='{"tool_name":"Edit","tool_input":{"file_path":"src/app.py","old_string":"a","new_string":"b"}}'
+  echo "$INPUT" | bash "$REBUILD_SCRIPT" 2>/dev/null; R=$?
+  assert_exit "Edit src/app.py (non-doc) → exit 0 (ignored)" 0 $R
+
+  popd > /dev/null
+fi
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 echo ""

@@ -1,0 +1,31 @@
+# Graphify ignore — exclude non-design files from the knowledge graph
+# Syntax: same as .gitignore
+
+# Graphify's own output
+graphify-out/
+
+# HITL session and change state — ephemeral, not design knowledge
+.hitl/
+docs/archive/
+docs/session-logs/
+
+# Binary and media assets
+docs/images/
+*.png
+*.svg
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.DS_Store
+
+# Python / Node artifacts
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+
+# Generated / derived files
+*.generated.*
+dist/
+build/
