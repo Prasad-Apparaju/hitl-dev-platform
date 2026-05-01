@@ -188,10 +188,10 @@ What transfers directly vs. what doesn't:
 **B4b — No reference implementation exists:**
 
 Design the target architecture from scratch using `/generate-docs`:
-1. Write HLDs for the target system
-2. Get architect approval
-3. Write LLDs for each component
-4. Document decisions as ADRs
+1. Use `/generate-docs` to draft HLDs for the target system — AI generates from the design conversation; architect reviews and approves
+2. Get architect approval on each HLD before proceeding
+3. Use `/generate-docs` to generate LLDs from the approved HLDs — architect and developer review and correct
+4. Document decisions as ADRs (AI drafts from the design discussion; architect verifies)
 
 ### B5. Sequence into vertical slices
 

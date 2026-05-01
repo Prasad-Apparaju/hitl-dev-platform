@@ -113,8 +113,8 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 
 | Urgency | Process | Doc requirement |
 |---------|---------|-----------------|
-| P0 (system down) | Fix first | Write LLD for affected area within 48 hours |
-| P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Write LLD during PR review |
+| P0 (system down) | Fix first | Use `/generate-docs` to produce LLD for affected area within 48 hours |
+| P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Use `/generate-docs` to produce LLD during PR review |
 | P2+ (everything else) | Full 30-step process | Standard docs-before-code |
 
 ## Common Objections

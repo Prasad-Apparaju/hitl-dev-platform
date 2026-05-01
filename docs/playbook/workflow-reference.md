@@ -1,4 +1,4 @@
-# Workflow Reference — The Full 28-Step Process
+# Workflow Reference — The Full 30-Step Process
 
 ## 4. Collaborative Development: The Design Room
 
@@ -30,8 +30,8 @@ Some changes have unknowns that must be resolved before the team can commit to a
 
 | Phase | When | What happens | Output |
 |-------|------|-------------|--------|
-| **Unknown (PoC / Spike)** | The team cannot write a precise LLD because a key question is unanswered — "will the API support this?", "can the model handle this latency?", "does this approach scale?" | Timeboxed PoC. AI generates the throwaway code. Developer validates the hypothesis. No production standards required — this is learning, not building. | Findings doc: what worked, what didn't, constraints discovered, revised assumptions. |
-| **Known (Execution)** | The design is understood well enough to write a precise LLD. | Full workflow below. The findings from the PoC feed directly into the LLD — they ARE the design input. | Production code, tests, docs, deployment. |
+| **Unknown (PoC / Spike)** | A key question is unanswered — "will the API support this?", "can the model handle this latency?", "does this approach scale?" — and without answering it the team cannot approve a precise LLD. | Timeboxed PoC. AI generates the throwaway code. Developer validates the hypothesis. No production standards required — this is learning, not building. | Findings doc: what worked, what didn't, constraints discovered, revised assumptions. |
+| **Known (Execution)** | The design is understood well enough for AI to generate a precise LLD that the architect can review and approve. | Full workflow below. The findings from the PoC feed directly into the LLD — they ARE the design input. | Production code, tests, docs, deployment. |
 
 The PoC phase is explicitly **not** held to the full workflow. Its purpose is to answer questions cheaply so the execution phase doesn't discover unknowns mid-build. But PoC findings MUST be documented — they become the basis for the LLD. A PoC without a findings doc is wasted learning.
 
@@ -132,17 +132,17 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 | Phase | Steps |
 |-------|-------|
-| **Requirements** | Issue 👤🤖 → Figma review 👤🤖 (if exists) |
-| **Design** | Impact analysis 🤖 → ROI estimate 👤🤖 (conditional) → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 |
+| **Requirements** | Issue 👤🤖 → Figma review 👤 (if exists) |
+| **Design** | Impact analysis 🤖 → ROI estimate 👤🤖 (conditional) → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 → Decision packet 👤 |
 | **Build (TDD)** | Generate tests (RED) 🤖 → Human reviews tests 👤 🔁 → Tests improve design 🤖 🔁 → Verify RED 🤖 → Generate code (GREEN) 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 → Convention checks 🤖 |
 | **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Rerun tests 🤖 → Reconcile docs 👤🤖 🔁 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
-| **Ship** | Create PR 👤🤖 → Integration verify 👤 → Figma comparison 👤🤖 (if exists) → Merge + canary deploy 👤🤖 |
+| **Ship** | Create PR 👤🤖 → Integration verify 👤 → Figma comparison 👤 (if exists) → Merge + canary deploy 👤🤖 → Promote or rollback 👤 |
 | **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 28 steps: **10 AI-driven** 🤖, **13 AI-assisted** 👤🤖, **5 human-only** 👤.
+Of 30 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **9 human-only** 👤.
 
 ### 5.3 The Two-Round Code Review
 
