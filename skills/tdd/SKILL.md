@@ -40,21 +40,29 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 
 5. **Present all generated tests** to the user. Do NOT proceed to Phase 2 until the user reviews.
 
-6. **STOP and ask:**
-   - "Review the tests above. Add edge cases, domain-specific scenarios, or integration tests I missed."
-   - "When you're satisfied, say 'tests approved' to proceed."
+6. **STOP and present a specific review checklist:**
+
+   > **Tests need your review before I write any code. Work through this list:**
+   >
+   > 1. **Coverage gaps** — I generated tests from the LLD. What domain knowledge or business rules do you know that aren't in the LLD? Add tests for those now.
+   > 2. **Incident registry** — Check `docs/03-engineering/testing/incident-registry.yaml` for past failures in this domain. Are any of those failure modes missing from the tests above?
+   > 3. **Security edge cases** — Is there a test for: unauthenticated access rejected? User A cannot access User B's data? Input at max length / empty / null?
+   > 4. **Realistic failure modes** — What's the most likely way this breaks in production that I haven't tested? (network timeout? partial write? concurrent requests?)
+   > 5. **Test quality** — Read 3 random tests from the list. Does the assertion actually verify the behavior described in the test name? If not, those tests need to be rewritten.
+   >
+   > Remove any tests that only verify implementation details (mock called once, internal method invoked). Those tests will break on every refactor without catching real bugs.
+   >
+   > When you're satisfied, say **"tests approved"** to proceed.
 
 ---
 
 ## Phase 2 — Human Reviews + Adds Tests
 
-Wait for the user to:
-- Add edge cases AI missed
-- Add scenarios from the incident registry
-- Remove tests that are trivial or wrong
-- Challenge assumptions
+Wait for the user to work through the checklist above. Do not prompt them to hurry or summarize what you're waiting for — they need to think through each item.
 
-When the user says "tests approved" or equivalent, proceed to Phase 3.
+If the user says "tests approved" without engaging with the checklist, ask: "Did you check the incident registry for this domain? And are there security edge cases covered?" Only proceed when both are confirmed.
+
+When the user says "tests approved" and has addressed the checklist, proceed to Phase 3.
 
 ---
 
