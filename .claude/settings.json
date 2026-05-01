@@ -18,6 +18,10 @@
           {
             "type": "command",
             "command": "bash hooks/check-domain-boundary.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash hooks/rebuild-graph.sh"
           }
         ]
       }

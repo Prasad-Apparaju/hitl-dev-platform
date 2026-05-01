@@ -120,6 +120,60 @@ for tmpl in hld-template.md lld-component-template.md; do
   fi
 done
 
+# --- Claude Code hooks (.claude/settings.json) ---
+
+mkdir -p "$TARGET_DIR/.claude"
+CLAUDE_SETTINGS="$TARGET_DIR/.claude/settings.json"
+
+if [[ -f "$CLAUDE_SETTINGS" ]]; then
+  echo "  .claude/settings.json already exists — add rebuild-graph hook manually if needed:"
+  echo "    PostToolUse / Edit|Write → bash codex/hook-scripts/rebuild-graph.sh"
+else
+  cat > "$CLAUDE_SETTINGS" << 'JSON'
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash codex/hook-scripts/check-hitl-context.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash codex/hook-scripts/check-domain-boundary.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash codex/hook-scripts/rebuild-graph.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash codex/hook-scripts/write-session-summary.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+JSON
+  echo "✓ Created .claude/settings.json (Claude Code hooks — HITL context, boundary check, graph rebuild)"
+fi
+
 # --- Graphify knowledge graph (optional) ---
 
 if [[ ! -f "$TARGET_DIR/.graphifyignore" ]]; then
