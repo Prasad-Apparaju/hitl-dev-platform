@@ -12,7 +12,11 @@ Compare what's been built against what was requested.
 
 ## Steps
 
-1. **Read the PRD** at `docs/01-product/prd.md`. Extract all functional requirements (FR-*).
+1. **Get all functional requirements** — prefer a graph query if available:
+   ```
+   /graphify query "all functional requirements FR-* with implementation status"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable or stale.
 
 2. **Scan the V2 codebase** at `V2/app/`. For each requirement, check whether implementation exists:
    - Look at the "Implementation" column in the PRD if populated

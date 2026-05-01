@@ -12,7 +12,12 @@ Generate a demo checklist from the PRD so the PM knows exactly what to test and 
 
 ## Steps
 
-1. **Read the PRD** at `docs/01-product/prd.md`. Extract all use cases (UC-0 through UC-N).
+1. **Get all use cases** — prefer a graph query if available:
+   ```
+   /graphify query "all use cases from PRD with acceptance criteria"
+   /graphify query "UC-0 through UC-N flows and error scenarios"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable or stale.
 
 2. **Read the latest release notes** at `docs/releases/` to understand what's currently deployed.
 

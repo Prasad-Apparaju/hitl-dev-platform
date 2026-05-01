@@ -19,7 +19,12 @@ You MUST verify all of the following before writing any code:
 ### Step 1: Read Source Artifacts
 - Read `.hitl/current-change.yaml`
 - Read the approved LLD
-- Read `docs/system-manifest.yaml` for the relevant domain (cross-cutting conventions, facade APIs, boundary entities)
+- Get domain conventions and facade APIs — prefer a graph query if the graph is available:
+  ```
+  /graphify query "domain: <domain-name> facade APIs and boundary entities"
+  /graphify query "cross-cutting conventions for <domain-name>"
+  ```
+  Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable or stale (`graphify check-update docs/`).
 - Read `CLAUDE.md` for coding standards
 
 ### Step 2: Run TDD Cycle

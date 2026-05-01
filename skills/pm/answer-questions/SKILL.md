@@ -12,7 +12,11 @@ Walk through the Open Questions section and help the PM resolve them.
 
 ## Steps
 
-1. **Read Section 10 (Open Questions)** from `docs/01-product/prd.md`.
+1. **Get the Open Questions section** — prefer a graph query if available:
+   ```
+   /graphify query "open questions from PRD with owner and status"
+   ```
+   Fall back to reading Section 10 of `docs/01-product/prd.md` directly if the graph is unavailable or stale.
 
 2. **Present each open question** one at a time:
    ```

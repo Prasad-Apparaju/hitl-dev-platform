@@ -25,7 +25,11 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
 5. **What does success look like?** Name a specific metric with its current measured value and a target. "Improve engagement" is not an answer. "Increase campaign creation rate from 2.3/week to 4/week, measured by analytics event X" is.
 6. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP — and it's probably what you should validate first.
 7. **What's explicitly out of scope?** What should this feature NOT do? Unstated non-goals become scope creep.
-8. **Does this conflict with anything we've already built or committed to?** Read `docs/01-product/prd.md` now. Flag any requirement this extends, contradicts, or duplicates.
+8. **Does this conflict with anything we've already built or committed to?** Query the PRD for conflicts now — prefer a graph query:
+   ```
+   /graphify query "existing requirements related to <feature-topic>"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable. Flag any requirement this extends, contradicts, or duplicates.
 
 Summarize the answers back to the PM. If any answer is vague, ask for the specific data point before summarizing. Get confirmation before proceeding.
 
@@ -101,7 +105,11 @@ Present the full list. Get confirmation before proceeding.
 
 Before writing to the PRD, assess honestly. Surface risks and costs — do not make the feature sound easier than it is.
 
-1. **Existing requirements affected** — read `docs/01-product/prd.md` carefully. Flag any requirement this feature changes, extends, or conflicts with. If a conflict exists, it must be resolved before writing to the PRD.
+1. **Existing requirements affected** — prefer a graph query to find conflicts:
+   ```
+   /graphify query "requirements related to <feature-topic> or <domain>"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable. Flag any requirement this feature changes, extends, or conflicts with. If a conflict exists, it must be resolved before writing to the PRD.
 2. **Architecture implications** — read `docs/02-design/technical/hld/index.md`. Does this need a new HLD? New LLD? New ADR? Will this require changes to the system manifest?
 3. **Dependencies** — does this feature depend on something not yet built? If yes, which features are blocked until that dependency is resolved?
 4. **Effort estimate** — is this a 1-day, 1-week, or multi-week feature? Provide a range, not a single number. (Inform the PM; do not decide priority for them.)

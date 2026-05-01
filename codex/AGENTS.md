@@ -343,7 +343,11 @@ Run after the TDD cycle is complete, before creating a PR.
 1. Every acceptance criterion from the GitHub issue has at least one test
 2. Every LLD error mode has a test
 3. Every LLD precondition has a violation test
-4. Incident regressions are present (cross-reference `docs/03-engineering/testing/incident-registry.yaml`)
+4. Incident regressions are present — prefer a graph query:
+   ```
+   /graphify query "past incidents affecting domain: <domain-name>"
+   ```
+   Fall back to reading `docs/03-engineering/testing/incident-registry.yaml` directly if the graph is unavailable. Do not assume the registry is empty — actively query it.
 5. Tests assert on behavior, not implementation (test names describe scenarios)
 6. Tests are independent (no shared mutable state)
 7. External APIs mocked; internal logic not mocked

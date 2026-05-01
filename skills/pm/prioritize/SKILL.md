@@ -12,7 +12,12 @@ Review all requirements and help the PM prioritize.
 
 ## Steps
 
-1. **Read the PRD** at `docs/01-product/prd.md`. Extract all functional requirements grouped by priority (Must / Should / Could).
+1. **Get all functional requirements** — prefer a graph query if available:
+   ```
+   /graphify query "all requirements from PRD grouped by priority"
+   /graphify query "Must Have Should Have Could Have requirements"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable or stale.
 
 2. **Present the current priority breakdown:**
    ```

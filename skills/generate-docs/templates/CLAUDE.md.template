@@ -18,14 +18,48 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 28-step workflow. For structured impact analysis and test planning, use `/apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 30-step workflow. For structured impact analysis and test planning, use `/apply-change`.
 
 ## System Manifest — Read Before Every Change
 
-Before modifying any code, read `docs/system-manifest.yaml`:
+Before modifying any code, get the relevant domain's conventions and facade APIs. Prefer a graph query if available — `docs/system-manifest.yaml` is large and the graph surfaces just the relevant slice:
+
+```
+/graphify query "domain: <domain-name> facade APIs and boundary entities"
+/graphify query "cross-cutting conventions for <domain-name>"
+```
+
+Fall back to reading `docs/system-manifest.yaml` directly if the graph is unavailable or stale (`graphify check-update docs/`).
+
 - The `cross_cutting` section lists conventions that apply to all code
 - The domain entry for the area you're modifying lists its specific conventions + facade APIs
 - Follow every convention listed. If unsure whether a convention applies, it applies.
+
+## Knowledge Graph (Graphify)
+
+The HITL platform integrates Graphify to reduce token cost when querying design docs. Use graph queries before reading files directly.
+
+### Setup (one-time)
+
+```bash
+pip install graphifyy && graphify install
+graphify . --directed --no-viz          # build initial graph
+python3 -m graphify.serve graphify-out/graph.json   # start MCP server
+```
+
+### When to use the graph vs read files directly
+
+| Situation | Use graph | Read file directly |
+|---|---|---|
+| Finding which domain a component belongs to | ✓ | |
+| Getting facade APIs for a domain | ✓ | |
+| Tracing cross-component dependencies | ✓ | |
+| Checking existing test coverage for a domain | ✓ | |
+| Finding past incidents for a domain | ✓ | |
+| Reading full method signatures from an LLD | | ✓ |
+| Verifying a specific precondition or error mode | | ✓ |
+| Reading the full test registry to register a new test | | ✓ |
+| Graph is missing or stale | | ✓ |
 
 ## Cross-Cutting Conventions
 

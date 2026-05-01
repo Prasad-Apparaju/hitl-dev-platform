@@ -14,7 +14,12 @@ If `$ARGUMENTS` is empty, ask: "What feature do you want to add? Describe what t
 
 ## Steps
 
-1. **Read the current PRD** at `docs/01-product/prd.md`. Understand the existing requirement IDs, use case numbering, and format.
+1. **Get the existing requirements structure** — prefer a graph query if available:
+   ```
+   /graphify query "all requirement IDs and use case numbers from PRD"
+   /graphify query "PRD format and requirement areas FR-<AREA>"
+   ```
+   Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable or stale. You need the full document to pick the correct next ID and follow the exact format.
 
 2. **Draft the requirement** following the existing format:
    - Requirement ID: next available `FR-<AREA>-N` (look at the existing IDs to pick the right area and number)
