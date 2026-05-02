@@ -21,7 +21,13 @@ Review and apply infrastructure changes from the change plan. This is a hard gat
    - Which files are modified (e.g., `infra/rds.tf`, `k8s/deployment.yaml`, `helm/values.yaml`)
    - Change type per file: add / update / delete
    - Whether any change is destructive (data loss, replacement, downtime, irreversible)
-4. Read the IaC files listed in the plan — confirm they exist and match what `iac_plan` describes. Flag any divergence.
+4. Identify which application components depend on the infrastructure being changed — prefer a graph query:
+   ```
+   /graphify query "components depending on infrastructure: <resource-name>"
+   /graphify query "services affected by changes to <database|queue|bucket|network>: <resource-name>"
+   ```
+   Fall back to reading `docs/system-manifest.yaml` directly and checking `dependencies` entries if the graph is unavailable. Include the blast radius in the approval summary (Step 3).
+5. Read the IaC files listed in the plan — confirm they exist and match what `iac_plan` describes. Flag any divergence.
 
 ---
 
@@ -52,6 +58,7 @@ Infrastructure changes to apply
   CHANGE: <list resources being updated — what property changes>
   DELETE: <list resources being destroyed>
 
+Affected components:  <list of application services that depend on changed resources>
 Destructive changes:  <yes — list them | no>
 Estimated downtime:   <yes — resource and estimated duration | no>
 Rollback path:        <describe how to revert if apply fails>

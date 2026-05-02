@@ -22,7 +22,12 @@ Deploy a verified artifact to the specified environment, following the approved 
    - `rollout_plan` is present (from the approved impact brief)
    - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — do not deploy before IaC is applied
 2. Confirm the target environment is healthy — check existing deployment status before deploying on top of it
-3. Check `docs/04-operations/incident-registry.yaml` for active incidents affecting this environment
+3. Check for active incidents affecting this environment or the domains being deployed — prefer a graph query:
+   ```
+   /graphify query "active incidents in environment: <environment>"
+   /graphify query "recent incidents affecting domain: <domain-name>"
+   ```
+   Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the graph is unavailable. If no incidents exist, say so explicitly — do not skip the check.
 
 If any pre-check fails, list all failures and stop. Do not deploy into an active incident.
 
