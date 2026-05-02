@@ -226,8 +226,8 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/generate-docs` | [skills/generate-docs/SKILL.md](skills/generate-docs/SKILL.md) | HLD/LLD/ADRs from feature description (new) or from existing code (reverse-engineer) |
 | Skill | `/architect:design-system` | [skills/architect/design-system/SKILL.md](skills/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs |
 | Skill | `/architect:design-feature` | [skills/architect/design-feature/SKILL.md](skills/architect/design-feature/SKILL.md) | Steps 3–9: impact analysis, HLD/LLD with approval gates, slice decomposition, decision packets |
-| Skill | `/architect:review-design` | [commands/architect/review-design.md](commands/architect/review-design.md) | Review HLD/LLD/ADR — approve design before implementation starts |
-| Skill | `/architect:verify-traceability` | [commands/architect/verify-traceability.md](commands/architect/verify-traceability.md) | Verify issue→design→code→tests→brief chain before merge |
+| Command | `/architect:review-design` | [commands/architect/review-design.md](commands/architect/review-design.md) | Review HLD/LLD/ADR — approve design before implementation starts |
+| Command | `/architect:verify-traceability` | [commands/architect/verify-traceability.md](commands/architect/verify-traceability.md) | Verify issue→design→code→tests→brief chain before merge |
 | Skill | `/qa:plan-tests` | [skills/qa/plan-tests/SKILL.md](skills/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
 | Skill | `/qa:review-tests` | [skills/qa/review-tests/SKILL.md](skills/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
 | Skill | `/qa:verify-quality` | [skills/qa/verify-quality/SKILL.md](skills/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
@@ -235,8 +235,8 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 | Skill | `/ops:build` | [skills/ops/build/SKILL.md](skills/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
 | Skill | `/ops:apply-iac` | [skills/ops/apply-iac/SKILL.md](skills/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
 | Skill | `/ops:deploy` | [skills/ops/deploy/SKILL.md](skills/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
-| Skill | `/ops:review-release` | [commands/ops/review-release.md](commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
-| Skill | `/ops:monitor-canary` | [commands/ops/monitor-canary.md](commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
+| Command | `/ops:review-release` | [commands/ops/review-release.md](commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
+| Command | `/ops:monitor-canary` | [commands/ops/monitor-canary.md](commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
 | Tool | Convention rules (semgrep) | [.semgrep/](.semgrep/) | Project convention rules — runs via semgrep in CI and pre-commit |
 | Tool | Graphify (knowledge graph) | `pip install graphifyy` · [github.com/safishamsi/graphify](https://github.com/safishamsi/graphify) | Indexes design docs as a knowledge graph; HITL skills query it instead of reading full `system-manifest.yaml` on every operation. Reduces token cost on large doc sets. PostToolUse hook keeps graph current after every doc edit. |
 | Script | Mermaid fixer | [scripts/fix_mermaid_br_tags.py](scripts/fix_mermaid_br_tags.py) | Removes `<br/>` from Mermaid blocks for Obsidian compatibility |
