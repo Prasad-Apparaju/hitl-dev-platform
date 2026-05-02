@@ -408,6 +408,7 @@ Feature work proceeds when blockers are zero.
 | Name | Source | What it does |
 |------|--------|-------------|
 | `/dev-practices` | [skills/dev-practices/SKILL.md](../skills/dev-practices/SKILL.md) | Full workflow |
+| `/architect/design-system` | [skills/architect/design-system/SKILL.md](../skills/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
 | `/architect/design-feature` | [skills/architect/design-feature/SKILL.md](../skills/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
 | `/architect/review-design` | [commands/architect/review-design.md](../commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
 | `/architect/verify-traceability` | [commands/architect/verify-traceability.md](../commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
