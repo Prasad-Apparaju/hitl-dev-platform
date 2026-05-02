@@ -49,6 +49,10 @@ Once the plugin is installed or commands are copied, Claude Code auto-loads your
 
 ![Claude Code after setup — CLAUDE.md loaded, skills available as slash commands](docs/images/claude-code-setup.svg)
 
+All 25 commands across 5 namespaces — type `/` to browse or `/namespace:` to filter by role:
+
+![All 25 HITL slash commands grouped by namespace](docs/images/all-commands.svg)
+
 ### Recommended: Install as a Claude plugin
 
 The fastest way to get skills, agents, hooks, and command wrappers into any project is plugin installation. Claude Code installs the plugin once and all its skills become available as slash commands automatically.
