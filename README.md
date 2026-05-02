@@ -53,20 +53,39 @@ All 30 commands across 5 namespaces — type `/` to browse or `/namespace:` to f
 
 ![All 30 HITL slash commands grouped by namespace](docs/images/all-commands.svg)
 
-### Recommended: Install as a Claude plugin
+### Recommended: Fork and install as a shared platform
 
-The fastest way to get skills, agents, hooks, and command wrappers into any project is plugin installation. Claude Code installs the plugin once and all its skills become available as slash commands automatically.
+Fork this repo on GitHub, clone your fork once to a stable location, then use `init-project.sh` to bootstrap each product repo. The platform lives in one place; product repos reference it — nothing is copied except your project-specific files.
 
 ```bash
-# In Claude Code settings, add this plugin:
-# Path: /path/to/hitl-dev-platform/.claude-plugin/plugin.json
+# 1. Fork on GitHub, then clone your fork once
+git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platform
+
+# 2. Bootstrap a product repo (creates it if it doesn't exist)
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
+
+# 3. Repeat for every additional product — the platform stays in one place
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-other-product
 ```
 
-Then copy your project-specific content:
+`init-project.sh` accepts `--tool claude|codex|both` (default: both) and `--name <project-name>`. It sets up Claude Code via plugin reference and Codex via file copy — see below for what each produces.
+
+**After init, each product repo contains only product-specific files:**
+- `CLAUDE.md` — customize with your project's coding standards
+- `docs/system-manifest.yaml` — document your domains and API boundaries
+- `docs/` structure for HLDs, LLDs, and ADRs
+- `.claude/settings.json` pointing to the shared platform plugin and hooks
+- `AGENTS.md` and `codex/hook-scripts/` (Codex only)
+
+**To edit a skill, agent, or hook:** open `~/tools/hitl-dev-platform` and edit the file directly. See [docs/customization-guide.md](docs/customization-guide.md) for the full command-to-file map.
+
+**To pull upstream improvements into your fork:**
 
 ```bash
-cp templates/CLAUDE.md.template your-repo/CLAUDE.md
-# Edit: fill in your project's coding standards and conventions
+cd ~/tools/hitl-dev-platform
+git fetch upstream && git merge upstream/main
+# Skills and agents update immediately for Claude Code (referenced, not copied).
+# For Codex hook scripts: re-run init-project.sh or codex/install.sh in each product repo.
 ```
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
@@ -88,9 +107,23 @@ python3 -m graphify.serve graphify-out/graph.json
 
 The PostToolUse hook (included in the plugin) triggers an incremental graph rebuild automatically after every design doc edit — no manual re-runs needed.
 
-### Fallback: Manual copy (without plugin)
+### Install for Codex CLI
 
-If you prefer to own local copies of the skills and agents rather than using the plugin:
+Codex CLI uses `AGENTS.md` instead of `CLAUDE.md` and has no plugin system. `init-project.sh` handles Codex setup automatically (it delegates to `codex/install.sh` internally):
+
+```bash
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product --tool codex
+```
+
+This copies `AGENTS.md` to your project root (Codex reads it automatically), installs git hooks, and copies the enforcement hook scripts to `codex/hook-scripts/`. After init, edit `AGENTS.md` to add your project's coding standards.
+
+**Enforcement:** When `codex_hooks = true` is set in `.codex/config.toml`, Codex loads `.codex/hooks.json` and enforces HITL context checks before every Write/Edit — the same real-time timing as Claude Code's PreToolUse hooks. Git hooks provide a portable fallback at commit time.
+
+See [`codex/`](codex/) for Codex-specific artifacts and [`docs/customization-guide.md`](docs/customization-guide.md) for editing Codex hook scripts.
+
+### Fallback: Manual copy (without init script)
+
+If you prefer to copy files by hand rather than using `init-project.sh`:
 
 ```bash
 cp templates/CLAUDE.md.template your-repo/CLAUDE.md
@@ -99,28 +132,7 @@ cp -r agents/ your-repo/.claude/agents/
 cp -r commands/ your-repo/.claude/commands/
 ```
 
-That is Level 1 of the [Adoption Ladder](#adoption-ladder). You can stop there or add layers incrementally as the team sees value.
-
-### Install for Codex CLI
-
-Codex CLI uses `AGENTS.md` instead of `CLAUDE.md`, and does not have Claude Code's plugin or hook system. Enforcement is handled by git hooks instead.
-
-```bash
-# Run the installer — copies AGENTS.md and installs git hooks into your repo
-bash /path/to/hitl-dev-platform/codex/install.sh /path/to/your-repo
-```
-
-The installer:
-- Copies `codex/AGENTS.md` to your project root (Codex reads it automatically)
-- Installs a `pre-commit` hook that blocks commits on source files without `.hitl/current-change.yaml`
-- Installs a `post-commit` hook that writes session summaries to `docs/session-logs/`
-- Copies `codex/scripts/hitl-conventions.sh` for running convention checks
-
-After install, open `AGENTS.md` and fill in your project's coding standards (look for the placeholder sections).
-
-**Enforcement:** When `codex_hooks = true` is set in `.codex/config.toml`, Codex loads `.codex/hooks.json` and enforces HITL context checks before every Write/Edit — the same real-time timing as Claude Code's PreToolUse hooks. Git hooks provide a portable fallback that fires at commit time. Both are installed by `install.sh`.
-
-See [`codex/`](codex/) for all Codex-specific artifacts.
+That is Level 1 of the [Adoption Ladder](#adoption-ladder). You can stop there or add layers incrementally.
 
 ---
 
