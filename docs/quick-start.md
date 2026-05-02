@@ -1,134 +1,206 @@
-# HITL AI-Driven Development Platform
+# HITL Quick Start
 
-A repeatable process + tooling for teams adopting AI-native development. Copy the templates, fill in your project's conventions, and every developer's AI coding assistant follows the same standards from day one.
+> **AI tool note:** This guide uses Claude Code as the primary example. Codex CLI is fully supported — pass `--tool codex` or `--tool both` to `init-project.sh`.
 
-> **AI tool note:** This guide uses Claude Code and `CLAUDE.md` as examples. The process works with any AI coding assistant that supports auto-loaded project rules (Cursor, Windsurf, Cline, etc.).
-
-> **Language note:** The enforcement tooling (manifest drift checker, import analysis, Semgrep rules) currently targets Python codebases. The process and documentation workflow are language-agnostic — only the automated checks are Python-first. TypeScript and other language support is planned.
+> **Language note:** Convention enforcement (semgrep rules, manifest drift checker) currently targets Python codebases. The process and doc workflow are language-agnostic.
 
 ## The Core Idea
 
-The team — PM, Architect, Developers, and AI — discusses every design decision together. Once a decision is finalized, it's captured in documentation: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries.
+The team — PM, Architect, Developers, and AI — discusses every design decision together. Once finalized, it's captured in version-controlled docs: HLDs for architecture, LLDs for component design, ADRs for trade-offs, and a System Manifest for domain boundaries.
 
-From that point forward, **all downstream activities — code generation, testing, code review, deployment planning, and ROI verification — are driven off that documentation.** The documentation is not a record of what was built. It's the specification that drives what gets built.
+From that point forward, **all downstream work — code generation, testing, deployment — is driven from that documentation.** The docs are not a record of what was built. They are the specification that drives what gets built.
 
-This inverts the traditional relationship between docs and code. In most teams, documentation is written after the code (if at all) and drifts almost immediately. In this process, documentation is written first — with AI's help, significantly faster (observed in pilot projects) — and the code is generated from it.
+---
 
 ## Quick Start — New Project
 
+**Step 1: Fork and clone the platform once per machine**
+
 ```bash
-# 0. Create target directories (idempotent — safe to re-run)
-mkdir -p your-repo/.claude/skills your-repo/.claude/agents your-repo/.claude/commands \
-  your-repo/tools your-repo/templates your-repo/.github/workflows your-repo/.github \
-  your-repo/.semgrep your-repo/scripts your-repo/.hitl
-
-# 1. Copy skills and agents to your repo
-cp -r skills/ your-repo/.claude/skills/
-cp -r .claude/agents/ your-repo/.claude/agents/
-
-# 2. Copy and customize the CLAUDE.md template
-cp templates/CLAUDE.md.template your-repo/CLAUDE.md
-# Edit: fill in your project's conventions and coding standards
-
-# 3. Generate a system manifest from your codebase
-python tools/generate-manifest/generator.py --source your-repo/src --output your-repo/docs/system-manifest.yaml
-
-# 3a. (Recommended) Install Graphify — builds a knowledge graph over your design docs
-# so AI skills use targeted queries instead of reading the full manifest every time.
-# Required once per environment; not re-run per project.
-pip install graphifyy && graphify install
-# Then from your repo root, build the initial graph:
-cd your-repo && graphify . --directed --no-viz
-# Start the MCP server so Claude Code can query it:
-python3 -m graphify.serve graphify-out/graph.json &
-# On large codebases (50+ domains), this step pays off immediately. Skip it on small
-# repos — skills fall back to direct file reads automatically.
-
-# 4. Copy convention checker config
-cp examples/greenfield/convention-checks.yaml your-repo/
-# Edit: add your project-specific checks
-
-# 5. Copy CI actions
-# NOTE: These are copyable templates, not active workflows for the platform repo.
-# They are designed to run inside your product repo after docs/system-manifest.yaml
-# has been generated.
-cp ci/*.yml your-repo/.github/workflows/
-
-# 6. Copy preflight script (required by traceability-check.yml)
-cp -r tools/preflight/ your-repo/tools/preflight/
-
-# 7. Copy manifest drift checker (required by convention-check.yml)
-cp -r tools/manifest-drift/ your-repo/tools/manifest-drift/
-
-# 8. Copy Semgrep rules (required by convention-check.yml)
-cp -r .semgrep/ your-repo/.semgrep/
-
-# 9. Copy PR template
-mkdir -p your-repo/.github
-cp templates/pull-request-template.md your-repo/.github/PULL_REQUEST_TEMPLATE.md
-
-# 10. Copy decision packet template (reference for impact analysis)
-cp templates/decision-packet-template.yaml your-repo/templates/decision-packet-template.yaml
-
-# 11. Copy legacy scripts if referenced by your CI
-cp -r scripts/ your-repo/scripts/
+# Fork https://github.com/your-org/hitl-dev-platform on GitHub, then:
+git clone https://github.com/YOUR-ORG/hitl-dev-platform ~/tools/hitl-dev-platform
 ```
 
-Every developer who clones the repo now gets the same process.
+The platform stays at this shared path. All product repos reference it — nothing is copied except product-specific files.
+
+**Step 2: Bootstrap your product repo**
+
+```bash
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
+```
+
+Default is `--tool both` (Claude Code + Codex). Use `--tool claude` or `--tool codex` if you only need one.
+
+**What gets created in your product repo:**
+
+| File / directory | Purpose |
+|---|---|
+| `CLAUDE.md` | Your project's coding standards — edit this |
+| `AGENTS.md` | Codex reads this automatically — edit this |
+| `docs/system-manifest.yaml` | Domain and API boundary definitions — fill in |
+| `docs/02-design/` | HLD, LLD, ADR directories |
+| `.claude/settings.json` | Plugin reference + hook wiring |
+| `.hitl/hooks/*.sh` | Hook wrappers (resolve platform via `HITL_PLATFORM_ROOT`) |
+| `.semgrep/` | Semgrep convention rules (required by `/check-conventions`) |
+| `tools/manifest-drift/` | Manifest drift checker (required by `/check-conventions`) |
+| `scripts/fix_mermaid_br_tags.py` | Mermaid linter (required by `/check-conventions`) |
+
+Skills, agents, and commands are **not** copied — they load from the shared platform via the Claude Code plugin.
+
+**Step 3: Edit your project-specific files**
+
+```bash
+# Fill in your project's coding standards and conventions
+$EDITOR ~/code/my-product/CLAUDE.md
+
+# Document your domains and API boundaries
+$EDITOR ~/code/my-product/docs/system-manifest.yaml
+```
+
+**Step 4: (Optional) Generate a manifest from an existing codebase**
+
+```bash
+python ~/tools/hitl-dev-platform/tools/generate-manifest/generator.py \
+  --source ~/code/my-product/src \
+  --output ~/code/my-product/docs/system-manifest.yaml
+```
+
+**Step 5: (Optional) Install Graphify for large codebases**
+
+Graphify builds a knowledge graph over your design docs. Skills fall back to direct file reads without it — add it once your repo has enough domains that full-manifest reads become expensive.
+
+```bash
+pip install graphifyy && graphify install
+cd ~/code/my-product && graphify . --directed --no-viz
+python3 -m graphify.serve graphify-out/graph.json &
+```
+
+**Step 6: Copy CI templates**
+
+```bash
+mkdir -p ~/code/my-product/.github/workflows
+cp ~/tools/hitl-dev-platform/ci/*.yml ~/code/my-product/.github/workflows/
+cp ~/tools/hitl-dev-platform/templates/pull-request-template.md \
+   ~/code/my-product/.github/PULL_REQUEST_TEMPLATE.md
+```
+
+Every developer who clones the product repo now gets the same process.
+
+---
 
 ## Quick Start — Existing Project (Brownfield)
 
-An architect working with AI can produce the documentation baseline in a sprint — typically one to two weeks for a medium-sized system, longer for larger platforms. See [docs/playbook/adoption-guide.md](docs/playbook/adoption-guide.md) for scope expectations by system size.
+Run `init-project.sh` against your existing repo. It is idempotent — it skips files that already exist:
+
+```bash
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/existing-repo
+```
+
+Then generate the system manifest baseline:
+
+```bash
+python ~/tools/hitl-dev-platform/tools/generate-manifest/generator.py \
+  --source ~/code/existing-repo/src \
+  --output ~/code/existing-repo/docs/system-manifest.yaml
+```
+
+An architect working with AI can produce the full documentation baseline in a sprint — typically one to two weeks for a medium-sized system. See [docs/playbook/adoption-guide.md](playbook/adoption-guide.md) for scope expectations by system size.
+
+---
+
+## Additional products on the same machine
+
+The platform stays in one place. Just run `init-project.sh` for each new product:
+
+```bash
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/product-b
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/product-c
+```
+
+---
+
+## Version isolation
+
+By default all products on one machine share one platform checkout and pick up changes immediately when you `git pull` in the platform. That is the right default for a team maintaining one standard.
+
+If a specific product needs to stay pinned to an older platform version:
+
+```bash
+# Clone a second copy of the platform at a specific tag
+git clone https://github.com/YOUR-ORG/hitl-dev-platform ~/tools/hitl-dev-platform-v1
+cd ~/tools/hitl-dev-platform-v1 && git checkout v1.0.0
+
+# Bootstrap the product against that version
+bash ~/tools/hitl-dev-platform-v1/scripts/init-project.sh ~/code/legacy-product
+```
+
+The hook wrappers in `.hitl/hooks/` use `HITL_PLATFORM_ROOT` at runtime — setting it overrides which platform clone is used without re-running init.
+
+---
+
+## CI setup
+
+Hook wrappers resolve the platform at runtime via `HITL_PLATFORM_ROOT`. On CI machines:
+
+```yaml
+# .github/workflows/your-workflow.yml
+- name: Install HITL platform
+  run: git clone https://github.com/YOUR-ORG/hitl-dev-platform ~/tools/hitl-dev-platform
+
+- name: Set platform path
+  run: echo "HITL_PLATFORM_ROOT=$HOME/tools/hitl-dev-platform" >> $GITHUB_ENV
+```
+
+Or set `HITL_PLATFORM_ROOT` to the path where the platform is cloned in your CI environment.
+
+---
+
+## Keeping the platform up to date
+
+Skills and agents update for all products immediately when you pull in the platform clone:
+
+```bash
+cd ~/tools/hitl-dev-platform
+git fetch upstream && git merge upstream/main
+```
+
+Convention tools (`.semgrep/`, `tools/manifest-drift/`, `scripts/`) are copies in each product repo. Refresh them by re-running init (it skips files that already exist — pass `--force` manually if you want to overwrite):
+
+```bash
+# Manual refresh of convention tools
+cp -r ~/tools/hitl-dev-platform/.semgrep/ ~/code/my-product/.semgrep/
+cp -r ~/tools/hitl-dev-platform/tools/manifest-drift/ ~/code/my-product/tools/manifest-drift/
+cp ~/tools/hitl-dev-platform/scripts/fix_mermaid_br_tags.py ~/code/my-product/scripts/
+```
+
+Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those are project-specific.
+
+---
 
 ## What's Included
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| **Skills** | `skills/` | Claude Code skills: dev workflow, TDD, impact brief, conventions. Copy to `.claude/skills/` |
-| **Agents** | `.claude/agents/` | Role subagents: PM reviewer, architect, developer, QA, ops, conformance reviewer. Copy to `.claude/agents/` |
-| **Templates** | `templates/` | 15 templates: CLAUDE.md, system manifest, ADR, training plan, issue, test strategy, security audit, best practices, cost analysis, performance, data model mapping, API contract mapping, decision catalog, test registry, incident registry |
-| **Patterns** | `docs/patterns/` | Architectural patterns: failure mode taxonomy, idempotency keys |
-| **Tools** | `tools/` | Convention checker (pluggable, config-driven), Mermaid fixer, Markdown-to-PDF with Mermaid support |
-| **CI Actions** | `ci/` | GitHub Actions for convention checking + manifest drift detection |
+| Component | Location in platform | Notes |
+|---|---|---|
+| Skills (slash commands) | `skills/` | Loaded via plugin — not copied |
+| Agents (subagents) | `agents/` | Loaded via plugin — not copied |
+| Templates | `templates/` | Referenced; copy on demand |
+| Convention rules | `.semgrep/` | Copied to product repos by init |
+| Manifest drift checker | `tools/manifest-drift/` | Copied to product repos by init |
+| CI actions | `ci/` | Copy once to `.github/workflows/` |
+| Patterns / playbook | `docs/` | Reference from platform |
+| Codex files | `codex/` | Copied to product repos by init |
 
-> **CI note:** The workflows under `ci/` are copyable templates, not active workflows for this platform repo. They are designed to run inside your product repo after `docs/system-manifest.yaml` has been generated. Copy them to `.github/workflows/` in your target repo.
-| **Examples** | `examples/` | Greenfield starter with minimal CLAUDE.md, manifest, and convention config |
-| **Playbook** | `docs/playbook/` | Adoption guide (brownfield one-week sprint) + process overview |
-| **Infographics** | `templates/infographic/` | HTML templates for team collaboration diagrams (renderable to PDF) |
-
-## How to Keep in Sync
-
-The update model is **copy, not dependency.** Each project gets its own copy of the skills and tools. Updates are explicit pulls, not automatic:
-
-```bash
-# Update skills and agents (overwrite — platform-owned)
-cp -r hitl-dev-platform/skills/ your-repo/.claude/skills/
-cp -r hitl-dev-platform/agents/ your-repo/.claude/agents/
-
-# Update CI actions
-cp hitl-dev-platform/ci/*.yml your-repo/.github/workflows/
-
-# Update preflight, manifest-drift, semgrep rules, scripts
-cp -r hitl-dev-platform/tools/preflight/ your-repo/tools/preflight/
-cp -r hitl-dev-platform/tools/manifest-drift/ your-repo/tools/manifest-drift/
-cp -r hitl-dev-platform/.semgrep/ your-repo/.semgrep/
-cp -r hitl-dev-platform/scripts/ your-repo/scripts/
-
-# DON'T overwrite: CLAUDE.md, system-manifest.yaml, convention-checks.yaml
-# Those are project-specific content
-```
-
-When the platform adds a new workflow step or improves the convention checker, projects update by pulling the latest and copying the shared files. Project-specific content (CLAUDE.md conventions, manifest domains, check definitions) is never overwritten.
+---
 
 ## Philosophy
 
-**Quality over speed.** The goal is meticulous system evolution with minimized problems — not maximum deployment velocity. Every step in the 30-step workflow prevents a specific failure mode.
-
-**Inverse Conway Maneuver for AI agents.** Design the knowledge boundaries explicitly in a System Manifest, and the quality of what agents produce mirrors those boundaries. Scoped agents with clean facades produce modular, convention-honoring output.
+**Quality over speed.** The goal is meticulous system evolution with minimized problems — not maximum deployment velocity. Every step in the workflow prevents a specific failure mode.
 
 **The docs are the moat, not the AI tools.** Every team has access to the same AI models. The competitive advantage is in the documentation that makes those models produce *your* system's conventions, *your* architecture's patterns, *your* domain's edge cases.
 
-**Convention enforcement across all instances.** When 4 developers each use their own Claude Code, consistency comes from three layers: CLAUDE.md (auto-loaded rules), CI checks (automated enforcement), and PR review (human gates). The platform provides all three.
+**Convention enforcement across all instances.** When multiple developers each use their own Claude Code, consistency comes from three layers: CLAUDE.md (auto-loaded rules), CI checks (automated enforcement), and PR review (human gates). The platform provides all three.
+
+---
 
 ## License
 
