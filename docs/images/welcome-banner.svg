@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="252" viewBox="0 0 620 252">
+  <!-- Terminal window -->
+  <rect width="620" height="252" rx="10" fill="#1e1e2e"/>
+
+  <!-- Title bar -->
+  <rect width="620" height="36" rx="10" fill="#313244"/>
+  <rect y="18" width="620" height="18" fill="#313244"/>
+
+  <!-- Traffic lights -->
+  <circle cx="22" cy="18" r="6" fill="#f38ba8"/>
+  <circle cx="44" cy="18" r="6" fill="#f9e2af"/>
+  <circle cx="66" cy="18" r="6" fill="#a6e3a1"/>
+
+  <!-- Window title -->
+  <text x="310" y="23" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="12" fill="#6c7086" text-anchor="middle">claude code — my-product</text>
+
+  <!-- Content: line 1 separator -->
+  <text x="16" y="62" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#7aa2f7" xml:space="preserve">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>
+
+  <!-- Line 2: title -->
+  <text x="16" y="84" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">  HITL AI-Driven Development — <tspan fill="#a6e3a1">platform active</tspan></text>
+
+  <!-- Line 3: blank (skip) -->
+
+  <!-- Line 4: Getting started label -->
+  <text x="16" y="118" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Getting started:</text>
+
+  <!-- Line 5: /start -->
+  <text x="16" y="138" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/start</tspan>           set up a new project or onboard this codebase</text>
+
+  <!-- Line 6: /dev-practices -->
+  <text x="16" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/dev-practices</tspan>   begin a new change (full 30-step workflow)</text>
+
+  <!-- Line 7: / browse -->
+  <text x="16" y="178" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/</tspan>                browse all 30 commands</text>
+
+  <!-- Line 8: blank (skip) -->
+
+  <!-- Line 9: Roles -->
+  <text x="16" y="212" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Roles: <tspan fill="#cba6f7">/pm</tspan>  <tspan fill="#cba6f7">/architect</tspan>  <tspan fill="#cba6f7">/qa</tspan>  <tspan fill="#cba6f7">/ops</tspan></text>
+
+  <!-- Line 10: separator -->
+  <text x="16" y="232" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#7aa2f7" xml:space="preserve">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>
+</svg>
