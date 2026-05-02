@@ -1,4 +1,8 @@
-# Brownfield Adoption Guide — The Baseline Sprint
+# Adoption Guide — Baseline Sprint
+
+> **Greenfield (new system from PRD)?** Use `/architect/design-system` — it guides the architect through domain decomposition, manifest creation, HLDs, ADRs, LLDs, and HITL process bootstrap in one session. After it completes, use `/architect/design-feature` for every subsequent change.
+>
+> **Brownfield (existing codebase)?** Continue reading — this guide covers the reverse-engineer sprint.
 
 An architect working with AI can produce the documentation baseline for an existing codebase in a sprint — typically one to two weeks for a medium-sized system. Larger platforms, systems with significant tribal knowledge gaps, or codebases with heavy integration surface area take longer. The goal is an honest starting point, not a finished product.
 

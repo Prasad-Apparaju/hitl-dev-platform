@@ -332,6 +332,128 @@ Run when a design needs review before implementation. This replaces the `archite
 
 ---
 
+## Greenfield System Design (New System from PRD)
+
+Run once at project inception when designing a new system from scratch.
+
+**Trigger:** User asks to "design the system", "design system from PRD", "architect design-system", or "start greenfield design".
+
+### Phase 1 — PRD Analysis
+
+1. Read the PRD from the path in $ARGUMENTS or `docs/01-product/prd.md`.
+2. Extract: system name, user personas, core use cases (3–5), functional requirements (must-have vs nice-to-have), NFRs (performance, scale, security, compliance), external integrations, tech stack constraints, out-of-scope items, open questions.
+3. Flag gaps that will make domain decomposition ambiguous: who owns what data, consistency requirements between capabilities, scale profile.
+4. **STOP — ask architect to confirm requirements are complete and resolve gaps before proceeding.**
+
+### Phase 2 — Domain Decomposition
+
+This is the most consequential decision. Do not rush it.
+
+1. Propose candidate domains using these heuristics:
+   - Group by **business capability**, not technical layer
+   - Separate by rate of change and data ownership
+   - Keep transactional boundaries inside a single domain — avoid distributed transactions
+   - Each domain should be implementable without knowing the internals of other domains
+
+2. For each domain: name, purpose, what it owns, key responsibilities, explicit exclusions.
+
+3. Build the interaction matrix: for each cross-domain data exchange, specify direction, what data crosses (boundary entity), and sync vs async.
+
+4. Self-challenge before presenting: circular dependencies? Domain doing too many unrelated things? Two domains always changed together?
+
+5. **STOP — ask architect to confirm domain breakdown. This is the only gate where the skill must not proceed without explicit confirmation. Domain boundary errors cascade through every subsequent artifact.**
+
+### Phase 3 — System Manifest
+
+Generate `docs/system-manifest.yaml` from confirmed domains. Follow the schema in `skills/generate-docs/templates/system-manifest.schema.yaml`.
+
+- `files`: empty (no code yet)
+- `facade_apis`: propose from PRD, mark ALL as `DRAFT — architect to verify`
+- `boundary_entities`: propose from interaction matrix, mark DRAFT
+- `lld`: `"pending"` (updated in Phase 6)
+
+**STOP — ask architect to review manifest, especially facade_apis and boundary_entities.**
+
+### Phase 4 — Foundational ADRs
+
+Identify and resolve every decision that blocks HLD generation:
+
+| Decision | Must resolve before |
+|---|---|
+| Language and framework | LLDs |
+| Data storage | Domain schemas |
+| Auth/authz approach | Security HLD, all domain LLDs |
+| API style (REST/GraphQL/gRPC/events) | API HLD, facade API shapes |
+| Deployment model | System architecture HLD |
+| Observability stack | Observability HLD, conventions |
+
+For each: create `docs/02-design/technical/adrs/<decision>.md` using `templates/adr-template.md`. For decided: fill decision, ask architect for rationale. For open: list options and tradeoffs, **STOP and ask architect to decide before continuing**.
+
+Update `docs/02-design/technical/adrs/README.md`.
+
+### Phase 5 — System-Level HLDs
+
+Generate from confirmed manifest and ADRs — not from general knowledge:
+
+**Always:**
+1. `hld/system-architecture.md` — component topology, deployment model, domain map (Mermaid), external integrations, sequence diagrams for 2–3 critical use cases
+2. `hld/data-architecture.md` — storage choices, data ownership per domain, cross-domain access patterns, compliance
+3. `hld/security-architecture.md` — auth/authz, data isolation, secrets management, compliance NFRs
+
+**If applicable:**
+4. `hld/api-architecture.md` — if external-facing API exists
+5. `hld/observability-architecture.md` — if SLA or availability NFRs exist
+
+Update `hld/index.md`. **STOP after each HLD for architect approval. Do not generate LLDs until all HLDs are approved.**
+
+### Phase 6 — Domain-Level LLDs
+
+For each domain in the manifest, generate `docs/02-design/technical/lld/<domain>/<domain>.md`:
+- Propose internal structure (services, classes, models) that implements the domain's facade_apis
+- Mermaid class diagram, method signatures, sequence diagrams for main flows, error modes, preconditions
+- Mark everything DRAFT — design intent, not final
+
+Update `lld/index.md`, `lld/packages.md` (domain dependency diagram), and manifest `lld` paths.
+
+**STOP after each LLD for architect approval.**
+
+### Phase 7 — HITL Process Bootstrap
+
+Follow Phase R5 of the `Generate Documentation` section:
+1. Generate `CLAUDE.md` — inline conventions from ADRs
+2. Generate `convention-checks.yaml` — checks from Phase 4 conventions
+3. Install plugin or copy skills
+4. Copy CI actions to `.github/workflows/`
+5. Generate `.github/ISSUE_TEMPLATE/technical-change.md`
+6. For systems with 4+ domains: install Graphify (`pip install graphifyy && graphify install`)
+7. Generate `docs/README.md`
+
+### Output format
+
+```
+SYSTEM DESIGN COMPLETE — [System Name]
+Domains: N  |  HLDs: N  |  LLDs: N  |  ADRs: N
+
+Artifacts:
+  System manifest:   docs/system-manifest.yaml
+  HLDs:              docs/02-design/technical/hld/
+  LLDs:              docs/02-design/technical/lld/
+  ADRs:              docs/02-design/technical/adrs/
+  CLAUDE.md:         repo root
+  Convention checks: convention-checks.yaml
+  Graphify:          [installed / not required]
+
+Needs architect attention before first feature:
+  • Facade API blurbs (DRAFT): N fields
+  • Boundary entity shapes (DRAFT): N fields
+  • ADR rationale sections: N docs
+
+Next: /architect/design-feature for first change
+      First implementations will correct DRAFT fields
+```
+
+---
+
 ## Architect Design Journey (Steps 3–9)
 
 Run when the architect is starting a new change and needs to drive the full design phase — from impact analysis through to decision packets ready for developer handoff.
