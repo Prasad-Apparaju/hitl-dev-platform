@@ -2,6 +2,8 @@
 
 How all the pieces get loaded into context when you start a Claude Code session.
 
+> **Confidence framing:** This map is a practical mental model, not a formal internal spec. Items marked 🔴 reflect documented or consistently enforced behavior. Items marked 🔵 are predictable in practice and directly observable. Claims about internal mechanics — concurrent read ordering, exact assembly sequence, binary file locations, and token size estimates — are informed inference from observed behavior and should be treated as directional, not authoritative. The three-zone model (always loaded / lazy loaded / session growth) is the part most worth relying on.
+
 ## Diagram
 
 ### Overview
@@ -148,7 +150,7 @@ sequenceDiagram
 
 Paid on every session regardless of what you do.
 
-| Source | File / Location | Approx Size |
+| Source | File / Location | Size (order of magnitude — treat as directional) |
 |---|---|---|
 | Base system prompt | Binary (`~/.local/bin/claude`) | ~6–8K tokens |
 | Global instructions | `~/.claude/CLAUDE.md` | ~0.5KB |
@@ -158,7 +160,7 @@ Paid on every session regardless of what you do.
 | Deferred tools list | Tool names from MCP servers + harness | ~2–3KB |
 | System injections | Date, user email, model info | ~0.1KB |
 
-**Total fixed cost: ~12–25K tokens per session**
+**Rough fixed cost: ~12–25K tokens per session** _(observed range — not a guarantee)_
 
 ---
 
