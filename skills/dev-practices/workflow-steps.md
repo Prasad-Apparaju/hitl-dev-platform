@@ -4,6 +4,23 @@ Step-by-step reference for the 30-step HITL change workflow. The SKILL.md entryp
 
 ---
 
+## Prerequisites
+
+Before step 1, ensure these artifacts exist:
+
+| Artifact | New project | Brownfield |
+|---|---|---|
+| `docs/system-manifest.yaml` | Run `/architect/design-system` from your PRD | Run `/start` Path B → baseline sprint (`/generate-docs reverse-engineer`) |
+| HLDs + LLDs | Produced by `/architect/design-system` | Produced by brownfield baseline sprint |
+| `docs/03-engineering/testing/test-registry.yaml` | Created empty by `/architect/design-system`; populated as changes land | Populate during baseline sprint from existing test catalog |
+| `docs/04-operations/incident-registry.yaml` | Starts empty; populated after each production incident | Seed during baseline sprint: "what broke in the last 6 months?" |
+
+If you have not done this yet, run `/start` — it detects your situation and routes you to the right setup path.
+
+**Brownfield accuracy note:** The manifest and LLDs produced by the baseline sprint start at 55–75% accuracy and improve as changes correct each area. For the first several changes on a brownfield project, treat AI output from steps 5, 10, and 14 as drafts requiring closer human review than on a well-established codebase.
+
+---
+
 ## Steps 1–2: Requirements
 
 **1. GitHub Issue**
@@ -25,11 +42,15 @@ If the step 3 effort estimate exceeds 1 day, add an ROI section to the GitHub is
 **5. Update Docs** — use `/generate-docs`
 Using the affected component list from `.hitl/current-change.yaml` (step 3) and Figma specs from step 2 (if available): create or update HLD at `docs/02-design/technical/hld/<feature>.md` and LLD at `docs/02-design/technical/lld/<component>.md`. Update ADRs for any new design decisions. Architect must approve the HLD before LLD generation begins. LLD must be approved before implementation starts.
 
+> **Brownfield:** If the LLD being updated was produced by the baseline sprint rather than a previous change, verify it against the actual code before using it as a code-generation source. Baseline-sprint LLDs are drafts — they may not yet reflect the true behavior of the component.
+
 **6. Update IaC**
 Using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): update Terraform/Kubernetes manifests, migrations, and configs. Only if step 3 identified IaC changes.
 
 **7. Test Case Planning** — use `/qa:plan-tests`
 Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: QA queries incident history with `/qa:plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in the GitHub issue and in `.hitl/current-change.yaml` under `tests.plan`.
+
+> **Empty incident registry (new project or no incidents logged yet):** Skip the incident history query. Record the test plan from the LLD alone and note "incident registry empty" in `.hitl/current-change.yaml`. The registry will accumulate entries as production incidents occur.
 
 **8. Training Plan Stub (conditional)**
 If the change introduces a new architectural pattern, external system, framework, ML/AI technique, or significant mental-model-changing refactor: draft a stub at `docs/03-engineering/training/<capability>.md`. Triggers: new architectural pattern, new external system, new framework, new ML/AI technique, or a significant mental-model-changing refactor. New endpoints, bug fixes, and preserving-the-model refactors do not require a training plan.
@@ -67,6 +88,8 @@ Developer passes the LLD path from the decision packet to `/tdd`. The skill read
 
 **11. Human Reviews Tests** — use `/qa:review-tests`
 QA (or developer on small teams) reads the same LLD (`docs/02-design/technical/lld/<component>.md`, step 5) and queries the incident registry to identify gaps in the generated tests. Adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial or wrong tests. Updates `docs/03-engineering/testing/test-registry.yaml` for every test added or removed. If QA ran `/qa:plan-tests` at design time, verify those scenarios are present before approving.
+
+> **Empty incident registry:** Skip the incident registry query. Add edge cases from domain knowledge and LLD review alone.
 
 **12. Tests Improve the Design** — use `/tdd`
 `/tdd` analyzes the test files in `tests/` against the LLD at `docs/02-design/technical/lld/<component>.md`. For each test that covers behavior the LLD does not describe, proposes a specific LLD update. LLD is updated at the same path before any code is written. If LLD changes are significant, architect re-reviews and confirms before proceeding.
@@ -108,6 +131,8 @@ Never silently normalize drift.
 **22. QA Post-Handoff Verification** — use `/qa:verify-quality`
 Developer has delivered a stable build with all tests passing and docs reconciled (step 21). QA runs independent verification against the running build: verify each acceptance criterion, run exploratory tests beyond the happy path, and probe failure modes from the incident registry. If any AC fails or a blocking defect is found, QA runs `/qa:report-defect` and sets `approvals.qa: blocked` in `.hitl/current-change.yaml`. Promotion to Assess is blocked until QA lifts the block.
 
+> **Empty incident registry:** Skip the failure-mode probe from incident history. Run exploratory tests based on the acceptance criteria and LLD edge cases instead.
+
 ---
 
 ## Steps 23–24: Assess
@@ -115,8 +140,14 @@ Developer has delivered a stable build with all tests passing and docs reconcile
 **23. Downstream Impact Brief** — use `/impact-brief`
 `/impact-brief` reads `.hitl/current-change.yaml`, `git diff main...HEAD`, `system-manifest.yaml`, incident registry, and test registry. Produces a 5-section brief. Section 5 contains the rollout strategy draft including risk tier and go/no-go criteria.
 
+> **Empty incident registry:** `/impact-brief` will produce section 5 without historical failure context. The rollout strategy draft will be based on the change's risk tier alone — ops should add manual go/no-go criteria to compensate for the missing incident signal.
+
 **24. Risk-Rated Rollout Plan** — use `/ops:review-release`
 Ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist before the PR is created.
+
+> **Empty incident registry:** Base the canary criteria on the change's risk tier and known failure modes from the LLD rather than historical incidents. Flag this in the rollout plan: "No incident history available — criteria are forward-looking only."
+>
+> **First release (no prior version in production):** Canary over existing traffic is not possible. Use a direct deploy with a manual smoke-test gate: deploy to staging, run the acceptance criteria from the GitHub issue, then promote to production. "Rollback" means tearing down the deployment; there is no prior version to restore. Document this explicitly in the rollout plan.
 
 ---
 
@@ -134,8 +165,12 @@ If Figma design exists, lead compares running implementation to the Figma spec f
 **28. Build, Apply IaC, and Deploy** — use `/ops:build`, `/ops:apply-iac` (conditional), `/ops:deploy`, `/ops:monitor-canary`
 Ops verifies branch state and triggers the build using `/ops:build` — confirms artifact integrity before deployment begins. If step 6 identified IaC changes, Ops runs `/ops:apply-iac`: dry-run first, then applies with explicit approval (destructive changes require a second `CONFIRMED`). Lead then triggers merge and deploys per the approved rollout plan from step 24 using `/ops:deploy`. Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge. Monitor go/no-go criteria throughout.
 
+> **First release:** Follow the direct-deploy plan approved at step 24. Skip `/ops:monitor-canary` — run the smoke-test gate manually instead.
+
 **29. Promote or Rollback**
 At each canary step, verify all go/no-go criteria from the approved plan (step 24). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
+
+> **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect — open a GitHub issue, fix it, and re-run from step 25.
 
 ---
 
