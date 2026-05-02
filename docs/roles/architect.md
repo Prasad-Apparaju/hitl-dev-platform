@@ -8,24 +8,32 @@ You hold the design and integration gates. You review designs before implementat
 
 | Command | When to use | Gate it covers |
 |---------|-------------|----------------|
-| `/architect:review-design` | After the developer opens a design PR — before implementation starts | Design PR gate |
+| `/architect:design-system` | New project — designing the full system from a PRD | System foundation (one-time) |
+| `/architect:design-feature` | Starting any Tier 2+ change — steps 3–9 end-to-end | Impact analysis through decision packet handoff |
+| `/architect:review-design` | After design docs are produced — before implementation starts | Design approval gate |
 | `/architect:verify-traceability` | Final check before approving merge | Integration verification gate |
 
 **When also covering QA:** use [`/qa:review-tests`](qa.md) and [`/qa:verify-quality`](qa.md)
 
 **When also covering Ops:** use [`/ops:review-release`](ops.md) and [`/ops:monitor-canary`](ops.md)
 
-## Your Two Gates
+## Your Commands in Context
 
-### Gate 1 — Design Review (`/architect:review-design`)
-Run after the developer submits a design PR with HLD, LLD, and ADR. Check:
+### New System (`/architect:design-system`)
+Run once at project inception. Takes the PRD and produces: domain decomposition, `docs/system-manifest.yaml`, system HLDs, foundational ADRs, domain LLDs, and the HITL process bootstrap. The domain decomposition gate is the most consequential — domain boundary errors cascade through every subsequent artifact.
+
+### New Change (`/architect:design-feature`)
+Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with approval gates, ADR capture, slice decomposition (domain independence check), test case planning, and decision packet assembly. Produces `.hitl/current-change.yaml` set to `implementation-approved` and hands one decision packet per slice to each developer.
+
+### Design Review (`/architect:review-design`)
+Run after design docs are produced — before implementation starts. Check:
 - LLD is precise enough to generate tests from — every method has a signature, error modes are enumerated, preconditions are explicit
 - Manifest facade APIs are updated if new domain APIs are introduced
 - ADRs are written for all tradeoffs — specific rationale, genuine alternatives, honest consequences
 
 Do not approve implementation until the LLD has `status: approved` in its frontmatter.
 
-### Gate 2 — Integration Verification (`/architect:verify-traceability`)
+### Integration Verification (`/architect:verify-traceability`)
 Final check before approving merge. Confirm the chain is unbroken:
 
 GitHub issue exists → design PR merged → implementation matches LLD → tests cover the spec → impact brief complete → rollout plan approved
