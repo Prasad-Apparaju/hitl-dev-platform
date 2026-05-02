@@ -1,8 +1,9 @@
 {
   "name": "hitl-dev-platform",
   "version": "1.0.0",
-  "description": "HITL delivery methodology packaged as Claude Code skills, subagents, slash commands, hooks, and templates. Enforces doc-driven development, TDD-as-design, spec conformance review, and role-separated AI assistance.",
+  "description": "HITL AI-Driven Development. Run /start to set up a new project or onboard an existing codebase. Then use /dev-practices for the full 30-step delivery workflow, role-specific commands (/pm, /architect, /qa, /ops), and enforcement hooks.",
   "skills": [
+    "skills/start",
     "skills/dev-practices",
     "skills/apply-change",
     "skills/check-conventions",

@@ -2,6 +2,12 @@
 
 These rules apply to EVERY Claude Code session that opens this repo. They ensure all team members' Claude instances follow the same standards, conventions, and workflow.
 
+## Getting Started
+
+If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively run `/start`. It detects whether this is a new project or an existing codebase and walks through the appropriate setup path.
+
+Do not wait for the user to discover `/start` on their own. Offer it immediately if the project appears unconfigured.
+
 ## Preflight Check (MANDATORY)
 
 Before making ANY code or doc change, output these 7 lines in the chat BEFORE the first state-modifying tool call:
