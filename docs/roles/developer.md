@@ -13,6 +13,7 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 | `/tdd` | After the LLD is approved — runs the RED → GREEN → REFACTOR cycle, tests first |
 | `/apply-change` | Before touching code — impact analysis across components, APIs, docs, and tests |
 | `/check-conventions` | At any point — runs semgrep, manifest drift, and convention checks in-chat before CI catches them |
+| `/check-implementation` | After TDD — two-round spec conformance review comparing implementation against the LLD and manifest |
 | `/impact-brief` | When the PR is ready — generates the downstream impact brief and rollout plan for the architect to review |
 | `/conclude` | After a design-room thread reaches a decision — turns the Slack thread into an ADR, GitHub issue, and HLD/LLD updates |
 
@@ -23,9 +24,10 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 3. Run `/generate-docs` — draft HLD/LLD before writing code
 4. Get architect design approval (`/architect:review-design`)
 5. Run `/tdd` — tests first, then code
-6. Run `/check-conventions` — fix violations before PR
-7. Run `/impact-brief` — downstream impact brief + rollout plan
-8. Create the PR — QA runs `/qa:review-tests`, then architect runs `/architect:verify-traceability` before merge
+6. Run `/check-implementation` — two-round spec conformance review against the LLD
+7. Run `/check-conventions` — fix violations before PR
+8. Run `/impact-brief` — downstream impact brief + rollout plan
+9. Create the PR — QA runs `/qa:review-tests`, then architect runs `/architect:verify-traceability` before merge
 
 ## Setup Note: Graphify (recommended for large codebases)
 

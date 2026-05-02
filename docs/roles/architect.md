@@ -12,10 +12,10 @@ You hold the design and integration gates. You review designs before implementat
 | `/architect:design-feature` | Starting any Tier 2+ change — steps 3–9 end-to-end | Impact analysis through decision packet handoff |
 | `/architect:review-design` | After design docs are produced — before implementation starts | Design approval gate |
 | `/architect:verify-traceability` | Final check before approving merge | Integration verification gate |
-
-**When also covering QA:** use [`/qa:review-tests`](qa.md) and [`/qa:verify-quality`](qa.md)
-
-**When also covering Ops:** use [`/ops:review-release`](ops.md) and [`/ops:monitor-canary`](ops.md)
+| `/qa:review-tests` | After the TDD cycle — review test coverage against ACs and LLD | QA gate (when covering QA) |
+| `/qa:verify-quality` | After developer handoff — independent quality verification | QA gate (when covering QA) |
+| `/ops:review-release` | Before release — assess rollout plan, canary criteria, rollback | Ops gate (when covering Ops) |
+| `/ops:monitor-canary` | During active canary — read dashboards, produce go/no-go | Ops gate (when covering Ops) |
 
 ## Your Commands in Context
 
