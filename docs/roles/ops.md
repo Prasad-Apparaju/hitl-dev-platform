@@ -9,6 +9,9 @@ You own the release. You take the handoff from QA, assess deployment risk, deplo
 | Command | When to use |
 |---------|-------------|
 | `/ops:review-release` | After the developer completes the impact brief — review rollout plan, canary criteria, observability readiness, and rollback procedure |
+| `/ops:apply-iac` | Before deployment — when the change plan includes IaC changes, review and apply them with a dry-run gate |
+| `/ops:build` | Before deployment — build the app from the release branch, verify CI artifact and run smoke check |
+| `/ops:deploy` | After build and IaC are verified — deploy to target environment per the approved rollout plan |
 | `/ops:monitor-canary` | During an active canary deployment — read dashboards against go/no-go criteria and produce a promotion recommendation |
 
 ## Your Role in the Workflow
@@ -16,6 +19,12 @@ You own the release. You take the handoff from QA, assess deployment risk, deplo
 **At design time (non-blocking):** When the developer shares the impact brief draft, contribute canary criteria from the incident registry. Your past incident knowledge shapes what thresholds are tight enough for this domain.
 
 **Before release (gate):** Run `/ops:review-release`. Check that the rollout plan has explicit canary percentages and soak times, go/no-go criteria are specific numbers (not "error rate is low"), rollback is defined, and side-effect safety is assessed for irreversible operations. Required for Tier 3+; advisory for Tier 2.
+
+**IaC changes:** If the change plan includes infrastructure changes, run `/ops:apply-iac` before deployment. This runs a dry-run plan, presents all changes (adds, updates, deletes) for your approval, and applies only after explicit confirmation. Destructive changes require a second confirmation. The deploy command blocks until IaC shows `status: applied`.
+
+**Build:** Run `/ops:build` to verify the release branch has a passing CI run and a clean artifact. The skill checks the artifact digest against CI output, runs a smoke check, and records the artifact reference in the HITL context. Never deploy an artifact whose origin you cannot trace to a CI run.
+
+**Deploy:** Run `/ops:deploy` once build and IaC are verified. The skill reads the rollout plan risk level, confirms the canary configuration with you, presents the exact deployment command before running it, and guides post-deployment verification. For canary deployments it hands off to `/ops:monitor-canary`.
 
 **During canary (monitoring):** Run `/ops:monitor-canary` at each promotion step. AI reads the observability data and produces a recommendation — you make the final call. If a criterion fails, pause (do not immediately roll back) and investigate. Most canary "failures" are noise or pre-existing issues; automatic rollback on noise creates churn.
 
