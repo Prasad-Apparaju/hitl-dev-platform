@@ -43,7 +43,14 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
-> **Brownfield (existing codebase not yet in HITL):** Run `/start` and choose Path B. The baseline sprint produces the manifest, HLDs, and LLDs from the existing code before any change work begins. See the [adoption guide](adoption-guide.md) for the full sprint process.
+> **Brownfield (existing codebase not yet in HITL):** Two valid approaches — choose based on how much time you can invest upfront:
+>
+> | Approach | What you do first | Tradeoff |
+> |---|---|---|
+> | **Full baseline sprint** (recommended) | Run the full reverse-engineer sprint via `/generate-docs reverse-engineer` — produces manifest, HLDs, LLDs, registries, and process setup before any change work starts | Cleaner start; AI output from step 1 is more reliable |
+> | **Incremental** | Run `/start` Path B — produces manifest, priority component docs, and registry stubs; start change work immediately | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
+>
+> In both cases, run `/start` first. For the full sprint, it routes you to `/generate-docs reverse-engineer`. For incremental, it walks you through the lightweight setup. See the [adoption guide](adoption-guide.md) for full sprint details.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
