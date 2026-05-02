@@ -332,6 +332,133 @@ Run when a design needs review before implementation. This replaces the `archite
 
 ---
 
+## Architect Design Journey (Steps 3–9)
+
+Run when the architect is starting a new change and needs to drive the full design phase — from impact analysis through to decision packets ready for developer handoff.
+
+**Trigger:** User asks to "design feature", "run the design phase", "architect design-feature", or "steps 3 through 9".
+
+This section covers everything from impact analysis through decision packet assembly. Use the `Architecture Review` section (above) for the narrower case of reviewing existing design docs.
+
+### Phase 1 — Impact Analysis and Scope
+
+1. Fetch the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`."
+2. Read the system manifest — prefer a graph query:
+   ```
+   /graphify query "all domains and facade APIs"
+   /graphify query "domain: <candidate> facade APIs boundary entities"
+   ```
+   Fall back to `docs/system-manifest.yaml` directly.
+3. Check incident history for candidate domains — prefer a graph query:
+   ```
+   /graphify query "past incidents affecting domain: <domain-name>"
+   ```
+   Fall back to `docs/04-operations/incident-registry.yaml`.
+4. Identify affected domains, facade API changes, boundary entity changes, IaC scope, and backwards compatibility.
+5. Determine tier (from `skills/dev-practices/SKILL.md`). Challenge scope: cross-domain or multi-service changes are Tier 3 even when described as simple.
+6. Estimate effort and token cost (phase-level formula from `skills/dev-practices/roi-estimation.md`).
+7. Initialize or update `.hitl/current-change.yaml` with `status: planning`.
+8. **STOP — present impact summary and ask architect to confirm scope and tier.**
+
+### Phase 2 — ROI Trigger (Step 4)
+
+If effort > 1 day: draft ROI section for the GitHub issue from `skills/dev-practices/roi-estimation.md`. Ask architect to fill in the baseline metric now — it cannot be estimated after the fact.
+
+### Phase 3 — HLD (Step 5, Part 1)
+
+For Tier 2+:
+- Generate HLD at `docs/02-design/technical/hld/<feature>.md` following the `Generate Documentation` section below.
+- Update `docs/02-design/technical/hld/index.md` and `source_artifacts.hld` in `.hitl/current-change.yaml`.
+- **STOP — ask architect to approve HLD.** Do not generate LLDs until approval.
+
+### Phase 4 — ADR Capture (Step 5, Part 2)
+
+After HLD approval:
+- Identify every design decision in the HLD.
+- Create ADR stubs at `docs/02-design/technical/adrs/<decision>.md` using `templates/adr-template.md`. Mark as "DRAFT — architect to complete rationale."
+- Ask architect: "Are there decisions being made here that aren't visible in the design?"
+
+### Phase 5 — LLD per Domain (Step 5, Part 3)
+
+For each affected domain:
+- Generate LLD following the `Generate Documentation` section below.
+- **STOP after each LLD — ask architect:** "Is this precise enough to generate tests from?"
+- Update `source_artifacts.lld` in `.hitl/current-change.yaml` after each approval.
+
+### Phase 6 — IaC Planning (Step 6)
+
+If IaC changes were identified: list specific files, what changes, and reversibility. Record in `.hitl/current-change.yaml` under `iac_plan`. If none: state so explicitly.
+
+### Phase 7 — Slice Decomposition
+
+This is the architect's core parallelization decision — no default behavior, requires explicit reasoning.
+
+For each affected domain, propose a slice. For each pair of slices:
+- Do they share mutable state, database tables, or external API contracts?
+- Can both be deployed to production independently?
+
+Mark slices with ordering dependencies as **SEQUENTIAL**. Mark fully independent slices as **PARALLEL OK**.
+
+**STOP — present slice plan and ask architect to confirm.** Do not assemble packets until the slice plan is confirmed.
+
+### Phase 8 — Test Case Planning (Step 7)
+
+For each confirmed slice, using the approved LLD, produce:
+
+| Action | Test name | What it covers |
+|--------|-----------|----------------|
+| ADD | `test_<scenario>` | [behavior from LLD] |
+| UPDATE | `test_<existing>` | [what changes] |
+| REMOVE | `test_<obsolete>` | [why] |
+| VERIFY | `test_<existing>` | [regression check] |
+
+Check incident registry for the domain (graph-first). Add regression tests for any relevant incidents.
+
+Record the test plan in `.hitl/current-change.yaml` under `tests.plan`.
+
+### Phase 9 — Training Plan Stub (Step 8, conditional)
+
+Training required for: new architectural pattern, new external system, new framework, new ML/AI technique, significant mental-model-changing refactor.
+
+Not required for: new endpoints on existing patterns, bug fixes, model-preserving refactors.
+
+If required: create stub at `docs/03-engineering/training/<capability>.md` using `templates/training-plan-template.md`.
+
+### Phase 10 — Decision Packet Assembly (Step 9)
+
+For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice) using `templates/decision-packet-template.yaml`. Fill all fields: issue, domain (one only), LLD path, HLD path, ADR paths, IaC plan, test plan, rollout risk, ROI flag, impact brief placeholders.
+
+**STOP after each packet — ask architect to approve.** After all packets approved:
+- Set `approvals.architecture: approved` in `.hitl/current-change.yaml`
+- Set `status: implementation-approved`
+
+### Output format
+
+```
+DESIGN COMPLETE — GH-<N>: [title]
+Tier: N  |  Slices: M  |  Est. effort: N days
+
+Artifacts:
+  HLD: docs/02-design/technical/hld/...
+  LLDs: N files
+  ADRs: N stubs (architect to fill rationale)
+  Decision packets: N files
+  Training stub: [path or "not required"]
+  .hitl context: implementation-approved
+
+Slice handoff:
+  Slice 1: domain [A] [PARALLEL OK]
+    LLD: docs/.../lld/[A]/...
+    Packet: docs/decisions/issue-<N>-s1.yaml
+  Slice 2: domain [B] [SEQUENTIAL — after slice 1]
+    LLD: docs/.../lld/[B]/...
+    Packet: docs/decisions/issue-<N>-s2.yaml
+
+Next: assign packets to developers; each runs /tdd with their LLD path
+```
+
+---
+
 ## QA Review
 
 Run after the TDD cycle is complete, before creating a PR.

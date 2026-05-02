@@ -408,7 +408,10 @@ Feature work proceeds when blockers are zero.
 | Name | Source | What it does |
 |------|--------|-------------|
 | `/dev-practices` | [skills/dev-practices/SKILL.md](../skills/dev-practices/SKILL.md) | Full workflow |
-| `/apply-change` | [skills/apply-change/SKILL.md](../skills/apply-change/SKILL.md) | Impact analysis |
+| `/architect/design-feature` | [skills/architect/design-feature/SKILL.md](../skills/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
+| `/architect/review-design` | [commands/architect/review-design.md](../commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
+| `/architect/verify-traceability` | [commands/architect/verify-traceability.md](../commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/apply-change` | [skills/apply-change/SKILL.md](../skills/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
 | `/generate-docs` | [skills/generate-docs/SKILL.md](../skills/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
 | `/tdd` | [skills/tdd/SKILL.md](../skills/tdd/SKILL.md) | TDD-as-design loop |
 | `/impact-brief` | [skills/impact-brief/SKILL.md](../skills/impact-brief/SKILL.md) | 5-section downstream impact brief |
