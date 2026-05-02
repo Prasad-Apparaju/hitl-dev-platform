@@ -28,21 +28,19 @@ This is why HITL puts coding standards, domain boundaries, the preflight checkli
 
 Keep these files focused. Every token in the always-loaded zone is paid on every session.
 
-### Loaded on demand → Workflow steps (Skills)
+### Loaded on demand → Workflow steps
 
-Each workflow step — `/dev-practices`, `/tdd`, `/generate-docs`, `/architect:design-feature`, and so on — is a separate skill rather than one giant instruction block loaded at startup. Skills are lazy-loaded: they enter context only when the user explicitly invokes them.
+**Claude Code:** Each workflow step — `/dev-practices`, `/tdd`, `/generate-docs`, `/architect:design-feature`, and so on — is a separate skill rather than one giant instruction block loaded at startup. Skills are lazy-loaded: they enter context only when the user explicitly invokes them. A developer running `/tdd` pays only for the TDD skill instructions — not for the PM, Ops, or Architect workflows. A 30-step workflow written as a skill costs nothing on sessions where it is never invoked.
 
-A developer running `/tdd` pays only for the TDD skill instructions — not for the PM, Ops, or Architect workflows. A PM running `/pm:prioritize` does not load any developer workflow content.
-
-This also means each skill can be thorough. A 30-step workflow written as a skill costs nothing on sessions where it is never invoked. Written in `CLAUDE.md`, it would cost that every session.
+**Codex CLI:** There is no equivalent lazy-load path for skills. The full workflow is encoded directly in `AGENTS.md`, which is always loaded at startup. The design consequence is different: instead of deferring workflow instructions, the complete AGENTS.md is present from the first message — but every token in it is paid on every session. This is why the HITL `codex/AGENTS.md` is structured differently from the Claude skills: it consolidates all workflows into one focused document rather than splitting them across 25 individually lazy-loaded files.
 
 ### Hooks → Enforcement outside the context window
 
 Enforcement logic in HITL runs in hooks — `check-hitl-context.sh`, `check-domain-boundary.sh`, `write-session-summary.sh` — rather than as instructions in `CLAUDE.md`. Hooks fire as OS-level processes. Their output is appended to context when they produce output, but the enforcement logic itself runs outside the model's context window.
 
-This means HITL can enforce: "a GitHub issue must exist before any file is edited" without spending any permanent tokens on that rule. The hook fires on `PreToolUse`, checks the `.hitl/current-change.yaml` file, and either passes silently (zero context cost) or blocks with a one-line message.
+This means HITL can enforce that a change context file (`.hitl/current-change.yaml`) exists and contains the required fields — including an issue reference — before any file is edited. The hook fires on `PreToolUse`, checks the file, and either passes silently (zero context cost) or blocks with a one-line message. It does not make a live GitHub API call to verify the issue; it checks that the local context file was properly initialized.
 
-For Codex, the same pattern applies via `.codex/hooks.json` (lifecycle hooks) and git hooks (commit-time enforcement).
+For Codex, the same pattern applies via `.codex/hooks.json` (lifecycle hooks scoped to `Write|Edit` operations) and git hooks (commit-time enforcement).
 
 ### Subagents → Parallel role work without red zone accumulation
 
@@ -54,9 +52,9 @@ This maps directly to the session-growth zone insight: every tool result, file r
 
 ## The Design Consequence
 
-Because skills are lazy-loaded, the total size of all HITL skills combined does not matter for session cost. What matters is the number of skills invoked in a given session. A developer doing TDD all day pays for the TDD skill once, not for the 25 other skills in the platform.
+**Claude Code:** Because skills are lazy-loaded, the total size of all HITL skills combined does not matter for session cost. What matters is the number of skills invoked in a given session. A developer doing TDD all day pays for the TDD skill once, not for the 25 other skills in the platform. Because `CLAUDE.md` is always loaded, its size does matter — the template stays small by design: conventions as bullet points, not prose; a manifest reference rather than the full manifest inline; a preflight checklist rather than a full workflow.
 
-Because `CLAUDE.md` is always loaded, its size does matter. The template is intentionally structured to stay small: conventions as bullet points, not prose; a manifest reference rather than the full manifest inline; a preflight checklist rather than a full workflow.
+**Codex CLI:** Because `AGENTS.md` is always loaded, its size matters directly. HITL's `codex/AGENTS.md` consolidates all workflow instructions into one document and is structured to be comprehensive without being redundant. There is no lazy-load path to fall back on, so the document must cover all roles and workflows while remaining focused enough that the startup cost stays reasonable.
 
 Because hooks run outside the context window, enforcement has near-zero runtime cost. HITL can apply strict checks on every file edit without any incremental token cost per check.
 

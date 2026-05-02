@@ -95,7 +95,7 @@ sequenceDiagram
     end
 
     rect rgb(220, 255, 230)
-        Note over CLI,Hook: 🔵 Trigger: tool call when lifecycle hooks are enabled
+        Note over CLI,Hook: 🔵 Trigger: Write or Edit tool call when lifecycle hooks are enabled (hooks.json scopes to Write|Edit — not all tools)
         CLI->>Hook: pre-tool hook
         Hook-->>CLI: approve / block / annotate
         CLI->>Tool: run tool
