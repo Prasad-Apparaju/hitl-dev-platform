@@ -43,6 +43,45 @@ Each role has its own command set and setup guide:
 | **QA Engineer** | `/qa:plan-tests`, `/qa:review-tests`, `/qa:verify-quality`, `/qa:report-defect` | [QA guide](docs/roles/qa.md) |
 | **Ops Engineer** | `/ops:build`, `/ops:deploy`, `/ops:apply-iac`, `/ops:review-release`, `/ops:monitor-canary` | [Ops guide](docs/roles/ops.md) |
 
+### Installing the plugin
+
+The HITL platform is packaged as a Claude Code plugin. Installing it makes all 30 slash commands, subagents, and enforcement hooks available in your project.
+
+**Step 1 — Clone the platform to a stable path on your machine**
+
+```bash
+git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platform
+```
+
+**Step 2 — Register the plugin**
+
+_Option A: Per-project (recommended)_ — run `init-project.sh` and it writes the plugin entry automatically:
+
+```bash
+bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
+```
+
+This creates `.claude/settings.json` in your product repo with the plugin path already set. Open the product repo in Claude Code and the commands are immediately available.
+
+_Option B: Global install_ — add the plugin to your user-level Claude Code settings so it is available in every project without running `init-project.sh`:
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "plugins": ["~/tools/hitl-dev-platform/.claude-plugin/plugin.json"]
+}
+```
+
+**Step 3 — Verify**
+
+Open Claude Code in your project directory and type `/`. You should see `/start`, `/dev-practices`, `/tdd`, and the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`). If the commands do not appear, confirm the plugin path in `.claude/settings.json` points to the correct location of your platform clone.
+
+**Step 4 — Run `/start`**
+
+`/start` detects whether this is a new project or an existing codebase and walks you through the appropriate setup. Run it first in every new project.
+
+---
+
 ### What it looks like after setup
 
 Once the plugin is installed, Claude Code auto-loads your project conventions and exposes all 30 workflow commands as slash commands. Type `/` to browse or `/namespace:` to filter by role (`/pm`, `/architect`, `/qa`, `/ops`). Run `/start` first if you are setting up a new project or onboarding an existing codebase.
