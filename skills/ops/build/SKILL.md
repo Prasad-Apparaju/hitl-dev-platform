@@ -18,7 +18,13 @@ Build the application from a specified branch and confirm the artifact is ready 
 1. Run `git fetch origin` and confirm the branch exists
 2. Check branch is rebased or merged with the target base (main/release) — flag any divergence
 3. Read the CI configuration (`Dockerfile`, `Makefile`, `.github/workflows/`, or equivalent) to understand the build pipeline
-4. Check recent CI runs for this branch: `gh run list --branch <branch>` — note the last run status
+4. Identify which domains this branch touches — prefer a graph query:
+   ```
+   /graphify query "domains affected by branch: <branch-name>"
+   /graphify query "components changed in: <list of modified files>"
+   ```
+   Fall back to reading `docs/system-manifest.yaml` directly and matching modified files to domain paths. Record the affected domains — they determine which smoke checks apply in Step 3.
+5. Check recent CI runs for this branch: `gh run list --branch <branch>` — note the last run status
 
 If the last CI run failed, present the failure reason and stop: "Build is blocked — address CI failures before deployment."
 
@@ -42,8 +48,14 @@ If the last CI run failed, present the failure reason and stop: "Build is blocke
 
 1. Confirm the artifact exists at the expected location
 2. Verify the image digest or checksum matches what CI produced — do not proceed with a stale artifact
-3. Run the smoke check if one is defined (e.g., `docker run --rm <image> --health-check`, `curl /health`)
-4. If the smoke check fails, stop and report the failure — do not proceed to deployment
+3. Determine smoke check scope from the affected domains identified in Step 1 — prefer a graph query:
+   ```
+   /graphify query "health endpoints and smoke checks for domain: <domain-name>"
+   /graphify query "integration test entry points for: <domain-name>"
+   ```
+   Fall back to reading the CI config and `docs/system-manifest.yaml` for known health endpoints if the graph is unavailable.
+4. Run the applicable smoke checks (e.g., `docker run --rm <image> --health-check`, `curl /health`)
+5. If any smoke check fails, stop and report the failure — do not proceed to deployment
 
 ---
 
