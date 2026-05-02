@@ -408,10 +408,19 @@ Feature work proceeds when blockers are zero.
 | Name | Source | What it does |
 |------|--------|-------------|
 | `/dev-practices` | [skills/dev-practices/SKILL.md](../skills/dev-practices/SKILL.md) | Full workflow |
-| `/architect/design-system` | [skills/architect/design-system/SKILL.md](../skills/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
-| `/architect/design-feature` | [skills/architect/design-feature/SKILL.md](../skills/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
-| `/architect/review-design` | [commands/architect/review-design.md](../commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
-| `/architect/verify-traceability` | [commands/architect/verify-traceability.md](../commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/architect:design-system` | [skills/architect/design-system/SKILL.md](../skills/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
+| `/architect:design-feature` | [skills/architect/design-feature/SKILL.md](../skills/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
+| `/architect:review-design` | [commands/architect/review-design.md](../commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
+| `/architect:verify-traceability` | [commands/architect/verify-traceability.md](../commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/qa:plan-tests` | [skills/qa/plan-tests/SKILL.md](../skills/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
+| `/qa:review-tests` | [skills/qa/review-tests/SKILL.md](../skills/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
+| `/qa:verify-quality` | [skills/qa/verify-quality/SKILL.md](../skills/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
+| `/qa:report-defect` | [skills/qa/report-defect/SKILL.md](../skills/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
+| `/ops:build` | [skills/ops/build/SKILL.md](../skills/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
+| `/ops:apply-iac` | [skills/ops/apply-iac/SKILL.md](../skills/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
+| `/ops:deploy` | [skills/ops/deploy/SKILL.md](../skills/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
+| `/ops:review-release` | [commands/ops/review-release.md](../commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
+| `/ops:monitor-canary` | [commands/ops/monitor-canary.md](../commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
 | `/apply-change` | [skills/apply-change/SKILL.md](../skills/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
 | `/generate-docs` | [skills/generate-docs/SKILL.md](../skills/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
 | `/tdd` | [skills/tdd/SKILL.md](../skills/tdd/SKILL.md) | TDD-as-design loop |
