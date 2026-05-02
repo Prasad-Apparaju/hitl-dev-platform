@@ -213,22 +213,29 @@ This mode reads the existing codebase and generates the full documentation basel
    - Includes downstream impact brief prompts
    - Includes training plan link placeholder
 
-6. **Set up Obsidian compatibility** (if docs/ exists):
+6. **Create registry stubs** if they don't exist:
+
+   - **Test registry** (`docs/03-engineering/testing/test-registry.yaml`): generate from the test files discovered in Phase R1 — one entry per test file with `domain`, `path`, and `risk: DRAFT`. Leave `covers` empty for the architect to fill in.
+   - **Incident registry** (`docs/04-operations/incident-registry.yaml`): create an empty stub (header + comment block only). Do not fabricate incidents.
+
+   After generating, say: "I've created registry stubs. The test registry has [N] entries from discovered test files — add `risk` classifications and `covers` links as you review each domain. The incident registry is empty. Before starting change work, ask your team: *What broke in production in the last 6 months?* Each answer is one entry."
+
+7. **Set up Obsidian compatibility** (if docs/ exists):
    - Create `docs/.obsidian/app.json` with `useMarkdownLinks: true`, `newLinkFormat: "relative"`
    - Add `.obsidian/` and `docs/.obsidian/` to `.gitignore`
 
-7. **Identify training plan candidates** — scan the codebase for capabilities that would benefit from a training plan:
+8. **Identify training plan candidates** — scan the codebase for capabilities that would benefit from a training plan:
    - Any custom framework or abstraction used across 3+ files
    - Any external system integration (API clients, SDKs)
    - Any architectural pattern that deviates from the framework default
    - For each candidate, create a stub at `docs/03-engineering/training/<name>.md` using `templates/training-plan-template.md` with module outlines and reading lists pointing to the just-generated LLDs
 
-8. **Generate the docs README** — `docs/README.md` with:
+9. **Generate the docs README** — `docs/README.md` with:
    - A table of contents linking to all HLDs, LLDs, ADRs, training plans
    - The arc42-style directory structure explanation
    - Quick links to the system manifest and CLAUDE.md
 
-9. **Present a completeness summary** to the user:
+10. **Present a completeness summary** to the user:
 
    ```
    ┌─────────────────────────────────────────────┐
@@ -243,6 +250,8 @@ This mode reads the existing codebase and generates the full documentation basel
    │ Convention checks: 1 config, M checks       │
    │ CI actions:       2 workflows               │
    │ Issue template:   1 file                    │
+   │ Test registry:    1 file, N entries (DRAFT) │
+   │ Incident registry: 1 file, empty stub       │
    ├─────────────────────────────────────────────┤
    │ NEEDS HUMAN REVIEW:                         │
    │ • Manifest facade blurbs (DRAFT): N items   │
@@ -250,12 +259,15 @@ This mode reads the existing codebase and generates the full documentation basel
    │ • Manifest boundary entities: N items       │
    │ • Forensic ADRs (INFERRED): W items         │
    │ • Training plan stubs: T items              │
+   │ • Test registry risk fields: N items        │
+   │ • Incident registry: seed with team input   │
    ├─────────────────────────────────────────────┤
    │ RECOMMENDED NEXT STEPS:                     │
    │ 1. Review manifest domain boundaries        │
    │ 2. Fill in facade blurbs + mutations        │
    │ 3. Verify forensic ADRs with the team       │
-   │ 4. Apply the process to one real change     │
+   │ 4. Seed incident registry ("what broke?")   │
+   │ 5. Apply the process to one real change     │
    └─────────────────────────────────────────────┘
    ```
 

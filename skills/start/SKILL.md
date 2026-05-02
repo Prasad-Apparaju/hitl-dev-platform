@@ -138,18 +138,38 @@ For each component:
 - If they want it now, run `/generate-docs` for that component.
 - Note: This can be done incrementally. You don't need to document everything before starting work.
 
-### B5. Create your first change issue
+### B5. Seed the registries
+
+The 30-step workflow queries two registries at multiple points. They need to exist before `/dev-practices` is run for the first time.
+
+**Test registry** (`docs/03-engineering/testing/test-registry.yaml`):
+- Ask: "Do you have existing tests? If so, I'll create a test registry stub from your test files."
+- If yes: scan `tests/`, `spec/`, or equivalent; generate one entry per test file with `domain` and `path`. Leave `risk` and `covers` as DRAFT.
+- If no: create an empty stub.
+
+**Incident registry** (`docs/04-operations/incident-registry.yaml`):
+- Ask: "What broke in production in the last 6 months? Describe each incident in one sentence."
+- For each answer, add one entry to the incident registry with `description`, `domain` (best guess), and `date`.
+- If they have nothing, create an empty stub. Say: "You can add entries later — after each production incident, run `/ops:log-incident`."
+
+### B6. Create your first change issue
 
 Ask: "What's the first change you want to make now that this project is onboarded?"
 - Run: `gh issue create --title "[change description]" --body "First tracked change after HITL brownfield onboarding."`
 - Show the issue URL.
 
-### B6. Confirm ready
+### B7. Confirm ready
 
 Output this exactly:
 
 ---
 **Brownfield baseline established.**
+
+You are starting incrementally: manifest and priority component docs exist, registries are seeded. Undocumented components will need their LLDs created when you first change them (`/generate-docs` for that component).
+
+**What this means for your first changes:**
+- Treat AI output from steps 5, 10, and 14 as drafts — the docs are new and may not yet reflect actual behavior. Increase human review scrutiny until the docs have been corrected through real use.
+- If `/dev-practices` stops with "no LLD found" on an undocumented component, run `/generate-docs` for that component, then resume.
 
 For every change going forward:
 
@@ -157,8 +177,6 @@ For every change going forward:
 2. Run `/dev-practices` — the 30-step workflow starts here
 3. Update HLD/LLD if the design changes
 4. Code → tests → PR
-
-You don't need to document everything before starting. The manifest and docs grow with each change.
 
 Run `/dev-practices` now to start your first change, or ask me anything about the process.
 
