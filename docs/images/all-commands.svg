@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 1190" width="780" height="1190" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 1246" width="780" height="1246" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
 
   <!-- Background -->
-  <rect width="780" height="1190" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="1246" rx="10" fill="#1e1e2e"/>
 
   <!-- Title bar -->
   <rect width="780" height="38" rx="10" fill="#313244"/>
@@ -29,10 +29,10 @@
   <rect x="46" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
   <!-- Dropdown outer -->
-  <rect x="16" y="212" width="748" height="928" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="984" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">ALL COMMANDS  (28)  —  type /namespace: to filter  —  ↑↓ navigate   ↵ select</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">ALL COMMANDS  (30)  —  type /namespace: to filter  —  ↑↓ navigate   ↵ select</text>
 
   <!-- ══ ARCHITECT (4) ══════════════════════════════════════════════════════ -->
   <rect x="17" y="240" width="746" height="20" fill="#1a2744"/>
@@ -154,58 +154,68 @@
   <text x="262" y="886" fill="#6c7086" font-size="11">  ·</text>
   <text x="275" y="886" fill="#a6adc8" font-size="11">Answer product or business questions using existing docs</text>
 
-  <!-- ══ QA (2) ══════════════════════════════════════════════════════════════ -->
+  <!-- ══ QA (4) ══════════════════════════════════════════════════════════════ -->
   <rect x="17" y="900" width="746" height="20" fill="#2e2a1a"/>
   <text x="28" y="914" fill="#f9e2af" font-size="10" font-weight="bold" letter-spacing="1">QA</text>
-  <text x="692" y="914" fill="#45475a" font-size="10">2 commands</text>
+  <text x="692" y="914" fill="#45475a" font-size="10">4 commands</text>
 
   <rect x="17" y="920" width="746" height="28" fill="transparent"/>
-  <text x="28" y="938" fill="#cba6f7" font-size="12">/qa:review-tests</text>
+  <text x="28" y="938" fill="#cba6f7" font-size="12">/qa:plan-tests</text>
   <text x="262" y="938" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="938" fill="#a6adc8" font-size="11">Formal test coverage review — ACs, LLD edge cases, regressions</text>
+  <text x="275" y="938" fill="#a6adc8" font-size="11">Design time — test scenarios from incident history before TDD starts</text>
 
   <rect x="17" y="948" width="746" height="28" fill="transparent"/>
-  <text x="28" y="966" fill="#cba6f7" font-size="12">/qa:verify-quality</text>
+  <text x="28" y="966" fill="#cba6f7" font-size="12">/qa:review-tests</text>
   <text x="262" y="966" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="966" fill="#a6adc8" font-size="11">Independent quality verification — exploratory testing, approve</text>
+  <text x="275" y="966" fill="#a6adc8" font-size="11">Formal test coverage review — ACs, LLD edge cases, incident regressions</text>
+
+  <rect x="17" y="976" width="746" height="28" fill="transparent"/>
+  <text x="28" y="994" fill="#cba6f7" font-size="12">/qa:verify-quality</text>
+  <text x="262" y="994" fill="#6c7086" font-size="11">  ·</text>
+  <text x="275" y="994" fill="#a6adc8" font-size="11">Post-handoff independent verification — block or approve promotion</text>
+
+  <rect x="17" y="1004" width="746" height="28" fill="transparent"/>
+  <text x="28" y="1022" fill="#cba6f7" font-size="12">/qa:report-defect</text>
+  <text x="262" y="1022" fill="#6c7086" font-size="11">  ·</text>
+  <text x="275" y="1022" fill="#a6adc8" font-size="11">File structured defect when blocking — AC ref, repro steps, severity</text>
 
   <!-- ══ OPS (5) ══════════════════════════════════════════════════════════════ -->
-  <rect x="17" y="980" width="746" height="20" fill="#2e1a1a"/>
-  <text x="28" y="994" fill="#f38ba8" font-size="10" font-weight="bold" letter-spacing="1">OPS</text>
-  <text x="692" y="994" fill="#45475a" font-size="10">5 commands</text>
-
-  <rect x="17" y="1000" width="746" height="28" fill="transparent"/>
-  <text x="28" y="1018" fill="#cba6f7" font-size="12">/ops:review-release</text>
-  <text x="262" y="1018" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="1018" fill="#a6adc8" font-size="11">Assess rollout plan, canary criteria, and rollback readiness</text>
-
-  <rect x="17" y="1028" width="746" height="28" fill="transparent"/>
-  <text x="28" y="1046" fill="#cba6f7" font-size="12">/ops:apply-iac</text>
-  <text x="262" y="1046" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="1046" fill="#a6adc8" font-size="11">Review and apply IaC changes — dry-run plan, approve gate, apply, verify</text>
+  <rect x="17" y="1036" width="746" height="20" fill="#2e1a1a"/>
+  <text x="28" y="1050" fill="#f38ba8" font-size="10" font-weight="bold" letter-spacing="1">OPS</text>
+  <text x="692" y="1050" fill="#45475a" font-size="10">5 commands</text>
 
   <rect x="17" y="1056" width="746" height="28" fill="transparent"/>
-  <text x="28" y="1074" fill="#cba6f7" font-size="12">/ops:build</text>
+  <text x="28" y="1074" fill="#cba6f7" font-size="12">/ops:review-release</text>
   <text x="262" y="1074" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="1074" fill="#a6adc8" font-size="11">Build from branch — verify CI run, artifact integrity, smoke readiness</text>
+  <text x="275" y="1074" fill="#a6adc8" font-size="11">Assess rollout plan, canary criteria, and rollback readiness</text>
 
   <rect x="17" y="1084" width="746" height="28" fill="transparent"/>
-  <text x="28" y="1102" fill="#cba6f7" font-size="12">/ops:deploy</text>
+  <text x="28" y="1102" fill="#cba6f7" font-size="12">/ops:apply-iac</text>
   <text x="262" y="1102" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="1102" fill="#a6adc8" font-size="11">Deploy a verified artifact to an environment per the approved rollout plan</text>
+  <text x="275" y="1102" fill="#a6adc8" font-size="11">Review and apply IaC changes — dry-run plan, approve gate, apply, verify</text>
 
   <rect x="17" y="1112" width="746" height="28" fill="transparent"/>
-  <text x="28" y="1130" fill="#cba6f7" font-size="12">/ops:monitor-canary</text>
+  <text x="28" y="1130" fill="#cba6f7" font-size="12">/ops:build</text>
   <text x="262" y="1130" fill="#6c7086" font-size="11">  ·</text>
-  <text x="275" y="1130" fill="#a6adc8" font-size="11">Read dashboards — go/no-go recommendation per canary step</text>
+  <text x="275" y="1130" fill="#a6adc8" font-size="11">Build from branch — verify CI run, artifact integrity, smoke readiness</text>
+
+  <rect x="17" y="1140" width="746" height="28" fill="transparent"/>
+  <text x="28" y="1158" fill="#cba6f7" font-size="12">/ops:deploy</text>
+  <text x="262" y="1158" fill="#6c7086" font-size="11">  ·</text>
+  <text x="275" y="1158" fill="#a6adc8" font-size="11">Deploy a verified artifact to an environment per the approved rollout plan</text>
+
+  <rect x="17" y="1168" width="746" height="28" fill="transparent"/>
+  <text x="28" y="1186" fill="#cba6f7" font-size="12">/ops:monitor-canary</text>
+  <text x="262" y="1186" fill="#6c7086" font-size="11">  ·</text>
+  <text x="275" y="1186" fill="#a6adc8" font-size="11">Read dashboards — go/no-go recommendation per canary step</text>
 
   <!-- Separator + nav hint -->
-  <line x1="16" y1="1142" x2="764" y2="1142" stroke="#45475a" stroke-width="1" opacity="0.5"/>
-  <text x="28" y="1156" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter by namespace</text>
-  <text x="572" y="1156" fill="#45475a" font-size="11">from .claude/commands/</text>
+  <line x1="16" y1="1198" x2="764" y2="1198" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="1212" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter by namespace</text>
+  <text x="572" y="1212" fill="#45475a" font-size="11">from .claude/commands/</text>
 
   <!-- Footer -->
-  <rect x="0" y="1168" width="780" height="18" fill="#313244" opacity="0.5"/>
-  <text x="16" y="1181" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  28 commands  (architect: 4  developer: 8  pm: 9  qa: 2  ops: 5)</text>
+  <rect x="0" y="1224" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="1237" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  30 commands  (architect: 4  developer: 8  pm: 9  qa: 4  ops: 5)</text>
 
 </svg>

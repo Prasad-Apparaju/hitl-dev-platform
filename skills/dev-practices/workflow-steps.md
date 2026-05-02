@@ -65,8 +65,8 @@ Do this before closing the session — the summary is not persisted anywhere els
 **10. AI Generates Tests (RED)** — use `/tdd`
 Developer passes the LLD path from the decision packet to `/tdd`. The skill reads `docs/02-design/technical/lld/<component>.md` (step 5) and `system-manifest.yaml` directly — it does not read the decision packet file itself. Generates maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance from manifest facade APIs. Writes test files to `tests/`. Registers each test in `docs/03-engineering/testing/test-registry.yaml`. No implementation code exists at this point.
 
-**11. Human Reviews Tests** — use `/qa/review-tests`
-Developer reads the same LLD (`docs/02-design/technical/lld/<component>.md`, step 5) and incident registry to identify gaps in the generated tests. Adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial or wrong tests, challenges assumptions. Updates `docs/03-engineering/testing/test-registry.yaml` for every test added or removed.
+**11. Human Reviews Tests** — use `/qa:review-tests`
+QA (or developer on small teams) reads the same LLD (`docs/02-design/technical/lld/<component>.md`, step 5) and queries the incident registry to identify gaps in the generated tests. Adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial or wrong tests. Updates `docs/03-engineering/testing/test-registry.yaml` for every test added or removed. If QA ran `/qa:plan-tests` at design time, verify those scenarios are present before approving.
 
 **12. Tests Improve the Design** — use `/tdd`
 `/tdd` analyzes the test files in `tests/` against the LLD at `docs/02-design/technical/lld/<component>.md`. For each test that covers behavior the LLD does not describe, proposes a specific LLD update. LLD is updated at the same path before any code is written. If LLD changes are significant, architect re-reviews and confirms before proceeding.

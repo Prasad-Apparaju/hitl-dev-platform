@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 322" width="780" height="322" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
-  <rect width="780" height="322" rx="10" fill="#1e1e2e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 430" width="780" height="430" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <rect width="780" height="430" rx="10" fill="#1e1e2e"/>
   <rect width="780" height="38" rx="10" fill="#313244"/>
   <rect y="28" width="780" height="10" fill="#313244"/>
   <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
@@ -19,21 +19,35 @@
   <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /qa</text>
   <rect x="58" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
-  <rect x="16" y="212" width="748" height="64" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="172" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (2)  —  namespace: qa</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (4)  —  namespace: qa</text>
 
   <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
-  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/qa:review-tests</text>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/qa:plan-tests</text>
   <text x="175" y="261" fill="#6c7086" font-size="12">  ·</text>
-  <text x="188" y="261" fill="#a6adc8" font-size="12">Formal test coverage review — ACs, LLD edge cases, incident regressions</text>
+  <text x="188" y="261" fill="#a6adc8" font-size="12">Design time — contribute test scenarios from incident history before TDD starts</text>
 
   <rect x="17" y="276" width="746" height="36" fill="transparent"/>
-  <text x="28" y="297" fill="#cba6f7" font-size="13">/qa:verify-quality</text>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/qa:review-tests</text>
   <text x="175" y="297" fill="#6c7086" font-size="12">  ·</text>
-  <text x="188" y="297" fill="#a6adc8" font-size="12">Post-handoff independent quality verification — exploratory testing, block or approve promotion</text>
+  <text x="188" y="297" fill="#a6adc8" font-size="12">Formal test coverage review — ACs, LLD edge cases, incident regressions</text>
 
-  <rect x="0" y="304" width="780" height="18" fill="#313244" opacity="0.5"/>
-  <text x="16" y="317" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  2 qa commands loaded  ·  convention checks: active</text>
+  <rect x="17" y="312" width="746" height="36" fill="transparent"/>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/qa:verify-quality</text>
+  <text x="175" y="333" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="333" fill="#a6adc8" font-size="12">Post-handoff independent verification — block or approve promotion to Ops</text>
+
+  <rect x="17" y="348" width="746" height="36" fill="transparent"/>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/qa:report-defect</text>
+  <text x="175" y="369" fill="#6c7086" font-size="12">  ·</text>
+  <text x="188" y="369" fill="#a6adc8" font-size="12">File structured defect when blocking — AC reference, repro steps, severity</text>
+
+  <line x1="16" y1="386" x2="764" y2="386" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="400" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="400" fill="#45475a" font-size="11">from .claude/commands/</text>
+
+  <rect x="0" y="412" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="425" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  4 qa commands loaded  ·  convention checks: active</text>
 </svg>
