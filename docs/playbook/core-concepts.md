@@ -78,7 +78,7 @@ This is the same structural pattern used in multi-agent orchestration: the orche
 
 **Where it breaks:** if the LLD is underspecified, the implementation fills gaps with assumptions, and those assumptions may not compose correctly across domains. The architect's most important job is reviewing LLDs for precision before they become delegation packets — not reviewing code after it is written.
 
-![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](docs/images/team-collaboration.png)
+![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](../images/team-collaboration.png)
 
 > **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 30-step workflow, and the three boundaries.
 
