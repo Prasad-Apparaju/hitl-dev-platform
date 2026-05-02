@@ -12,14 +12,31 @@
 #   git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platform
 #   bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
 #
-# Claude Code: skills, agents, and hooks are referenced from the shared platform —
-#              nothing is copied into the product repo.
-# Codex:       AGENTS.md and hook scripts are copied into the product repo
-#              (Codex has no plugin system; files must live in the project root).
+# Claude Code — what gets created in the product repo:
+#   .claude/settings.json       plugin reference + project-relative hook paths
+#   .hitl/hooks/*.sh            wrapper scripts; resolve platform via HITL_PLATFORM_ROOT
+#   .semgrep/                   semgrep convention rules (required by /check-conventions)
+#   tools/manifest-drift/       manifest drift checker (required by /check-conventions)
+#   scripts/fix_mermaid_br_tags.py  Mermaid linter (required by /check-conventions)
 #
-# CI note: Claude Code hooks use absolute paths to the platform. On CI machines,
-#          clone the platform to the same path before running Claude Code:
-#          git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platform
+# Skills, agents, and commands are never copied — they load from the shared
+# platform via the Claude Code plugin.
+#
+# Codex — what gets created (via codex/install.sh):
+#   AGENTS.md, .codex/, codex/hook-scripts/, .git/hooks/
+#
+# Version isolation:
+#   All products on one machine share one platform checkout by default.
+#   If a product needs a specific platform version, clone the fork to a
+#   different path and pass it:
+#     git clone ... ~/tools/hitl-dev-platform-v2
+#     HITL_PLATFORM_ROOT=~/tools/hitl-dev-platform-v2 \
+#       bash ~/tools/hitl-dev-platform-v2/scripts/init-project.sh ~/code/my-product
+#
+# CI setup:
+#   Hook wrappers resolve HITL_PLATFORM_ROOT at runtime. On CI machines, set:
+#     export HITL_PLATFORM_ROOT=/path/to/platform-clone
+#   or clone to the default path (~/tools/hitl-dev-platform).
 
 set -euo pipefail
 
@@ -79,7 +96,7 @@ else
   TMPL="$PLATFORM_ROOT/skills/generate-docs/templates/CLAUDE.md.template"
   if [[ -f "$TMPL" ]]; then
     cp "$TMPL" "$CLAUDE_DEST"
-    echo "✓ CLAUDE.md — edit this to add your project's coding standards and conventions"
+    echo "✓ CLAUDE.md — customize with your project's coding standards"
   else
     echo "  WARNING: CLAUDE.md template not found at $TMPL"
   fi
@@ -94,18 +111,48 @@ mkdir -p \
   "$TARGET_DIR/docs/session-logs"
 echo "✓ docs/ directory structure"
 
-MANIFEST_DEST="$TARGET_DIR/docs/system-manifest.yaml"
-if [[ ! -f "$MANIFEST_DEST" ]]; then
+if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
   MANIFEST_TMPL="$PLATFORM_ROOT/templates/system-manifest-template.yaml"
   if [[ -f "$MANIFEST_TMPL" ]]; then
-    cp "$MANIFEST_TMPL" "$MANIFEST_DEST"
+    cp "$MANIFEST_TMPL" "$TARGET_DIR/docs/system-manifest.yaml"
     echo "✓ docs/system-manifest.yaml — fill in your domains and API boundaries"
   fi
 fi
 
+# ---- Convention tool assets ----
+# check-conventions and related skills invoke these tools via project-relative
+# paths. They must live in the product repo, not the shared platform.
+
+setup_tools() {
+  local copied=0
+
+  if [[ -d "$PLATFORM_ROOT/.semgrep" && ! -d "$TARGET_DIR/.semgrep" ]]; then
+    cp -r "$PLATFORM_ROOT/.semgrep" "$TARGET_DIR/.semgrep"
+    echo "✓ .semgrep/ (semgrep convention rules)"
+    (( copied++ )) || true
+  fi
+
+  if [[ -d "$PLATFORM_ROOT/tools/manifest-drift" && ! -d "$TARGET_DIR/tools/manifest-drift" ]]; then
+    mkdir -p "$TARGET_DIR/tools"
+    cp -r "$PLATFORM_ROOT/tools/manifest-drift" "$TARGET_DIR/tools/manifest-drift"
+    echo "✓ tools/manifest-drift/"
+    (( copied++ )) || true
+  fi
+
+  if [[ -f "$PLATFORM_ROOT/scripts/fix_mermaid_br_tags.py" && ! -f "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" ]]; then
+    mkdir -p "$TARGET_DIR/scripts"
+    cp "$PLATFORM_ROOT/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"
+    echo "✓ scripts/fix_mermaid_br_tags.py"
+    (( copied++ )) || true
+  fi
+
+  [[ $copied -eq 0 ]] && echo "  Convention tools already present — skipping"
+}
+
 # ---- Claude Code setup ----
-# Skills, agents, and hooks are referenced from the shared platform via the plugin
-# path. No platform files are copied into the product repo.
+# Skills, agents, and commands load from the shared platform via the plugin.
+# Hook wrappers use HITL_PLATFORM_ROOT so the product repo is portable across
+# machines and CI without hardcoded paths.
 
 setup_claude() {
   mkdir -p "$TARGET_DIR/.claude"
@@ -114,12 +161,10 @@ setup_claude() {
   if [[ -f "$SETTINGS" ]]; then
     echo "  .claude/settings.json already exists — add plugin entry manually:"
     echo "    \"plugins\": [\"$PLATFORM_ROOT/.claude-plugin/plugin.json\"]"
-    return
-  fi
-
-  # Hooks use absolute paths so they resolve correctly regardless of the
-  # product repo's working directory.
-  cat > "$SETTINGS" <<JSON
+  else
+    # The plugin path is written at init time. Re-run this script if the
+    # platform is ever moved to a different path.
+    cat > "$SETTINGS" <<JSON
 {
   "plugins": ["$PLATFORM_ROOT/.claude-plugin/plugin.json"],
   "hooks": {
@@ -127,10 +172,7 @@ setup_claude() {
       {
         "matcher": "Edit|Write",
         "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$PLATFORM_ROOT/hooks/check-hitl-context.sh\""
-          }
+          { "type": "command", "command": "bash .hitl/hooks/check-hitl-context.sh" }
         ]
       }
     ],
@@ -138,37 +180,47 @@ setup_claude() {
       {
         "matcher": "Edit|Write",
         "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$PLATFORM_ROOT/hooks/check-domain-boundary.sh\""
-          },
-          {
-            "type": "command",
-            "command": "bash \"$PLATFORM_ROOT/hooks/rebuild-graph.sh\""
-          }
+          { "type": "command", "command": "bash .hitl/hooks/check-domain-boundary.sh" },
+          { "type": "command", "command": "bash .hitl/hooks/rebuild-graph.sh" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$PLATFORM_ROOT/hooks/write-session-summary.sh\""
-          }
+          { "type": "command", "command": "bash .hitl/hooks/write-session-summary.sh" }
         ]
       }
     ]
   }
 }
 JSON
-  echo "✓ .claude/settings.json (plugin + hooks → platform at $PLATFORM_ROOT)"
+    echo "✓ .claude/settings.json (plugin → $PLATFORM_ROOT)"
+  fi
+
+  # Hook wrappers — project-relative scripts that resolve the platform path at
+  # runtime via HITL_PLATFORM_ROOT, falling back to the path at init time.
+  local HOOKS_DIR="$TARGET_DIR/.hitl/hooks"
+  if [[ ! -d "$HOOKS_DIR" ]]; then
+    mkdir -p "$HOOKS_DIR"
+    local DEFAULT_PLATFORM="$PLATFORM_ROOT"
+    for hook in check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
+      cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
+#!/usr/bin/env bash
+exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/hooks/$hook.sh" "\$@"
+WRAPPER
+      chmod 750 "$HOOKS_DIR/$hook.sh"
+    done
+    echo "✓ .hitl/hooks/ — wrappers resolving via HITL_PLATFORM_ROOT (default: $DEFAULT_PLATFORM)"
+  else
+    echo "  .hitl/hooks/ already exists — skipping"
+  fi
 }
 
 # ---- Codex setup ----
 # AGENTS.md and hook scripts are copied into the product repo because Codex
 # has no plugin system — it reads AGENTS.md from the project root only.
-# The existing codex/install.sh handles all Codex setup; we delegate to it.
+# codex/install.sh owns all Codex setup logic; delegate to avoid duplication.
 
 setup_codex() {
   bash "$PLATFORM_ROOT/codex/install.sh" "$TARGET_DIR"
@@ -176,6 +228,7 @@ setup_codex() {
 
 # ---- Run selected setup ----
 
+setup_tools
 [[ "$TOOL" == "claude" || "$TOOL" == "both" ]] && setup_claude
 [[ "$TOOL" == "codex"  || "$TOOL" == "both" ]] && setup_codex
 
@@ -185,18 +238,16 @@ echo ""
 echo "Setup complete."
 echo ""
 echo "Next steps:"
-echo "  1. Edit CLAUDE.md — add your project's coding standards and conventions"
-if [[ "$TOOL" == "codex" || "$TOOL" == "both" ]]; then
-  echo "  2. Edit AGENTS.md — Codex reads this automatically (it's your copy, customize freely)"
-fi
+echo "  1. Edit CLAUDE.md — add your project's coding standards"
+[[ "$TOOL" == "codex" || "$TOOL" == "both" ]] && \
+  echo "  2. Edit AGENTS.md — Codex reads this automatically (your copy, customize freely)"
 echo "  3. Edit docs/system-manifest.yaml — document your domains and API boundaries"
 echo ""
 echo "To edit a skill, agent, or hook prompt:"
 echo "  Platform: $PLATFORM_ROOT"
 echo "  Guide:    $PLATFORM_ROOT/docs/customization-guide.md"
 echo ""
-if [[ "$TOOL" == "claude" || "$TOOL" == "both" ]]; then
-  echo "CI setup — Claude Code hooks need the platform available on CI machines:"
-  echo "  Add a setup step: git clone <your-fork-url> $PLATFORM_ROOT"
-  echo ""
-fi
+echo "CI setup — set HITL_PLATFORM_ROOT before running Claude Code:"
+echo "  export HITL_PLATFORM_ROOT=/path/to/your-platform-clone"
+echo "  (or clone to the default: ~/tools/hitl-dev-platform)"
+echo ""

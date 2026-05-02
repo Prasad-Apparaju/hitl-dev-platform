@@ -75,17 +75,26 @@ bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-other-product
 - `docs/system-manifest.yaml` — document your domains and API boundaries
 - `docs/` structure for HLDs, LLDs, and ADRs
 - `.claude/settings.json` pointing to the shared platform plugin and hooks
+- `.hitl/hooks/` — wrapper scripts that resolve the platform at runtime via `HITL_PLATFORM_ROOT`
+- `.semgrep/`, `tools/manifest-drift/`, `scripts/fix_mermaid_br_tags.py` — convention tools required by `/check-conventions`
 - `AGENTS.md` and `codex/hook-scripts/` (Codex only)
 
 **To edit a skill, agent, or hook:** open `~/tools/hitl-dev-platform` and edit the file directly. See [docs/customization-guide.md](docs/customization-guide.md) for the full command-to-file map.
+
+**Version isolation:** By default all products on one machine share one platform checkout and pick up changes on the next `git pull`. If a product needs to stay pinned to a specific version, clone the fork to a separate path and point `HITL_PLATFORM_ROOT` at it. See [docs/quick-start.md](docs/quick-start.md#version-isolation) for details.
+
+**CI setup:** Hook wrappers read `HITL_PLATFORM_ROOT` at runtime. On CI machines, set this env var to the path where you clone the platform:
+```bash
+export HITL_PLATFORM_ROOT=/path/to/hitl-dev-platform
+```
 
 **To pull upstream improvements into your fork:**
 
 ```bash
 cd ~/tools/hitl-dev-platform
 git fetch upstream && git merge upstream/main
-# Skills and agents update immediately for Claude Code (referenced, not copied).
-# For Codex hook scripts: re-run init-project.sh or codex/install.sh in each product repo.
+# Skills and agents update immediately (referenced, not copied).
+# Convention tools in product repos: copy manually or re-run init-project.sh.
 ```
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
