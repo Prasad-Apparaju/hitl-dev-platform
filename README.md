@@ -45,13 +45,7 @@ Each role has its own command set and setup guide:
 
 ### What it looks like after setup
 
-Once the plugin is installed or commands are copied, Claude Code auto-loads your project conventions and exposes the workflow commands:
-
-![Claude Code after setup — CLAUDE.md loaded, skills available as slash commands](docs/images/claude-code-setup.svg)
-
-All 30 commands across 5 namespaces — type `/` to browse or `/namespace:` to filter by role:
-
-![All 30 HITL slash commands grouped by namespace](docs/images/all-commands.svg)
+Once the plugin is installed, Claude Code auto-loads your project conventions and exposes all 30 workflow commands as slash commands. Type `/` to browse or `/namespace:` to filter by role (`/pm`, `/architect`, `/qa`, `/ops`). Run `/start` first if you are setting up a new project or onboarding an existing codebase.
 
 ### Recommended: Fork and install as a shared platform
 
