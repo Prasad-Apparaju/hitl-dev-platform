@@ -168,6 +168,13 @@ setup_claude() {
 {
   "plugins": ["$PLATFORM_ROOT/.claude-plugin/plugin.json"],
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .hitl/hooks/welcome.sh" }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
@@ -204,7 +211,7 @@ JSON
   if [[ ! -d "$HOOKS_DIR" ]]; then
     mkdir -p "$HOOKS_DIR"
     local DEFAULT_PLATFORM="$PLATFORM_ROOT"
-    for hook in check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
+    for hook in welcome check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
 exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/hooks/$hook.sh" "\$@"

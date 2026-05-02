@@ -21,6 +21,10 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 ## Use This In Your Project
 
+Once installed, this is the welcome banner that appears at the start of every Claude Code session:
+
+![HITL welcome banner — shown at the start of every Claude Code session](docs/images/welcome-banner.svg)
+
 Pick the path that matches where you are:
 
 | Situation | Start here | Time |
