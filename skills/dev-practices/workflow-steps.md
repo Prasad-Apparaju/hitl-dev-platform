@@ -28,13 +28,13 @@ Using the affected component list from `.hitl/current-change.yaml` (step 3) and 
 **6. Update IaC**
 Using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): update Terraform/Kubernetes manifests, migrations, and configs. Only if step 3 identified IaC changes.
 
-**7. Test Case Planning**
-Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: produce a concrete list of new tests, updated tests, removed tests, and regression tests. Record the test plan in the GitHub issue and in `.hitl/current-change.yaml` under `tests.plan`.
+**7. Test Case Planning** — use `/qa:plan-tests`
+Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: QA queries incident history with `/qa:plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in the GitHub issue and in `.hitl/current-change.yaml` under `tests.plan`.
 
 **8. Training Plan Stub (conditional)**
 If the change introduces a new architectural pattern, external system, framework, ML/AI technique, or significant mental-model-changing refactor: draft a stub at `docs/03-engineering/training/<capability>.md`. Triggers: new architectural pattern, new external system, new framework, new ML/AI technique, or a significant mental-model-changing refactor. New endpoints, bug fixes, and preserving-the-model refactors do not require a training plan.
 
-**9. Package Decision Packet** — use `/architect/design-feature`
+**9. Package Decision Packet** — use `/architect:design-feature`
 Architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `templates/decision-packet-template.yaml`. Fields: issue number, affected domain from `system-manifest.yaml`, LLD path from step 5, IaC plan from step 6, test plan from step 7, training stub path from step 8 if applicable. Constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain, they are sequential, not parallel. Architect reviews each packet, sets `approvals.architecture: approved` in `.hitl/current-change.yaml`, then hands one packet per slice to each assigned developer. `/architect/design-feature` runs steps 3–9 as a single guided session including slice decomposition and packet generation.
 
 ---
@@ -88,7 +88,7 @@ Run `semgrep scan --config .semgrep/ --error` and manifest drift check against `
 
 ---
 
-## Steps 18–21: Verify
+## Steps 18–22: Verify
 
 **18. Code Review Round 1** — use `/check-implementation`
 Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the LLD at `docs/02-design/technical/lld/<component>.md` (step 12) and `system-manifest.yaml`. Reviews: structure, security, LLD adherence, naming conventions. Fix all CRITICAL and HIGH findings before proceeding. MEDIUM findings are documented for Round 2.
@@ -105,41 +105,44 @@ Compare implementation against the LLD at `docs/02-design/technical/lld/<compone
 - **Implementation drifted from the intended design** → fix the code, rerun steps 18–20
 Never silently normalize drift.
 
+**22. QA Post-Handoff Verification** — use `/qa:verify-quality`
+Developer has delivered a stable build with all tests passing and docs reconciled (step 21). QA runs independent verification against the running build: verify each acceptance criterion, run exploratory tests beyond the happy path, and probe failure modes from the incident registry. If any AC fails or a blocking defect is found, QA runs `/qa:report-defect` and sets `approvals.qa: blocked` in `.hitl/current-change.yaml`. Promotion to Assess is blocked until QA lifts the block.
+
 ---
 
-## Steps 22–23: Assess
+## Steps 23–24: Assess
 
-**22. Downstream Impact Brief** — use `/impact-brief`
+**23. Downstream Impact Brief** — use `/impact-brief`
 `/impact-brief` reads `.hitl/current-change.yaml`, `git diff main...HEAD`, `system-manifest.yaml`, incident registry, and test registry. Produces a 5-section brief. Section 5 contains the rollout strategy draft including risk tier and go/no-go criteria.
 
-**23. Risk-Rated Rollout Plan** — use `/ops/review-release`
-Ops reads the rollout strategy from step 22's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist before the PR is created.
+**24. Risk-Rated Rollout Plan** — use `/ops:review-release`
+Ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist before the PR is created.
 
 ---
 
-## Steps 24–28: Ship
+## Steps 25–30: Ship
 
-**24. Create PR**
-Includes: issue link, HLD/LLD from step 5 (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 22), approved rollout plan (step 23). Also: copy `token_tracking.actual` from `.hitl/current-change.yaml` into `docs/03-engineering/costs/token-cost-registry.yaml` and recompute the aggregate block.
+**25. Create PR**
+Includes: issue link, HLD/LLD from step 5 (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 23), approved rollout plan (step 24). Also: copy `token_tracking.actual` from `.hitl/current-change.yaml` into `docs/03-engineering/costs/token-cost-registry.yaml` and recompute the aggregate block.
 
-**25. Integration Verification** — use `/architect/verify-traceability`
+**26. Integration Verification** — use `/architect:verify-traceability`
 Lead runs each slice E2E and verifies cross-slice composition: do the slices integrate correctly when all are deployed together? Also verifies the traceability chain for each slice: GitHub issue → design PR merged → implementation matches LLD → test files cover the spec → impact brief complete → rollout plan approved. Signs off or sends back with findings.
 
-**26. Figma Comparison (conditional)**
+**27. Figma Comparison (conditional)**
 If Figma design exists, lead compares running implementation to the Figma spec from step 2 screen by screen. Lists and resolves all differences. Exit criterion: zero unresolved differences before merge.
 
-**27. Merge + Canary Deploy** — use `/ops/monitor-canary`
-Lead coordinates merge order if multiple slices are landing. Lead triggers merge and deploys per the approved rollout plan from step 23. Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge. Monitor go/no-go criteria.
+**28. Build, Apply IaC, and Deploy** — use `/ops:build`, `/ops:apply-iac` (conditional), `/ops:deploy`, `/ops:monitor-canary`
+Ops verifies branch state and triggers the build using `/ops:build` — confirms artifact integrity before deployment begins. If step 6 identified IaC changes, Ops runs `/ops:apply-iac`: dry-run first, then applies with explicit approval (destructive changes require a second `CONFIRMED`). Lead then triggers merge and deploys per the approved rollout plan from step 24 using `/ops:deploy`. Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge. Monitor go/no-go criteria throughout.
 
-**28. Promote or Rollback**
-At each canary step, verify all go/no-go criteria from the approved plan (step 23). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
+**29. Promote or Rollback**
+At each canary step, verify all go/no-go criteria from the approved plan (step 24). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
 
 ---
 
-## Steps 29–30: Post-Ship
+## Steps 30–31: Post-Ship
 
-**29. 30-Day ROI Check (conditional)**
+**30. 30-Day ROI Check (conditional)**
 Only if step 4 was done. Reads expected outcome and baseline metric from step 4 in the GitHub issue. Developer + lead assess whether the metric is moving in the right direction. Also check whether `token_tracking.actual.total_cost_usd` was within 50% of estimated — if not, add a note to the cost registry entry explaining the variance. See `roi-estimation.md` for the review template.
 
-**30. 90-Day ROI Check (conditional)**
-Only if step 4 was done. Reads expected outcome and baseline metric from step 4 and 30-day findings from step 29. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.
+**31. 90-Day ROI Check (conditional)**
+Only if step 4 was done. Reads expected outcome and baseline metric from step 4 and 30-day findings from step 30. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.

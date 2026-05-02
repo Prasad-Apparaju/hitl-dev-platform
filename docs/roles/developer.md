@@ -27,7 +27,7 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 6. Run `/check-implementation` — two-round spec conformance review against the LLD
 7. Run `/check-conventions` — fix violations before PR
 8. Run `/impact-brief` — downstream impact brief + rollout plan
-9. Create the PR — QA runs `/qa:review-tests`, then architect runs `/architect:verify-traceability` before merge
+9. Create the PR — architect runs `/architect:verify-traceability` before merge (QA test review and post-handoff verification already completed at steps 11 and 22)
 
 ## Setup Note: Graphify (recommended for large codebases)
 

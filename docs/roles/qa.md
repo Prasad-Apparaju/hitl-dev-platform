@@ -9,7 +9,7 @@ You own quality verification — independently, after the developer hands off. Y
 | Command | When to use |
 |---------|-------------|
 | `/qa:plan-tests` | At design time — review the LLD and query incident history to contribute test scenarios before the TDD cycle starts (non-blocking) |
-| `/qa:review-tests` | After the TDD cycle — formal review of test coverage against acceptance criteria, LLD edge cases, and incident registry regressions |
+| `/qa:review-tests` | After RED test generation (step 10) — formal review before implementation begins; verify ACs, LLD edge cases, and incident registry regressions |
 | `/qa:verify-quality` | After the developer handoff — independent quality verification against the running build; you block or approve promotion |
 | `/qa:report-defect` | When verify-quality finds a blocking issue — structured defect report with AC reference, reproduction steps, and severity |
 
@@ -17,7 +17,7 @@ You own quality verification — independently, after the developer hands off. Y
 
 **At design time (non-blocking):** Run `/qa:plan-tests` when the LLD is shared. Query the incident registry for the domain, identify edge cases and failure modes the developer may miss, and produce a prioritized list of test scenarios. Regression-required scenarios (from past incidents) must be in the test plan before the TDD cycle starts. This is input, not a gate — but the developer must acknowledge each scenario.
 
-**After TDD (gate):** Run `/qa:review-tests`. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
+**After RED test generation (gate):** Run `/qa:review-tests` after step 10 generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
 
 **After handoff (gate):** Run `/qa:verify-quality`. The developer has delivered a stable build. You run independent verification — verify each AC against the running build, run exploratory testing beyond the happy path, and probe failure modes from the incident registry. If anything fails, run `/qa:report-defect` and block promotion.
 
