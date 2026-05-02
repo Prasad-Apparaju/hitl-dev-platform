@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 430" width="780" height="430" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 628" width="780" height="628" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
   <!-- Window chrome -->
-  <rect width="780" height="430" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="628" rx="10" fill="#1e1e2e"/>
   <rect width="780" height="38" rx="10" fill="#313244"/>
   <rect y="28" width="780" height="10" fill="#313244"/>
   <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
@@ -25,42 +25,81 @@
   <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /architect</text>
   <rect x="100" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
-  <!-- Command dropdown outer box -->
-  <rect x="16" y="212" width="748" height="172" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <!-- Dropdown outer box -->
+  <rect x="16" y="212" width="748" height="376" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (4)  —  namespace: architect</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (8)  —  own namespace + qa + ops when covering those roles</text>
 
-  <!-- Row 1: design-system (highlighted / selected) -->
-  <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
-  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/architect:design-system</text>
-  <text x="270" y="261" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="261" fill="#a6adc8" font-size="12">Design new system from PRD — domains, manifest, HLDs, ADRs, LLDs</text>
+  <!-- Section 1: ARCHITECT COMMANDS (4) -->
+  <rect x="17" y="240" width="746" height="20" fill="#1a2744"/>
+  <text x="28" y="254" fill="#89b4fa" font-size="10" font-weight="bold" letter-spacing="1">ARCHITECT COMMANDS</text>
+  <text x="672" y="254" fill="#45475a" font-size="10">4 commands</text>
+
+  <!-- Row 1: design-system (highlighted) -->
+  <rect x="17" y="260" width="746" height="36" fill="#313244" rx="0"/>
+  <text x="28" y="281" fill="#cba6f7" font-size="13" font-weight="bold">/architect:design-system</text>
+  <text x="270" y="281" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="281" fill="#a6adc8" font-size="12">Design new system from PRD — domains, manifest, HLDs, ADRs, LLDs</text>
 
   <!-- Row 2: design-feature -->
-  <rect x="17" y="276" width="746" height="36" fill="transparent"/>
-  <text x="28" y="297" fill="#cba6f7" font-size="13">/architect:design-feature</text>
-  <text x="270" y="297" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="297" fill="#a6adc8" font-size="12">Steps 3–9: impact analysis, HLD, LLD, slice decomp, packets</text>
+  <rect x="17" y="296" width="746" height="36" fill="transparent"/>
+  <text x="28" y="317" fill="#cba6f7" font-size="13">/architect:design-feature</text>
+  <text x="270" y="317" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="317" fill="#a6adc8" font-size="12">Steps 3–9: impact analysis, HLD, LLD, slice decomp, decision packets</text>
 
   <!-- Row 3: review-design -->
-  <rect x="17" y="312" width="746" height="36" fill="transparent"/>
-  <text x="28" y="333" fill="#cba6f7" font-size="13">/architect:review-design</text>
-  <text x="270" y="333" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="333" fill="#a6adc8" font-size="12">Review HLD, LLD, ADR — approve design before implementation starts</text>
+  <rect x="17" y="332" width="746" height="36" fill="transparent"/>
+  <text x="28" y="353" fill="#cba6f7" font-size="13">/architect:review-design</text>
+  <text x="270" y="353" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="353" fill="#a6adc8" font-size="12">Review HLD, LLD, ADR — approve design before implementation starts</text>
 
   <!-- Row 4: verify-traceability -->
-  <rect x="17" y="348" width="746" height="36" fill="transparent"/>
-  <text x="28" y="369" fill="#cba6f7" font-size="13">/architect:verify-traceability</text>
-  <text x="270" y="369" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="369" fill="#a6adc8" font-size="12">Integration verify — issue → design → code → tests → brief chain</text>
+  <rect x="17" y="368" width="746" height="36" fill="transparent"/>
+  <text x="28" y="389" fill="#cba6f7" font-size="13">/architect:verify-traceability</text>
+  <text x="270" y="389" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="389" fill="#a6adc8" font-size="12">Integration verify — issue → design → code → tests → brief chain</text>
+
+  <!-- Section 2: WHEN COVERING QA (2) -->
+  <rect x="17" y="404" width="746" height="20" fill="#2e2a1a"/>
+  <text x="28" y="418" fill="#f9e2af" font-size="10" font-weight="bold" letter-spacing="1">WHEN COVERING QA</text>
+  <text x="672" y="418" fill="#45475a" font-size="10">2 commands</text>
+
+  <!-- Row 5: qa:review-tests -->
+  <rect x="17" y="424" width="746" height="36" fill="transparent"/>
+  <text x="28" y="445" fill="#cba6f7" font-size="13">/qa:review-tests</text>
+  <text x="270" y="445" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="445" fill="#a6adc8" font-size="12">Formal test coverage review — ACs, LLD edge cases, incident regressions</text>
+
+  <!-- Row 6: qa:verify-quality -->
+  <rect x="17" y="460" width="746" height="36" fill="transparent"/>
+  <text x="28" y="481" fill="#cba6f7" font-size="13">/qa:verify-quality</text>
+  <text x="270" y="481" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="481" fill="#a6adc8" font-size="12">Post-handoff independent quality verification — block or approve promotion</text>
+
+  <!-- Section 3: WHEN COVERING OPS (2) -->
+  <rect x="17" y="496" width="746" height="20" fill="#2e1a1a"/>
+  <text x="28" y="510" fill="#f38ba8" font-size="10" font-weight="bold" letter-spacing="1">WHEN COVERING OPS</text>
+  <text x="672" y="510" fill="#45475a" font-size="10">2 commands</text>
+
+  <!-- Row 7: ops:review-release -->
+  <rect x="17" y="516" width="746" height="36" fill="transparent"/>
+  <text x="28" y="537" fill="#cba6f7" font-size="13">/ops:review-release</text>
+  <text x="270" y="537" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="537" fill="#a6adc8" font-size="12">Assess rollout plan, canary criteria, observability, and rollback before release</text>
+
+  <!-- Row 8: ops:monitor-canary -->
+  <rect x="17" y="552" width="746" height="36" fill="transparent"/>
+  <text x="28" y="573" fill="#cba6f7" font-size="13">/ops:monitor-canary</text>
+  <text x="270" y="573" fill="#6c7086" font-size="12">  ·</text>
+  <text x="283" y="573" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation</text>
 
   <!-- Separator + nav hint -->
-  <line x1="16" y1="386" x2="764" y2="386" stroke="#45475a" stroke-width="1" opacity="0.5"/>
-  <text x="28" y="400" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
-  <text x="600" y="400" fill="#45475a" font-size="11">from .claude/commands/</text>
+  <line x1="16" y1="590" x2="764" y2="590" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="604" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="604" fill="#45475a" font-size="11">from .claude/commands/</text>
 
   <!-- Footer -->
-  <rect x="0" y="412" width="780" height="18" fill="#313244" opacity="0.5"/>
-  <text x="16" y="425" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  4 architect commands loaded  —  also use /qa: and /ops: namespaces</text>
+  <rect x="0" y="610" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="623" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  4 architect + 2 qa + 2 ops commands  —  also use /qa: and /ops: namespaces</text>
 </svg>
