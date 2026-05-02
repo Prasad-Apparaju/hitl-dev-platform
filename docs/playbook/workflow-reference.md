@@ -39,9 +39,11 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 
 | Starting from | What happens first |
 |---------------|-------------------|
-| **A PRD (new system or major feature)** | AI helps decompose the PRD into HLD → LLDs → issues. Each issue enters the workflow. |
+| **A PRD (new system or major feature)** | Run `/architect/design-system` — produces domain decomposition, system manifest, HLDs, LLDs, and ADRs. Each resulting issue then enters the workflow below. |
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
+
+> **Brownfield (existing codebase not yet in HITL):** Run `/start` and choose Path B. The baseline sprint produces the manifest, HLDs, and LLDs from the existing code before any change work begins. See the [adoption guide](adoption-guide.md) for the full sprint process.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
@@ -233,6 +235,7 @@ The rollout plan at step 22 is risk-rated — not every change gets the full can
 
 | Risk level | Example | Rollout |
 |-----------|---------|---------|
+| **First release** | Initial deployment — no prior version in production | Direct deploy to staging → manual smoke-test gate → production. Rollback = tear down deployment (no prior version exists). |
 | **Low** | CSS fix, copy change, internal doc update | Direct deploy |
 | **Medium** | New feature behind feature flag, additive endpoint | Flag off, staging, 24h soak, production |
 | **High** | Changed existing behavior, external integration, schema migration | Canary 5-10%, 4h monitor, 25%, 4h, 100% |

@@ -84,14 +84,22 @@ Output this exactly:
 ---
 **You're ready.**
 
-For every change, the workflow is:
+Before writing any feature code, generate the design docs for your system:
+
+```
+/architect/design-system
+```
+
+This produces the system manifest, HLDs, and LLDs from your PRD. The 30-step workflow reads these docs at nearly every step — they must exist before feature work starts.
+
+For every change after that:
 
 1. Create a GitHub issue
 2. Run `/dev-practices` — the 30-step workflow starts here
 3. Design (HLD → LLD) before writing code
 4. Code → tests → PR
 
-Run `/dev-practices` now to start your first feature, or ask me anything about the process.
+Run `/architect/design-system` now if you have a PRD, or `/dev-practices` if you already have LLDs in place.
 
 ---
 

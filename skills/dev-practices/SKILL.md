@@ -23,7 +23,7 @@ When in doubt, use the heavier process. If you are touching more than one domain
 
 **Do not implement from chat-only requirements.** Source artifacts must exist first.
 
-**Refusal condition:** If no GitHub issue or approved LLD exists for a Tier 2+ change, stop and say so.
+**Refusal condition:** If no GitHub issue or approved LLD exists for a Tier 2+ change, stop and say: "No LLD found. For a new project, run `/architect/design-system` to generate design docs from your PRD first. For an existing codebase, run `/generate-docs` for the affected component."
 
 **Source-of-truth order:**
 1. GitHub issue or PRD
