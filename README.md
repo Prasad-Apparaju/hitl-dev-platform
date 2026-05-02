@@ -228,6 +228,9 @@ Levels 1-3 are the minimum viable adoption — shared conventions, docs-first de
 | AI governance and security | [AI governance](docs/playbook/ai-governance.md) |
 | Evidence taxonomy and open questions | [Evidence](docs/playbook/evidence.md) |
 | Manifest ownership and CI enforcement | [Manifest governance](docs/playbook/manifest-governance.md) |
+| **How HITL was designed** — context model rationale | [Context models](docs/reference/context-models/README.md) |
+| Claude Code context loading (detailed) | [Claude Code context map](docs/reference/context-models/claude-code-context-map.md) |
+| Codex CLI context loading (detailed) | [Codex CLI context map](docs/reference/context-models/codex-cli-context-map.md) |
 
 ---
 
@@ -307,4 +310,5 @@ Skills are Claude Code commands that automate parts of the workflow. Tools run i
 
 ## Further Reading
 
+- **Context models** — [How Claude Code and Codex load context, and how HITL was designed around it](docs/reference/context-models/README.md)
 - **Conway's Law (1967)** — Melvin Conway, "How Do Committees Invent?" — the architectural principle behind the knowledge hierarchy
