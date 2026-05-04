@@ -14,6 +14,22 @@ This is a guided, multi-phase process. Do NOT skip phases. Do NOT jump to writin
 
 ---
 
+## Challenge Level — Ask First
+
+Before Phase 1, ask:
+
+> "What level of challenge would you like for this session?
+>
+> - **Rigorous** — I'll push back on vague answers and won't proceed without specifics. Best for high-stakes or complex features.
+> - **Moderate** — I'll ask everything but accept reasonable answers. Best for most feature work.
+> - **Light** — I'll ask only the key framing questions and move fast. Best for well-understood or low-risk features.
+>
+> Say **Rigorous**, **Moderate**, or **Light** to set the level."
+
+Apply the chosen level throughout the session as defined in `skills/shared/challenge-stance.md` — Challenge Levels section. Default to **Moderate** if the PM doesn't specify.
+
+---
+
 ## Phase 1 — Discovery
 
 Ask the PM these questions one at a time. Wait for answers before moving on. Do not accept vague or aspirational answers — push for specifics.
@@ -35,7 +51,16 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
    ```
    Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable. Flag any requirement this extends, contradicts, or duplicates.
 
-Summarize the answers back to the PM. If any answer is vague, ask for the specific data point before summarizing. Get confirmation before proceeding.
+**Behavior by level:**
+
+| | Rigorous | Moderate | Light |
+|---|---|---|---|
+| Questions asked | All 9 | All 9 | 1 (delivery surface), 3 (evidence), 6 (success), 9 (conflicts) |
+| Blockers | 1, 2, 3, 4, 6, 8 — do not proceed without a specific answer | 1 (delivery surface) and 4 (problem statement) only | 1 (delivery surface) only |
+| Vague answers | Push back until specific; do not summarize until resolved | Flag in summary, proceed | Note as recommendation in summary |
+| Unanswered optional questions | Must be answered | Noted in summary | Skipped |
+
+Summarize the answers back to the PM. At **Rigorous**, resolve every vague answer before summarizing. At **Moderate** or **Light**, include a "Gaps noted" section listing anything that was skipped or accepted as approximate. Get confirmation before proceeding to Phase 2.
 
 ---
 
