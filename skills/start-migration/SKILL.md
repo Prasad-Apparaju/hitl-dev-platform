@@ -21,14 +21,15 @@ Ask the following questions and record the answers. Do not proceed until all fou
 3. **Migration trigger:** Why now? (compliance requirement, vendor end-of-life, performance ceiling, architecture debt, cost — be specific)
 4. **External documentation:** Do you have existing migration documentation — vendor runbooks, consultant deliverables, prior analysis, field mapping specs? If yes, list the files or describe what you have.
 
-Record the answers in `.hitl/current-change.yaml` under `migration_context`:
+Record the answers in `docs/00-migration/migration-context.yaml` (create it now — this is project-level bootstrap state, separate from the per-change `.hitl/current-change.yaml`):
 
 ```yaml
-migration_context:
-  source_system: <description>
-  target_system: <description>
-  trigger: <reason>
-  external_docs_available: true|false
+# Migration project context — written once during /start-migration
+# This is project-level metadata, not a per-change runtime file.
+source_system: <description>
+target_system: <description>
+trigger: <reason>
+external_docs_available: true|false
 ```
 
 ---
@@ -64,8 +65,10 @@ Create the following directories if they do not exist:
 
 ```
 docs/00-migration/
-  external-reference/    ← external docs go here (reference only, never canonical)
-  migration-review.md    ← produced by /migrate:review-external-docs (stub for now)
+  migration-context.yaml    ← written in Step 1 (project-level bootstrap state)
+  external-reference/       ← external docs go here (reference only, never canonical)
+  migration-review.md       ← produced by /migrate:review-external-docs (stub for now)
+  migration-brief.md        ← produced by /migrate:review-external-docs (PRD-equivalent)
 ```
 
 ```bash
@@ -121,7 +124,7 @@ Run:
 ```bash
 gh issue create \
   --title "Migration: [source system] → [target system]" \
-  --body "Migration project initialized via HITL. External reference docs staged in docs/00-migration/external-reference/. Next: /migrate:review-external-docs (architect deep review)."
+  --body "Migration project initialized via HITL. Context: docs/00-migration/migration-context.yaml. External reference docs staged in docs/00-migration/external-reference/. Next: /migrate:review-external-docs produces migration-review.md and migration-brief.md before any design begins."
 ```
 
 Show the issue URL.
@@ -143,9 +146,13 @@ Project structure, conventions, target manifest, and external reference docs are
 /migrate:review-external-docs
 ```
 
-The architect runs this to produce `docs/00-migration/migration-review.md` — a deep critique of the external docs identifying what is reliable, what has gaps, and what the HITL design should diverge from. No design work (HLD/LLD) begins until the review is approved.
+The architect runs this to produce two documents:
+- `docs/00-migration/migration-review.md` — critique of the external docs: what is reliable, what has gaps, what the HITL design should diverge from
+- `docs/00-migration/migration-brief.md` — PRD-equivalent requirements for the target system
 
-After the review, the architect runs `/architect:design-feature` (or `/architect:design-system` for a full-system migration) using the migration review as design input. Each resulting slice is handed to developers via the standard 31-step workflow.
+No design work (HLD/LLD) begins until both documents are approved. The migration brief is the required input for the architect design skills — it replaces `docs/01-product/prd.md` in the standard workflow.
+
+After the review, the architect runs `/architect:design-system docs/00-migration/migration-brief.md` (full-system migration) or `/architect:design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 31-step workflow.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 
