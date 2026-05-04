@@ -203,7 +203,7 @@ This mode reads the existing codebase and generates the full documentation basel
 3. **Install the plugin** (preferred) or copy skills to `.claude/skills/` if they don't exist:
    - Install: add this repo as a Claude Code plugin so skills are auto-discovered
    - Manual copy: `cp -r skills/ <your-repo>/.claude/skills/`
-   - Key skills: `skills/dev-practices/SKILL.md` — the 30-step workflow; `skills/apply-change/SKILL.md` — impact analysis
+   - Key skills: `skills/dev-practices/SKILL.md` — the 31-step workflow; `skills/apply-change/SKILL.md` — impact analysis
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR

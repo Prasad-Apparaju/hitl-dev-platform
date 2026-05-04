@@ -1,6 +1,6 @@
 # Workflow Steps — Full Detail
 
-Step-by-step reference for the 30-step HITL change workflow. The SKILL.md entrypoint has the summary; this file has the detail.
+Step-by-step reference for the 31-step HITL change workflow. The SKILL.md entrypoint has the summary; this file has the detail.
 
 ---
 
@@ -179,7 +179,7 @@ At each canary step, verify all go/no-go criteria from the approved plan (step 2
 ## Steps 30–31: Post-Ship
 
 **30. 30-Day ROI Check (conditional)**
-Only if step 4 was done. Reads expected outcome and baseline metric from step 4 in the GitHub issue. Developer + lead assess whether the metric is moving in the right direction. Also check whether `token_tracking.actual.total_cost_usd` was within 50% of estimated — if not, add a note to the cost registry entry explaining the variance. See `roi-estimation.md` for the review template.
+Only if step 4 was done. Reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`. Developer + lead assess whether the metric is moving in the right direction. Also check whether `token_tracking.actual.total_cost_usd` was within 50% of estimated — if not, add a note to the cost registry entry explaining the variance. See `roi-estimation.md` for the review template.
 
 **31. 90-Day ROI Check (conditional)**
-Only if step 4 was done. Reads expected outcome and baseline metric from step 4 and 30-day findings from step 30. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.
+Only if step 4 was done. Reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.

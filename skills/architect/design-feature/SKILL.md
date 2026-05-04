@@ -419,7 +419,7 @@ rollout:
 
 roi:
   required: <true|false>
-  estimate: "<link to ROI section in issue, or null>"
+  estimate: "<roi_estimate from .hitl/current-change.yaml, or null>"
 
 impact_brief:
   pm_mental_model: "<one sentence: what changes for the PM's mental model of the system>"

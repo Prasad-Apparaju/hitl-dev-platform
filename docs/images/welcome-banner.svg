@@ -29,10 +29,10 @@
   <text x="16" y="138" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/start</tspan>           set up a new project or onboard this codebase</text>
 
   <!-- Line 6: /dev-practices -->
-  <text x="16" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/dev-practices</tspan>   begin a new change (full 30-step workflow)</text>
+  <text x="16" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/dev-practices</tspan>   begin a new change (full 31-step workflow)</text>
 
   <!-- Line 7: / browse -->
-  <text x="16" y="178" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/</tspan>                browse all 30 commands</text>
+  <text x="16" y="178" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/</tspan>                browse all commands</text>
 
   <!-- Line 8: blank (skip) -->
 

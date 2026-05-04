@@ -30,7 +30,7 @@ Keep these files focused. Every token in the always-loaded zone is paid on every
 
 ### Loaded on demand → Workflow steps
 
-**Claude Code:** Each workflow step — `/dev-practices`, `/tdd`, `/generate-docs`, `/architect:design-feature`, and so on — is a separate skill rather than one giant instruction block loaded at startup. Skills are lazy-loaded: they enter context only when the user explicitly invokes them. A developer running `/tdd` pays only for the TDD skill instructions — not for the PM, Ops, or Architect workflows. A 30-step workflow written as a skill costs nothing on sessions where it is never invoked.
+**Claude Code:** Each workflow step — `/dev-practices`, `/tdd`, `/generate-docs`, `/architect:design-feature`, and so on — is a separate skill rather than one giant instruction block loaded at startup. Skills are lazy-loaded: they enter context only when the user explicitly invokes them. A developer running `/tdd` pays only for the TDD skill instructions — not for the PM, Ops, or Architect workflows. A 31-step workflow written as a skill costs nothing on sessions where it is never invoked.
 
 **Codex CLI:** There is no equivalent lazy-load path for skills. The full workflow is encoded directly in `AGENTS.md`, which is always loaded at startup. The design consequence is different: instead of deferring workflow instructions, the complete AGENTS.md is present from the first message — but every token in it is paid on every session. This is why the HITL `codex/AGENTS.md` is structured differently from the Claude skills: it consolidates all workflows into one focused document rather than splitting them across 25 individually lazy-loaded files.
 

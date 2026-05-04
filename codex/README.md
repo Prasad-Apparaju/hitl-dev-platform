@@ -137,6 +137,6 @@ Don't overwrite `AGENTS.md` if you've added project-specific conventions — mer
 ## Further reading
 
 - [Full HITL methodology](../README.md)
-- [30-step workflow reference](../docs/playbook/workflow-reference.md)
+- [31-step workflow reference](../docs/playbook/workflow-reference.md)
 - [Process tiers and when to abbreviate](../docs/playbook/common-pitfalls.md)
 - [Adoption checklist](../docs/playbook/adoption-checklist.md)
