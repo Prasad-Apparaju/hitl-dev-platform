@@ -96,7 +96,7 @@ AI generates code from your requirements (through HLDs and LLDs the architect cr
 
 ### Template
 
-Use the [PRD template](../../shared/templates/prd-template.md) for new sections.
+Use the [PRD template](../../ai/shared/templates/prd-template.md) for new sections.
 
 ---
 

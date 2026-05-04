@@ -13,7 +13,7 @@
 #   bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
 #
 # Claude Code — what gets created in the product repo:
-#   .claude/settings.json       plugin reference + project-relative hook paths
+#   .ai/claude/settings.json       plugin reference + project-relative hook paths
 #   .hitl/hooks/*.sh            wrapper scripts; resolve platform via HITL_PLATFORM_ROOT
 #   .semgrep/                   semgrep convention rules (required by /check-conventions)
 #   ci/manifest-drift/       manifest drift checker (required by /check-conventions)
@@ -22,8 +22,8 @@
 # Skills, agents, and commands are never copied — they load from the shared
 # platform via the Claude Code plugin.
 #
-# Codex — what gets created (via codex/install.sh):
-#   AGENTS.md, .codex/, codex/hook-scripts/, .git/hooks/
+# Codex — what gets created (via ai/codex/install.sh):
+#   AGENTS.md, .ai/codex/, ai/codex/hook-scripts/, .git/hooks/
 #
 # Version isolation:
 #   All products on one machine share one platform checkout by default.
@@ -93,7 +93,7 @@ CLAUDE_DEST="$TARGET_DIR/CLAUDE.md"
 if [[ -f "$CLAUDE_DEST" ]]; then
   echo "  CLAUDE.md already exists — skipping"
 else
-  TMPL="$PLATFORM_ROOT/claude/generate-docs/templates/CLAUDE.md.template"
+  TMPL="$PLATFORM_ROOT/ai/claude/generate-docs/templates/CLAUDE.md.template"
   if [[ -f "$TMPL" ]]; then
     cp "$TMPL" "$CLAUDE_DEST"
     echo "✓ CLAUDE.md — customize with your project's coding standards"
@@ -112,7 +112,7 @@ mkdir -p \
 echo "✓ docs/ directory structure"
 
 if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
-  MANIFEST_TMPL="$PLATFORM_ROOT/shared/templates/system-manifest-template.yaml"
+  MANIFEST_TMPL="$PLATFORM_ROOT/ai/shared/templates/system-manifest-template.yaml"
   if [[ -f "$MANIFEST_TMPL" ]]; then
     cp "$MANIFEST_TMPL" "$TARGET_DIR/docs/system-manifest.yaml"
     echo "✓ docs/system-manifest.yaml — fill in your domains and API boundaries"
@@ -156,17 +156,17 @@ setup_tools() {
 
 setup_claude() {
   mkdir -p "$TARGET_DIR/.claude"
-  local SETTINGS="$TARGET_DIR/.claude/settings.json"
+  local SETTINGS="$TARGET_DIR/.ai/claude/settings.json"
 
   if [[ -f "$SETTINGS" ]]; then
-    echo "  .claude/settings.json already exists — add plugin entry manually:"
-    echo "    \"plugins\": [\"$PLATFORM_ROOT/claude/plugin/plugin.json\"]"
+    echo "  .ai/claude/settings.json already exists — add plugin entry manually:"
+    echo "    \"plugins\": [\"$PLATFORM_ROOT/ai/claude/plugin/plugin.json\"]"
   else
     # The plugin path is written at init time. Re-run this script if the
     # platform is ever moved to a different path.
     cat > "$SETTINGS" <<JSON
 {
-  "plugins": ["$PLATFORM_ROOT/claude/plugin/plugin.json"],
+  "plugins": ["$PLATFORM_ROOT/ai/claude/plugin/plugin.json"],
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -202,7 +202,7 @@ setup_claude() {
   }
 }
 JSON
-    echo "✓ .claude/settings.json (plugin → $PLATFORM_ROOT)"
+    echo "✓ .ai/claude/settings.json (plugin → $PLATFORM_ROOT)"
   fi
 
   # Hook wrappers — project-relative scripts that resolve the platform path at
@@ -214,7 +214,7 @@ JSON
     for hook in welcome check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
-exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/claude/hooks/$hook.sh" "\$@"
+exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/ai/claude/hooks/$hook.sh" "\$@"
 WRAPPER
       chmod 750 "$HOOKS_DIR/$hook.sh"
     done
@@ -227,10 +227,10 @@ WRAPPER
 # ---- Codex setup ----
 # AGENTS.md and hook scripts are copied into the product repo because Codex
 # has no plugin system — it reads AGENTS.md from the project root only.
-# codex/install.sh owns all Codex setup logic; delegate to avoid duplication.
+# ai/codex/install.sh owns all Codex setup logic; delegate to avoid duplication.
 
 setup_codex() {
-  bash "$PLATFORM_ROOT/codex/install.sh" "$TARGET_DIR"
+  bash "$PLATFORM_ROOT/ai/codex/install.sh" "$TARGET_DIR"
 }
 
 # ---- Run selected setup ----

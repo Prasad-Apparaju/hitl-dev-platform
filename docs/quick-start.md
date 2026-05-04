@@ -39,7 +39,7 @@ Default is `--tool both` (Claude Code + Codex). Use `--tool claude` or `--tool c
 | `AGENTS.md` | Codex reads this automatically — edit this |
 | `docs/system-manifest.yaml` | Domain and API boundary definitions — fill in |
 | `docs/02-design/` | HLD, LLD, ADR directories |
-| `.claude/settings.json` | Plugin reference + hook wiring |
+| `.ai/claude/settings.json` | Plugin reference + hook wiring |
 | `.hitl/hooks/*.sh` | Hook wrappers (resolve platform via `HITL_PLATFORM_ROOT`) |
 | `.semgrep/` | Semgrep convention rules (required by `/check-conventions`) |
 | `ci/manifest-drift/` | Manifest drift checker (required by `/check-conventions`) |
@@ -80,7 +80,7 @@ python3 -m graphify.serve graphify-out/graph.json &
 ```bash
 mkdir -p ~/code/my-product/.github/workflows
 cp ~/tools/hitl-dev-platform/ci/workflows/*.yml ~/code/my-product/.github/workflows/
-cp ~/tools/hitl-dev-platform/shared/templates/pull-request-template.md \
+cp ~/tools/hitl-dev-platform/ai/shared/templates/pull-request-template.md \
    ~/code/my-product/.github/PULL_REQUEST_TEMPLATE.md
 ```
 
@@ -181,14 +181,14 @@ Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those
 
 | Component | Location in platform | Notes |
 |---|---|---|
-| Skills (slash commands) | `claude/` | Loaded via plugin — not copied |
+| Skills (slash commands) | `ai/claude/` | Loaded via plugin — not copied |
 | Agents (subagents) | `agents/` | Loaded via plugin — not copied |
-| Templates | `shared/templates/` | Referenced; copy on demand |
+| Templates | `ai/shared/templates/` | Referenced; copy on demand |
 | Convention rules | `.semgrep/` | Copied to product repos by init |
 | Manifest drift checker | `ci/manifest-drift/` | Copied to product repos by init |
 | CI actions | `ci/workflows/` | Copy once to `.github/workflows/` |
 | Patterns / playbook | `docs/` | Reference from platform |
-| Codex files | `codex/` | Copied to product repos by init |
+| Codex files | `ai/codex/` | Copied to product repos by init |
 
 ---
 

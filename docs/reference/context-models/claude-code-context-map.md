@@ -50,7 +50,7 @@ sequenceDiagram
     rect rgb(220, 230, 255)
         Note over JS,MCP: 🔵 JS issues all reads concurrently without blocking
         JS->>OS: 🔴 async read — base system prompt (binary)
-        JS->>OS: 🔵 async read — ~/.claude/CLAUDE.md
+        JS->>OS: 🔵 async read — ~/.ai/claude/CLAUDE.md
         JS->>OS: 🔵 async read — project CLAUDE.md (cascaded from cwd upward)
         JS->>OS: 🔵 async read — MEMORY.md (if exists for cwd)
         JS->>OS: 🔵 async read — plugin skill descriptions (enabled plugins)
@@ -64,9 +64,9 @@ sequenceDiagram
     rect rgb(220, 230, 255)
         Note over JS,Ctx: 🔵 Assembly in fixed priority order — no conflict detection
         JS->>Ctx: 🔴 1. base system prompt (Anthropic — highest authority)
-        JS->>Ctx: 🔵 2. global CLAUDE.md (~/.claude/CLAUDE.md)
+        JS->>Ctx: 🔵 2. global CLAUDE.md (~/.ai/claude/CLAUDE.md)
         JS->>Ctx: 🔵 3. parent CLAUDE.md (cascaded upward from cwd)
-        JS->>Ctx: 🔵 4. project CLAUDE.md (.claude/CLAUDE.md in cwd)
+        JS->>Ctx: 🔵 4. project CLAUDE.md (.ai/claude/CLAUDE.md in cwd)
         JS->>Ctx: 🔵 5. MEMORY.md
         JS->>Ctx: 🔵 6. skill descriptions + deferred tool names + date/email/model
     end
@@ -153,9 +153,9 @@ Paid on every session regardless of what you do.
 | Source | File / Location | Size (order of magnitude — treat as directional) |
 |---|---|---|
 | Base system prompt | Binary (`~/.local/bin/claude`) | ~6–8K tokens |
-| Global instructions | `~/.claude/CLAUDE.md` | ~0.5KB |
-| Project instructions | `<project>/.claude/CLAUDE.md` or parent `CLAUDE.md` | ~4KB |
-| Project memory index | `~/.claude/projects/<slug>/memory/MEMORY.md` | 0–7KB |
+| Global instructions | `~/.ai/claude/CLAUDE.md` | ~0.5KB |
+| Project instructions | `<project>/.ai/claude/CLAUDE.md` or parent `CLAUDE.md` | ~4KB |
+| Project memory index | `~/.ai/claude/projects/<slug>/memory/MEMORY.md` | 0–7KB |
 | Skills list | Descriptions from enabled plugin `SKILL.md` frontmatter | ~4KB |
 | Deferred tools list | Tool names from MCP servers + harness | ~2–3KB |
 | System injections | Date, user email, model info | ~0.1KB |
@@ -204,9 +204,9 @@ The always-loaded blue zone is largely fixed and small. Real context pressure co
 | Path | Purpose |
 |---|---|
 | `~/.local/bin/claude` | Claude Code binary (base prompt baked in) |
-| `~/.claude/settings.json` | Plugin enable/disable, theme, env vars, status line |
-| `~/.claude/CLAUDE.md` | Global instructions (all projects) |
-| `~/.claude/plugins/cache/` | Cached plugin skill files |
-| `~/.claude/projects/<slug>/memory/` | Per-project persistent memory |
-| `<project>/.claude/settings.json` | Project-local overrides |
+| `~/.ai/claude/settings.json` | Plugin enable/disable, theme, env vars, status line |
+| `~/.ai/claude/CLAUDE.md` | Global instructions (all projects) |
+| `~/.ai/claude/plugins/cache/` | Cached plugin skill files |
+| `~/.ai/claude/projects/<slug>/memory/` | Per-project persistent memory |
+| `<project>/.ai/claude/settings.json` | Project-local overrides |
 | `<project>/CLAUDE.md` | Project-specific instructions |

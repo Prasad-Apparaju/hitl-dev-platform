@@ -40,5 +40,5 @@ Every command shows a breadcrumb banner at the start of each phase — completed
 ## Further Reading
 
 - [PM guide](../playbook/pm-guide.md)
-- [PM playbook template](../../shared/templates/pm-playbook.md)
-- [PRD template](../../shared/templates/prd-template.md)
+- [PM playbook template](../../ai/shared/templates/pm-playbook.md)
+- [PRD template](../../ai/shared/templates/prd-template.md)

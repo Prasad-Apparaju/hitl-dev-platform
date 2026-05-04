@@ -9,7 +9,7 @@ How to organize your project's `docs/` folder. This structure scales from a solo
 ```
 docs/
 ├── 01-product/          WHAT and WHY
-│   ├── prd.md           Product requirements (use shared/templates/prd-template.md)
+│   ├── prd.md           Product requirements (use ai/shared/templates/prd-template.md)
 │   ├── roadmap.md       Phases, milestones, priorities
 │   └── competitive-analysis.md
 │
@@ -107,15 +107,15 @@ docs/
 | HLD files | One per system area | `system.md`, `data.md`, `security.md` |
 | LLD files | Organized by layer | `controllers/auth.md`, `services/model-router.md` |
 | ADRs | Descriptive names | `idempotency-keys.md`, `retry-policy.md` |
-| Templates | Always in `/shared/templates/` at repo root | Not in `docs/` |
+| Templates | Always in `/ai/shared/templates/` at repo root | Not in `docs/` |
 
 ---
 
 ## Getting Started
 
 1. Copy this structure into your project's `docs/` folder
-2. Start with `01-product/prd.md` (use `shared/templates/prd-template.md`)
-3. Create `docs/system-manifest.yaml` (use `shared/templates/system-manifest-template.yaml`)
+2. Start with `01-product/prd.md` (use `ai/shared/templates/prd-template.md`)
+3. Create `docs/system-manifest.yaml` (use `ai/shared/templates/system-manifest-template.yaml`)
 4. Add `docs/README.md` as the navigation index
 5. Fill in docs as you design and build — the 31-step process drives doc creation
 

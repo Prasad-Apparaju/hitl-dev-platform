@@ -14,4 +14,4 @@
 | `customization-guide.md` | Full command-to-file map — where to edit every skill, agent, hook, and template |
 | `reference.md` | Quick reference card for commands and workflow steps |
 
-Everything in this directory is for **people to read**. The AI runtime lives in `claude/` (including `claude/agents/`, `claude/commands/`, `claude/hooks/`).
+Everything in this directory is for **people to read**. The AI runtime lives in `ai/claude/` (including `ai/claude/agents/`, `ai/claude/commands/`, `ai/claude/hooks/`).

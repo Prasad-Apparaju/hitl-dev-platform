@@ -48,5 +48,5 @@ You own the release. You take the handoff from QA, assess deployment risk, deplo
 - [Rollout strategy](../playbook/rollout-strategy.md)
 - [Deployment gates](../playbook/deployment-gates.md)
 - [Workflow reference — ship steps](../playbook/workflow-reference.md)
-- [Incident registry template](../../shared/templates/incident-registry-template.yaml)
-- [Deployment manifest template](../../shared/templates/deployment-manifest-template.yaml)
+- [Incident registry template](../../ai/shared/templates/incident-registry-template.yaml)
+- [Deployment manifest template](../../ai/shared/templates/deployment-manifest-template.yaml)

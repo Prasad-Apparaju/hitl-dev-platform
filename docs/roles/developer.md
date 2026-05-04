@@ -50,6 +50,6 @@ Skills fall back to direct file reads automatically if Graphify is not running â
 ## Further Reading
 
 - [Full 31-step workflow](../playbook/workflow-reference.md)
-- [TDD as design](../../claude/dev-practices/tdd-design.md)
-- [Downstream impact](../../claude/dev-practices/downstream-impact.md)
-- [Developer playbook template](../../shared/templates/developer-playbook.md)
+- [TDD as design](../../ai/claude/dev-practices/tdd-design.md)
+- [Downstream impact](../../ai/claude/dev-practices/downstream-impact.md)
+- [Developer playbook template](../../ai/shared/templates/developer-playbook.md)

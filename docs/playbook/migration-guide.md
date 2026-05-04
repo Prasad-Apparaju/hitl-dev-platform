@@ -120,10 +120,10 @@ You have your existing codebase and access to hitl-dev-platform. You need to set
 
 ```bash
 # Copy the skills so every developer's Claude follows the same workflow
-cp -r hitl-dev-platform/claude/ your-repo/.claude/claude/
+cp -r hitl-dev-platform/ai/claude/ your-repo/.ai/claude/ai/claude/
 
 # Copy and customize CLAUDE.md
-cp hitl-dev-platform/shared/templates/CLAUDE.md.template your-repo/CLAUDE.md
+cp hitl-dev-platform/ai/shared/templates/CLAUDE.md.template your-repo/CLAUDE.md
 # Edit: fill in your project's conventions and coding standards
 
 # Copy convention checker config
@@ -133,7 +133,7 @@ cp hitl-dev-platform/docs/examples/greenfield/convention-checks.yaml your-repo/
 cp hitl-dev-platform/ci/workflows/*.yml your-repo/.github/workflows/
 
 # Copy issue template
-cp hitl-dev-platform/shared/templates/issue-template.md your-repo/.github/ISSUE_TEMPLATE/
+cp hitl-dev-platform/ai/shared/templates/issue-template.md your-repo/.github/ISSUE_TEMPLATE/
 ```
 
 **Time: 1 hour.** After this, every developer who clones the repo gets the process.
@@ -142,16 +142,16 @@ cp hitl-dev-platform/shared/templates/issue-template.md your-repo/.github/ISSUE_
 
 | What to do | Skill / tool | Reference to study first |
 |-----------|-------------|-------------------------|
-| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([claude/generate-docs/](../../claude/generate-docs/)) | Study the [example manifest](../../docs/examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../claude/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
+| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([ai/claude/generate-docs/](../../ai/claude/generate-docs/)) | Study the [example manifest](../../docs/examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../ai/claude/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
-| Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([shared/templates/test-registry-template.yaml](../../shared/templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
-| Start the incident registry | Create `docs/04-operations/incident-registry.yaml` using the template ([shared/templates/incident-registry-template.yaml](../../shared/templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
+| Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([ai/shared/templates/test-registry-template.yaml](../../ai/shared/templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
+| Start the incident registry | Create `docs/04-operations/incident-registry.yaml` using the template ([ai/shared/templates/incident-registry-template.yaml](../../ai/shared/templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
 
 ### B3. Assess the gaps
 
 | What to do | Skill / tool |
 |-----------|-------------|
-| Run all convention checks | `/check-conventions` ([claude/check-conventions/SKILL.md](../../claude/check-conventions/SKILL.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
+| Run all convention checks | `/check-conventions` ([ai/claude/check-conventions/SKILL.md](../../ai/claude/check-conventions/SKILL.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
 | Bucket findings into tiers | Follow [adoption-guide.md §After the Sprint](adoption-guide.md) — Blocker / Near-term / Medium-term / Long-term |
 | Fix blockers before migration starts | AI generates the fix; architect reviews |
 
@@ -205,15 +205,15 @@ A typical backend migration is 6-12 slices.
 
 | Workflow step | Skill / tool | What it produces |
 |--------------|-------------|-----------------|
-| Create issue | Use [shared/templates/issue-template.md](../../shared/templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
-| Data model mapping | Use [shared/templates/data-model-mapping-template.md](../../shared/templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
-| API contract mapping | Use [shared/templates/api-contract-mapping-template.md](../../shared/templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
-| Impact analysis | `/apply-change` ([claude/apply-change/SKILL.md](../../claude/apply-change/SKILL.md)) | Affected components in BOTH current and target system |
-| TDD | `/tdd` ([claude/tdd/SKILL.md](../../claude/tdd/SKILL.md)) | Tests from the target LLD + manifest contracts |
+| Create issue | Use [ai/shared/templates/issue-template.md](../../ai/shared/templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
+| Data model mapping | Use [ai/shared/templates/data-model-mapping-template.md](../../ai/shared/templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
+| API contract mapping | Use [ai/shared/templates/api-contract-mapping-template.md](../../ai/shared/templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
+| Impact analysis | `/apply-change` ([ai/claude/apply-change/SKILL.md](../../ai/claude/apply-change/SKILL.md)) | Affected components in BOTH current and target system |
+| TDD | `/tdd` ([ai/claude/tdd/SKILL.md](../../ai/claude/tdd/SKILL.md)) | Tests from the target LLD + manifest contracts |
 | Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Code using agentic-platform infrastructure (if agentic) |
 | Code review | Two rounds — AI reviews against LLD | Structure (R1) then behavior (R2) |
-| Downstream impact brief | `/impact-brief` ([claude/impact-brief/SKILL.md](../../claude/impact-brief/SKILL.md)) | 5-section brief from PR diff + manifest + incident registry |
-| Convention check | `/check-conventions` ([claude/check-conventions/SKILL.md](../../claude/check-conventions/SKILL.md)) | Violations caught before CI |
+| Downstream impact brief | `/impact-brief` ([ai/claude/impact-brief/SKILL.md](../../ai/claude/impact-brief/SKILL.md)) | 5-section brief from PR diff + manifest + incident registry |
+| Convention check | `/check-conventions` ([ai/claude/check-conventions/SKILL.md](../../ai/claude/check-conventions/SKILL.md)) | Violations caught before CI |
 
 ### B7. Run old and new in parallel
 
@@ -261,7 +261,7 @@ If the database changes (e.g., MongoDB → PostgreSQL):
 1. **Capture golden outputs** from the current agents — run them against a fixed set of inputs, record the outputs. These become the behavioral baseline.
 2. **Build the new agents** using the agentic-platform infrastructure (BaseAgent, tool base classes, AgentEvaluator, etc.)
 3. **Run the same inputs through the new agents** — compare outputs against the golden baseline. Differences are either bugs (fix) or intentional improvements (document as ADRs).
-4. **Migrate prompts to skill files** — if agents have prompts embedded as string literals in code, extract them into versioned `claude/<agent>/system-prompt.md` files.
+4. **Migrate prompts to skill files** — if agents have prompts embedded as string literals in code, extract them into versioned `ai/claude/<agent>/system-prompt.md` files.
 
 ### Frontend preservation
 
