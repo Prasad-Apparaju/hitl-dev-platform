@@ -138,35 +138,14 @@ Do not proceed until the architect explicitly confirms. If the architect request
 
 Generate `docs/system-manifest.yaml` from the confirmed domain breakdown. Follow the schema in `ai/claude/generate-docs/templates/system-manifest.schema.yaml`.
 
-For each domain:
+For a greenfield system, apply these rules per domain:
+- `files` and `tests`: empty arrays — no code exists yet
+- `lld`: `"pending"` — updated in Phase 6
+- All `facade_apis`, `boundary_entities`, and `events_*` fields: propose from PRD use cases and mark every value `DRAFT — architect to verify` — these are intended contracts, not ground truth
+- `depends_on`: from the interaction matrix (Phase 2b)
+- `conventions`: empty array — filled in after Phase 4 ADRs resolve
 
-```yaml
-<domain-name>:
-  purpose: "<confirmed one-line description>"
-  files: []                        # empty — no code exists yet
-  lld: "pending"                   # updated in Phase 6
-  tests: []                        # empty — no tests yet
-  boundary_entities:
-    <EntityName>:                  # data types that cross domain boundaries
-      shape: |                     # propose field shapes from PRD use cases
-        # DRAFT — architect to verify
-        field_name: type
-      consumed_by: [<domain>, ...]
-      note: "DRAFT — shape inferred from PRD; verify before first implementation"
-  facade_apis:
-    <method_name>:                 # propose from PRD requirements
-      signature: "DRAFT: <proposed_signature>"
-      blurb: "DRAFT — <inferred from PRD>"
-      mutations: ["DRAFT — verify"]
-      preconditions: ["DRAFT — verify"]
-      error_modes: ["DRAFT — verify"]
-  depends_on: [<domain>, ...]      # from interaction matrix
-  events_emitted: []               # architect fills in if event-driven
-  events_consumed: []
-  conventions: []                  # filled in after Phase 4 ADRs
-```
-
-Cross-cutting section: propose conventions based on tech stack decisions (if known), NFRs, and any organization-wide standards mentioned in the PRD. Mark all as DRAFT.
+Cross-cutting section: propose conventions from tech stack decisions (if known), NFRs, and any organization-wide standards in the PRD. Mark all as DRAFT.
 
 Interaction matrix: populate from Phase 2b.
 
@@ -368,50 +347,32 @@ Present as a table:
 
 For each confirmed slice, create a GitHub issue (or use the next available issue number) and generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`.
 
-Fill all fields using the exact template structure:
+Use `ai/shared/templates/decision-packet-template.yaml` as the exact field schema — do not invent or omit fields. Populate each field from the work completed in prior phases. For a greenfield system, apply these defaults unless the slice warrants otherwise:
 
-```yaml
-issue: <N>                          # GitHub issue number for this slice
-slice: <M>                          # slice number; null if only one slice in this domain
-title: "<domain> — initial implementation"
-change_type: feature
-risk_level: low                     # most initial domain builds are low risk; raise if cross-domain
-
-domains:
-  - <domain name — exactly one>
-
-source_docs:
-  prd: "<path to PRD from Phase 1>"
-  hld:
-    - "<path to relevant HLD from Phase 5>"
-  lld:
-    - "<path to domain LLD from Phase 6>"
-  adr:
-    - "<paths to ADRs that govern this slice>"
-
-tests:
-  plan: "<key test scenarios derivable from the facade APIs in this domain's LLD>"
-  new_tests: []                     # developer fills in during /tdd
-  registry_updated: false
-
-incidents:
-  checked: true
-  relevant: null                    # no incident history yet on a new system
-
-rollout:
-  risk: low
-  strategy: "Direct deploy — new system, no existing traffic"
-  go_no_go:
-    - "<observable criterion from demo check in 8a>"
-
-roi:
-  required: false                   # set true if this slice takes > 1 day
-  estimate: null
-
-impact_brief:
-  pm_mental_model: "<one sentence: what the PM can now demo or verify after this slice>"
-  risk_assessment: "<main risk for this slice>"
-```
+| Field | Greenfield default | Source |
+|---|---|---|
+| `issue` | — | GitHub issue number for this slice |
+| `slice` | `null` if one slice per domain | Slice number M |
+| `title` | `"<domain> — initial implementation"` | Phase 8a slice description |
+| `change_type` | `feature` | — |
+| `risk_level` | `low` | Raise if cross-domain or high-traffic |
+| `domains` | — | Exactly one — from delivery plan |
+| `source_docs.prd` | — | PRD path from Phase 1 |
+| `source_docs.hld` | — | Relevant HLD path from Phase 5 |
+| `source_docs.lld` | — | Domain LLD path from Phase 6 |
+| `source_docs.adr` | — | ADRs that govern this slice |
+| `tests.plan` | — | Key scenarios derivable from facade APIs in the LLD |
+| `tests.new_tests` | `[]` | Developer fills in during `/tdd` |
+| `tests.registry_updated` | `false` | Developer updates during `/tdd` |
+| `incidents.checked` | `true` | — |
+| `incidents.relevant` | `null` | No incident history on a new system |
+| `rollout.risk` | `low` | — |
+| `rollout.strategy` | `"Direct deploy — new system, no existing traffic"` | — |
+| `rollout.go_no_go` | — | Observable criterion from demo check in 8a |
+| `roi.required` | `false` | Set `true` if slice takes > 1 day |
+| `roi.estimate` | `null` | — |
+| `impact_brief.pm_mental_model` | — | Demo check from 8a in one sentence |
+| `impact_brief.risk_assessment` | — | Main risk for this slice |
 
 The `pm_mental_model` line is the demo check from 8a in one sentence — it is the handoff signal to the PM that this slice is complete.
 

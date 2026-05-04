@@ -215,8 +215,8 @@ This mode reads the existing codebase and generates the full documentation basel
 
 6. **Create registry stubs** if they don't exist:
 
-   - **Test registry** (`docs/03-engineering/testing/test-registry.yaml`): generate from the test files discovered in Phase R1 — one entry per test file with `domain`, `path`, and `risk: DRAFT`. Leave `covers` empty for the architect to fill in.
-   - **Incident registry** (`docs/04-operations/incident-registry.yaml`): create an empty stub (header + comment block only). Do not fabricate incidents.
+   - **Test registry** (`docs/03-engineering/testing/test-registry.yaml`): generate from the test files discovered in Phase R1 using the schema from `ai/shared/templates/test-registry-template.yaml`. One entry per test file; populate `id`, `name`, `domain`, `file`, and `type` from what is discoverable; set `risk: DRAFT` and `origin: tdd`; leave `incident_ref: null` for the architect to classify.
+   - **Incident registry** (`docs/04-operations/incident-registry.yaml`): create an empty stub from `ai/shared/templates/incident-registry-template.yaml` — header and schema structure only, no fabricated incidents.
 
    After generating, say: "I've created registry stubs. The test registry has [N] entries from discovered test files — add `risk` classifications and `covers` links as you review each domain. The incident registry is empty. Before starting change work, ask your team: *What broke in production in the last 6 months?* Each answer is one entry."
 
