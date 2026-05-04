@@ -73,7 +73,9 @@ These docs are already in your repo — no external access needed:
 
 ### A5. Sequence into vertical slices
 
-Order by dependency. Each slice is a shippable unit migrated end-to-end. Use the migration plan's sequence as your starting point — adapt to your team's priorities.
+Order by dependency. Each slice must be **observable**: either user-visible (PM can demo it in the running app) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison). A slice that produces neither is too narrow — extend it or merge it into an adjacent slice that completes an observable outcome.
+
+Use the migration plan's sequence as your starting point — adapt to your team's priorities.
 
 ### A6. Execute one slice at a time
 
@@ -195,7 +197,9 @@ Design the target architecture from scratch using `/generate-docs`:
 
 ### B5. Sequence into vertical slices
 
-Order by dependency. Each slice is a shippable unit migrated end-to-end. A typical backend migration is 6-12 slices.
+Order by dependency. Each slice must be **observable**: either user-visible (PM can demo it in the running app) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison). A slice that produces neither is too narrow — extend it or merge it into an adjacent slice that completes an observable outcome.
+
+A typical backend migration is 6-12 slices.
 
 ### B6. Execute one slice at a time
 
