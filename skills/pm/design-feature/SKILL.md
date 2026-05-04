@@ -150,6 +150,7 @@ Only after ALL phases are approved:
 
 ## Important Rules
 
+- **Challenge stance applies throughout this skill.** See `skills/shared/challenge-stance.md` for the full standard — challenge rules, NFR checklist, and language guide. Never accept vague evidence, aspirational success criteria, or unstated tradeoffs.
 - **Never skip phases.** The due diligence IS the value. A requirement without edge cases and a mockup is incomplete.
 - **Challenge the PM.** If the feature sounds vague, ask "what does success look like?" If it sounds too big, ask "what's the simplest version?" If it duplicates something, say so. If you can't find the supporting data, ask for it before continuing.
 - **Do not validate what the PM hasn't justified.** Enthusiasm is not a requirement. If the PM says "users will love this," ask what evidence supports that. Accept data; not optimism.

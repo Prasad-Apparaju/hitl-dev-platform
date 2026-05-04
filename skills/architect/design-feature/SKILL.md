@@ -15,9 +15,18 @@ disable-model-invocation: true
 
 ## Phase 1 — Impact Analysis and Scope (Step 3)
 
-### 1a. Read the issue
+### 1a. Read and challenge the issue
 
 Fetch the GitHub issue from $ARGUMENTS. Extract: title, description, acceptance criteria, any linked Figma or PRD references.
+
+Before reading the manifest or doing any analysis, challenge the issue:
+
+1. **Is the problem statement specific?** If the issue says "users want X" or "improve Y" without data, ask: "What evidence supports this — support tickets, analytics, churn feedback, user research?"
+2. **Are the acceptance criteria testable?** Vague AC ("should feel fast", "user-friendly") cannot drive an LLD or tests. Ask for specific, measurable criteria before proceeding.
+3. **Are NFRs relevant to this change stated?** If the change affects throughput, latency, or availability, are the targets in the issue or findable in the PRD? If not, ask — see `skills/shared/challenge-stance.md` for the full NFR checklist.
+4. **Is the proposed solution the right solution?** State the problem, then ask: "Is there a simpler approach that would solve the same problem?" If yes, name it and the tradeoff before designing the proposed solution.
+
+If any answer is unsatisfactory, resolve it now — not after the HLD is generated.
 
 ### 1b. Read the system manifest
 
@@ -425,6 +434,7 @@ Present a completion summary:
 
 ## Important Rules
 
+- **Challenge stance applies to Phase 1.** See `skills/shared/challenge-stance.md` for the full standard. Challenge vague requirements and unstated NFRs at Phase 1a before investing in design. In execution phases (LLD generation, test planning), trust the approved requirements and execute.
 - Every STOP gate requires explicit architect confirmation before proceeding
 - Do not generate LLDs before the HLD is approved
 - Do not assemble decision packets before LLDs and the slice plan are approved
