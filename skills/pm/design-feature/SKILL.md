@@ -143,21 +143,26 @@ Present a table of edge cases with proposed handling. Get confirmation before pr
 
 Present to the PM. Get explicit approval: "Agent design approved" before proceeding.
 
-**Web UI / Mobile:** Use **Claude Design** to create a visual prototype. This is required — do not skip it or replace it with a text description. Text-only requirements for UI features are incomplete; the prototype IS the spec for the frontend team.
+**Web UI / Mobile:** A visual reference is required before Phase 5. Text-only requirements for UI features are incomplete — the visual IS the spec for the frontend team. **Do not proceed to Phase 5 without one.**
 
-1. **Generate screens** for each step in the user journey from Phase 2.
-2. **Include states for every screen:**
-   - Default (data loaded normally)
-   - Empty (no data yet)
-   - Loading (waiting for response)
-   - Error (something went wrong)
-   - Success (action completed)
-3. **Follow existing UI patterns** — read `V1/web/components/` for the current design system (shadcn/ui, Tailwind). Match the existing look and feel.
-4. **Show the flow** — how screens connect to each other.
+Ask the PM:
 
-Say to the PM: "Let's use Claude Design to prototype this now. I'll generate the screens for each step we mapped in Phase 2."
+> "Do you already have a design for this — a Figma file, a screenshot from another tool, or even a photo of a hand-drawn sketch? If yes, share it and I'll annotate it with the edge cases from Phase 3. If not, let's generate it with Claude Design now."
 
-Present the prototype to the PM. Iterate until they're satisfied. Get explicit approval: "Design approved" before proceeding.
+**If they share an image (any format — Figma export, tool screenshot, photo of sketch):**
+1. Acknowledge and read the image.
+2. Annotate: for each screen, note which Phase 3 edge cases are handled and which are missing.
+3. Identify any missing states (empty, loading, error, success) and propose how they should look.
+4. Present the annotated review. Iterate until the PM is satisfied.
+
+**If they have nothing:**
+1. Say: "Let's generate it with Claude Design. I'll create screens for each step from Phase 2."
+2. Generate screens for every journey step. Include states: default, empty, loading, error, success.
+3. Follow existing UI patterns — read `V1/web/components/` for the design system (shadcn/ui, Tailwind).
+4. Show the flow — how screens connect.
+5. Present and iterate until satisfied.
+
+Get explicit approval: "Design approved" before proceeding to Phase 5.
 
 ---
 
