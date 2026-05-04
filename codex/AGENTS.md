@@ -52,7 +52,18 @@ If no idea is provided, ask: "What feature are you thinking about? Describe the 
 
 This is a 7-phase process. Do not skip phases or write to the PRD until all phases are approved.
 
+**Progress banners:** At the start of every phase, output:
+```
+---
+**Feature Design — Phase N / 7: [Name]**
+[✅/▶/○] Discovery · [✅/▶/○] Journey · [✅/▶/○] Edge Cases · [✅/▶/○] Design · [✅/▶/○] Criteria · [✅/▶/○] Impact · [✅/▶/○] PRD
+---
+```
+Use ✅ for approved phases, ▶ for current, ○ for upcoming. See `skills/pm/design-feature/SKILL.md` for the exact banner per phase.
+
 #### Phase 1 — Discovery
+
+*→ Output Phase 1 progress banner.*
 
 Ask one at a time. Wait for each answer before asking the next.
 
@@ -93,6 +104,8 @@ Summarize answers. Include **Open Items** for anything deferred. **STOP — get 
 
 #### Phase 2 — User Journey
 
+*→ Output Phase 2 progress banner.*
+
 Format depends on delivery surface from Phase 1:
 
 - **Web/Mobile:** Entry point → each screen/step (what the user sees, what actions they can take, what data is shown) → happy path end-to-end → alternative paths (back, refresh, new tab).
@@ -103,11 +116,15 @@ Present as numbered flow. **STOP — get confirmation before Phase 3.**
 
 #### Phase 3 — Edge Cases
 
+*→ Output Phase 3 progress banner.*
+
 For each step in the journey: empty data? huge data? action fails (API error, timeout, rate limit)? user unauthorized? double-click / duplicate submission? mobile constraints?
 
 Present a table: scenario | proposed handling. **STOP — get confirmation before Phase 4.**
 
 #### Phase 4 — Design Artifacts (conditional on delivery surface)
+
+*→ Output Phase 4 progress banner.*
 
 - **API/Backend only:** Skip — acceptance criteria in Phase 5 will be contract-shaped (request/response, error codes, edge cases).
 - **Agentic:** Produce (1) tool schema — name, inputs, outputs, failure modes; (2) decision flow — numbered trigger → tool calls → branches; (3) HITL gate definitions; (4) guardrails — actions the agent must never take autonomously. **STOP — get explicit approval: "Agent design approved."**
@@ -115,11 +132,15 @@ Present a table: scenario | proposed handling. **STOP — get confirmation befor
 
 #### Phase 5 — Acceptance Criteria
 
+*→ Output Phase 5 progress banner.*
+
 For each behavior in the approved design: "Given [context], when [action], then [result]." Cover happy path, every edge case from Phase 3, every error state from Phase 4. Be specific — include numbers, limits, and exact messages where applicable.
 
 **STOP — get confirmation before Phase 6.**
 
 #### Phase 6 — Impact Analysis
+
+*→ Output Phase 6 progress banner.*
 
 Assess honestly. Do not soften estimates.
 
@@ -133,6 +154,8 @@ Assess honestly. Do not soften estimates.
 **STOP — get confirmation before Phase 7.**
 
 #### Phase 7 — Write to PRD
+
+*→ Output Phase 7 progress banner.*
 
 Only after all phases are approved:
 

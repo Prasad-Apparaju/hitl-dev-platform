@@ -25,7 +25,23 @@ Before step 1, ask:
 
 ---
 
+## Progress Banners
+
+At the start of each milestone — before questions or content — output a banner. Format: `---` line, `**Add Feature — Step N / 5: Name**`, trail, `---`.
+
+| Step | Name | Banner trail |
+|---|---|---|
+| 1 | Questions | `▶ Questions · ○ Research · ○ Draft · ○ Review · ○ Publish` |
+| 2 | Research | `✅ Questions · ▶ Research · ○ Draft · ○ Review · ○ Publish` |
+| 3 | Draft | `✅ Questions · ✅ Research · ▶ Draft · ○ Review · ○ Publish` |
+| 4 | Review | `✅ Questions · ✅ Research · ✅ Draft · ▶ Review · ○ Publish` |
+| 5 | Publish | `✅ Questions · ✅ Research · ✅ Draft · ✅ Review · ▶ Publish` |
+
+---
+
 ## Steps
+
+*→ Output Step 1 progress banner.*
 
 1. **Challenge before drafting** — before touching the PRD, ask the following. Apply the chosen challenge level.
 
@@ -60,12 +76,16 @@ Before step 1, ask:
 
    At **Light**, summarize any unanswered questions as "Gaps to revisit" in the draft rather than blocking on them.
 
+*→ Output Step 2 progress banner.*
+
 2. **Get the existing requirements structure** — prefer a graph query if available:
    ```
    /graphify query "all requirement IDs and use case numbers from PRD"
    /graphify query "PRD format and requirement areas FR-<AREA>"
    ```
    Fall back to reading `docs/01-product/prd.md` directly if the graph is unavailable or stale. You need the full document to pick the correct next ID and follow the exact format.
+
+*→ Output Step 3 progress banner.*
 
 3. **Draft the requirement** following the existing format:
    - Requirement ID: next available `FR-<AREA>-N` (look at the existing IDs to pick the right area and number)
@@ -83,7 +103,11 @@ Before step 1, ask:
 
 5. **Check for conflicts** — does this feature contradict or duplicate any existing requirement? Flag it.
 
+*→ Output Step 4 progress banner.*
+
 6. **Present the draft** to the user for review. Do NOT update the PRD until they approve.
+
+*→ Output Step 5 progress banner.*
 
 7. **On approval**, update `docs/01-product/prd.md` with the new requirement (and use case if applicable).
 

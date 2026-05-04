@@ -30,7 +30,35 @@ Apply the chosen level throughout the session as defined in `skills/shared/chall
 
 ---
 
+## Progress Banners
+
+At the start of every phase — before asking any questions or generating content — output the banner for that phase so the PM always knows where they are.
+
+Format: `---` line, then `**Feature Design — Phase N / 7: Name**`, then the trail, then `---`.
+
+| Phase | Banner trail |
+|---|---|
+| 1 | `▶ Discovery · ○ Journey · ○ Edge Cases · ○ Design · ○ Criteria · ○ Impact · ○ PRD` |
+| 2 | `✅ Discovery · ▶ Journey · ○ Edge Cases · ○ Design · ○ Criteria · ○ Impact · ○ PRD` |
+| 3 | `✅ Discovery · ✅ Journey · ▶ Edge Cases · ○ Design · ○ Criteria · ○ Impact · ○ PRD` |
+| 4 | `✅ Discovery · ✅ Journey · ✅ Edge Cases · ▶ Design · ○ Criteria · ○ Impact · ○ PRD` |
+| 5 | `✅ Discovery · ✅ Journey · ✅ Edge Cases · ✅ Design · ▶ Criteria · ○ Impact · ○ PRD` |
+| 6 | `✅ Discovery · ✅ Journey · ✅ Edge Cases · ✅ Design · ✅ Criteria · ▶ Impact · ○ PRD` |
+| 7 | `✅ Discovery · ✅ Journey · ✅ Edge Cases · ✅ Design · ✅ Criteria · ✅ Impact · ▶ PRD` |
+
+Example (Phase 3):
+```
+---
+**Feature Design — Phase 3 / 7: Edge Cases**
+✅ Discovery · ✅ Journey · ▶ Edge Cases · ○ Design · ○ Criteria · ○ Impact · ○ PRD
+---
+```
+
+---
+
 ## Phase 1 — Discovery
+
+*→ Output Phase 1 progress banner.*
 
 Ask the PM these questions one at a time. Wait for answers before moving on. Do not accept vague or aspirational answers — push for specifics.
 
@@ -89,6 +117,8 @@ Get confirmation before proceeding to Phase 2.
 
 ## Phase 2 — User Journey
 
+*→ Output Phase 2 progress banner.*
+
 Walk through the feature step by step. The format depends on the delivery surface confirmed in Phase 1.
 
 **Web UI / Mobile:** Walk through screen by screen.
@@ -118,6 +148,8 @@ Present the journey as a numbered flow. Get confirmation before proceeding.
 
 ## Phase 3 — Edge Cases & Error Handling
 
+*→ Output Phase 3 progress banner.*
+
 For each step in the journey, ask:
 
 1. **What if the data is empty?** (no campaigns, no garments, no history) — what does the user see?
@@ -132,6 +164,8 @@ Present a table of edge cases with proposed handling. Get confirmation before pr
 ---
 
 ## Phase 4 — Design Artifacts (conditional on delivery surface)
+
+*→ Output Phase 4 progress banner.*
 
 **Backend / API only:** Skip this phase. Acceptance criteria in Phase 5 will be contract-shaped (request/response format, error codes, edge cases). Proceed to Phase 5.
 
@@ -168,6 +202,8 @@ Get explicit approval: "Design approved" before proceeding to Phase 5.
 
 ## Phase 5 — Acceptance Criteria
 
+*→ Output Phase 5 progress banner.*
+
 For each behavior in the approved design, write a testable acceptance criterion:
 
 - **Format:** "Given [context], when [action], then [result]"
@@ -183,6 +219,8 @@ Present the full list. Get confirmation before proceeding.
 ---
 
 ## Phase 6 — Impact Analysis
+
+*→ Output Phase 6 progress banner.*
 
 Before writing to the PRD, assess honestly. Surface risks and costs — do not make the feature sound easier than it is.
 
@@ -202,6 +240,8 @@ Present the analysis including any concerns. Do not soften the effort estimate o
 ---
 
 ## Phase 7 — Write to PRD
+
+*→ Output Phase 7 progress banner.*
 
 Only after ALL phases are approved:
 
