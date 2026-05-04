@@ -46,9 +46,19 @@ Run this workflow when starting any Tier 1+ change. This replaces the `/apply-ch
 
 **Refusal:** If no GitHub issue number is provided or discoverable, stop: "No GitHub issue found. Create one first with `gh issue create`, then re-run with the issue number."
 
+### Challenge Stance
+
+This workflow is a design-phase entrypoint. Before tier identification or impact analysis, apply the challenge standard from `skills/shared/challenge-stance.md`: require evidence for the problem, testable acceptance criteria, stated NFRs where relevant, and surface tradeoffs before agreeing to a solution. Resolve gaps now — not after the HLD is generated.
+
 ### Steps
 
-1. **Parse the change description.** Ask for the GitHub issue number if not provided.
+1. **Parse and challenge the change.** Ask for the GitHub issue number if not provided. Before identifying the tier or analyzing impact, challenge the issue:
+   - Is the problem statement backed by evidence? (support tickets, analytics, user research — not "we think users want this")
+   - Are the acceptance criteria testable and specific? Vague AC cannot drive an LLD or tests.
+   - Are NFRs relevant to this change stated? If the change affects throughput, latency, or availability, are the targets in the issue or PRD? If not, ask.
+   - Is there a simpler approach that solves the same problem? Name it and the tradeoff before proceeding.
+
+   Resolve any gap before moving to step 2. See `skills/shared/challenge-stance.md` for the full checklist.
 
 2. **Identify the tier** from the table above. Ask if unclear.
 
@@ -342,8 +352,8 @@ Run once at project inception when designing a new system from scratch.
 
 1. Read the PRD from the path in $ARGUMENTS or `docs/01-product/prd.md`.
 2. Extract: system name, user personas, core use cases (3–5), functional requirements (must-have vs nice-to-have), NFRs (performance, scale, security, compliance), external integrations, tech stack constraints, out-of-scope items, open questions.
-3. Flag gaps that will make domain decomposition ambiguous: who owns what data, consistency requirements between capabilities, scale profile.
-4. **STOP — ask architect to confirm requirements are complete and resolve gaps before proceeding.**
+3. Flag structural gaps (who owns what data, consistency requirements between capabilities, scale profile) **and** interrogate NFRs. Apply the full NFR checklist from `skills/shared/challenge-stance.md` — Minimum NFR Checklist section. For each NFR absent or vague in the PRD, ask the architect now. If an answer is genuinely unavailable, make a stated assumption with a specific number and flag it as a design risk in the gate below — do not proceed with an unnamed assumption embedded in the architecture.
+4. **STOP — ask architect to confirm requirements are complete, all NFR gaps are answered or explicitly assumed, and open questions are resolved before proceeding.**
 
 ### Phase 2 — Domain Decomposition
 
@@ -464,7 +474,7 @@ This section covers everything from impact analysis through decision packet asse
 
 ### Phase 1 — Impact Analysis and Scope
 
-1. Fetch the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`."
+1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Before reading the manifest or doing any analysis, challenge the issue: Is the problem backed by evidence (not just intent)? Are acceptance criteria testable and specific? Are NFRs relevant to the affected domain stated — throughput, latency, availability targets? Is there a simpler approach? Resolve gaps now. See `skills/shared/challenge-stance.md` for the full standard.
 2. Read the system manifest — prefer a graph query:
    ```
    /graphify query "all domains and facade APIs"
