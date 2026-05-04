@@ -18,14 +18,18 @@ This is a guided, multi-phase process. Do NOT skip phases. Do NOT jump to writin
 
 Ask the PM these questions one at a time. Wait for answers before moving on. Do not accept vague or aspirational answers — push for specifics.
 
-1. **Who is this for?** Which persona from the PRD (`docs/01-product/prd.md` §3) is the primary user? Is there a secondary user?
-2. **What evidence confirms this is a real problem?** Cite specific data: support tickets, user research sessions, usage analytics, churn feedback. "We think users want this" is not evidence — ask until a specific data point is provided.
-3. **What problem does this solve?** What pain exists today? What is the user doing right now as a workaround?
-4. **What happens if we don't build this?** Is this blocking users, causing churn, or just a nice-to-have? The answer determines priority.
-5. **What does success look like?** Name a specific metric with its current measured value and a target. "Improve engagement" is not an answer. "Increase campaign creation rate from 2.3/week to 4/week, measured by analytics event X" is.
-6. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP — and it's probably what you should validate first.
-7. **What's explicitly out of scope?** What should this feature NOT do? Unstated non-goals become scope creep.
-8. **Does this conflict with anything we've already built or committed to?** Query the PRD for conflicts now — prefer a graph query:
+1. **What is the delivery surface?** Web UI, mobile (iOS/Android/responsive web), API/backend only, agentic workflow (AI agent with no direct UI), internal/ops tool, or a combination? The answer gates which phases apply:
+   - Backend-only or API → Phase 2 describes request/response flows, not screen steps; Phase 4 is skipped
+   - Agentic → Phase 2 describes the agent's decision path and HITL gates; Phase 4 is replaced with tool/gate design
+   - Web or mobile UI → all phases apply as written
+2. **Who is this for?** Which persona from the PRD (`docs/01-product/prd.md` §3) is the primary user? Is there a secondary user?
+3. **What evidence confirms this is a real problem?** Cite specific data: support tickets, user research sessions, usage analytics, churn feedback. "We think users want this" is not evidence — ask until a specific data point is provided.
+4. **What problem does this solve?** What pain exists today? What is the user doing right now as a workaround?
+5. **What happens if we don't build this?** Is this blocking users, causing churn, or just a nice-to-have? The answer determines priority.
+6. **What does success look like?** Name a specific metric with its current measured value and a target. "Improve engagement" is not an answer. "Increase campaign creation rate from 2.3/week to 4/week, measured by analytics event X" is. For pre-launch or new capabilities with no baseline: a hypothesis with a validation plan is acceptable.
+7. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP — and it's probably what you should validate first.
+8. **What's explicitly out of scope?** What should this feature NOT do? Unstated non-goals become scope creep.
+9. **Does this conflict with anything we've already built or committed to?** Query the PRD for conflicts now — prefer a graph query:
    ```
    /graphify query "existing requirements related to <feature-topic>"
    ```
@@ -37,16 +41,28 @@ Summarize the answers back to the PM. If any answer is vague, ask for the specif
 
 ## Phase 2 — User Journey
 
-Walk through the feature step by step from the user's perspective.
+Walk through the feature step by step. The format depends on the delivery surface confirmed in Phase 1.
 
+**Web UI / Mobile:** Walk through screen by screen.
 1. **Entry point:** How does the user discover or reach this feature? (navigation, link, notification, redirect)
-2. **For each screen/step:**
-   - What does the user see?
-   - What actions can they take?
-   - What data is displayed? Where does it come from?
-   - What happens when they complete the action?
+2. **For each screen/step:** What does the user see? What actions can they take? What data is displayed and where does it come from? What happens when they complete the action?
 3. **Happy path:** Walk through the complete flow end-to-end.
 4. **Alternative paths:** What if the user goes back? Refreshes? Opens in a new tab?
+
+**API / Backend only:** Walk through the contract.
+1. **Trigger:** What calls this? (other service, scheduled job, user action upstream)
+2. **Request shape:** What inputs are required? What is optional?
+3. **Processing steps:** What does the system do? What can fail at each step?
+4. **Response shape:** What is returned on success? On each failure mode?
+5. **Side effects:** What else changes — database, events emitted, downstream calls?
+
+**Agentic workflow:** Walk through the agent's decision path.
+1. **Trigger:** What initiates the agent? (user prompt, event, schedule)
+2. **Tool access:** What tools does the agent have? What can each tool do and what are its limits?
+3. **Decision points:** Where does the agent choose between paths? What are the branch conditions?
+4. **HITL gates:** At which points must a human review, correct, or approve before the agent continues? What happens if the human rejects?
+5. **Output:** What does the agent produce? Who or what consumes it?
+6. **Failure modes:** What happens if a tool call fails? If the agent is uncertain? If the human is unavailable?
 
 Present the journey as a numbered flow. Get confirmation before proceeding.
 
@@ -67,9 +83,19 @@ Present a table of edge cases with proposed handling. Get confirmation before pr
 
 ---
 
-## Phase 4 — UX Design
+## Phase 4 — Design Artifacts (conditional on delivery surface)
 
-Use **Claude Design** to create a visual prototype.
+**Backend / API only:** Skip this phase. Acceptance criteria in Phase 5 will be contract-shaped (request/response format, error codes, edge cases). Proceed to Phase 5.
+
+**Agentic workflow:** Skip visual prototyping. Instead, produce:
+1. **Tool schema** — for each tool the agent uses: name, inputs, outputs, and failure modes.
+2. **Decision flow** — a numbered sequence showing trigger → tool calls → decision branches → output. Include the conditions at each branch.
+3. **HITL gate definitions** — for each gate: what the human sees, what they can approve/reject/correct, and what the agent does with each response.
+4. **Guardrails** — what the agent must never do autonomously (irreversible actions, external sends, data deletion). These become hard HITL gates.
+
+Present to the PM. Get explicit approval: "Agent design approved" before proceeding.
+
+**Web UI / Mobile:** Use **Claude Design** to create a visual prototype.
 
 1. **Generate screens** for each step in the user journey from Phase 2.
 2. **Include states:**
