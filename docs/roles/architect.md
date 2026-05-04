@@ -63,5 +63,5 @@ Gates should not block progress for more than 24 hours.
 - [Ops role guide](ops.md) — release review and canary monitoring
 - [Roles and responsibilities](../playbook/roles.md)
 - [Common pitfalls and process tiers](../playbook/common-pitfalls.md)
-- [Architect playbook template](../../ai/shared/templates/architect-playbook.md)
+- [Architect playbook template](../playbook/architect-playbook.md)
 - [Manifest governance](../playbook/manifest-governance.md)

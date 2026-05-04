@@ -440,10 +440,10 @@ Feature work proceeds when blockers are zero.
 | Template | Source | Use when |
 |----------|--------|----------|
 | PRD | [ai/shared/templates/prd-template.md](../ai/shared/templates/prd-template.md) | Writing product requirements |
-| CLAUDE.md | [ai/shared/templates/CLAUDE.md.template](../ai/shared/templates/CLAUDE.md.template) | Setting up a new project |
+| CLAUDE.md | [ai/claude/generate-docs/templates/CLAUDE.md.template](../ai/claude/generate-docs/templates/CLAUDE.md.template) | Setting up a new project |
 | System manifest schema | [ai/claude/generate-docs/templates/system-manifest.schema.yaml](../ai/claude/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
 | Issue template | [ai/shared/templates/issue-template.md](../ai/shared/templates/issue-template.md) | Every issue |
-| ADR template | [ai/shared/templates/adr-template.md](../ai/shared/templates/adr-template.md) | Every architectural decision |
+| ADR template | [ai/claude/generate-docs/templates/adr-template.md](../ai/claude/generate-docs/templates/adr-template.md) | Every architectural decision |
 | Training plan | [ai/shared/templates/training-plan-template.md](../ai/shared/templates/training-plan-template.md) | New capability introduced |
 | Test strategy | [ai/shared/templates/test-strategy-template.md](../ai/shared/templates/test-strategy-template.md) | Planning tests for a vertical slice |
 | Security audit | [ai/shared/templates/security-audit-template.md](../ai/shared/templates/security-audit-template.md) | Security assessment |
