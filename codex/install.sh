@@ -113,7 +113,7 @@ fi
 
 mkdir -p "$TARGET_DIR/templates"
 for tmpl in hld-template.md lld-component-template.md; do
-  SRC="$PLATFORM_ROOT/skills/generate-docs/templates/$tmpl"
+  SRC="$PLATFORM_ROOT/ai/generate-docs/templates/$tmpl"
   if [[ -f "$SRC" ]]; then
     cp "$SRC" "$TARGET_DIR/templates/$tmpl"
     echo "✓ Copied templates/$tmpl"

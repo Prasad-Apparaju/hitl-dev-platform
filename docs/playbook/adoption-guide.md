@@ -26,7 +26,7 @@ Whatever exists — code, old wiki pages, Confluence docs, Swagger specs, README
 
 ## The Skill
 
-The `/generate-docs` skill (at `skills/generate-docs/`) automates most of this sprint. Run it in **reverse-engineer mode**:
+The `/generate-docs` skill (at `ai/generate-docs/`) automates most of this sprint. Run it in **reverse-engineer mode**:
 
 ```
 /generate-docs reverse-engineer the existing system

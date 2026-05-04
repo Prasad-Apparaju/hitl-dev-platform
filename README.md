@@ -25,7 +25,7 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 hitl-dev-platform/
 │
 │  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
-├── skills/
+├── ai/
 │   ├── [skill folders]   Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*
 │   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)

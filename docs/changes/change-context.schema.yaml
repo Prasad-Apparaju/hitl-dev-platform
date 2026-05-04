@@ -1,7 +1,7 @@
 # HITL Change Context Schema
 # One file per active change. Place at .hitl/current-change.yaml in the product repo.
 # This file is the bridge between human HITL process and Claude tool enforcement.
-# Required by: hooks/check-hitl-context.sh, hooks/check-domain-boundary.sh, skills/apply-change, skills/impact-brief
+# Required by: hooks/check-hitl-context.sh, hooks/check-domain-boundary.sh, ai/apply-change, ai/impact-brief
 
 $schema:
   version: "1.0"

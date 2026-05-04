@@ -88,7 +88,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Decorators + base classes → convention patterns
    - Test files → test coverage map
 
-2. **Generate `docs/system-manifest.yaml`** with ALL sections from `skills/generate-docs/templates/system-manifest.schema.yaml`:
+2. **Generate `docs/system-manifest.yaml`** with ALL sections from `ai/generate-docs/templates/system-manifest.schema.yaml`:
 
    **Per domain:**
    - `purpose`: one-line description (infer from directory name + file contents)
@@ -200,10 +200,10 @@ This mode reads the existing codebase and generates the full documentation basel
      - File content requirement → `file_contains`
    - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
-3. **Install the plugin** (preferred) or copy skills to `.claude/skills/` if they don't exist:
+3. **Install the plugin** (preferred) or copy skills to `.claude/ai/` if they don't exist:
    - Install: add this repo as a Claude Code plugin so skills are auto-discovered
-   - Manual copy: `cp -r skills/ <your-repo>/.claude/skills/`
-   - Key skills: `skills/dev-practices/SKILL.md` — the 31-step workflow; `skills/apply-change/SKILL.md` — impact analysis
+   - Manual copy: `cp -r ai/ <your-repo>/.claude/ai/`
+   - Key skills: `ai/dev-practices/SKILL.md` — the 31-step workflow; `ai/apply-change/SKILL.md` — impact analysis
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR

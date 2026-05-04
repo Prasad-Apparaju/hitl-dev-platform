@@ -181,7 +181,7 @@ Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those
 
 | Component | Location in platform | Notes |
 |---|---|---|
-| Skills (slash commands) | `skills/` | Loaded via plugin — not copied |
+| Skills (slash commands) | `ai/` | Loaded via plugin — not copied |
 | Agents (subagents) | `agents/` | Loaded via plugin — not copied |
 | Templates | `templates/` | Referenced; copy on demand |
 | Convention rules | `.semgrep/` | Copied to product repos by init |

@@ -91,7 +91,7 @@ For systems that include AI agents, the agent's prompts are design artifacts —
 Prompts live in git-managed skill files alongside the agent they belong to:
 
 ```
-skills/
+ai/
   campaign-generation/
     system-prompt.md        # The agent's personality and instructions
     guardrails.md           # Input/output validation rules
