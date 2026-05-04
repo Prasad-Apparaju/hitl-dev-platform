@@ -28,7 +28,7 @@ If semgrep is not installed, say: "Install semgrep: `pip install semgrep` or `br
 ### Manifest drift
 
 ```bash
-python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
+python ci/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
 ```
 
 ### Mermaid br tags

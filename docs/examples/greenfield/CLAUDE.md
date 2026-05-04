@@ -48,7 +48,7 @@ Before modifying any code, read `docs/system-manifest.yaml` and identify which d
 - Lint: `ruff check .`
 - Format: `black .`
 - Convention check: `/check-conventions`
-- Manifest drift: `python tools/manifest-drift/check_manifest_drift.py --source-dirs src/`
+- Manifest drift: `python ci/manifest-drift/check_manifest_drift.py --source-dirs src/`
 
 ## Cross-Cutting Conventions
 

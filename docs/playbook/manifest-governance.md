@@ -52,10 +52,10 @@ The most senior developer who understands cross-domain concerns takes the manife
 
 | Check | Enforcement mechanism |
 |-------|----------------------|
-| Files exist in manifest | Manifest drift checker (`tools/manifest-drift/`) compares file lists against actual directory |
+| Files exist in manifest | Manifest drift checker (`ci/manifest-drift/`) compares file lists against actual directory |
 | Newly added source files are in a domain | CI fails if unregistered source files detected |
 | Convention checks pass | Semgrep rules in `.semgrep/` run on every PR |
-| Decision packet includes affected domains | Preflight check (`tools/preflight/`) validates packet against manifest domains |
+| Decision packet includes affected domains | Preflight check (`ci/preflight/`) validates packet against manifest domains |
 
 **CI cannot automatically verify:**
 - Whether the facade API blurbs accurately describe the code

@@ -48,7 +48,7 @@ The installer copies:
 - `codex/hook-scripts/` → scripts used by both Codex and git hooks
 - `.git/hooks/pre-commit` and `.git/hooks/post-commit` → git-level enforcement
 - `codex/scripts/hitl-conventions.sh` → convention check runner
-- `tools/manifest-drift/`, `scripts/fix_mermaid_br_tags.py`, `.semgrep/` → convention check dependencies
+- `ci/manifest-drift/`, `scripts/fix_mermaid_br_tags.py`, `.semgrep/` → convention check dependencies
 - `templates/hld-template.md`, `templates/lld-component-template.md` → design doc templates
 
 **4. Enable Codex lifecycle hooks**

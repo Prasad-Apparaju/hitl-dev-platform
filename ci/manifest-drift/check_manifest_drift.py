@@ -16,9 +16,9 @@ Exit codes:
   1 — at least one ERROR-level finding
 
 Usage:
-    python tools/manifest-drift/check_manifest_drift.py
-    python tools/manifest-drift/check_manifest_drift.py --manifest docs/system-manifest.yaml
-    python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ src/ lib/
+    python ci/manifest-drift/check_manifest_drift.py
+    python ci/manifest-drift/check_manifest_drift.py --manifest docs/system-manifest.yaml
+    python ci/manifest-drift/check_manifest_drift.py --source-dirs app/ src/ lib/
 """
 
 from __future__ import annotations

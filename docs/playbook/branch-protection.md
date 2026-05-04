@@ -18,7 +18,7 @@ In the "Branch name pattern" field, enter `main`.
 
 Check **"Require status checks to pass before merging"**.
 
-In the search box that appears, type `traceability` and select the **traceability** job from `tools/tools/ci/traceability-check.yml`.  This blocks any PR from merging until the preflight script exits with code 0.
+In the search box that appears, type `traceability` and select the **traceability** job from `ci/workflows/traceability-check.yml`.  This blocks any PR from merging until the preflight script exits with code 0.
 
 Also select **convention-check** jobs (`semgrep`, `manifest-drift`, `mermaid-check`) if you want those enforced too.
 

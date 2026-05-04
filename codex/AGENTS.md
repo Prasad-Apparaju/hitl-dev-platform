@@ -477,7 +477,7 @@ Run before creating a PR. This replaces the `/check-conventions` skill.
 semgrep scan --config .semgrep/ --error
 
 # Manifest drift
-python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
+python ci/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
 
 # Mermaid br tags
 find docs/ -name "*.md" -exec python scripts/fix_mermaid_br_tags.py --check {} +

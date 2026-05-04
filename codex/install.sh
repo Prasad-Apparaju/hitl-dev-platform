@@ -90,10 +90,10 @@ chmod +x "$TARGET_DIR/codex/scripts/hitl-conventions.sh"
 echo "✓ Copied codex/scripts/hitl-conventions.sh"
 
 # Manifest drift checker
-if [[ -d "$PLATFORM_ROOT/tools/manifest-drift" ]]; then
-  mkdir -p "$TARGET_DIR/tools/manifest-drift"
-  cp -r "$PLATFORM_ROOT/tools/manifest-drift/." "$TARGET_DIR/tools/manifest-drift/"
-  echo "✓ Copied tools/manifest-drift/"
+if [[ -d "$PLATFORM_ROOT/ci/manifest-drift" ]]; then
+  mkdir -p "$TARGET_DIR/ci/manifest-drift"
+  cp -r "$PLATFORM_ROOT/ci/manifest-drift/." "$TARGET_DIR/ci/manifest-drift/"
+  echo "✓ Copied ci/manifest-drift/"
 fi
 
 # Mermaid fixer script

@@ -42,7 +42,7 @@ Default is `--tool both` (Claude Code + Codex). Use `--tool claude` or `--tool c
 | `.claude/settings.json` | Plugin reference + hook wiring |
 | `.hitl/hooks/*.sh` | Hook wrappers (resolve platform via `HITL_PLATFORM_ROOT`) |
 | `.semgrep/` | Semgrep convention rules (required by `/check-conventions`) |
-| `tools/manifest-drift/` | Manifest drift checker (required by `/check-conventions`) |
+| `ci/manifest-drift/` | Manifest drift checker (required by `/check-conventions`) |
 | `tools/scripts/fix_mermaid_br_tags.py` | Mermaid linter (required by `/check-conventions`) |
 
 Skills, agents, and commands are **not** copied — they load from the shared platform via the Claude Code plugin.
@@ -79,7 +79,7 @@ python3 -m graphify.serve graphify-out/graph.json &
 
 ```bash
 mkdir -p ~/code/my-product/.github/workflows
-cp ~/tools/hitl-dev-platform/tools/tools/ci/*.yml ~/code/my-product/.github/workflows/
+cp ~/tools/hitl-dev-platform/ci/workflows/*.yml ~/code/my-product/.github/workflows/
 cp ~/tools/hitl-dev-platform/templates/pull-request-template.md \
    ~/code/my-product/.github/PULL_REQUEST_TEMPLATE.md
 ```
@@ -164,12 +164,12 @@ cd ~/tools/hitl-dev-platform
 git fetch upstream && git merge upstream/main
 ```
 
-Convention tools (`.semgrep/`, `tools/manifest-drift/`, `tools/scripts/`) are copies in each product repo. Refresh them by re-running init (it skips files that already exist — pass `--force` manually if you want to overwrite):
+Convention tools (`.semgrep/`, `ci/manifest-drift/`, `tools/scripts/`) are copies in each product repo. Refresh them by re-running init (it skips files that already exist — pass `--force` manually if you want to overwrite):
 
 ```bash
 # Manual refresh of convention tools
 cp -r ~/tools/hitl-dev-platform/.semgrep/ ~/code/my-product/.semgrep/
-cp -r ~/tools/hitl-dev-platform/tools/manifest-drift/ ~/code/my-product/tools/manifest-drift/
+cp -r ~/tools/hitl-dev-platform/ci/manifest-drift/ ~/code/my-product/ci/manifest-drift/
 cp ~/tools/hitl-dev-platform/tools/scripts/fix_mermaid_br_tags.py ~/code/my-product/scripts/
 ```
 
@@ -185,8 +185,8 @@ Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those
 | Agents (subagents) | `agents/` | Loaded via plugin — not copied |
 | Templates | `templates/` | Referenced; copy on demand |
 | Convention rules | `.semgrep/` | Copied to product repos by init |
-| Manifest drift checker | `tools/manifest-drift/` | Copied to product repos by init |
-| CI actions | `tools/ci/` | Copy once to `.github/workflows/` |
+| Manifest drift checker | `ci/manifest-drift/` | Copied to product repos by init |
+| CI actions | `ci/workflows/` | Copy once to `.github/workflows/` |
 | Patterns / playbook | `docs/` | Reference from platform |
 | Codex files | `codex/` | Copied to product repos by init |
 
