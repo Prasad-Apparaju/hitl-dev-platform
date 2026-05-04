@@ -18,6 +18,7 @@ Type these in Claude Code. Claude loads the right context automatically.
 
 | Command | What it does |
 |---|---|
+| `/pm:design-feature <rough idea>` | Guided 7-phase process: shapes a rough idea into structured requirements, a UI prototype, and acceptance criteria |
 | `/pm:add-feature <description>` | Draft a new requirement in the PRD with acceptance criteria, use case, and GitHub issue |
 | `/pm:update-requirement FR-xxx-N <change>` | Update an existing requirement, flag ripple effects |
 | `/pm:review-progress` | Gap analysis: PRD requirements vs what's actually built |
@@ -26,6 +27,37 @@ Type these in Claude Code. Claude loads the right context automatically.
 | `/pm:answer-questions` | Walk through PRD §10 open questions one at a time, resolve them |
 | `/pm:prep-demo` | Generate a demo checklist from PRD use cases + acceptance criteria |
 | `/pm:review-scope-change <PR#>` | Summarize a team-proposed PRD change, generate review questions |
+
+---
+
+## Designing a Feature with `/pm:design-feature`
+
+Use this command when you have a rough idea and need to shape it into something the team can build from. It runs you through 7 phases — each one requires your approval before moving to the next.
+
+![Feature design flow with progress breadcrumb](../images/pm-design-feature-flow.svg)
+
+A progress banner appears at the top of every phase so you always know where you are and how far you've come:
+
+```
+---
+Feature Design — Phase 3 / 7: Edge Cases
+✅ Discovery · ✅ Journey · ▶ Edge Cases · ○ Design · ○ Criteria · ○ Impact · ○ PRD
+---
+```
+
+**The 7 phases:**
+
+| Phase | What happens |
+|---|---|
+| 1 · Discovery | Claude asks about the problem, evidence, success criteria, and scope. You pick the challenge level (Rigorous / Moderate / Light). |
+| 2 · User Journey | Walk through the feature step by step — what the user sees, what they do, and what happens. |
+| 3 · Edge Cases | Cover failure modes: empty states, errors, timeouts, duplicate actions, mobile constraints. |
+| 4 · Design | If it has a UI: prototype with Claude Design (or bring your own sketch/Figma file). Required before Phase 5. |
+| 5 · Criteria | Claude writes testable acceptance criteria from the approved design. You confirm before they go into the PRD. |
+| 6 · Impact | Honest assessment: effort range, architecture implications, dependencies, technical debt. |
+| 7 · PRD | Claude writes the requirement into the PRD and creates a GitHub issue. |
+
+You can defer any question to a **TODO list** ("add that to open items") and come back to it — Claude won't block you, but will show the open items at the end of Phase 1.
 
 ---
 

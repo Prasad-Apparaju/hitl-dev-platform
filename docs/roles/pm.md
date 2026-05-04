@@ -9,7 +9,7 @@ You define what gets built and why. You review AI-drafted PRDs, accept or reques
 | Command | When to use |
 |---------|-------------|
 | `/pm:add-feature` | A new feature needs to be documented — adds it to the PRD with acceptance criteria and a requirement ID |
-| `/pm:design-feature` | You have a rough idea — shapes it into structured requirements before handing to the team |
+| `/pm:design-feature` | You have a rough idea — 7-phase guided process: discovery, user journey, edge cases, UI prototype, acceptance criteria, impact, PRD. Shows a progress breadcrumb at every phase. |
 | `/pm:update-requirement` | An existing requirement changes — updates the PRD with new criteria or scope |
 | `/pm:review-scope-change` | The team flags a scope change — analyzes downstream impact before you decide |
 | `/pm:prioritize` | Backlog grooming — scores features by value, effort, risk, and strategic alignment |
