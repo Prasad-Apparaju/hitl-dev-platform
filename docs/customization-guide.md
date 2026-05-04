@@ -8,11 +8,11 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 ```
 ~/tools/hitl-dev-platform/
-  claude/          ← slash command prompts
+  ai/claude/          ← slash command prompts
   agents/          ← subagent role definitions
   hooks/           ← enforcement scripts (Claude Code)
-  codex/           ← Codex-specific files
-  shared/templates/       ← document templates used by skills
+  ai/codex/           ← Codex-specific files
+  ai/shared/templates/       ← document templates used by skills
 ```
 
 ---
@@ -21,35 +21,35 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 | Slash command | File to edit |
 |---|---|
-| `/start-prd` | `claude/start-prd/SKILL.md` |
-| `/start-brownfield` | `claude/start-brownfield/SKILL.md` |
-| `/start-migration` | `claude/start-migration/SKILL.md` |
-| `/dev-practices` | `claude/dev-practices/SKILL.md` |
-| `/apply-change` | `claude/apply-change/SKILL.md` |
-| `/check-conventions` | `claude/check-conventions/SKILL.md` |
-| `/impact-brief` | `claude/impact-brief/SKILL.md` |
-| `/tdd` | `claude/tdd/SKILL.md` |
-| `/generate-docs` | `claude/generate-docs/SKILL.md` |
-| `/conclude` | `claude/conclude/SKILL.md` |
-| `/migrate:review-external-docs` | `claude/migrate/review-external-docs/SKILL.md` |
-| `/pm:add-feature` | `claude/pm/add-feature/SKILL.md` |
-| `/pm:answer-questions` | `claude/pm/answer-questions/SKILL.md` |
-| `/pm:design-feature` | `claude/pm/design-feature/SKILL.md` |
-| `/pm:prep-demo` | `claude/pm/prep-demo/SKILL.md` |
-| `/pm:prioritize` | `claude/pm/prioritize/SKILL.md` |
-| `/pm:report-bug` | `claude/pm/report-bug/SKILL.md` |
-| `/pm:review-progress` | `claude/pm/review-progress/SKILL.md` |
-| `/pm:review-scope-change` | `claude/pm/review-scope-change/SKILL.md` |
-| `/pm:update-requirement` | `claude/pm/update-requirement/SKILL.md` |
-| `/qa:plan-tests` | `claude/qa/plan-tests/SKILL.md` |
-| `/qa:report-defect` | `claude/qa/report-defect/SKILL.md` |
-| `/qa:review-tests` | `claude/qa/review-tests/SKILL.md` |
-| `/qa:verify-quality` | `claude/qa/verify-quality/SKILL.md` |
-| `/ops:build` | `claude/ops/build/SKILL.md` |
-| `/ops:deploy` | `claude/ops/deploy/SKILL.md` |
-| `/ops:apply-iac` | `claude/ops/apply-iac/SKILL.md` |
-| `/architect:design-system` | `claude/architect/design-system/SKILL.md` |
-| `/architect:design-feature` | `claude/architect/design-feature/SKILL.md` |
+| `/start-prd` | `ai/claude/start-prd/SKILL.md` |
+| `/start-brownfield` | `ai/claude/start-brownfield/SKILL.md` |
+| `/start-migration` | `ai/claude/start-migration/SKILL.md` |
+| `/dev-practices` | `ai/claude/dev-practices/SKILL.md` |
+| `/apply-change` | `ai/claude/apply-change/SKILL.md` |
+| `/check-conventions` | `ai/claude/check-conventions/SKILL.md` |
+| `/impact-brief` | `ai/claude/impact-brief/SKILL.md` |
+| `/tdd` | `ai/claude/tdd/SKILL.md` |
+| `/generate-docs` | `ai/claude/generate-docs/SKILL.md` |
+| `/conclude` | `ai/claude/conclude/SKILL.md` |
+| `/migrate:review-external-docs` | `ai/claude/migrate/review-external-docs/SKILL.md` |
+| `/pm:add-feature` | `ai/claude/pm/add-feature/SKILL.md` |
+| `/pm:answer-questions` | `ai/claude/pm/answer-questions/SKILL.md` |
+| `/pm:design-feature` | `ai/claude/pm/design-feature/SKILL.md` |
+| `/pm:prep-demo` | `ai/claude/pm/prep-demo/SKILL.md` |
+| `/pm:prioritize` | `ai/claude/pm/prioritize/SKILL.md` |
+| `/pm:report-bug` | `ai/claude/pm/report-bug/SKILL.md` |
+| `/pm:review-progress` | `ai/claude/pm/review-progress/SKILL.md` |
+| `/pm:review-scope-change` | `ai/claude/pm/review-scope-change/SKILL.md` |
+| `/pm:update-requirement` | `ai/claude/pm/update-requirement/SKILL.md` |
+| `/qa:plan-tests` | `ai/claude/qa/plan-tests/SKILL.md` |
+| `/qa:report-defect` | `ai/claude/qa/report-defect/SKILL.md` |
+| `/qa:review-tests` | `ai/claude/qa/review-tests/SKILL.md` |
+| `/qa:verify-quality` | `ai/claude/qa/verify-quality/SKILL.md` |
+| `/ops:build` | `ai/claude/ops/build/SKILL.md` |
+| `/ops:deploy` | `ai/claude/ops/deploy/SKILL.md` |
+| `/ops:apply-iac` | `ai/claude/ops/apply-iac/SKILL.md` |
+| `/architect:design-system` | `ai/claude/architect/design-system/SKILL.md` |
+| `/architect:design-feature` | `ai/claude/architect/design-feature/SKILL.md` |
 
 ---
 
@@ -81,11 +81,11 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 | Template | File |
 |---|---|
-| HLD document | `claude/generate-docs/templates/hld-template.md` |
-| LLD component | `claude/generate-docs/templates/lld-component-template.md` |
-| ADR | `claude/generate-docs/templates/adr-template.md` |
-| New project CLAUDE.md | `claude/generate-docs/templates/CLAUDE.md.template` |
-| System manifest schema | `claude/generate-docs/templates/system-manifest.schema.yaml` |
+| HLD document | `ai/claude/generate-docs/templates/hld-template.md` |
+| LLD component | `ai/claude/generate-docs/templates/lld-component-template.md` |
+| ADR | `ai/claude/generate-docs/templates/adr-template.md` |
+| New project CLAUDE.md | `ai/claude/generate-docs/templates/CLAUDE.md.template` |
+| System manifest schema | `ai/claude/generate-docs/templates/system-manifest.schema.yaml` |
 
 ---
 
@@ -93,19 +93,19 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 Codex reads `AGENTS.md` from your **product repo root** — that file is your copy, installed by `init-project.sh`. Edit it directly; your customizations won't be overwritten by platform updates.
 
-The hook scripts Codex uses are also copies in your product repo under `codex/hook-scripts/`:
+The hook scripts Codex uses are also copies in your product repo under `ai/codex/hook-scripts/`:
 
 | What it enforces | File in your product repo |
 |---|---|
-| Pre-write: blocks edits without active change context | `codex/hook-scripts/check-hitl-context.sh` |
-| Post-write: domain boundary check | `codex/hook-scripts/check-domain-boundary.sh` |
-| Session summary | `codex/hook-scripts/write-session-summary.sh` |
-| Knowledge graph rebuild | `codex/hook-scripts/rebuild-graph.sh` |
+| Pre-write: blocks edits without active change context | `ai/codex/hook-scripts/check-hitl-context.sh` |
+| Post-write: domain boundary check | `ai/codex/hook-scripts/check-domain-boundary.sh` |
+| Session summary | `ai/codex/hook-scripts/write-session-summary.sh` |
+| Knowledge graph rebuild | `ai/codex/hook-scripts/rebuild-graph.sh` |
 
 To pull an updated hook script from the platform without touching `AGENTS.md`:
 
 ```bash
-bash ~/tools/hitl-dev-platform/codex/install.sh .
+bash ~/tools/hitl-dev-platform/ai/codex/install.sh .
 # install.sh backs up existing hooks and skips AGENTS.md if already present
 ```
 

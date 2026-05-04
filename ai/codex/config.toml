@@ -1,0 +1,13 @@
+# Reference Codex CLI config — copy to ~/.ai/codex/config.toml (global)
+# or .ai/codex/config.toml (project-scoped, requires trusted-project setup).
+# See: https://developers.openai.com/ai/codex/config-reference
+
+model = "gpt-5.4"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[features]
+# Enable lifecycle hooks loaded from .ai/codex/hooks.json.
+# When enabled, HITL context checks run before every Write/Edit — same
+# enforcement timing as Claude Code's PreToolUse hooks.
+codex_hooks = true

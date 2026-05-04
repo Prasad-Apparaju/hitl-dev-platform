@@ -10,7 +10,7 @@ Both Claude Code and Codex CLI context can be understood as three zones:
 
 | Zone | Claude Code | Codex CLI | Cost |
 |---|---|---|---|
-| **Always loaded** | `CLAUDE.md`, plugin skill descriptions | `AGENTS.md`, `.codex/config.toml` | Fixed — paid on every session regardless |
+| **Always loaded** | `CLAUDE.md`, plugin skill descriptions | `AGENTS.md`, `.ai/codex/config.toml` | Fixed — paid on every session regardless |
 | **Loaded on demand** | Skills (when `/skill-name` is typed), hooks output | File reads, tool output, hook results | Pay only when triggered |
 | **Session growth** | Conversation turns, tool results, file reads | Conversation, file reads, tool output | Grows continuously; compaction fires eventually |
 
@@ -32,7 +32,7 @@ Keep these files focused. Every token in the always-loaded zone is paid on every
 
 **Claude Code:** Each workflow step — `/dev-practices`, `/tdd`, `/generate-docs`, `/architect:design-feature`, and so on — is a separate skill rather than one giant instruction block loaded at startup. Skills are lazy-loaded: they enter context only when the user explicitly invokes them. A developer running `/tdd` pays only for the TDD skill instructions — not for the PM, Ops, or Architect workflows. A 31-step workflow written as a skill costs nothing on sessions where it is never invoked.
 
-**Codex CLI:** There is no equivalent lazy-load path for skills. The full workflow is encoded directly in `AGENTS.md`, which is always loaded at startup. The design consequence is different: instead of deferring workflow instructions, the complete AGENTS.md is present from the first message — but every token in it is paid on every session. This is why the HITL `codex/AGENTS.md` is structured differently from the Claude skills: it consolidates all workflows into one focused document rather than splitting them across 25 individually lazy-loaded files.
+**Codex CLI:** There is no equivalent lazy-load path for skills. The full workflow is encoded directly in `AGENTS.md`, which is always loaded at startup. The design consequence is different: instead of deferring workflow instructions, the complete AGENTS.md is present from the first message — but every token in it is paid on every session. This is why the HITL `ai/codex/AGENTS.md` is structured differently from the Claude skills: it consolidates all workflows into one focused document rather than splitting them across 25 individually lazy-loaded files.
 
 ### Hooks → Enforcement outside the context window
 
@@ -40,7 +40,7 @@ Enforcement logic in HITL runs in hooks — `check-hitl-context.sh`, `check-doma
 
 This means HITL can enforce that a change context file (`.hitl/current-change.yaml`) exists and contains the required fields — including an issue reference — before any file is edited. The hook fires on `PreToolUse`, checks the file, and either passes silently (zero context cost) or blocks with a one-line message. It does not make a live GitHub API call to verify the issue; it checks that the local context file was properly initialized.
 
-For Codex, the same pattern applies via `.codex/hooks.json` (lifecycle hooks scoped to `Write|Edit` operations) and git hooks (commit-time enforcement).
+For Codex, the same pattern applies via `.ai/codex/hooks.json` (lifecycle hooks scoped to `Write|Edit` operations) and git hooks (commit-time enforcement).
 
 ### Subagents → Parallel role work without red zone accumulation
 
@@ -54,7 +54,7 @@ This maps directly to the session-growth zone insight: every tool result, file r
 
 **Claude Code:** Because skills are lazy-loaded, the total size of all HITL skills combined does not matter for session cost. What matters is the number of skills invoked in a given session. A developer doing TDD all day pays for the TDD skill once, not for the 25 other skills in the platform. Because `CLAUDE.md` is always loaded, its size does matter — the template stays small by design: conventions as bullet points, not prose; a manifest reference rather than the full manifest inline; a preflight checklist rather than a full workflow.
 
-**Codex CLI:** Because `AGENTS.md` is always loaded, its size matters directly. HITL's `codex/AGENTS.md` consolidates all workflow instructions into one document and is structured to be comprehensive without being redundant. There is no lazy-load path to fall back on, so the document must cover all roles and workflows while remaining focused enough that the startup cost stays reasonable.
+**Codex CLI:** Because `AGENTS.md` is always loaded, its size matters directly. HITL's `ai/codex/AGENTS.md` consolidates all workflow instructions into one document and is structured to be comprehensive without being redundant. There is no lazy-load path to fall back on, so the document must cover all roles and workflows while remaining focused enough that the startup cost stays reasonable.
 
 Because hooks run outside the context window, enforcement has near-zero runtime cost. HITL can apply strict checks on every file edit without any incremental token cost per check.
 

@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/codex/hook-scripts/check-hitl-context.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/codex/hook-scripts/check-domain-boundary.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ai/codex/hook-scripts/rebuild-graph.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/codex/hook-scripts/write-session-summary.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

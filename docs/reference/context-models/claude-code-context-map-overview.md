@@ -44,7 +44,7 @@ flowchart TD
 | Category | Typical examples | Notes |
 |---|---|---|
 | Base instructions | Claude's built-in system behavior | Highest-authority layer |
-| Global guidance | `~/.claude/CLAUDE.md` | Shared across projects |
+| Global guidance | `~/.ai/claude/CLAUDE.md` | Shared across projects |
 | Project guidance | project `CLAUDE.md` and parent-scoped files | The most relevant local conventions |
 | Enabled capability summaries | skill descriptions, tool names, plugin metadata | Usually small compared with later session growth |
 | Session metadata | date, environment, identity info | Low context cost |

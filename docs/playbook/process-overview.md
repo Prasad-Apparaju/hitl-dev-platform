@@ -63,12 +63,12 @@ graph LR
 > **Architect shortcut:** `/architect:design-feature` runs steps 3–9 as a single guided session — impact analysis, HLD, LLD, slice decomposition, and decision packet assembly with approval gates at each phase.
 
 3. 🤖 **Impact analysis** — AI identifies affected components, APIs, configs, and dependencies from the system manifest, test registry, and incident registry; produces effort estimate; outputs `.hitl/current-change.yaml`. On projects with Graphify installed, the skill uses targeted graph queries (`/graphify query "domain: <name> facade APIs"`) instead of reading the full `system-manifest.yaml` — automatic fallback to direct reads if Graphify is unavailable → `/apply-change` (or phase 1 of `/architect:design-feature`)
-4. 👤🤖 **ROI estimate** (if step 3 effort estimate > 1 day) — record in `.hitl/current-change.yaml` under `roi_estimate`: expected outcome (falsifiable), baseline metric (measured now), measurement plan, 30/90-day checkpoints; post a pointer comment on the GitHub issue; follow `claude/dev-practices/roi-estimation.md`
+4. 👤🤖 **ROI estimate** (if step 3 effort estimate > 1 day) — record in `.hitl/current-change.yaml` under `roi_estimate`: expected outcome (falsifiable), baseline metric (measured now), measurement plan, 30/90-day checkpoints; post a pointer comment on the GitHub issue; follow `ai/claude/dev-practices/roi-estimation.md`
 5. 👤🤖 **Update docs** — using the affected component list from `.hitl/current-change.yaml` (step 3) and Figma specs from step 2 (if available): create or update HLD at `docs/02-design/technical/hld/<feature>.md` and LLD at `docs/02-design/technical/lld/<component>.md`; architect approves HLD before LLD generation begins → `/generate-docs` · `/architect:review-design`
 6. 👤🤖 **Update IaC** — using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): update infrastructure manifests, migrations, configs; only if step 3 identified IaC changes
 7. 👤🤖 **Test case planning** — QA runs `/qa:plan-tests` to query incident history and contribute regression-required scenarios before the TDD cycle starts; developer lists new tests, updated tests, removed tests, and regression tests from the LLD; each QA-contributed scenario must be acknowledged; record the test plan in `.hitl/current-change.yaml` under `tests.plan` → `/qa:plan-tests`
 8. 👤🤖 **Training plan stub** (if change introduces a new architectural pattern, external system, framework, ML/AI technique, or significant mental-model-changing refactor) — draft stub at `docs/03-engineering/training/<capability>.md`
-9. 👤🤖 **Package decision packet** — architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `shared/templates/decision-packet-template.yaml`; fields include: issue number, affected domain from `system-manifest.yaml`, LLD path from step 5, IaC plan from step 6, test plan from step 7, training stub path from step 8 if applicable; constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain they are sequential, not parallel; architect hands one packet per slice to each assigned developer; set `approvals.architecture: approved` in `.hitl/current-change.yaml` → `/architect:design-feature`
+9. 👤🤖 **Package decision packet** — architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `ai/shared/templates/decision-packet-template.yaml`; fields include: issue number, affected domain from `system-manifest.yaml`, LLD path from step 5, IaC plan from step 6, test plan from step 7, training stub path from step 8 if applicable; constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain they are sequential, not parallel; architect hands one packet per slice to each assigned developer; set `approvals.architecture: approved` in `.hitl/current-change.yaml` → `/architect:design-feature`
 
 ### Build — TDD Cycle (steps 10-17)
 10. 🤖 **AI generates tests (RED)** — developer passes the LLD path from the decision packet to `/tdd`; the skill reads `docs/02-design/technical/lld/<component>.md` (step 5) and `system-manifest.yaml` directly; generates maximum coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance; writes test files to `tests/`; registers each test in `docs/03-engineering/testing/test-registry.yaml`; no implementation code yet → `/tdd`
@@ -99,8 +99,8 @@ graph LR
 29. 👤 **Promote or rollback** — at each canary step, verify all go/no-go criteria from the approved plan (step 24); if all met: promote to next tier; if any fail: pause and investigate before deciding; lead makes the final call
 
 ### Post-ship (steps 30-31)
-30. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `claude/dev-practices/roi-estimation.md`
-31. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `claude/dev-practices/roi-estimation.md`
+30. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `ai/claude/dev-practices/roi-estimation.md`
+31. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `ai/claude/dev-practices/roi-estimation.md`
 
 ## Key Concepts
 
@@ -124,7 +124,7 @@ If a visual design exists, it appears twice: at the beginning (feeding requireme
 New architectural pattern, new external system, new framework, new ML/AI technique, or a significant mental-model-changing refactor → training plan required. New endpoints, bug fixes, preserving-the-model refactors → not required.
 
 ### ROI Estimation
-Every change with a step 3 effort estimate > 1 day gets a measurable thesis: expected outcome (falsifiable), baseline metric (measured now), measurement plan, 30/90-day checkpoints. The 90-day review creates a calibration loop — each estimate is compared to reality. See `claude/dev-practices/roi-estimation.md` for the template.
+Every change with a step 3 effort estimate > 1 day gets a measurable thesis: expected outcome (falsifiable), baseline metric (measured now), measurement plan, 30/90-day checkpoints. The 90-day review creates a calibration loop — each estimate is compared to reality. See `ai/claude/dev-practices/roi-estimation.md` for the template.
 
 ### Downstream Impact Assessment
 Not the same as impact analysis (which identifies affected code). This identifies affected *people and processes*: what flows changed, what can break, how the PM's mental model needs to update, and how to derisk the deployment.
@@ -158,4 +158,4 @@ Every artifact class has exactly one canonical location. Path drift undermines e
 
 ## Full Detail
 
-See [claude/dev-practices/SKILL.md](../../claude/dev-practices/SKILL.md) for the complete workflow with subsections on test planning (§1b), training plans (§1c), ROI estimation (§1d), and downstream impact (§1e).
+See [ai/claude/dev-practices/SKILL.md](../../ai/claude/dev-practices/SKILL.md) for the complete workflow with subsections on test planning (§1b), training plans (§1c), ROI estimation (§1d), and downstream impact (§1e).

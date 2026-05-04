@@ -2,7 +2,7 @@
 
 How the main visible pieces get into **Codex CLI** context when a session starts and as work continues.
 
-This version is for the **Codex CLI + local repo configuration** model, where repo files such as `AGENTS.md` and `.codex/config.toml` matter much more than host-app session scaffolding.
+This version is for the **Codex CLI + local repo configuration** model, where repo files such as `AGENTS.md` and `.ai/codex/config.toml` matter much more than host-app session scaffolding.
 
 ## Diagram
 
@@ -51,8 +51,8 @@ sequenceDiagram
         Note over CLI,FS: 🔵 CLI loads repo-local guidance and runtime config
         CLI->>FS: 🔴 read system/runtime defaults
         CLI->>FS: 🔵 read `AGENTS.md` from repo root (if present)
-        CLI->>FS: 🔵 read `.codex/config.toml` or user config (if present)
-        CLI->>FS: 🔵 read `.codex/hooks.json` when hooks are enabled
+        CLI->>FS: 🔵 read `.ai/codex/config.toml` or user config (if present)
+        CLI->>FS: 🔵 read `.ai/codex/hooks.json` when hooks are enabled
         CLI->>FS: 🔵 capture cwd, shell, date, trust, and other environment state
     end
 
@@ -62,7 +62,7 @@ sequenceDiagram
         Note over CLI,Ctx: 🟡 Exact assembly order is implementation detail, but the effective startup envelope is stable enough to reason about
         CLI->>Ctx: 🔴 base instructions
         CLI->>Ctx: 🔵 local repo instructions from `AGENTS.md`
-        CLI->>Ctx: 🔵 config-driven behavior from `.codex/config.toml`
+        CLI->>Ctx: 🔵 config-driven behavior from `.ai/codex/config.toml`
         CLI->>Ctx: 🔵 enabled hook definitions and tool permissions
         CLI->>Ctx: 🔵 current environment block
     end
@@ -137,8 +137,8 @@ Available at the beginning of the session.
 |---|---|---|
 | Base runtime instructions | Global CLI/runtime behavior | Partly visible, partly implementation detail |
 | `AGENTS.md` | Repo-local workflow, standards, conventions | Directly observable |
-| `.codex/config.toml` | model, approval, sandbox, features, hooks enablement | Directly observable |
-| `.codex/hooks.json` | lifecycle hook wiring when enabled | Directly observable |
+| `.ai/codex/config.toml` | model, approval, sandbox, features, hooks enablement | Directly observable |
+| `.ai/codex/hooks.json` | lifecycle hook wiring when enabled | Directly observable |
 | Environment block | cwd, shell, date, trust, runtime context | Directly observable |
 
 ### Green — Loaded On Demand
@@ -192,6 +192,6 @@ That makes Codex CLI feel more like a configurable local harness than a pre-orch
 
 This map is meant as a practical mental model, not a formal internal spec.
 
-- The role of `AGENTS.md`, `.codex/config.toml`, hooks, and git-hook enforcement is directly observable in real setups.
+- The role of `AGENTS.md`, `.ai/codex/config.toml`, hooks, and git-hook enforcement is directly observable in real setups.
 - File reads, tool output, and conversation growth are directly observable.
 - Exact low-level startup ordering inside the CLI should still be treated as implementation detail.

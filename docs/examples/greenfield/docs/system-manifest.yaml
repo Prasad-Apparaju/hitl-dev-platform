@@ -3,7 +3,7 @@
 # This is a worked example showing realistic manifest content for a
 # small e-commerce system. Replace with your project's actual domains.
 #
-# See shared/templates/system-manifest.schema.yaml for field documentation.
+# See ai/shared/templates/system-manifest.schema.yaml for field documentation.
 # See docs/patterns/idempotency-keys.md for the idempotency convention.
 
 version: "1.0"

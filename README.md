@@ -11,7 +11,7 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 **Where this is not a good fit as written:** understaffed startups, teams without good CI or test discipline, teams where most work is small bugfixes and iterative UX changes, or teams without an architect or senior lead who can own the review gates.
 
-> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool. A [Codex CLI](https://github.com/openclaude/codex) version is also provided — see [Install for Codex CLI](#install-for-codex-cli). The process works with any AI coding assistant that supports auto-loaded project rules. The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
+> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool. A [Codex CLI](https://github.com/openai/claude/codex) version is also provided — see [Install for Codex CLI](#install-for-codex-cli). The process works with any AI coding assistant that supports auto-loaded project rules. The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
 
 > **Language note:** Enforcement tooling currently targets Python codebases. The process and documentation workflow are language-agnostic — only the automated checks are Python-first.
 
@@ -25,14 +25,14 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 hitl-dev-platform/
 │
 │  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
-├── claude/
+├── ai/claude/
 │   ├── [skill folders]   Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*
 │   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
 │   └── hooks/            Enforcement hooks — fire at PreToolUse/PostToolUse during every Claude session
 │
 │  ── Codex CLI (parallel surface for OpenAI Codex users) ──────────────────────
-├── codex/                AGENTS.md, hooks, install script — mirrors the Claude Code skill surface
+├── ai/codex/                AGENTS.md, hooks, install script — mirrors the Claude Code skill surface
 │
 │  ── Enforcement + tooling (run in CI or from the command line) ────────────────
 ├── tools/
@@ -44,7 +44,7 @@ hitl-dev-platform/
 ├── docs/
 │   ├── [playbook etc.]   Playbooks, role guides, patterns, reference, quick-start
 │   └── examples/         Worked examples of the process applied to specific project types
-├── shared/templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
+├── ai/shared/templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
 ```
 
 ---
@@ -93,11 +93,11 @@ git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platfor
 bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 ```
 
-This creates `.claude/settings.json` pointing to the shared plugin and copies the project-specific files your repo needs: `CLAUDE.md`, `docs/system-manifest.yaml`, convention tools, and CI templates. The platform stays in one place — product repos reference it, nothing is copied except project-specific files. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
+This creates `.ai/claude/settings.json` pointing to the shared plugin and copies the project-specific files your repo needs: `CLAUDE.md`, `docs/system-manifest.yaml`, convention tools, and CI templates. The platform stays in one place — product repos reference it, nothing is copied except project-specific files. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
 
 **Step 3 — Verify**
 
-Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, confirm the plugin path in `.claude/settings.json` points to your platform clone.
+Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, confirm the plugin path in `.ai/claude/settings.json` points to your platform clone.
 
 **Step 4 — Run the appropriate start command**
 
@@ -121,7 +121,7 @@ The PostToolUse hook triggers an incremental rebuild automatically after every d
 bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product --tool codex
 ```
 
-This copies `AGENTS.md` to your project root, installs git hooks, and copies enforcement scripts to `codex/hook-scripts/`. See [`codex/`](codex/) for Codex-specific artifacts.
+This copies `AGENTS.md` to your project root, installs git hooks, and copies enforcement scripts to `ai/codex/hook-scripts/`. See [`ai/codex/`](ai/codex/) for Codex-specific artifacts.
 
 ---
 
