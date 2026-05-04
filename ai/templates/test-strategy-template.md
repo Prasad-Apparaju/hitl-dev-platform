@@ -89,7 +89,7 @@ Every test case in this strategy should have a corresponding entry in `docs/03-e
 - Origin (from requirements, from incidents, from code review)
 - Linked incidents (what past failure this test prevents)
 
-See [test-registry-template.yaml](../templates/test-registry-template.yaml) for the format.
+See [test-registry-template.yaml](../ai/templates/test-registry-template.yaml) for the format.
 
 ---
 

@@ -123,7 +123,7 @@ You have your existing codebase and access to hitl-dev-platform. You need to set
 cp -r hitl-dev-platform/ai/ your-repo/.claude/ai/
 
 # Copy and customize CLAUDE.md
-cp hitl-dev-platform/templates/CLAUDE.md.template your-repo/CLAUDE.md
+cp hitl-dev-platform/ai/templates/CLAUDE.md.template your-repo/CLAUDE.md
 # Edit: fill in your project's conventions and coding standards
 
 # Copy convention checker config
@@ -133,7 +133,7 @@ cp hitl-dev-platform/docs/examples/greenfield/convention-checks.yaml your-repo/
 cp hitl-dev-platform/ci/workflows/*.yml your-repo/.github/workflows/
 
 # Copy issue template
-cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLATE/
+cp hitl-dev-platform/ai/templates/issue-template.md your-repo/.github/ISSUE_TEMPLATE/
 ```
 
 **Time: 1 hour.** After this, every developer who clones the repo gets the process.
@@ -144,8 +144,8 @@ cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLAT
 |-----------|-------------|-------------------------|
 | Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([ai/generate-docs/](../../ai/generate-docs/)) | Study the [example manifest](../../docs/examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../ai/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
-| Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([templates/test-registry-template.yaml](../../templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
-| Start the incident registry | Create `docs/04-operations/incident-registry.yaml` using the template ([templates/incident-registry-template.yaml](../../templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
+| Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([ai/templates/test-registry-template.yaml](../../ai/templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
+| Start the incident registry | Create `docs/04-operations/incident-registry.yaml` using the template ([ai/templates/incident-registry-template.yaml](../../ai/templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
 
 ### B3. Assess the gaps
 
@@ -205,9 +205,9 @@ A typical backend migration is 6-12 slices.
 
 | Workflow step | Skill / tool | What it produces |
 |--------------|-------------|-----------------|
-| Create issue | Use [templates/issue-template.md](../../templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
-| Data model mapping | Use [templates/data-model-mapping-template.md](../../templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
-| API contract mapping | Use [templates/api-contract-mapping-template.md](../../templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
+| Create issue | Use [ai/templates/issue-template.md](../../ai/templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
+| Data model mapping | Use [ai/templates/data-model-mapping-template.md](../../ai/templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
+| API contract mapping | Use [ai/templates/api-contract-mapping-template.md](../../ai/templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
 | Impact analysis | `/apply-change` ([ai/apply-change/SKILL.md](../../ai/apply-change/SKILL.md)) | Affected components in BOTH current and target system |
 | TDD | `/tdd` ([ai/tdd/SKILL.md](../../ai/tdd/SKILL.md)) | Tests from the target LLD + manifest contracts |
 | Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Code using agentic-platform infrastructure (if agentic) |

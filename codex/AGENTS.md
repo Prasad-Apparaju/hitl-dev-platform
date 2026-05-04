@@ -657,7 +657,7 @@ Identify and resolve every decision that blocks HLD generation:
 | Deployment model | System architecture HLD |
 | Observability stack | Observability HLD, conventions |
 
-For each: create `docs/02-design/technical/adrs/<decision>.md` using `templates/adr-template.md`. For decided: fill decision, ask architect for rationale. For open: list options and tradeoffs, **STOP and ask architect to decide before continuing**.
+For each: create `docs/02-design/technical/adrs/<decision>.md` using `ai/templates/adr-template.md`. For decided: fill decision, ask architect for rationale. For open: list options and tradeoffs, **STOP and ask architect to decide before continuing**.
 
 Update `docs/02-design/technical/adrs/README.md`.
 
@@ -779,7 +779,7 @@ Proceeding to ADRs and LLD generation."
 
 After HLD approval:
 - Identify every design decision in the HLD.
-- Create ADR stubs at `docs/02-design/technical/adrs/<decision>.md` using `templates/adr-template.md`. Mark as "DRAFT — architect to complete rationale."
+- Create ADR stubs at `docs/02-design/technical/adrs/<decision>.md` using `ai/templates/adr-template.md`. Mark as "DRAFT — architect to complete rationale."
 - Ask architect: "Are there decisions being made here that aren't visible in the design?"
 
 ### Phase 5 — LLD per Domain (Step 5, Part 3)
@@ -840,11 +840,11 @@ Training required for: new architectural pattern, new external system, new frame
 
 Not required for: new endpoints on existing patterns, bug fixes, model-preserving refactors.
 
-If required: create stub at `docs/03-engineering/training/<capability>.md` using `templates/training-plan-template.md`.
+If required: create stub at `docs/03-engineering/training/<capability>.md` using `ai/templates/training-plan-template.md`.
 
 ### Phase 10 — Decision Packet Assembly (Step 9)
 
-For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice) using `templates/decision-packet-template.yaml`. Fill all fields: issue, domain (one only), LLD path, HLD path, ADR paths, IaC plan, test plan, rollout risk, ROI flag, impact brief placeholders.
+For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice) using `ai/templates/decision-packet-template.yaml`. Fill all fields: issue, domain (one only), LLD path, HLD path, ADR paths, IaC plan, test plan, rollout risk, ROI flag, impact brief placeholders.
 
 **STOP after each packet — ask architect to approve.** After all packets approved:
 - Set `approvals.architecture: approved` in `.hitl/current-change.yaml`
@@ -959,10 +959,10 @@ Run before implementation on any Tier 2+ change. This replaces the `/generate-do
 ### New Feature Mode
 
 1. Determine the feature name (kebab-case).
-2. Create `docs/02-design/technical/hld/<feature-name>.md` using `templates/hld-template.md` (installed by `codex/install.sh`). Must include: executive summary, Mermaid architecture diagram (`graph TB`), component overview, data flow sequence diagrams, integration points, security architecture, scalability considerations.
+2. Create `docs/02-design/technical/hld/<feature-name>.md` using `ai/templates/hld-template.md` (installed by `codex/install.sh`). Must include: executive summary, Mermaid architecture diagram (`graph TB`), component overview, data flow sequence diagrams, integration points, security architecture, scalability considerations.
 3. Update `docs/02-design/technical/hld/index.md`.
 4. **Stop — ask the user to review and approve the HLD** before creating the LLD.
-5. After HLD approval, create LLD files under `docs/02-design/technical/lld/` using `templates/lld-component-template.md` (installed by `codex/install.sh`). Include Mermaid class and sequence diagrams, method signatures, error modes, preconditions, and usage examples.
+5. After HLD approval, create LLD files under `docs/02-design/technical/lld/` using `ai/templates/lld-component-template.md` (installed by `codex/install.sh`). Include Mermaid class and sequence diagrams, method signatures, error modes, preconditions, and usage examples.
 6. Update `docs/02-design/technical/lld/index.md` and `packages.md`.
 
 All diagrams must use Mermaid. No `<br/>` tags inside Mermaid blocks.
@@ -1048,7 +1048,7 @@ A deployment that fails health checks mid-rollout must be paused and investigate
 1. Read the thread content.
 2. Extract: what was decided, by whom, which alternatives were considered, rationale.
 3. If no clear decision is present: "I can't find a clear decision in this thread. Can you point me to the message where the team agreed?"
-4. Draft ADR at `docs/02-design/technical/adrs/<decision-name>.md` using `templates/adr-template.md`. Use the team's actual words for rationale — do not rephrase into generic architecture-speak. The ADR should sound like the team, not a textbook.
+4. Draft ADR at `docs/02-design/technical/adrs/<decision-name>.md` using `ai/templates/adr-template.md`. Use the team's actual words for rationale — do not rephrase into generic architecture-speak. The ADR should sound like the team, not a textbook.
 5. **STOP — present draft and ask:** "Is this an accurate record of the decision?"
 6. On approval:
    - Save the ADR.

@@ -12,7 +12,7 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
   agents/          ← subagent role definitions
   hooks/           ← enforcement scripts (Claude Code)
   codex/           ← Codex-specific files
-  templates/       ← document templates used by skills
+  ai/templates/       ← document templates used by skills
 ```
 
 ---

@@ -115,8 +115,8 @@ mkdir -p "$TARGET_DIR/templates"
 for tmpl in hld-template.md lld-component-template.md; do
   SRC="$PLATFORM_ROOT/ai/generate-docs/templates/$tmpl"
   if [[ -f "$SRC" ]]; then
-    cp "$SRC" "$TARGET_DIR/templates/$tmpl"
-    echo "✓ Copied templates/$tmpl"
+    cp "$SRC" "$TARGET_DIR/ai/templates/$tmpl"
+    echo "✓ Copied ai/templates/$tmpl"
   fi
 done
 
@@ -236,7 +236,7 @@ echo "  2. Review .codex/config.toml — set model and approval_policy for your 
 echo "     codex_hooks = true enables real-time HITL context checks (same timing as Claude Code)"
 echo ""
 echo "  3. Create your system manifest if you don't have one:"
-echo "     mkdir -p docs && cp /path/to/hitl-dev-platform/templates/system-manifest-template.yaml docs/system-manifest.yaml"
+echo "     mkdir -p docs && cp /path/to/hitl-dev-platform/ai/templates/system-manifest-template.yaml docs/system-manifest.yaml"
 echo ""
 echo "  4. Start a change:"
 echo "     codex 'Initialize HITL context for GH-42: add user notifications'"

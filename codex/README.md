@@ -49,7 +49,7 @@ The installer copies:
 - `.git/hooks/pre-commit` and `.git/hooks/post-commit` → git-level enforcement
 - `codex/scripts/hitl-conventions.sh` → convention check runner
 - `ci/manifest-drift/`, `scripts/fix_mermaid_br_tags.py`, `.semgrep/` → convention check dependencies
-- `templates/hld-template.md`, `templates/lld-component-template.md` → design doc templates
+- `ai/templates/hld-template.md`, `ai/templates/lld-component-template.md` → design doc templates
 
 **4. Enable Codex lifecycle hooks**
 
@@ -86,7 +86,7 @@ Codex reads `AGENTS.md` automatically and follows the Change Initialization work
 ```bash
 # Design first (Tier 2+ changes)
 codex "Generate the HLD for the authentication service"
-# → Codex creates docs/02-design/technical/hld/auth-service.md using templates/hld-template.md
+# → Codex creates docs/02-design/technical/hld/auth-service.md using ai/templates/hld-template.md
 # → You review and approve before it proceeds to LLD
 
 # Then implement with TDD
