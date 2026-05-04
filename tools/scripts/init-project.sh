@@ -214,7 +214,7 @@ JSON
     for hook in welcome check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
-exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/hooks/$hook.sh" "\$@"
+exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/skills/hooks/$hook.sh" "\$@"
 WRAPPER
       chmod 750 "$HOOKS_DIR/$hook.sh"
     done

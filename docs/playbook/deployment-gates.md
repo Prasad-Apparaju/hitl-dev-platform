@@ -19,7 +19,7 @@ How to enforce risk-based gates before code reaches production. Complements the 
 
 ### Sample: Deploy with Risk-Based Gates
 
-See [`ci/deploy-with-gates.yml.example`](../../ci/deploy-with-gates.yml.example) for a complete workflow. The key patterns:
+See [`tools/ci/deploy-with-gates.yml.example`](../../tools/ci/deploy-with-gates.yml.example) for a complete workflow. The key patterns:
 
 #### Checking for the `rollout-approved` label
 

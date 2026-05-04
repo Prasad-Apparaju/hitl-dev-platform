@@ -33,7 +33,7 @@
     "skills/pm/review-scope-change",
     "skills/pm/update-requirement"
   ],
-  "agents": "agents/",
-  "commands": "commands/",
-  "hooks": "hooks/hooks.json"
+  "agents": "skills/agents/",
+  "commands": "skills/commands/",
+  "hooks": "skills/hooks/hooks.json"
 }

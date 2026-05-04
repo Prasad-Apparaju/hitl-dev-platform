@@ -14,5 +14,5 @@ Each subdirectory is one slash command. The `SKILL.md` file inside it is the pro
 | `/ops:` | `build`, `deploy`, `apply-iac` |
 | `/migrate:` | `review-external-docs` |
 
-To customize a command, edit its `SKILL.md`. Changes take effect on the next Claude Code session.
+To customize a command, edit its `SKILL.md`. Note: `agents/`, `commands/`, and `hooks/` are subdirectories inside `skills/` — they are part of the same AI runtime. Changes take effect on the next Claude Code session.
 See [docs/customization-guide.md](../docs/customization-guide.md) for the full command-to-file map.

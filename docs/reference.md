@@ -245,7 +245,7 @@ semgrep scan --config .semgrep/ --error
 python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
 
 # Check Mermaid br tags
-find docs/ -name "*.md" -exec python scripts/fix_mermaid_br_tags.py --check {} +
+find docs/ -name "*.md" -exec python tools/scripts/fix_mermaid_br_tags.py --check {} +
 
 # Run all via pre-commit
 pre-commit run --all-files
@@ -264,7 +264,7 @@ Standalone checks:
 | Script | What it verifies |
 |--------|-----------------|
 | `tools/manifest-drift/check_manifest_drift.py` | Manifest drift: missing files, unlisted files, cross-domain imports, facade coverage |
-| `scripts/fix_mermaid_br_tags.py --check` | No `<br/>` in Mermaid code blocks |
+| `tools/scripts/fix_mermaid_br_tags.py --check` | No `<br/>` in Mermaid code blocks |
 
 To add a new rule, create a YAML file in the appropriate `.semgrep/` subdirectory. See [semgrep docs](https://semgrep.dev/docs/writing-rules/overview/) for the rule format.
 
@@ -385,7 +385,7 @@ skills/<agent-name>/
   guardrails.md            # Input/output validation
   eval-criteria.yaml       # Quality dimensions + weights
   tools.yaml               # Available tools
-  examples/                # Few-shot examples
+  docs/examples/                # Few-shot examples
 ```
 
 Changes go through PRs. PMs can edit without code deploys. See the Skill System pattern in the companion agentic-platform repo.
@@ -412,8 +412,8 @@ Feature work proceeds when blockers are zero.
 | `/dev-practices` | [skills/dev-practices/SKILL.md](../skills/dev-practices/SKILL.md) | Full workflow |
 | `/architect:design-system` | [skills/architect/design-system/SKILL.md](../skills/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
 | `/architect:design-feature` | [skills/architect/design-feature/SKILL.md](../skills/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
-| `/architect:review-design` | [commands/architect/review-design.md](../commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
-| `/architect:verify-traceability` | [commands/architect/verify-traceability.md](../commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/architect:review-design` | [skills/commands/architect/review-design.md](../skills/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
+| `/architect:verify-traceability` | [skills/commands/architect/verify-traceability.md](../skills/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
 | `/qa:plan-tests` | [skills/qa/plan-tests/SKILL.md](../skills/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
 | `/qa:review-tests` | [skills/qa/review-tests/SKILL.md](../skills/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
 | `/qa:verify-quality` | [skills/qa/verify-quality/SKILL.md](../skills/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
@@ -421,8 +421,8 @@ Feature work proceeds when blockers are zero.
 | `/ops:build` | [skills/ops/build/SKILL.md](../skills/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
 | `/ops:apply-iac` | [skills/ops/apply-iac/SKILL.md](../skills/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
 | `/ops:deploy` | [skills/ops/deploy/SKILL.md](../skills/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
-| `/ops:review-release` | [commands/ops/review-release.md](../commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
-| `/ops:monitor-canary` | [commands/ops/monitor-canary.md](../commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
+| `/ops:review-release` | [skills/commands/ops/review-release.md](../skills/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
+| `/ops:monitor-canary` | [skills/commands/ops/monitor-canary.md](../skills/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
 | `/apply-change` | [skills/apply-change/SKILL.md](../skills/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
 | `/generate-docs` | [skills/generate-docs/SKILL.md](../skills/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
 | `/tdd` | [skills/tdd/SKILL.md](../skills/tdd/SKILL.md) | TDD-as-design loop |
@@ -431,7 +431,7 @@ Feature work proceeds when blockers are zero.
 | `/conclude` | [skills/conclude/SKILL.md](../skills/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
-| Mermaid fixer | [scripts/fix_mermaid_br_tags.py](../scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
+| Mermaid fixer | [tools/scripts/fix_mermaid_br_tags.py](../tools/scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
 
 ---
 

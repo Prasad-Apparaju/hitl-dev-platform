@@ -26,7 +26,7 @@ The platform stays at this shared path. All product repos reference it — nothi
 **Step 2: Bootstrap your product repo**
 
 ```bash
-bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
+bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 ```
 
 Default is `--tool both` (Claude Code + Codex). Use `--tool claude` or `--tool codex` if you only need one.
@@ -43,7 +43,7 @@ Default is `--tool both` (Claude Code + Codex). Use `--tool claude` or `--tool c
 | `.hitl/hooks/*.sh` | Hook wrappers (resolve platform via `HITL_PLATFORM_ROOT`) |
 | `.semgrep/` | Semgrep convention rules (required by `/check-conventions`) |
 | `tools/manifest-drift/` | Manifest drift checker (required by `/check-conventions`) |
-| `scripts/fix_mermaid_br_tags.py` | Mermaid linter (required by `/check-conventions`) |
+| `tools/scripts/fix_mermaid_br_tags.py` | Mermaid linter (required by `/check-conventions`) |
 
 Skills, agents, and commands are **not** copied — they load from the shared platform via the Claude Code plugin.
 
@@ -79,7 +79,7 @@ python3 -m graphify.serve graphify-out/graph.json &
 
 ```bash
 mkdir -p ~/code/my-product/.github/workflows
-cp ~/tools/hitl-dev-platform/ci/*.yml ~/code/my-product/.github/workflows/
+cp ~/tools/hitl-dev-platform/tools/tools/ci/*.yml ~/code/my-product/.github/workflows/
 cp ~/tools/hitl-dev-platform/templates/pull-request-template.md \
    ~/code/my-product/.github/PULL_REQUEST_TEMPLATE.md
 ```
@@ -93,7 +93,7 @@ Every developer who clones the product repo now gets the same process.
 Run `init-project.sh` against your existing repo. It is idempotent — it skips files that already exist:
 
 ```bash
-bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/existing-repo
+bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/existing-repo
 ```
 
 Then generate the system manifest baseline:
@@ -113,8 +113,8 @@ An architect working with AI can produce the full documentation baseline in a sp
 The platform stays in one place. Just run `init-project.sh` for each new product:
 
 ```bash
-bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/product-b
-bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/product-c
+bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/product-b
+bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/product-c
 ```
 
 ---
@@ -131,7 +131,7 @@ git clone https://github.com/YOUR-ORG/hitl-dev-platform ~/tools/hitl-dev-platfor
 cd ~/tools/hitl-dev-platform-v1 && git checkout v1.0.0
 
 # Bootstrap the product against that version
-bash ~/tools/hitl-dev-platform-v1/scripts/init-project.sh ~/code/legacy-product
+bash ~/tools/hitl-dev-platform-v1/tools/scripts/init-project.sh ~/code/legacy-product
 ```
 
 The hook wrappers in `.hitl/hooks/` use `HITL_PLATFORM_ROOT` at runtime — setting it overrides which platform clone is used without re-running init.
@@ -164,13 +164,13 @@ cd ~/tools/hitl-dev-platform
 git fetch upstream && git merge upstream/main
 ```
 
-Convention tools (`.semgrep/`, `tools/manifest-drift/`, `scripts/`) are copies in each product repo. Refresh them by re-running init (it skips files that already exist — pass `--force` manually if you want to overwrite):
+Convention tools (`.semgrep/`, `tools/manifest-drift/`, `tools/scripts/`) are copies in each product repo. Refresh them by re-running init (it skips files that already exist — pass `--force` manually if you want to overwrite):
 
 ```bash
 # Manual refresh of convention tools
 cp -r ~/tools/hitl-dev-platform/.semgrep/ ~/code/my-product/.semgrep/
 cp -r ~/tools/hitl-dev-platform/tools/manifest-drift/ ~/code/my-product/tools/manifest-drift/
-cp ~/tools/hitl-dev-platform/scripts/fix_mermaid_br_tags.py ~/code/my-product/scripts/
+cp ~/tools/hitl-dev-platform/tools/scripts/fix_mermaid_br_tags.py ~/code/my-product/scripts/
 ```
 
 Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those are project-specific.
@@ -186,7 +186,7 @@ Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those
 | Templates | `templates/` | Referenced; copy on demand |
 | Convention rules | `.semgrep/` | Copied to product repos by init |
 | Manifest drift checker | `tools/manifest-drift/` | Copied to product repos by init |
-| CI actions | `ci/` | Copy once to `.github/workflows/` |
+| CI actions | `tools/ci/` | Copy once to `.github/workflows/` |
 | Patterns / playbook | `docs/` | Reference from platform |
 | Codex files | `codex/` | Copied to product repos by init |
 

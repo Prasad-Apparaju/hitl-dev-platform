@@ -10,6 +10,9 @@
 | `render-pdf/` | Renders markdown files with Mermaid diagrams to PDF. |
 | `read-risk.py` | Reads risk scores from the incident registry for a given domain. |
 
-These tools run against your **product repo**, not this platform repo. The CI templates in `ci/` wire them into GitHub Actions — copy those workflows to `.github/workflows/` in your product repo.
+These tools run against your **product repo**, not this platform repo. The CI templates in `tools/ci/` wire them into GitHub Actions — copy those workflows to `.github/workflows/` in your product repo.
 
-See `scripts/fix_mermaid_br_tags.py` in `scripts/` for the Mermaid compatibility fixer (separate from enforcement).
+See `tools/scripts/fix_mermaid_br_tags.py` for the Mermaid compatibility fixer (separate from enforcement).
+
+**Setup scripts** are in `tools/scripts/` — see `tools/scripts/init-project.sh`.
+**CI workflow templates** are in `tools/ci/` — copy to `.github/workflows/` in your product repo.
