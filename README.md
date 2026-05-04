@@ -24,28 +24,27 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 ```
 hitl-dev-platform/
 │
-│  ── AI runtime (Claude Code loads and executes these) ──────────────
-├── skills/          Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*, /migrate:*
-├── agents/          Subagent role definitions — invoked by skills for focused tasks (code review, QA, etc.)
-├── commands/        Lightweight slash commands — stateless single-purpose prompts
-├── hooks/           Enforcement hooks — run at PreToolUse/PostToolUse to enforce HITL requirements in real time
-├── .claude-plugin/  Plugin manifest — registers skills, agents, commands, and hooks with Claude Code
+│  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
+├── skills/
+│   ├── [skill folders]   Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*
+│   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
+│   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
+│   └── hooks/            Enforcement hooks — fire at PreToolUse/PostToolUse during every Claude session
 │
-│  ── Codex CLI (parallel surface for OpenAI Codex users) ────────────
-├── codex/           AGENTS.md, hooks, install script — mirrors the Claude Code skill surface for Codex
+│  ── Codex CLI (parallel surface for OpenAI Codex users) ──────────────────────
+├── codex/                AGENTS.md, hooks, install script — mirrors the Claude Code skill surface
 │
-│  ── Enforcement tools (run in CI or from the command line) ─────────
-├── tools/           Python tools: preflight traceability checker, manifest drift checker, manifest generator
-├── .semgrep/        Convention rules — run via semgrep in CI and pre-commit
-├── ci/              Copyable CI workflow templates — copy to .github/workflows/ in your product repo
+│  ── Enforcement + tooling (run in CI or from the command line) ────────────────
+├── tools/
+│   ├── [tool folders]    Python tools: preflight checker, manifest drift, manifest generator
+│   ├── ci/               Copyable CI workflow templates — copy to .github/workflows/ in your product repo
+│   └── scripts/          init-project.sh — bootstraps a product repo
 │
-│  ── Setup ──────────────────────────────────────────────────────────
-├── scripts/         init-project.sh — bootstraps a product repo (wires plugin, installs git hooks, copies tools)
-│
-│  ── Human-readable documentation ───────────────────────────────────
-├── docs/            Playbooks, role guides, patterns, reference material, quick-start
-├── templates/       Document templates to copy into product repos (PRD, ADR, manifest, decision packet, etc.)
-├── examples/        Worked examples of the process applied to specific project types
+│  ── Human-readable documentation ─────────────────────────────────────────────
+├── docs/
+│   ├── [playbook etc.]   Playbooks, role guides, patterns, reference, quick-start
+│   └── examples/         Worked examples of the process applied to specific project types
+├── templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
 ```
 
 ---
@@ -91,7 +90,7 @@ git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platfor
 **Step 2 — Bootstrap your project**
 
 ```bash
-bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
+bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 ```
 
 This creates `.claude/settings.json` pointing to the shared plugin and copies the project-specific files your repo needs: `CLAUDE.md`, `docs/system-manifest.yaml`, convention tools, and CI templates. The platform stays in one place — product repos reference it, nothing is copied except project-specific files. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
@@ -119,7 +118,7 @@ The PostToolUse hook triggers an incremental rebuild automatically after every d
 ### Install for Codex CLI
 
 ```bash
-bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product --tool codex
+bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product --tool codex
 ```
 
 This copies `AGENTS.md` to your project root, installs git hooks, and copies enforcement scripts to `codex/hook-scripts/`. See [`codex/`](codex/) for Codex-specific artifacts.
@@ -199,5 +198,5 @@ Levels 1–3 are the minimum viable adoption — shared conventions, docs-first 
 ## Known Limitations
 
 - **Enforcement tooling is Python-first.** Manifest drift detection, import analysis, and Semgrep rules target Python codebases. The process and documentation workflow are language-agnostic.
-- **CI workflows under `ci/` are copyable templates.** They are not active for this platform repo. Copy to `.github/workflows/` in your product repo after generating `docs/system-manifest.yaml`.
+- **CI workflows under `tools/ci/` are copyable templates.** They are not active for this platform repo. Copy to `.github/workflows/` in your product repo after generating `docs/system-manifest.yaml`.
 - **The process depends on human review.** AI generates artifacts faster, but the value comes from humans actually reviewing, challenging, and correcting those artifacts before they become code. Without that review, the process is just faster drift.

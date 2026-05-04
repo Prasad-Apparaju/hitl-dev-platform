@@ -97,7 +97,7 @@ skills/
     guardrails.md           # Input/output validation rules
     eval-criteria.yaml      # Quality dimensions + weights + pass threshold
     tools.yaml              # Which tools this agent can use
-    examples/               # Few-shot examples for the prompt
+    docs/examples/               # Few-shot examples for the prompt
 ```
 
 The skill loader reads these at agent init time. Changes are PRs — reviewed, version-controlled, rollback-able. PMs can iterate on prompts without engineering involvement. A/B testing becomes "change the prompt file, run eval, compare scores."
