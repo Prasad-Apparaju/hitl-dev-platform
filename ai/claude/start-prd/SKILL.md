@@ -56,12 +56,10 @@ Generate the design docs for your system before writing any code:
 /architect:design-system
 ```
 
-This produces the system manifest, HLDs, and LLDs from your PRD. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
+This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
-For every change after that:
-1. Create a GitHub issue — or use `/pm:add-feature` / `/pm:design-feature` to shape requirements first
-2. Run `/dev-practices` — the 31-step workflow starts here
-3. Design (HLD → LLD) before writing code
-4. Code → tests → PR
+After `/architect:design-system` completes:
+1. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it
+2. For new features after the initial build, create a GitHub issue and run `/dev-practices`
 
 ---
