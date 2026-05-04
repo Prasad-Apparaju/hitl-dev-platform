@@ -380,7 +380,7 @@ Verify at 30 days (direction check) and 90 days (magnitude check). Document actu
 Prompts are design artifacts, not code strings. They live in versioned skill files:
 
 ```
-skills/<agent-name>/
+ai/<agent-name>/
   system-prompt.md         # Agent personality and instructions
   guardrails.md            # Input/output validation
   eval-criteria.yaml       # Quality dimensions + weights
@@ -409,26 +409,26 @@ Feature work proceeds when blockers are zero.
 
 | Name | Source | What it does |
 |------|--------|-------------|
-| `/dev-practices` | [skills/dev-practices/SKILL.md](../skills/dev-practices/SKILL.md) | Full workflow |
-| `/architect:design-system` | [skills/architect/design-system/SKILL.md](../skills/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
-| `/architect:design-feature` | [skills/architect/design-feature/SKILL.md](../skills/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
-| `/architect:review-design` | [skills/commands/architect/review-design.md](../skills/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
-| `/architect:verify-traceability` | [skills/commands/architect/verify-traceability.md](../skills/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
-| `/qa:plan-tests` | [skills/qa/plan-tests/SKILL.md](../skills/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
-| `/qa:review-tests` | [skills/qa/review-tests/SKILL.md](../skills/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
-| `/qa:verify-quality` | [skills/qa/verify-quality/SKILL.md](../skills/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
-| `/qa:report-defect` | [skills/qa/report-defect/SKILL.md](../skills/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
-| `/ops:build` | [skills/ops/build/SKILL.md](../skills/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
-| `/ops:apply-iac` | [skills/ops/apply-iac/SKILL.md](../skills/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
-| `/ops:deploy` | [skills/ops/deploy/SKILL.md](../skills/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
-| `/ops:review-release` | [skills/commands/ops/review-release.md](../skills/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
-| `/ops:monitor-canary` | [skills/commands/ops/monitor-canary.md](../skills/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
-| `/apply-change` | [skills/apply-change/SKILL.md](../skills/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
-| `/generate-docs` | [skills/generate-docs/SKILL.md](../skills/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
-| `/tdd` | [skills/tdd/SKILL.md](../skills/tdd/SKILL.md) | TDD-as-design loop |
-| `/impact-brief` | [skills/impact-brief/SKILL.md](../skills/impact-brief/SKILL.md) | 5-section downstream impact brief |
-| `/check-conventions` | [skills/check-conventions/SKILL.md](../skills/check-conventions/SKILL.md) | Convention checker in-chat |
-| `/conclude` | [skills/conclude/SKILL.md](../skills/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
+| `/dev-practices` | [ai/dev-practices/SKILL.md](../ai/dev-practices/SKILL.md) | Full workflow |
+| `/architect:design-system` | [ai/architect/design-system/SKILL.md](../ai/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
+| `/architect:design-feature` | [ai/architect/design-feature/SKILL.md](../ai/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
+| `/architect:review-design` | [ai/commands/architect/review-design.md](../ai/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
+| `/architect:verify-traceability` | [ai/commands/architect/verify-traceability.md](../ai/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/qa:plan-tests` | [ai/qa/plan-tests/SKILL.md](../ai/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
+| `/qa:review-tests` | [ai/qa/review-tests/SKILL.md](../ai/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
+| `/qa:verify-quality` | [ai/qa/verify-quality/SKILL.md](../ai/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
+| `/qa:report-defect` | [ai/qa/report-defect/SKILL.md](../ai/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
+| `/ops:build` | [ai/ops/build/SKILL.md](../ai/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
+| `/ops:apply-iac` | [ai/ops/apply-iac/SKILL.md](../ai/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
+| `/ops:deploy` | [ai/ops/deploy/SKILL.md](../ai/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
+| `/ops:review-release` | [ai/commands/ops/review-release.md](../ai/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
+| `/ops:monitor-canary` | [ai/commands/ops/monitor-canary.md](../ai/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
+| `/apply-change` | [ai/apply-change/SKILL.md](../ai/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
+| `/generate-docs` | [ai/generate-docs/SKILL.md](../ai/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
+| `/tdd` | [ai/tdd/SKILL.md](../ai/tdd/SKILL.md) | TDD-as-design loop |
+| `/impact-brief` | [ai/impact-brief/SKILL.md](../ai/impact-brief/SKILL.md) | 5-section downstream impact brief |
+| `/check-conventions` | [ai/check-conventions/SKILL.md](../ai/check-conventions/SKILL.md) | Convention checker in-chat |
+| `/conclude` | [ai/conclude/SKILL.md](../ai/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
 | Mermaid fixer | [tools/scripts/fix_mermaid_br_tags.py](../tools/scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
@@ -441,7 +441,7 @@ Feature work proceeds when blockers are zero.
 |----------|--------|----------|
 | PRD | [templates/prd-template.md](../templates/prd-template.md) | Writing product requirements |
 | CLAUDE.md | [templates/CLAUDE.md.template](../templates/CLAUDE.md.template) | Setting up a new project |
-| System manifest schema | [skills/generate-docs/templates/system-manifest.schema.yaml](../skills/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
+| System manifest schema | [ai/generate-docs/templates/system-manifest.schema.yaml](../ai/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
 | Issue template | [templates/issue-template.md](../templates/issue-template.md) | Every issue |
 | ADR template | [templates/adr-template.md](../templates/adr-template.md) | Every architectural decision |
 | Training plan | [templates/training-plan-template.md](../templates/training-plan-template.md) | New capability introduced |

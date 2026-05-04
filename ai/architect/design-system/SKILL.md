@@ -46,7 +46,7 @@ Extract and summarize:
 
 #### NFR interrogation — mandatory if absent or vague in the PRD
 
-Run through the full NFR checklist in `skills/shared/challenge-stance.md` (Minimum NFR Checklist section). For each NFR that is absent or vague in the PRD, ask the architect or PM now.
+Run through the full NFR checklist in `ai/shared/challenge-stance.md` (Minimum NFR Checklist section). For each NFR that is absent or vague in the PRD, ask the architect or PM now.
 
 **One rule for unresolvable NFRs:** Ask first. If the answer cannot be obtained (early-stage project, no stakeholder available), make a stated assumption with a specific number and record it as a design risk in the gate below — do not leave it unnamed. "We don't know yet" embedded silently in an architecture is far more dangerous than an explicit assumption the team can challenge and update.
 
@@ -136,7 +136,7 @@ Do not proceed until the architect explicitly confirms. If the architect request
 
 ## Phase 3 — System Manifest
 
-Generate `docs/system-manifest.yaml` from the confirmed domain breakdown. Follow the schema in `skills/generate-docs/templates/system-manifest.schema.yaml`.
+Generate `docs/system-manifest.yaml` from the confirmed domain breakdown. Follow the schema in `ai/generate-docs/templates/system-manifest.schema.yaml`.
 
 For each domain:
 

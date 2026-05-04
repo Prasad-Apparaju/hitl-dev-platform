@@ -48,9 +48,9 @@ When in doubt, use the heavier tier. Cross-domain or multi-dozen-line changes ar
 
 If no idea is provided, ask: "What feature are you thinking about? Describe the rough idea — we'll refine it together."
 
-**Ask first:** "What level of challenge would you like? Rigorous / Moderate / Light (default: Moderate)." See `skills/shared/challenge-stance.md` — Challenge Levels section for what each means.
+**Ask first:** "What level of challenge would you like? Rigorous / Moderate / Light (default: Moderate)." See `ai/shared/challenge-stance.md` — Challenge Levels section for what each means.
 
-**TODO deferral is always available** at any level. When the PM says "not sure", "add to TODO", "come back to this", or similar — record the item and proceed. Present collected open items at the end of Phase 1. See `skills/shared/challenge-stance.md` — TODO Deferral section.
+**TODO deferral is always available** at any level. When the PM says "not sure", "add to TODO", "come back to this", or similar — record the item and proceed. Present collected open items at the end of Phase 1. See `ai/shared/challenge-stance.md` — TODO Deferral section.
 
 This is a 7-phase process. Do not skip phases or write to the PRD until all phases are approved.
 
@@ -61,7 +61,7 @@ This is a 7-phase process. Do not skip phases or write to the PRD until all phas
 [✅/▶/○] Discovery · [✅/▶/○] Journey · [✅/▶/○] Edge Cases · [✅/▶/○] Design · [✅/▶/○] Criteria · [✅/▶/○] Impact · [✅/▶/○] PRD
 ---
 ```
-Use ✅ for approved phases, ▶ for current, ○ for upcoming. See `skills/pm/design-feature/SKILL.md` for the exact banner per phase.
+Use ✅ for approved phases, ▶ for current, ○ for upcoming. See `ai/pm/design-feature/SKILL.md` for the exact banner per phase.
 
 #### Phase 1 — Discovery
 
@@ -306,7 +306,7 @@ Run this workflow when starting any Tier 1+ change. This replaces the `/apply-ch
 
 ### Challenge Stance
 
-This workflow is a design-phase entrypoint. Before tier identification or impact analysis, apply the challenge standard from `skills/shared/challenge-stance.md`: require evidence for the problem, testable acceptance criteria, stated NFRs where relevant, and surface tradeoffs before agreeing to a solution. Resolve gaps now — not after the HLD is generated.
+This workflow is a design-phase entrypoint. Before tier identification or impact analysis, apply the challenge standard from `ai/shared/challenge-stance.md`: require evidence for the problem, testable acceptance criteria, stated NFRs where relevant, and surface tradeoffs before agreeing to a solution. Resolve gaps now — not after the HLD is generated.
 
 ### Steps
 
@@ -316,7 +316,7 @@ This workflow is a design-phase entrypoint. Before tier identification or impact
    - Are NFRs relevant to this change stated? If the change affects throughput, latency, or availability, are the targets in the issue or PRD? If not, ask.
    - Is there a simpler approach that solves the same problem? Name it and the tradeoff before proceeding.
 
-   Resolve any gap before moving to step 2. See `skills/shared/challenge-stance.md` for the full checklist.
+   Resolve any gap before moving to step 2. See `ai/shared/challenge-stance.md` for the full checklist.
 
 2. **Identify the tier** from the table above. Ask if unclear.
 
@@ -612,7 +612,7 @@ Run once at project inception when designing a new system from scratch.
 
 1. Read the PRD from the path in $ARGUMENTS or `docs/01-product/prd.md`.
 2. Extract: system name, user personas, core use cases (3–5), functional requirements (must-have vs nice-to-have), NFRs (performance, scale, security, compliance), external integrations, tech stack constraints, out-of-scope items, open questions.
-3. Flag structural gaps (who owns what data, consistency requirements between capabilities, scale profile) **and** interrogate NFRs. Apply the full NFR checklist from `skills/shared/challenge-stance.md` — Minimum NFR Checklist section. For each NFR absent or vague in the PRD, ask the architect now. If an answer is genuinely unavailable, make a stated assumption with a specific number and flag it as a design risk in the gate below — do not proceed with an unnamed assumption embedded in the architecture.
+3. Flag structural gaps (who owns what data, consistency requirements between capabilities, scale profile) **and** interrogate NFRs. Apply the full NFR checklist from `ai/shared/challenge-stance.md` — Minimum NFR Checklist section. For each NFR absent or vague in the PRD, ask the architect now. If an answer is genuinely unavailable, make a stated assumption with a specific number and flag it as a design risk in the gate below — do not proceed with an unnamed assumption embedded in the architecture.
 4. **STOP — ask architect to confirm requirements are complete, all NFR gaps are answered or explicitly assumed, and open questions are resolved before proceeding.**
 
 ### Phase 2 — Domain Decomposition
@@ -635,7 +635,7 @@ This is the most consequential decision. Do not rush it.
 
 ### Phase 3 — System Manifest
 
-Generate `docs/system-manifest.yaml` from confirmed domains. Follow the schema in `skills/generate-docs/templates/system-manifest.schema.yaml`.
+Generate `docs/system-manifest.yaml` from confirmed domains. Follow the schema in `ai/generate-docs/templates/system-manifest.schema.yaml`.
 
 - `files`: empty (no code yet)
 - `facade_apis`: propose from PRD, mark ALL as `DRAFT — architect to verify`
@@ -734,7 +734,7 @@ This section covers everything from impact analysis through decision packet asse
 
 ### Phase 1 — Impact Analysis and Scope
 
-1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Detect the requirements source: if `docs/00-migration/migration-brief.md` exists this is a migration project — read the brief as the requirements source (it replaces `docs/01-product/prd.md`; slices reference `MR-<ID>` not `FR-<ID>`). Otherwise extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement — the issue is a pointer, the PRD is the source of truth. Before reading the manifest, challenge: Is the problem backed by evidence? Are the AC testable and specific? Are NFRs for the affected domain stated? Is there a simpler approach? Resolve gaps now. See `skills/shared/challenge-stance.md` for the full standard.
+1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Detect the requirements source: if `docs/00-migration/migration-brief.md` exists this is a migration project — read the brief as the requirements source (it replaces `docs/01-product/prd.md`; slices reference `MR-<ID>` not `FR-<ID>`). Otherwise extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement — the issue is a pointer, the PRD is the source of truth. Before reading the manifest, challenge: Is the problem backed by evidence? Are the AC testable and specific? Are NFRs for the affected domain stated? Is there a simpler approach? Resolve gaps now. See `ai/shared/challenge-stance.md` for the full standard.
 2. Read the system manifest — prefer a graph query:
    ```
    /graphify query "all domains and facade APIs"
@@ -747,14 +747,14 @@ This section covers everything from impact analysis through decision packet asse
    ```
    Fall back to `docs/04-operations/incident-registry.yaml`.
 4. Identify affected domains, facade API changes, boundary entity changes, IaC scope, and backwards compatibility.
-5. Determine tier (from `skills/dev-practices/SKILL.md`). Challenge scope: cross-domain or multi-service changes are Tier 3 even when described as simple.
-6. Estimate effort and token cost (phase-level formula from `skills/dev-practices/roi-estimation.md`).
+5. Determine tier (from `ai/dev-practices/SKILL.md`). Challenge scope: cross-domain or multi-service changes are Tier 3 even when described as simple.
+6. Estimate effort and token cost (phase-level formula from `ai/dev-practices/roi-estimation.md`).
 7. Initialize or update `.hitl/current-change.yaml` with `status: planning`.
 8. **STOP — present impact summary and ask architect to confirm scope and tier.**
 
 ### Phase 2 — ROI Trigger (Step 4)
 
-If effort > 1 day: record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template from `skills/dev-practices/roi-estimation.md`. Ask architect to fill in the baseline metric now — it cannot be estimated after the fact. Post a pointer comment on the issue (not the content): `gh issue comment <issue-number> --body "ROI estimate required — filed in decision packet (effort > 1 day)."`
+If effort > 1 day: record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template from `ai/dev-practices/roi-estimation.md`. Ask architect to fill in the baseline metric now — it cannot be estimated after the fact. Post a pointer comment on the issue (not the content): `gh issue comment <issue-number> --body "ROI estimate required — filed in decision packet (effort > 1 day)."`
 
 ### Phase 3 — HLD (Step 5, Part 1)
 

@@ -15,7 +15,7 @@ disable-model-invocation: true
 
 ## Challenge Stance
 
-This skill is a design-phase skill. The challenge stance from `skills/shared/challenge-stance.md` applies throughout — challenge vague requirements, surface tradeoffs, require evidence. In particular: if the issue has vague acceptance criteria, no supporting data, or unstated NFRs relevant to the affected domain, raise them at Step 1 before doing any analysis.
+This skill is a design-phase skill. The challenge stance from `ai/shared/challenge-stance.md` applies throughout — challenge vague requirements, surface tradeoffs, require evidence. In particular: if the issue has vague acceptance criteria, no supporting data, or unstated NFRs relevant to the affected domain, raise them at Step 1 before doing any analysis.
 
 ---
 

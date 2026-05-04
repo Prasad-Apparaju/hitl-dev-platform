@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash skills/hooks/welcome.sh"
+            "command": "bash ai/hooks/welcome.sh"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash skills/hooks/check-hitl-context.sh"
+            "command": "bash ai/hooks/check-hitl-context.sh"
           }
         ]
       }
@@ -27,11 +27,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash skills/hooks/check-domain-boundary.sh"
+            "command": "bash ai/hooks/check-domain-boundary.sh"
           },
           {
             "type": "command",
-            "command": "bash skills/hooks/rebuild-graph.sh"
+            "command": "bash ai/hooks/rebuild-graph.sh"
           }
         ]
       }
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash skills/hooks/write-session-summary.sh"
+            "command": "bash ai/hooks/write-session-summary.sh"
           }
         ]
       }

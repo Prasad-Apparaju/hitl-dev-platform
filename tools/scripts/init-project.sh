@@ -93,7 +93,7 @@ CLAUDE_DEST="$TARGET_DIR/CLAUDE.md"
 if [[ -f "$CLAUDE_DEST" ]]; then
   echo "  CLAUDE.md already exists — skipping"
 else
-  TMPL="$PLATFORM_ROOT/skills/generate-docs/templates/CLAUDE.md.template"
+  TMPL="$PLATFORM_ROOT/ai/generate-docs/templates/CLAUDE.md.template"
   if [[ -f "$TMPL" ]]; then
     cp "$TMPL" "$CLAUDE_DEST"
     echo "✓ CLAUDE.md — customize with your project's coding standards"
@@ -214,7 +214,7 @@ JSON
     for hook in welcome check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
-exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/skills/hooks/$hook.sh" "\$@"
+exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/ai/hooks/$hook.sh" "\$@"
 WRAPPER
       chmod 750 "$HOOKS_DIR/$hook.sh"
     done
