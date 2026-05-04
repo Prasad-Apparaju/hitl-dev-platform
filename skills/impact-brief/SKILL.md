@@ -115,7 +115,7 @@ Once approved:
 
 ## Important Rules
 
-- The brief protects against ORGANIZATIONAL risk, not technical risk. Tests and code review handle technical risk.
+- The brief addresses ORGANIZATIONAL risk — downstream, deployment, and stakeholder impact; not technical risk.
 - Section 4 (mental model update) must be written for a non-engineer audience
 - Reference the incident registry for the affected domains — past failures shape the risk assessment
 - If no incidents exist for a domain, say "No prior incidents in this domain" — don't skip the check

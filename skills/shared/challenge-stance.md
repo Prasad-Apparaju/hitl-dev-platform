@@ -15,6 +15,27 @@ Apply the challenge stance in:
 
 ---
 
+## TODO Deferral
+
+Available at **all challenge levels**. Any time the PM is unsure of an answer, they can defer it rather than block the session.
+
+**Trigger phrases** (any of these → record and proceed):
+- "add to TODO", "defer this", "come back to this", "not sure yet", "TBD", "I'll find out"
+
+**Behavior:**
+1. Acknowledge: "Got it — I'll add that to the open items list and we'll keep going."
+2. Record the item: question label + what's missing (e.g., "Evidence: no specific data point yet — needs ticket count or analytics pull").
+3. Proceed as if the question was answered at Light level (note the gap, do not block).
+4. At the end of Phase 1 (or the full session for `pm/add-feature`), present the collected TODO list:
+
+   > **Open items to revisit before this feature ships:**
+   > - [ ] Evidence: ticket count or analytics to confirm the problem scope
+   > - [ ] Success metric: specific baseline + target (or hypothesis + validation plan)
+
+The TODO list is informational — it does not block moving to the next phase. It surfaces what the PM still needs to resolve before the feature can be treated as fully justified.
+
+---
+
 ## Challenge Levels
 
 Skills that apply the challenge stance offer three levels. Ask the user which they prefer at the start of any requirements or design session.
@@ -43,8 +64,13 @@ Skills that apply the challenge stance offer three levels. Ask the user which th
 **2. Surface tradeoffs before agreeing.**
 Every architectural choice trades something for something else. Name both sides before accepting a direction. "We'll use microservices" → "That buys independent deployability and fault isolation; it costs operational complexity and makes distributed transactions hard. Is that tradeoff intentional here?"
 
-**3. Reject vague success criteria.**
-"Improve user experience" is not a success criterion. For mature product work: require a current measured baseline and a specific target ("Reduce campaign creation time from 4 min to 90 sec, measured by analytics event X"). For pre-launch systems, new capabilities, or internal tools where no live baseline exists: require an explicit hypothesis with a validation plan ("We believe this will reduce time-to-first-campaign because [specific reasoning]; we'll validate with [metric] within [timeframe]"). A hypothesis with a validation plan is not aspirational vagueness — it is honest uncertainty with a plan to resolve it. What is not acceptable in either case is intent without rationale: "users will enjoy this."
+**3. Ask for success criteria — don't demand hard numbers.**
+"Improve user experience" is not a success criterion, but that doesn't mean you need a fully measured baseline before proceeding. Ask: "What would tell you this feature worked — even roughly?" Accept:
+- A specific metric with a rough target ("reduce support tickets related to this, currently about 10/week")
+- A hypothesis with a validation plan ("we believe time-to-first-campaign will drop; we'll measure with analytics event X")
+- An acknowledged gap + TODO deferral ("I don't have a number yet — I'll pull analytics")
+
+What is not acceptable: pure intent without any rationale ("users will enjoy this", "it'll be better"). One follow-up probe is appropriate: "Do you have a rough sense of the current state — even a ballpark?" If they don't, offer the TODO option.
 
 **4. Name what you're not building.**
 Unstated non-goals become scope creep. Ask "what is explicitly out of scope?" before finalizing requirements.

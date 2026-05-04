@@ -73,11 +73,3 @@ Run `/qa:report-defect` for each blocking issue. Then report: "QA blocked. `<N>`
 
 Do not approve with open defects. Do not block without filing a defect — informal notes are not actionable.
 
----
-
-## Important Rules
-
-- Verify against the running build, not the code — tests passing in CI does not replace this step
-- Every block must have a filed defect (`/qa:report-defect`) — "it didn't work" is not sufficient
-- If a past incident failure mode CAN be reproduced: it is a regression — block regardless of ACs passing
-- Re-verification after a fix requires a new verify-quality run — do not lift a block without re-running

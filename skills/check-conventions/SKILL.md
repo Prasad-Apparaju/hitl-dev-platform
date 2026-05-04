@@ -72,5 +72,4 @@ For Mermaid violations, offer to run the fixer: `python scripts/fix_mermaid_br_t
 - Run from the project root
 - Semgrep rules are in `.semgrep/` organized by category (security, correctness, best-practices)
 - To add a new convention, create a semgrep rule YAML in the appropriate `.semgrep/` subdirectory
-- Convention violations are blocking in CI. Catching them here saves a failed CI run.
 - If the manifest is missing or stale (drift detected), flag it: "The manifest may be out of date. Run the manifest generator to refresh it."

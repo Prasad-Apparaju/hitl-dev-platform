@@ -7,8 +7,6 @@ disable-model-invocation: true
 
 # Apply Change Workflow
 
-Apply the dev-practices workflow to analyze and plan a change before writing code.
-
 **Input:** $ARGUMENTS (description of the change — feature, bug fix, refactor, etc.)
 
 **Refusal rule:** If no GitHub issue number is provided or discoverable in $ARGUMENTS, stop and say: "No GitHub issue found. Create one first with `gh issue create`, then re-run this skill with the issue number."

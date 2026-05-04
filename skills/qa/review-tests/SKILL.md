@@ -53,11 +53,3 @@ Flag every ❌ as a gap that must be resolved before implementation starts.
 
 **If gaps exist:** List every gap with the specific spec item it fails to cover. Do not approve. Report: "Test coverage blocked. `<N>` gap(s) found — implementation must not start until these are resolved."
 
----
-
-## Important Rules
-
-- Every acceptance criterion must have at least one test — no exceptions
-- Every LLD error mode must be exercised — if a method can throw, there must be a test for the throw
-- Do not approve if any incident regression from this domain is uncovered
-- Update the test registry when approving — a review with no registry update is incomplete

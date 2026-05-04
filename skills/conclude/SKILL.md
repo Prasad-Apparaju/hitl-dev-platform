@@ -141,6 +141,5 @@ Once all artifacts are approved:
 - **Never infer a decision that wasn't explicitly stated.** If the thread doesn't have a clear conclusion, say: "I can't find a clear decision in this thread. Can you point me to the message where the team agreed?"
 - **The ADR captures what was decided, not what should be decided.** This skill documents concluded discussions, not open ones.
 - **Thread participants are listed as Deciders** in the ADR. If someone who should have been involved wasn't in the thread, flag it: "Note: [role] wasn't in this discussion. Should they review the ADR before it's accepted?"
-- **Cross-reference the system manifest.** Every affected domain should be identified. If the decision crosses domain boundaries, note which facade APIs are affected.
 - **Don't skip the ROI estimate.** If the thread doesn't mention expected value, ask the user. Every decision has a cost; documenting expected return makes 30/90-day verification possible.
 - **Preserve the thread's language.** Use the team's actual words for rationale and alternatives — don't rephrase into generic architecture-speak. The ADR should sound like the team, not a textbook.

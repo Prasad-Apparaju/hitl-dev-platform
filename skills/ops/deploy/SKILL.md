@@ -78,12 +78,3 @@ deployment:
 For canary deployments: "Deployed at `<N>%`. Run `/ops:monitor-canary` to assess go/no-go criteria before promoting."
 For direct deployments: "Deployed to `<environment>`. Run manual verification from the impact brief."
 
----
-
-## Important Rules
-
-- Never deploy before IaC changes are applied — check `iac_plan.status` before every deployment
-- Never skip the canary step for High or Critical risk changes
-- Present the exact deployment command before running it — the operator must confirm
-- Do not deploy into an environment that already has an active incident
-- A deployment that fails health checks mid-rollout should be paused and investigated — not automatically rolled back without diagnosis

@@ -54,4 +54,3 @@ If `$ARGUMENTS` is empty, ask: "What went wrong? Describe what you did, what you
 
 - Always check for duplicates before creating
 - Keep the title short and descriptive — starts with "fix:"
-- Include reproduction steps — "it's broken" is not actionable
