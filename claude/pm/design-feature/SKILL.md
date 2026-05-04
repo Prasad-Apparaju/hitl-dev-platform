@@ -26,7 +26,7 @@ Before Phase 1, ask:
 >
 > Say **Rigorous**, **Moderate**, or **Light** to set the level."
 
-Apply the chosen level throughout the session as defined in `ai/shared/challenge-stance.md` — Challenge Levels section. Default to **Moderate** if the PM doesn't specify.
+Apply the chosen level throughout the session as defined in `shared/challenge-stance.md` — Challenge Levels section. Default to **Moderate** if the PM doesn't specify.
 
 ---
 

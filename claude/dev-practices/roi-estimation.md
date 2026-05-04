@@ -87,7 +87,7 @@ After each Claude Code session, record the session cost and which steps were cov
 
 ### Cross-change registry
 
-At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/03-engineering/costs/token-cost-registry.yaml` (template at `ai/templates/token-cost-registry-template.yaml`). After 5+ entries, the registry surfaces optimization signals — see the template for what patterns to look for.
+At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/03-engineering/costs/token-cost-registry.yaml` (template at `shared/templates/token-cost-registry-template.yaml`). After 5+ entries, the registry surfaces optimization signals — see the template for what patterns to look for.
 
 ### Estimation method (step 3)
 

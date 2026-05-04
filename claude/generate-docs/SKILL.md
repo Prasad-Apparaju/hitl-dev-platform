@@ -36,7 +36,7 @@ Otherwise → use **New Feature Mode** (Phase 1-2 below).
 
 1. **Determine the feature name** from the user's description. Use kebab-case (e.g., `campaign-scheduler`).
 
-2. **Create `docs/02-design/technical/hld/<feature-name>.md`** using the template at `ai/templates/hld-template.md`. The document must contain:
+2. **Create `docs/02-design/technical/hld/<feature-name>.md`** using the template at `shared/templates/hld-template.md`. The document must contain:
    - Executive summary
    - System architecture diagram (Mermaid `graph TB`)
    - Component overview table with responsibilities
@@ -61,7 +61,7 @@ Only proceed after HLD approval.
    - `security/` — Auth, guards
    - `config/` — Configuration
 
-2. **For each component**, create `docs/02-design/technical/lld/<category>/<component-name>.md` using `ai/templates/lld-component-template.md`. Each file must include:
+2. **For each component**, create `docs/02-design/technical/lld/<category>/<component-name>.md` using `shared/templates/lld-component-template.md`. Each file must include:
    - Overview + purpose
    - Mermaid class diagram
    - Method signatures with parameters, return types, descriptions
@@ -88,7 +88,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Decorators + base classes → convention patterns
    - Test files → test coverage map
 
-2. **Generate `docs/system-manifest.yaml`** with ALL sections from `ai/generate-docs/templates/system-manifest.schema.yaml`:
+2. **Generate `docs/system-manifest.yaml`** with ALL sections from `claude/generate-docs/templates/system-manifest.schema.yaml`:
 
    **Per domain:**
    - `purpose`: one-line description (infer from directory name + file contents)
@@ -124,7 +124,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R2 — HLDs (Days 2-3 equivalent)
 
-1. **For each major system area**, generate an HLD using `ai/templates/hld-template.md`:
+1. **For each major system area**, generate an HLD using `shared/templates/hld-template.md`:
    - Read the actual source code for that area
    - Extract the architecture from what EXISTS, not what should exist
    - Use real class names, real endpoints, real data flows
@@ -142,7 +142,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R3 — LLDs (Days 3-4 equivalent)
 
-1. **For each domain in the manifest**, generate LLDs using `ai/templates/lld-component-template.md`:
+1. **For each domain in the manifest**, generate LLDs using `shared/templates/lld-component-template.md`:
    - Read the actual source files listed in the manifest's domain entry
    - Extract real class hierarchies, method signatures, dependencies
    - Generate class diagrams from the actual code (via AST analysis)
@@ -165,7 +165,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Authentication/authorization approach (from middleware/guards)
    - Error handling patterns (from try/catch patterns, error classes)
 
-2. **For each detected decision**, generate a forensic ADR using `ai/templates/adr-template.md`:
+2. **For each detected decision**, generate a forensic ADR using `shared/templates/adr-template.md`:
    - Context: "Based on the code, this system uses [X]"
    - Decision: "The decision appears to be [Y]"
    - Rationale: "The likely rationale is [Z]"
@@ -181,7 +181,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R5 — Process Setup (Day 5 equivalent)
 
-1. **Generate `CLAUDE.md`** from the template at `ai/templates/CLAUDE.md.template`:
+1. **Generate `CLAUDE.md`** from the template at `shared/templates/CLAUDE.md.template`:
    - Fill in the cross-cutting conventions discovered in Phase R1 (inline, not just links)
    - Fill in the coding standards detected from the codebase:
      - Language + framework (from imports / package.json / pyproject.toml)
@@ -200,15 +200,15 @@ This mode reads the existing codebase and generates the full documentation basel
      - File content requirement → `file_contains`
    - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
-3. **Install the plugin** (preferred) or copy skills to `.claude/ai/` if they don't exist:
+3. **Install the plugin** (preferred) or copy skills to `.claude/claude/` if they don't exist:
    - Install: add this repo as a Claude Code plugin so skills are auto-discovered
-   - Manual copy: `cp -r ai/ <your-repo>/.claude/ai/`
-   - Key skills: `ai/dev-practices/SKILL.md` — the 31-step workflow; `ai/apply-change/SKILL.md` — impact analysis
+   - Manual copy: `cp -r claude/ <your-repo>/.claude/claude/`
+   - Key skills: `claude/dev-practices/SKILL.md` — the 31-step workflow; `claude/apply-change/SKILL.md` — impact analysis
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR
 
-5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `ai/templates/issue-template.md`:
+5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `shared/templates/issue-template.md`:
    - Pre-filled with the ROI estimation section
    - Includes downstream impact brief prompts
    - Includes training plan link placeholder
@@ -228,7 +228,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Any custom framework or abstraction used across 3+ files
    - Any external system integration (API clients, SDKs)
    - Any architectural pattern that deviates from the framework default
-   - For each candidate, create a stub at `docs/03-engineering/training/<name>.md` using `ai/templates/training-plan-template.md` with module outlines and reading lists pointing to the just-generated LLDs
+   - For each candidate, create a stub at `docs/03-engineering/training/<name>.md` using `shared/templates/training-plan-template.md` with module outlines and reading lists pointing to the just-generated LLDs
 
 9. **Generate the docs README** — `docs/README.md` with:
    - A table of contents linking to all HLDs, LLDs, ADRs, training plans

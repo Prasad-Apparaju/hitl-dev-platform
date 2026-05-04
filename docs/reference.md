@@ -380,7 +380,7 @@ Verify at 30 days (direction check) and 90 days (magnitude check). Document actu
 Prompts are design artifacts, not code strings. They live in versioned skill files:
 
 ```
-ai/<agent-name>/
+claude/<agent-name>/
   system-prompt.md         # Agent personality and instructions
   guardrails.md            # Input/output validation
   eval-criteria.yaml       # Quality dimensions + weights
@@ -409,26 +409,26 @@ Feature work proceeds when blockers are zero.
 
 | Name | Source | What it does |
 |------|--------|-------------|
-| `/dev-practices` | [ai/dev-practices/SKILL.md](../ai/dev-practices/SKILL.md) | Full workflow |
-| `/architect:design-system` | [ai/architect/design-system/SKILL.md](../ai/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
-| `/architect:design-feature` | [ai/architect/design-feature/SKILL.md](../ai/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
-| `/architect:review-design` | [ai/commands/architect/review-design.md](../ai/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
-| `/architect:verify-traceability` | [ai/commands/architect/verify-traceability.md](../ai/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
-| `/qa:plan-tests` | [ai/qa/plan-tests/SKILL.md](../ai/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
-| `/qa:review-tests` | [ai/qa/review-tests/SKILL.md](../ai/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
-| `/qa:verify-quality` | [ai/qa/verify-quality/SKILL.md](../ai/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
-| `/qa:report-defect` | [ai/qa/report-defect/SKILL.md](../ai/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
-| `/ops:build` | [ai/ops/build/SKILL.md](../ai/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
-| `/ops:apply-iac` | [ai/ops/apply-iac/SKILL.md](../ai/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
-| `/ops:deploy` | [ai/ops/deploy/SKILL.md](../ai/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
-| `/ops:review-release` | [ai/commands/ops/review-release.md](../ai/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
-| `/ops:monitor-canary` | [ai/commands/ops/monitor-canary.md](../ai/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
-| `/apply-change` | [ai/apply-change/SKILL.md](../ai/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
-| `/generate-docs` | [ai/generate-docs/SKILL.md](../ai/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
-| `/tdd` | [ai/tdd/SKILL.md](../ai/tdd/SKILL.md) | TDD-as-design loop |
-| `/impact-brief` | [ai/impact-brief/SKILL.md](../ai/impact-brief/SKILL.md) | 5-section downstream impact brief |
-| `/check-conventions` | [ai/check-conventions/SKILL.md](../ai/check-conventions/SKILL.md) | Convention checker in-chat |
-| `/conclude` | [ai/conclude/SKILL.md](../ai/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
+| `/dev-practices` | [claude/dev-practices/SKILL.md](../claude/dev-practices/SKILL.md) | Full workflow |
+| `/architect:design-system` | [claude/architect/design-system/SKILL.md](../claude/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
+| `/architect:design-feature` | [claude/architect/design-feature/SKILL.md](../claude/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
+| `/architect:review-design` | [claude/commands/architect/review-design.md](../claude/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
+| `/architect:verify-traceability` | [claude/commands/architect/verify-traceability.md](../claude/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/qa:plan-tests` | [claude/qa/plan-tests/SKILL.md](../claude/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
+| `/qa:review-tests` | [claude/qa/review-tests/SKILL.md](../claude/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
+| `/qa:verify-quality` | [claude/qa/verify-quality/SKILL.md](../claude/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
+| `/qa:report-defect` | [claude/qa/report-defect/SKILL.md](../claude/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
+| `/ops:build` | [claude/ops/build/SKILL.md](../claude/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
+| `/ops:apply-iac` | [claude/ops/apply-iac/SKILL.md](../claude/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
+| `/ops:deploy` | [claude/ops/deploy/SKILL.md](../claude/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
+| `/ops:review-release` | [claude/commands/ops/review-release.md](../claude/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
+| `/ops:monitor-canary` | [claude/commands/ops/monitor-canary.md](../claude/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
+| `/apply-change` | [claude/apply-change/SKILL.md](../claude/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
+| `/generate-docs` | [claude/generate-docs/SKILL.md](../claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
+| `/tdd` | [claude/tdd/SKILL.md](../claude/tdd/SKILL.md) | TDD-as-design loop |
+| `/impact-brief` | [claude/impact-brief/SKILL.md](../claude/impact-brief/SKILL.md) | 5-section downstream impact brief |
+| `/check-conventions` | [claude/check-conventions/SKILL.md](../claude/check-conventions/SKILL.md) | Convention checker in-chat |
+| `/conclude` | [claude/conclude/SKILL.md](../claude/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
 | Mermaid fixer | [tools/scripts/fix_mermaid_br_tags.py](../tools/scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |
@@ -439,24 +439,24 @@ Feature work proceeds when blockers are zero.
 
 | Template | Source | Use when |
 |----------|--------|----------|
-| PRD | [ai/templates/prd-template.md](../ai/templates/prd-template.md) | Writing product requirements |
-| CLAUDE.md | [ai/templates/CLAUDE.md.template](../ai/templates/CLAUDE.md.template) | Setting up a new project |
-| System manifest schema | [ai/generate-docs/templates/system-manifest.schema.yaml](../ai/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
-| Issue template | [ai/templates/issue-template.md](../ai/templates/issue-template.md) | Every issue |
-| ADR template | [ai/templates/adr-template.md](../ai/templates/adr-template.md) | Every architectural decision |
-| Training plan | [ai/templates/training-plan-template.md](../ai/templates/training-plan-template.md) | New capability introduced |
-| Test strategy | [ai/templates/test-strategy-template.md](../ai/templates/test-strategy-template.md) | Planning tests for a vertical slice |
-| Security audit | [ai/templates/security-audit-template.md](../ai/templates/security-audit-template.md) | Security assessment |
-| Best practices | [ai/templates/best-practices-template.md](../ai/templates/best-practices-template.md) | Documenting domain practices |
-| Cost analysis | [ai/templates/cost-analysis-template.md](../ai/templates/cost-analysis-template.md) | Infrastructure cost comparison |
-| Performance optimization | [ai/templates/performance-optimization-template.md](../ai/templates/performance-optimization-template.md) | Tiered optimization plan |
-| Data model mapping | [ai/templates/data-model-mapping-template.md](../ai/templates/data-model-mapping-template.md) | Schema migration (field-by-field) |
-| API contract mapping | [ai/templates/api-contract-mapping-template.md](../ai/templates/api-contract-mapping-template.md) | Endpoint migration mapping |
-| Decision catalog | [ai/templates/consolidated-decisions-template.md](../ai/templates/consolidated-decisions-template.md) | Consolidated decision reference |
-| Test registry | [ai/templates/test-registry-template.yaml](../ai/templates/test-registry-template.yaml) | Setting up test tracking |
-| Incident registry | [ai/templates/incident-registry-template.yaml](../ai/templates/incident-registry-template.yaml) | Setting up incident tracking |
-| Deployment manifest | [ai/templates/deployment-manifest-template.yaml](../ai/templates/deployment-manifest-template.yaml) | Service inventory with health checks |
-| Admin guide | [ai/templates/admin-guide-template.md](../ai/templates/admin-guide-template.md) | Admin UI documentation for operators |
+| PRD | [shared/templates/prd-template.md](../shared/templates/prd-template.md) | Writing product requirements |
+| CLAUDE.md | [shared/templates/CLAUDE.md.template](../shared/templates/CLAUDE.md.template) | Setting up a new project |
+| System manifest schema | [claude/generate-docs/templates/system-manifest.schema.yaml](../claude/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
+| Issue template | [shared/templates/issue-template.md](../shared/templates/issue-template.md) | Every issue |
+| ADR template | [shared/templates/adr-template.md](../shared/templates/adr-template.md) | Every architectural decision |
+| Training plan | [shared/templates/training-plan-template.md](../shared/templates/training-plan-template.md) | New capability introduced |
+| Test strategy | [shared/templates/test-strategy-template.md](../shared/templates/test-strategy-template.md) | Planning tests for a vertical slice |
+| Security audit | [shared/templates/security-audit-template.md](../shared/templates/security-audit-template.md) | Security assessment |
+| Best practices | [shared/templates/best-practices-template.md](../shared/templates/best-practices-template.md) | Documenting domain practices |
+| Cost analysis | [shared/templates/cost-analysis-template.md](../shared/templates/cost-analysis-template.md) | Infrastructure cost comparison |
+| Performance optimization | [shared/templates/performance-optimization-template.md](../shared/templates/performance-optimization-template.md) | Tiered optimization plan |
+| Data model mapping | [shared/templates/data-model-mapping-template.md](../shared/templates/data-model-mapping-template.md) | Schema migration (field-by-field) |
+| API contract mapping | [shared/templates/api-contract-mapping-template.md](../shared/templates/api-contract-mapping-template.md) | Endpoint migration mapping |
+| Decision catalog | [shared/templates/consolidated-decisions-template.md](../shared/templates/consolidated-decisions-template.md) | Consolidated decision reference |
+| Test registry | [shared/templates/test-registry-template.yaml](../shared/templates/test-registry-template.yaml) | Setting up test tracking |
+| Incident registry | [shared/templates/incident-registry-template.yaml](../shared/templates/incident-registry-template.yaml) | Setting up incident tracking |
+| Deployment manifest | [shared/templates/deployment-manifest-template.yaml](../shared/templates/deployment-manifest-template.yaml) | Service inventory with health checks |
+| Admin guide | [shared/templates/admin-guide-template.md](../shared/templates/admin-guide-template.md) | Admin UI documentation for operators |
 
 ---
 

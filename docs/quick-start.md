@@ -80,7 +80,7 @@ python3 -m graphify.serve graphify-out/graph.json &
 ```bash
 mkdir -p ~/code/my-product/.github/workflows
 cp ~/tools/hitl-dev-platform/ci/workflows/*.yml ~/code/my-product/.github/workflows/
-cp ~/tools/hitl-dev-platform/ai/templates/pull-request-template.md \
+cp ~/tools/hitl-dev-platform/shared/templates/pull-request-template.md \
    ~/code/my-product/.github/PULL_REQUEST_TEMPLATE.md
 ```
 
@@ -181,9 +181,9 @@ Never overwrite: `CLAUDE.md`, `AGENTS.md`, `docs/system-manifest.yaml` — those
 
 | Component | Location in platform | Notes |
 |---|---|---|
-| Skills (slash commands) | `ai/` | Loaded via plugin — not copied |
+| Skills (slash commands) | `claude/` | Loaded via plugin — not copied |
 | Agents (subagents) | `agents/` | Loaded via plugin — not copied |
-| Templates | `ai/templates/` | Referenced; copy on demand |
+| Templates | `shared/templates/` | Referenced; copy on demand |
 | Convention rules | `.semgrep/` | Copied to product repos by init |
 | Manifest drift checker | `ci/manifest-drift/` | Copied to product repos by init |
 | CI actions | `ci/workflows/` | Copy once to `.github/workflows/` |

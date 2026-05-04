@@ -44,7 +44,7 @@ The architect/lead is a bottleneck by design — they are the quality gate. But 
 
 Gates should not block progress for more than 24 hours. When a substitute approves, the decision is documented and the architect reviews within the specified window.
 
-See [ai/templates/team-responsibilities-template.md](../../ai/templates/team-responsibilities-template.md) for the full delegation framework.
+See [shared/templates/team-responsibilities-template.md](../../shared/templates/team-responsibilities-template.md) for the full delegation framework.
 
 ### 6.3 Evidence Taxonomy
 

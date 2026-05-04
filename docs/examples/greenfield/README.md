@@ -8,7 +8,7 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
    - **Plugin install (recommended):** add the hitl-dev-platform repo as a Claude Code plugin — skills, agents, hooks, and commands are auto-discovered.
    - **Manual copy:** copy skills into your repo:
    ```bash
-   cp -r ../../ai/ .claude/ai/
+   cp -r ../../claude/ .claude/claude/
    ```
 
 2. **Edit `CLAUDE.md`** — replace the sample conventions with your project's actual rules
@@ -34,10 +34,10 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
 
 6. **PR template** is already in place at `.github/PULL_REQUEST_TEMPLATE.md` — it enforces traceability on every pull request (linked issue, manifest domains, design docs, test plan, rollout plan, impact brief)
 
-7. **Decision packets** go in `docs/decisions/issue-NNN.yaml` — Claude generates one per change before writing code. The template is at `../../ai/templates/decision-packet-template.yaml`
+7. **Decision packets** go in `docs/decisions/issue-NNN.yaml` — Claude generates one per change before writing code. The template is at `../../shared/templates/decision-packet-template.yaml`
 
 ## Next steps
 
 - Read [../../docs/playbook/adoption-guide.md](../../docs/playbook/adoption-guide.md) for the full brownfield adoption guide
 - Read [../../docs/playbook/process-overview.md](../../docs/playbook/process-overview.md) for the workflow details
-- Copy [../../ai/templates/issue-template.md](../../ai/templates/issue-template.md) to `.github/ISSUE_TEMPLATE/`
+- Copy [../../shared/templates/issue-template.md](../../shared/templates/issue-template.md) to `.github/ISSUE_TEMPLATE/`

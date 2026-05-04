@@ -28,7 +28,7 @@ A catalog of test cases with metadata — not the test code itself (that stays i
 - Step 6 (AI generates tests): AI reads relevant entries — especially incident-regression tests that must not be accidentally removed
 - QA review: "is the regression test for INC-X in the plan?"
 
-See `ai/templates/test-registry-template.yaml` for the full format with examples.
+See `shared/templates/test-registry-template.yaml` for the full format with examples.
 
 ## Incident Registry
 
@@ -58,7 +58,7 @@ A catalog of production incidents with root cause, affected domain, fix, regress
 - Step 15 (Rollout plan): past incidents shape the canary go/no-go criteria
 - Onboarding: new team members learn what broke and why, grounded in real incidents
 
-See `ai/templates/incident-registry-template.yaml` for the full format with examples.
+See `shared/templates/incident-registry-template.yaml` for the full format with examples.
 
 ## QA and Ops Integration
 

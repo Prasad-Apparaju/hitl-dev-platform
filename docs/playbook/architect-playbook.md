@@ -143,4 +143,4 @@ All escalations use documentation — no undocumented verbal decisions.
 | Analyse impact of a change | `/apply-change` skill |
 | Check convention violations | `/check-conventions` skill |
 | Write a downstream impact brief | `/impact-brief` skill |
-| Understand the full dev workflow | `ai/dev-practices/SKILL.md` |
+| Understand the full dev workflow | `claude/dev-practices/SKILL.md` |
