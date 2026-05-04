@@ -82,4 +82,4 @@ Every AI-assisted change must have:
 1. A `Co-Authored-By` trailer in the commit message identifying the AI tool and model.
 2. A link to a GitHub issue that describes why the change was made.
 
-This is enforced by the development workflow (see [dev-practices](../../skills/dev-practices.md)). The combination of issue linkage and co-author trailer makes it possible to trace any line of code back to the decision that produced it and know whether AI was involved.
+This is enforced by the development workflow (see [dev-practices](../../skills/dev-practices/SKILL.md)). The combination of issue linkage and co-author trailer makes it possible to trace any line of code back to the decision that produced it and know whether AI was involved.

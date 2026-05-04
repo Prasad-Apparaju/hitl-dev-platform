@@ -21,6 +21,9 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 | Slash command | File to edit |
 |---|---|
+| `/start-prd` | `skills/start-prd/SKILL.md` |
+| `/start-brownfield` | `skills/start-brownfield/SKILL.md` |
+| `/start-migration` | `skills/start-migration/SKILL.md` |
 | `/dev-practices` | `skills/dev-practices/SKILL.md` |
 | `/apply-change` | `skills/apply-change/SKILL.md` |
 | `/check-conventions` | `skills/check-conventions/SKILL.md` |
@@ -28,24 +31,25 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 | `/tdd` | `skills/tdd/SKILL.md` |
 | `/generate-docs` | `skills/generate-docs/SKILL.md` |
 | `/conclude` | `skills/conclude/SKILL.md` |
-| `/pm add-feature` | `skills/pm/add-feature/SKILL.md` |
-| `/pm answer-questions` | `skills/pm/answer-questions/SKILL.md` |
-| `/pm design-feature` | `skills/pm/design-feature/SKILL.md` |
-| `/pm prep-demo` | `skills/pm/prep-demo/SKILL.md` |
-| `/pm prioritize` | `skills/pm/prioritize/SKILL.md` |
-| `/pm report-bug` | `skills/pm/report-bug/SKILL.md` |
-| `/pm review-progress` | `skills/pm/review-progress/SKILL.md` |
-| `/pm review-scope-change` | `skills/pm/review-scope-change/SKILL.md` |
-| `/pm update-requirement` | `skills/pm/update-requirement/SKILL.md` |
-| `/qa plan-tests` | `skills/qa/plan-tests/SKILL.md` |
-| `/qa report-defect` | `skills/qa/report-defect/SKILL.md` |
-| `/qa review-tests` | `skills/qa/review-tests/SKILL.md` |
-| `/qa verify-quality` | `skills/qa/verify-quality/SKILL.md` |
-| `/ops build` | `skills/ops/build/SKILL.md` |
-| `/ops deploy` | `skills/ops/deploy/SKILL.md` |
-| `/ops apply-iac` | `skills/ops/apply-iac/SKILL.md` |
-| `/architect design-system` | `skills/architect/design-system/SKILL.md` |
-| `/architect design-feature` | `skills/architect/design-feature/SKILL.md` |
+| `/migrate:review-external-docs` | `skills/migrate/review-external-docs/SKILL.md` |
+| `/pm:add-feature` | `skills/pm/add-feature/SKILL.md` |
+| `/pm:answer-questions` | `skills/pm/answer-questions/SKILL.md` |
+| `/pm:design-feature` | `skills/pm/design-feature/SKILL.md` |
+| `/pm:prep-demo` | `skills/pm/prep-demo/SKILL.md` |
+| `/pm:prioritize` | `skills/pm/prioritize/SKILL.md` |
+| `/pm:report-bug` | `skills/pm/report-bug/SKILL.md` |
+| `/pm:review-progress` | `skills/pm/review-progress/SKILL.md` |
+| `/pm:review-scope-change` | `skills/pm/review-scope-change/SKILL.md` |
+| `/pm:update-requirement` | `skills/pm/update-requirement/SKILL.md` |
+| `/qa:plan-tests` | `skills/qa/plan-tests/SKILL.md` |
+| `/qa:report-defect` | `skills/qa/report-defect/SKILL.md` |
+| `/qa:review-tests` | `skills/qa/review-tests/SKILL.md` |
+| `/qa:verify-quality` | `skills/qa/verify-quality/SKILL.md` |
+| `/ops:build` | `skills/ops/build/SKILL.md` |
+| `/ops:deploy` | `skills/ops/deploy/SKILL.md` |
+| `/ops:apply-iac` | `skills/ops/apply-iac/SKILL.md` |
+| `/architect:design-system` | `skills/architect/design-system/SKILL.md` |
+| `/architect:design-feature` | `skills/architect/design-feature/SKILL.md` |
 
 ---
 

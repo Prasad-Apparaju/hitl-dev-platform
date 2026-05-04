@@ -44,7 +44,7 @@ The architect/lead is a bottleneck by design — they are the quality gate. But 
 
 Gates should not block progress for more than 24 hours. When a substitute approves, the decision is documented and the architect reviews within the specified window.
 
-See [templates/team-responsibilities-template.md](templates/team-responsibilities-template.md) for the full delegation framework.
+See [templates/team-responsibilities-template.md](../../templates/team-responsibilities-template.md) for the full delegation framework.
 
 ### 6.3 Evidence Taxonomy
 
@@ -70,7 +70,7 @@ Selected claims and their status:
 | "Days rather than sprints" for a bounded feature | Hypothesis — depends heavily on LLD precision and team familiarity with the workflow |
 | One architect can baseline any brownfield system in one week | Hypothesis — feasible for small-to-medium systems; larger systems take longer |
 
-See [docs/playbook/evidence.md](docs/playbook/evidence.md) for a fuller breakdown.
+See [evidence.md](evidence.md) for a fuller breakdown.
 
 ### 6.4 Open Questions
 

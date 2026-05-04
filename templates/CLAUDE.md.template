@@ -238,7 +238,7 @@ For verbose explanations, examples, Mermaid diagrams, and subsection details, se
 
 | Topic | File |
 |---|---|
-| Full 30-step workflow with Mermaid + subsections | `skills/dev-practices/SKILL.md` |
+| Full 31-step workflow with Mermaid + subsections | `skills/dev-practices/SKILL.md` |
 | Impact analysis template | `skills/apply-change/SKILL.md` |
 | Convention check commands | `skills/check-conventions/SKILL.md` |
 | Downstream impact brief (5-section template) | `skills/impact-brief/SKILL.md` |

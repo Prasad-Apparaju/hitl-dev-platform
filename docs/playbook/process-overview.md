@@ -56,7 +56,7 @@ graph LR
 | **Total** | **31** | **10** | **11** | **10** |
 
 ### Requirements (steps 1-2)
-1. 👤🤖 **GitHub Issue** — describe the change, root cause, proposed solution → `/pm/add-feature` · `/pm/report-bug`
+1. 👤🤖 **GitHub Issue** — describe the change, root cause, proposed solution → `/pm:add-feature` · `/pm:report-bug`
 2. 👤 **Figma review** (if design exists) — PM/developer reads the Figma file directly and adds requirements, interactions, and visual specs into the GitHub issue; no command
 
 ### Design (steps 3-9)

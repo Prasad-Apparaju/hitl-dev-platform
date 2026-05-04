@@ -39,7 +39,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 
 | Starting from | What happens first |
 |---------------|-------------------|
-| **A PRD (new system or major feature)** | Run `/architect/design-system` — produces domain decomposition, system manifest, HLDs, LLDs, and ADRs. Each resulting issue then enters the workflow below. |
+| **A PRD (new system or major feature)** | Run `/architect:design-system` — produces domain decomposition, system manifest, HLDs, LLDs, and ADRs. Each resulting issue then enters the workflow below. |
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
