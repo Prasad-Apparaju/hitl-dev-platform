@@ -1,6 +1,6 @@
 # Adoption Guide — Baseline Sprint
 
-> **Greenfield (new system from PRD)?** Use `/architect/design-system` — it guides the architect through domain decomposition, manifest creation, HLDs, ADRs, LLDs, and HITL process bootstrap in one session. After it completes, use `/architect/design-feature` for every subsequent change.
+> **Greenfield (new system from PRD)?** Use `/architect:design-system` — it guides the architect through domain decomposition, manifest creation, HLDs, ADRs, LLDs, and HITL process bootstrap in one session. After it completes, use `/architect:design-feature` for every subsequent change.
 >
 > **Brownfield (existing codebase)?** Continue reading — this guide covers the reverse-engineer sprint.
 

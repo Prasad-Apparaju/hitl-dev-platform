@@ -718,7 +718,7 @@ Needs architect attention before first feature:
   • Boundary entity shapes (DRAFT): N fields
   • ADR rationale sections: N docs
 
-Next: /architect/design-feature for first change
+Next: /architect:design-feature for first change
       First implementations will correct DRAFT fields
 ```
 
