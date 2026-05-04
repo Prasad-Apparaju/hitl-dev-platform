@@ -30,7 +30,7 @@ Apply the challenge stance in:
 Every architectural choice trades something for something else. Name both sides before accepting a direction. "We'll use microservices" → "That buys independent deployability and fault isolation; it costs operational complexity and makes distributed transactions hard. Is that tradeoff intentional here?"
 
 **3. Reject vague success criteria.**
-"Improve user experience" is not a success criterion. "Reduce campaign creation time from 4 min to 90 sec, measured by analytics event X" is. Ask until the metric has a current measured baseline and a specific target.
+"Improve user experience" is not a success criterion. For mature product work: require a current measured baseline and a specific target ("Reduce campaign creation time from 4 min to 90 sec, measured by analytics event X"). For pre-launch systems, new capabilities, or internal tools where no live baseline exists: require an explicit hypothesis with a validation plan ("We believe this will reduce time-to-first-campaign because [specific reasoning]; we'll validate with [metric] within [timeframe]"). A hypothesis with a validation plan is not aspirational vagueness — it is honest uncertainty with a plan to resolve it. What is not acceptable in either case is intent without rationale: "users will enjoy this."
 
 **4. Name what you're not building.**
 Unstated non-goals become scope creep. Ask "what is explicitly out of scope?" before finalizing requirements.

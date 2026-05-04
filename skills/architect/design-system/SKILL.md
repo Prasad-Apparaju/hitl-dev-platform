@@ -46,22 +46,9 @@ Extract and summarize:
 
 #### NFR interrogation — mandatory if absent or vague in the PRD
 
-For each row below, check whether the PRD gives a specific, measurable answer. If it says "TBD", "should be fast", "needs to scale", or gives no answer — ask the architect or PM now, before proceeding:
+Run through the full NFR checklist in `skills/shared/challenge-stance.md` (Minimum NFR Checklist section). For each NFR that is absent or vague in the PRD, ask the architect or PM now.
 
-| NFR | If absent or vague, ask |
-|---|---|
-| **Throughput** | What is the expected peak load? (req/sec, messages/sec, or jobs/sec as appropriate) What is the peak-to-average ratio? When does peak occur — time of day, specific events? |
-| **Latency** | What is the p99 response time target for user-facing operations? Is there a different target for background operations? |
-| **Availability** | What is the uptime SLA? (99.9% = 8.7h downtime/year; 99.99% = 52 min/year) What is acceptable planned downtime per month? |
-| **Data volume** | How much data at launch? Growth rate per month/year? How long must data be retained? |
-| **Geographic distribution** | Single region or multi-region? Which regions? Any data residency or sovereignty requirements? |
-| **Consistency** | Where is strong consistency required? Where is eventual consistency acceptable? |
-| **Failure modes** | What happens when a key dependency is unavailable? Which operations must succeed under degradation? |
-| **Concurrency** | Are there operations that must be serialized? Any operations that could be triggered concurrently with the same inputs? |
-
-**Rule:** "We don't know yet" is not acceptable for throughput, availability, or consistency — these three drive every major architectural decision. If genuinely unknown, make a stated assumption with a specific number and flag it as a design risk. A named assumption the team can challenge is better than an unnamed one embedded in the architecture.
-
-For each gap or unanswered NFR, ask now. Do not proceed with assumptions.
+**One rule for unresolvable NFRs:** Ask first. If the answer cannot be obtained (early-stage project, no stakeholder available), make a stated assumption with a specific number and record it as a design risk in the gate below — do not leave it unnamed. "We don't know yet" embedded silently in an architecture is far more dangerous than an explicit assumption the team can challenge and update.
 
 ### 1c. Gate — architect confirms requirements are complete
 
