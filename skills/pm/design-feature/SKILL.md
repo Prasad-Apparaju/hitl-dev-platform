@@ -38,11 +38,24 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
    - Backend-only or API → Phase 2 describes request/response flows, not screen steps; Phase 4 is skipped
    - Agentic → Phase 2 describes the agent's decision path and HITL gates; Phase 4 is replaced with tool/gate design
    - Web or mobile UI → all phases apply as written
+
+   *Follow-up probe (if the answer is vague or combo):* "Just to make sure I design the right flows — is there a primary surface, or are web and mobile truly equal-priority?"
+
 2. **Who is this for?** Which persona from the PRD (`docs/01-product/prd.md` §3) is the primary user? Is there a secondary user?
-3. **What evidence confirms this is a real problem?** Cite specific data: support tickets, user research sessions, usage analytics, churn feedback. "We think users want this" is not evidence — ask until a specific data point is provided.
+3. **What evidence confirms this is a real problem?** What are users doing or saying that points to this gap? (Support tickets, user research, analytics, churn feedback.)
+
+   *Follow-up probe (after any answer):* "Do you have a rough sense of how widespread this is — even a ballpark? If not, no worries — we can add it to the open items list."
+   - If they give a data point: accept it, note it.
+   - If they say "not sure" / "add to TODO": record it and proceed. See [TODO Deferral](../../shared/challenge-stance.md#todo-deferral).
+
 4. **What problem does this solve?** What pain exists today? What is the user doing right now as a workaround?
 5. **What happens if we don't build this?** Is this blocking users, causing churn, or just a nice-to-have? The answer determines priority.
-6. **What does success look like?** Name a specific metric with its current measured value and a target. "Improve engagement" is not an answer. "Increase campaign creation rate from 2.3/week to 4/week, measured by analytics event X" is. For pre-launch or new capabilities with no baseline: a hypothesis with a validation plan is acceptable.
+6. **What does success look like?** What would tell you this feature worked?
+
+   *Follow-up probe (after any answer):* "Do you have a rough current baseline — even approximate — or a hypothesis for how you'd validate this? If not, we can park it in open items."
+   - Accept: rough metric, hypothesis + validation plan, or acknowledged gap + TODO.
+   - Do not demand an exact number. See rule 3 in [challenge-stance.md](../../shared/challenge-stance.md).
+
 7. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP — and it's probably what you should validate first.
 8. **What's explicitly out of scope?** What should this feature NOT do? Unstated non-goals become scope creep.
 9. **Does this conflict with anything we've already built or committed to?** Query the PRD for conflicts now — prefer a graph query:
@@ -56,11 +69,19 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
 | | Rigorous | Moderate | Light |
 |---|---|---|---|
 | Questions asked | All 9 | All 9 | 1 (delivery surface), 3 (evidence), 6 (success), 9 (conflicts) |
-| Blockers | 1, 2, 3, 4, 6, 8 — do not proceed without a specific answer | 1 (delivery surface) and 4 (problem statement) only | 1 (delivery surface) only |
-| Vague answers | Push back until specific; do not summarize until resolved | Flag in summary, proceed | Note as recommendation in summary |
-| Unanswered optional questions | Must be answered | Noted in summary | Skipped |
+| Blockers | 1 (delivery surface) only — everything else can be deferred via TODO | 1 (delivery surface) and 4 (problem statement) only | 1 (delivery surface) only |
+| Follow-up probes | Questions 1, 3, 6 — one gentle clarifying probe each | Questions 3 and 6 only | None |
+| Vague answers | One follow-up probe; if still vague, offer TODO deferral | Offer TODO deferral | Note as gap, proceed |
+| TODO deferral | Available for any question | Available for any question | Available for any question |
 
-Summarize the answers back to the PM. At **Rigorous**, resolve every vague answer before summarizing. At **Moderate** or **Light**, include a "Gaps noted" section listing anything that was skipped or accepted as approximate. Get confirmation before proceeding to Phase 2.
+**TODO deferral is available at all levels.** Any time the PM says "not sure", "add to TODO", "come back to this", or similar — record the item and proceed. Do not block on it.
+
+Summarize the answers back to the PM. Include an **Open Items** section listing any TODO-deferred questions:
+
+> **Open items to revisit before this feature ships:**
+> - [ ] [Question label]: [what's missing]
+
+Get confirmation before proceeding to Phase 2.
 
 ---
 
@@ -197,16 +218,3 @@ Only after ALL phases are approved:
    - GitHub issue link
    - Impact analysis summary
 
----
-
-## Important Rules
-
-- **Challenge stance applies throughout this skill.** See `skills/shared/challenge-stance.md` for the full standard — challenge rules, NFR checklist, and language guide. Never accept vague evidence, aspirational success criteria, or unstated tradeoffs.
-- **Never skip phases.** The due diligence IS the value. A requirement without edge cases and a mockup is incomplete.
-- **Challenge the PM.** If the feature sounds vague, ask "what does success look like?" If it sounds too big, ask "what's the simplest version?" If it duplicates something, say so. If you can't find the supporting data, ask for it before continuing.
-- **Do not validate what the PM hasn't justified.** Enthusiasm is not a requirement. If the PM says "users will love this," ask what evidence supports that. Accept data; not optimism.
-- **Use Claude Design for every feature that has a UI.** Text-only requirements for UI features are not acceptable.
-- **The PM approves each phase before the next.** No phase is auto-approved.
-- **Acceptance criteria must be testable.** "User-friendly" is not a criterion. "Empty state shows message X with button Y" is.
-- **Read the existing PRD first.** Every feature exists in the context of what's already there. Don't propose something that contradicts or duplicates existing requirements without flagging it.
-- **Surface the real cost.** Do not let a feature sound easy in Phase 6 if the architecture implies it isn't. The PM needs accurate information to prioritize.

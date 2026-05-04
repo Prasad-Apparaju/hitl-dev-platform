@@ -275,12 +275,4 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ## Important Rules
 
-- Use **Mermaid** for ALL diagrams — never ASCII art
-- **No `<br/>` tags** inside Mermaid code blocks (breaks Obsidian rendering)
-- Follow the templates for consistent formatting
-- Do NOT generate implementation code — only documentation
-- Each phase requires explicit user approval before proceeding
-- In reverse-engineer mode, extract from ACTUAL code — do not invent or idealize
-- Mark anything uncertain as "INFERRED — needs verification"
-- The system manifest's human-authored fields (blurbs, mutations, preconditions) should be marked as "DRAFT" for the architect to fill in
 - If a domain is too large to document fully, document the public interface and mark internals as "DRAFT"

@@ -27,20 +27,36 @@ Before step 1, ask:
 
 ## Steps
 
-1. **Challenge before drafting** — before touching the PRD, ask the following. Apply the chosen challenge level:
+1. **Challenge before drafting** — before touching the PRD, ask the following. Apply the chosen challenge level.
+
+   **TODO deferral is always available.** Any time the PM says "not sure", "add to TODO", "come back to this", or similar — record the item and proceed. Do not block on it.
 
    - **[All levels]** "What is the delivery surface?" Web UI, mobile, API/backend only, agentic workflow, internal/ops tool, or a combination? Always required — blocks at every level.
-   - **[All levels]** "What evidence confirms this is a real problem?" Support tickets, analytics, user research, churn feedback.
-     - *Rigorous*: block until a specific data point is provided
-     - *Moderate*: flag if absent, proceed with a note
-     - *Light*: ask once; if no evidence, note it and proceed
-   - **[All levels]** "What does success look like?" Measured baseline + target, or hypothesis + validation plan for pre-launch work.
-     - *Rigorous*: block until specific
-     - *Moderate*: accept a rough metric or proxy; note the gap
+
+     *Follow-up probe (if vague or combo):* "Is there a primary surface, or are they equal-priority?"
+
+   - **[All levels]** "What evidence confirms this is a real problem?" What are users doing or saying that points to this gap?
+
+     *Follow-up probe (after any answer):* "Do you have a rough sense of how widespread this is — even a ballpark? If not, we can add it to open items."
+     - *Rigorous*: one follow-up probe; if still no data, offer TODO deferral and note the gap
+     - *Moderate*: offer TODO deferral if no data; note the gap and proceed
+     - *Light*: ask once; if no answer, note and proceed
+
+   - **[All levels]** "What does success look like?" What would tell you this feature worked?
+
+     *Follow-up probe (after any answer):* "Do you have a rough current baseline or a hypothesis for how you'd validate this? If not, we can park it."
+     - *Rigorous*: one follow-up probe; accept rough metric, hypothesis + validation plan, or TODO deferral
+     - *Moderate*: accept any answer or TODO deferral; note the gap
      - *Light*: ask once; note if vague
+
    - **[Rigorous + Moderate]** "What's explicitly out of scope?" Unstated non-goals become scope creep.
-     - *Rigorous*: block until answered
+     - *Rigorous*: one follow-up if skipped; offer TODO if still no answer
      - *Moderate*: ask; if skipped, note in summary
+
+   At the end of this step, if any items were deferred, present the open items list:
+
+   > **Open items to revisit before this feature ships:**
+   > - [ ] [Question label]: [what's missing]
 
    At **Light**, summarize any unanswered questions as "Gaps to revisit" in the draft rather than blocking on them.
 
@@ -78,8 +94,4 @@ Before step 1, ask:
 
 ## Important Rules
 
-- **Challenge stance applies at step 1.** See `skills/shared/challenge-stance.md` for the full standard. Do not add a requirement to the PRD for a problem that hasn't been justified with evidence.
 - Follow the EXACT format used in the existing PRD — don't invent a new structure
-- Requirements must be specific and testable — reject vague descriptions ("make it better")
-- Don't specify technical implementation — that's the architect's job
-- Always include error scenarios in use cases

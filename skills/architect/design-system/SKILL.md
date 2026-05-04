@@ -356,10 +356,4 @@ Present a completion summary:
 
 ## Important Rules
 
-- **Challenge stance applies throughout this skill.** See `skills/shared/challenge-stance.md` for the full standard — challenge rules, NFR interrogation checklist, and language guide. Never accept vague NFRs, aspirational requirements, or unstated tradeoffs. If a requirement is not specific and measurable, ask before designing.
-- The domain decomposition gate (Phase 2) is the only gate where the architect must confirm before the skill generates any artifacts. All other gates are per-artifact approvals. Phase 2 is special — get it wrong here and every subsequent artifact needs to be reworked.
-- Every DRAFT field in the manifest and LLDs is a placeholder for architect judgment. Do not invent concrete API signatures or data shapes that aren't grounded in the PRD.
-- Open ADRs on the foundational decision list (tech stack, data storage, auth, API style, deployment model) must be resolved before HLDs are generated. HLDs are meaningless without knowing the decisions they encode.
-- For greenfield systems, `files` and `tests` in the manifest are empty. That is correct — they are populated by the first implementations.
-- The output of this command is a starting point, not a finished product. Expect the first 10–15 feature implementations to correct and refine the DRAFT fields. That correction process is how the design becomes accurate.
-- Do not generate implementation code. This command produces design artifacts only.
+- Open ADRs on the foundational decision list (tech stack, data storage, auth, API style, deployment model) must be resolved before HLDs are generated.

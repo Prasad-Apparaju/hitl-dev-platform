@@ -161,8 +161,4 @@ When the user says "tests approved" and has addressed the checklist, proceed to 
 
 ## Important Rules
 
-- Never generate implementation code before tests exist and are reviewed
 - Never skip the human review step (Phase 2) — this is where domain expertise enters
-- If the LLD is too vague to generate tests from, say so and stop — do not guess
-- Register every test in the test registry with metadata
-- The test suite IS the refined specification — treat it as such

@@ -91,7 +91,4 @@ Report the scenario list to the developer. Confirm: "Review these scenarios — 
 
 ## Important Rules
 
-- This step is non-blocking — the developer may challenge or deprioritize scenarios, but must explicitly acknowledge each one
-- Regression-required scenarios (from past incidents) are the developer's to justify skipping, not QA's to drop silently
-- Do not generate generic scenarios — every scenario must trace to a specific LLD behavior or incident
-- If the LLD is too vague to generate concrete scenarios, flag that as a design gap before TDD starts
+- If the LLD is too vague to generate concrete scenarios, flag it as a design gap before TDD starts

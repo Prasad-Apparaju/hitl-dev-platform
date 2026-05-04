@@ -430,16 +430,3 @@ Present a completion summary:
 └─────────────────────────────────────────────────┘
 ```
 
----
-
-## Important Rules
-
-- **Challenge stance applies to Phase 1.** See `skills/shared/challenge-stance.md` for the full standard. Challenge vague requirements and unstated NFRs at Phase 1a before investing in design. In execution phases (LLD generation, test planning), trust the approved requirements and execute.
-- Every STOP gate requires explicit architect confirmation before proceeding
-- Do not generate LLDs before the HLD is approved
-- Do not assemble decision packets before LLDs and the slice plan are approved
-- Each decision packet must cover exactly one manifest domain — split any packet that references two domains
-- Sequential slice constraints must be stated explicitly in every packet that has a dependency
-- Mark all ADR stubs as DRAFT — the architect fills in rationale; do not invent it
-- Do not proceed past Phase 1 if no GitHub issue exists
-- Read artifacts from the repo; do not reason from memory about what the system looks like
