@@ -49,7 +49,7 @@ Each role has its own command set and setup guide:
 
 ### Installing the plugin
 
-The HITL platform is packaged as a Claude Code plugin. Installing it makes all 30 slash commands, subagents, and enforcement hooks available in your project.
+The HITL platform is packaged as a Claude Code plugin. Installing it makes all workflow commands, subagents, and enforcement hooks available in your project.
 
 **Step 1 — Clone the platform to a stable path on your machine**
 
@@ -88,7 +88,7 @@ Open Claude Code in your project directory and type `/`. You should see `/start-
 
 ### What it looks like after setup
 
-Once the plugin is installed, Claude Code auto-loads your project conventions and exposes all 30 workflow commands as slash commands. Type `/` to browse or `/namespace:` to filter by role (`/pm`, `/architect`, `/qa`, `/ops`). Run the appropriate `/start-*` command first if you are setting up a new project or onboarding an existing codebase.
+Once the plugin is installed, Claude Code auto-loads your project conventions and exposes all workflow commands as slash commands. Type `/` to browse or `/namespace:` to filter by role (`/pm`, `/architect`, `/qa`, `/ops`). Run the appropriate `/start-*` command first if you are setting up a new project or onboarding an existing codebase.
 
 ### Recommended: Fork and install as a shared platform
 
@@ -229,7 +229,7 @@ Design decisions are discussed as a team and captured in version-controlled docu
 4. **Verify**: Two-round AI code review → reconcile docs against implementation
 5. **Assess + Ship**: Downstream impact brief → risk-rated rollout plan → PR + lead integration verification → canary deploy
 
-Of 30 steps: 10 AI-driven, 11 AI-assisted, 9 human-only. Not every change uses all 30 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
+Of 31 steps: 10 AI-driven, 11 AI-assisted, 10 human-only. Not every change uses all 31 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
 
 → [Full 31-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
 

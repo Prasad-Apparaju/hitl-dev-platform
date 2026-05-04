@@ -3,19 +3,22 @@
 # This file is created BEFORE code generation. It proves that the change
 # traces back to approved decisions. Claude generates code FROM this packet.
 #
-# Location: docs/decisions/issue-<number>.yaml
+# Location: docs/decisions/issue-<number>.yaml           (single-slice)
+#           docs/decisions/issue-<number>-slice-<M>.yaml  (multi-slice, one file per slice)
 # Created by: developer or Claude during the design phase (step 3-8)
 # Consumed by: preflight script, CI traceability check, code review
 
 issue: NNN                          # GitHub issue number
+slice: null                         # slice number (M) for multi-slice changes; null for single-slice
 title: "Short description"
 change_type: feature                # feature | bugfix | refactor | infrastructure
 risk_level: medium                  # low | medium | high | critical
 
-# Which manifest domains does this change touch?
+# Which manifest domain does this change touch?
+# RULE: exactly one domain per packet. If two slices touch different domains,
+# create separate packet files (issue-<N>-slice-1.yaml, issue-<N>-slice-2.yaml).
 domains:
   - publishing
-  - data_layer
 
 # What design documents govern this change?
 source_docs:

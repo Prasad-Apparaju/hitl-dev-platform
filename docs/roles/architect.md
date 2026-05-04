@@ -25,7 +25,7 @@ You hold the design and integration gates. You review designs before implementat
 Run once at project inception. Takes the PRD and produces: domain decomposition, `docs/system-manifest.yaml`, system HLDs, foundational ADRs, domain LLDs, and the HITL process bootstrap. The domain decomposition gate is the most consequential — domain boundary errors cascade through every subsequent artifact.
 
 ### New Change (`/architect:design-feature`)
-Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with approval gates, ADR capture, slice decomposition (domain independence check), test case planning, and decision packet assembly. Produces `.hitl/current-change.yaml` set to `implementation-approved` and hands one decision packet per slice to each developer.
+Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with approval gates, ADR capture, slice decomposition (domain independence + demoable/observable check), test case planning, and decision packet assembly. Produces `.hitl/current-change.yaml` set to `implementation-approved` and hands one decision packet per slice to each developer.
 
 ### Design Review (`/architect:review-design`)
 Run after design docs are produced — before implementation starts. Check:
@@ -53,7 +53,7 @@ Gates should not block progress for more than 24 hours.
 
 ## Progress Breadcrumbs
 
-`/architect:design-feature` shows a 10-phase breadcrumb trail. The long trail reflects the full scope: impact analysis, ROI, HLD, ADRs, LLD, IaC, slice decomposition, test planning, training stub, and decision packet.
+`/architect:design-feature` shows a 10-phase breadcrumb trail. The long trail reflects the full scope: impact analysis, ROI, HLD, ADRs, LLD, IaC, slice decomposition (each slice must be demoable or observable — not just technically independent), test planning, training stub, and decision packet.
 
 ![/architect:design-feature progress breadcrumbs](../images/architect-design-feature-flow.svg)
 

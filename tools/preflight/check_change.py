@@ -183,8 +183,10 @@ def _resolve_packets_to_validate(
     """Return the specific decision packet(s) that should be validated.
 
     Strategy:
-    1. If we know the active issue number, look for docs/decisions/issue-<N>.yaml
-    2. Additionally include any decision packets that appear in the changed files
+    1. Include any decision packets that appear in the changed files
+    2. If we know the active issue number, look for:
+       - docs/decisions/issue-<N>.yaml          (single-slice)
+       - docs/decisions/issue-<N>-slice-*.yaml  (multi-slice, one per slice)
     3. Never scan all historical packets — they belong to other issues
     """
     seen: set[str] = set()
@@ -198,12 +200,21 @@ def _resolve_packets_to_validate(
                 packets.append(p)
                 seen.add(str(p))
 
-    # The packet for the active issue (may not be in the changed files)
+    # The packet for the active issue (may not be in the changed files).
+    # Supports both naming patterns:
+    #   - Single-slice:  docs/decisions/issue-<N>.yaml
+    #   - Multi-slice:   docs/decisions/issue-<N>-slice-<M>.yaml
     if issue:
         target = Path(f"docs/decisions/issue-{issue}.yaml")
         if target.exists() and str(target) not in seen:
             packets.append(target)
             seen.add(str(target))
+        decisions_dir = Path("docs/decisions")
+        if decisions_dir.exists():
+            for slice_packet in sorted(decisions_dir.glob(f"issue-{issue}-slice-*.yaml")):
+                if str(slice_packet) not in seen:
+                    packets.append(slice_packet)
+                    seen.add(str(slice_packet))
 
     return packets
 
@@ -245,7 +256,9 @@ def check_decision_packet(changed: list[str], issue: str | None = None, *, stric
     if not packets:
         return CheckResult(
             "decision-packet", False,
-            "Manifest-domain files changed but no decision packet found at docs/decisions/issue-<N>.yaml.",
+            "Manifest-domain files changed but no decision packet found. "
+            "Expected docs/decisions/issue-<N>.yaml (single-slice) or "
+            "docs/decisions/issue-<N>-slice-<M>.yaml (multi-slice).",
         )
 
     # Validate the contents of each packet

@@ -43,16 +43,14 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
-> **Brownfield (existing codebase not yet in HITL):** Two valid approaches — choose based on how much time you can invest upfront:
+> **Brownfield (existing codebase not yet in HITL):** Run `/start-brownfield` to onboard. It walks through the incremental setup: CLAUDE.md, system manifest, priority component docs, and registry stubs. Start change work immediately after — each undocumented component gets its LLD generated the first time you change it.
 >
-> | Approach | What you do first | Tradeoff |
+> | Approach | Steps | Tradeoff |
 > |---|---|---|
-> | **Full baseline sprint** (recommended) | Run the full reverse-engineer sprint via `/generate-docs reverse-engineer` — produces manifest, HLDs, LLDs, registries, and process setup before any change work starts | Cleaner start; AI output from step 1 is more reliable |
-> | **Incremental** | Run `/start-brownfield` — produces manifest, priority component docs, and registry stubs; start change work immediately | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
+> | **Incremental** (default) | `/start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
+> | **Full baseline sprint** (optional) | `/start-brownfield` → then `/generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
 >
-> In both cases, run `/start-brownfield` first. For the full sprint, it routes you to `/generate-docs reverse-engineer`. For incremental, it walks you through the lightweight setup. See the [adoption guide](adoption-guide.md) for full sprint details.
->
-> **Once onboarded (via either approach), the 31-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
+> **Once onboarded, the 31-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
