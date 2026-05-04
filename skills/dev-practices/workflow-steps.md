@@ -10,12 +10,12 @@ Before step 1, ensure these artifacts exist:
 
 | Artifact | New project | Brownfield |
 |---|---|---|
-| `docs/system-manifest.yaml` | Run `/architect/design-system` from your PRD | Run `/start` Path B → baseline sprint (`/generate-docs reverse-engineer`) |
+| `docs/system-manifest.yaml` | Run `/architect/design-system` from your PRD | Run `/start-brownfield` → baseline sprint (`/generate-docs reverse-engineer`) |
 | HLDs + LLDs | Produced by `/architect/design-system` | Produced by brownfield baseline sprint |
 | `docs/03-engineering/testing/test-registry.yaml` | Created empty by `/architect/design-system`; populated as changes land | Populate during baseline sprint from existing test catalog |
 | `docs/04-operations/incident-registry.yaml` | Starts empty; populated after each production incident | Seed during baseline sprint: "what broke in the last 6 months?" |
 
-If you have not done this yet, run `/start` — it detects your situation and routes you to the right setup path.
+If you have not done this yet, run `/start-prd`, `/start-brownfield`, or `/start-migration` — choose the one that fits your situation.
 
 **Brownfield accuracy note:** The manifest and LLDs produced by the baseline sprint start at 55–75% accuracy and improve as changes correct each area. For the first several changes on a brownfield project, treat AI output from steps 5, 10, and 14 as drafts requiring closer human review than on a well-established codebase.
 

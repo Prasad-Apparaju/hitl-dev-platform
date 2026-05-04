@@ -16,6 +16,8 @@ Before making ANY code or doc change, output these 7 lines in the chat BEFORE th
 6. **Downstream impact**: Affects other teams' mental models or deployment? If yes → impact brief required.
 7. **Plan**: State the order (docs → IaC → training plan → tests → code → review → impact brief → reconcile docs). Reconcile means: explicitly decide whether divergence reflects a better design (update docs) or unintended drift (fix code).
 
+If no HITL setup exists yet, offer the right start command: `/start-prd` (new project), `/start-brownfield` (existing codebase), or `/start-migration` (migration project).
+
 Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ---

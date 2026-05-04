@@ -48,9 +48,9 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 > | Approach | What you do first | Tradeoff |
 > |---|---|---|
 > | **Full baseline sprint** (recommended) | Run the full reverse-engineer sprint via `/generate-docs reverse-engineer` — produces manifest, HLDs, LLDs, registries, and process setup before any change work starts | Cleaner start; AI output from step 1 is more reliable |
-> | **Incremental** | Run `/start` Path B — produces manifest, priority component docs, and registry stubs; start change work immediately | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
+> | **Incremental** | Run `/start-brownfield` — produces manifest, priority component docs, and registry stubs; start change work immediately | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
 >
-> In both cases, run `/start` first. For the full sprint, it routes you to `/generate-docs reverse-engineer`. For incremental, it walks you through the lightweight setup. See the [adoption guide](adoption-guide.md) for full sprint details.
+> In both cases, run `/start-brownfield` first. For the full sprint, it routes you to `/generate-docs reverse-engineer`. For incremental, it walks you through the lightweight setup. See the [adoption guide](adoption-guide.md) for full sprint details.
 >
 > **Once onboarded (via either approach), the 31-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 

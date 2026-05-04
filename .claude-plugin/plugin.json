@@ -1,9 +1,11 @@
 {
   "name": "hitl-dev-platform",
   "version": "1.0.0",
-  "description": "HITL AI-Driven Development. Run /start to set up a new project or onboard an existing codebase. Then use /dev-practices for the full 30-step delivery workflow, role-specific commands (/pm, /architect, /qa, /ops), and enforcement hooks.",
+  "description": "HITL AI-Driven Development. Use /start-prd, /start-brownfield, or /start-migration to set up a project. Then use /dev-practices for the full 31-step delivery workflow, role-specific commands (/pm, /architect, /qa, /ops), and enforcement hooks.",
   "skills": [
-    "skills/start",
+    "skills/start-prd",
+    "skills/start-brownfield",
+    "skills/start-migration",
     "skills/dev-practices",
     "skills/apply-change",
     "skills/check-conventions",

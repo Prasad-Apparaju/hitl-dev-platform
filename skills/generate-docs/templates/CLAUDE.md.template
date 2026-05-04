@@ -4,9 +4,13 @@ These rules apply to EVERY Claude Code session that opens this repo. They ensure
 
 ## Getting Started
 
-If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively run `/start`. It detects whether this is a new project or an existing codebase and walks through the appropriate setup path.
+If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively offer the right start command based on the project situation:
 
-Do not wait for the user to discover `/start` on their own. Offer it immediately if the project appears unconfigured.
+- `/start-prd` — new project, no source code yet, starting from a PRD
+- `/start-brownfield` — existing codebase to onboard into HITL
+- `/start-migration` — migrating from one system to another
+
+Do not wait for the user to discover these on their own. Assess the project state and recommend the right one immediately if the project appears unconfigured.
 
 ## Preflight Check (MANDATORY)
 

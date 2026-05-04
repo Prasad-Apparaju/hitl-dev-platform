@@ -15,10 +15,13 @@ cat << 'BANNER'
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   HITL AI-Driven Development — platform active
 
-  Getting started:
-    /start           set up a new project or onboard this codebase
-    /dev-practices   begin a new change (full 31-step workflow)
-    /                browse all commands
+  Start a project:
+    /start-prd          new project from a PRD
+    /start-brownfield   onboard an existing codebase
+    /start-migration    migrate from one system to another
+
+  Run a change:
+    /dev-practices      begin a new change (full 31-step workflow)
 
   Roles: /pm  /architect  /qa  /ops
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
