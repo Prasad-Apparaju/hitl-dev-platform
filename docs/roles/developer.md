@@ -41,9 +41,15 @@ python3 -m graphify.serve graphify-out/graph.json   # keep running in background
 
 Skills fall back to direct file reads automatically if Graphify is not running — no action needed on small repos.
 
+## Progress Breadcrumbs
+
+`/tdd` shows a 7-phase breadcrumb trail through the full Red → Green → Refactor cycle. The human review phase (Phase 2) is an explicit stop — the breadcrumb stays on Review until you approve the tests.
+
+![/tdd progress breadcrumbs](../images/tdd-flow.svg)
+
 ## Further Reading
 
-- [Full 30-step workflow](../playbook/workflow-reference.md)
+- [Full 31-step workflow](../playbook/workflow-reference.md)
 - [TDD as design](../../skills/dev-practices/tdd-design.md)
 - [Downstream impact](../../skills/dev-practices/downstream-impact.md)
 - [Developer playbook template](../../templates/developer-playbook.md)

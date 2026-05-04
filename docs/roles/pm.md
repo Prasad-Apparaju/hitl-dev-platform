@@ -25,6 +25,18 @@ You define what gets built and why. You review AI-drafted PRDs, accept or reques
 - **After shipping:** Review the downstream impact brief — specifically section 4 (product mental model update). This is where you learn how your mental model needs to update.
 - **At demo:** Accept or request changes. Your feedback drives the next iteration.
 
+## Progress Breadcrumbs
+
+Every command shows a breadcrumb banner at the start of each phase — completed phases (✅), current phase (▶), and remaining phases (○). You always know where you are and what comes next.
+
+**`/pm:add-feature`** — 5-step process (Questions → Research → Draft → Review → Publish):
+
+![/pm:add-feature progress breadcrumbs](../images/pm-add-feature-flow.svg)
+
+**`/pm:design-feature`** — 7-phase process (Discovery → Journey → Edge Cases → Design → Criteria → Impact → PRD):
+
+![/pm:design-feature progress breadcrumbs](../images/pm-design-feature-flow.svg)
+
 ## Further Reading
 
 - [PM guide](../playbook/pm-guide.md)
