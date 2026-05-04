@@ -12,15 +12,37 @@ If `$ARGUMENTS` is empty, ask: "What feature do you want to add? Describe what t
 
 ---
 
+## Challenge Level — Ask First
+
+Before step 1, ask:
+
+> "What level of challenge would you like?
+> - **Rigorous** — I'll push back until I have specific answers. Nothing gets drafted without justification.
+> - **Moderate** — I'll ask all questions and flag gaps, but won't block on every one.
+> - **Light** — I'll ask the essentials only and move fast.
+>
+> Default is **Moderate** if you don't specify."
+
+---
+
 ## Steps
 
-1. **Challenge before drafting** — before touching the PRD, ask:
-   - "What is the delivery surface?" Web UI, mobile (iOS/Android/responsive), API/backend only, agentic workflow, internal/ops tool, or a combination? The answer shapes what acceptance criteria look like and what design artifacts the architect will need.
-   - "What evidence confirms this is a real problem?" Require a specific data point: support tickets, analytics, user research, churn feedback. "We think users want this" is not evidence — ask until a concrete data point is provided.
-   - "What does success look like?" For mature product work: require a current measured baseline and a target ("Increase X from N to M, measured by event Y"). For pre-launch systems, new capabilities, or internal tools where no baseline exists: require an explicit hypothesis with a validation plan ("We believe X will happen because Y; we'll validate with metric Z within timeframe T"). Aspirational intent without reasoning ("users will enjoy this") is not acceptable in either case.
-   - "What's explicitly out of scope?" Unstated non-goals become scope creep.
+1. **Challenge before drafting** — before touching the PRD, ask the following. Apply the chosen challenge level:
 
-   If any answer is vague, ask for the specific data point before proceeding. Do not draft a requirement for a problem that hasn't been justified.
+   - **[All levels]** "What is the delivery surface?" Web UI, mobile, API/backend only, agentic workflow, internal/ops tool, or a combination? Always required — blocks at every level.
+   - **[All levels]** "What evidence confirms this is a real problem?" Support tickets, analytics, user research, churn feedback.
+     - *Rigorous*: block until a specific data point is provided
+     - *Moderate*: flag if absent, proceed with a note
+     - *Light*: ask once; if no evidence, note it and proceed
+   - **[All levels]** "What does success look like?" Measured baseline + target, or hypothesis + validation plan for pre-launch work.
+     - *Rigorous*: block until specific
+     - *Moderate*: accept a rough metric or proxy; note the gap
+     - *Light*: ask once; note if vague
+   - **[Rigorous + Moderate]** "What's explicitly out of scope?" Unstated non-goals become scope creep.
+     - *Rigorous*: block until answered
+     - *Moderate*: ask; if skipped, note in summary
+
+   At **Light**, summarize any unanswered questions as "Gaps to revisit" in the draft rather than blocking on them.
 
 2. **Get the existing requirements structure** — prefer a graph query if available:
    ```

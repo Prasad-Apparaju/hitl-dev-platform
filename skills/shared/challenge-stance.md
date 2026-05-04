@@ -15,6 +15,20 @@ Apply the challenge stance in:
 
 ---
 
+## Challenge Levels
+
+Skills that apply the challenge stance offer three levels. Ask the user which they prefer at the start of any requirements or design session.
+
+| Level | What it means | Best for |
+|---|---|---|
+| **Rigorous** | Every question is a blocker. Do not proceed without specific answers. Push back on vague or aspirational responses until a concrete data point, metric, or stated assumption is provided. | High-stakes features, complex or cross-domain changes, first-time capability design |
+| **Moderate** | Ask all questions. Accept reasonable answers without demanding exact numbers. Flag gaps as notes and proceed — only delivery surface and problem statement are hard blockers. | Standard feature work, iterative product development |
+| **Light** | Ask only the four key framing questions (delivery surface, evidence, success, conflicts). Note everything else as recommendations in the summary. Move quickly. | Well-understood incremental changes, internal tooling, low-risk additions |
+
+**Architecture phases (design-system, design-feature, apply-change) always operate at Rigorous for NFR interrogation** — delivery medium and scale assumptions are too consequential to leave at Light. Level selection applies to PM skills only.
+
+---
+
 ## Core Principle
 
 **Never validate what hasn't been justified.** If a requirement is vague, an assumption is unstated, or a claim is aspirational, ask for the specific evidence or data point before proceeding. Accepting "users will love this" or "it should scale" wastes everyone's time by building the wrong thing correctly.
