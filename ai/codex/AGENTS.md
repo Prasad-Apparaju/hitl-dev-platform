@@ -698,6 +698,60 @@ Follow Phase R5 of the `Generate Documentation` section:
 6. For systems with 4+ domains: install Graphify (`pip install graphifyy && graphify install`)
 7. Generate `docs/README.md`
 
+### Phase 8 — Initial Delivery Plan
+
+Translate the approved design into ordered work packets — one per slice — that developers can pick up and execute independently.
+
+1. **Decompose each domain into initial slices.** For each domain, propose the minimum slices that build its foundational capability. A slice is work one developer completes in 2–5 days.
+
+   For each slice:
+   - `Slice ID`: `<domain>-<N>` (e.g. `billing-1`)
+   - `Delivers`: what gets built
+   - `Demo check`: "What does the PM see at the end of this slice?" — must be a user-visible feature or measurable outcome (record counts, latency delta). If the answer is "nothing visible yet", extend or merge the slice.
+   - `Dependencies`: which other slices must complete first
+
+2. **Sequence all slices** across domains into a delivery table ordered by dependency. Slices with no dependencies can run in parallel.
+
+3. **STOP — ask architect to confirm the delivery plan** before generating packets. Check: does each slice's demo check produce something concrete? Is the sequencing correct?
+
+4. **Generate one decision packet per confirmed slice** at `docs/decisions/issue-<N>-slice-<M>.yaml` (or `issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`:
+
+   ```yaml
+   issue: <N>
+   slice: <M>
+   title: "<domain> — initial implementation"
+   change_type: feature
+   risk_level: low
+   domains:
+     - <one domain only>
+   source_docs:
+     prd: "<PRD path>"
+     hld:
+       - "<HLD path from Phase 5>"
+     lld:
+       - "<LLD path from Phase 6>"
+     adr:
+       - "<governing ADR paths>"
+   tests:
+     plan: "<key test scenarios from facade APIs in this domain's LLD>"
+     new_tests: []
+     registry_updated: false
+   incidents:
+     checked: true
+     relevant: null
+   rollout:
+     risk: low
+     strategy: "Direct deploy — new system, no existing traffic"
+     go_no_go:
+       - "<observable criterion from demo check>"
+   roi:
+     required: false
+     estimate: null
+   impact_brief:
+     pm_mental_model: "<one sentence: what the PM can now demo or verify>"
+     risk_assessment: "<main risk for this slice>"
+   ```
+
 ### Output format
 
 ```
