@@ -33,16 +33,35 @@ Extract and summarize:
 | Explicit out-of-scope items | |
 | Open questions | |
 
-### 1b. Identify PRD gaps
+### 1b. Identify PRD gaps and interrogate NFRs
 
-Before proceeding, flag anything that will make domain decomposition ambiguous:
-- Missing: who owns what data?
-- Missing: which workflows cross multiple capability areas?
-- Missing: what are the consistency requirements between capabilities? (eventual vs. strong)
-- Missing: what's the scale profile? (matters for monolith vs service decisions)
-- Unresolved open questions that affect architecture (not product detail)
+**Do not proceed past this step with any unanswered item.** Missing NFRs at design time become architecture mistakes at build time.
 
-For each gap, ask the architect now — do not proceed with assumptions.
+#### Structural gaps — ask if absent or ambiguous
+
+- Who owns what data? Is data ownership unambiguous for each capability area?
+- Which workflows cross multiple capability areas? (matters for domain boundary decisions)
+- Where must operations succeed or fail together? (consistency requirements)
+- Any open questions that affect architecture, not product detail?
+
+#### NFR interrogation — mandatory if absent or vague in the PRD
+
+For each row below, check whether the PRD gives a specific, measurable answer. If it says "TBD", "should be fast", "needs to scale", or gives no answer — ask the architect or PM now, before proceeding:
+
+| NFR | If absent or vague, ask |
+|---|---|
+| **Throughput** | What is the expected peak load? (req/sec, messages/sec, or jobs/sec as appropriate) What is the peak-to-average ratio? When does peak occur — time of day, specific events? |
+| **Latency** | What is the p99 response time target for user-facing operations? Is there a different target for background operations? |
+| **Availability** | What is the uptime SLA? (99.9% = 8.7h downtime/year; 99.99% = 52 min/year) What is acceptable planned downtime per month? |
+| **Data volume** | How much data at launch? Growth rate per month/year? How long must data be retained? |
+| **Geographic distribution** | Single region or multi-region? Which regions? Any data residency or sovereignty requirements? |
+| **Consistency** | Where is strong consistency required? Where is eventual consistency acceptable? |
+| **Failure modes** | What happens when a key dependency is unavailable? Which operations must succeed under degradation? |
+| **Concurrency** | Are there operations that must be serialized? Any operations that could be triggered concurrently with the same inputs? |
+
+**Rule:** "We don't know yet" is not acceptable for throughput, availability, or consistency — these three drive every major architectural decision. If genuinely unknown, make a stated assumption with a specific number and flag it as a design risk. A named assumption the team can challenge is better than an unnamed one embedded in the architecture.
+
+For each gap or unanswered NFR, ask now. Do not proceed with assumptions.
 
 ### 1c. Gate — architect confirms requirements are complete
 
@@ -350,6 +369,7 @@ Present a completion summary:
 
 ## Important Rules
 
+- **Challenge stance applies throughout this skill.** See `skills/shared/challenge-stance.md` for the full standard — challenge rules, NFR interrogation checklist, and language guide. Never accept vague NFRs, aspirational requirements, or unstated tradeoffs. If a requirement is not specific and measurable, ask before designing.
 - The domain decomposition gate (Phase 2) is the only gate where the architect must confirm before the skill generates any artifacts. All other gates are per-artifact approvals. Phase 2 is special — get it wrong here and every subsequent artifact needs to be reworked.
 - Every DRAFT field in the manifest and LLDs is a placeholder for architect judgment. Do not invent concrete API signatures or data shapes that aren't grounded in the PRD.
 - Open ADRs on the foundational decision list (tech stack, data storage, auth, API style, deployment model) must be resolved before HLDs are generated. HLDs are meaningless without knowing the decisions they encode.

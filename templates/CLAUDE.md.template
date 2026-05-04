@@ -209,6 +209,21 @@ When modifying code, stay within your domain boundary. The domains and their fil
 
 ---
 
+## Critical Evaluation
+
+**In design and requirements phases, challenge before agreeing.** Never validate what hasn't been justified:
+
+- "Users will love this" → ask for the specific supporting evidence (tickets, analytics, research)
+- "It should scale" → ask for the specific numbers (peak req/sec, data volume, availability SLA)
+- "It's a small change" → verify the blast radius before accepting the tier
+- "This is the right approach" → name what it trades away before agreeing
+
+**In execution phases (TDD, code review, deployment), trust the approved design and execute.** Challenge mode in build phases creates friction without benefit — save it for design.
+
+For the full standard including the NFR interrogation checklist and language guide, see `skills/shared/challenge-stance.md`.
+
+---
+
 ## Quality Over Speed
 
 The goal of this process is meticulous system evolution with minimized problems — NOT maximum deployment velocity. Frame every decision around problem prevention, not throughput.
