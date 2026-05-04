@@ -145,22 +145,22 @@ Present to the PM. Get explicit approval: "Agent design approved" before proceed
 
 **Web UI / Mobile:** A visual reference is required before Phase 5. Text-only requirements for UI features are incomplete — the visual IS the spec for the frontend team. **Do not proceed to Phase 5 without one.**
 
-Ask the PM:
+Say to the PM:
 
-> "Do you already have a design for this — a Figma file, a screenshot from another tool, or even a photo of a hand-drawn sketch? If yes, share it and I'll annotate it with the edge cases from Phase 3. If not, let's generate it with Claude Design now."
+> "Let's prototype this with Claude Design now — I'll generate screens for each step we mapped in Phase 2. If you'd rather start from something you already have (Figma file, tool screenshot, hand-drawn sketch), share it and I'll annotate it instead. Otherwise, let's go."
 
-**If they share an image (any format — Figma export, tool screenshot, photo of sketch):**
-1. Acknowledge and read the image.
-2. Annotate: for each screen, note which Phase 3 edge cases are handled and which are missing.
-3. Identify any missing states (empty, loading, error, success) and propose how they should look.
-4. Present the annotated review. Iterate until the PM is satisfied.
-
-**If they have nothing:**
-1. Say: "Let's generate it with Claude Design. I'll create screens for each step from Phase 2."
-2. Generate screens for every journey step. Include states: default, empty, loading, error, success.
+**Primary path — Claude Design (preferred):**
+1. Generate screens for every journey step from Phase 2.
+2. Include states for every screen: default, empty, loading, error, success.
 3. Follow existing UI patterns — read `V1/web/components/` for the design system (shadcn/ui, Tailwind).
 4. Show the flow — how screens connect.
-5. Present and iterate until satisfied.
+5. Present and iterate until the PM is satisfied.
+
+**Alternative — PM provides an existing visual (Figma export, tool screenshot, hand-drawn sketch):**
+1. Read the image.
+2. Annotate: which Phase 3 edge cases are handled vs missing; which screen states are covered vs absent.
+3. Propose what the missing states should look like.
+4. Iterate until the PM is satisfied.
 
 Get explicit approval: "Design approved" before proceeding to Phase 5.
 
