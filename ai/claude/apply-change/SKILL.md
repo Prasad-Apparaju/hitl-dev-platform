@@ -76,26 +76,16 @@ If infrastructure is affected:
 - Does the local dev config need updating?
 
 ### Step 7: Initialize HITL Context File
-Create or update `.hitl/current-change.yaml` with the discovered information:
+Create or update `.hitl/current-change.yaml` using the schema at `docs/changes/change-context.schema.yaml`. See `docs/changes/GH-000-example.yaml` for a filled-in example.
 
-```yaml
-change_id: GH-<issue-number>
-tier: <0|1|2|3|4>
-status: planning
-source_artifacts:
-  issue: <url>
-  hld: <path or "pending">
-  lld: <path or "pending">
-manifest:
-  path: docs/system-manifest.yaml
-  domain: <domain-name>
-allowed_paths:
-  - <source paths for this domain>
-required_evidence: []
-approvals:
-  product: pending
-  architecture: pending
-```
+Set from the impact analysis above:
+- `change_id`: `GH-<issue-number>`
+- `tier`: from Step 3
+- `status`: `planning`
+- `source_artifacts.issue`: GitHub issue URL; set `hld` and `lld` to paths if known, or `"pending"`
+- `manifest.domain`: affected domain name
+- `allowed_paths`: source paths for this domain
+- `approvals.product` and `approvals.architecture`: both `pending`
 
 Ask the user to confirm the HITL context file before proceeding.
 

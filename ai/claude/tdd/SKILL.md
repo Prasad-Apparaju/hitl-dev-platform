@@ -78,9 +78,7 @@ Format: `---` line, `**TDD — Phase N / 7: [Name]**`, trail, `---`.
    - Convention tests (e.g., if `idempotency-keys` convention applies, test that the tool rejects missing keys)
    - Regression tests for every incident found in step 4
 
-7. **Register each new test** in the test registry (`docs/03-engineering/testing/test-registry.yaml`) with:
-   - domain, risk level, type (unit/integration/contract), origin: `tdd`
-   - For incident regression tests: include `incident_ref`
+7. **Register each new test** in `docs/03-engineering/testing/test-registry.yaml` using the schema from `ai/shared/templates/test-registry-template.yaml`. Required fields: `id`, `name`, `domain`, `risk`, `type`, `origin` (set to `tdd`), `file`. For incident regression tests, also set `incident_ref`.
 
 5. **Present all generated tests** to the user. Do NOT proceed to Phase 2 until the user reviews.
 

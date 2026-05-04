@@ -98,34 +98,17 @@ For token cost estimation, use the phase-level formula from `ai/claude/dev-pract
 
 ### 1g. Initialize `.hitl/current-change.yaml`
 
-Create or update:
+Create or update using the schema at `docs/changes/change-context.schema.yaml`. See `docs/changes/GH-000-example.yaml` for a filled-in example.
 
-```yaml
-change_id: GH-<issue-number>
-tier: <0–4>
-status: planning
-source_artifacts:
-  issue: <url>
-  hld: pending
-  lld: pending
-manifest:
-  path: docs/system-manifest.yaml
-  domain: <primary-domain>
-allowed_paths:
-  - <source paths for all affected domains>
-required_evidence: []
-approvals:
-  product: pending
-  architecture: pending
-token_tracking:
-  estimated:
-    total_cost_usd: <estimate>
-    by_phase:
-      design: <estimate>
-      build: <estimate>
-      verify: <estimate>
-      assess: <estimate>
-```
+Set from this impact analysis:
+- `change_id`: `GH-<issue-number>`
+- `tier`: from Step 1e
+- `status`: `planning`
+- `source_artifacts.issue`: GitHub issue URL; set `hld` and `lld` to `pending`
+- `manifest.domain`: primary affected domain
+- `allowed_paths`: source paths for all affected domains
+- `approvals.product` and `approvals.architecture`: both `pending`
+- `token_tracking.estimated`: populate with the cost estimate from Step 1f
 
 ### 1h. Gate — architect confirms scope
 
@@ -407,48 +390,32 @@ If no: state the reason explicitly (e.g., "No training plan required — this ex
 
 For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for a single-slice change) using `ai/shared/templates/decision-packet-template.yaml`.
 
-Fill all fields:
-```yaml
-issue: <N>
-title: "<slice description>"
-change_type: <feature|bugfix|refactor|infrastructure>
-risk_level: <low|medium|high|critical>  # derived from tier
+Use `ai/shared/templates/decision-packet-template.yaml` as the exact field schema — do not invent or omit fields. Populate each field from the work completed in prior phases:
 
-domains:
-  - <domain for this slice only>
-
-source_docs:
-  prd: "<PRD path if exists>"
-  hld:
-    - "<HLD path from Phase 3>"
-  lld:
-    - "<LLD path for this domain from Phase 5>"
-  adr:
-    - "<ADR paths from Phase 4 that apply to this slice>"
-
-tests:
-  plan: "<summary from Phase 8 for this slice>"
-  new_tests: [<list from Phase 8>]
-  registry_updated: false  # developer updates this when /tdd runs
-
-incidents:
-  checked: true
-  relevant: "<incident ID or null>"
-
-rollout:
-  risk: <low|medium|high|critical>
-  strategy: "<canary percentage + soak time — placeholder for ops to refine>"
-  go_no_go:
-    - "<criterion from LLD or incident history>"
-
-roi:
-  required: <true|false>
-  estimate: "<roi_estimate from .hitl/current-change.yaml, or null>"
-
-impact_brief:
-  pm_mental_model: "<one sentence: what changes for the PM's mental model of the system>"
-  risk_assessment: "<one sentence: main risk>"
-```
+| Field | Source |
+|---|---|
+| `issue` | GitHub issue number from Phase 1 |
+| `slice` | Slice number M; `null` if single-slice |
+| `title` | Slice description from Phase 7 |
+| `change_type` | Derived from issue type |
+| `risk_level` | Derived from tier (0–1 → low, 2 → medium, 3–4 → high/critical) |
+| `domains` | Exactly one — the domain for this slice from Phase 7 |
+| `source_docs.prd` | PRD path from Phase 1 |
+| `source_docs.hld` | HLD path from Phase 3 |
+| `source_docs.lld` | LLD path for this domain from Phase 5 |
+| `source_docs.adr` | ADR paths from Phase 4 that apply to this slice |
+| `tests.plan` | Test plan summary for this slice from Phase 8 |
+| `tests.new_tests` | Test list from Phase 8 |
+| `tests.registry_updated` | `false` — developer updates during `/tdd` |
+| `incidents.checked` | `true` |
+| `incidents.relevant` | Incident ID found in Phase 8, or `null` |
+| `rollout.risk` | Same as `risk_level` |
+| `rollout.strategy` | Canary percentage + soak time — placeholder for ops to refine |
+| `rollout.go_no_go` | Criteria from LLD or incident history (Phase 8) |
+| `roi.required` | `true` if effort > 1 day (Phase 1) |
+| `roi.estimate` | `roi_estimate` from `.hitl/current-change.yaml`, or `null` |
+| `impact_brief.pm_mental_model` | One sentence: what changes for the PM's mental model |
+| `impact_brief.risk_assessment` | One sentence: main risk |
 
 Update `.hitl/current-change.yaml`:
 - Add `source_artifacts.decision_packet` paths for all packets
