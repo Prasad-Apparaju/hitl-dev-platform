@@ -19,6 +19,37 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 ---
 
+## Repo Map
+
+```
+hitl-dev-platform/
+│
+│  ── AI runtime (Claude Code loads and executes these) ──────────────
+├── skills/          Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*, /migrate:*
+├── agents/          Subagent role definitions — invoked by skills for focused tasks (code review, QA, etc.)
+├── commands/        Lightweight slash commands — stateless single-purpose prompts
+├── hooks/           Enforcement hooks — run at PreToolUse/PostToolUse to enforce HITL requirements in real time
+├── .claude-plugin/  Plugin manifest — registers skills, agents, commands, and hooks with Claude Code
+│
+│  ── Codex CLI (parallel surface for OpenAI Codex users) ────────────
+├── codex/           AGENTS.md, hooks, install script — mirrors the Claude Code skill surface for Codex
+│
+│  ── Enforcement tools (run in CI or from the command line) ─────────
+├── tools/           Python tools: preflight traceability checker, manifest drift checker, manifest generator
+├── .semgrep/        Convention rules — run via semgrep in CI and pre-commit
+├── ci/              Copyable CI workflow templates — copy to .github/workflows/ in your product repo
+│
+│  ── Setup ──────────────────────────────────────────────────────────
+├── scripts/         init-project.sh — bootstraps a product repo (wires plugin, installs git hooks, copies tools)
+│
+│  ── Human-readable documentation ───────────────────────────────────
+├── docs/            Playbooks, role guides, patterns, reference material, quick-start
+├── templates/       Document templates to copy into product repos (PRD, ADR, manifest, decision packet, etc.)
+├── examples/        Worked examples of the process applied to specific project types
+```
+
+---
+
 ## Use This In Your Project
 
 Once installed, this is the welcome banner that appears at the start of every Claude Code session:
