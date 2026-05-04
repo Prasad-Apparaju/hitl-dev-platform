@@ -15,6 +15,21 @@ Deploy a verified artifact to the specified environment, following the approved 
 
 ---
 
+## Progress Banners
+
+Output the banner for the current step at the start of every step — before any checks or actions.
+
+Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
+
+| Step | Name | Banner trail |
+|---|---|---|
+| 1 | Pre-deploy Checks | `▶ Pre-deploy · ○ Confirm Config · ○ Execute · ○ Post-deploy` |
+| 2 | Confirm Config | `✅ Pre-deploy · ▶ Confirm Config · ○ Execute · ○ Post-deploy` |
+| 3 | Execute | `✅ Pre-deploy · ✅ Confirm Config · ▶ Execute · ○ Post-deploy` |
+| 4 | Post-deploy | `✅ Pre-deploy · ✅ Confirm Config · ✅ Execute · ▶ Post-deploy` |
+
+---
+
 ## Step 1 — Pre-deployment checks
 
 1. Read `.hitl/current-change.yaml` — confirm all three are true:

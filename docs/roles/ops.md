@@ -37,6 +37,12 @@ You own the release. You take the handoff from QA, assess deployment risk, deplo
 - QA verification (that is QA's gate)
 - Your approval is required for Tier 3+ releases; for Tier 2, your review is non-blocking but valued
 
+## Progress Breadcrumbs
+
+`/ops:deploy` shows a 4-step breadcrumb trail. Step 2 (Confirm Config) is an explicit confirmation gate — the skill presents the canary configuration and waits for your approval before executing.
+
+![/ops:deploy progress breadcrumbs](../images/ops-deploy-flow.svg)
+
 ## Further Reading
 
 - [Rollout strategy](../playbook/rollout-strategy.md)

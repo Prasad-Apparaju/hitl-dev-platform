@@ -30,6 +30,12 @@ You own quality verification — independently, after the developer hands off. Y
 - Release and deployment decisions (that is Ops)
 - You add tests when gaps are found — you do not delete developer-written tests without an explicit reason
 
+## Progress Breadcrumbs
+
+`/qa:verify-quality` shows a 5-step breadcrumb trail. Step 5 (Block or Approve) is the gate — the breadcrumb does not advance past it until you file all defects or post the approval comment.
+
+![/qa:verify-quality progress breadcrumbs](../images/qa-verify-quality-flow.svg)
+
 ## Further Reading
 
 - [Common pitfalls — process tiers](../playbook/common-pitfalls.md)

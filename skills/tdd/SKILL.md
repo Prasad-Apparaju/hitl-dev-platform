@@ -17,6 +17,24 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 
 ---
 
+## Progress Banners
+
+Output the banner for the current phase at the start of every phase — before any questions, analysis, or content.
+
+Format: `---` line, `**TDD — Phase N / 7: [Name]**`, trail, `---`.
+
+| Phase | Name | Banner trail |
+|---|---|---|
+| 1 | Generate Tests | `▶ RED · ○ Review · ○ Improve Design · ○ Verify RED · ○ GREEN · ○ Verify GREEN · ○ Refactor` |
+| 2 | Human Review | `✅ RED · ▶ Review · ○ Improve Design · ○ Verify RED · ○ GREEN · ○ Verify GREEN · ○ Refactor` |
+| 3 | Improve Design | `✅ RED · ✅ Review · ▶ Improve Design · ○ Verify RED · ○ GREEN · ○ Verify GREEN · ○ Refactor` |
+| 4 | Verify RED | `✅ RED · ✅ Review · ✅ Improve Design · ▶ Verify RED · ○ GREEN · ○ Verify GREEN · ○ Refactor` |
+| 5 | Generate Code | `✅ RED · ✅ Review · ✅ Improve Design · ✅ Verify RED · ▶ GREEN · ○ Verify GREEN · ○ Refactor` |
+| 6 | Verify GREEN | `✅ RED · ✅ Review · ✅ Improve Design · ✅ Verify RED · ✅ GREEN · ▶ Verify GREEN · ○ Refactor` |
+| 7 | Refactor | `✅ RED · ✅ Review · ✅ Improve Design · ✅ Verify RED · ✅ GREEN · ✅ Verify GREEN · ▶ Refactor` |
+
+---
+
 ## Phase 1 — Generate Tests (RED)
 
 1. **Read the LLD** for the component being implemented. If no LLD exists, stop (see refusal rule above).

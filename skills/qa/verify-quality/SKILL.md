@@ -15,6 +15,22 @@ Independent verification of the developer's handoff. You are the last gate befor
 
 ---
 
+## Progress Banners
+
+Output the banner for the current step at the start of every step — before any actions or content.
+
+Format: `---` line, `**Verify Quality — Step N / 5: [Name]**`, trail, `---`.
+
+| Step | Name | Banner trail |
+|---|---|---|
+| 1 | Read Handoff | `▶ Handoff · ○ Incidents · ○ Verify ACs · ○ Exploratory · ○ Block or Approve` |
+| 2 | Check Incidents | `✅ Handoff · ▶ Incidents · ○ Verify ACs · ○ Exploratory · ○ Block or Approve` |
+| 3 | Verify ACs | `✅ Handoff · ✅ Incidents · ▶ Verify ACs · ○ Exploratory · ○ Block or Approve` |
+| 4 | Exploratory Testing | `✅ Handoff · ✅ Incidents · ✅ Verify ACs · ▶ Exploratory · ○ Block or Approve` |
+| 5 | Block or Approve | `✅ Handoff · ✅ Incidents · ✅ Verify ACs · ✅ Exploratory · ▶ Block or Approve` |
+
+---
+
 ## Step 1 — Read the handoff context
 
 1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` for the acceptance criteria. The PRD is the source of truth — the issue is a pointer.

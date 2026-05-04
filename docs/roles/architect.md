@@ -51,6 +51,12 @@ Run the feature end-to-end and ask: "Does this actually do what the design said 
 
 Gates should not block progress for more than 24 hours.
 
+## Progress Breadcrumbs
+
+`/architect:design-feature` shows a 10-phase breadcrumb trail. The long trail reflects the full scope: impact analysis, ROI, HLD, ADRs, LLD, IaC, slice decomposition, test planning, training stub, and decision packet.
+
+![/architect:design-feature progress breadcrumbs](../images/architect-design-feature-flow.svg)
+
 ## Further Reading
 
 - [QA role guide](qa.md) — test review and quality verification

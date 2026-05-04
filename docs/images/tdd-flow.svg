@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 530" width="780" height="530" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <!-- Window chrome -->
+  <rect width="780" height="530" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="38" rx="10" fill="#313244"/>
+  <rect y="28" width="780" height="10" fill="#313244"/>
+  <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
+  <circle cx="40" cy="19" r="6" fill="#f9e2af"/>
+  <circle cx="60" cy="19" r="6" fill="#a6e3a1"/>
+  <text x="390" y="24" text-anchor="middle" fill="#cdd6f4" font-size="13" opacity="0.7">Claude Code — your-project · Developer</text>
+
+  <!-- Status bar -->
+  <rect x="16" y="52" width="748" height="24" rx="4" fill="#2a1e1e" stroke="#f38ba8" stroke-width="1" opacity="0.9"/>
+  <text x="28" y="68" fill="#f38ba8" font-size="11">✓  CLAUDE.md loaded · role: developer</text>
+
+  <!-- User message -->
+  <text x="28" y="100" fill="#6c7086" font-size="12">&gt; /tdd  #42 NotificationScheduler</text>
+  <rect x="60" y="88" width="2" height="14" fill="#cdd6f4" opacity="0.7"/>
+
+  <!-- ─── Phase 1 response ─── -->
+  <rect x="16" y="114" width="748" height="172" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+
+  <!-- Phase 1 breadcrumb banner (blue) -->
+  <rect x="28" y="124" width="724" height="48" rx="4" fill="#1c2640" stroke="#89b4fa" stroke-width="1"/>
+  <text x="40" y="142" fill="#89b4fa" font-size="12" font-weight="bold">TDD — Phase 1 / 7: Generate Tests</text>
+  <text x="40" y="162" font-size="12">
+    <tspan fill="#cba6f7" font-weight="bold">▶ RED</tspan><tspan fill="#45475a"> · ○ Review · ○ Improve Design · ○ Verify RED · ○ GREEN · ○ Verify GREEN · ○ Refactor</tspan>
+  </text>
+
+  <!-- Phase 1 content -->
+  <text x="28" y="194" fill="#cdd6f4" font-size="12">Reading LLD for NotificationScheduler — generating test suite (RED phase)</text>
+  <text x="40" y="214" font-size="12"><tspan fill="#f38ba8">❌</tspan><tspan fill="#a6adc8">  test_schedule_digest_creates_job_for_valid_user</tspan></text>
+  <text x="40" y="232" font-size="12"><tspan fill="#f38ba8">❌</tspan><tspan fill="#a6adc8">  test_schedule_digest_rejects_invalid_frequency</tspan></text>
+  <text x="40" y="250" font-size="12"><tspan fill="#f38ba8">❌</tspan><tspan fill="#a6adc8">  test_cancel_digest_removes_scheduled_job</tspan></text>
+  <text x="40" y="268" font-size="12"><tspan fill="#f38ba8">❌</tspan><tspan fill="#a6adc8">  test_INC041_quota_exceeded_returns_error_not_silent_fail</tspan></text>
+  <text x="28" y="278" fill="#6c7086" font-size="11" font-style="italic">  4 tests generated · Human review required before proceeding</text>
+
+  <!-- Spacer -->
+  <text x="28" y="304" fill="#45475a" font-size="11" font-style="italic">  · · · After Review, Design Improvement, and RED verified · · ·</text>
+
+  <!-- ─── Phase 5 response ─── -->
+  <rect x="16" y="314" width="748" height="162" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+
+  <!-- Phase 5 breadcrumb banner (green) -->
+  <rect x="28" y="324" width="724" height="48" rx="4" fill="#1a2a1a" stroke="#a6e3a1" stroke-width="1"/>
+  <text x="40" y="342" fill="#a6e3a1" font-size="12" font-weight="bold">TDD — Phase 5 / 7: Generate Code</text>
+  <text x="40" y="362" font-size="12">
+    <tspan fill="#a6e3a1">✅ RED · ✅ Review · ✅ Improve Design · ✅ Verify RED · </tspan><tspan fill="#cba6f7" font-weight="bold">▶ GREEN</tspan><tspan fill="#45475a"> · ○ Verify GREEN · ○ Refactor</tspan>
+  </text>
+
+  <!-- Phase 5 content -->
+  <text x="28" y="392" fill="#cdd6f4" font-size="12">All tests confirmed RED — generating simplest implementation...</text>
+  <text x="40" y="412" fill="#a6adc8" font-size="12">class NotificationScheduler:</text>
+  <text x="56" y="430" fill="#a6adc8" font-size="12">def schedule_digest(self, user_id, frequency):</text>
+  <text x="72" y="448" fill="#a6adc8" font-size="12">if frequency not in VALID_FREQUENCIES: raise InvalidFrequency</text>
+  <text x="28" y="466" fill="#6c7086" font-size="11" font-style="italic">  Present to user for review, then run Phase 6: Verify GREEN</text>
+
+  <!-- Bottom status -->
+  <rect x="0" y="494" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="507" fill="#6c7086" font-size="11">tdd · Phase 5 / 7 — Generate Code · 4 RED phases complete · 2 remaining</text>
+  <rect x="0" y="512" width="780" height="18" rx="0" fill="#181825"/>
+</svg>
