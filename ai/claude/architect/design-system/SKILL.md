@@ -1,6 +1,6 @@
 ---
 name: architect/design-system
-description: Design a new system from scratch starting from a PRD. Produces domain decomposition, system manifest, system-level HLDs, foundational ADRs, domain-level LLDs, and HITL process bootstrap. Run once at project inception. After this completes, use /architect/design-feature for individual changes.
+description: Design a new system from scratch starting from a PRD. Produces domain decomposition, system manifest, HLDs, ADRs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet ready to hand to a developer. Run once at project inception.
 argument-hint: "[path to PRD]"
 disable-model-invocation: true
 ---
@@ -316,6 +316,72 @@ Follow the instructions in Phase R5 of the `generate-docs` skill exactly. This s
 
 ---
 
+## Phase 8 — Initial Delivery Plan
+
+The design is complete. Now translate it into an ordered set of work packets — one per slice — that developers can pick up and execute independently using the 31-step workflow.
+
+### 8a. Decompose each domain into initial slices
+
+For each domain in the approved manifest, propose the minimum set of implementation slices that builds the domain's foundational capability. A slice is a unit of work one developer can complete in 2–5 days that produces something observable.
+
+For each proposed slice:
+
+```
+Slice:        <domain>-<N> (e.g. billing-1)
+Domain:       <domain name> — one domain only
+Delivers:     <what gets built in this slice>
+Demo check:   What does the PM see at the end of this slice?
+              Valid: user-visible feature or measurable outcome (record counts, latency, error rate)
+              Invalid: "nothing visible yet" → extend or merge with an adjacent slice
+Dependencies: which other slices must complete first (from interaction matrix)
+```
+
+**Rule:** If a slice cannot answer the demo check with something concrete, it is too narrow. Extend it forward to the next observable boundary or merge it with the slice that completes the visible outcome.
+
+### 8b. Sequence the slices
+
+Order all slices from all domains into a delivery sequence:
+
+- Slices with no dependencies → parallel, earliest sprint
+- Slices that depend on facade APIs from another domain → after that domain's foundational slice
+- Slices that share mutable state or contracts → sequential, not parallel
+
+Present as a table:
+
+| Order | Slice ID | Domain | Delivers | Demo check | Parallel with |
+|-------|----------|--------|----------|------------|---------------|
+| 1 | domain-a-1 | | | | domain-b-1 |
+| 1 | domain-b-1 | | | | domain-a-1 |
+| 2 | domain-c-1 | | | | — |
+
+### 8c. Gate — architect confirms delivery plan
+
+**STOP:**
+> "Here is the initial delivery plan — [N] slices across [M] domains. Before I generate decision packets:
+> 1. Does each slice's demo check produce something a PM can verify in the running app?
+> 2. Is the sequencing correct given the dependencies?
+> 3. Any slices that should be merged (too granular) or split (too large for one developer)?
+>
+> Say **"delivery plan confirmed"** to generate decision packets."
+
+### 8d. Generate decision packets
+
+For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`.
+
+Fill all fields:
+- `change_id`: slice ID (e.g. `billing-1`)
+- `domain`: exactly one domain from the manifest
+- `lld_path`: path to the domain LLD from Phase 6
+- `hld_path`: path to the relevant HLD from Phase 5
+- `adr_paths`: any ADRs that govern this slice's implementation decisions
+- `tier`: 2 for most initial domain implementations; 3 if cross-domain coordination is required
+- `status`: `design-approved`
+- `demo_check`: the observable outcome from 8a (what the PM sees)
+- `test_plan`: key test scenarios derivable from the LLD facade APIs
+- Leave `rollout_risk`, `roi_flag`, and `impact_brief` as placeholders — filled in by the developer
+
+---
+
 ## Output Summary
 
 Present a completion summary:
@@ -342,11 +408,14 @@ Present a completion summary:
 │  • ADR rationale sections: N docs                   │
 │  • LLD method signatures (DRAFT): N domains         │
 ├─────────────────────────────────────────────────────┤
+│ DELIVERY PLAN                                       │
+│  Slices: N  |  Parallel tracks: N  |  Packets: N   │
+├─────────────────────────────────────────────────────┤
 │ NEXT STEPS                                          │
 │  1. Fill in DRAFT fields in manifest and ADRs       │
-│  2. Run /architect/design-feature for first change  │
-│     — the first real implementation will correct    │
-│     DRAFT fields and calibrate the design           │
+│  2. Assign decision packets to developers           │
+│     — each developer receives one packet and runs   │
+│       the standard 31-step workflow from it         │
 │  3. Run /generate-docs reverse-engineer after the   │
 │     first sprint to reconcile design vs. built      │
 └─────────────────────────────────────────────────────┘
