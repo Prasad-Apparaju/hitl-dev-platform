@@ -37,7 +37,9 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
 1. **What is the delivery surface?** Web UI, mobile (iOS/Android/responsive web), API/backend only, agentic workflow (AI agent with no direct UI), internal/ops tool, or a combination? The answer gates which phases apply:
    - Backend-only or API → Phase 2 describes request/response flows, not screen steps; Phase 4 is skipped
    - Agentic → Phase 2 describes the agent's decision path and HITL gates; Phase 4 is replaced with tool/gate design
-   - Web or mobile UI → all phases apply as written
+   - Web or mobile UI → all phases apply, including **Phase 4 UI prototyping with Claude Design**
+
+   If the answer is Web or Mobile, say immediately: "Great — since this has a UI, we'll prototype it with Claude Design in Phase 4. Text-only requirements for UI features are incomplete; the prototype is part of the spec."
 
    *Follow-up probe (if the answer is vague or combo):* "Just to make sure I design the right flows — is there a primary surface, or are web and mobile truly equal-priority?"
 
@@ -141,17 +143,19 @@ Present a table of edge cases with proposed handling. Get confirmation before pr
 
 Present to the PM. Get explicit approval: "Agent design approved" before proceeding.
 
-**Web UI / Mobile:** Use **Claude Design** to create a visual prototype.
+**Web UI / Mobile:** Use **Claude Design** to create a visual prototype. This is required — do not skip it or replace it with a text description. Text-only requirements for UI features are incomplete; the prototype IS the spec for the frontend team.
 
 1. **Generate screens** for each step in the user journey from Phase 2.
-2. **Include states:**
-   - Default state (data loaded normally)
-   - Empty state (no data yet)
-   - Loading state (waiting for response)
-   - Error state (something went wrong)
-   - Success state (action completed)
+2. **Include states for every screen:**
+   - Default (data loaded normally)
+   - Empty (no data yet)
+   - Loading (waiting for response)
+   - Error (something went wrong)
+   - Success (action completed)
 3. **Follow existing UI patterns** — read `V1/web/components/` for the current design system (shadcn/ui, Tailwind). Match the existing look and feel.
 4. **Show the flow** — how screens connect to each other.
+
+Say to the PM: "Let's use Claude Design to prototype this now. I'll generate the screens for each step we mapped in Phase 2."
 
 Present the prototype to the PM. Iterate until they're satisfied. Get explicit approval: "Design approved" before proceeding.
 
