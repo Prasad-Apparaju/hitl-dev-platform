@@ -57,6 +57,9 @@ This is a 7-phase process. Do not skip phases or write to the PRD until all phas
 Ask one at a time. Wait for each answer before asking the next.
 
 1. **Delivery surface?** Web UI, mobile (iOS/Android/responsive), API/backend only, agentic workflow, internal/ops tool, or combination? This gates which later phases apply.
+   - Web or mobile UI → all phases apply, including **Phase 4 UI prototyping with Claude Design**. Say immediately: "Since this has a UI, we'll prototype it with Claude Design in Phase 4 — text-only requirements for UI features are incomplete."
+   - Backend/API only → Phase 4 skipped; acceptance criteria will be contract-shaped.
+   - Agentic → Phase 4 replaced with tool schema, decision flow, and HITL gate definitions.
    - *Follow-up (if vague):* "Is there a primary surface, or are they truly equal-priority?"
 
 2. **Who is this for?** Which persona from `docs/01-product/prd.md` §3?
@@ -108,7 +111,7 @@ Present a table: scenario | proposed handling. **STOP — get confirmation befor
 
 - **API/Backend only:** Skip — acceptance criteria in Phase 5 will be contract-shaped (request/response, error codes, edge cases).
 - **Agentic:** Produce (1) tool schema — name, inputs, outputs, failure modes; (2) decision flow — numbered trigger → tool calls → branches; (3) HITL gate definitions; (4) guardrails — actions the agent must never take autonomously. **STOP — get explicit approval: "Agent design approved."**
-- **Web/Mobile:** Generate visual prototype or detailed screen descriptions covering default, empty, loading, error, and success states. Follow existing UI patterns in the codebase. **STOP — get explicit approval: "Design approved."**
+- **Web/Mobile:** Use **Claude Design** to create a visual prototype. This is required — do not skip it or substitute a text description. Say: "Let's prototype this with Claude Design now. I'll generate screens for each step from Phase 2." Generate screens for every journey step, with states: default, empty, loading, error, success. Follow existing UI patterns in the codebase. **STOP — iterate until satisfied. Get explicit approval: "Design approved."**
 
 #### Phase 5 — Acceptance Criteria
 
