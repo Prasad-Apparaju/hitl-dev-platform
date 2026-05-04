@@ -44,7 +44,7 @@ hitl-dev-platform/
 ├── docs/
 │   ├── [playbook etc.]   Playbooks, role guides, patterns, reference, quick-start
 │   └── examples/         Worked examples of the process applied to specific project types
-├── templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
+├── ai/templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
 ```
 
 ---

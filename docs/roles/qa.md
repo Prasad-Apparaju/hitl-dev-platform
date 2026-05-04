@@ -40,5 +40,5 @@ You own quality verification — independently, after the developer hands off. Y
 
 - [Common pitfalls — process tiers](../playbook/common-pitfalls.md)
 - [Workflow reference — QA steps](../playbook/workflow-reference.md)
-- [Test registry template](../../templates/test-registry-template.yaml)
-- [Incident registry template](../../templates/incident-registry-template.yaml)
+- [Test registry template](../../ai/templates/test-registry-template.yaml)
+- [Incident registry template](../../ai/templates/incident-registry-template.yaml)

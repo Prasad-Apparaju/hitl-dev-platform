@@ -36,7 +36,7 @@ Otherwise → use **New Feature Mode** (Phase 1-2 below).
 
 1. **Determine the feature name** from the user's description. Use kebab-case (e.g., `campaign-scheduler`).
 
-2. **Create `docs/02-design/technical/hld/<feature-name>.md`** using the template at `templates/hld-template.md`. The document must contain:
+2. **Create `docs/02-design/technical/hld/<feature-name>.md`** using the template at `ai/templates/hld-template.md`. The document must contain:
    - Executive summary
    - System architecture diagram (Mermaid `graph TB`)
    - Component overview table with responsibilities
@@ -61,7 +61,7 @@ Only proceed after HLD approval.
    - `security/` — Auth, guards
    - `config/` — Configuration
 
-2. **For each component**, create `docs/02-design/technical/lld/<category>/<component-name>.md` using `templates/lld-component-template.md`. Each file must include:
+2. **For each component**, create `docs/02-design/technical/lld/<category>/<component-name>.md` using `ai/templates/lld-component-template.md`. Each file must include:
    - Overview + purpose
    - Mermaid class diagram
    - Method signatures with parameters, return types, descriptions
@@ -124,7 +124,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R2 — HLDs (Days 2-3 equivalent)
 
-1. **For each major system area**, generate an HLD using `templates/hld-template.md`:
+1. **For each major system area**, generate an HLD using `ai/templates/hld-template.md`:
    - Read the actual source code for that area
    - Extract the architecture from what EXISTS, not what should exist
    - Use real class names, real endpoints, real data flows
@@ -142,7 +142,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R3 — LLDs (Days 3-4 equivalent)
 
-1. **For each domain in the manifest**, generate LLDs using `templates/lld-component-template.md`:
+1. **For each domain in the manifest**, generate LLDs using `ai/templates/lld-component-template.md`:
    - Read the actual source files listed in the manifest's domain entry
    - Extract real class hierarchies, method signatures, dependencies
    - Generate class diagrams from the actual code (via AST analysis)
@@ -165,7 +165,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Authentication/authorization approach (from middleware/guards)
    - Error handling patterns (from try/catch patterns, error classes)
 
-2. **For each detected decision**, generate a forensic ADR using `templates/adr-template.md`:
+2. **For each detected decision**, generate a forensic ADR using `ai/templates/adr-template.md`:
    - Context: "Based on the code, this system uses [X]"
    - Decision: "The decision appears to be [Y]"
    - Rationale: "The likely rationale is [Z]"
@@ -181,7 +181,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R5 — Process Setup (Day 5 equivalent)
 
-1. **Generate `CLAUDE.md`** from the template at `templates/CLAUDE.md.template`:
+1. **Generate `CLAUDE.md`** from the template at `ai/templates/CLAUDE.md.template`:
    - Fill in the cross-cutting conventions discovered in Phase R1 (inline, not just links)
    - Fill in the coding standards detected from the codebase:
      - Language + framework (from imports / package.json / pyproject.toml)
@@ -208,7 +208,7 @@ This mode reads the existing codebase and generates the full documentation basel
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR
 
-5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `templates/issue-template.md`:
+5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `ai/templates/issue-template.md`:
    - Pre-filled with the ROI estimation section
    - Includes downstream impact brief prompts
    - Includes training plan link placeholder
@@ -228,7 +228,7 @@ This mode reads the existing codebase and generates the full documentation basel
    - Any custom framework or abstraction used across 3+ files
    - Any external system integration (API clients, SDKs)
    - Any architectural pattern that deviates from the framework default
-   - For each candidate, create a stub at `docs/03-engineering/training/<name>.md` using `templates/training-plan-template.md` with module outlines and reading lists pointing to the just-generated LLDs
+   - For each candidate, create a stub at `docs/03-engineering/training/<name>.md` using `ai/templates/training-plan-template.md` with module outlines and reading lists pointing to the just-generated LLDs
 
 9. **Generate the docs README** — `docs/README.md` with:
    - A table of contents linking to all HLDs, LLDs, ADRs, training plans

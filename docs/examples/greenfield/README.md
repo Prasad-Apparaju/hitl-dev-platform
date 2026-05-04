@@ -34,10 +34,10 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
 
 6. **PR template** is already in place at `.github/PULL_REQUEST_TEMPLATE.md` — it enforces traceability on every pull request (linked issue, manifest domains, design docs, test plan, rollout plan, impact brief)
 
-7. **Decision packets** go in `docs/decisions/issue-NNN.yaml` — Claude generates one per change before writing code. The template is at `../../templates/decision-packet-template.yaml`
+7. **Decision packets** go in `docs/decisions/issue-NNN.yaml` — Claude generates one per change before writing code. The template is at `../../ai/templates/decision-packet-template.yaml`
 
 ## Next steps
 
 - Read [../../docs/playbook/adoption-guide.md](../../docs/playbook/adoption-guide.md) for the full brownfield adoption guide
 - Read [../../docs/playbook/process-overview.md](../../docs/playbook/process-overview.md) for the workflow details
-- Copy [../../templates/issue-template.md](../../templates/issue-template.md) to `.github/ISSUE_TEMPLATE/`
+- Copy [../../ai/templates/issue-template.md](../../ai/templates/issue-template.md) to `.github/ISSUE_TEMPLATE/`

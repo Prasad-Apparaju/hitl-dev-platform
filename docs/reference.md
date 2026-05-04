@@ -439,24 +439,24 @@ Feature work proceeds when blockers are zero.
 
 | Template | Source | Use when |
 |----------|--------|----------|
-| PRD | [templates/prd-template.md](../templates/prd-template.md) | Writing product requirements |
-| CLAUDE.md | [templates/CLAUDE.md.template](../templates/CLAUDE.md.template) | Setting up a new project |
+| PRD | [ai/templates/prd-template.md](../ai/templates/prd-template.md) | Writing product requirements |
+| CLAUDE.md | [ai/templates/CLAUDE.md.template](../ai/templates/CLAUDE.md.template) | Setting up a new project |
 | System manifest schema | [ai/generate-docs/templates/system-manifest.schema.yaml](../ai/generate-docs/templates/system-manifest.schema.yaml) | Creating a manifest |
-| Issue template | [templates/issue-template.md](../templates/issue-template.md) | Every issue |
-| ADR template | [templates/adr-template.md](../templates/adr-template.md) | Every architectural decision |
-| Training plan | [templates/training-plan-template.md](../templates/training-plan-template.md) | New capability introduced |
-| Test strategy | [templates/test-strategy-template.md](../templates/test-strategy-template.md) | Planning tests for a vertical slice |
-| Security audit | [templates/security-audit-template.md](../templates/security-audit-template.md) | Security assessment |
-| Best practices | [templates/best-practices-template.md](../templates/best-practices-template.md) | Documenting domain practices |
-| Cost analysis | [templates/cost-analysis-template.md](../templates/cost-analysis-template.md) | Infrastructure cost comparison |
-| Performance optimization | [templates/performance-optimization-template.md](../templates/performance-optimization-template.md) | Tiered optimization plan |
-| Data model mapping | [templates/data-model-mapping-template.md](../templates/data-model-mapping-template.md) | Schema migration (field-by-field) |
-| API contract mapping | [templates/api-contract-mapping-template.md](../templates/api-contract-mapping-template.md) | Endpoint migration mapping |
-| Decision catalog | [templates/consolidated-decisions-template.md](../templates/consolidated-decisions-template.md) | Consolidated decision reference |
-| Test registry | [templates/test-registry-template.yaml](../templates/test-registry-template.yaml) | Setting up test tracking |
-| Incident registry | [templates/incident-registry-template.yaml](../templates/incident-registry-template.yaml) | Setting up incident tracking |
-| Deployment manifest | [templates/deployment-manifest-template.yaml](../templates/deployment-manifest-template.yaml) | Service inventory with health checks |
-| Admin guide | [templates/admin-guide-template.md](../templates/admin-guide-template.md) | Admin UI documentation for operators |
+| Issue template | [ai/templates/issue-template.md](../ai/templates/issue-template.md) | Every issue |
+| ADR template | [ai/templates/adr-template.md](../ai/templates/adr-template.md) | Every architectural decision |
+| Training plan | [ai/templates/training-plan-template.md](../ai/templates/training-plan-template.md) | New capability introduced |
+| Test strategy | [ai/templates/test-strategy-template.md](../ai/templates/test-strategy-template.md) | Planning tests for a vertical slice |
+| Security audit | [ai/templates/security-audit-template.md](../ai/templates/security-audit-template.md) | Security assessment |
+| Best practices | [ai/templates/best-practices-template.md](../ai/templates/best-practices-template.md) | Documenting domain practices |
+| Cost analysis | [ai/templates/cost-analysis-template.md](../ai/templates/cost-analysis-template.md) | Infrastructure cost comparison |
+| Performance optimization | [ai/templates/performance-optimization-template.md](../ai/templates/performance-optimization-template.md) | Tiered optimization plan |
+| Data model mapping | [ai/templates/data-model-mapping-template.md](../ai/templates/data-model-mapping-template.md) | Schema migration (field-by-field) |
+| API contract mapping | [ai/templates/api-contract-mapping-template.md](../ai/templates/api-contract-mapping-template.md) | Endpoint migration mapping |
+| Decision catalog | [ai/templates/consolidated-decisions-template.md](../ai/templates/consolidated-decisions-template.md) | Consolidated decision reference |
+| Test registry | [ai/templates/test-registry-template.yaml](../ai/templates/test-registry-template.yaml) | Setting up test tracking |
+| Incident registry | [ai/templates/incident-registry-template.yaml](../ai/templates/incident-registry-template.yaml) | Setting up incident tracking |
+| Deployment manifest | [ai/templates/deployment-manifest-template.yaml](../ai/templates/deployment-manifest-template.yaml) | Service inventory with health checks |
+| Admin guide | [ai/templates/admin-guide-template.md](../ai/templates/admin-guide-template.md) | Admin UI documentation for operators |
 
 ---
 

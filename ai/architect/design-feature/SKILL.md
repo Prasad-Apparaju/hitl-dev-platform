@@ -224,7 +224,7 @@ After HLD approval:
 
 1. From the approved HLD, identify every design decision — framework choice, pattern selection, tradeoff made, constraint accepted.
 
-2. For each decision that is not already documented in an existing ADR, create a stub at `docs/02-design/technical/adrs/<decision-slug>.md` using `templates/adr-template.md`. Mark status as "DRAFT — architect to complete rationale."
+2. For each decision that is not already documented in an existing ADR, create a stub at `docs/02-design/technical/adrs/<decision-slug>.md` using `ai/templates/adr-template.md`. Mark status as "DRAFT — architect to complete rationale."
 
 3. Ask the architect:
    > "I've created stubs for [N] decisions I found in the HLD. Are there decisions being made here that aren't visible in the design — things the team discussed, constraints from legal or ops, or choices you ruled out?"
@@ -397,7 +397,7 @@ Check if the change introduces any of:
 - A new ML/AI technique
 - A refactor that significantly changes how engineers reason about a subsystem
 
-If yes: create a stub at `docs/03-engineering/training/<capability>.md` using `templates/training-plan-template.md`. Link to the relevant LLDs and ADRs. Mark sections as "DRAFT — architect to complete."
+If yes: create a stub at `docs/03-engineering/training/<capability>.md` using `ai/templates/training-plan-template.md`. Link to the relevant LLDs and ADRs. Mark sections as "DRAFT — architect to complete."
 
 If no: state the reason explicitly (e.g., "No training plan required — this extends an existing pattern.").
 
@@ -405,7 +405,7 @@ If no: state the reason explicitly (e.g., "No training plan required — this ex
 
 ## Phase 10 — Decision Packet Assembly (Step 9)
 
-For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for a single-slice change) using `templates/decision-packet-template.yaml`.
+For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for a single-slice change) using `ai/templates/decision-packet-template.yaml`.
 
 Fill all fields:
 ```yaml

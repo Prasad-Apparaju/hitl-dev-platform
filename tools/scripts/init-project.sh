@@ -112,7 +112,7 @@ mkdir -p \
 echo "✓ docs/ directory structure"
 
 if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
-  MANIFEST_TMPL="$PLATFORM_ROOT/templates/system-manifest-template.yaml"
+  MANIFEST_TMPL="$PLATFORM_ROOT/ai/templates/system-manifest-template.yaml"
   if [[ -f "$MANIFEST_TMPL" ]]; then
     cp "$MANIFEST_TMPL" "$TARGET_DIR/docs/system-manifest.yaml"
     echo "✓ docs/system-manifest.yaml — fill in your domains and API boundaries"
