@@ -38,13 +38,18 @@ Format: `---` line, `**Design Feature — Phase N / 10: [Name]**`, trail, `---`.
 
 ### 1a. Read and challenge the issue
 
-Fetch the GitHub issue from $ARGUMENTS. Extract: title, description, PRD reference (FR-<ID>), any linked Figma references. Then read `docs/01-product/prd.md` at the FR-<ID> to get the current acceptance criteria — the issue is a pointer, the PRD is the source of truth for the spec.
+Fetch the GitHub issue from $ARGUMENTS. Extract: title, description, any linked Figma references.
 
-Before reading the manifest or doing any analysis, challenge the issue:
+**Detect project type and locate the requirements source:**
 
-1. **Is the problem statement specific?** If the issue says "users want X" or "improve Y" without data, ask: "What evidence supports this — support tickets, analytics, churn feedback, user research?"
+- **Migration project** — if `docs/00-migration/migration-brief.md` exists, that file is the requirements source. It replaces `docs/01-product/prd.md`. Read it in full. The issue title should reference the migration slice being designed; the migration brief is the source of truth for acceptance criteria and NFRs. Do not look for an `FR-<ID>` pointer — migration slices reference `MR-<ID>` from the brief instead.
+- **Standard project** — extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement. The issue is a pointer; the PRD is the source of truth.
+
+Before reading the manifest or doing any analysis, challenge the issue against its requirements source:
+
+1. **Is the problem statement specific?** If the issue says "users want X" or "improve Y" without data, ask: "What evidence supports this — support tickets, analytics, churn feedback, user research?" For migration: "What in the migration brief or external reference docs supports this slice being needed now?"
 2. **Are the acceptance criteria testable?** Vague AC ("should feel fast", "user-friendly") cannot drive an LLD or tests. Ask for specific, measurable criteria before proceeding.
-3. **Are NFRs relevant to this change stated?** If the change affects throughput, latency, or availability, are the targets in the issue or findable in the PRD? If not, ask — see `skills/shared/challenge-stance.md` for the full NFR checklist.
+3. **Are NFRs relevant to this change stated?** If the change affects throughput, latency, or availability, are the targets in the issue or findable in the requirements source? If not, ask — see `skills/shared/challenge-stance.md` for the full NFR checklist.
 4. **Is the proposed solution the right solution?** State the problem, then ask: "Is there a simpler approach that would solve the same problem?" If yes, name it and the tradeoff before designing the proposed solution.
 
 If any answer is unsatisfactory, resolve it now — not after the HLD is generated.

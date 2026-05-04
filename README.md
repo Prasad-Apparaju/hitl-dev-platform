@@ -78,7 +78,7 @@ _Option B: Global install_ — add the plugin to your user-level Claude Code set
 
 **Step 3 — Verify**
 
-Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, and the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`). If the commands do not appear, confirm the plugin path in `.claude/settings.json` points to the correct location of your platform clone.
+Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If the commands do not appear, confirm the plugin path in `.claude/settings.json` points to the correct location of your platform clone.
 
 **Step 4 — Run the appropriate start command**
 

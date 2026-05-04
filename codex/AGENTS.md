@@ -734,7 +734,7 @@ This section covers everything from impact analysis through decision packet asse
 
 ### Phase 1 — Impact Analysis and Scope
 
-1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Extract the PRD reference (FR-<ID>) from the issue, then read `docs/01-product/prd.md` at that requirement for the acceptance criteria — the issue is a pointer, the PRD is the source of truth. Before reading the manifest or doing any analysis, challenge: Is the problem backed by evidence (not just intent)? Are the AC in the PRD testable and specific? Are NFRs relevant to the affected domain stated? Is there a simpler approach? Resolve gaps now. See `skills/shared/challenge-stance.md` for the full standard.
+1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Detect the requirements source: if `docs/00-migration/migration-brief.md` exists this is a migration project — read the brief as the requirements source (it replaces `docs/01-product/prd.md`; slices reference `MR-<ID>` not `FR-<ID>`). Otherwise extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement — the issue is a pointer, the PRD is the source of truth. Before reading the manifest, challenge: Is the problem backed by evidence? Are the AC testable and specific? Are NFRs for the affected domain stated? Is there a simpler approach? Resolve gaps now. See `skills/shared/challenge-stance.md` for the full standard.
 2. Read the system manifest — prefer a graph query:
    ```
    /graphify query "all domains and facade APIs"
