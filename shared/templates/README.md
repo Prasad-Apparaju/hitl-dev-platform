@@ -1,4 +1,4 @@
-# ai/templates/
+# shared/templates/
 
 **Document scaffolds used by AI skills** — skills read these and fill them in. Humans receive the completed output, not these raw files.
 
@@ -15,4 +15,4 @@
 | `pull-request-template.md` | `/conclude` |
 | `*-template.md` (others) | `/generate-docs`, `/architect:*` |
 
-HLD, LLD, ADR, and CLAUDE.md templates live in `ai/generate-docs/templates/` — co-located with the skill that uses them.
+HLD, LLD, ADR, and CLAUDE.md templates live in `claude/generate-docs/templates/` — co-located with the skill that uses them.

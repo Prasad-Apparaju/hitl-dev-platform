@@ -11,7 +11,7 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 **Where this is not a good fit as written:** understaffed startups, teams without good CI or test discipline, teams where most work is small bugfixes and iterative UX changes, or teams without an architect or senior lead who can own the review gates.
 
-> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool. A [Codex CLI](https://github.com/openai/codex) version is also provided — see [Install for Codex CLI](#install-for-codex-cli). The process works with any AI coding assistant that supports auto-loaded project rules. The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
+> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool. A [Codex CLI](https://github.com/openclaude/codex) version is also provided — see [Install for Codex CLI](#install-for-codex-cli). The process works with any AI coding assistant that supports auto-loaded project rules. The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
 
 > **Language note:** Enforcement tooling currently targets Python codebases. The process and documentation workflow are language-agnostic — only the automated checks are Python-first.
 
@@ -25,7 +25,7 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 hitl-dev-platform/
 │
 │  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
-├── ai/
+├── claude/
 │   ├── [skill folders]   Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*
 │   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
@@ -44,7 +44,7 @@ hitl-dev-platform/
 ├── docs/
 │   ├── [playbook etc.]   Playbooks, role guides, patterns, reference, quick-start
 │   └── examples/         Worked examples of the process applied to specific project types
-├── ai/templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
+├── shared/templates/            Document templates to copy into product repos (PRD, ADR, manifest, etc.)
 ```
 
 ---

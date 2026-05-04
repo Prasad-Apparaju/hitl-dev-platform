@@ -13,4 +13,4 @@ Commands are single `.md` files with a prompt. Unlike skills (which have structu
 | `check-implementation.md` | Two-round spec conformance review (invokes `spec-conformance-reviewer` agent) |
 | others | See subdirectories for PM, QA, and workflow commands |
 
-The distinction from `ai/`: commands are stateless one-shot prompts; skills orchestrate multi-step workflows with approval gates and produce artifacts.
+The distinction from `claude/`: commands are stateless one-shot prompts; skills orchestrate multi-step workflows with approval gates and produce artifacts.

@@ -93,7 +93,7 @@ CLAUDE_DEST="$TARGET_DIR/CLAUDE.md"
 if [[ -f "$CLAUDE_DEST" ]]; then
   echo "  CLAUDE.md already exists — skipping"
 else
-  TMPL="$PLATFORM_ROOT/ai/generate-docs/templates/CLAUDE.md.template"
+  TMPL="$PLATFORM_ROOT/claude/generate-docs/templates/CLAUDE.md.template"
   if [[ -f "$TMPL" ]]; then
     cp "$TMPL" "$CLAUDE_DEST"
     echo "✓ CLAUDE.md — customize with your project's coding standards"
@@ -112,7 +112,7 @@ mkdir -p \
 echo "✓ docs/ directory structure"
 
 if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
-  MANIFEST_TMPL="$PLATFORM_ROOT/ai/templates/system-manifest-template.yaml"
+  MANIFEST_TMPL="$PLATFORM_ROOT/shared/templates/system-manifest-template.yaml"
   if [[ -f "$MANIFEST_TMPL" ]]; then
     cp "$MANIFEST_TMPL" "$TARGET_DIR/docs/system-manifest.yaml"
     echo "✓ docs/system-manifest.yaml — fill in your domains and API boundaries"
@@ -160,13 +160,13 @@ setup_claude() {
 
   if [[ -f "$SETTINGS" ]]; then
     echo "  .claude/settings.json already exists — add plugin entry manually:"
-    echo "    \"plugins\": [\"$PLATFORM_ROOT/.claude-plugin/plugin.json\"]"
+    echo "    \"plugins\": [\"$PLATFORM_ROOT/claude/plugin/plugin.json\"]"
   else
     # The plugin path is written at init time. Re-run this script if the
     # platform is ever moved to a different path.
     cat > "$SETTINGS" <<JSON
 {
-  "plugins": ["$PLATFORM_ROOT/.claude-plugin/plugin.json"],
+  "plugins": ["$PLATFORM_ROOT/claude/plugin/plugin.json"],
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -214,7 +214,7 @@ JSON
     for hook in welcome check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
-exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/ai/hooks/$hook.sh" "\$@"
+exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/claude/hooks/$hook.sh" "\$@"
 WRAPPER
       chmod 750 "$HOOKS_DIR/$hook.sh"
     done

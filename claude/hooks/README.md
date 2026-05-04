@@ -2,7 +2,7 @@
 
 **Claude Code enforcement hooks** — shell scripts that run automatically during every session.
 
-Hooks fire at Claude Code events (PreToolUse, PostToolUse) to enforce HITL requirements in real time, before a tool call completes. Registered via `.claude-plugin/plugin.json`.
+Hooks fire at Claude Code events (PreToolUse, PostToolUse) to enforce HITL requirements in real time, before a tool call completes. Registered via `claude/plugin/plugin.json`.
 
 | File | Trigger | What it enforces |
 |------|---------|-----------------|
