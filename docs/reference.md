@@ -363,11 +363,13 @@ Go/no-go criteria are calibrated per change, not universal thresholds. The incid
 
 ## ROI estimation — quick reference
 
-For changes >1 day of effort, add to the GitHub issue:
+For changes >1 day of effort, record in `.hitl/current-change.yaml` under `roi_estimate`:
 
 1. **Expected outcome** — specific, falsifiable, with timeframe
 2. **Baseline metric** — measured, not estimated
 3. **Decision if not realized** — revert / rearchitect / accept partial
+
+Post a pointer comment on the GitHub issue linking to the decision packet — the ROI content lives in the artifact, not the issue.
 
 Verify at 30 days (direction check) and 90 days (magnitude check). Document actual outcome in the ADR.
 

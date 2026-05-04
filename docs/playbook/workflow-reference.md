@@ -52,7 +52,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 >
 > In both cases, run `/start` first. For the full sprint, it routes you to `/generate-docs reverse-engineer`. For incremental, it walks you through the lightweight setup. See the [adoption guide](adoption-guide.md) for full sprint details.
 >
-> **Once onboarded (via either approach), the 30-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
+> **Once onboarded (via either approach), the 31-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
@@ -153,7 +153,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 30 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **9 human-only** 👤.
+Of 31 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **9 human-only** 👤.
 
 ### 5.3 The Two-Round Code Review
 
@@ -174,7 +174,7 @@ If a visual design (Figma or similar) exists, it appears twice in the workflow: 
 
 **When it applies (Tier 3 changes and above):** initiatives larger than one sprint, infrastructure spend, reliability investments, or major architecture bets. Not required for ordinary feature work — applying it to every change makes it feel like paperwork and teams will stop filling it out.
 
-When it applies, add three items to the GitHub issue before build starts: (1) a specific, falsifiable expected outcome with timeframe, (2) the current baseline metric (measured, not estimated), and (3) what happens if ROI is not realized. Verify at 30 days (direction check) and 90 days (magnitude check). Document the actual outcome in the ADR so future estimates calibrate against reality.
+When it applies, record three items in `.hitl/current-change.yaml` under `roi_estimate` before build starts: (1) a specific, falsifiable expected outcome with timeframe, (2) the current baseline metric (measured, not estimated), and (3) what happens if ROI is not realized. Post a pointer comment on the GitHub issue linking to the decision packet. Verify at 30 days (direction check) and 90 days (magnitude check). Document the actual outcome in the ADR so future estimates calibrate against reality.
 
 ### 5.6 Downstream Impact Assessment
 

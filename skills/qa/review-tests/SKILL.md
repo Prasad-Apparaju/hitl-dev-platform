@@ -39,7 +39,7 @@ For each item in the spec, confirm test coverage:
 
 | Spec item | Source | Test(s) | Status |
 |-----------|--------|---------|--------|
-| `<AC from issue>` | GitHub issue | `<test name>` | ✅ / ❌ |
+| `<AC from PRD>` | PRD (FR-<ID>) | `<test name>` | ✅ / ❌ |
 | `<method + error mode from LLD>` | LLD | `<test name>` | ✅ / ❌ |
 | `<incident regression>` | Incident registry | `<test name>` | ✅ / ❌ |
 
