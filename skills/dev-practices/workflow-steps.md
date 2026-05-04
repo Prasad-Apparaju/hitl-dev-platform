@@ -26,6 +26,8 @@ If you have not done this yet, run `/start` — it detects your situation and ro
 **1. GitHub Issue**
 Describe the change, root cause, and proposed solution. If no issue exists, create one with `gh issue create` before proceeding. Use `/pm/add-feature` for features or `/pm/report-bug` for bugs.
 
+> **Brownfield:** PM skills apply identically once onboarded — `/pm:design-feature` and `/pm:add-feature` work the same way for new features on a brownfield project as on a greenfield one.
+
 **2. Figma Review (conditional)**
 If a Figma design exists, the PM or developer reads the Figma file directly and adds requirements, interactions, and visual specs into the GitHub issue. No command — this is a manual extraction step.
 
@@ -37,7 +39,7 @@ If a Figma design exists, the PM or developer reads the Figma file directly and 
 Reads `system-manifest.yaml`, test registry (`docs/03-engineering/testing/test-registry.yaml`), and incident registry (`docs/04-operations/incident-registry.yaml`) to identify affected components, APIs, configs, and dependencies. Produces an effort estimate. Outputs `.hitl/current-change.yaml` with change ID, tier, affected domains, source artifact paths, and `token_tracking.estimated` — a phase-level token cost estimate based on artifact file sizes. See `roi-estimation.md` for the estimation method.
 
 **4. ROI Estimate (conditional)**
-If the step 3 effort estimate exceeds 1 day, add an ROI section to the GitHub issue: expected outcome (specific and falsifiable), baseline metric (measured now, not estimated), measurement plan, 30/90-day checkpoints. Include `token_tracking.estimated.total_cost_usd` from `.hitl/current-change.yaml` as the "AI dev tokens" cost line item. See `roi-estimation.md` for the template. No command.
+If the step 3 effort estimate exceeds 1 day, record the ROI section in `.hitl/current-change.yaml` under `roi_estimate`: expected outcome (specific and falsifiable), baseline metric (measured now, not estimated), measurement plan, 30/90-day checkpoints, and `token_tracking.estimated.total_cost_usd` as the "AI dev tokens" cost line item. See `roi-estimation.md` for the template. Post a pointer comment on the GitHub issue: `gh issue comment <issue-number> --body "ROI estimate filed — see decision packet at \`docs/decisions/issue-<N>.yaml\`"`.
 
 **5. Update Docs** — use `/generate-docs`
 Using the affected component list from `.hitl/current-change.yaml` (step 3) and Figma specs from step 2 (if available): create or update HLD at `docs/02-design/technical/hld/<feature>.md` and LLD at `docs/02-design/technical/lld/<component>.md`. Update ADRs for any new design decisions. Architect must approve the HLD before LLD generation begins. LLD must be approved before implementation starts.
@@ -48,7 +50,7 @@ Using the affected component list from `.hitl/current-change.yaml` (step 3) and 
 Using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): update Terraform/Kubernetes manifests, migrations, and configs. Only if step 3 identified IaC changes.
 
 **7. Test Case Planning** — use `/qa:plan-tests`
-Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: QA queries incident history with `/qa:plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in the GitHub issue and in `.hitl/current-change.yaml` under `tests.plan`.
+Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: QA queries incident history with `/qa:plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in `.hitl/current-change.yaml` under `tests.plan`. The issue is not the home for the test plan — it lives in the context file and decision packet.
 
 > **Empty incident registry (new project or no incidents logged yet):** Skip the incident history query. Record the test plan from the LLD alone and note "incident registry empty" in `.hitl/current-change.yaml`. The registry will accumulate entries as production incidents occur.
 
@@ -147,7 +149,7 @@ Ops reads the rollout strategy from step 23's section 5 and the incident registr
 
 > **Empty incident registry:** Base the canary criteria on the change's risk tier and known failure modes from the LLD rather than historical incidents. Flag this in the rollout plan: "No incident history available — criteria are forward-looking only."
 >
-> **First release (no prior version in production):** Canary over existing traffic is not possible. Use a direct deploy with a manual smoke-test gate: deploy to staging, run the acceptance criteria from the GitHub issue, then promote to production. "Rollback" means tearing down the deployment; there is no prior version to restore. Document this explicitly in the rollout plan.
+> **First release (no prior version in production):** Canary over existing traffic is not possible. Use a direct deploy with a manual smoke-test gate: deploy to staging, run the acceptance criteria from the PRD (FR-<ID> linked in the issue), then promote to production. "Rollback" means tearing down the deployment; there is no prior version to restore. Document this explicitly in the rollout plan.
 
 ---
 

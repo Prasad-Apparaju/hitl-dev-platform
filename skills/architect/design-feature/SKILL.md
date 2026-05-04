@@ -17,7 +17,7 @@ disable-model-invocation: true
 
 ### 1a. Read and challenge the issue
 
-Fetch the GitHub issue from $ARGUMENTS. Extract: title, description, acceptance criteria, any linked Figma or PRD references.
+Fetch the GitHub issue from $ARGUMENTS. Extract: title, description, PRD reference (FR-<ID>), any linked Figma references. Then read `docs/01-product/prd.md` at the FR-<ID> to get the current acceptance criteria — the issue is a pointer, the PRD is the source of truth for the spec.
 
 Before reading the manifest or doing any analysis, challenge the issue:
 
@@ -131,7 +131,7 @@ Do not proceed until the architect confirms.
 
 If effort estimate exceeds 1 day:
 
-Draft the ROI section for the GitHub issue using the template in `skills/dev-practices/roi-estimation.md`. Fill in:
+Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `skills/dev-practices/roi-estimation.md`. Fill in:
 - Value dimension
 - Expected outcome (specific, falsifiable, with timeframe)
 - Baseline metric placeholder (note: architect must measure this now, not estimate it)
@@ -139,6 +139,11 @@ Draft the ROI section for the GitHub issue using the template in `skills/dev-pra
 - 30/90-day checkpoint dates
 
 Present the draft to the architect. Ask them to fill in the baseline metric before proceeding — it cannot be estimated after the fact.
+
+Post a pointer comment on the GitHub issue (not the content — the content lives in the context file and will be included in the decision packet at Phase 10):
+```bash
+gh issue comment <issue-number> --body "ROI estimate required — filed in decision packet (effort > 1 day)."
+```
 
 If effort estimate is ≤ 1 day, state: "ROI estimate not required — change is <1 day."
 
@@ -170,6 +175,18 @@ For Tier 2 and above:
 > Say **"HLD approved"** to proceed to ADRs and LLD."
 
 Do not generate LLDs until the architect explicitly approves the HLD.
+
+After the architect says "HLD approved", post a comment on the GitHub issue from Step 1:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ HLD Approved
+
+High-Level Design reviewed and approved by architect.
+
+**HLD:** \`docs/02-design/technical/hld/<feature-name>.md\`
+
+Proceeding to ADRs and LLD generation."
+```
 
 For Tier 0–1: skip this phase.
 
@@ -217,6 +234,18 @@ For each affected domain identified in Phase 1:
 4. After each LLD is approved, update `source_artifacts.lld` in `.hitl/current-change.yaml`.
 
 Do not proceed to slice decomposition until all LLDs are approved.
+
+After all domain LLDs are approved, post a comment on the GitHub issue:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ LLDs Approved
+
+Low-Level Designs reviewed and approved for all affected domains: <domain list>.
+
+**LLD(s):** \`docs/02-design/technical/lld/...\`
+
+Proceeding to slice decomposition and test planning."
+```
 
 ---
 
@@ -393,6 +422,21 @@ Update `.hitl/current-change.yaml`:
 After all packets are approved:
 - Set `approvals.architecture: approved` in `.hitl/current-change.yaml`
 - Update `status: implementation-approved`
+
+Post a comment on the GitHub issue signalling the feature is ready for development:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ Architecture Approved — Ready for Development
+
+Design complete. Decision packet(s) assembled and approved by architect.
+
+**Slices:** <slice plan from Phase 7>
+**Decision packet(s):** \`docs/decisions/issue-<N>...\`
+**Estimated effort:** <N days>
+**Rollout risk:** <level>
+
+Developers can begin implementation. Run \`/tdd\` with the assigned LLD."
+```
 
 ---
 

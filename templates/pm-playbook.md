@@ -41,7 +41,7 @@ When you have a rough idea and want to think it through properly:
 /pm:design-feature [describe your idea]
 ```
 
-Claude walks you through 7 phases — discovery, user journey, edge cases, UX mockup, acceptance criteria, impact analysis, and writing to the PRD. You approve each phase before it moves to the next. At the end, the PRD is updated and a GitHub issue is created.
+Claude walks you through 7 phases — discovery, user journey, edge cases, UX mockup, acceptance criteria, impact analysis, and writing to the PRD. You approve each phase before it moves to the next. A GitHub issue is created immediately after Phase 1 discovery so the work is tracked from the start; the PRD reference is added to it at the end.
 
 ---
 
@@ -53,7 +53,7 @@ When you already know what you want and just need it in the PRD:
 /pm:add-feature [describe the requirement]
 ```
 
-Claude drafts the requirement in the right format, checks for conflicts with existing requirements, gets your approval, updates the PRD, and creates the GitHub issue.
+Claude creates a draft GitHub issue first to track the work, then drafts the requirement in the right format, checks for conflicts with existing requirements, gets your approval, updates the PRD, and adds the PRD reference to the issue.
 
 ---
 

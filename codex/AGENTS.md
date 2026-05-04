@@ -40,6 +40,8 @@ When in doubt, use the heavier tier. Cross-domain or multi-dozen-line changes ar
 
 ## PM Role — Requirements and Product Management
 
+> **Brownfield projects:** This role applies identically once the baseline sprint is complete and `docs/` contains the manifest, HLDs, and LLDs. The PM workflow does not change based on project origin.
+
 ### Design a Feature (pm/design-feature)
 
 **Trigger:** User says "design a feature", "pm/design-feature", or describes a rough feature idea they want to work through.
@@ -102,6 +104,15 @@ Ask one at a time. Wait for each answer before asking the next.
 
 Summarize answers. Include **Open Items** for anything deferred. **STOP — get confirmation before Phase 2.**
 
+**Create a draft GitHub issue immediately after Phase 1 is approved:**
+```bash
+gh issue create \
+  --title "feat: <feature name>" \
+  --body "## Status: Requirements in progress (Phase 1 / 7 complete)\n\n**Problem:** <problem from Q4>\n**Evidence:** <evidence from Q3>\n**Success looks like:** <from Q6>\n**Out of scope:** <from Q8>\n\n*PRD reference will be added at Phase 7. Acceptance criteria live in the PRD, not this issue.*" \
+  --label "requirements"
+```
+Note the issue number — it will be updated at Phase 7.
+
 #### Phase 2 — User Journey
 
 *→ Output Phase 2 progress banner.*
@@ -161,9 +172,11 @@ Only after all phases are approved:
 
 1. Draft requirement in `docs/01-product/prd.md`: next available FR-ID, description, priority (ask PM), acceptance criteria from Phase 5.
 2. Draft use case if this is a new user journey: actor, preconditions, flow, expected outcome, error scenarios.
-3. Create GitHub issue:
+3. Update the title and add a PRD pointer comment on the issue created in Phase 1. Do NOT overwrite the body — the Phase 1 rationale is the permanent audit trail.
    ```bash
-   gh issue create --title "feat: <short description>" --body "PRD: FR-<ID>\n\nAcceptance criteria:\n<from Phase 5>"
+   gh issue edit <issue-number-from-phase-1> --title "feat: <short description>"
+   gh issue comment <issue-number-from-phase-1> \
+     --body "## ✅ Requirements Complete\n\nPRD: FR-<ID> — \`docs/01-product/prd.md\`\nDesign: \`docs/02-design/ux/<feature-name>/\`\n\nAcceptance criteria are in the PRD at FR-<ID>."
    ```
 4. Present: PRD section, GitHub issue link, impact summary, open items list.
 
@@ -195,6 +208,15 @@ Use when the feature is already understood and needs to be documented, not desig
 
 Present **Open Items** at end if anything was deferred.
 
+**Create a draft GitHub issue immediately after questions are confirmed:**
+```bash
+gh issue create \
+  --title "feat: <feature description>" \
+  --body "## Status: Requirements in progress\n\n**Problem:** <from evidence question>\n**Success looks like:** <from success metric question>\n\n*PRD reference will be added on approval. Acceptance criteria live in the PRD, not this issue.*" \
+  --label "requirements"
+```
+Note the issue number — it will be updated on approval.
+
 **Then:**
 
 1. Read `docs/01-product/prd.md` — get the existing format and last FR-ID used.
@@ -203,7 +225,11 @@ Present **Open Items** at end if anything was deferred.
 4. Check for conflicts with existing requirements.
 5. **Present draft. Do NOT update PRD until approved.**
 6. On approval, update `docs/01-product/prd.md`.
-7. Create GitHub issue: `gh issue create --title "feat: <description>" --body "PRD reference: FR-<ID>\n\n<acceptance criteria>"`
+7. Update the title and add a PRD pointer comment — do NOT overwrite the body, the Step 1 rationale is the permanent audit trail:
+   ```bash
+   gh issue edit <issue-number> --title "feat: <description>"
+   gh issue comment <issue-number> --body "## ✅ Requirements Complete\n\nPRD: FR-<ID> — \`docs/01-product/prd.md\`\n\nAcceptance criteria are in the PRD at FR-<ID>."
+   ```
 
 Follow the EXACT format of the existing PRD — don't invent a new structure.
 
@@ -266,7 +292,7 @@ Read `docs/01-product/prd.md`. Show current text of the requirement. Collect the
 
 **Trigger:** User says "prep a demo", "demo script", or "pm/prep-demo".
 
-Read PRD for the feature and linked GitHub issue for acceptance criteria. Draft: demo flow (happy path only), 3–5 talking points, known limitations to acknowledge. Present for PM confirmation before finalizing.
+Read PRD for the feature (FR-<ID> linked in the issue) for acceptance criteria. Draft: demo flow (happy path only), 3–5 talking points, known limitations to acknowledge. Present for PM confirmation before finalizing.
 
 ---
 
@@ -307,6 +333,8 @@ This workflow is a design-phase entrypoint. Before tier identification or impact
    Fall back to reading the full file if the graph is missing or the `graphify check-update docs/` command reports it is stale.
 
    For Tier 2+: if the LLD does not exist, stop — "LLD required before implementation. Run the Generate Documentation workflow first."
+
+   > **On brownfield:** If the LLD was produced by the baseline sprint (not a previous change), verify it against the actual code before using it as the source for code generation — baseline sprint LLDs are drafts and may not yet reflect the true behavior of the component.
 
 4. **Impact analysis** — read the codebase to identify:
    - Affected endpoints/APIs
@@ -706,7 +734,7 @@ This section covers everything from impact analysis through decision packet asse
 
 ### Phase 1 — Impact Analysis and Scope
 
-1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Before reading the manifest or doing any analysis, challenge the issue: Is the problem backed by evidence (not just intent)? Are acceptance criteria testable and specific? Are NFRs relevant to the affected domain stated — throughput, latency, availability targets? Is there a simpler approach? Resolve gaps now. See `skills/shared/challenge-stance.md` for the full standard.
+1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Extract the PRD reference (FR-<ID>) from the issue, then read `docs/01-product/prd.md` at that requirement for the acceptance criteria — the issue is a pointer, the PRD is the source of truth. Before reading the manifest or doing any analysis, challenge: Is the problem backed by evidence (not just intent)? Are the AC in the PRD testable and specific? Are NFRs relevant to the affected domain stated? Is there a simpler approach? Resolve gaps now. See `skills/shared/challenge-stance.md` for the full standard.
 2. Read the system manifest — prefer a graph query:
    ```
    /graphify query "all domains and facade APIs"
@@ -726,7 +754,7 @@ This section covers everything from impact analysis through decision packet asse
 
 ### Phase 2 — ROI Trigger (Step 4)
 
-If effort > 1 day: draft ROI section for the GitHub issue from `skills/dev-practices/roi-estimation.md`. Ask architect to fill in the baseline metric now — it cannot be estimated after the fact.
+If effort > 1 day: record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template from `skills/dev-practices/roi-estimation.md`. Ask architect to fill in the baseline metric now — it cannot be estimated after the fact. Post a pointer comment on the issue (not the content): `gh issue comment <issue-number> --body "ROI estimate required — filed in decision packet (effort > 1 day)."`
 
 ### Phase 3 — HLD (Step 5, Part 1)
 
@@ -734,6 +762,18 @@ For Tier 2+:
 - Generate HLD at `docs/02-design/technical/hld/<feature>.md` following the `Generate Documentation` section below.
 - Update `docs/02-design/technical/hld/index.md` and `source_artifacts.hld` in `.hitl/current-change.yaml`.
 - **STOP — ask architect to approve HLD.** Do not generate LLDs until approval.
+
+After architect says "HLD approved", post a comment on the GitHub issue:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ HLD Approved
+
+High-Level Design reviewed and approved by architect.
+
+**HLD:** \`docs/02-design/technical/hld/<feature-name>.md\`
+
+Proceeding to ADRs and LLD generation."
+```
 
 ### Phase 4 — ADR Capture (Step 5, Part 2)
 
@@ -748,6 +788,18 @@ For each affected domain:
 - Generate LLD following the `Generate Documentation` section below.
 - **STOP after each LLD — ask architect:** "Is this precise enough to generate tests from?"
 - Update `source_artifacts.lld` in `.hitl/current-change.yaml` after each approval.
+
+After all domain LLDs are approved, post a comment on the GitHub issue:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ LLDs Approved
+
+Low-Level Designs reviewed and approved for all affected domains: <domain list>.
+
+**LLD(s):** \`docs/02-design/technical/lld/...\`
+
+Proceeding to slice decomposition and test planning."
+```
 
 ### Phase 6 — IaC Planning (Step 6)
 
@@ -796,6 +848,21 @@ For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or
 - Set `approvals.architecture: approved` in `.hitl/current-change.yaml`
 - Set `status: implementation-approved`
 
+Post a comment on the GitHub issue signalling the feature is ready for development:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ Architecture Approved — Ready for Development
+
+Design complete. Decision packet(s) assembled and approved by architect.
+
+**Slices:** <slice plan>
+**Decision packet(s):** \`docs/decisions/issue-<N>...\`
+**Estimated effort:** <N days>
+**Rollout risk:** <level>
+
+Developers can begin implementation. Run \`/tdd\` with the assigned LLD."
+```
+
 ### Output format
 
 ```
@@ -831,7 +898,7 @@ Run after the TDD cycle is complete, before creating a PR.
 
 ### What to check
 
-1. Every acceptance criterion from the GitHub issue has at least one test
+1. Every acceptance criterion from the PRD (FR-<ID> linked in the issue) has at least one test
 2. Every LLD error mode has a test
 3. Every LLD precondition has a violation test
 4. Incident regressions are present — prefer a graph query:
@@ -844,6 +911,10 @@ Run after the TDD cycle is complete, before creating a PR.
 7. External APIs mocked; internal logic not mocked
 8. All new tests registered in the test registry with domain, risk, type, and origin
 9. Incident regression tests have `incident_ref` set
+
+After producing the review, post a comment on the GitHub issue:
+- If **APPROVED**: `gh issue comment <issue-number> --body "## ✅ QA Review Approved\n\nTest coverage verified. All ACs covered, LLD edge cases present, incident regressions tested. Implementation can proceed to verify-quality handoff."`
+- If **REVISIONS REQUIRED**: `gh issue comment <issue-number> --body "## 🔁 QA Review: Revisions Required\n\n<summary of gaps to fix>"`
 
 ### Output format
 
@@ -954,9 +1025,15 @@ Never apply IaC changes without showing the full plan first. Never skip the conf
 3. For **High or Critical risk** changes: canary deployment only — never skip canary for these tiers.
 4. **Present the exact deployment command before running it. STOP — ask operator to confirm.**
 5. On confirmation, deploy. Monitor health checks.
-6. Report:
-   - Canary: "Deployed at `<N>%`. Monitor go/no-go criteria before promoting."
-   - Direct: "Deployed to `<environment>`. Run manual verification from the impact brief."
+6. Post a comment on the GitHub issue, then report to the team:
+   ```bash
+   gh issue comment <issue-number> \
+     --body "## 🚀 Deployed to <environment>\n\n**Artifact:** <artifact-reference>\n**Deployed at:** <ISO timestamp>\n**Rollout:** <canary N% / 100% direct>"
+   ```
+   For the final production promotion (100% traffic, all go/no-go criteria met), also close the issue:
+   ```bash
+   gh issue close <issue-number> --comment "Deployed to production at <timestamp>. All go/no-go criteria met. Closing."
+   ```
 
 A deployment that fails health checks mid-rollout must be paused and investigated — do not auto-rollback without first diagnosing the cause.
 
