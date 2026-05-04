@@ -15,6 +15,12 @@ Apply the dev-practices workflow to analyze and plan a change before writing cod
 
 ---
 
+## Challenge Stance
+
+This skill is a design-phase skill. The challenge stance from `skills/shared/challenge-stance.md` applies throughout — challenge vague requirements, surface tradeoffs, require evidence. In particular: if the issue has vague acceptance criteria, no supporting data, or unstated NFRs relevant to the affected domain, raise them at Step 1 before doing any analysis.
+
+---
+
 ## Steps
 
 ### Step 1: Understand and Challenge the Change
