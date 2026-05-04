@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 530" width="780" height="530" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <!-- Window -->
+  <rect width="780" height="530" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="38" rx="10" fill="#313244"/>
+  <rect y="28" width="780" height="10" fill="#313244"/>
+  <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
+  <circle cx="40" cy="19" r="6" fill="#f9e2af"/>
+  <circle cx="60" cy="19" r="6" fill="#a6e3a1"/>
+  <text x="390" y="24" text-anchor="middle" fill="#cdd6f4" font-size="13" opacity="0.7">Claude Code — your-project · Product Manager</text>
+
+  <!-- Status bar -->
+  <rect x="16" y="52" width="748" height="24" rx="4" fill="#1e3a1e" stroke="#a6e3a1" stroke-width="1" opacity="0.9"/>
+  <text x="28" y="68" fill="#a6e3a1" font-size="11">✓  CLAUDE.md loaded · role: pm</text>
+
+  <!-- User message -->
+  <text x="28" y="100" fill="#6c7086" font-size="12">&gt; /pm:design-feature  Add user profiles to our app</text>
+  <rect x="60" y="88" width="2" height="14" fill="#cdd6f4" opacity="0.7"/>
+
+  <!-- ─── Phase 1 response ─── -->
+  <rect x="16" y="114" width="748" height="172" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+
+  <!-- Phase 1 breadcrumb banner -->
+  <rect x="28" y="124" width="724" height="48" rx="4" fill="#1c2640" stroke="#89b4fa" stroke-width="1"/>
+  <text x="40" y="142" fill="#89b4fa" font-size="12" font-weight="bold">Feature Design — Phase 1 / 7: Discovery</text>
+  <text x="40" y="162" font-size="12">
+    <tspan fill="#cba6f7" font-weight="bold">▶ Discovery</tspan><tspan fill="#45475a"> · ○ Journey · ○ Edge Cases · ○ Design · ○ Criteria · ○ Impact · ○ PRD</tspan>
+  </text>
+
+  <!-- Challenge level prompt -->
+  <text x="28" y="194" fill="#cdd6f4" font-size="12">What level of challenge would you like for this session?</text>
+  <text x="40" y="214" font-size="12"><tspan fill="#a6e3a1" font-weight="bold">Rigorous</tspan><tspan fill="#a6adc8"> — push back until specifics are provided. Best for high-stakes features.</tspan></text>
+  <text x="40" y="232" font-size="12"><tspan fill="#f9e2af" font-weight="bold">Moderate</tspan><tspan fill="#a6adc8"> — ask everything, accept reasonable answers. </tspan><tspan fill="#6c7086">(default)</tspan></text>
+  <text x="40" y="250" font-size="12"><tspan fill="#f38ba8" font-weight="bold">Light</tspan><tspan fill="#a6adc8"> — key framing questions only, move fast.</tspan></text>
+  <text x="28" y="272" fill="#6c7086" font-size="11" font-style="italic">PM replies: Moderate</text>
+
+  <!-- Spacer label -->
+  <text x="28" y="304" fill="#45475a" font-size="11" font-style="italic">  · · · After Discovery and User Journey are approved · · ·</text>
+
+  <!-- ─── Phase 3 response ─── -->
+  <rect x="16" y="314" width="748" height="162" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+
+  <!-- Phase 3 breadcrumb banner -->
+  <rect x="28" y="324" width="724" height="48" rx="4" fill="#1a2a1a" stroke="#a6e3a1" stroke-width="1"/>
+  <text x="40" y="342" fill="#a6e3a1" font-size="12" font-weight="bold">Feature Design — Phase 3 / 7: Edge Cases</text>
+  <text x="40" y="362" font-size="12">
+    <tspan fill="#a6e3a1">✅ Discovery · ✅ Journey · </tspan><tspan fill="#cba6f7" font-weight="bold">▶ Edge Cases</tspan><tspan fill="#45475a"> · ○ Design · ○ Criteria · ○ Impact · ○ PRD</tspan>
+  </text>
+
+  <!-- Edge cases prompt -->
+  <text x="28" y="392" fill="#cdd6f4" font-size="12">For each step in the user journey, let's cover the failure modes:</text>
+  <text x="40" y="412" fill="#a6adc8" font-size="12">1.  What happens if the profile photo upload fails?</text>
+  <text x="40" y="430" fill="#a6adc8" font-size="12">2.  What does a user see if their username is already taken?</text>
+  <text x="40" y="448" fill="#a6adc8" font-size="12">3.  Can users edit their profile on mobile? Any responsive constraints?</text>
+  <text x="28" y="466" fill="#6c7086" font-size="11" font-style="italic">  ...continues for each flow step</text>
+
+  <!-- Bottom status -->
+  <rect x="0" y="494" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="507" fill="#6c7086" font-size="11">pm:design-feature · Phase 3 / 7 — Edge Cases · 2 phases approved · 4 remaining</text>
+  <rect x="0" y="512" width="780" height="18" rx="0" fill="#181825"/>
+</svg>
