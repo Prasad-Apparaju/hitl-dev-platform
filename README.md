@@ -34,10 +34,14 @@ hitl-dev-platform/
 │  ── Codex CLI (parallel surface for OpenAI Codex users) ──────────────────────
 ├── ai/codex/                AGENTS.md, hooks, install script — mirrors the Claude Code skill surface
 │
-│  ── Enforcement + tooling (run in CI or from the command line) ────────────────
+│  ── CI enforcement (workflows + scripts they invoke) ──────────────────────────
+├── ci/
+│   ├── workflows/        Copyable CI workflow templates — copy to .github/workflows/ in your product repo
+│   └── manifest-drift/   Manifest drift checker (invoked by CI workflows)
+│
+│  ── Developer tooling (run from the command line) ─────────────────────────────
 ├── tools/
-│   ├── [tool folders]    Python tools: preflight checker, manifest drift, manifest generator
-│   ├── ci/               Copyable CI workflow templates — copy to .github/workflows/ in your product repo
+│   ├── [tool folders]    Python tools: preflight checker, manifest generator
 │   └── scripts/          init-project.sh — bootstraps a product repo
 │
 │  ── Human-readable documentation ─────────────────────────────────────────────
@@ -93,11 +97,11 @@ git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platfor
 bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 ```
 
-This creates `.ai/claude/settings.json` pointing to the shared plugin and copies the project-specific files your repo needs: `CLAUDE.md`, `docs/system-manifest.yaml`, convention tools, and CI templates. The platform stays in one place — product repos reference it, nothing is copied except project-specific files. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
+This creates `.claude/settings.json` pointing to the shared plugin and copies the project-specific files your repo needs: `CLAUDE.md`, `docs/system-manifest.yaml`, `.semgrep/` convention rules, `ci/manifest-drift/`, and the Mermaid linter. CI workflow templates live in `ci/workflows/` in this repo — copy whichever ones apply to your product repo's `.github/workflows/`. The platform stays in one place — product repos reference it. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
 
 **Step 3 — Verify**
 
-Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, confirm the plugin path in `.ai/claude/settings.json` points to your platform clone.
+Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, confirm the plugin path in `.claude/settings.json` points to your platform clone.
 
 **Step 4 — Run the appropriate start command**
 

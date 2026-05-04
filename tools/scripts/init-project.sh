@@ -2,7 +2,7 @@
 # Bootstrap a new product repository with HITL enforcement.
 #
 # Usage:
-#   bash /path/to/hitl-dev-platform/scripts/init-project.sh <target-dir> [options]
+#   bash /path/to/hitl-dev-platform/tools/scripts/init-project.sh <target-dir> [options]
 #
 # Options:
 #   --tool  claude|codex|both   AI tool to configure (default: both)
@@ -10,10 +10,10 @@
 #
 # Recommended setup:
 #   git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platform
-#   bash ~/tools/hitl-dev-platform/scripts/init-project.sh ~/code/my-product
+#   bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 #
 # Claude Code — what gets created in the product repo:
-#   .ai/claude/settings.json       plugin reference + project-relative hook paths
+#   .claude/settings.json          plugin reference + project-relative hook paths
 #   .hitl/hooks/*.sh            wrapper scripts; resolve platform via HITL_PLATFORM_ROOT
 #   .semgrep/                   semgrep convention rules (required by /check-conventions)
 #   ci/manifest-drift/       manifest drift checker (required by /check-conventions)
@@ -31,7 +31,7 @@
 #   different path and pass it:
 #     git clone ... ~/tools/hitl-dev-platform-v2
 #     HITL_PLATFORM_ROOT=~/tools/hitl-dev-platform-v2 \
-#       bash ~/tools/hitl-dev-platform-v2/scripts/init-project.sh ~/code/my-product
+#       bash ~/tools/hitl-dev-platform-v2/tools/scripts/init-project.sh ~/code/my-product
 #
 # CI setup:
 #   Hook wrappers resolve HITL_PLATFORM_ROOT at runtime. On CI machines, set:
@@ -41,7 +41,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLATFORM_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PLATFORM_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # ---- Argument parsing ----
 
@@ -139,14 +139,14 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
-  if [[ -f "$PLATFORM_ROOT/scripts/fix_mermaid_br_tags.py" && ! -f "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" ]]; then
+  if [[ -f "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" && ! -f "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" ]]; then
     mkdir -p "$TARGET_DIR/scripts"
-    cp "$PLATFORM_ROOT/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"
+    cp "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"
     echo "✓ scripts/fix_mermaid_br_tags.py"
     (( copied++ )) || true
   fi
 
-  [[ $copied -eq 0 ]] && echo "  Convention tools already present — skipping"
+  [[ $copied -eq 0 ]] && echo "  Convention tools already present — skipping" || true
 }
 
 # ---- Claude Code setup ----
@@ -156,10 +156,10 @@ setup_tools() {
 
 setup_claude() {
   mkdir -p "$TARGET_DIR/.claude"
-  local SETTINGS="$TARGET_DIR/.ai/claude/settings.json"
+  local SETTINGS="$TARGET_DIR/.claude/settings.json"
 
   if [[ -f "$SETTINGS" ]]; then
-    echo "  .ai/claude/settings.json already exists — add plugin entry manually:"
+    echo "  .claude/settings.json already exists — add plugin entry manually:"
     echo "    \"plugins\": [\"$PLATFORM_ROOT/ai/claude/plugin/plugin.json\"]"
   else
     # The plugin path is written at init time. Re-run this script if the
@@ -202,7 +202,7 @@ setup_claude() {
   }
 }
 JSON
-    echo "✓ .ai/claude/settings.json (plugin → $PLATFORM_ROOT)"
+    echo "✓ .claude/settings.json (plugin → $PLATFORM_ROOT)"
   fi
 
   # Hook wrappers — project-relative scripts that resolve the platform path at
