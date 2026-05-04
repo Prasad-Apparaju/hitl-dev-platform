@@ -113,6 +113,17 @@ Summarize the answers back to the PM. Include an **Open Items** section listing 
 
 Get confirmation before proceeding to Phase 2.
 
+**Create a draft GitHub issue immediately after Phase 1 is approved.** The feature needs to exist in the tracker before design work starts — the team should be able to see what's in progress:
+
+```bash
+gh issue create \
+  --title "feat: <feature name>" \
+  --body "## Status: Requirements in progress (Phase 1 / 7 complete)\n\n**Problem:** <problem statement from Q4>\n**Evidence:** <evidence from Q3>\n**Success looks like:** <from Q6>\n**Out of scope:** <from Q8>\n\n*PRD reference will be added at Phase 7. Acceptance criteria live in the PRD, not this issue.*" \
+  --label "requirements"
+```
+
+Note the issue number — it will be updated with the full spec at Phase 7.
+
 ---
 
 ## Phase 2 — User Journey
@@ -256,9 +267,11 @@ Only after ALL phases are approved:
 
 3. **Save the UX design** — export the Claude Design prototype to `docs/02-design/ux/<feature-name>/` as reference for the architect.
 
-4. **Create a GitHub issue:**
+4. **Update the GitHub issue** created in Phase 1 — update the title only, then add the PRD reference as a comment. Do NOT overwrite the body: the problem statement and rationale captured in Phase 1 are the permanent audit trail.
    ```bash
-   gh issue create --title "feat: <short description>" --body "PRD: FR-<ID>\nDesign: docs/02-design/ux/<feature-name>/\n\nAcceptance criteria:\n<from Phase 5>"
+   gh issue edit <issue-number-from-phase-1> --title "feat: <short description>"
+   gh issue comment <issue-number-from-phase-1> \
+     --body "## ✅ Requirements Complete\n\nPRD: FR-<ID> — \`docs/01-product/prd.md\`\nDesign: \`docs/02-design/ux/<feature-name>/\`\n\nAcceptance criteria are in the PRD at FR-<ID>."
    ```
 
 5. **Present the final output** to the PM:

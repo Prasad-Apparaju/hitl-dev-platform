@@ -273,6 +273,10 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ---
 
+After the baseline sprint, use `/pm:design-feature` or `/pm:add-feature` for new features — the full HITL workflow (PM skills, design, TDD, review, deployment) applies identically from this point forward. The brownfield distinction ends here.
+
+---
+
 ## Important Rules
 
 - If a domain is too large to document fully, document the public interface and mark internals as "DRAFT"

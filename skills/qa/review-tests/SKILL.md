@@ -15,7 +15,7 @@ Verify that the test suite produced by the TDD cycle is complete before implemen
 
 ## Step 1 — Read the spec
 
-1. Read the GitHub issue to extract all acceptance criteria
+1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` at that requirement for the acceptance criteria. The PRD is the source of truth — the issue is a pointer.
 2. Read the LLD at the path in `.hitl/current-change.yaml` (`source_artifacts.lld`) — note every method signature, error mode, precondition, and boundary entity
 3. Read the test plan from `.hitl/current-change.yaml` under `tests.plan` — this is what the developer committed to covering
 4. List the test files in `tests/` — read them

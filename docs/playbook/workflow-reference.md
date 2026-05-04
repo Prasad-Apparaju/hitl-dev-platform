@@ -51,6 +51,8 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 > | **Incremental** | Run `/start` Path B — produces manifest, priority component docs, and registry stubs; start change work immediately | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
 >
 > In both cases, run `/start` first. For the full sprint, it routes you to `/generate-docs reverse-engineer`. For incremental, it walks you through the lightweight setup. See the [adoption guide](adoption-guide.md) for full sprint details.
+>
+> **Once onboarded (via either approach), the 30-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 

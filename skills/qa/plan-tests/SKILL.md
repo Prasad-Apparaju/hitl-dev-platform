@@ -15,7 +15,7 @@ Review the LLD and acceptance criteria before the TDD cycle starts. Contribute t
 
 ## Step 1 — Read the design
 
-1. Read the GitHub issue to understand acceptance criteria and scope
+1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` at that requirement for the acceptance criteria and scope. The PRD is the source of truth — the issue is a pointer.
 2. Read the LLD at `$ARGUMENTS` (or at the path in `.hitl/current-change.yaml` under `source_artifacts.lld`)
 3. Note: method signatures, error modes, preconditions, boundary entities, and any interactions with other domains
 

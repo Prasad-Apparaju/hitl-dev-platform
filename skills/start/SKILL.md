@@ -169,7 +169,7 @@ You are starting incrementally: manifest and priority component docs exist, regi
 
 **What this means for your first changes:**
 - Treat AI output from steps 5, 10, and 14 as drafts — the docs are new and may not yet reflect actual behavior. Increase human review scrutiny until the docs have been corrected through real use.
-- If `/dev-practices` stops with "no LLD found" on an undocumented component, run `/generate-docs` for that component, then resume.
+- If `/dev-practices` stops with "no LLD found" on an undocumented component, run `/generate-docs` for that component, then resume. This is brownfield-only friction — it decreases naturally as each component gets its first doc pass through real use.
 
 For every change going forward:
 
@@ -177,6 +177,8 @@ For every change going forward:
 2. Run `/dev-practices` — the 30-step workflow starts here
 3. Update HLD/LLD if the design changes
 4. Code → tests → PR
+
+For new features, use `/pm:add-feature` or `/pm:design-feature` to shape requirements first — PM skills apply identically on an onboarded brownfield project.
 
 Run `/dev-practices` now to start your first change, or ask me anything about the process.
 

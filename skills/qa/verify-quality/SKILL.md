@@ -17,7 +17,7 @@ Independent verification of the developer's handoff. You are the last gate befor
 
 ## Step 1 — Read the handoff context
 
-1. Read the GitHub issue — extract all acceptance criteria
+1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` for the acceptance criteria. The PRD is the source of truth — the issue is a pointer.
 2. Read `.hitl/current-change.yaml` — review the impact brief (Section 3: manual verification scenarios) and rollout plan
 3. Read the test registry entry for this change — understand what was tested automatically
 
@@ -66,10 +66,27 @@ approvals:
   qa: approved
   qa_notes: "All <N> ACs verified. <M> exploratory scenarios passed. No incident regressions reproduced."
 ```
-Report: "QA approved. Build is ready for Ops handoff."
+Post a comment on the GitHub issue, then report to the team:
+```bash
+gh issue comment <issue-number> \
+  --body "## ✅ QA Approved
+
+All <N> acceptance criteria verified. <M> exploratory scenarios passed. No incident regressions reproduced.
+
+Build is ready for Ops handoff."
+```
 
 **If any criterion fails or regression reproduced:**
-Run `/qa:report-defect` for each blocking issue. Then report: "QA blocked. `<N>` defect(s) filed — see issue(s) `<list>`. Promotion is blocked until all are resolved and re-verified."
+Run `/qa:report-defect` for each blocking issue. Post a comment on the main feature issue linking all defects, then report to the team:
+```bash
+gh issue comment <issue-number> \
+  --body "## 🚫 QA Blocked
+
+<N> blocking defect(s) filed. Promotion is blocked until all are resolved and re-verified.
+
+**Open defects:**
+- #<defect-number>: <short description>"
+```
 
 Do not approve with open defects. Do not block without filing a defect — informal notes are not actionable.
 

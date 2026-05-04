@@ -75,6 +75,25 @@ deployment:
   status: deployed
 ```
 
-For canary deployments: "Deployed at `<N>%`. Run `/ops:monitor-canary` to assess go/no-go criteria before promoting."
-For direct deployments: "Deployed to `<environment>`. Run manual verification from the impact brief."
+Post a comment on the GitHub issue, then report to the team:
+
+```bash
+gh issue comment <issue-number> \
+  --body "## 🚀 Deployed to <environment>
+
+**Artifact:** <artifact-reference>
+**Deployed at:** <ISO timestamp>
+**Rollout:** <canary N% / 100% direct>
+
+<If canary: 'Run /ops:monitor-canary to assess go/no-go criteria before promoting to next tier.'>
+<If production 100%: 'Feature is live.'>"
+```
+
+For canary deployments: proceed to `/ops:monitor-canary` to assess go/no-go before promoting.
+
+For the final production promotion (100% traffic, all go/no-go criteria met), close the issue:
+```bash
+gh issue close <issue-number> \
+  --comment "Deployed to production at <timestamp>. All go/no-go criteria met. Closing."
+```
 

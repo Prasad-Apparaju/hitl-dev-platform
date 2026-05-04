@@ -109,7 +109,11 @@ Do NOT proceed until the user confirms the brief is complete.
 
 Once approved:
 1. Update `.hitl/current-change.yaml` — add `rollout_plan` to `required_evidence` and mark `impact_brief: done`
-2. Add the brief to the PR description or as a comment on the GitHub issue
+2. Post a pointer comment on the GitHub issue — the full brief belongs in the PR description, not the issue:
+   ```bash
+   gh issue comment <issue-number> \
+     --body "## 📋 Impact Brief Complete\n\nRollout risk: <level>. Full brief in PR description at step 25."
+   ```
 
 ---
 

@@ -76,6 +76,17 @@ At the start of each milestone — before questions or content — output a bann
 
    At **Light**, summarize any unanswered questions as "Gaps to revisit" in the draft rather than blocking on them.
 
+**Create a draft GitHub issue immediately after Step 1 is confirmed.** The feature needs to be tracked before design work starts:
+
+```bash
+gh issue create \
+  --title "feat: <feature description>" \
+  --body "## Status: Requirements in progress\n\n**Problem:** <problem from evidence question>\n**Success looks like:** <from success metric question>\n\n*PRD reference will be added at Step 5. Acceptance criteria live in the PRD, not this issue.*" \
+  --label "requirements"
+```
+
+Note the issue number — it will be updated with the PRD reference at Step 5.
+
 *→ Output Step 2 progress banner.*
 
 2. **Get the existing requirements structure** — prefer a graph query if available:
@@ -111,9 +122,11 @@ At the start of each milestone — before questions or content — output a bann
 
 7. **On approval**, update `docs/01-product/prd.md` with the new requirement (and use case if applicable).
 
-8. **Create a GitHub issue** linking to the new PRD requirement:
-   ```
-   gh issue create --title "feat: <short description>" --body "PRD reference: FR-<ID>\n\n<acceptance criteria>"
+8. **Update the GitHub issue** created in Step 1 — update the title only, then add the PRD reference as a comment. Do NOT overwrite the body: the problem statement captured at Step 1 is the permanent audit trail.
+   ```bash
+   gh issue edit <issue-number-from-step-1> --title "feat: <short description>"
+   gh issue comment <issue-number-from-step-1> \
+     --body "## ✅ Requirements Complete\n\nPRD: FR-<ID> — \`docs/01-product/prd.md\`\n\nAcceptance criteria are in the PRD at FR-<ID>."
    ```
 
 ## Important Rules
