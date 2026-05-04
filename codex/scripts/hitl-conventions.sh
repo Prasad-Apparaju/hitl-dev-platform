@@ -64,8 +64,8 @@ fi
 
 if [[ "$ONLY" == "all" || "$ONLY" == "manifest" ]]; then
   echo "--- Manifest drift ---"
-  if [[ ! -f "tools/manifest-drift/check_manifest_drift.py" ]]; then
-    skip_check "manifest drift" "tools/manifest-drift/check_manifest_drift.py not found — copy from hitl-dev-platform/tools/manifest-drift/"
+  if [[ ! -f "ci/manifest-drift/check_manifest_drift.py" ]]; then
+    skip_check "manifest drift" "ci/manifest-drift/check_manifest_drift.py not found — copy from hitl-dev-platform/ci/manifest-drift/"
   else
     SOURCE_DIRS=""
     [[ -d "app" ]] && SOURCE_DIRS="$SOURCE_DIRS app/"
@@ -73,7 +73,7 @@ if [[ "$ONLY" == "all" || "$ONLY" == "manifest" ]]; then
     if [[ -z "$SOURCE_DIRS" ]]; then
       skip_check "manifest drift" "no app/ or src/ directory found"
     else
-      run_check "manifest drift" "python tools/manifest-drift/check_manifest_drift.py --source-dirs $SOURCE_DIRS"
+      run_check "manifest drift" "python ci/manifest-drift/check_manifest_drift.py --source-dirs $SOURCE_DIRS"
     fi
   fi
   echo ""

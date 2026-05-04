@@ -25,7 +25,7 @@ repos:
     hooks:
       - id: manifest-drift
         name: Check manifest drift
-        entry: python tools/manifest-drift/check_manifest_drift.py --strict --source-dirs app/ src/
+        entry: python ci/manifest-drift/check_manifest_drift.py --strict --source-dirs app/ src/
         language: python
         types_or: [python, yaml]
         additional_dependencies: [pyyaml]

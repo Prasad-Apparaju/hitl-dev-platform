@@ -130,7 +130,7 @@ cp hitl-dev-platform/templates/CLAUDE.md.template your-repo/CLAUDE.md
 cp hitl-dev-platform/docs/examples/greenfield/convention-checks.yaml your-repo/
 
 # Copy CI actions
-cp hitl-dev-platform/tools/tools/ci/*.yml your-repo/.github/workflows/
+cp hitl-dev-platform/ci/workflows/*.yml your-repo/.github/workflows/
 
 # Copy issue template
 cp hitl-dev-platform/templates/issue-template.md your-repo/.github/ISSUE_TEMPLATE/

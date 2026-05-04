@@ -16,7 +16,7 @@
 #   .claude/settings.json       plugin reference + project-relative hook paths
 #   .hitl/hooks/*.sh            wrapper scripts; resolve platform via HITL_PLATFORM_ROOT
 #   .semgrep/                   semgrep convention rules (required by /check-conventions)
-#   tools/manifest-drift/       manifest drift checker (required by /check-conventions)
+#   ci/manifest-drift/       manifest drift checker (required by /check-conventions)
 #   scripts/fix_mermaid_br_tags.py  Mermaid linter (required by /check-conventions)
 #
 # Skills, agents, and commands are never copied — they load from the shared
@@ -132,10 +132,10 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
-  if [[ -d "$PLATFORM_ROOT/tools/manifest-drift" && ! -d "$TARGET_DIR/tools/manifest-drift" ]]; then
-    mkdir -p "$TARGET_DIR/tools"
-    cp -r "$PLATFORM_ROOT/tools/manifest-drift" "$TARGET_DIR/tools/manifest-drift"
-    echo "✓ tools/manifest-drift/"
+  if [[ -d "$PLATFORM_ROOT/ci/manifest-drift" && ! -d "$TARGET_DIR/ci/manifest-drift" ]]; then
+    mkdir -p "$TARGET_DIR/ci"
+    cp -r "$PLATFORM_ROOT/ci/manifest-drift" "$TARGET_DIR/ci/manifest-drift"
+    echo "✓ ci/manifest-drift/"
     (( copied++ )) || true
   fi
 

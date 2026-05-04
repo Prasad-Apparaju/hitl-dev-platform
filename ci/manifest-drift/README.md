@@ -17,28 +17,28 @@ ERRORS cause exit code 1 (blocks CI). WARNINGS cause exit code 0 (advisory only)
 
 ```bash
 # Basic — uses defaults (manifest at docs/system-manifest.yaml, scans app/ and src/)
-python tools/manifest-drift/check_manifest_drift.py
+python ci/manifest-drift/check_manifest_drift.py
 
 # Custom manifest path
-python tools/manifest-drift/check_manifest_drift.py --manifest path/to/manifest.yaml
+python ci/manifest-drift/check_manifest_drift.py --manifest path/to/manifest.yaml
 
 # Custom source directories to scan for unlisted files
-python tools/manifest-drift/check_manifest_drift.py --source-dirs app/ lib/ services/
+python ci/manifest-drift/check_manifest_drift.py --source-dirs app/ lib/ services/
 
 # Require manifest to exist — exit 1 if docs/system-manifest.yaml is missing
-python tools/manifest-drift/check_manifest_drift.py --require-manifest
+python ci/manifest-drift/check_manifest_drift.py --require-manifest
 
 # Strict mode — unlisted files become errors (exit 1) instead of warnings
-python tools/manifest-drift/check_manifest_drift.py --strict
+python ci/manifest-drift/check_manifest_drift.py --strict
 
 # Fail on cross-domain imports — imports across domain boundaries become errors
-python tools/manifest-drift/check_manifest_drift.py --strict --fail-cross-domain-imports
+python ci/manifest-drift/check_manifest_drift.py --strict --fail-cross-domain-imports
 
 # Fail on missing facade coverage — missing facade API definitions become errors
-python tools/manifest-drift/check_manifest_drift.py --strict --fail-cross-domain-imports --fail-missing-facade
+python ci/manifest-drift/check_manifest_drift.py --strict --fail-cross-domain-imports --fail-missing-facade
 
 # Python-only mode (default, currently the only mode)
-python tools/manifest-drift/check_manifest_drift.py --python-only
+python ci/manifest-drift/check_manifest_drift.py --python-only
 ```
 
 ## How Cross-Domain Import Detection Works
@@ -65,7 +65,7 @@ manifest-drift:
         python-version: '3.12'
     - run: pip install pyyaml
     - name: Check manifest drift
-      run: python tools/manifest-drift/check_manifest_drift.py --require-manifest
+      run: python ci/manifest-drift/check_manifest_drift.py --require-manifest
 ```
 
 ## Pre-Commit Hook
@@ -77,7 +77,7 @@ Add to `.pre-commit-config.yaml`:
   hooks:
     - id: manifest-drift
       name: Manifest drift check
-      entry: python tools/manifest-drift/check_manifest_drift.py
+      entry: python ci/manifest-drift/check_manifest_drift.py
       language: python
       additional_dependencies: [pyyaml]
       pass_filenames: false
