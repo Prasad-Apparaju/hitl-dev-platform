@@ -15,6 +15,7 @@ If `$ARGUMENTS` is empty, ask: "What feature do you want to add? Describe what t
 ## Steps
 
 1. **Challenge before drafting** — before touching the PRD, ask:
+   - "What is the delivery surface?" Web UI, mobile (iOS/Android/responsive), API/backend only, agentic workflow, internal/ops tool, or a combination? The answer shapes what acceptance criteria look like and what design artifacts the architect will need.
    - "What evidence confirms this is a real problem?" Require a specific data point: support tickets, analytics, user research, churn feedback. "We think users want this" is not evidence — ask until a concrete data point is provided.
    - "What does success look like?" For mature product work: require a current measured baseline and a target ("Increase X from N to M, measured by event Y"). For pre-launch systems, new capabilities, or internal tools where no baseline exists: require an explicit hypothesis with a validation plan ("We believe X will happen because Y; we'll validate with metric Z within timeframe T"). Aspirational intent without reasoning ("users will enjoy this") is not acceptable in either case.
    - "What's explicitly out of scope?" Unstated non-goals become scope creep.
