@@ -28,7 +28,7 @@ When in doubt, use the heavier process. If you are touching more than one domain
 > No LLD found for this component.
 >
 > - **New project:** Run `/architect/design-system` to generate design docs from your PRD first.
-> - **Existing codebase not yet in HITL** (no manifest, no registries): Run `/start` and choose Path B to establish the full baseline — manifest, priority LLDs, and registry stubs — before starting change work.
+> - **Existing codebase not yet in HITL** (no manifest, no registries): Run `/start-brownfield` to establish the full baseline — manifest, priority LLDs, and registry stubs — before starting change work.
 > - **Existing HITL project, one undocumented component:** Run `/generate-docs` for the affected component to create its LLD. Then verify that the test registry and incident registry exist (see Prerequisites in workflow-steps.md) before resuming.
 
 **Source-of-truth order:**
