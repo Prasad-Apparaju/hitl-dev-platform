@@ -410,7 +410,7 @@ Feature work proceeds when blockers are zero.
 | Name | Source | What it does |
 |------|--------|-------------|
 | `/dev-practices` | [ai/claude/dev-practices/SKILL.md](../ai/claude/dev-practices/SKILL.md) | Full workflow |
-| `/architect:design-system` | [ai/claude/architect/design-system/SKILL.md](../ai/claude/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, HITL bootstrap |
+| `/architect:design-system` | [ai/claude/architect/design-system/SKILL.md](../ai/claude/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, initial delivery plan (demoable slices + one decision packet per slice, ready to assign to developers) |
 | `/architect:design-feature` | [ai/claude/architect/design-feature/SKILL.md](../ai/claude/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
 | `/architect:review-design` | [ai/claude/commands/architect/review-design.md](../ai/claude/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
 | `/architect:verify-traceability` | [ai/claude/commands/architect/verify-traceability.md](../ai/claude/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |

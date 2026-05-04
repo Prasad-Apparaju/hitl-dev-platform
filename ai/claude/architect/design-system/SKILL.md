@@ -366,19 +366,54 @@ Present as a table:
 
 ### 8d. Generate decision packets
 
-For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`.
+For each confirmed slice, create a GitHub issue (or use the next available issue number) and generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`.
 
-Fill all fields:
-- `change_id`: slice ID (e.g. `billing-1`)
-- `domain`: exactly one domain from the manifest
-- `lld_path`: path to the domain LLD from Phase 6
-- `hld_path`: path to the relevant HLD from Phase 5
-- `adr_paths`: any ADRs that govern this slice's implementation decisions
-- `tier`: 2 for most initial domain implementations; 3 if cross-domain coordination is required
-- `status`: `design-approved`
-- `demo_check`: the observable outcome from 8a (what the PM sees)
-- `test_plan`: key test scenarios derivable from the LLD facade APIs
-- Leave `rollout_risk`, `roi_flag`, and `impact_brief` as placeholders — filled in by the developer
+Fill all fields using the exact template structure:
+
+```yaml
+issue: <N>                          # GitHub issue number for this slice
+slice: <M>                          # slice number; null if only one slice in this domain
+title: "<domain> — initial implementation"
+change_type: feature
+risk_level: low                     # most initial domain builds are low risk; raise if cross-domain
+
+domains:
+  - <domain name — exactly one>
+
+source_docs:
+  prd: "<path to PRD from Phase 1>"
+  hld:
+    - "<path to relevant HLD from Phase 5>"
+  lld:
+    - "<path to domain LLD from Phase 6>"
+  adr:
+    - "<paths to ADRs that govern this slice>"
+
+tests:
+  plan: "<key test scenarios derivable from the facade APIs in this domain's LLD>"
+  new_tests: []                     # developer fills in during /tdd
+  registry_updated: false
+
+incidents:
+  checked: true
+  relevant: null                    # no incident history yet on a new system
+
+rollout:
+  risk: low
+  strategy: "Direct deploy — new system, no existing traffic"
+  go_no_go:
+    - "<observable criterion from demo check in 8a>"
+
+roi:
+  required: false                   # set true if this slice takes > 1 day
+  estimate: null
+
+impact_brief:
+  pm_mental_model: "<one sentence: what the PM can now demo or verify after this slice>"
+  risk_assessment: "<main risk for this slice>"
+```
+
+The `pm_mental_model` line is the demo check from 8a in one sentence — it is the handoff signal to the PM that this slice is complete.
 
 ---
 

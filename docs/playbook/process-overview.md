@@ -60,7 +60,9 @@ graph LR
 2. 👤 **Figma review** (if design exists) — PM/developer reads the Figma file directly and adds requirements, interactions, and visual specs into the GitHub issue; no command
 
 ### Design (steps 3-9)
-> **Architect shortcut:** `/architect:design-feature` runs steps 3–9 as a single guided session — impact analysis, HLD, LLD, slice decomposition, and decision packet assembly with approval gates at each phase.
+> **At project inception:** `/architect:design-system` designs the full system from the PRD and produces an initial delivery plan — demoable slices for every domain, sequenced by dependency, each with a decision packet ready to assign to a developer. Run once before any feature work starts.
+>
+> **For each subsequent change:** `/architect:design-feature` runs steps 3–9 as a single guided session — impact analysis, HLD, LLD, slice decomposition, and decision packet assembly with approval gates at each phase.
 
 3. 🤖 **Impact analysis** — AI identifies affected components, APIs, configs, and dependencies from the system manifest, test registry, and incident registry; produces effort estimate; outputs `.hitl/current-change.yaml`. On projects with Graphify installed, the skill uses targeted graph queries (`/graphify query "domain: <name> facade APIs"`) instead of reading the full `system-manifest.yaml` — automatic fallback to direct reads if Graphify is unavailable → `/apply-change` (or phase 1 of `/architect:design-feature`)
 4. 👤🤖 **ROI estimate** (if step 3 effort estimate > 1 day) — record in `.hitl/current-change.yaml` under `roi_estimate`: expected outcome (falsifiable), baseline metric (measured now), measurement plan, 30/90-day checkpoints; post a pointer comment on the GitHub issue; follow `ai/claude/dev-practices/roi-estimation.md`

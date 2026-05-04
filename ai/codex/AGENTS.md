@@ -702,13 +702,14 @@ Follow Phase R5 of the `Generate Documentation` section:
 
 ```
 SYSTEM DESIGN COMPLETE — [System Name]
-Domains: N  |  HLDs: N  |  LLDs: N  |  ADRs: N
+Domains: N  |  HLDs: N  |  LLDs: N  |  ADRs: N  |  Slices: N
 
 Artifacts:
   System manifest:   docs/system-manifest.yaml
   HLDs:              docs/02-design/technical/hld/
   LLDs:              docs/02-design/technical/lld/
   ADRs:              docs/02-design/technical/adrs/
+  Decision packets:  docs/decisions/  (N files — one per slice)
   CLAUDE.md:         repo root
   Convention checks: convention-checks.yaml
   Graphify:          [installed / not required]
@@ -718,8 +719,9 @@ Needs architect attention before first feature:
   • Boundary entity shapes (DRAFT): N fields
   • ADR rationale sections: N docs
 
-Next: /architect:design-feature for first change
-      First implementations will correct DRAFT fields
+Next: Assign decision packets to developers — each developer picks up
+      one packet from docs/decisions/ and runs the 31-step workflow.
+      Use /architect:design-feature for subsequent feature changes.
 ```
 
 ---
