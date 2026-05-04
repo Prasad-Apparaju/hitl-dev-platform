@@ -38,6 +38,6 @@ Minimal setup to adopt the HITL AI-Driven Development process on a new project.
 
 ## Next steps
 
-- Read [../../docs/playbook/adoption-guide.md](../../docs/playbook/adoption-guide.md) for the full brownfield adoption guide
-- Read [../../docs/playbook/process-overview.md](../../docs/playbook/process-overview.md) for the workflow details
-- Copy [../../ai/shared/templates/issue-template.md](../../ai/shared/templates/issue-template.md) to `.github/ISSUE_TEMPLATE/`
+- Read [../../playbook/adoption-guide.md](../../playbook/adoption-guide.md) for the full brownfield adoption guide
+- Read [../../playbook/process-overview.md](../../playbook/process-overview.md) for the workflow details
+- Copy [../../../ai/shared/templates/issue-template.md](../../../ai/shared/templates/issue-template.md) to `.github/ISSUE_TEMPLATE/`

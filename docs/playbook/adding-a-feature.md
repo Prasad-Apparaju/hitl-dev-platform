@@ -235,7 +235,7 @@ Deploy per the risk-rated rollout plan. Monitor go/no-go criteria. The system mu
 
 ## Escalation
 
-Architectural trade-offs, PRD scope changes, and cross-team decisions → discuss with the technical advisor and product owner using the prescribed documentation formats. See [Architect Playbook — Escalation Path](../../ai/shared/templates/architect-playbook.md#escalation-path).
+Architectural trade-offs, PRD scope changes, and cross-team decisions → discuss with the technical advisor and product owner using the prescribed documentation formats. See [Architect Playbook — Escalation Path](architect-playbook.md#escalation-path).
 
 ## Quick Reference
 

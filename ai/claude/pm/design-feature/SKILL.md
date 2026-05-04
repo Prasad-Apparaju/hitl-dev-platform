@@ -76,7 +76,7 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
 
    *Follow-up probe (after any answer):* "Do you have a rough sense of how widespread this is — even a ballpark? If not, no worries — we can add it to the open items list."
    - If they give a data point: accept it, note it.
-   - If they say "not sure" / "add to TODO": record it and proceed. See [TODO Deferral](../../ai/shared/challenge-stance.md#todo-deferral).
+   - If they say "not sure" / "add to TODO": record it and proceed. See [TODO Deferral](../../../shared/challenge-stance.md#todo-deferral).
 
 4. **What problem does this solve?** What pain exists today? What is the user doing right now as a workaround?
 5. **What happens if we don't build this?** Is this blocking users, causing churn, or just a nice-to-have? The answer determines priority.
@@ -84,7 +84,7 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
 
    *Follow-up probe (after any answer):* "Do you have a rough current baseline — even approximate — or a hypothesis for how you'd validate this? If not, we can park it in open items."
    - Accept: rough metric, hypothesis + validation plan, or acknowledged gap + TODO.
-   - Do not demand an exact number. See rule 3 in [challenge-stance.md](../../ai/shared/challenge-stance.md).
+   - Do not demand an exact number. See rule 3 in [challenge-stance.md](../../../shared/challenge-stance.md).
 
 7. **What's the simplest version?** If you had to ship this in 1 day, what would you cut? That's your MVP — and it's probably what you should validate first.
 8. **What's explicitly out of scope?** What should this feature NOT do? Unstated non-goals become scope creep.
