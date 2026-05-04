@@ -17,8 +17,8 @@ cat << 'BANNER'
 
   Getting started:
     /start           set up a new project or onboard this codebase
-    /dev-practices   begin a new change (full 30-step workflow)
-    /                browse all 30 commands
+    /dev-practices   begin a new change (full 31-step workflow)
+    /                browse all commands
 
   Roles: /pm  /architect  /qa  /ops
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

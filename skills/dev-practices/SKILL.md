@@ -47,7 +47,7 @@ Requirements
 
 Design
 3.  Impact Analysis        → /apply-change — reads system-manifest.yaml, registries; outputs .hitl/current-change.yaml
-4.  ROI Estimate           → if >1 day effort, add to issue; see roi-estimation.md (conditional)
+4.  ROI Estimate           → if >1 day effort, record in `.hitl/current-change.yaml` under `roi_estimate`; post pointer comment on issue; see roi-estimation.md (conditional)
 5.  Update Docs            → /generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
 6.  Update IaC             → manifests, migrations, configs (conditional)
 7.  Test Case Planning     → /qa:plan-tests — QA queries incident history; QA scenarios acknowledged before TDD
@@ -83,8 +83,8 @@ Ship
 29. Promote or Rollback    → verify go/no-go criteria from step 24; pause on failure, lead decides
 
 Post-Ship
-30. 30-day ROI Check       → reads baseline from step 4 issue; see roi-estimation.md (conditional)
-31. 90-day ROI Check       → reads step 4 + step 30; update ADR Actual Outcome; see roi-estimation.md (conditional)
+30. 30-day ROI Check       → reads roi_estimate from .hitl/current-change.yaml; see roi-estimation.md (conditional)
+31. 90-day ROI Check       → reads roi_estimate + step 30 findings; update ADR Actual Outcome; see roi-estimation.md (conditional)
 ```
 
 ## Reference Files

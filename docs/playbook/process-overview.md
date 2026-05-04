@@ -99,8 +99,8 @@ graph LR
 29. 👤 **Promote or rollback** — at each canary step, verify all go/no-go criteria from the approved plan (step 24); if all met: promote to next tier; if any fail: pause and investigate before deciding; lead makes the final call
 
 ### Post-ship (steps 30-31)
-30. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from step 4 in the GitHub issue; developer + lead assess whether the metric is moving in the right direction; follow `skills/dev-practices/roi-estimation.md`
-31. 👤 **90-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from step 4 and 30-day findings from step 30; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `skills/dev-practices/roi-estimation.md`
+30. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `skills/dev-practices/roi-estimation.md`
+31. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `skills/dev-practices/roi-estimation.md`
 
 ## Key Concepts
 

@@ -90,12 +90,12 @@ Before writing any feature code, generate the design docs for your system:
 /architect/design-system
 ```
 
-This produces the system manifest, HLDs, and LLDs from your PRD. The 30-step workflow reads these docs at nearly every step — they must exist before feature work starts.
+This produces the system manifest, HLDs, and LLDs from your PRD. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
 For every change after that:
 
 1. Create a GitHub issue
-2. Run `/dev-practices` — the 30-step workflow starts here
+2. Run `/dev-practices` — the 31-step workflow starts here
 3. Design (HLD → LLD) before writing code
 4. Code → tests → PR
 
@@ -140,7 +140,7 @@ For each component:
 
 ### B5. Seed the registries
 
-The 30-step workflow queries two registries at multiple points. They need to exist before `/dev-practices` is run for the first time.
+The 31-step workflow queries two registries at multiple points. They need to exist before `/dev-practices` is run for the first time.
 
 **Test registry** (`docs/03-engineering/testing/test-registry.yaml`):
 - Ask: "Do you have existing tests? If so, I'll create a test registry stub from your test files."
@@ -174,7 +174,7 @@ You are starting incrementally: manifest and priority component docs exist, regi
 For every change going forward:
 
 1. Create a GitHub issue
-2. Run `/dev-practices` — the 30-step workflow starts here
+2. Run `/dev-practices` — the 31-step workflow starts here
 3. Update HLD/LLD if the design changes
 4. Code → tests → PR
 

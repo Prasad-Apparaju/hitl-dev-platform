@@ -51,7 +51,7 @@ rollout:
 # ROI (if change > 1 day)
 roi:
   required: false                   # true if change > 1 day
-  estimate: null                    # link to ROI section in issue, or null
+  estimate: null                    # roi_estimate from .hitl/current-change.yaml, or null
 
 # Impact brief
 impact_brief:

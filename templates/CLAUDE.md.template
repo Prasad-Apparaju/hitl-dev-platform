@@ -11,7 +11,7 @@ Before making ANY code or doc change, output these 7 lines in the chat BEFORE th
 1. **Issue**: Is there a GitHub issue? If no → `gh issue create` now.
 2. **Impact analysis**: Which components, APIs, configs, docs, and tests are affected?
 3. **Docs**: Does HLD/LLD/ADR cover this change? If no → update BEFORE code.
-4. **ROI estimate**: Change costs >1 day? If yes → add ROI Estimate section to the issue.
+4. **ROI estimate**: Change costs >1 day? If yes → record in `.hitl/current-change.yaml` under `roi_estimate`; post a pointer comment on the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
 6. **Downstream impact**: Affects other teams' mental models or deployment? If yes → impact brief required.
 7. **Plan**: State the order (docs → IaC → training plan → tests → code → review → impact brief → reconcile docs). Reconcile means: explicitly decide whether divergence reflects a better design (update docs) or unintended drift (fix code).
@@ -20,7 +20,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ---
 
-## Change Workflow (30 Steps — MANDATORY ORDER)
+## Change Workflow (31 Steps — MANDATORY ORDER)
 
 Every change — feature, bug fix, improvement, refactor — follows this sequence. Never skip steps 1-5. Documentation is the source of truth, not code.
 
@@ -32,7 +32,7 @@ Every change — feature, bug fix, improvement, refactor — follows this sequen
 ### Design (Steps 3-8)
 
 3. **Impact analysis** — identify affected components, APIs, configs, dependencies. Query the test registry and incident registry for the affected domain.
-4. **ROI estimate** (conditional, >1 day changes) — add to the issue: value dimension, expected outcome (falsifiable), baseline metric (measured), cost, measurement plan, 30/90-day checkpoints.
+4. **ROI estimate** (conditional, >1 day changes) — record in `.hitl/current-change.yaml` under `roi_estimate`: value dimension, expected outcome (falsifiable), baseline metric (measured), cost, measurement plan, 30/90-day checkpoints. Post a pointer comment on the issue.
 5. **Update docs** — HLD, LLD, ADRs, test cases BEFORE code. Reference Figma specs if they exist.
 6. **Update IaC** — infrastructure manifests, migrations, configs if affected.
 7. **Test case planning** — identify tests to add, update, remove, and regression tests to verify.

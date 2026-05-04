@@ -15,7 +15,7 @@ Before making ANY code or doc change, output these 7 lines in the chat BEFORE th
 1. **Issue**: Is there a GitHub issue? If no → `gh issue create` now.
 2. **Workflow**: Have I run `/apply-change`? If no → run it now.
 3. **Docs**: Does HLD/LLD/ADR cover this change? If no → update BEFORE code.
-4. **ROI estimate**: Change costs >1 day? If yes → add ROI Estimate section to the issue.
+4. **ROI estimate**: Change costs >1 day? If yes → record in `.hitl/current-change.yaml` under `roi_estimate`; post a pointer comment on the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
 6. **Downstream impact**: Affects other teams' mental models or deployment? If yes → impact brief required.
 7. **Plan**: State the order (docs → IaC → training plan → code → tests → impact brief → reconcile docs). Reconcile means: explicitly decide whether divergence reflects a better design (update docs) or unintended drift (fix code).
@@ -24,7 +24,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 30-step workflow. For structured impact analysis and test planning, use `/apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 31-step workflow. For structured impact analysis and test planning, use `/apply-change`.
 
 ## System Manifest — Read Before Every Change
 

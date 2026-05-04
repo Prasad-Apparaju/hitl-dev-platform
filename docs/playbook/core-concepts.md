@@ -80,7 +80,7 @@ This is the same structural pattern used in multi-agent orchestration: the orche
 
 ![Team Collaboration — How PM, Architect, Developers, QA, Ops, and Claude work together](../images/team-collaboration.png)
 
-> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 30-step workflow, and the three boundaries.
+> **[Download editable PowerPoint version](docs/hitl-team-collaboration.pptx)** — 4 slides covering team collaboration, the 31-step workflow, and the three boundaries.
 
 <details open>
 <summary>View as Mermaid diagram (text-based, copy-pasteable)</summary>
