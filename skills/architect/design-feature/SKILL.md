@@ -306,7 +306,23 @@ Proposed slice plan:
   ...
 ```
 
-### 7b. Check for domain independence
+### 7b. Check for demoability
+
+For each slice, answer: **"What does the PM see at the end of this slice?"**
+
+A valid answer is one of:
+- A user-visible feature or workflow step the PM can exercise in the running app
+- A measurable outcome with a defined pass/fail (for infrastructure-only slices: record counts, latency comparison, error-rate delta)
+
+If the answer is "nothing visible yet" — the slice is too narrow. Either extend it to include the user-visible layer, or merge it into an adjacent slice that completes the user-facing story.
+
+Add a `demo:` line to each slice:
+```
+Slice 1: domain [A] — [description]
+  Demo: PM can [specific action] and see [specific result]
+```
+
+### 7c. Check for domain independence
 
 For each pair of slices, determine:
 - Do they share any mutable state, database tables, or external API contracts?
@@ -318,19 +334,22 @@ If two slices are NOT independent:
 - Mark them as **sequential** (complete and merge slice M before starting slice N)
 - Do not allow them to be handed to different developers concurrently
 
-### 7c. Present the final slice plan
+### 7d. Present the final slice plan
 
 ```
 Slice plan — GH-<N>:
   Slice 1: domain [A] [PARALLEL OK]
     Developer: [to be assigned]
     LLD: docs/02-design/technical/lld/[A]/...
+    Demo: PM can [specific action] and see [specific result]
   Slice 2: domain [B] [SEQUENTIAL — after Slice 1]
     Developer: [to be assigned]
     LLD: docs/02-design/technical/lld/[B]/...
+    Demo: PM can [specific action] and see [specific result]
 ```
 
 **STOP. Ask the architect:**
+- "Does each slice's Demo answer clearly describe what the PM will see?"
 - "Are these slices correctly domain-isolated?"
 - "Any hidden dependencies between slices I missed?"
 - "Confirm parallelism?"

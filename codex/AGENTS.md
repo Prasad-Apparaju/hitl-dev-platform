@@ -809,13 +809,15 @@ If IaC changes were identified: list specific files, what changes, and reversibi
 
 This is the architect's core parallelization decision — no default behavior, requires explicit reasoning.
 
-For each affected domain, propose a slice. For each pair of slices:
+For each affected domain, propose a slice. For each slice, answer: **"What does the PM see at the end of this slice?"** A valid answer is a user-visible feature the PM can exercise, or a measurable outcome with a defined pass/fail (record counts, latency delta, error-rate comparison). If the answer is "nothing visible yet," the slice is too narrow — extend or merge it. Add a `demo:` line to each slice.
+
+For each pair of slices:
 - Do they share mutable state, database tables, or external API contracts?
 - Can both be deployed to production independently?
 
 Mark slices with ordering dependencies as **SEQUENTIAL**. Mark fully independent slices as **PARALLEL OK**.
 
-**STOP — present slice plan and ask architect to confirm.** Do not assemble packets until the slice plan is confirmed.
+**STOP — present slice plan (with `demo:` lines) and ask architect to confirm.** Do not assemble packets until the slice plan is confirmed.
 
 ### Phase 8 — Test Case Planning (Step 7)
 
