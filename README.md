@@ -83,7 +83,7 @@ Pick the path that matches where you are:
 
 ## Install
 
-The HITL platform is packaged as a Claude Code plugin. Installing it makes all workflow commands, subagents, and enforcement hooks available in your project.
+The HITL platform lives in a shared clone on your machine. The bootstrap script wires each product repo to it via symlinks and hook wrappers — no copy-paste, no per-repo installs.
 
 **Step 1 — Clone the platform to a stable path on your machine**
 
@@ -97,11 +97,17 @@ git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platfor
 bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 ```
 
-This creates `.claude/settings.json` pointing to the shared plugin and copies the project-specific files your repo needs: `CLAUDE.md`, `docs/system-manifest.yaml`, `.semgrep/` convention rules, `ci/manifest-drift/`, and the Mermaid linter. CI workflow templates live in `ci/workflows/` in this repo — copy whichever ones apply to your product repo's `.github/workflows/`. The platform stays in one place — product repos reference it. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
+This creates the project-specific files your repo needs:
+- `.claude/commands/` — symlinks to platform SKILL.md files; Claude Code discovers commands from this directory
+- `.claude/settings.json` — hook registrations (UserPromptSubmit, PreToolUse, PostToolUse, Stop)
+- `.hitl/hooks/` — wrapper scripts that delegate to the platform via `HITL_PLATFORM_ROOT`
+- `CLAUDE.md`, `docs/system-manifest.yaml`, `.semgrep/` convention rules, `ci/manifest-drift/`, Mermaid linter
+
+The platform stays in one place — product repos reference it. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
 
 **Step 3 — Verify**
 
-Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, confirm the plugin path in `.claude/settings.json` points to your platform clone.
+Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, check that `.claude/commands/` exists and contains `.md` symlinks pointing to the platform.
 
 **Step 4 — Run the appropriate start command**
 

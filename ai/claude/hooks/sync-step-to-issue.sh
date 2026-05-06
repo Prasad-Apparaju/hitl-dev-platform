@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# PostToolUse hook: post a GitHub issue comment whenever current_step advances.
+# PostToolUse hook: post a GitHub issue comment when current_step advances.
 # Fires on any Edit/Write tool call; exits silently if the file isn't the HITL context.
+# Uses /tmp/hitl-last-step-<change_id> to detect advancement — skips duplicate posts.
 # Non-blocking — never exits with a non-zero code that would surface to the user.
 
 set -uo pipefail
@@ -43,10 +44,21 @@ PHASE=$(echo "$CS_BLOCK" | awk -F'"' '/phase:/{print $2}')
 ISSUE_NUM="${CHANGE_ID#GH-}"
 [[ "$ISSUE_NUM" == "$CHANGE_ID" || -z "$ISSUE_NUM" ]] && exit 0  # not GH-N format
 
+# Step advancement check — only post when the step number actually increases
+CACHE_FILE="/tmp/hitl-last-step-${CHANGE_ID}"
+LAST_STEP=0
+[[ -f "$CACHE_FILE" ]] && LAST_STEP=$(cat "$CACHE_FILE" 2>/dev/null || echo 0)
+
+# Exit without posting if step hasn't advanced
+[[ "$STEP_NUM" -le "$LAST_STEP" ]] && exit 0
+
 # Post comment — silently skip if gh is unavailable or the issue doesn't exist
 if command -v gh &>/dev/null; then
     BODY="**HITL progress** | Step ${STEP_NUM}: ${STEP_NAME} | Phase: ${PHASE} | Tier: ${TIER}"
     gh issue comment "$ISSUE_NUM" --body "$BODY" &>/dev/null || true
 fi
+
+# Record the step we just posted so future edits at the same step are silent
+echo "$STEP_NUM" > "$CACHE_FILE"
 
 exit 0
