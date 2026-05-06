@@ -32,11 +32,20 @@ Before any code change (feature, bug fix, refactor, improvement), load `/dev-pra
 
 ## Testing
 
-After every code change, test it before reporting done. This applies to scripts, hooks, config files, and any instructions that reference file paths or commands.
+After every change, validate it before reporting done. This applies to code, docs, scripts, hooks, config files, and skill or agent instructions.
 
-- Run the changed code with inputs covering the happy path and key edge cases
-- Fix failures before committing — never commit a known failure
-- If a change cannot be tested locally (e.g., requires a live external service), say so explicitly rather than claiming success
+**For code:** Run with representative inputs covering the happy path and key edge cases.
+
+**For documentation:**
+- File paths mentioned in the doc exist on disk
+- Commands shown actually execute without error
+- YAML/JSON blocks are syntactically valid (`python3 -c "import yaml; yaml.safe_load(open('<file>'))"`)
+- Mermaid blocks contain no `<br/>` tags (`grep -n '<br' <file>`)
+- Cross-references are live: if the doc says "see §N.M", verify that heading exists in the target file
+- Template placeholders (`{{variable}}`) are not left unfilled (`grep -n '{{' <file>`)
+- Index files are updated when a new doc is created
+
+Fix failures before reporting done. If a change cannot be validated locally, say so explicitly rather than claiming success.
 
 ## System Manifest — Read Before Every Change
 
