@@ -35,8 +35,7 @@ sequenceDiagram
 
 ---
 
-<details>
-<summary><strong>Phase 1 — Session Init (detail)</strong></summary>
+### Phase 1 — Session Init (detail)
 
 ```mermaid
 sequenceDiagram
@@ -70,10 +69,9 @@ sequenceDiagram
     Note over Ctx: This model is much more repo-local than the Codex app session model
 ```
 
-</details>
+---
 
-<details>
-<summary><strong>Phase 2 — During Session (detail)</strong></summary>
+### Phase 2 — During Session (detail)
 
 ```mermaid
 sequenceDiagram
@@ -122,8 +120,6 @@ sequenceDiagram
 
     Note over Ctx: 🔴 Context pressure grows mainly from conversation, file reads, tool output, and fetched content
 ```
-
-</details>
 
 ---
 

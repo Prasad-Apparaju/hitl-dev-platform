@@ -34,8 +34,7 @@ sequenceDiagram
 
 ---
 
-<details>
-<summary><strong>Phase 1 — Session Init (detail)</strong></summary>
+### Phase 1 — Session Init (detail)
 
 ```mermaid
 sequenceDiagram
@@ -66,10 +65,9 @@ sequenceDiagram
     Note over Ctx: Unlike Claude Code, this model is not primarily explained through auto-loaded project memory files
 ```
 
-</details>
+---
 
-<details>
-<summary><strong>Phase 2 — During Session (detail)</strong></summary>
+### Phase 2 — During Session (detail)
 
 ```mermaid
 sequenceDiagram
@@ -120,8 +118,6 @@ sequenceDiagram
 
     Note over Ctx: 🔴 Context pressure grows mainly from messages, file reads, command output, fetched content, and sub-agent results
 ```
-
-</details>
 
 ---
 
