@@ -45,7 +45,7 @@ PLATFORM_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # ---- Argument parsing ----
 
-TOOL="both"
+TOOL=""
 PROJECT_NAME=""
 TARGET_DIR=""
 
@@ -63,9 +63,26 @@ if [[ -z "$TARGET_DIR" ]]; then
   exit 1
 fi
 
-if [[ ! "$TOOL" =~ ^(claude|codex|both)$ ]]; then
+# Validate explicit --tool value if provided; otherwise prompt interactively
+if [[ -n "$TOOL" && ! "$TOOL" =~ ^(claude|codex|both)$ ]]; then
   echo "ERROR: --tool must be claude, codex, or both" >&2
   exit 1
+fi
+
+if [[ -z "$TOOL" ]]; then
+  echo ""
+  echo "Which AI tool will you use in this project?"
+  echo "  1) Claude Code"
+  echo "  2) Codex"
+  echo "  3) Both"
+  echo ""
+  read -rp "Enter 1, 2, or 3: " _choice
+  case "$_choice" in
+    1) TOOL="claude" ;;
+    2) TOOL="codex"  ;;
+    3) TOOL="both"   ;;
+    *) echo "Invalid choice. Run again and enter 1, 2, or 3." >&2; exit 1 ;;
+  esac
 fi
 
 [[ -z "$PROJECT_NAME" ]] && PROJECT_NAME="$(basename "$TARGET_DIR")"
