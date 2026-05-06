@@ -86,6 +86,7 @@ Set from the impact analysis above:
 - `manifest.domain`: affected domain name
 - `allowed_paths`: source paths for this domain
 - `approvals.product` and `approvals.architecture`: both `pending`
+- `current_step`: `{number: 3, name: "Impact analysis", phase: "Design"}`
 
 Ask the user to confirm the HITL context file before proceeding.
 

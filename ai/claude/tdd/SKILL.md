@@ -37,6 +37,8 @@ Format: `---` line, `**TDD — Phase N / 7: [Name]**`, trail, `---`.
 
 ## Phase 1 — Generate Tests (RED)
 
+Update `.hitl/current-change.yaml`: set `current_step: {number: 10, name: "AI generates tests (RED)", phase: "Build"}`.
+
 1. **Read the LLD** for the component being implemented. If no LLD exists, stop (see refusal rule above).
 
 2. **Get manifest data** for the domain. Prefer graph queries if available:
@@ -134,6 +136,8 @@ When the user says "tests approved" and has addressed the checklist, proceed to 
 
 ## Phase 5 — Generate Code (GREEN)
 
+Update `.hitl/current-change.yaml`: set `current_step: {number: 14, name: "Generate code (GREEN)", phase: "Build"}`.
+
 1. **Generate the simplest implementation** that makes all failing tests pass.
    - Read the LLD for the implementation spec
    - Follow the conventions from the manifest's `cross_cutting` section
@@ -159,6 +163,8 @@ When the user says "tests approved" and has addressed the checklist, proceed to 
 ---
 
 ## Phase 7 — Refactor
+
+Update `.hitl/current-change.yaml`: set `current_step: {number: 16, name: "Refactor", phase: "Build"}`.
 
 1. **Review the passing code** for simplification opportunities:
    - Remove duplication
