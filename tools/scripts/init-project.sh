@@ -266,6 +266,27 @@ WRAPPER
   else
     echo "  .hitl/hooks/ already exists — skipping"
   fi
+
+  # Graphify knowledge graph support
+  if [[ ! -f "$TARGET_DIR/.graphifyignore" && -f "$PLATFORM_ROOT/.graphifyignore" ]]; then
+    cp "$PLATFORM_ROOT/.graphifyignore" "$TARGET_DIR/.graphifyignore"
+    echo "✓ .graphifyignore"
+  fi
+
+  if [[ ! -f "$TARGET_DIR/.mcp.json" ]]; then
+    cat > "$TARGET_DIR/.mcp.json" << 'JSON'
+{
+  "mcpServers": {
+    "graphify": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "graphify.serve", "graphify-out/graph.json"]
+    }
+  }
+}
+JSON
+    echo "✓ .mcp.json (Graphify MCP server — requires: pip install 'graphifyy[mcp]')"
+  fi
 }
 
 # ---- Codex setup ----
