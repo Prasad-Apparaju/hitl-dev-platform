@@ -37,7 +37,7 @@ fi
 
 # --- Codex CLI config and lifecycle hooks ---
 
-mkdir -p "$TARGET_DIR/.codex"
+mkdir -p "$TARGET_DIR/.ai/codex"
 
 if [[ -f "$TARGET_DIR/.ai/codex/config.toml" ]]; then
   echo ".ai/codex/config.toml already exists — review $SCRIPT_DIR/config.toml and merge manually."
