@@ -21,6 +21,8 @@ Work through phases in order. Pause after each output and wait for architect app
 
 ## Phase 1 — Read Context
 
+Update `.hitl/current-change.yaml`: set `current_step: {number: 1, name: "Read migration context", phase: "Migration Review"}`.
+
 ### 1a. Read migration context
 
 Read `docs/00-migration/migration-context.yaml`. Extract:
@@ -50,6 +52,8 @@ Read each file in full. Do not summarize yet — full comprehension before evalu
 ---
 
 ## Phase 2 — Critical Evaluation
+
+Update `.hitl/current-change.yaml`: set `current_step: {number: 2, name: "Critical evaluation", phase: "Migration Review"}`.
 
 Evaluate each external document against four dimensions. Be specific — cite page numbers, section headings, or direct quotes where relevant.
 
@@ -100,6 +104,8 @@ Identify the top 3–5 risks visible in the external docs or their gaps:
 
 ## Phase 3 — Write the Migration Review
 
+Update `.hitl/current-change.yaml`: set `current_step: {number: 3, name: "Write migration review", phase: "Migration Review"}`.
+
 Write `docs/00-migration/migration-review.md` with the following structure:
 
 ```markdown
@@ -141,6 +147,8 @@ Incorporate feedback. Set `status: approved` only after the architect explicitly
 ---
 
 ## Phase 4 — Write the Migration Brief
+
+Update `.hitl/current-change.yaml`: set `current_step: {number: 4, name: "Write migration brief", phase: "Migration Review"}`.
 
 The migration brief is the PRD-equivalent for the migration. It is the required input for `/architect:design-system` (full-system migration) or `/architect:design-feature` (slice-by-slice). The architect skills read this file in place of `docs/01-product/prd.md`.
 
@@ -199,6 +207,8 @@ Incorporate feedback. Set `status: approved` only after the architect explicitly
 ---
 
 ## Phase 5 — Hand Off to Architect Design
+
+Update `.hitl/current-change.yaml`: set `current_step: {number: 5, name: "Hand off to architect", phase: "Migration Review"}`.
 
 Once both documents are approved, output this exactly:
 

@@ -48,7 +48,9 @@ Otherwise → use **New Feature Mode** (Phase 1-2 below).
 
 3. **Update `docs/02-design/technical/hld/index.md`** — add a row linking to the new HLD.
 
-4. **STOP and ask the user to review and approve the HLD** before proceeding to Phase 2.
+4. **Validate** the generated file (see Doc Validation Checklist below) before presenting.
+
+5. **STOP and ask the user to review and approve the HLD** before proceeding to Phase 2.
 
 ### Phase 2 — Low-Level Design (LLD)
 
@@ -71,7 +73,9 @@ Only proceed after HLD approval.
 
 3. **Update `docs/02-design/technical/lld/index.md`** and **`packages.md`**.
 
-4. **STOP and ask the user to approve the LLD.**
+4. **Validate** all generated LLD files (see Doc Validation Checklist below) before presenting.
+
+5. **STOP and ask the user to approve the LLD.**
 
 ---
 
@@ -120,7 +124,9 @@ This mode reads the existing codebase and generates the full documentation basel
    - "Any domains that should be merged or split?"
    - "Any conventions I missed?"
 
-4. **Revise based on feedback.** The manifest is the foundation — getting domain boundaries right here prevents cascading errors in HLDs/LLDs.
+4. **Validate** `docs/system-manifest.yaml` (see Doc Validation Checklist below) before presenting.
+
+5. **Revise based on feedback.** The manifest is the foundation — getting domain boundaries right here prevents cascading errors in HLDs/LLDs.
 
 ### Phase R2 — HLDs (Days 2-3 equivalent)
 
@@ -138,7 +144,9 @@ This mode reads the existing codebase and generates the full documentation basel
 
 3. **Update `docs/02-design/technical/hld/index.md`** with all new HLDs.
 
-4. **STOP and ask the user to review the HLDs.** These don't need to be perfect — approximately 70% accurate is the target (observed in initial projects; accuracy improves as conventions are documented). The user corrects the remainder.
+4. **Validate** all generated HLD files (see Doc Validation Checklist below) before presenting.
+
+5. **STOP and ask the user to review the HLDs.** These don't need to be perfect — approximately 70% accurate is the target (observed in initial projects; accuracy improves as conventions are documented). The user corrects the remainder.
 
 ### Phase R3 — LLDs (Days 3-4 equivalent)
 
@@ -154,7 +162,9 @@ This mode reads the existing codebase and generates the full documentation basel
 
 4. **Generate `docs/02-design/technical/lld/packages.md`** — a Mermaid `graph TD` showing the domain dependency structure with subgraphs for each domain's key components. Use the interaction matrix from the manifest to draw edges.
 
-5. **STOP and ask the user to review the LLDs.**
+5. **Validate** all generated LLD files (see Doc Validation Checklist below) before presenting.
+
+6. **STOP and ask the user to review the LLDs.**
 
 ### Phase R4 — ADRs (Days 4-5 equivalent)
 
@@ -178,6 +188,8 @@ This mode reads the existing codebase and generates the full documentation basel
    - "Are there any decisions that aren't reflected in the code?"
 
 4. **Update `docs/02-design/technical/adrs/README.md`** with all new ADRs.
+
+5. **Validate** all generated ADR files (see Doc Validation Checklist below) before presenting.
 
 ### Phase R5 — Process Setup (Day 5 equivalent)
 
@@ -274,6 +286,24 @@ This mode reads the existing codebase and generates the full documentation basel
 ---
 
 After the baseline sprint, use `/pm:design-feature` or `/pm:add-feature` for new features — the full HITL workflow (PM skills, design, TDD, review, deployment) applies identically from this point forward. The brownfield distinction ends here.
+
+---
+
+## Doc Validation Checklist
+
+Run these checks on every generated file before presenting it for human review. Fix failures before the STOP — don't surface broken docs.
+
+| Check | Command | Pass condition |
+|---|---|---|
+| No unfilled placeholders | `grep -n '{{'  <file>` | No output |
+| No `<br/>` in Mermaid blocks | `grep -n '<br' <file>` | No output |
+| YAML blocks valid | `python3 -c "import yaml; yaml.safe_load(open('<file>'))"` | Exits 0 |
+| File paths mentioned exist | `ls <path>` for each path in the doc | No "No such file" |
+| Commands run without error | Copy-paste and execute each shell command shown | Exits 0 |
+| Cross-references live | For each "see §N.M / see filename", verify heading or file exists | Found |
+| Index updated | Grep the relevant index file for the new doc's name | Found |
+
+For semantic accuracy (does the content correctly describe the design?), surface it to the human reviewer — these cannot be auto-checked. Count and report INFERRED/DRAFT markers in the summary so the reviewer knows what needs attention.
 
 ---
 
