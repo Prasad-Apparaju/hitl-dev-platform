@@ -6,14 +6,21 @@ Every role is a mix of producing artifacts, reviewing AI drafts, and making deci
 
 > **On "review, don't write":** The goal is not for engineers to stop writing. The goal is that low-value mechanical production (boilerplate, obvious patterns, predictable transforms) does not consume the hours that should go to design, debugging, and judgment. Many experienced engineers find the shift uncomfortable at first; that discomfort is worth naming explicitly.
 
-| Role | In Dev | After handoff to QA/Prod |
-|------|--------|------------------------|
-| **PM** | Defines requirements. Reviews AI-drafted PRDs. | Reviews demo. Accepts or requests changes. |
-| **Architect** | Designs, reviews, gates PRs. Verifies traceability. | Available if QA/Ops need design clarification. |
-| **Developer** | Owns everything in dev: code, tests, IaC, docs, QA-level testing, infra setup. Builds until the change is stable enough to hand off. | Pulled in by QA/Ops as needed for fixes. Retroactively applies Ops IaC refinements back to dev. |
-| **QA** | Contributes test scenarios from incident registry to the dev test plan (non-blocking input). | Takes the handoff. Runs independent quality verification. Can block promotion if criteria not met. |
-| **Ops** | Contributes canary criteria from incident registry (non-blocking input). | Takes the handoff. Refactors baseline IaC Dev provides. Monitors + promotes to production. Can block if system not stable. |
-| **Claude** | Drafts docs, generates code + tests, reviews PRs, monitors metrics. Proposes, never decides. | Reports canary metrics. Available to QA/Ops for analysis. |
+| Role | Behavioral mode | In Dev | After handoff to QA/Prod |
+|------|----------------|--------|------------------------|
+| **PM** | Draft-propose-approve | Defines requirements. Reviews AI-drafted PRDs. | Reviews demo. Accepts or requests changes. |
+| **Technical Advisor** | Draft-propose-approve | Evaluates external docs, owns migration brief and review, gates handoff to Architect. | Reviews design gates against original problem statement. |
+| **Architect** | Draft-propose-approve | Designs, reviews, gates PRs. Verifies traceability. | Available if QA/Ops need design clarification. |
+| **Developer** | Execute | Owns everything in dev: code, tests, IaC, docs, QA-level testing, infra setup. Builds until the change is stable enough to hand off. | Pulled in by QA/Ops as needed for fixes. Retroactively applies Ops IaC refinements back to dev. |
+| **QA** | Execute | Contributes test scenarios from incident registry to the dev test plan (non-blocking input). | Takes the handoff. Runs independent quality verification. Can block promotion if criteria not met. |
+| **Ops** | Execute | Contributes canary criteria from incident registry (non-blocking input). | Takes the handoff. Refactors baseline IaC Dev provides. Monitors + promotes to production. Can block if system not stable. |
+| **Claude** | — | Drafts docs, generates code + tests, reviews PRs, monitors metrics. Proposes, never decides. | Reports canary metrics. Available to QA/Ops for analysis. |
+
+**Behavioral modes:**
+- **Draft-propose-approve** — Claude drafts; the human reviews, challenges, and explicitly approves before Claude treats anything as final or advances to the next phase. Used when the work requires judgment Claude cannot reliably exercise: ambiguous requirements, design decisions, external doc evaluation, trust decisions.
+- **Execute** — Claude implements directly from an approved spec. Used when the spec is locked and the work is mechanical: code from an approved LLD, test generation from the manifest, IaC from a design decision.
+
+When no role is established at session start, Claude asks: *"Which role are you playing this session? PM / Technical Advisor / Architect / Developer / QA / Ops"* — and adapts its behavioral mode accordingly.
 
 **The model:** Dev is empowered to do everything in dev — including QA-level testing and Ops-level IaC. Once the build is stable, Dev hands off with evidence (test registry results, impact brief, rollout plan). QA and Ops take it from there independently and pull Dev in as needed. Ops may refactor the IaC Dev provided; Dev retroactively applies those refinements back to the dev environment.
 
