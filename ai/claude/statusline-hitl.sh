@@ -53,4 +53,5 @@ if [ -f "$YAML_FILE" ]; then
   fi
 fi
 
-printf "%s  %s%b%b%b" "$cwd" "$model" "$ctx_segment" "$branch_segment" "$hitl_segment"
+printf "%s  %s%b%b" "$cwd" "$model" "$ctx_segment" "$branch_segment"
+[ -n "$hitl_segment" ] && printf "\n%b" "$hitl_segment"
