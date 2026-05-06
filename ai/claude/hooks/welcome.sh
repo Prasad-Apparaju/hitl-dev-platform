@@ -27,17 +27,17 @@ show_breadcrumbs() {
   # Validate — fall through to static menu if step_num is missing
   [[ -z "$step_num" || ! "$step_num" =~ ^[0-9]+$ ]] && return 1
 
-  # Build trail: show a window of 9 steps centred on current step
-  local win_start=$(( step_num - 4 )); (( win_start < 1  )) && win_start=1
-  local win_end=$(( step_num + 4 ));   (( win_end  > 31 )) && win_end=31
+  # Build trail: show a window of 7 steps centred on current step (3 back + current + 3 ahead)
+  local win_start=$(( step_num - 3 )); (( win_start < 1  )) && win_start=1
+  local win_end=$(( step_num + 3 ));   (( win_end  > 31 )) && win_end=31
 
   local trail=""
   (( win_start > 1 )) && trail="… "
   for (( i=win_start; i<=win_end; i++ )); do
     local name="${NAMES[$i]}"
-    if   (( i <  step_num )); then trail+="✓${i}.${name}  "
-    elif (( i == step_num )); then trail+="▶${i}.${name}  "
-    else                           trail+="·${i}.${name}  "
+    if   (( i <  step_num )); then trail+="✓${i}.${name} "
+    elif (( i == step_num )); then trail+="▶${i}.${name} "
+    else                           trail+="·${i}.${name} "
     fi
   done
   (( win_end < 31 )) && trail+="…"
