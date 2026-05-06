@@ -1,4 +1,4 @@
-# Workflow Reference — The Full 30-Step Process
+# Workflow Reference — The Full 31-Step Process
 
 ## 4. Collaborative Development: The Design Room
 
@@ -151,7 +151,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 31 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **9 human-only** 👤.
+Of 31 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **10 human-only** 👤.
 
 ### 5.3 The Two-Round Code Review
 
