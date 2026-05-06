@@ -30,6 +30,14 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 31-step workflow. For structured impact analysis and test planning, use `/apply-change`.
 
+## Testing
+
+After every code change, test it before reporting done. This applies to scripts, hooks, config files, and any instructions that reference file paths or commands.
+
+- Run the changed code with inputs covering the happy path and key edge cases
+- Fix failures before committing — never commit a known failure
+- If a change cannot be tested locally (e.g., requires a live external service), say so explicitly rather than claiming success
+
 ## System Manifest — Read Before Every Change
 
 Before modifying any code, get the relevant domain's conventions and facade APIs. Prefer a graph query if available — `docs/system-manifest.yaml` is large and the graph surfaces just the relevant slice:
