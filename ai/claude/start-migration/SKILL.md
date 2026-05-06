@@ -112,7 +112,7 @@ Say: "Migration directory structure created. External docs staged in `docs/00-mi
 
 ---
 
-## Step 5 — Ingest external documentation
+## Step 5 — Ingest external documentation (optional)
 
 Update `.hitl/current-change.yaml` — set `current_step`:
 ```yaml
@@ -121,26 +121,31 @@ Update `.hitl/current-change.yaml` — set `current_step`:
   phase: "Migration Setup"
 ```
 
-If external docs are available (from Step 1):
+Present the following choice to the user:
 
-For each external document:
-- Ask the user to provide the file path or paste the content.
-- Copy or save to `docs/00-migration/external-reference/<doc-name>.<ext>`.
-- Do NOT edit the external docs — preserve them exactly as received.
+---
+**Step 5 is optional — choose one:**
 
-After all docs are ingested:
+**A — Copy docs into this repo** (`docs/00-migration/external-reference/`)
+> Best when: the reference repo is private, may become unavailable, or team members lack access.
+> What happens: you provide file paths or paste content; I copy them as-is. No editing.
+> Downside: files can drift from the source of truth over time.
 
-```
-External reference docs staged:
-  docs/00-migration/external-reference/
-    ├── <doc-1>
-    ├── <doc-2>
-    └── ...
+**B — Link only (skip copy)**
+> Best when: the reference repo is public and key decisions are already captured in `system-manifest.yaml` and `migration-context.yaml` (which Steps 3–4 produce).
+> What happens: I verify the `poc_reference` links in `migration-context.yaml` are live and confirm key architectural decisions are reflected in the manifest. No file copy.
+> Downside: future sessions need network access to the reference repo.
 
-These are reference material only. The architect's deep review (next step) will extract what is reliable, flag what is questionable, and identify gaps — before any HITL design work begins.
-```
+**C — No external docs**
+> The architect will design from scratch using the migration context collected in Step 1.
 
-If no external docs are available: say "No external docs to ingest — the architect will design from scratch using the migration context collected in Step 1." and move on.
+---
+
+**If A:** For each external document, ask the user to provide the file path or paste the content. Copy or save to `docs/00-migration/external-reference/<doc-name>.<ext>`. Do NOT edit the external docs — preserve them exactly as received. Then print the staged file list.
+
+**If B:** Verify `poc_reference.repo` in `migration-context.yaml` is reachable (`curl -sI <url> | head -1` or `gh repo view <repo>`). Confirm key decisions are present in `system-manifest.yaml` (check `key_decisions` block or `robustness_primitives`). Report: "Reference links verified. Key decisions captured in manifest. No file copy needed." and move on.
+
+**If C:** Say "No external docs to ingest — the architect will design from scratch." and move on.
 
 ---
 
