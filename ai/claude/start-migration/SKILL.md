@@ -14,10 +14,17 @@ Work through these steps in order — pause after each and wait for confirmation
 
 ## Step 1 — Collect migration context
 
-Create or update `.hitl/current-change.yaml` with a migration setup stub (the change_id is temporary — updated to `GH-<number>` in Step 7):
-- `change_id: migration-setup`
-- `tier: 3`
-- `current_step: {number: 1, name: "Collect migration context", phase: "Migration Setup"}`
+**Write `.hitl/current-change.yaml` now** (before asking questions — this enables breadcrumbs immediately):
+
+```yaml
+change_id: migration-setup
+tier: 3
+status: planning
+current_step:
+  number: 1
+  name: "Collect migration context"
+  phase: "Migration Setup"
+```
 
 Ask the following questions and record the answers. Do not proceed until all four are answered:
 
@@ -41,7 +48,12 @@ external_docs_available: true|false
 
 ## Step 2 — Customize CLAUDE.md
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 2, name: "Customize CLAUDE.md", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 2
+  name: "Customize CLAUDE.md"
+  phase: "Migration Setup"
+```
 
 If `CLAUDE.md` has template placeholders (`{{coding_standards}}`, `{{#conventions}}`):
 - Ask: "What language and framework is the TARGET system? What test framework? Any naming or formatting conventions?"
@@ -55,7 +67,12 @@ If `CLAUDE.md` already has real content, say: "`CLAUDE.md` looks customized — 
 
 ## Step 3 — Initialize the system manifest for the target
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 3, name: "Initialize system manifest", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 3
+  name: "Initialize system manifest"
+  phase: "Migration Setup"
+```
 
 The system manifest represents the **target** architecture — what you are building toward. The source system is documented separately.
 
@@ -70,7 +87,12 @@ If a real manifest already exists, ask: "Is this manifest for the target system 
 
 ## Step 4 — Set up migration directory structure
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 4, name: "Set up directory structure", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 4
+  name: "Set up directory structure"
+  phase: "Migration Setup"
+```
 
 Create the following directories if they do not exist:
 
@@ -92,7 +114,12 @@ Say: "Migration directory structure created. External docs staged in `docs/00-mi
 
 ## Step 5 — Ingest external documentation
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 5, name: "Ingest external docs", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 5
+  name: "Ingest external docs"
+  phase: "Migration Setup"
+```
 
 If external docs are available (from Step 1):
 
@@ -119,7 +146,12 @@ If no external docs are available: say "No external docs to ingest — the archi
 
 ## Step 6 — Seed the registries
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 6, name: "Seed registries", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 6
+  name: "Seed registries"
+  phase: "Migration Setup"
+```
 
 **Test registry** (`docs/03-engineering/testing/test-registry.yaml`):
 - Ask: "Do you have existing tests for the source system? I'll create a registry stub."
@@ -135,7 +167,12 @@ Update `.hitl/current-change.yaml`: set `current_step: {number: 6, name: "Seed r
 
 ## Step 7 — Create the migration tracking issue
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 7, name: "Create tracking issue", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 7
+  name: "Create tracking issue"
+  phase: "Migration Setup"
+```
 
 Run:
 ```bash
@@ -150,7 +187,12 @@ Show the issue URL. Then update `.hitl/current-change.yaml`: set `change_id: GH-
 
 ## Step 8 — Confirm ready and hand off
 
-Update `.hitl/current-change.yaml`: set `current_step: {number: 8, name: "Confirm and hand off", phase: "Migration Setup"}`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 8
+  name: "Confirm and hand off"
+  phase: "Migration Setup"
+```
 
 Output this exactly:
 
