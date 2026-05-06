@@ -142,6 +142,29 @@ approvals:
     enum: [pending, approved, not-required]
     description: "Ops release review approval (required for Tier 3+)"
 
+# --- Workflow breadcrumb ---
+
+current_step:
+  description: |
+    Written by each skill as it advances the workflow. Consumed by welcome.sh
+    to show the developer where they are in the 31-step process on every prompt.
+    Skills that own multiple steps update this at the start of each phase.
+  number:
+    type: integer
+    minimum: 1
+    maximum: 31
+    description: "31-step workflow step number currently in progress"
+    example: 7
+  name:
+    type: string
+    description: "Human-readable step name"
+    example: "Test Case Planning"
+  phase:
+    type: string
+    enum: [Requirements, Design, Build, Verify, Assess, Ship, Post-Ship]
+    description: "Workflow phase this step belongs to"
+    example: "Design"
+
 # --- Token cost tracking ---
 
 token_tracking:
