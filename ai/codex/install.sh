@@ -9,7 +9,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLATFORM_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PLATFORM_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TARGET_DIR="${1:-$(pwd)}"
 
 echo ""
@@ -57,7 +57,7 @@ fi
 
 mkdir -p "$TARGET_DIR/ai/codex/hook-scripts"
 for script in check-hitl-context.sh check-domain-boundary.sh write-session-summary.sh; do
-  SRC="$PLATFORM_ROOT/hooks/$script"
+  SRC="$PLATFORM_ROOT/ai/claude/hooks/$script"
   if [[ -f "$SRC" ]]; then
     cp "$SRC" "$TARGET_DIR/ai/codex/hook-scripts/$script"
     chmod +x "$TARGET_DIR/ai/codex/hook-scripts/$script"
@@ -76,8 +76,8 @@ if [[ -f "$TEST_SCRIPT_SRC" ]]; then
 fi
 
 # Graphify rebuild hook (triggers incremental graph rebuild on doc writes)
-if [[ -f "$PLATFORM_ROOT/hooks/rebuild-graph.sh" ]]; then
-  cp "$PLATFORM_ROOT/hooks/rebuild-graph.sh" "$TARGET_DIR/ai/codex/hook-scripts/rebuild-graph.sh"
+if [[ -f "$PLATFORM_ROOT/ai/claude/hooks/rebuild-graph.sh" ]]; then
+  cp "$PLATFORM_ROOT/ai/claude/hooks/rebuild-graph.sh" "$TARGET_DIR/ai/codex/hook-scripts/rebuild-graph.sh"
   chmod +x "$TARGET_DIR/ai/codex/hook-scripts/rebuild-graph.sh"
   echo "✓ Copied ai/codex/hook-scripts/rebuild-graph.sh"
 fi
@@ -97,9 +97,9 @@ if [[ -d "$PLATFORM_ROOT/ci/manifest-drift" ]]; then
 fi
 
 # Mermaid fixer script
-if [[ -f "$PLATFORM_ROOT/scripts/fix_mermaid_br_tags.py" ]]; then
+if [[ -f "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" ]]; then
   mkdir -p "$TARGET_DIR/scripts"
-  cp "$PLATFORM_ROOT/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"
+  cp "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"
   echo "✓ Copied scripts/fix_mermaid_br_tags.py"
 fi
 
@@ -111,7 +111,7 @@ fi
 
 # --- HLD/LLD templates ---
 
-mkdir -p "$TARGET_DIR/templates"
+mkdir -p "$TARGET_DIR/ai/shared/templates"
 for tmpl in hld-template.md lld-component-template.md; do
   SRC="$PLATFORM_ROOT/ai/claude/generate-docs/templates/$tmpl"
   if [[ -f "$SRC" ]]; then
@@ -122,7 +122,7 @@ done
 
 # --- Claude Code hooks (.ai/claude/settings.json) ---
 
-mkdir -p "$TARGET_DIR/.claude"
+mkdir -p "$TARGET_DIR/.ai/claude"
 CLAUDE_SETTINGS="$TARGET_DIR/.ai/claude/settings.json"
 
 if [[ -f "$CLAUDE_SETTINGS" ]]; then
