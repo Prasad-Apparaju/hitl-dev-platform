@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # HITL status line for Claude Code
 # Preserves the global status line output (cwd, model, context bar, git branch)
-# and appends the current HITL step when a change is in progress.
+# and appends the current HITL step + windowed trail on a second line.
 
 YAML_FILE="$(dirname "$0")/../.hitl/current-change.yaml"
 
@@ -16,6 +16,7 @@ COLOR_GREEN='\033[32m'
 COLOR_YELLOW='\033[33m'
 COLOR_RED='\033[31m'
 COLOR_CYAN='\033[36m'
+COLOR_MAGENTA='\033[35m'
 COLOR_RESET='\033[0m'
 
 # Context window progress bar
@@ -38,7 +39,7 @@ branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
 branch_segment=""
 [ -n "$branch" ] && branch_segment=" ${COLOR_CYAN}git:(${branch})${COLOR_RESET}"
 
-# HITL step (appended only when .hitl/current-change.yaml exists)
+# ── HITL step + trail ───────────────────────────────────────────────────────
 hitl_segment=""
 if [ -f "$YAML_FILE" ]; then
   cs_block=$(awk '/^current_step:/{f=1;next} f && /^[^ ]/{exit} f{print}' "$YAML_FILE")
@@ -48,8 +49,45 @@ if [ -f "$YAML_FILE" ]; then
   change_id=$(awk '/^change_id:/{print $2}' "$YAML_FILE")
   tier=$(awk '/^tier:/{print $2}' "$YAML_FILE")
 
-  if [ -n "$phase" ] && [ -n "$step_num" ] && [ -n "$step_name" ]; then
-    hitl_segment="  \033[35m|\033[0m  HITL: ${phase} | Step ${step_num}: ${step_name} [${change_id} · T${tier}]"
+  if [ -n "$phase" ] && [ -n "$step_num" ]; then
+
+    # ── Phase-specific step name tables ──────────────────────────────────────
+    # Add a new block here for each HITL phase.
+    declare -a NAMES=()
+    total=0
+
+    case "$phase" in
+      "Migration Setup")
+        NAMES=("" "Context" "CLAUDE.md" "Manifest" "DirSetup" "ExtDocs" "Registries" "Issue" "Handoff")
+        total=8
+        ;;
+      "Development")
+        NAMES=("" "Issue" "Figma" "Impact" "ROI" "Docs" "IaC" "Tests" "Train" "Packet"
+               "RED" "TstRvw" "Dsn+" "VfyRED" "GREEN" "VfyGRN" "Refact"
+               "Conv" "Rvw1" "Rvw2" "Rerun" "Recncl" "QAVfy" "ImpBrf"
+               "Rollout" "PR" "IntVfy" "Figma2" "Deploy" "Promote" "30dROI" "90dROI")
+        total=31
+        ;;
+    esac
+
+    # ── Build windowed trail (3 back + current + 3 ahead) ────────────────────
+    trail=""
+    if [ ${#NAMES[@]} -gt 0 ]; then
+      win_start=$(( step_num - 3 )); (( win_start < 1     )) && win_start=1
+      win_end=$(( step_num + 3 ));   (( win_end  > total  )) && win_end=$total
+
+      (( win_start > 1 ))     && trail="… "
+      for (( i=win_start; i<=win_end; i++ )); do
+        name="${NAMES[$i]}"
+        if   (( i <  step_num )); then trail+="✓${i}.${name} "
+        elif (( i == step_num )); then trail+="\033[32m▶${i}.${name}\033[0m "
+        else                          trail+="·${i}.${name} "
+        fi
+      done
+      (( win_end < total ))   && trail+="…"
+    fi
+
+    hitl_segment="  \033[35m|\033[0m  HITL: ${phase} · Step ${step_num}/${total}: ${step_name} [${change_id} · T${tier}]\n     ${trail}"
   fi
 fi
 
