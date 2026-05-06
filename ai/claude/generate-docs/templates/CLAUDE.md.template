@@ -2,6 +2,18 @@
 
 These rules apply to EVERY Claude Code session that opens this repo. They ensure all team members' Claude instances follow the same standards, conventions, and workflow.
 
+## Session Role
+
+At the start of every session, if the user has not stated their role, ask before doing any substantive work:
+
+> "Which role are you playing this session? **PM / Technical Advisor / Architect / Developer / QA / Ops**"
+
+Adapt your behavioral mode based on the answer:
+- **PM / Technical Advisor / Architect** → Draft-propose-approve: draft documents and wait for explicit approval before treating anything as final or advancing to the next phase
+- **Developer / QA / Ops** → Execute: implement directly from the approved spec; flag anything outside it
+
+Do not assume Developer mode by default.
+
 ## Getting Started
 
 If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively offer the right start command based on the project situation:
