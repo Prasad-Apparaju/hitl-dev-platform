@@ -159,14 +159,10 @@ setup_claude() {
   local SETTINGS="$TARGET_DIR/.claude/settings.json"
 
   if [[ -f "$SETTINGS" ]]; then
-    echo "  .claude/settings.json already exists — add plugin entry manually:"
-    echo "    \"plugins\": [\"$PLATFORM_ROOT/ai/claude/plugin/plugin.json\"]"
+    echo "  .claude/settings.json already exists — skipping"
   else
-    # The plugin path is written at init time. Re-run this script if the
-    # platform is ever moved to a different path.
     cat > "$SETTINGS" <<JSON
 {
-  "plugins": ["$PLATFORM_ROOT/ai/claude/plugin/plugin.json"],
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -188,7 +184,8 @@ setup_claude() {
         "matcher": "Edit|Write",
         "hooks": [
           { "type": "command", "command": "bash .hitl/hooks/check-domain-boundary.sh" },
-          { "type": "command", "command": "bash .hitl/hooks/rebuild-graph.sh" }
+          { "type": "command", "command": "bash .hitl/hooks/rebuild-graph.sh" },
+          { "type": "command", "command": "bash .hitl/hooks/sync-step-to-issue.sh" }
         ]
       }
     ],
@@ -202,16 +199,46 @@ setup_claude() {
   }
 }
 JSON
-    echo "✓ .claude/settings.json (plugin → $PLATFORM_ROOT)"
+    echo "✓ .claude/settings.json"
+  fi
+
+  # Skills — symlinks from .claude/commands/ to the platform SKILL.md files.
+  # Claude Code discovers commands from this directory; symlinks mean platform
+  # updates propagate without re-running this script.
+  local CMDS_DIR="$TARGET_DIR/.claude/commands"
+  if [[ ! -d "$CMDS_DIR" ]]; then
+    mkdir -p "$CMDS_DIR"
+
+    # Flat skills
+    for skill in start-prd start-brownfield start-migration dev-practices apply-change \
+                 check-conventions impact-brief tdd generate-docs conclude; do
+      local src="$PLATFORM_ROOT/ai/claude/$skill/SKILL.md"
+      [[ -f "$src" ]] && ln -sf "$src" "$CMDS_DIR/$skill.md"
+    done
+
+    # Namespaced skills — subdirectory prefix becomes /namespace:command
+    for ns in architect qa ops pm migrate; do
+      mkdir -p "$CMDS_DIR/$ns"
+      find "$PLATFORM_ROOT/ai/claude/$ns" -name "SKILL.md" 2>/dev/null | while read -r f; do
+        local cmd; cmd=$(basename "$(dirname "$f")")
+        ln -sf "$f" "$CMDS_DIR/$ns/$cmd.md"
+      done
+    done
+
+    local count; count=$(find "$CMDS_DIR" -name "*.md" | wc -l | tr -d ' ')
+    echo "✓ .claude/commands/ — $count skill symlinks → $PLATFORM_ROOT"
+  else
+    echo "  .claude/commands/ already exists — skipping"
   fi
 
   # Hook wrappers — project-relative scripts that resolve the platform path at
-  # runtime via HITL_PLATFORM_ROOT, falling back to the path at init time.
+  # runtime via HITL_PLATFORM_ROOT, falling back to the path baked in at init time.
   local HOOKS_DIR="$TARGET_DIR/.hitl/hooks"
   if [[ ! -d "$HOOKS_DIR" ]]; then
     mkdir -p "$HOOKS_DIR"
     local DEFAULT_PLATFORM="$PLATFORM_ROOT"
-    for hook in welcome check-hitl-context check-domain-boundary rebuild-graph write-session-summary; do
+    for hook in welcome check-hitl-context check-domain-boundary rebuild-graph \
+                write-session-summary sync-step-to-issue; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
 exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/ai/claude/hooks/$hook.sh" "\$@"
