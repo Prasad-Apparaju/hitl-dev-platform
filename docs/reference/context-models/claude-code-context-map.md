@@ -34,8 +34,7 @@ sequenceDiagram
 
 ---
 
-<details>
-<summary><strong>Phase 1 — Session Init (detail)</strong></summary>
+### Phase 1 — Session Init (detail)
 
 ```mermaid
 sequenceDiagram
@@ -74,10 +73,9 @@ sequenceDiagram
     Note over Ctx: Conflicts NOT detected — model resolves by judgment (more specific beats general)
 ```
 
-</details>
+---
 
-<details>
-<summary><strong>Phase 2 — During Session (detail)</strong></summary>
+### Phase 2 — During Session (detail)
 
 ```mermaid
 sequenceDiagram
@@ -139,8 +137,6 @@ sequenceDiagram
 
     Note over Ctx: 🔴 Compaction fires automatically when context window fills
 ```
-
-</details>
 
 ---
 
