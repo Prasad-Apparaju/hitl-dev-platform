@@ -1,6 +1,8 @@
 
 # HITL AI-Driven Development
 
+![HITL platform overview — Human-AI convergence loop, shared team memory, and AI executing from docs](docs/images/hitl-dev-platform-infographic.svg)
+
 ## What this is
 
 A document-driven delivery model for teams that use AI heavily in non-trivial software work. AI produces code faster than teams can review it — and does so confidently even when wrong. This process makes that speed safe by organizing the team around documentation as the shared source of truth. AI generates; humans shape, review, and decide.
