@@ -83,8 +83,9 @@ Ship
 29. Promote or Rollback + Monitor → /ops:rollback if rollback (includes /ops:backup-database restore); /ops:post-deploy-monitor required after final promotion (soak: Low 1h, Med 4h, High 12h, Crit 24h)
 
 Post-Ship
-30. 30-day ROI Check       → reads roi_estimate from .hitl/current-change.yaml; see roi-estimation.md (conditional)
-31. 90-day ROI Check       → reads roi_estimate + step 30 findings; update ADR Actual Outcome; see roi-estimation.md (conditional)
+30. Penetration Test       → /ops:pentest — OWASP Top 10 automated scan + manual checklist; optional for Tier 2+ after STABLE; required for Tier 3+ auth/payments/data changes; `blocked` result requires remediation + retest before change is closed (conditional)
+31. 30-day ROI Check       → reads roi_estimate from .hitl/current-change.yaml; see roi-estimation.md (conditional)
+32. 90-day ROI Check       → reads roi_estimate + step 31 findings; update ADR Actual Outcome; see roi-estimation.md (conditional)
 ```
 
 ## Reference Files
@@ -93,7 +94,7 @@ Detailed procedures are in supporting files — load only what you need:
 
 | File | Contains |
 |------|---------|
-| `workflow-steps.md` | Full step-by-step detail for each of the 31 steps |
+| `workflow-steps.md` | Full step-by-step detail for each of the 32 steps |
 | `tdd-design.md` | TDD-as-design three-phase loop, contract tests, worked examples |
 | `roi-estimation.md` | ROI template, value dimensions, verification cadence |
 | `downstream-impact.md` | Impact brief 5 sections, risk-rated rollout plan table |
