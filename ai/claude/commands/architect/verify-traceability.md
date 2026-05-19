@@ -21,6 +21,8 @@ Then verify the following gates before marking integration verify complete:
    ```
    Block if any journey fails. The smoke suite exercises the full new-customer flow across all registered features — a failure here means the build is not promotable regardless of unit test results.
 
-4. **Cross-slice composition** — if this change spans multiple decision-packet slices, verify the slices compose correctly end-to-end (no interface mismatches between them).
+4. **Ops scripts verified** — confirm `ops_scripts.verified_at` exists in `.hitl/current-change.yaml` and `ops_scripts.rollback_covered: true`. If missing, run `/ops:verify-scripts <change-ID> --level full` now. Block if any failure is returned — broken or untested ops scripts are a merge blocker, not a post-merge fix.
+
+5. **Cross-slice composition** — if this change spans multiple decision-packet slices, verify the slices compose correctly end-to-end (no interface mismatches between them).
 
 Do not approve traceability if any of these gates are open.

@@ -46,8 +46,12 @@ Using the affected component list from `.hitl/current-change.yaml` (step 3) and 
 
 > **Brownfield:** If the LLD being updated was produced by the baseline sprint rather than a previous change, verify it against the actual code before using it as a code-generation source. Baseline-sprint LLDs are drafts — they may not yet reflect the true behavior of the component.
 
-**6. Update IaC**
-Using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): update Terraform/Kubernetes manifests, migrations, and configs. Only if step 3 identified IaC changes.
+**6. Update IaC and Verify Ops Scripts**
+Using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): write Terraform/Kubernetes manifests, database migration scripts, rollback migrations, and deployment configs. Only if step 3 identified IaC changes.
+
+**Exit criterion — run `/ops:verify-scripts <change-ID> --level syntax` before moving to step 7.** This checks that every expected artifact exists on disk, passes syntax validation, and passes a dev dry-run. Do not start TDD (step 10) with ops scripts that have never been validated — a broken migration discovered at step 28 costs significantly more to fix than one caught here.
+
+For database migrations, also run the migration against the dev database and revert it to confirm the schema roundtrip works. Record `ops_scripts.verified_at` in `.hitl/current-change.yaml` before proceeding.
 
 **7. Test Case Planning** — use `/qa:plan-tests`
 Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: QA queries incident history with `/qa:plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in `.hitl/current-change.yaml` under `tests.plan`. The issue is not the home for the test plan — it lives in the context file and decision packet.
