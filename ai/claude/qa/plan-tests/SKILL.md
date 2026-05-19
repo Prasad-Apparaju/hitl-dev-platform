@@ -56,6 +56,7 @@ Write concrete test scenarios for each gap found. Format each scenario clearly e
 
 ```
 Scenario: <name>
+  Layer:  unit | integration | e2e | smoke
   Given: <precondition>
   When:  <action>
   Then:  <expected outcome>
@@ -66,6 +67,10 @@ Group scenarios by:
 - **Regression required** — from past incidents, must be covered
 - **Strongly recommended** — high-risk gaps from the LLD review
 - **Optional** — lower-risk scenarios worth including if time allows
+
+For each acceptance criterion in the PRD, produce at least one **E2E Playwright scenario** that exercises the criterion as a real user would — browser-driven, desktop + mobile (iPhone 15, Pixel 7). Flag any criterion that cannot be exercised via browser (native mobile app only) — those require Appium or Detox and must be noted in the test plan.
+
+Produce one **smoke suite scenario** for the feature's primary happy-path user journey. The scenario must assume a brand-new customer (created by the smoke suite setup step) and assert the visible outcome a PM would verify.
 
 ---
 

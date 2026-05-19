@@ -46,7 +46,7 @@ Extract and summarize:
 
 #### NFR interrogation — mandatory if absent or vague in the PRD
 
-Run through the full NFR checklist in `ai/shared/challenge-stance.md` (Minimum NFR Checklist section). For each NFR that is absent or vague in the PRD, ask the architect or PM now.
+Run through the full NFR checklist in `shared/challenge-stance.md` (Minimum NFR Checklist section). For each NFR that is absent or vague in the PRD, ask the architect or PM now.
 
 **One rule for unresolvable NFRs:** Ask first. If the answer cannot be obtained (early-stage project, no stakeholder available), make a stated assumption with a specific number and record it as a design risk in the gate below — do not leave it unnamed. "We don't know yet" embedded silently in an architecture is far more dangerous than an explicit assumption the team can challenge and update.
 
@@ -136,7 +136,7 @@ Do not proceed until the architect explicitly confirms. If the architect request
 
 ## Phase 3 — System Manifest
 
-Generate `docs/system-manifest.yaml` from the confirmed domain breakdown. Follow the schema in `ai/claude/generate-docs/templates/system-manifest.schema.yaml`.
+Generate `docs/system-manifest.yaml` from the confirmed domain breakdown. Follow the schema in `shared/templates/system-manifest.schema.yaml`.
 
 For a greenfield system, apply these rules per domain:
 - `files` and `tests`: empty arrays — no code exists yet
@@ -181,7 +181,7 @@ Ask the architect: "Which of these are already decided by your organization? Whi
 
 ### 4b. Create ADR stubs
 
-For each decision (decided or open), create `docs/02-design/technical/adrs/<decision-slug>.md` using `ai/shared/templates/adr-template.md`.
+For each decision (decided or open), create `docs/02-design/technical/adrs/<decision-slug>.md` using `shared/templates/adr-template.md`.
 
 For decisions already made: pre-fill `Status: Accepted`, `Decision` section, ask architect to fill in the `Rationale` (the why — what alternatives were considered and why this won).
 
@@ -196,7 +196,7 @@ Update `docs/02-design/technical/adrs/README.md` with all new ADRs.
 
 ## Phase 5 — System-Level HLDs
 
-Generate the following HLDs using `ai/shared/templates/hld-template.md`. Each must read from the confirmed manifest and ADRs — not from memory or general reasoning.
+Generate the following HLDs using `shared/templates/hld-template.md`. Each must read from the confirmed manifest and ADRs — not from memory or general reasoning.
 
 **Always generate:**
 
@@ -251,7 +251,7 @@ Do not generate LLDs until all HLDs are approved.
 
 ## Phase 6 — Domain-Level LLDs
 
-For each domain in the confirmed manifest, generate a LLD at `docs/02-design/technical/lld/<domain>/<domain>.md` using `ai/shared/templates/lld-component-template.md`.
+For each domain in the confirmed manifest, generate a LLD at `docs/02-design/technical/lld/<domain>/<domain>.md` using `shared/templates/lld-component-template.md`.
 
 For each LLD:
 - Propose the internal structure (services, classes, data models) that would implement the domain's `facade_apis` and satisfy the use cases from Phase 1 that this domain owns
@@ -279,11 +279,11 @@ After all domain LLDs, generate `docs/02-design/technical/lld/packages.md` — a
 
 Follow the instructions in Phase R5 of the `generate-docs` skill exactly. This sets up the process infrastructure:
 
-1. **Generate `CLAUDE.md`** from `ai/shared/templates/CLAUDE.md.template` — inline the cross-cutting conventions from the ADRs and manifest
+1. **Generate `CLAUDE.md`** from `shared/templates/CLAUDE.md.template` — inline the cross-cutting conventions from the ADRs and manifest
 2. **Generate `convention-checks.yaml`** — create checks from the conventions established in Phase 4 ADRs
 3. **Install the plugin or copy skills** — so `/architect/design-feature`, `/tdd`, `/generate-docs`, etc. are available
 4. **Copy CI actions** to `.github/workflows/`
-5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `ai/shared/templates/issue-template.md`
+5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `shared/templates/issue-template.md`
 6. **Set up Graphify** — for systems with 4+ domains, the doc set produced by this session will likely exceed context window limits on future queries. Install before team onboarding:
    ```bash
    pip install graphifyy && graphify install
@@ -345,34 +345,55 @@ Present as a table:
 
 ### 8d. Generate decision packets
 
-For each confirmed slice, create a GitHub issue (or use the next available issue number) and generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice domains) using `ai/shared/templates/decision-packet-template.yaml`.
+For each confirmed slice, create a GitHub issue (or use the next available issue number) and create `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice domains). Create the `docs/decisions/` directory first if it does not exist.
 
-Use `ai/shared/templates/decision-packet-template.yaml` as the exact field schema — do not invent or omit fields. Populate each field from the work completed in prior phases. For a greenfield system, apply these defaults unless the slice warrants otherwise:
+Use **exactly** the schema below — do not add, remove, or rename fields. For a greenfield system, apply the defaults shown unless the slice warrants otherwise:
 
-| Field | Greenfield default | Source |
-|---|---|---|
-| `issue` | — | GitHub issue number for this slice |
-| `slice` | `null` if one slice per domain | Slice number M |
-| `title` | `"<domain> — initial implementation"` | Phase 8a slice description |
-| `change_type` | `feature` | — |
-| `risk_level` | `low` | Raise if cross-domain or high-traffic |
-| `domains` | — | Exactly one — from delivery plan |
-| `source_docs.prd` | — | PRD path from Phase 1 |
-| `source_docs.hld` | — | Relevant HLD path from Phase 5 |
-| `source_docs.lld` | — | Domain LLD path from Phase 6 |
-| `source_docs.adr` | — | ADRs that govern this slice |
-| `tests.plan` | — | Key scenarios derivable from facade APIs in the LLD |
-| `tests.new_tests` | `[]` | Developer fills in during `/tdd` |
-| `tests.registry_updated` | `false` | Developer updates during `/tdd` |
-| `incidents.checked` | `true` | — |
-| `incidents.relevant` | `null` | No incident history on a new system |
-| `rollout.risk` | `low` | — |
-| `rollout.strategy` | `"Direct deploy — new system, no existing traffic"` | — |
-| `rollout.go_no_go` | — | Observable criterion from demo check in 8a |
-| `roi.required` | `false` | Set `true` if slice takes > 1 day |
-| `roi.estimate` | `null` | — |
-| `impact_brief.pm_mental_model` | — | Demo check from 8a in one sentence |
-| `impact_brief.risk_assessment` | — | Main risk for this slice |
+```yaml
+# docs/decisions/issue-<N>.yaml  (or issue-<N>-slice-<M>.yaml for multi-slice)
+issue: <N>                        # GitHub issue number for this slice
+slice: null                       # slice number M, or null if one slice per domain
+title: "<domain> — initial implementation"
+change_type: feature
+risk_level: low                   # raise to medium/high if cross-domain or high-traffic
+
+domains:
+  - <domain-name>                 # exactly one domain per packet
+
+source_docs:
+  prd: "<path>#<requirement-ref>"
+  hld:
+    - "<path>"                    # relevant HLD from Phase 5
+  lld:
+    - "<path>"                    # domain LLD from Phase 6
+  adr:
+    - "<path>"                    # ADRs governing this slice (empty list if none)
+
+tests:
+  plan: "<key scenarios from facade APIs in the LLD>"
+  new_tests: []                   # developer fills in during /tdd
+  registry_updated: false
+
+incidents:
+  checked: true
+  relevant: null                  # null for new systems — no incident history
+
+rollout:
+  risk: low
+  strategy: "Direct deploy — new system, no existing traffic"
+  go_no_go: "<observable criterion from demo check in 8a>"
+
+roi:
+  required: false                 # set true if slice takes > 1 day
+  estimate: null
+
+impact_brief:
+  pm_mental_model: "<demo check from 8a in one sentence>"
+  risk_assessment: "<main risk for this slice>"
+
+approvals:
+  architecture: pending           # architect sets to approved after review
+```
 
 The `pm_mental_model` line is the demo check from 8a in one sentence — it is the handoff signal to the PM that this slice is complete.
 
