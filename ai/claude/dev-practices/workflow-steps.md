@@ -164,13 +164,28 @@ Lead runs each slice E2E and verifies cross-slice composition: do the slices int
 **27. Figma Comparison (conditional)**
 If Figma design exists, lead compares running implementation to the Figma spec from step 2 screen by screen. Lists and resolves all differences. Exit criterion: zero unresolved differences before merge.
 
-**28. Build, Apply IaC, and Deploy** — use `/ops:build`, `/ops:apply-iac` (conditional), `/ops:deploy`, `/ops:monitor-canary`
-Ops verifies branch state and triggers the build using `/ops:build` — confirms artifact integrity before deployment begins. If step 6 identified IaC changes, Ops runs `/ops:apply-iac`: dry-run first, then applies with explicit approval (destructive changes require a second `CONFIRMED`). Lead then triggers merge and deploys per the approved rollout plan from step 24 using `/ops:deploy`. Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge. Monitor go/no-go criteria throughout.
+**28. Build, Migrate, Apply IaC, Configure Observability, and Deploy**
+Ops executes this sequence — each step gates the next:
 
-> **First release:** Follow the direct-deploy plan approved at step 24. Skip `/ops:monitor-canary` — run the smoke-test gate manually instead.
+1. **Build** (`/ops:build`) — verifies CI passed, confirms artifact digest, runs health/smoke checks
+2. **Database migrations** (`/ops:migrate-database`) — conditional; only when the change includes migrations. Verifies backup, runs dry-run, requires explicit `MIGRATE` confirmation, applies, verifies schema. Must complete before app deploy.
+3. **Apply IaC** (`/ops:apply-iac`) — conditional; only when infrastructure changes exist. Dry-run first, applies with explicit `APPLY` confirmation, destructive changes require `CONFIRMED`.
+4. **Observability setup** (`/ops:setup-observability`) — **required gate for all Tier 2+ changes**. Creates dashboards and alerts for every go/no-go criterion in the rollout plan. Verifies alert routing to on-call. `/ops:deploy` will refuse to run if `observability.status: configured` is not set.
+5. **Deploy** (`/ops:deploy`) — reads artifact and rollout plan, confirms deployment configuration with operator, executes deployment, runs post-deployment verification
+6. **Canary monitoring** (`/ops:monitor-canary`) — at each promotion step, reads observability data and produces a go/no-go recommendation; human makes the final call
+
+Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge.
+
+> **First release:** Follow the direct-deploy plan approved at step 24. Skip `/ops:monitor-canary` — run the smoke suite manually. Observability setup is still required even on first release.
 
 **29. Promote or Rollback**
 At each canary step, verify all go/no-go criteria from the approved plan (step 24). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
+
+- **To promote:** continue deployment per the rollout plan steps
+- **To roll back:** run `/ops:rollback` — assesses side effects, presents rollback plan, requires `ROLLBACK` confirmation, executes, verifies stability
+- **After final promotion (High/Critical risk):** run `/ops:post-deploy-monitor` to watch the full soak period and produce a final stability report. Recommended for Medium risk as well.
+
+If rollback was performed: re-open the issue, investigate root cause, and re-run from step 25.
 
 > **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect — open a GitHub issue, fix it, and re-run from step 25.
 
