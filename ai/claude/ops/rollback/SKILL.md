@@ -13,6 +13,12 @@ Roll back a deployed change to the previous stable state. This skill is invoked 
 
 **Refusal rule:** If the deployment state in `.hitl/current-change.yaml` does not show an active deployment (`deployment.status: deployed`), stop: "No active deployment found for this change — nothing to roll back."
 
+**Graphify pre-flight:** Before the first step, run:
+```bash
+ls graphify-out/graph.json 2>/dev/null && echo "Graphify: available" || echo "Graphify: unavailable"
+```
+State the result once — "✅ Graphify available, using graph queries" or "⚠️ Graphify unavailable — using direct doc reads throughout." Apply that result for every step; do not rediscover availability mid-task.
+
 ---
 
 ## Progress Banners
