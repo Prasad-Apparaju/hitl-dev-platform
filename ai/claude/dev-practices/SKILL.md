@@ -49,6 +49,7 @@ Design
 3.  Impact Analysis        → /apply-change — reads system-manifest.yaml, registries; outputs .hitl/current-change.yaml
 4.  ROI Estimate           → if >1 day effort, record in `.hitl/current-change.yaml` under `roi_estimate`; post pointer comment on issue; see roi-estimation.md (conditional)
 5.  Update Docs            → /generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
+5a. Security Review (Design) → /review-security --phase design — threat model + STRIDE; required Tier 3+, recommended Tier 2+; LLD cannot be architect-approved until Critical/High findings have mitigations (conditional)
 6.  Update IaC + Verify Scripts → manifests, migrations, rollback migrations, configs; exit requires /ops:verify-scripts --level syntax (conditional)
 7.  Test Case Planning     → /qa:plan-tests — QA queries incident history; QA scenarios acknowledged before TDD
 8.  Training Plan Stub     → if new capability introduced (conditional)
@@ -62,6 +63,7 @@ Build (TDD)
 14. Generate Code (GREEN)  → /tdd — reads tests/, LLD (step 12), system-manifest.yaml, CLAUDE.md
 15. Verify GREEN           → unit + integration pass; coverage ≥90% enforced (AI generates gap tests if needed); smoke runs
 16. Refactor               → rerun tests after each change; done when no further simplification possible
+16a. Security Review (Code) → /review-security --phase code — SAST (semgrep OWASP, Bandit, ESLint-security, Gosec) + code-level OWASP checklist; required Tier 3+, recommended Tier 2+; Critical/High block PR (conditional)
 17. Convention Checks      → /check-conventions — zero violations required before proceeding
 
 Verify
