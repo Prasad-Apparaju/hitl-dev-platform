@@ -107,11 +107,9 @@ Monitor the rollout: confirm the previous artifact is serving traffic and the ne
 
 **Database rollback (if applicable):**
 
-- If a rollback migration exists: run it using the same migration tool as the forward migration
-- If no rollback migration exists and schema compatibility is a concern: stop and present options:
-  1. Restore from backup (`backup_path` in `.hitl/current-change.yaml`)
-  2. Write a manual rollback migration and run it
-  3. Accept schema divergence if the old code is compatible with the new schema
+- If a rollback migration exists: run it using the same migration tool as the forward migration, then verify the schema matches the previous LLD
+- If no rollback migration exists: run `/ops:backup-database restore <change-ID>` — this reads `database_backup.backup_path` from `.hitl/current-change.yaml`, assesses data loss from the window between backup and now, requires `RESTORE` confirmation, executes the restore, and verifies the schema
+- If schema compatibility is acceptable (old code can read new schema): accept divergence and document it explicitly in the rollback record — skip the restore
 
 **Feature flag (if applicable):**
 Toggle the flag off immediately as a first step — this stops new users from hitting the new code path while the artifact rollback proceeds.
