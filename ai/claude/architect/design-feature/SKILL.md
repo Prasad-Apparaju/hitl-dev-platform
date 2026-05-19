@@ -1,5 +1,5 @@
 ---
-name: architect/design-feature
+name: architect-design-feature
 description: Orchestrate the architect's design journey for a change — steps 3 through 9. Covers impact analysis, HLD and LLD generation with approval gates, slice decomposition, test case planning, and decision packet assembly. Produces decision packets ready to hand to developers. Do not invoke spontaneously; requires a GitHub issue.
 argument-hint: "[issue number or feature description]"
 disable-model-invocation: true
@@ -494,35 +494,5 @@ Developers can begin implementation. Run \`/tdd\` with the assigned LLD."
 
 ## Output Summary
 
-Present a completion summary:
-
-```
-┌─────────────────────────────────────────────────┐
-│ DESIGN COMPLETE — GH-<N>: [title]               │
-├─────────────────────────────────────────────────┤
-│ Tier: N  |  Slices: M  |  Est. effort: N days   │
-├─────────────────────────────────────────────────┤
-│ ARTIFACTS                                       │
-│  HLD:              docs/02-design/.../hld/...   │
-│  LLDs:             N files                      │
-│  ADRs:             N stubs (architect to fill)  │
-│  Decision packets: N files                      │
-│  Training stub:    [path or "not required"]     │
-│  .hitl context:    implementation-approved      │
-├─────────────────────────────────────────────────┤
-│ SLICE HANDOFF                                   │
-│  Slice 1: domain [A] → assign to developer      │
-│           LLD: docs/.../lld/[A]/...             │
-│           Packet: docs/decisions/issue-<N>-s1   │
-│  Slice 2: domain [B] → [SEQUENTIAL after s1]    │
-│           LLD: docs/.../lld/[B]/...             │
-│           Packet: docs/decisions/issue-<N>-s2   │
-├─────────────────────────────────────────────────┤
-│ NEXT STEPS                                      │
-│  1. Assign packet(s) to developer(s)            │
-│  2. Each developer runs /tdd with their LLD     │
-│  3. Sequential slices: merge slice 1 before     │
-│     handing off slice 2                         │
-└─────────────────────────────────────────────────┘
-```
+Read `output-summary.md` in this skill's directory and present the completion summary populated with the actual values from this session.
 

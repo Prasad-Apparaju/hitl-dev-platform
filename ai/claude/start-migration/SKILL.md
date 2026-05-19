@@ -2,6 +2,7 @@
 name: start-migration
 description: Start a migration project. Collects migration context, ingests external migration documentation as reference material, sets up the project structure, and hands off to /migrate:review-external-docs for the architect's deep review before design begins.
 argument-hint: "[optional: source system name or migration description]"
+disable-model-invocation: true
 ---
 
 # Start a Migration Project
