@@ -167,12 +167,13 @@ If Figma design exists, lead compares running implementation to the Figma spec f
 **28. Build, Migrate, Apply IaC, Configure Observability, and Deploy**
 Ops executes this sequence — each step gates the next:
 
-1. **Build** (`/ops:build`) — verifies CI passed, confirms artifact digest, runs health/smoke checks
-2. **Database migrations** (`/ops:migrate-database`) — conditional; only when the change includes migrations. Verifies backup, runs dry-run, requires explicit `MIGRATE` confirmation, applies, verifies schema. Must complete before app deploy.
+1. **Database backup** (`/ops:backup-database backup <change-ID>`) — required before any migration; always creates a labeled, verified snapshot recorded in `.hitl/current-change.yaml`. Skip if no migrations exist.
+2. **Database migrations** (`/ops:migrate-database`) — conditional; only when the change includes migrations. Delegates backup verification to Step 1, runs dry-run, requires explicit `MIGRATE` confirmation, applies, verifies schema. Must complete before app deploy.
 3. **Apply IaC** (`/ops:apply-iac`) — conditional; only when infrastructure changes exist. Dry-run first, applies with explicit `APPLY` confirmation, destructive changes require `CONFIRMED`.
 4. **Observability setup** (`/ops:setup-observability`) — **required gate for all Tier 2+ changes**. Creates dashboards and alerts for every go/no-go criterion in the rollout plan. Verifies alert routing to on-call. `/ops:deploy` will refuse to run if `observability.status: configured` is not set.
-5. **Deploy** (`/ops:deploy`) — reads artifact and rollout plan, confirms deployment configuration with operator, executes deployment, runs post-deployment verification
-6. **Canary monitoring** (`/ops:monitor-canary`) — at each promotion step, reads observability data and produces a go/no-go recommendation; human makes the final call
+5. **Build** (`/ops:build`) — verifies CI passed, confirms artifact digest, runs health/smoke checks.
+6. **Deploy** (`/ops:deploy`) — reads artifact and rollout plan, confirms deployment configuration with operator, executes deployment, runs post-deployment verification. Checks all gates are complete (backup, migrations, IaC, observability) before proceeding.
+7. **Canary monitoring** (`/ops:monitor-canary`) — at each promotion step, reads observability data and produces a go/no-go recommendation; human makes the final call
 
 Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge.
 
@@ -182,8 +183,8 @@ Remaining slices that have not yet merged must rebase against main and rerun ste
 At each canary step, verify all go/no-go criteria from the approved plan (step 24). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
 
 - **To promote:** continue deployment per the rollout plan steps
-- **To roll back:** run `/ops:rollback` — assesses side effects, presents rollback plan, requires `ROLLBACK` confirmation, executes, verifies stability
-- **After final promotion (High/Critical risk):** run `/ops:post-deploy-monitor` to watch the full soak period and produce a final stability report. Recommended for Medium risk as well.
+- **To roll back:** run `/ops:rollback` — assesses side effects (including data written since deployment), presents rollback plan, requires `ROLLBACK` confirmation. If a database migration ran and has no rollback migration, it delegates to `/ops:backup-database restore` to restore from the pre-migration snapshot.
+- **After final promotion — required for all Tier 2+ changes:** run `/ops:post-deploy-monitor <change-ID>`. Soak duration is risk-scaled: Low 1h (check every 30m), Medium 4h (every 1h), High 12h (every 2h), Critical 24h (every 4h). The change is **not complete** until this produces a STABLE verdict. A WATCH verdict requires a follow-up check. A ROLLBACK verdict triggers `/ops:rollback`.
 
 If rollback was performed: re-open the issue, investigate root cause, and re-run from step 25.
 

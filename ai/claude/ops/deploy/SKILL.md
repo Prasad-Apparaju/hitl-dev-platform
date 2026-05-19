@@ -106,11 +106,9 @@ gh issue comment <issue-number> \
 <If production 100%: 'Feature is live.'>"
 ```
 
-For canary deployments: proceed to `/ops:monitor-canary` to assess go/no-go before promoting.
+For canary deployments: proceed to `/ops:monitor-canary` to assess go/no-go before promoting to the next tier.
 
-For the final production promotion (100% traffic, all go/no-go criteria met), close the issue:
-```bash
-gh issue close <issue-number> \
-  --comment "Deployed to production at <timestamp>. All go/no-go criteria met. Closing."
-```
+For the final production promotion (100% traffic, all go/no-go criteria met):
+- Run `/ops:post-deploy-monitor <change-ID>` — this is required for all Tier 2+ changes. The soak duration is determined by risk level (Low: 1h, Medium: 4h, High: 12h, Critical: 24h). Do not close the issue or declare the change complete until post-deploy monitor produces a STABLE verdict.
+- If the post-deploy monitor produces ROLLBACK: run `/ops:rollback`.
 

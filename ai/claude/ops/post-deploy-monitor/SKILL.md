@@ -1,36 +1,41 @@
 ---
 name: ops-post-deploy-monitor
-description: Extended observability watch after a successful canary promotion. Reads the go/no-go criteria from the rollout plan, samples metrics at defined intervals over the full soak period, and produces a final stability report. Recommended for High and Critical risk changes after the canary reaches 100%.
-argument-hint: "[change ID and soak duration, e.g. 'GH-42 24h']"
+description: Required post-deployment monitoring after every Tier 2+ deployment reaches full traffic. Reads go/no-go criteria from the rollout plan, samples metrics at risk-scaled intervals over the full soak period, and produces a STABLE/WATCH/ROLLBACK verdict. Run after the final canary promotion — /ops:deploy records the required soak duration by risk level.
+argument-hint: "[change ID, e.g. 'GH-42']"
 disable-model-invocation: true
 ---
 
 # Post-Deploy Extended Monitoring
 
-Watch a fully-promoted deployment over its full soak period and produce a final stability report. This skill is separate from `/ops:monitor-canary` (which is used at each promotion step) — this runs after the final promotion and through the full soak window.
+Required monitoring after every Tier 2+ deployment reaches full traffic. Produces a STABLE / WATCH / ROLLBACK verdict before the change is considered complete.
 
-**Input:** $ARGUMENTS (change ID and soak duration)
+**Input:** $ARGUMENTS (change ID)
 
-**When to use:** Recommended for High and Critical risk changes (Tier 3–4). Optional but encouraged for Medium risk (Tier 2) changes that touch high-traffic domains or have external integrations.
+This skill is separate from `/ops:monitor-canary` (which runs at each promotion step). This runs after the **final promotion** and covers the full soak window — the change is not done until this skill produces a STABLE verdict.
 
-**Skip condition:** For Low risk (Tier 1) direct deploys with no soak requirement, this skill is not needed.
+**Soak duration and check interval by risk level:**
+
+| Risk level | Soak duration | Check interval | Min checks |
+|---|---|---|---|
+| Low | 1 hour | every 30 min | 2 |
+| Medium | 4 hours | every 1 hour | 4 |
+| High | 12 hours | every 2 hours | 6 |
+| Critical | 24 hours | every 4 hours | 6 |
+
+Read `rollout_plan.risk` from `.hitl/current-change.yaml` to determine which row applies. If the soak duration was shortened in the rollout plan (operator discretion), use the approved value — not the default above.
 
 ---
 
 ## Step 1 — Set up the monitoring session
 
 Read `.hitl/current-change.yaml`:
+- `rollout_plan.risk` — determines soak duration and check interval (see table above)
 - `rollout_plan.go_no_go` — the criteria and their thresholds
 - `observability.dashboard` — the dashboard URL set up by `/ops:setup-observability`
 - `observability.alerts` — the alert names to watch
 - `deployment.deployed_at` — reference timestamp for baseline comparison
 
-Define the sampling schedule based on risk level:
-
-| Risk level | Check interval | Minimum checks |
-|---|---|---|
-| High | Every 2 hours | 6 (12h soak) |
-| Critical | Every 4 hours | 6 (24h soak) |
+Compute the session schedule from the risk-level table. State the soak end time explicitly.
 
 Record the session start time and expected end time. Post an update on the GitHub issue:
 ```bash

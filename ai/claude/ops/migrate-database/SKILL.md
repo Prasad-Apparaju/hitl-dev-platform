@@ -48,21 +48,15 @@ Present the full migration summary before proceeding.
 
 ---
 
-## Step 2 — Verify backup
+## Step 2 — Take a verified backup
 
-**For additive-only migrations:** Confirm a recent backup exists (within 24h). If a backup job is configured, check the last successful run timestamp. If no automated backup exists, prompt: "No automated backup found. Run a manual backup now and confirm before proceeding."
+Run `/ops:backup-database backup <change-ID>` before proceeding. This creates a labeled, verified snapshot and records `database_backup.backup_path` in `.hitl/current-change.yaml`.
 
-**For any destructive migration:** A fresh backup is mandatory — not a previous day's backup. Run or verify a backup taken within the last 60 minutes:
+**For additive-only migrations:** A backup taken within 24h is acceptable if one already exists and is recorded in `.hitl/current-change.yaml` under `database_backup`. If none is recorded, run the backup skill now.
 
-```bash
-# PostgreSQL example
-pg_dump -h <host> -U <user> -d <database> -f /backups/<change-id>-pre-migration.dump
+**For any destructive migration:** A fresh backup is mandatory — taken within the last 60 minutes. Run `/ops:backup-database backup <change-ID>` regardless of any prior backups.
 
-# MySQL example
-mysqldump -h <host> -u <user> -p <database> > /backups/<change-id>-pre-migration.sql
-```
-
-Confirm the backup file exists and its size is reasonable (non-zero, comparable to prior backups). Do not proceed without confirmation.
+Do not proceed to Step 3 until `database_backup.verified: true` is set in `.hitl/current-change.yaml`.
 
 ---
 
