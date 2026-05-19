@@ -267,12 +267,24 @@ For each affected infrastructure artifact, specify:
 - What changes (resource added/modified/removed, migration direction, config key)
 - Whether the change is reversible
 
-Record the IaC plan in `.hitl/current-change.yaml` under a new `iac_plan` key:
+**Config and secrets externalization (required):**
+
+For any new config or secret introduced by this change:
+- Config values must be externalized as environment variables or a config service reference — not hardcoded in source.
+- Secrets must be declared as vault references — never as literal values in IaC, migrations, or deploy scripts.
+
+For each new secret, record the vault path and secret manager. If a secret has no vault path assigned, stop: "Secret `<name>` has no vault path. Assign one before proceeding."
+
+Record the IaC plan in `.hitl/current-change.yaml`:
 ```yaml
 iac_plan:
   - path: <file>
     change: <description>
     reversible: true|false
+secrets:
+  - name: <SECRET_NAME>
+    vault_path: <path>
+    manager: <aws-secrets-manager|hashicorp-vault|gcp-secret-manager|azure-key-vault|ssm>
 ```
 
 If no IaC changes: state "No IaC changes identified" and continue.
