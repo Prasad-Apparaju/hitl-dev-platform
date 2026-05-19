@@ -49,7 +49,7 @@ Design
 3.  Impact Analysis        → /apply-change — reads system-manifest.yaml, registries; outputs .hitl/current-change.yaml
 4.  ROI Estimate           → if >1 day effort, record in `.hitl/current-change.yaml` under `roi_estimate`; post pointer comment on issue; see roi-estimation.md (conditional)
 5.  Update Docs            → /generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
-6.  Update IaC             → manifests, migrations, configs (conditional)
+6.  Update IaC + Verify Scripts → manifests, migrations, rollback migrations, configs; exit requires /ops:verify-scripts --level syntax (conditional)
 7.  Test Case Planning     → /qa:plan-tests — QA queries incident history; QA scenarios acknowledged before TDD
 8.  Training Plan Stub     → if new capability introduced (conditional)
 9.  Package Decision Packet → architect assembles docs/decisions/issue-<N>.yaml; one per domain-independent slice
