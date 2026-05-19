@@ -32,10 +32,12 @@ Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
 
 ## Step 1 — Pre-deployment checks
 
-1. Read `.hitl/current-change.yaml` — confirm all three are true:
+1. Read `.hitl/current-change.yaml` — confirm all of the following are true before proceeding:
    - `build.status: ready` and `build.artifact` is recorded
    - `rollout_plan` is present (from the approved impact brief)
-   - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — do not deploy before IaC is applied
+   - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — run `/ops:apply-iac` if pending
+   - `iac_plan.migrations` is either absent/empty or `iac_plan.migrations.status: applied` — run `/ops:migrate-database` if pending
+   - `observability.status: configured` — run `/ops:setup-observability` if missing
 2. Confirm the target environment is healthy — check existing deployment status before deploying on top of it
 3. Check for active incidents affecting this environment or the domains being deployed — prefer a graph query:
    ```

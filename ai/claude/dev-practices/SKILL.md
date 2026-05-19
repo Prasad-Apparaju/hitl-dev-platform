@@ -79,8 +79,8 @@ Ship
 25. Create PR              → issue + HLD/LLD + IaC + code + tests + packet + brief + plan
 26. Integration Verify     → /architect:verify-traceability — traceability chain + E2E evidence check + smoke suite re-run + cross-slice composition
 27. Figma Comparison       → lead compares to Figma from step 2; zero unresolved differences (conditional)
-28. Build + Apply IaC + Deploy → /ops:build + /ops:apply-iac (conditional) + /ops:deploy + /ops:monitor-canary
-29. Promote or Rollback    → verify go/no-go criteria from step 24; pause on failure, lead decides
+28. Build + Migrate + IaC + Observability + Deploy → /ops:build → /ops:migrate-database (if migrations) → /ops:apply-iac (if IaC) → /ops:setup-observability (required) → /ops:deploy → /ops:monitor-canary
+29. Promote or Rollback    → verify go/no-go criteria from step 24; /ops:rollback if rollback decision; /ops:post-deploy-monitor for High/Critical after final promotion
 
 Post-Ship
 30. 30-day ROI Check       → reads roi_estimate from .hitl/current-change.yaml; see roi-estimation.md (conditional)
