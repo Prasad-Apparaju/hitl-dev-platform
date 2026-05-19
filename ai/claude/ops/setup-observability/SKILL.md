@@ -13,6 +13,12 @@ Instrument the change so that failures are visible and pages fire before the can
 
 **Refusal rule:** If `.hitl/current-change.yaml` is missing a `rollout_plan` section, stop: "No rollout plan found. Run `/ops:review-release` to produce go/no-go criteria before setting up observability."
 
+**Graphify pre-flight:** Before the first step, run:
+```bash
+ls graphify-out/graph.json 2>/dev/null && echo "Graphify: available" || echo "Graphify: unavailable"
+```
+State the result once — "✅ Graphify available, using graph queries" or "⚠️ Graphify unavailable — using direct doc reads throughout." Apply that result for every step; do not rediscover availability mid-task.
+
 ---
 
 ## Progress Banners

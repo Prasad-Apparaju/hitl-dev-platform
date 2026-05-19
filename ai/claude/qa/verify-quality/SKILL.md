@@ -13,6 +13,12 @@ Independent verification of the developer's handoff. You are the last gate befor
 
 **Prerequisite:** The developer has completed the impact brief and test registry is up to date. If no impact brief exists in `.hitl/current-change.yaml`, stop: "Impact brief missing — ask the developer to run `/impact-brief` before QA handoff."
 
+**Graphify pre-flight:** Before the first step, run:
+```bash
+ls graphify-out/graph.json 2>/dev/null && echo "Graphify: available" || echo "Graphify: unavailable"
+```
+State the result once — "✅ Graphify available, using graph queries" or "⚠️ Graphify unavailable — using direct doc reads throughout." Apply that result for every step; do not rediscover availability mid-task.
+
 ---
 
 ## Progress Banners
