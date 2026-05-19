@@ -49,7 +49,7 @@ Before reading the manifest or doing any analysis, challenge the issue against i
 
 1. **Is the problem statement specific?** If the issue says "users want X" or "improve Y" without data, ask: "What evidence supports this — support tickets, analytics, churn feedback, user research?" For migration: "What in the migration brief or external reference docs supports this slice being needed now?"
 2. **Are the acceptance criteria testable?** Vague AC ("should feel fast", "user-friendly") cannot drive an LLD or tests. Ask for specific, measurable criteria before proceeding.
-3. **Are NFRs relevant to this change stated?** If the change affects throughput, latency, or availability, are the targets in the issue or findable in the requirements source? If not, ask — see `ai/shared/challenge-stance.md` for the full NFR checklist.
+3. **Are NFRs relevant to this change stated?** If the change affects throughput, latency, or availability, are the targets in the issue or findable in the requirements source? If not, ask — see `shared/challenge-stance.md` for the full NFR checklist.
 4. **Is the proposed solution the right solution?** State the problem, then ask: "Is there a simpler approach that would solve the same problem?" If yes, name it and the tradeoff before designing the proposed solution.
 
 If any answer is unsatisfactory, resolve it now — not after the HLD is generated.
@@ -83,7 +83,7 @@ If backwards-incompatible changes are identified, flag them explicitly. Do not p
 
 ### 1e. Determine the tier
 
-Use the tier definitions from `ai/claude/dev-practices/SKILL.md`. State the tier with justification.
+Use the tier definitions from `skills/dev-practices/SKILL.md`. State the tier with justification.
 
 **Challenge the tier before accepting it:**
 - Cross-domain or multi-service changes are Tier 3 even when described as simple
@@ -94,7 +94,7 @@ Use the tier definitions from `ai/claude/dev-practices/SKILL.md`. State the tier
 
 Estimate implementation effort (in days) based on the number of affected domains, facade API changes, and IaC scope. This determines whether step 4 (ROI) is required.
 
-For token cost estimation, use the phase-level formula from `ai/claude/dev-practices/roi-estimation.md`.
+For token cost estimation, use the phase-level formula from `skills/dev-practices/roi-estimation.md`.
 
 ### 1g. Initialize `.hitl/current-change.yaml`
 
@@ -140,7 +140,7 @@ Do not proceed until the architect confirms.
 
 If effort estimate exceeds 1 day:
 
-Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `ai/claude/dev-practices/roi-estimation.md`. Fill in:
+Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `skills/dev-practices/roi-estimation.md`. Fill in:
 - Value dimension
 - Expected outcome (specific, falsifiable, with timeframe)
 - Baseline metric placeholder (note: architect must measure this now, not estimate it)
@@ -207,7 +207,7 @@ After HLD approval:
 
 1. From the approved HLD, identify every design decision — framework choice, pattern selection, tradeoff made, constraint accepted.
 
-2. For each decision that is not already documented in an existing ADR, create a stub at `docs/02-design/technical/adrs/<decision-slug>.md` using `ai/shared/templates/adr-template.md`. Mark status as "DRAFT — architect to complete rationale."
+2. For each decision that is not already documented in an existing ADR, create a stub at `docs/02-design/technical/adrs/<decision-slug>.md` using `shared/templates/adr-template.md`. Mark status as "DRAFT — architect to complete rationale."
 
 3. Ask the architect:
    > "I've created stubs for [N] decisions I found in the HLD. Are there decisions being made here that aren't visible in the design — things the team discussed, constraints from legal or ops, or choices you ruled out?"
@@ -380,7 +380,7 @@ Check if the change introduces any of:
 - A new ML/AI technique
 - A refactor that significantly changes how engineers reason about a subsystem
 
-If yes: create a stub at `docs/03-engineering/training/<capability>.md` using `ai/shared/templates/training-plan-template.md`. Link to the relevant LLDs and ADRs. Mark sections as "DRAFT — architect to complete."
+If yes: create a stub at `docs/03-engineering/training/<capability>.md` using `shared/templates/training-plan-template.md`. Link to the relevant LLDs and ADRs. Mark sections as "DRAFT — architect to complete."
 
 If no: state the reason explicitly (e.g., "No training plan required — this extends an existing pattern.").
 
@@ -388,34 +388,74 @@ If no: state the reason explicitly (e.g., "No training plan required — this ex
 
 ## Phase 10 — Decision Packet Assembly (Step 9)
 
-For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for a single-slice change) using `ai/shared/templates/decision-packet-template.yaml`.
+For each confirmed slice, create `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for a single-slice change). Create the `docs/decisions/` directory first if it does not exist.
 
-Use `ai/shared/templates/decision-packet-template.yaml` as the exact field schema — do not invent or omit fields. Populate each field from the work completed in prior phases:
+Use **exactly** the schema below — do not add, remove, or rename fields. Populate every field from the work completed in prior phases:
+
+```yaml
+# docs/decisions/issue-<N>.yaml  (or issue-<N>-slice-<M>.yaml for multi-slice)
+issue: <N>                        # GitHub issue number (Phase 1)
+slice: null                       # slice number M, or null for single-slice (Phase 7)
+title: "<slice description>"      # from Phase 7
+change_type: feature              # feature | bugfix | refactor | infrastructure
+risk_level: medium                # low | medium | high | critical — derived from tier
+
+domains:
+  - <domain-name>                 # exactly one domain per packet (Phase 7)
+
+source_docs:
+  prd: "<path>#<requirement-ref>" # PRD path from Phase 1
+  hld:
+    - "<path>"                    # HLD path from Phase 3
+  lld:
+    - "<path>"                    # LLD path for this domain from Phase 5
+  adr:
+    - "<path>"                    # ADR paths from Phase 4 (empty list if none)
+
+tests:
+  plan: "<summary>"               # test plan summary from Phase 8
+  new_tests:
+    - "<tests/file.py::test_name>"  # full list from Phase 8
+  registry_updated: false         # developer sets true during /tdd
+
+incidents:
+  checked: true
+  relevant: null                  # incident ID from Phase 8, or null
+
+rollout:
+  risk: medium                    # same as risk_level
+  strategy: "canary 5% → 25% → 100%, 1h soak each"  # placeholder; ops refines
+  go_no_go: "<measurable criteria from LLD or incident history>"
+
+roi:
+  required: false                 # true if effort > 1 day (Phase 1)
+  estimate: null                  # roi_estimate from .hitl/current-change.yaml, or null
+
+impact_brief:
+  pm_mental_model: "<one sentence: what changes for the PM>"
+  risk_assessment: "<one sentence: main risk>"
+
+approvals:
+  architecture: pending           # architect sets to approved after review
+```
+
+Field mapping from prior phases:
 
 | Field | Source |
 |---|---|
 | `issue` | GitHub issue number from Phase 1 |
 | `slice` | Slice number M; `null` if single-slice |
 | `title` | Slice description from Phase 7 |
-| `change_type` | Derived from issue type |
-| `risk_level` | Derived from tier (0–1 → low, 2 → medium, 3–4 → high/critical) |
-| `domains` | Exactly one — the domain for this slice from Phase 7 |
-| `source_docs.prd` | PRD path from Phase 1 |
-| `source_docs.hld` | HLD path from Phase 3 |
+| `risk_level` | tier 0–1 → low, 2 → medium, 3–4 → high/critical |
+| `domains` | Exactly one domain — the domain for this slice from Phase 7 |
 | `source_docs.lld` | LLD path for this domain from Phase 5 |
 | `source_docs.adr` | ADR paths from Phase 4 that apply to this slice |
 | `tests.plan` | Test plan summary for this slice from Phase 8 |
 | `tests.new_tests` | Test list from Phase 8 |
-| `tests.registry_updated` | `false` — developer updates during `/tdd` |
-| `incidents.checked` | `true` |
 | `incidents.relevant` | Incident ID found in Phase 8, or `null` |
-| `rollout.risk` | Same as `risk_level` |
-| `rollout.strategy` | Canary percentage + soak time — placeholder for ops to refine |
 | `rollout.go_no_go` | Criteria from LLD or incident history (Phase 8) |
 | `roi.required` | `true` if effort > 1 day (Phase 1) |
 | `roi.estimate` | `roi_estimate` from `.hitl/current-change.yaml`, or `null` |
-| `impact_brief.pm_mental_model` | One sentence: what changes for the PM's mental model |
-| `impact_brief.risk_assessment` | One sentence: main risk |
 
 Update `.hitl/current-change.yaml`:
 - Add `source_artifacts.decision_packet` paths for all packets

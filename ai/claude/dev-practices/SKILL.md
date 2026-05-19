@@ -55,12 +55,12 @@ Design
 9.  Package Decision Packet → architect assembles docs/decisions/issue-<N>.yaml; one per domain-independent slice
 
 Build (TDD)
-10. Generate Tests (RED)   → /tdd — reads LLD path from packet + system-manifest.yaml; writes to tests/
-11. Human Reviews Tests    → /qa:review-tests — reads same LLD + incident registry; updates test registry
+10. Generate Tests (RED)   → /tdd — unit tests + integration tests + Playwright E2E stubs (test.skip) + smoke journey; all written before any implementation
+11. Human Reviews Tests    → /qa:review-tests — verifies unit, integration, E2E stubs (one per AC), smoke journey, incident regressions, ≥90% coverage gate; blocks implementation if gaps
 12. Tests Improve Design   → /tdd — updates LLD at same path if gaps found; architect re-reviews if significant
-13. Verify RED             → all new tests must fail; resolve any that pass before proceeding
+13. Verify RED             → unit/integration tests must fail; E2E stubs skipped; smoke suite runs (existing journeys only)
 14. Generate Code (GREEN)  → /tdd — reads tests/, LLD (step 12), system-manifest.yaml, CLAUDE.md
-15. Verify GREEN           → all tests pass; regression fix loops back to step 14
+15. Verify GREEN           → unit + integration pass; coverage ≥90% enforced (AI generates gap tests if needed); smoke runs
 16. Refactor               → rerun tests after each change; done when no further simplification possible
 17. Convention Checks      → /check-conventions — zero violations required before proceeding
 
@@ -69,7 +69,7 @@ Verify
 19. Code Review Round 2    → /check-implementation — reads implementation + tests/ + test plan from .hitl/current-change.yaml
 20. Rerun Tests            → confirm no regressions from review fixes
 21. Reconcile Docs         → update LLD (/generate-docs) or fix code; document decision; if fix code, rerun 18–20
-22. QA Post-Handoff Verify → /qa:verify-quality — independent QA verification against running build; /qa:report-defect if blocking
+22. QA Post-Handoff Verify → /qa:verify-quality — unskips + runs E2E Playwright (desktop + iPhone 15 + Pixel 7); runs smoke suite; blocks if any fail; /qa:report-defect for each blocking issue
 
 Assess
 23. Downstream Impact Brief → /impact-brief — reads .hitl/current-change.yaml, diff, manifest, registries
@@ -77,7 +77,7 @@ Assess
 
 Ship
 25. Create PR              → issue + HLD/LLD + IaC + code + tests + packet + brief + plan
-26. Integration Verify     → /architect:verify-traceability — each slice E2E + cross-slice composition
+26. Integration Verify     → /architect:verify-traceability — traceability chain + E2E evidence check + smoke suite re-run + cross-slice composition
 27. Figma Comparison       → lead compares to Figma from step 2; zero unresolved differences (conditional)
 28. Build + Apply IaC + Deploy → /ops:build + /ops:apply-iac (conditional) + /ops:deploy + /ops:monitor-canary
 29. Promote or Rollback    → verify go/no-go criteria from step 24; pause on failure, lead decides
