@@ -38,6 +38,7 @@ Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
    - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — run `/ops:apply-iac` if pending
    - `iac_plan.migrations` is either absent/empty or `iac_plan.migrations.status: applied` — run `/ops:migrate-database` if pending
    - `observability.status: configured` — run `/ops:setup-observability` if missing
+   - `drift_check.result` is `clear` or `caution` — if missing or `blocked`, run `/ops:detect-drift <environment> <change-ID>` and resolve all BLOCKER items before proceeding. A `caution` result requires ops lead acknowledgement before proceeding.
 2. Confirm the target environment is healthy — check existing deployment status before deploying on top of it
 3. Check for active incidents affecting this environment or the domains being deployed — prefer a graph query:
    ```

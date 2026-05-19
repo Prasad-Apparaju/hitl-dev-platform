@@ -92,6 +92,24 @@ Validate each artifact can be parsed by its tool. None of these commands apply c
 | Shell scripts | `bash -n <script>` |
 | JSON/YAML configs | `python3 -m json.tool` / `python3 -c "import yaml; yaml.safe_load(open('<file>'))"`  |
 
+**Secrets scan of ops artifacts (blocking):**
+
+Ops scripts frequently touch credentials — connection strings in migrations, deploy tokens in CI scripts, API keys in Terraform variables. Scan all ops artifacts for hardcoded secrets before they reach the repo:
+
+```bash
+# Preferred: run whichever is installed
+gitleaks detect --source . --no-git --redact \
+  --include-path "infra/" --include-path "deploy/" --include-path ".github/workflows/"
+
+# Alternative
+trufflehog filesystem infra/ deploy/ .github/ --only-verified --fail
+
+# Semgrep fallback
+semgrep scan --config "p/secrets" infra/ deploy/ .github/ --error
+```
+
+Flag any match as a **blocking violation** — hardcoded secrets in ops scripts are a BLOCKER equivalent to a plain env var detected by `/ops:detect-drift`. The fix is always: move the value to vault, reference it via environment variable or secrets manager injection.
+
 Report each result:
 
 ```
@@ -101,6 +119,7 @@ Syntax validation results
   ✅ helm lint                — 0 warnings
   ❌ alembic check            — ERROR: revision 0042 references missing dependency 0041
   ✅ bash -n deploy.sh        — valid
+  ❌ secrets scan             — BLOCKER: deploy/scripts/init.sh line 14 contains hardcoded API_KEY
 ```
 
 Block on any failure. If `--level syntax` was specified, stop here and record the result (see Step 4 for recording).

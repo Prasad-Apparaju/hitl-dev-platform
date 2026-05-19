@@ -79,7 +79,7 @@ Ship
 25. Create PR              → issue + HLD/LLD + IaC + code + tests + packet + brief + plan
 26. Integration Verify     → /architect:verify-traceability — traceability chain + E2E evidence check + smoke suite re-run + cross-slice composition
 27. Figma Comparison       → lead compares to Figma from step 2; zero unresolved differences (conditional)
-28. Build + Backup + Migrate + IaC + Observability + Deploy → /ops:backup-database (before migrations) → /ops:migrate-database (if migrations) → /ops:apply-iac (if IaC) → /ops:setup-observability (required) → /ops:build → /ops:deploy → /ops:monitor-canary
+28. Build + Backup + Migrate + IaC + Observability + Drift Check + Deploy → /ops:backup-database (before migrations) → /ops:migrate-database (if migrations) → /ops:apply-iac (if IaC) → /ops:setup-observability (required) → /ops:build → /ops:detect-drift (Tier 2+, blocks on `blocked` result) → /ops:deploy → /ops:monitor-canary
 29. Promote or Rollback + Monitor → /ops:rollback if rollback (includes /ops:backup-database restore); /ops:post-deploy-monitor required after final promotion (soak: Low 1h, Med 4h, High 12h, Crit 24h)
 
 Post-Ship
