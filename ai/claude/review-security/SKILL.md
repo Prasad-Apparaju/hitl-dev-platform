@@ -1,17 +1,17 @@
 ---
 name: review-security
-description: Security review at three points in the workflow — threat model the design before implementation, SAST scan the generated code before PR, and run a periodic system-wide security baseline. Each phase is independent; run only the phase that matches your workflow position. Required for Tier 3+ auth/payments/data changes; recommended for Tier 2+.
+description: Security review at three points in the workflow — threat model the design before implementation, SAST scan the generated code before architect code review, and run a periodic system-wide security baseline. Each phase is independent; run only the phase that matches your workflow position. Required for Tier 3+ auth/payments/data changes; recommended for Tier 2+.
 argument-hint: "[--phase design|code|system] [change ID or issue number]"
 disable-model-invocation: true
 ---
 
 # Security Review
 
-Security is reviewed at three distinct points in the workflow — threat modeling the design before code is written, SAST analysis of the generated code before PR, and a periodic system-wide baseline scan. Each phase is independent.
+Security is reviewed at three distinct points in the workflow — threat modeling the design before code is written, SAST analysis of the generated code before architect code review, and a periodic system-wide baseline scan. Each phase is independent.
 
 **Input:** $ARGUMENTS
 - `--phase design <issue-or-change-ID>` — Step 5 (post-HLD, before LLD): threat model the feature design
-- `--phase code <change-ID>` — Step 17 (post-refactor, before PR): SAST + code-level security checklist
+- `--phase code <change-ID>` — Step 17 (post-refactor, before architect code review): SAST + code-level security checklist
 - `--phase system` — scheduled: system-wide SAST baseline (no change ID required)
 
 **Tier gate:**
@@ -259,7 +259,7 @@ Security review — Code phase — <change-ID>
 SAST:       Critical N · High N · Medium N · Low N
 Checklist:  N/N items passing (N failing)
 
-Blocking (must fix before PR):
+Blocking (must fix before merge):
   ❌ [file:line] <description>
 
 Non-blocking (document and schedule):

@@ -54,9 +54,9 @@ $(echo "$REQUIRED_EVIDENCE" | sed 's/^/- [ ] /')
 
 ## Next Steps
 
-Review the evidence checklist above and ensure all required items are complete before creating the PR.
+Review the evidence checklist above and ensure all required items are complete before architect code review (step 19a).
 
-Run \`/check-conventions\` to verify code quality before PR creation.
+Run \`/check-conventions\` to verify code quality before architect code review.
 
 SUMMARY
 
