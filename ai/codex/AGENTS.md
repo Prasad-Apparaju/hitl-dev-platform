@@ -791,7 +791,7 @@ Needs architect attention before first feature:
   • ADR rationale sections: N docs
 
 Next: Assign decision packets to developers — each developer picks up
-      one packet from docs/decisions/ and runs the 31-step workflow.
+      one packet from docs/decisions/ and runs the 32-step workflow.
       Use /hitl:architect-design-feature for subsequent feature changes.
 ```
 
