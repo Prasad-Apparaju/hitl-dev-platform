@@ -1,5 +1,4 @@
 ---
-name: hitl:pm:update-requirement
 description: Update an existing PRD requirement with new acceptance criteria, scope changes, or priority adjustments while maintaining traceability.
 argument-hint: "[requirement ID and change description]"
 disable-model-invocation: true

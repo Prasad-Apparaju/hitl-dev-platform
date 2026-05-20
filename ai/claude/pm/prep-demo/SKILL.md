@@ -1,5 +1,4 @@
 ---
-name: hitl:pm:prep-demo
 description: Prepare a demo script or talking points for a feature. Use before product demos or stakeholder reviews.
 argument-hint: "[feature name or PR number]"
 disable-model-invocation: true

@@ -1,5 +1,4 @@
 ---
-name: hitl:dev:check-conventions
 description: Run convention checks (semgrep, secrets scan, manifest drift, Mermaid lint) against the current codebase and report violations. Use before creating a PR or when asked to verify code quality. Safe to run at any time — read-only except when the user asks to fix violations.
 argument-hint: "[--only semgrep|secrets|manifest|mermaid]"
 disable-model-invocation: true

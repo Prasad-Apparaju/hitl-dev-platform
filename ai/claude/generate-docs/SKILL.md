@@ -1,5 +1,4 @@
 ---
-name: hitl:dev:generate-docs
 description: Generate HLD, LLD, ADR, system manifest, and CLAUDE.md for a new feature (forward design) or existing codebase (brownfield reverse-engineer). Use before implementation starts on any Tier 2+ change, or to bootstrap a documentation baseline for an existing repo. Creates files — do not invoke spontaneously.
 argument-hint: "[feature name] | [reverse-engineer]"
 disable-model-invocation: true

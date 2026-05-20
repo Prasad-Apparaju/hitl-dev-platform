@@ -1,5 +1,4 @@
 ---
-name: hitl:pm:review-scope-change
 description: Analyze a requested scope change: impact on existing requirements, dependencies, effort delta, and recommendation.
 argument-hint: "[description of scope change request]"
 disable-model-invocation: true

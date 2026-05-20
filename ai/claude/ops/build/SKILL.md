@@ -1,5 +1,4 @@
 ---
-name: hitl:ops:build
 description: Build the application from a specified branch, verify CI pipeline output and artifact integrity, and record build readiness in the HITL context file before deployment.
 argument-hint: "[branch name or PR number]"
 disable-model-invocation: true

@@ -1,5 +1,4 @@
 ---
-name: hitl:dev:review-security
 description: Security review at three points in the workflow — threat model the design before implementation, SAST scan the generated code before architect code review, and run a periodic system-wide security baseline. Each phase is independent; run only the phase that matches your workflow position. Required for Tier 3+ auth/payments/data changes; recommended for Tier 2+.
 argument-hint: "[--phase design|code|system] [change ID or issue number]"
 disable-model-invocation: true

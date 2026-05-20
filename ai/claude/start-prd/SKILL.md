@@ -1,5 +1,4 @@
 ---
-name: hitl:dev:start-prd
 description: Start a new greenfield project from a PRD. Sets up CLAUDE.md conventions, initializes the system manifest, and prepares for /hitl:architect:design-system. Run this first on a new project before any code is written.
 argument-hint: "[optional: project name or PRD path]"
 disable-model-invocation: true

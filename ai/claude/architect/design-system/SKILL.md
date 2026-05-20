@@ -1,5 +1,4 @@
 ---
-name: hitl:architect:design-system
 description: Design a new system from scratch starting from a PRD. Produces domain decomposition, system manifest, HLDs, ADRs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet ready to hand to a developer. Run once at project inception.
 argument-hint: "[path to PRD]"
 disable-model-invocation: true
