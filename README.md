@@ -13,7 +13,7 @@ A document-driven delivery model for teams that use AI heavily in non-trivial so
 
 **Where this is not a good fit as written:** understaffed startups, teams without good CI or test discipline, teams where most work is small bugfixes and iterative UX changes, or teams without an architect or senior lead who can own the review gates.
 
-> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool. A [Codex CLI](https://github.com/openai/claude/codex) version is also provided — see [Install for Codex CLI](#install-for-codex-cli). The process works with any AI coding assistant that supports auto-loaded project rules. The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
+> **AI tool note:** This guide uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) as the primary AI coding tool. The process works with any AI coding assistant that supports auto-loaded project rules. The principles and workflow are tool-agnostic; only the enforcement hooks are tool-specific.
 
 > **Language note:** Enforcement tooling currently targets Python codebases. The process and documentation workflow are language-agnostic — only the automated checks are Python-first.
 
@@ -85,55 +85,38 @@ Pick the path that matches where you are:
 
 ## Install
 
-The HITL platform lives in a shared clone on your machine. The bootstrap script wires each product repo to it via symlinks and hook wrappers — no copy-paste, no per-repo installs.
-
-**Step 1 — Clone the platform to a stable path on your machine**
+Install the Claude Code plugin into your project:
 
 ```bash
-git clone https://github.com/your-org/hitl-dev-platform ~/tools/hitl-dev-platform
+claude plugins install pappar/hitl-claude-plugin
 ```
 
-**Step 2 — Bootstrap your project**
+To update to the latest version later:
 
 ```bash
-bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
+claude plugins update hitl-claude-plugin
 ```
 
-This creates the project-specific files your repo needs:
-- `.claude/commands/` — symlinks to platform SKILL.md files; Claude Code discovers commands from this directory
-- `.claude/settings.json` — hook registrations (UserPromptSubmit, PreToolUse, PostToolUse, Stop)
-- `.hitl/hooks/` — wrapper scripts that delegate to the platform via `HITL_PLATFORM_ROOT`
-- `CLAUDE.md`, `docs/system-manifest.yaml`, `.semgrep/` convention rules, `ci/manifest-drift/`, Mermaid linter
+Once installed, open Claude Code in your project directory and run the command that matches your situation:
 
-The platform stays in one place — product repos reference it. See [Quick Start](docs/quick-start.md) for full details including version isolation and the global install option.
-
-**Step 3 — Verify**
-
-Open Claude Code in your project directory and type `/`. You should see `/start-prd`, `/start-brownfield`, `/start-migration`, `/dev-practices`, `/tdd`, the role namespaces (`/pm`, `/architect`, `/qa`, `/ops`), and for migration projects the `/migrate:` namespace. If commands do not appear, check that `.claude/commands/` exists and contains `.md` symlinks pointing to the platform.
-
-**Step 4 — Run the appropriate start command**
-
-Use `/start-prd` for a new project, `/start-brownfield` to onboard an existing codebase, or `/start-migration` for a migration project.
+| Situation | Command |
+|-----------|---------|
+| New project — greenfield from a PRD | `/start-prd` |
+| Existing codebase — adopt the process | `/start-brownfield` |
+| Migrating a system | `/start-migration` |
+| Already set up — start a change | `/dev-practices` |
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
 
 The HITL process works fully without Graphify. On systems with many domains or large design doc sets, [Graphify](https://github.com/safishamsi/graphify) acts as a retrieval accelerator: skills run targeted graph queries instead of reading the full `system-manifest.yaml` on every operation, cutting token cost and keeping AI grounded when docs would otherwise exceed the context window.
 
 ```bash
-pip install graphifyy && graphify install
-graphify . --directed --no-viz
-python3 -m graphify.serve graphify-out/graph.json
+uv tool install graphifyy
+graphify claude install
+graphify .
 ```
 
 The PostToolUse hook triggers an incremental rebuild automatically after every design doc edit.
-
-### Install for Codex CLI
-
-```bash
-bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product --tool codex
-```
-
-This copies `AGENTS.md` to your project root, installs git hooks, and copies enforcement scripts to `ai/codex/hook-scripts/`. See [`ai/codex/`](ai/codex/) for Codex-specific artifacts.
 
 ---
 
@@ -163,12 +146,12 @@ Design decisions are captured in version-controlled documents — HLDs, LLDs, AD
 1. **Requirements**: GitHub issue (with ROI estimate for Tier 3+ changes)
 2. **Design**: Impact analysis → HLD/LLD update → test plan → QA/Ops input → Design PR merge
 3. **Build (TDD)**: Generate tests first (RED) → human review → generate code (GREEN) → refactor → convention checks
-4. **Verify**: Two-round AI code review → reconcile docs against implementation
-5. **Assess + Ship**: Downstream impact brief → risk-rated rollout plan → PR + lead integration verification → canary deploy
+4. **Verify**: Two-round AI code review → architect code review on GitHub PR → reconcile docs against implementation
+5. **Assess + Ship**: Downstream impact brief → risk-rated rollout plan → verify PR completeness → lead integration verification → canary deploy
 
-Of 31 steps: 10 AI-driven, 11 AI-assisted, 10 human-only. Not every change uses all 31 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
+Of 33 steps: 10 AI-driven, 11 AI-assisted, 12 human-only. Not every change uses all 33 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
 
-→ [Full 31-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
+→ [Full 33-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
 
 ---
 
@@ -184,7 +167,7 @@ Of 31 steps: 10 AI-driven, 11 AI-assisted, 10 human-only. Not every change uses 
 | **4. System manifest + domain facades** | Manifest with domains, files, facades, conventions. Manifest drift checker. | AI stays scoped. Cross-domain drift detected. New team members onboard from the manifest. | 1 week |
 | **5. Full workflow** | Incident registry, test registry, rollout planning, ROI checks, deployment gates. | Past mistakes don't repeat. Deployments are risk-rated. Investments are measured. | 1-2 weeks |
 
-Levels 1–3 are the minimum viable adoption — shared conventions, docs-first design, and basic traceability, without the full 31-step workflow.
+Levels 1–3 are the minimum viable adoption — shared conventions, docs-first design, and basic traceability, without the full 33-step workflow.
 
 ---
 
@@ -195,7 +178,7 @@ Levels 1–3 are the minimum viable adoption — shared conventions, docs-first 
 | Why this process exists + the problem it solves | [Core concepts](docs/playbook/core-concepts.md) |
 | Role definitions and responsibilities | [Roles](docs/playbook/roles.md) |
 | System manifest and AI context management | [System manifest](docs/playbook/system-manifest.md) |
-| Full 31-step workflow + design room | [Workflow reference](docs/playbook/workflow-reference.md) |
+| Full 33-step workflow + design room | [Workflow reference](docs/playbook/workflow-reference.md) |
 | Process tiers, pitfalls, architect scaling | [Common pitfalls](docs/playbook/common-pitfalls.md) |
 | Adoption checklist | [Adoption checklist](docs/playbook/adoption-checklist.md) |
 | Brownfield adoption baseline sprint | [Adoption guide](docs/playbook/adoption-guide.md) |
