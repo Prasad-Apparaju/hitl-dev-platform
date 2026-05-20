@@ -69,6 +69,7 @@ Build (TDD)
 Verify
 18. Code Review Round 1    → /check-implementation — reads implementation + LLD (step 12) + system-manifest.yaml
 19. Code Review Round 2    → /check-implementation — reads implementation + tests/ + test plan from .hitl/current-change.yaml
+19a. Architect Code Review → /architect:review-code — human architect reviews for business logic, architectural consistency, domain boundary integrity, hidden coupling, naming; APPROVED or REVISIONS REQUIRED; revisions return to step 14 or 16
 20. Rerun Tests            → confirm no regressions from review fixes
 21. Reconcile Docs         → update LLD (/generate-docs) or fix code; document decision; if fix code, rerun 18–20
 22. QA Post-Handoff Verify → /qa:verify-quality — unskips + runs E2E Playwright (desktop + iPhone 15 + Pixel 7); runs smoke suite; blocks if any fail; /qa:report-defect for each blocking issue
