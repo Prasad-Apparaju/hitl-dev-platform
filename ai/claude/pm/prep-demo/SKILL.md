@@ -10,7 +10,7 @@ Generate a demo checklist from the PRD so the PM knows exactly what to test and 
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash
-ls graphify-out/graph.json 2>/dev/null && echo "Graphify: available" || echo "Graphify: unavailable"
+[ -f graphify-out/graph.json ] && echo "Graphify: available" || echo "Graphify: unavailable"
 ```
 State the result once — "✅ Graphify available, using graph queries" or "⚠️ Graphify unavailable — using direct doc reads throughout." Apply that result for every step; do not rediscover availability mid-task.
 
