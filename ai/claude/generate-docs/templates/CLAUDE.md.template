@@ -18,9 +18,9 @@ Do not assume Developer mode by default.
 
 If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively offer the right start command based on the project situation:
 
-- `/hitl:dev:start-prd` — new project, no source code yet, starting from a PRD
-- `/hitl:dev:start-brownfield` — existing codebase to onboard into HITL
-- `/hitl:dev:start-migration` — migrating from one system to another
+- `/hitl:dev-start-prd` — new project, no source code yet, starting from a PRD
+- `/hitl:dev-start-brownfield` — existing codebase to onboard into HITL
+- `/hitl:dev-start-migration` — migrating from one system to another
 
 Do not wait for the user to discover these on their own. Assess the project state and recommend the right one immediately if the project appears unconfigured.
 
@@ -29,7 +29,7 @@ Do not wait for the user to discover these on their own. Assess the project stat
 Before making ANY code or doc change, output these 7 lines in the chat BEFORE the first state-modifying tool call:
 
 1. **Issue**: Is there a GitHub issue? If no → `gh issue create` now.
-2. **Workflow**: Have I run `/apply-change`? If no → run it now.
+2. **Workflow**: Have I run `/hitl:dev-apply-change`? If no → run it now.
 3. **Docs**: Does HLD/LLD/ADR cover this change? If no → update BEFORE code.
 4. **ROI estimate**: Change costs >1 day? If yes → record in `.hitl/current-change.yaml` under `roi_estimate`; post a pointer comment on the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
@@ -40,7 +40,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev:practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/hitl:dev:apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev-practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/hitl:dev-apply-change`.
 
 ## Testing
 

@@ -1,5 +1,5 @@
 ---
-description: Architect deep review of external migration documentation. Reads staged reference docs, critically evaluates their reliability and gaps, and produces two outputs — a migration review (critique) and a migration brief (PRD-equivalent). The migration brief is the required input for /hitl:architect:design-system or /hitl:architect:design-feature. No HITL design work begins until both documents are approved.
+description: Architect deep review of external migration documentation. Reads staged reference docs, critically evaluates their reliability and gaps, and produces two outputs — a migration review (critique) and a migration brief (PRD-equivalent). The migration brief is the required input for /hitl:architect-design-system or /hitl:architect-design-feature. No HITL design work begins until both documents are approved.
 argument-hint: "[optional: specific doc or section to focus on]"
 disable-model-invocation: true
 ---
@@ -12,7 +12,7 @@ disable-model-invocation: true
 - `docs/00-migration/migration-review.md` — critical evaluation of the external docs
 - `docs/00-migration/migration-brief.md` — PRD-equivalent requirements for the target system
 
-**Refusal rule:** If `docs/00-migration/external-reference/` is empty and no migration context exists, stop and say: "Run `/hitl:dev:start-migration` first — the external docs must be staged and migration context recorded before the review can begin."
+**Refusal rule:** If `docs/00-migration/external-reference/` is empty and no migration context exists, stop and say: "Run `/hitl:dev-start-migration` first — the external docs must be staged and migration context recorded before the review can begin."
 
 Work through phases in order. Pause after each output and wait for architect approval before proceeding.
 
@@ -33,7 +33,7 @@ Read `docs/00-migration/migration-context.yaml`. Extract:
 | Migration trigger | |
 | External docs available | |
 
-If the file does not exist, stop: "Migration context not found. Run `/hitl:dev:start-migration` first."
+If the file does not exist, stop: "Migration context not found. Run `/hitl:dev-start-migration` first."
 
 ### 1b. Inventory external reference docs
 
@@ -62,7 +62,7 @@ For each external doc, identify which claims can be trusted as design input:
 
 - **Strong signal:** vendor-produced migration guides for the target platform, field-mapping specs produced by domain experts, runbooks proven in production migrations
 - **Weak signal:** consultant deliverables without validation evidence, "best practice" guides without context for this specific source/target pair, docs older than 18 months on rapidly-evolving platforms
-- **Flag explicitly:** anything that conflicts with what `/hitl:dev:start-migration` recorded as the migration trigger or target architecture
+- **Flag explicitly:** anything that conflicts with what `/hitl:dev-start-migration` recorded as the migration trigger or target architecture
 
 ### 2b. Gap analysis
 
@@ -149,7 +149,7 @@ Incorporate feedback. Set `status: approved` only after the architect explicitly
 
 Update `.hitl/current-change.yaml`: set `current_step: {number: 4, name: "Write migration brief", phase: "Migration Review"}`.
 
-The migration brief is the PRD-equivalent for the migration. It is the required input for `/hitl:architect:design-system` (full-system migration) or `/hitl:architect:design-feature` (slice-by-slice). The architect skills read this file in place of `docs/01-product/prd.md`.
+The migration brief is the PRD-equivalent for the migration. It is the required input for `/hitl:architect-design-system` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice). The architect skills read this file in place of `docs/01-product/prd.md`.
 
 Write `docs/00-migration/migration-brief.md` with the following structure:
 
@@ -225,17 +225,17 @@ Two documents produced:
 
 For a **full-system migration** (designing the entire target system from scratch):
 ```
-/hitl:architect:design-system docs/00-migration/migration-brief.md
+/hitl:architect-design-system docs/00-migration/migration-brief.md
 ```
 
 For a **slice-by-slice migration** (migrating one domain at a time into an existing or partially-built target):
 ```
-/hitl:architect:design-feature
+/hitl:architect-design-feature
 ```
 (The migration brief replaces the PRD — reference it as `docs/00-migration/migration-brief.md` when the architect asks for the PRD path.)
 
 **Before starting design:** resolve all open questions from the migration brief. The architect should not begin HLD work while open questions remain — unanswered NFRs at design time become architecture mistakes at build time.
 
-**Slice criterion:** every slice must be observable — either user-visible or verifiable by ops/QA. The architect enforces this during Phase 7 of `/hitl:architect:design-feature`.
+**Slice criterion:** every slice must be observable — either user-visible or verifiable by ops/QA. The architect enforces this during Phase 7 of `/hitl:architect-design-feature`.
 
 ---

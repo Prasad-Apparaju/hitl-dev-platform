@@ -1,6 +1,6 @@
 # TDD as a Design Tool — Reference
 
-> Use the `/hitl:dev:tdd` skill to run this process. This file is the conceptual reference.
+> Use the `/hitl:dev-tdd` skill to run this process. This file is the conceptual reference.
 
 ## The Core Insight
 

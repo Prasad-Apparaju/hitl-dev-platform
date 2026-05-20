@@ -315,7 +315,7 @@ Read PRD for the feature (FR-<ID> linked in the issue) for acceptance criteria. 
 
 ## Change Initialization
 
-Run this workflow when starting any Tier 1+ change. This replaces the `/hitl:dev:apply-change` skill from the Claude Code plugin.
+Run this workflow when starting any Tier 1+ change. This replaces the `/hitl:dev-apply-change` skill from the Claude Code plugin.
 
 **Trigger:** User says "start a change", "initialize a change", "apply-change", or describes a new feature/fix they want to implement.
 
@@ -430,7 +430,7 @@ Update `.hitl/current-change.yaml`:
 
 ## TDD Workflow
 
-Use after the LLD is approved, before writing any implementation code. This replaces the `/hitl:dev:tdd` skill.
+Use after the LLD is approved, before writing any implementation code. This replaces the `/hitl:dev-tdd` skill.
 
 **Refusal:** If no LLD exists or is not approved, stop: "No approved LLD found. Write the LLD first — this workflow generates tests FROM the spec, not without one."
 
@@ -483,7 +483,7 @@ Mark `tests_red: done` and `tests_green: done` in `.hitl/current-change.yaml`.
 
 ## Convention Checks
 
-Run before creating a PR. This replaces the `/hitl:dev:check-conventions` skill.
+Run before creating a PR. This replaces the `/hitl:dev-check-conventions` skill.
 
 **Trigger:** User asks to "check conventions", "run checks", or "verify before PR".
 
@@ -792,7 +792,7 @@ Needs architect attention before first feature:
 
 Next: Assign decision packets to developers — each developer picks up
       one packet from docs/decisions/ and runs the 31-step workflow.
-      Use /hitl:architect:design-feature for subsequent feature changes.
+      Use /hitl:architect-design-feature for subsequent feature changes.
 ```
 
 ---
@@ -935,7 +935,7 @@ Design complete. Decision packet(s) assembled and approved by architect.
 **Estimated effort:** <N days>
 **Rollout risk:** <level>
 
-Developers can begin implementation. Run \`/hitl:dev:tdd\` with the assigned LLD."
+Developers can begin implementation. Run \`/hitl:dev-tdd\` with the assigned LLD."
 ```
 
 ### Output format
@@ -960,7 +960,7 @@ Slice handoff:
     LLD: docs/.../lld/[B]/...
     Packet: docs/decisions/issue-<N>-s2.yaml
 
-Next: assign packets to developers; each runs /hitl:dev:tdd with their LLD path
+Next: assign packets to developers; each runs /hitl:dev-tdd with their LLD path
 ```
 
 ---
@@ -1025,7 +1025,7 @@ After producing the review, post a comment on the GitHub issue:
 
 ## Generate Documentation
 
-Run before implementation on any Tier 2+ change. This replaces the `/hitl:dev:generate-docs` skill.
+Run before implementation on any Tier 2+ change. This replaces the `/hitl:dev-generate-docs` skill.
 
 **Trigger:** User asks to "generate docs", "write HLD/LLD", or "create design documents".
 
@@ -1055,7 +1055,7 @@ Verify all of the following:
 - [ ] All new tests pass
 - [ ] No regressions in existing tests
 - [ ] LLD is up to date (no unresolved drift from conformance review)
-- [ ] Downstream impact brief exists (run `/hitl:dev:impact-brief` or ask Codex to generate one)
+- [ ] Downstream impact brief exists (run `/hitl:dev-impact-brief` or ask Codex to generate one)
 - [ ] PR description includes: GitHub issue link, HLD/LLD links, test plan summary, rollout notes
 
 ---

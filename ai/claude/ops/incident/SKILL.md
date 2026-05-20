@@ -97,7 +97,7 @@ Common mitigations to consider (assess applicability, do not apply blindly):
 
 | Mitigation | When to use |
 |---|---|
-| Roll back to previous artifact (`/hitl:ops:rollback`) | Deployment caused the incident |
+| Roll back to previous artifact (`/hitl:ops-rollback`) | Deployment caused the incident |
 | Toggle feature flag off | Change is behind a flag |
 | Redirect traffic to healthy region/AZ | Regional failure |
 | Scale up replicas | Capacity-related degradation |

@@ -88,7 +88,7 @@ If backwards-incompatible changes are identified, flag them explicitly. Do not p
 
 ### 1e. Determine the tier
 
-Use the tier definitions from `skills/dev/practices/SKILL.md`. State the tier with justification.
+Use the tier definitions from `skills/dev-practices/SKILL.md`. State the tier with justification.
 
 **Challenge the tier before accepting it:**
 - Cross-domain or multi-service changes are Tier 3 even when described as simple
@@ -99,7 +99,7 @@ Use the tier definitions from `skills/dev/practices/SKILL.md`. State the tier wi
 
 Estimate implementation effort (in days) based on the number of affected domains, facade API changes, and IaC scope. This determines whether step 4 (ROI) is required.
 
-For token cost estimation, use the phase-level formula from `skills/dev/practices/roi-estimation.md`.
+For token cost estimation, use the phase-level formula from `skills/dev-practices/roi-estimation.md`.
 
 ### 1g. Initialize `.hitl/current-change.yaml`
 
@@ -145,7 +145,7 @@ Do not proceed until the architect confirms.
 
 If effort estimate exceeds 1 day:
 
-Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `skills/dev/practices/roi-estimation.md`. Fill in:
+Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `skills/dev-practices/roi-estimation.md`. Fill in:
 - Value dimension
 - Expected outcome (specific, falsifiable, with timeframe)
 - Baseline metric placeholder (note: architect must measure this now, not estimate it)
@@ -433,7 +433,7 @@ tests:
   plan: "<summary>"               # test plan summary from Phase 8
   new_tests:
     - "<tests/file.py::test_name>"  # full list from Phase 8
-  registry_updated: false         # developer sets true during /hitl:dev:tdd
+  registry_updated: false         # developer sets true during /hitl:dev-tdd
 
 incidents:
   checked: true
@@ -504,7 +504,7 @@ Design complete. Decision packet(s) assembled and approved by architect.
 **Estimated effort:** <N days>
 **Rollout risk:** <level>
 
-Developers can begin implementation. Run \`/hitl:dev:tdd\` with the assigned LLD."
+Developers can begin implementation. Run \`/hitl:dev-tdd\` with the assigned LLD."
 ```
 
 ---

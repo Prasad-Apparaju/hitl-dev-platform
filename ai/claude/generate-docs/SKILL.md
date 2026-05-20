@@ -284,7 +284,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ---
 
-After the baseline sprint, use `/hitl:pm:design-feature` or `/hitl:pm:add-feature` for new features — the full HITL workflow (PM skills, design, TDD, review, deployment) applies identically from this point forward. The brownfield distinction ends here.
+After the baseline sprint, use `/hitl:pm-design-feature` or `/hitl:pm-add-feature` for new features — the full HITL workflow (PM skills, design, TDD, review, deployment) applies identically from this point forward. The brownfield distinction ends here.
 
 ---
 

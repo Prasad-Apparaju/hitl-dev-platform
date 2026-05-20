@@ -1,5 +1,5 @@
 ---
-description: Start a migration project. Collects migration context, ingests external migration documentation as reference material, sets up the project structure, and hands off to /hitl:dev:review-external-docs for the architect's deep review before design begins.
+description: Start a migration project. Collects migration context, ingests external migration documentation as reference material, sets up the project structure, and hands off to /hitl:dev-review-external-docs for the architect's deep review before design begins.
 argument-hint: "[optional: source system name or migration description]"
 disable-model-invocation: true
 ---
@@ -36,7 +36,7 @@ Ask the following questions and record the answers. Do not proceed until all fou
 Record the answers in `docs/00-migration/migration-context.yaml` (create it now — this is project-level bootstrap state, separate from the per-change `.hitl/current-change.yaml`):
 
 ```yaml
-# Migration project context — written once during /hitl:dev:start-migration
+# Migration project context — written once during /hitl:dev-start-migration
 # This is project-level metadata, not a per-change runtime file.
 source_system: <description>
 target_system: <description>
@@ -100,8 +100,8 @@ Create the following directories if they do not exist:
 docs/00-migration/
   migration-context.yaml    ← written in Step 1 (project-level bootstrap state)
   external-reference/       ← external docs go here (reference only, never canonical)
-  migration-review.md       ← produced by /hitl:dev:review-external-docs (stub for now)
-  migration-brief.md        ← produced by /hitl:dev:review-external-docs (PRD-equivalent)
+  migration-review.md       ← produced by /hitl:dev-review-external-docs (stub for now)
+  migration-brief.md        ← produced by /hitl:dev-review-external-docs (PRD-equivalent)
 ```
 
 ```bash
@@ -183,7 +183,7 @@ Run:
 ```bash
 gh issue create \
   --title "Migration: [source system] → [target system]" \
-  --body "Migration project initialized via HITL. Context: docs/00-migration/migration-context.yaml. External reference docs staged in docs/00-migration/external-reference/. Next: /hitl:dev:review-external-docs produces migration-review.md and migration-brief.md before any design begins."
+  --body "Migration project initialized via HITL. Context: docs/00-migration/migration-context.yaml. External reference docs staged in docs/00-migration/external-reference/. Next: /hitl:dev-review-external-docs produces migration-review.md and migration-brief.md before any design begins."
 ```
 
 Show the issue URL. Then update `.hitl/current-change.yaml`: set `change_id: GH-<issue-number>` (replace the `migration-setup` placeholder).
@@ -209,7 +209,7 @@ Project structure, conventions, target manifest, and external reference docs are
 **Next step — Architect deep review:**
 
 ```
-/hitl:dev:review-external-docs
+/hitl:dev-review-external-docs
 ```
 
 The architect runs this to produce two documents:
@@ -218,7 +218,7 @@ The architect runs this to produce two documents:
 
 No design work (HLD/LLD) begins until both documents are approved. The migration brief is the required input for the architect design skills — it replaces `docs/01-product/prd.md` in the standard workflow.
 
-After the review, the architect runs `/hitl:architect:design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect:design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 32-step workflow.
+After the review, the architect runs `/hitl:architect-design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 32-step workflow.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 

@@ -15,9 +15,9 @@
 # Claude Code — what gets created in the product repo:
 #   .claude/settings.json          plugin reference + project-relative hook paths
 #   .hitl/hooks/*.sh            wrapper scripts; resolve platform via HITL_PLATFORM_ROOT
-#   .semgrep/                   semgrep convention rules (required by /hitl:dev:check-conventions)
-#   ci/manifest-drift/       manifest drift checker (required by /hitl:dev:check-conventions)
-#   scripts/fix_mermaid_br_tags.py  Mermaid linter (required by /hitl:dev:check-conventions)
+#   .semgrep/                   semgrep convention rules (required by /hitl:dev-check-conventions)
+#   ci/manifest-drift/       manifest drift checker (required by /hitl:dev-check-conventions)
+#   scripts/fix_mermaid_br_tags.py  Mermaid linter (required by /hitl:dev-check-conventions)
 #
 # Skills, agents, and commands are never copied — they load from the shared
 # platform via the Claude Code plugin.

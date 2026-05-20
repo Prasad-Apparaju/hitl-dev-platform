@@ -134,9 +134,14 @@ echo "$OUT" | grep -q "HITL AI-Driven Development" \
 
 # ── Sync hook tests ───────────────────────────────────────────────────────────
 
+# Use a PID-unique change ID so each run gets its own /tmp cache file.
+SYNC_TEST_ID="GH-$$"
+SYNC_TEST_NUM="$$"
+trap 'rm -f "/tmp/hitl-last-step-${SYNC_TEST_ID}"' EXIT INT TERM
+
 echo ""
 echo "-- Sync hook: ignores writes to non-context files --"
-write_context "GH-99" 2 10 "AI generates tests (RED)" "Build"
+write_context "$SYNC_TEST_ID" 2 10 "AI generates tests (RED)" "Build"
 RESULT=$(hook_input "src/services/payment.py" | bash "$SYNC_HOOK"; echo "exit:$?")
 echo "$RESULT" | grep -q "exit:0" \
     && pass "hook exits 0 for non-context file" \
@@ -144,7 +149,7 @@ echo "$RESULT" | grep -q "exit:0" \
 
 echo ""
 echo "-- Sync hook: recognizes .hitl/current-change.yaml --"
-write_context "GH-99" 2 18 "Code review Round 1" "Verify"
+write_context "$SYNC_TEST_ID" 2 18 "Code review Round 1" "Verify"
 # Mock gh: writes call args to a log file (hook redirects gh stdout to /dev/null,
 # so we need a side-channel to verify gh was called with the right args)
 GH_LOG="/tmp/hitl_test_gh_log_$$"
@@ -159,8 +164,8 @@ echo "$RESULT" | grep -q "exit:0" \
 [[ -f "$GH_LOG" ]] \
     && pass "gh issue comment called for GH-N change_id" \
     || fail "gh not called — expected comment to be posted"
-grep -q "issue comment 99" "$GH_LOG" 2>/dev/null \
-    && pass "gh called with correct issue number 99" \
+grep -q "issue comment ${SYNC_TEST_NUM}" "$GH_LOG" 2>/dev/null \
+    && pass "gh called with correct issue number" \
     || fail "wrong issue number in gh call: $(cat "$GH_LOG" 2>/dev/null)"
 grep -q "Code review Round 1" "$GH_LOG" 2>/dev/null \
     && pass "step name included in comment body" \

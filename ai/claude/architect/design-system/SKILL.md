@@ -280,7 +280,7 @@ Follow the instructions in Phase R5 of the `generate-docs` skill exactly. This s
 
 1. **Generate `CLAUDE.md`** from `shared/templates/CLAUDE.md.template` — inline the cross-cutting conventions from the ADRs and manifest
 2. **Generate `convention-checks.yaml`** — create checks from the conventions established in Phase 4 ADRs
-3. **Install the plugin or copy skills** — so `/architect/design-feature`, `/hitl:dev:tdd`, `/hitl:dev:generate-docs`, etc. are available
+3. **Install the plugin or copy skills** — so `/architect/design-feature`, `/hitl:dev-tdd`, `/hitl:dev-generate-docs`, etc. are available
 4. **Copy CI actions** to `.github/workflows/`
 5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `shared/templates/issue-template.md`
 6. **Set up Graphify** — for systems with 4+ domains, the doc set produced by this session will exceed context window limits on future queries. Install before team onboarding (see `shared/graphify-setup.md` for full instructions):
@@ -371,7 +371,7 @@ source_docs:
 
 tests:
   plan: "<key scenarios from facade APIs in the LLD>"
-  new_tests: []                   # developer fills in during /hitl:dev:tdd
+  new_tests: []                   # developer fills in during /hitl:dev-tdd
   registry_updated: false
 
 incidents:
@@ -433,7 +433,7 @@ Present a completion summary:
 │  2. Assign decision packets to developers           │
 │     — each developer receives one packet and runs   │
 │       the standard 32-step workflow from it         │
-│  3. Run /hitl:dev:generate-docs reverse-engineer after the   │
+│  3. Run /hitl:dev-generate-docs reverse-engineer after the   │
 │     first sprint to reconcile design vs. built      │
 └─────────────────────────────────────────────────────┘
 ```

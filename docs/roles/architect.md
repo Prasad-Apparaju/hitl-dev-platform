@@ -1,6 +1,6 @@
 # Architect Role Guide
 
-You hold the design and integration gates. You review designs before implementation starts and verify the traceability chain before merge. On small teams you also cover the QA and Ops roles — use the `/hitl:qa:` and `/hitl:ops:` command namespaces for those activities.
+You hold the design and integration gates. You review designs before implementation starts and verify the traceability chain before merge. On small teams you also cover the QA and Ops roles — use the `/hitl:qa-` and `/hitl:ops-` command namespaces for those activities.
 
 ## Your Commands
 
@@ -8,26 +8,26 @@ You hold the design and integration gates. You review designs before implementat
 
 | Command | When to use | Gate it covers |
 |---------|-------------|----------------|
-| `/hitl:architect:design-system` | New project — designing the full system from a PRD | System foundation (one-time) |
-| `/hitl:architect:design-feature` | Starting any Tier 2+ change — steps 3–9 end-to-end | Impact analysis through decision packet handoff |
-| `/hitl:architect:review-design` | After design docs are produced — before implementation starts | Design approval gate |
-| `/hitl:architect:verify-traceability` | Final check before approving merge | Integration verification gate |
-| `/hitl:qa:plan-tests` | At design time — contribute test scenarios from incident history before TDD starts | QA gate (when covering QA) |
-| `/hitl:qa:review-tests` | After RED test generation — review coverage before implementation begins; ACs, LLD edges, regressions | QA gate (when covering QA) |
-| `/hitl:qa:verify-quality` | After developer handoff — independent quality verification | QA gate (when covering QA) |
-| `/hitl:qa:report-defect` | When verify-quality blocks — file structured defect with AC reference and severity | QA gate (when covering QA) |
-| `/hitl:ops:review-release` | Before release — assess rollout plan, canary criteria, rollback | Ops gate (when covering Ops) |
-| `/hitl:ops:monitor-canary` | During active canary — read dashboards, produce go/no-go | Ops gate (when covering Ops) |
+| `/hitl:architect-design-system` | New project — designing the full system from a PRD | System foundation (one-time) |
+| `/hitl:architect-design-feature` | Starting any Tier 2+ change — steps 3–9 end-to-end | Impact analysis through decision packet handoff |
+| `/hitl:architect-review-design` | After design docs are produced — before implementation starts | Design approval gate |
+| `/hitl:architect-verify-traceability` | Final check before approving merge | Integration verification gate |
+| `/hitl:qa-plan-tests` | At design time — contribute test scenarios from incident history before TDD starts | QA gate (when covering QA) |
+| `/hitl:qa-review-tests` | After RED test generation — review coverage before implementation begins; ACs, LLD edges, regressions | QA gate (when covering QA) |
+| `/hitl:qa-verify-quality` | After developer handoff — independent quality verification | QA gate (when covering QA) |
+| `/hitl:qa-report-defect` | When verify-quality blocks — file structured defect with AC reference and severity | QA gate (when covering QA) |
+| `/hitl:ops-review-release` | Before release — assess rollout plan, canary criteria, rollback | Ops gate (when covering Ops) |
+| `/hitl:ops-monitor-canary` | During active canary — read dashboards, produce go/no-go | Ops gate (when covering Ops) |
 
 ## Your Commands in Context
 
-### New System (`/hitl:architect:design-system`)
+### New System (`/hitl:architect-design-system`)
 Run once at project inception. Takes the PRD and produces: domain decomposition, `docs/system-manifest.yaml`, system HLDs, foundational ADRs, domain LLDs, and the HITL process bootstrap. The domain decomposition gate is the most consequential — domain boundary errors cascade through every subsequent artifact.
 
-### New Change (`/hitl:architect:design-feature`)
+### New Change (`/hitl:architect-design-feature`)
 Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with approval gates, ADR capture, slice decomposition (domain independence + demoable/observable check), test case planning, and decision packet assembly. Produces `.hitl/current-change.yaml` set to `implementation-approved` and hands one decision packet per slice to each developer.
 
-### Design Review (`/hitl:architect:review-design`)
+### Design Review (`/hitl:architect-review-design`)
 Run after design docs are produced — before implementation starts. Check:
 - LLD is precise enough to generate tests from — every method has a signature, error modes are enumerated, preconditions are explicit
 - Manifest facade APIs are updated if new domain APIs are introduced
@@ -35,7 +35,7 @@ Run after design docs are produced — before implementation starts. Check:
 
 Do not approve implementation until the LLD has `status: approved` in its frontmatter.
 
-### Integration Verification (`/hitl:architect:verify-traceability`)
+### Integration Verification (`/hitl:architect-verify-traceability`)
 Final check before approving merge. Confirm the chain is unbroken:
 
 GitHub issue exists → design PR merged → implementation matches LLD → tests cover the spec → impact brief complete → rollout plan approved
@@ -53,9 +53,9 @@ Gates should not block progress for more than 24 hours.
 
 ## Progress Breadcrumbs
 
-`/hitl:architect:design-feature` shows a 10-phase breadcrumb trail. The long trail reflects the full scope: impact analysis, ROI, HLD, ADRs, LLD, IaC, slice decomposition (each slice must be demoable or observable — not just technically independent), test planning, training stub, and decision packet.
+`/hitl:architect-design-feature` shows a 10-phase breadcrumb trail. The long trail reflects the full scope: impact analysis, ROI, HLD, ADRs, LLD, IaC, slice decomposition (each slice must be demoable or observable — not just technically independent), test planning, training stub, and decision packet.
 
-![/hitl:architect:design-feature progress breadcrumbs](../images/architect-design-feature-flow.svg)
+![/hitl:architect-design-feature progress breadcrumbs](../images/architect-design-feature-flow.svg)
 
 ## Further Reading
 

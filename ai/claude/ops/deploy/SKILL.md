@@ -10,7 +10,7 @@ Deploy a verified artifact to the specified environment, following the approved 
 
 **Input:** $ARGUMENTS (environment name and artifact reference)
 
-**Refusal rule:** If `.hitl/current-change.yaml` is missing or `build.status` is not `ready`, stop: "No verified build found. Run `/hitl:ops:build` first."
+**Refusal rule:** If `.hitl/current-change.yaml` is missing or `build.status` is not `ready`, stop: "No verified build found. Run `/hitl:ops-build` first."
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash
@@ -40,10 +40,10 @@ Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
 1. Read `.hitl/current-change.yaml` — confirm all of the following are true before proceeding:
    - `build.status: ready` and `build.artifact` is recorded
    - `rollout_plan` is present (from the approved impact brief)
-   - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — run `/hitl:ops:apply-iac` if pending
-   - `iac_plan.migrations` is either absent/empty or `iac_plan.migrations.status: applied` — run `/hitl:ops:migrate-database` if pending
-   - `observability.status: configured` — run `/hitl:ops:setup-observability` if missing
-   - `drift_check.result` is `clear` or `caution` — if missing or `blocked`, run `/hitl:ops:detect-drift <environment> <change-ID>` and resolve all BLOCKER items before proceeding. A `caution` result requires ops lead acknowledgement before proceeding.
+   - `iac_plan` is either empty/`none` or `iac_plan.status: applied` — run `/hitl:ops-apply-iac` if pending
+   - `iac_plan.migrations` is either absent/empty or `iac_plan.migrations.status: applied` — run `/hitl:ops-migrate-database` if pending
+   - `observability.status: configured` — run `/hitl:ops-setup-observability` if missing
+   - `drift_check.result` is `clear` or `caution` — if missing or `blocked`, run `/hitl:ops-detect-drift <environment> <change-ID>` and resolve all BLOCKER items before proceeding. A `caution` result requires ops lead acknowledgement before proceeding.
 2. Confirm the target environment is healthy — check existing deployment status before deploying on top of it
 3. Check for active incidents affecting this environment or the domains being deployed — prefer a graph query:
    ```
@@ -108,13 +108,13 @@ gh issue comment <issue-number> \
 **Deployed at:** <ISO timestamp>
 **Rollout:** <canary N% / 100% direct>
 
-<If canary: 'Run /hitl:ops:monitor-canary to assess go/no-go criteria before promoting to next tier.'>
+<If canary: 'Run /hitl:ops-monitor-canary to assess go/no-go criteria before promoting to next tier.'>
 <If production 100%: 'Feature is live.'>"
 ```
 
-For canary deployments: proceed to `/hitl:ops:monitor-canary` to assess go/no-go before promoting to the next tier.
+For canary deployments: proceed to `/hitl:ops-monitor-canary` to assess go/no-go before promoting to the next tier.
 
 For the final production promotion (100% traffic, all go/no-go criteria met):
-- Run `/hitl:ops:post-deploy-monitor <change-ID>` — this is required for all Tier 2+ changes. The soak duration is determined by risk level (Low: 1h, Medium: 4h, High: 12h, Critical: 24h). Do not close the issue or declare the change complete until post-deploy monitor produces a STABLE verdict.
-- If the post-deploy monitor produces ROLLBACK: run `/hitl:ops:rollback`.
+- Run `/hitl:ops-post-deploy-monitor <change-ID>` — this is required for all Tier 2+ changes. The soak duration is determined by risk level (Low: 1h, Medium: 4h, High: 12h, Critical: 24h). Do not close the issue or declare the change complete until post-deploy monitor produces a STABLE verdict.
+- If the post-deploy monitor produces ROLLBACK: run `/hitl:ops-rollback`.
 

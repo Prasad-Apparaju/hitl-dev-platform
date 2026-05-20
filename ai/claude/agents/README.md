@@ -6,11 +6,11 @@ Each `.md` file defines a subagent: its role, responsibilities, what it reads, a
 
 | Agent | Invoked by | Role |
 |-------|-----------|------|
-| `spec-conformance-reviewer.md` | `/hitl:dev:check-implementation` | Reviews implementation against LLD and system manifest |
-| `architect-reviewer.md` | `/hitl:architect:review-design` | Evaluates HLD/LLD quality before implementation |
-| `qa-reviewer.md` | `/hitl:qa:verify-quality` | Independent quality verification against running build |
-| `ops-release-reviewer.md` | `/hitl:ops:review-release` | Assesses rollout plan and canary criteria |
-| `pm-reviewer.md` | `/hitl:pm:review-progress` | Reviews progress against PRD requirements |
-| `developer-implementer.md` | `/hitl:dev:tdd` | Generates code from failing tests and LLD |
+| `spec-conformance-reviewer.md` | `/hitl:dev-check-implementation` | Reviews implementation against LLD and system manifest |
+| `architect-reviewer.md` | `/hitl:architect-review-design` | Evaluates HLD/LLD quality before implementation |
+| `qa-reviewer.md` | `/hitl:qa-verify-quality` | Independent quality verification against running build |
+| `ops-release-reviewer.md` | `/hitl:ops-review-release` | Assesses rollout plan and canary criteria |
+| `pm-reviewer.md` | `/hitl:pm-review-progress` | Reviews progress against PRD requirements |
+| `developer-implementer.md` | `/hitl:dev-tdd` | Generates code from failing tests and LLD |
 
 To customize an agent's behavior, edit its `.md` file directly.

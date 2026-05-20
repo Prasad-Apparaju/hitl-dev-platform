@@ -1,6 +1,6 @@
 {
   "name": "hitl",
-  "description": "HITL AI-Driven Development. Use /hitl:dev:start-prd, /hitl:dev:start-brownfield, or /hitl:dev:start-migration to set up a project. Then /hitl:dev:practices for the full 32-step delivery workflow.",
+  "description": "HITL AI-Driven Development. Use /hitl:dev-start-prd, /hitl:dev-start-brownfield, or /hitl:dev-start-migration to set up a project. Then /hitl:dev-practices for the full 32-step delivery workflow.",
   "skills": [
     "ai/claude/start-prd",
     "ai/claude/start-brownfield",

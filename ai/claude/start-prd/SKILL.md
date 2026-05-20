@@ -1,5 +1,5 @@
 ---
-description: Start a new greenfield project from a PRD. Sets up CLAUDE.md conventions, initializes the system manifest, and prepares for /hitl:architect:design-system. Run this first on a new project before any code is written.
+description: Start a new greenfield project from a PRD. Sets up CLAUDE.md conventions, initializes the system manifest, and prepares for /hitl:architect-design-system. Run this first on a new project before any code is written.
 argument-hint: "[optional: project name or PRD path]"
 disable-model-invocation: true
 ---
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Setting up a new greenfield project for HITL AI-Driven Development. Work through these steps in order — pause after each and wait for confirmation before proceeding.
 
-**Quick sanity check:** If this codebase already has substantial source code, you likely want `/hitl:dev:start-brownfield` instead. If you are migrating from one system to another, use `/hitl:dev:start-migration`. Say so if either applies.
+**Quick sanity check:** If this codebase already has substantial source code, you likely want `/hitl:dev-start-brownfield` instead. If you are migrating from one system to another, use `/hitl:dev-start-migration`. Say so if either applies.
 
 ---
 
@@ -37,7 +37,7 @@ If a real manifest already exists, say: "Manifest found — skipping." and move 
 
 ## Step 3 — Install Graphify
 
-Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window. Install it now so it's ready when `/hitl:architect:design-system` produces docs.
+Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window. Install it now so it's ready when `/hitl:architect-design-system` produces docs.
 
 ```bash
 uv tool install graphifyy        # install once per machine (or: pipx install graphifyy)
@@ -70,15 +70,15 @@ Output this exactly:
 Generate the design docs for your system before writing any code:
 
 ```
-/hitl:architect:design-system
+/hitl:architect-design-system
 ```
 
 This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 32-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
-After `/hitl:architect:design-system` completes:
+After `/hitl:architect-design-system` completes:
 1. Run `graphify .` to build the initial knowledge graph, then `graphify hook install` for auto-rebuild
 2. Commit `graphify-out/` (excluding `manifest.json` and `cost.json`) so teammates start with the graph
 3. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it
-4. For new features after the initial build, create a GitHub issue and run `/hitl:dev:practices`
+4. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`
 
 ---

@@ -409,26 +409,26 @@ Feature work proceeds when blockers are zero.
 
 | Name | Source | What it does |
 |------|--------|-------------|
-| `/hitl:dev:practices` | [ai/claude/dev-practices/SKILL.md](../ai/claude/dev-practices/SKILL.md) | Full workflow |
-| `/hitl:architect:design-system` | [ai/claude/architect/design-system/SKILL.md](../ai/claude/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, initial delivery plan (demoable slices + one decision packet per slice, ready to assign to developers) |
-| `/hitl:architect:design-feature` | [ai/claude/architect/design-feature/SKILL.md](../ai/claude/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
-| `/hitl:architect:review-design` | [ai/claude/commands/architect/review-design.md](../ai/claude/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
-| `/hitl:architect:verify-traceability` | [ai/claude/commands/architect/verify-traceability.md](../ai/claude/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
-| `/hitl:qa:plan-tests` | [ai/claude/qa/plan-tests/SKILL.md](../ai/claude/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
-| `/hitl:qa:review-tests` | [ai/claude/qa/review-tests/SKILL.md](../ai/claude/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
-| `/hitl:qa:verify-quality` | [ai/claude/qa/verify-quality/SKILL.md](../ai/claude/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
-| `/hitl:qa:report-defect` | [ai/claude/qa/report-defect/SKILL.md](../ai/claude/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
-| `/hitl:ops:build` | [ai/claude/ops/build/SKILL.md](../ai/claude/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
-| `/hitl:ops:apply-iac` | [ai/claude/ops/apply-iac/SKILL.md](../ai/claude/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
-| `/hitl:ops:deploy` | [ai/claude/ops/deploy/SKILL.md](../ai/claude/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
-| `/hitl:ops:review-release` | [ai/claude/commands/ops/review-release.md](../ai/claude/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
-| `/hitl:ops:monitor-canary` | [ai/claude/commands/ops/monitor-canary.md](../ai/claude/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
-| `/hitl:dev:apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
-| `/hitl:dev:generate-docs` | [ai/claude/generate-docs/SKILL.md](../ai/claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
-| `/hitl:dev:tdd` | [ai/claude/tdd/SKILL.md](../ai/claude/tdd/SKILL.md) | TDD-as-design loop |
-| `/hitl:dev:impact-brief` | [ai/claude/impact-brief/SKILL.md](../ai/claude/impact-brief/SKILL.md) | 5-section downstream impact brief |
-| `/hitl:dev:check-conventions` | [ai/claude/check-conventions/SKILL.md](../ai/claude/check-conventions/SKILL.md) | Convention checker in-chat |
-| `/hitl:dev:conclude` | [ai/claude/conclude/SKILL.md](../ai/claude/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
+| `/hitl:dev-practices` | [ai/claude/dev-practices/SKILL.md](../ai/claude/dev-practices/SKILL.md) | Full workflow |
+| `/hitl:architect-design-system` | [ai/claude/architect/design-system/SKILL.md](../ai/claude/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, initial delivery plan (demoable slices + one decision packet per slice, ready to assign to developers) |
+| `/hitl:architect-design-feature` | [ai/claude/architect/design-feature/SKILL.md](../ai/claude/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
+| `/hitl:architect-review-design` | [ai/claude/commands/architect/review-design.md](../ai/claude/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
+| `/hitl:architect-verify-traceability` | [ai/claude/commands/architect/verify-traceability.md](../ai/claude/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
+| `/hitl:qa-plan-tests` | [ai/claude/qa/plan-tests/SKILL.md](../ai/claude/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
+| `/hitl:qa-review-tests` | [ai/claude/qa/review-tests/SKILL.md](../ai/claude/qa/review-tests/SKILL.md) | After RED generation — formal review before implementation; ACs, LLD edges, regressions |
+| `/hitl:qa-verify-quality` | [ai/claude/qa/verify-quality/SKILL.md](../ai/claude/qa/verify-quality/SKILL.md) | Post-handoff independent verification against running build — block or approve promotion |
+| `/hitl:qa-report-defect` | [ai/claude/qa/report-defect/SKILL.md](../ai/claude/qa/report-defect/SKILL.md) | File structured defect when blocking — AC reference, repro steps, severity |
+| `/hitl:ops-build` | [ai/claude/ops/build/SKILL.md](../ai/claude/ops/build/SKILL.md) | Verify branch state and trigger build — confirm artifact integrity before deploy |
+| `/hitl:ops-apply-iac` | [ai/claude/ops/apply-iac/SKILL.md](../ai/claude/ops/apply-iac/SKILL.md) | Dry-run IaC changes, then apply with explicit human approval |
+| `/hitl:ops-deploy` | [ai/claude/ops/deploy/SKILL.md](../ai/claude/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
+| `/hitl:ops-review-release` | [ai/claude/commands/ops/review-release.md](../ai/claude/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
+| `/hitl:ops-monitor-canary` | [ai/claude/commands/ops/monitor-canary.md](../ai/claude/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
+| `/hitl:dev-apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
+| `/hitl:dev-generate-docs` | [ai/claude/generate-docs/SKILL.md](../ai/claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
+| `/hitl:dev-tdd` | [ai/claude/tdd/SKILL.md](../ai/claude/tdd/SKILL.md) | TDD-as-design loop |
+| `/hitl:dev-impact-brief` | [ai/claude/impact-brief/SKILL.md](../ai/claude/impact-brief/SKILL.md) | 5-section downstream impact brief |
+| `/hitl:dev-check-conventions` | [ai/claude/check-conventions/SKILL.md](../ai/claude/check-conventions/SKILL.md) | Convention checker in-chat |
+| `/hitl:dev-conclude` | [ai/claude/conclude/SKILL.md](../ai/claude/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
 | Mermaid fixer | [tools/scripts/fix_mermaid_br_tags.py](../tools/scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |

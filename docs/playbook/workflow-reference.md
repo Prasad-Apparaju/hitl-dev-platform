@@ -39,16 +39,16 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 
 | Starting from | What happens first |
 |---------------|-------------------|
-| **A PRD (new system or major feature)** | Run `/hitl:architect:design-system` — produces domain decomposition, system manifest, HLDs, LLDs, and ADRs. Each resulting issue then enters the workflow below. |
+| **A PRD (new system or major feature)** | Run `/hitl:architect-design-system` — produces domain decomposition, system manifest, HLDs, LLDs, and ADRs. Each resulting issue then enters the workflow below. |
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
-> **Brownfield (existing codebase not yet in HITL):** Run `/hitl:dev:start-brownfield` to onboard. It walks through the incremental setup: CLAUDE.md, system manifest, priority component docs, and registry stubs. Start change work immediately after — each undocumented component gets its LLD generated the first time you change it.
+> **Brownfield (existing codebase not yet in HITL):** Run `/hitl:dev-start-brownfield` to onboard. It walks through the incremental setup: CLAUDE.md, system manifest, priority component docs, and registry stubs. Start change work immediately after — each undocumented component gets its LLD generated the first time you change it.
 >
 > | Approach | Steps | Tradeoff |
 > |---|---|---|
-> | **Incremental** (default) | `/hitl:dev:start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
-> | **Full baseline sprint** (optional) | `/hitl:dev:start-brownfield` → then `/hitl:dev:generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
+> | **Incremental** (default) | `/hitl:dev-start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
+> | **Full baseline sprint** (optional) | `/hitl:dev-start-brownfield` → then `/hitl:dev-generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
 >
 > **Once onboarded, the 32-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 

@@ -23,8 +23,8 @@
   <!-- Start a project label -->
   <text x="16" y="116" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Start a project:</text>
 
-  <!-- /start-prd -->
-  <text x="16" y="136" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/start-prd</tspan>          new project from a PRD</text>
+  <!-- /hitl:dev-start-prd -->
+  <text x="16" y="136" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-start-prd</tspan>          new project from a PRD</text>
 
   <!-- /start-brownfield -->
   <text x="16" y="156" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/start-brownfield</tspan>   onboard an existing codebase</text>
@@ -35,8 +35,8 @@
   <!-- Run a change label -->
   <text x="16" y="208" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Run a change:</text>
 
-  <!-- /dev-practices -->
-  <text x="16" y="228" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/dev-practices</tspan>      begin a new change (full 31-step workflow)</text>
+  <!-- /hitl:dev-practices -->
+  <text x="16" y="228" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-practices</tspan>      begin a new change (full 32-step workflow)</text>
 
   <!-- Roles -->
   <text x="16" y="262" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Roles: <tspan fill="#cba6f7">/pm</tspan>  <tspan fill="#cba6f7">/architect</tspan>  <tspan fill="#cba6f7">/qa</tspan>  <tspan fill="#cba6f7">/ops</tspan></text>
