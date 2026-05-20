@@ -8,19 +8,19 @@ You define what gets built and why. You review AI-drafted PRDs, accept or reques
 
 | Command | When to use |
 |---------|-------------|
-| `/pm:add-feature` | A new feature needs to be documented — adds it to the PRD with acceptance criteria and a requirement ID |
-| `/pm:design-feature` | You have a rough idea — 7-phase guided process: discovery, user journey, edge cases, UI prototype, acceptance criteria, impact, PRD. Shows a progress breadcrumb at every phase. |
-| `/pm:update-requirement` | An existing requirement changes — updates the PRD with new criteria or scope |
-| `/pm:review-scope-change` | The team flags a scope change — analyzes downstream impact before you decide |
-| `/pm:prioritize` | Backlog grooming — scores features by value, effort, risk, and strategic alignment |
-| `/pm:review-progress` | Sprint or milestone check-in — reviews progress against PRD goals |
-| `/pm:report-bug` | You found a bug — documents it as a structured GitHub issue with reproduction steps |
-| `/pm:prep-demo` | Before a demo — generates a script and talking points for the feature |
-| `/pm:answer-questions` | Stakeholder question — answers product or business questions using the existing docs |
+| `/hitl:pm:add-feature` | A new feature needs to be documented — adds it to the PRD with acceptance criteria and a requirement ID |
+| `/hitl:pm:design-feature` | You have a rough idea — 7-phase guided process: discovery, user journey, edge cases, UI prototype, acceptance criteria, impact, PRD. Shows a progress breadcrumb at every phase. |
+| `/hitl:pm:update-requirement` | An existing requirement changes — updates the PRD with new criteria or scope |
+| `/hitl:pm:review-scope-change` | The team flags a scope change — analyzes downstream impact before you decide |
+| `/hitl:pm:prioritize` | Backlog grooming — scores features by value, effort, risk, and strategic alignment |
+| `/hitl:pm:review-progress` | Sprint or milestone check-in — reviews progress against PRD goals |
+| `/hitl:pm:report-bug` | You found a bug — documents it as a structured GitHub issue with reproduction steps |
+| `/hitl:pm:prep-demo` | Before a demo — generates a script and talking points for the feature |
+| `/hitl:pm:answer-questions` | Stakeholder question — answers product or business questions using the existing docs |
 
 ## Your Role in the Workflow
 
-- **Before design starts:** Write or review the PRD. Use `/pm:add-feature` or `/pm:design-feature`.
+- **Before design starts:** Write or review the PRD. Use `/hitl:pm:add-feature` or `/hitl:pm:design-feature`.
 - **During design review:** Review the HLD's scope against your requirements. Flag if the design doesn't match what you asked for.
 - **After shipping:** Review the downstream impact brief — specifically section 4 (product mental model update). This is where you learn how your mental model needs to update.
 - **At demo:** Accept or request changes. Your feedback drives the next iteration.
@@ -29,13 +29,13 @@ You define what gets built and why. You review AI-drafted PRDs, accept or reques
 
 Every command shows a breadcrumb banner at the start of each phase — completed phases (✅), current phase (▶), and remaining phases (○). You always know where you are and what comes next.
 
-**`/pm:add-feature`** — 5-step process (Questions → Research → Draft → Review → Publish):
+**`/hitl:pm:add-feature`** — 5-step process (Questions → Research → Draft → Review → Publish):
 
-![/pm:add-feature progress breadcrumbs](../images/pm-add-feature-flow.svg)
+![/hitl:pm:add-feature progress breadcrumbs](../images/pm-add-feature-flow.svg)
 
-**`/pm:design-feature`** — 7-phase process (Discovery → Journey → Edge Cases → Design → Criteria → Impact → PRD):
+**`/hitl:pm:design-feature`** — 7-phase process (Discovery → Journey → Edge Cases → Design → Criteria → Impact → PRD):
 
-![/pm:design-feature progress breadcrumbs](../images/pm-design-feature-flow.svg)
+![/hitl:pm:design-feature progress breadcrumbs](../images/pm-design-feature-flow.svg)
 
 ## Further Reading
 

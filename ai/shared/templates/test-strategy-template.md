@@ -105,7 +105,7 @@ See [test-registry-template.yaml](test-registry-template.yaml) for the format.
 
 ## Maintenance
 
-- **Add tests before code** — TDD-as-design via `/tdd` skill
+- **Add tests before code** — TDD-as-design via `/hitl:dev:tdd` skill
 - **Link every new test to the registry** — unregistered tests are invisible to impact analysis
 - **Review test coverage quarterly** — are there areas with no tests? Areas with brittle tests?
 - **When an incident occurs** — add a regression test BEFORE closing the incident (required by incident registry)

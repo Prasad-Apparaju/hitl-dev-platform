@@ -169,7 +169,7 @@ Fix any violations before proceeding.
 
 **19a. Architect code review (HUMAN GATE).**
 
-Run `/architect:review-code` — this creates the GitHub PR (not a draft) with the AI review summary and a 7-item judgment checklist in the PR description (business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, error handling). The architect reviews the code on GitHub using line comments and the approve/request-changes UI. Outcome is APPROVED or revision requests. Do not proceed past this gate without architect approval.
+Run `/hitl:architect:review-code` — this creates the GitHub PR (not a draft) with the AI review summary and a 7-item judgment checklist in the PR description (business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, error handling). The architect reviews the code on GitHub using line comments and the approve/request-changes UI. Outcome is APPROVED or revision requests. Do not proceed past this gate without architect approval.
 
 **19. Rerun tests** — confirm no regressions from review fixes.
 

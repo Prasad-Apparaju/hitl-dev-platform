@@ -28,7 +28,7 @@ hitl-dev-platform/
 │
 │  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
 ├── ai/claude/
-│   ├── [skill folders]   Slash command prompts — /dev-practices, /tdd, /architect:*, /pm:*, /qa:*, /ops:*
+│   ├── [skill folders]   Slash command prompts — /hitl:dev:practices, /hitl:dev:tdd, /hitl:architect:*, /hitl:pm:*, /hitl:qa:*, /hitl:ops:*
 │   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
 │   └── hooks/            Enforcement hooks — fire at PreToolUse/PostToolUse during every Claude session
@@ -75,11 +75,11 @@ Pick the path that matches where you are:
 
 | Role | Commands | Guide |
 |------|----------|-------|
-| **Developer** | `/dev-practices`, `/generate-docs`, `/tdd`, `/apply-change`, `/check-conventions`, `/impact-brief`, `/conclude` | [Developer guide](docs/roles/developer.md) |
-| **Product Manager** | `/pm:add-feature`, `/pm:design-feature`, `/pm:prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
-| **Architect** | `/architect:design-system`, `/architect:design-feature`, `/architect:review-design`, `/architect:verify-traceability` | [Architect guide](docs/roles/architect.md) |
-| **QA Engineer** | `/qa:plan-tests`, `/qa:review-tests`, `/qa:verify-quality`, `/qa:report-defect` | [QA guide](docs/roles/qa.md) |
-| **Ops Engineer** | `/ops:build`, `/ops:deploy`, `/ops:apply-iac`, `/ops:review-release`, `/ops:monitor-canary` | [Ops guide](docs/roles/ops.md) |
+| **Developer** | `/hitl:dev:practices`, `/hitl:dev:generate-docs`, `/hitl:dev:tdd`, `/hitl:dev:apply-change`, `/hitl:dev:check-conventions`, `/hitl:dev:impact-brief`, `/hitl:dev:conclude` | [Developer guide](docs/roles/developer.md) |
+| **Product Manager** | `/hitl:pm:add-feature`, `/hitl:pm:design-feature`, `/hitl:pm:prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
+| **Architect** | `/hitl:architect:design-system`, `/hitl:architect:design-feature`, `/hitl:architect:review-design`, `/hitl:architect:verify-traceability` | [Architect guide](docs/roles/architect.md) |
+| **QA Engineer** | `/hitl:qa:plan-tests`, `/hitl:qa:review-tests`, `/hitl:qa:verify-quality`, `/hitl:qa:report-defect` | [QA guide](docs/roles/qa.md) |
+| **Ops Engineer** | `/hitl:ops:build`, `/hitl:ops:deploy`, `/hitl:ops:apply-iac`, `/hitl:ops:review-release`, `/hitl:ops:monitor-canary` | [Ops guide](docs/roles/ops.md) |
 
 ---
 
@@ -101,10 +101,10 @@ Once installed, open Claude Code in your project directory and run the command t
 
 | Situation | Command |
 |-----------|---------|
-| New project — greenfield from a PRD | `/start-prd` |
-| Existing codebase — adopt the process | `/start-brownfield` |
-| Migrating a system | `/start-migration` |
-| Already set up — start a change | `/dev-practices` |
+| New project — greenfield from a PRD | `/hitl:dev:start-prd` |
+| Existing codebase — adopt the process | `/hitl:dev:start-brownfield` |
+| Migrating a system | `/hitl:dev:start-migration` |
+| Already set up — start a change | `/hitl:dev:practices` |
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
 

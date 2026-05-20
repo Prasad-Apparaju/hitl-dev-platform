@@ -38,7 +38,7 @@ claude
 ### A2. Understand the current system
 
 ```bash
-/generate-docs reverse-engineer the existing system
+/hitl:dev:generate-docs reverse-engineer the existing system
 ```
 
 AI scans `V1/`, produces a manifest and docs for the CURRENT system. Compare against the TARGET docs already in `docs/` to see exactly what needs to change.
@@ -50,7 +50,7 @@ Also populate:
 ### A3. Assess the gaps
 
 ```bash
-/check-conventions
+/hitl:dev:check-conventions
 ```
 
 Bucket findings into tiers (Blocker / Near-term / Medium-term / Long-term) using the [gap assessment](adoption-guide.md) criteria. Fix blockers before migration starts.
@@ -83,12 +83,12 @@ Use the migration plan's sequence as your starting point — adapt to your team'
 |------|-----------|-------|
 | 1 | Read the target LLD for this slice | Study `docs/02-design/technical/lld/` |
 | 2 | Read the migration mapping for this slice | Study `docs/05-migration/` |
-| 3 | Generate tests from the target LLD | `/tdd` |
+| 3 | Generate tests from the target LLD | `/hitl:dev:tdd` |
 | 4 | Human + QA review tests, add edge cases | Manual |
-| 5 | AI generates Python code in `V2/` that passes tests | `/tdd` continues |
+| 5 | AI generates Python code in `V2/` that passes tests | `/hitl:dev:tdd` continues |
 | 6 | Code review against the target LLD | Two rounds |
-| 7 | Downstream impact brief | `/impact-brief` |
-| 8 | Convention check | `/check-conventions` |
+| 7 | Downstream impact brief | `/hitl:dev:impact-brief` |
+| 8 | Convention check | `/hitl:dev:check-conventions` |
 | 9 | Ship the slice | PR, canary, promote |
 
 ### A7. Verify behavioral equivalence
@@ -142,7 +142,7 @@ cp hitl-dev-platform/ai/shared/templates/issue-template.md your-repo/.github/ISS
 
 | What to do | Skill / tool | Reference to study first |
 |-----------|-------------|-------------------------|
-| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/generate-docs reverse-engineer the existing system` ([ai/claude/generate-docs/](../../ai/claude/generate-docs/)) | Study the [example manifest](../../docs/examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../ai/claude/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
+| Generate manifest, HLDs, LLDs, ADRs from the current codebase | `/hitl:dev:generate-docs reverse-engineer the existing system` ([ai/claude/generate-docs/](../../ai/claude/generate-docs/)) | Study the [example manifest](../../docs/examples/greenfield/docs/system-manifest.yaml) and [manifest schema](../../ai/claude/generate-docs/templates/system-manifest.schema.yaml) to see the target format |
 | Generate the system manifest standalone | `python tools/generate-manifest/generator.py --source ./src --output docs/system-manifest.yaml` ([tools/generate-manifest/](../../tools/generate-manifest/)) | Study `facade_apis` (blurb + mutations + preconditions) and `boundary_entities` |
 | Populate the test registry | Create `docs/03-engineering/testing/test-registry.yaml` using the template ([ai/shared/templates/test-registry-template.yaml](../../ai/shared/templates/test-registry-template.yaml)) | How tests are tagged by domain, risk, origin |
 | Start the incident registry | Create `docs/04-operations/incident-registry.yaml` using the template ([ai/shared/templates/incident-registry-template.yaml](../../ai/shared/templates/incident-registry-template.yaml)) | Ask the team: "what broke in the last 6 months?" |
@@ -151,7 +151,7 @@ cp hitl-dev-platform/ai/shared/templates/issue-template.md your-repo/.github/ISS
 
 | What to do | Skill / tool |
 |-----------|-------------|
-| Run all convention checks | `/check-conventions` ([ai/claude/check-conventions/SKILL.md](../../ai/claude/check-conventions/SKILL.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
+| Run all convention checks | `/hitl:dev:check-conventions` ([ai/claude/check-conventions/SKILL.md](../../ai/claude/check-conventions/SKILL.md)) or `python tools/check-conventions/runner.py --config convention-checks.yaml --verbose` |
 | Bucket findings into tiers | Follow [adoption-guide.md §After the Sprint](adoption-guide.md) — Blocker / Near-term / Medium-term / Long-term |
 | Fix blockers before migration starts | AI generates the fix; architect reviews |
 
@@ -189,10 +189,10 @@ What transfers directly vs. what doesn't:
 
 **B4b — No reference implementation exists:**
 
-Design the target architecture from scratch using `/generate-docs`:
-1. Use `/generate-docs` to draft HLDs for the target system — AI generates from the design conversation; architect reviews and approves
+Design the target architecture from scratch using `/hitl:dev:generate-docs`:
+1. Use `/hitl:dev:generate-docs` to draft HLDs for the target system — AI generates from the design conversation; architect reviews and approves
 2. Get architect approval on each HLD before proceeding
-3. Use `/generate-docs` to generate LLDs from the approved HLDs — architect and developer review and correct
+3. Use `/hitl:dev:generate-docs` to generate LLDs from the approved HLDs — architect and developer review and correct
 4. Document decisions as ADRs (AI drafts from the design discussion; architect verifies)
 
 ### B5. Sequence into vertical slices
@@ -208,12 +208,12 @@ A typical backend migration is 6-12 slices.
 | Create issue | Use [ai/shared/templates/issue-template.md](../../ai/shared/templates/issue-template.md) | Issue with ROI estimate + downstream impact sections |
 | Data model mapping | Use [ai/shared/templates/data-model-mapping-template.md](../../ai/shared/templates/data-model-mapping-template.md) | Field-by-field schema migration plan (if DB changes) |
 | API contract mapping | Use [ai/shared/templates/api-contract-mapping-template.md](../../ai/shared/templates/api-contract-mapping-template.md) | Endpoint-by-endpoint migration plan (if API changes) |
-| Impact analysis | `/apply-change` ([ai/claude/apply-change/SKILL.md](../../ai/claude/apply-change/SKILL.md)) | Affected components in BOTH current and target system |
-| TDD | `/tdd` ([ai/claude/tdd/SKILL.md](../../ai/claude/tdd/SKILL.md)) | Tests from the target LLD + manifest contracts |
+| Impact analysis | `/hitl:dev:apply-change` ([ai/claude/apply-change/SKILL.md](../../ai/claude/apply-change/SKILL.md)) | Affected components in BOTH current and target system |
+| TDD | `/hitl:dev:tdd` ([ai/claude/tdd/SKILL.md](../../ai/claude/tdd/SKILL.md)) | Tests from the target LLD + manifest contracts |
 | Generate code | AI generates from the target LLD following `CLAUDE.md` conventions | Code using agentic-platform infrastructure (if agentic) |
 | Code review | Two rounds — AI reviews against LLD | Structure (R1) then behavior (R2) |
-| Downstream impact brief | `/impact-brief` ([ai/claude/impact-brief/SKILL.md](../../ai/claude/impact-brief/SKILL.md)) | 5-section brief from PR diff + manifest + incident registry |
-| Convention check | `/check-conventions` ([ai/claude/check-conventions/SKILL.md](../../ai/claude/check-conventions/SKILL.md)) | Violations caught before CI |
+| Downstream impact brief | `/hitl:dev:impact-brief` ([ai/claude/impact-brief/SKILL.md](../../ai/claude/impact-brief/SKILL.md)) | 5-section brief from PR diff + manifest + incident registry |
+| Convention check | `/hitl:dev:check-conventions` ([ai/claude/check-conventions/SKILL.md](../../ai/claude/check-conventions/SKILL.md)) | Violations caught before CI |
 
 ### B7. Run old and new in parallel
 
@@ -394,11 +394,11 @@ Checklist for each async side effect:
 
 | Question | Answer |
 |----------|--------|
-| "Do we need to document the old system?" | Yes — run `/generate-docs reverse-engineer`. AI does the drafting; architect reviews. ~1 week. |
+| "Do we need to document the old system?" | Yes — run `/hitl:dev:generate-docs reverse-engineer`. AI does the drafting; architect reviews. ~1 week. |
 | "Can we skip the docs and just rewrite?" | AI will generate inconsistent code without a shared spec. The rewrite will need its own rewrite. |
 | "What if we don't have an architect?" | The most senior dev who knows the current system plays that role. Their job is reviewing, not writing. |
 | "How long does the full migration take?" | Each vertical slice takes days to weeks. A typical backend migration is 6-12 slices. |
-| "What tools do we use?" | Claude Code + the skills (`/generate-docs`, `/tdd`, `/apply-change`, `/impact-brief`, `/check-conventions`) + the convention checker in CI + agentic-platform (if building agents). |
+| "What tools do we use?" | Claude Code + the skills (`/hitl:dev:generate-docs`, `/hitl:dev:tdd`, `/hitl:dev:apply-change`, `/hitl:dev:impact-brief`, `/hitl:dev:check-conventions`) + the convention checker in CI + agentic-platform (if building agents). |
 | "Where do I look to see what 'done' looks like?" | The reference repo (or bundled workspace) — study its manifest, HLDs, LLDs, ADRs, CLAUDE.md, test registry. |
 
 ## Reference

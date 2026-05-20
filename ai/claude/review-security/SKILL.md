@@ -1,5 +1,5 @@
 ---
-name: review-security
+name: dev:review-security
 description: Security review at three points in the workflow — threat model the design before implementation, SAST scan the generated code before architect code review, and run a periodic system-wide security baseline. Each phase is independent; run only the phase that matches your workflow position. Required for Tier 3+ auth/payments/data changes; recommended for Tier 2+.
 argument-hint: "[--phase design|code|system] [change ID or issue number]"
 disable-model-invocation: true
@@ -268,7 +268,7 @@ Non-blocking (document and schedule):
 Result: BLOCKED / FINDINGS / CLEAN
 ```
 
-Create a GitHub issue for each Critical or High finding (same format as `/ops:pentest`).
+Create a GitHub issue for each Critical or High finding (same format as `/hitl:ops:pentest`).
 
 Update `.hitl/current-change.yaml`:
 ```yaml
@@ -325,4 +325,4 @@ Update a standing `docs/04-operations/security-baseline.yaml` with the scan date
 - SAST findings are white-box — a finding means the code has the shape of a vulnerability, not necessarily that it is exploitable. Investigate before dismissing as a false positive.
 - A SAST finding dismissed as a false positive must be documented with the specific reason — do not suppress rules silently
 - Threat modeling is only useful before the LLD — after implementation it produces a list of things to fix, not a list of things to design correctly
-- `--phase code` and `/ops:pentest` are complementary, not redundant: this skill finds source-level vulnerabilities; pentest finds runtime vulnerabilities. Both are needed
+- `--phase code` and `/hitl:ops:pentest` are complementary, not redundant: this skill finds source-level vulnerabilities; pentest finds runtime vulnerabilities. Both are needed

@@ -8,20 +8,20 @@ You own quality verification — independently, after the developer hands off. Y
 
 | Command | When to use |
 |---------|-------------|
-| `/qa:plan-tests` | At design time — review the LLD and query incident history to contribute test scenarios before the TDD cycle starts (non-blocking) |
-| `/qa:review-tests` | After RED test generation (step 10) — formal review before implementation begins; verify ACs, LLD edge cases, and incident registry regressions |
-| `/qa:verify-quality` | After the developer handoff — independent quality verification against the running build; you block or approve promotion |
-| `/qa:report-defect` | When verify-quality finds a blocking issue — structured defect report with AC reference, reproduction steps, and severity |
+| `/hitl:qa:plan-tests` | At design time — review the LLD and query incident history to contribute test scenarios before the TDD cycle starts (non-blocking) |
+| `/hitl:qa:review-tests` | After RED test generation (step 10) — formal review before implementation begins; verify ACs, LLD edge cases, and incident registry regressions |
+| `/hitl:qa:verify-quality` | After the developer handoff — independent quality verification against the running build; you block or approve promotion |
+| `/hitl:qa:report-defect` | When verify-quality finds a blocking issue — structured defect report with AC reference, reproduction steps, and severity |
 
 ## Your Role in the Workflow
 
-**At design time (non-blocking):** Run `/qa:plan-tests` when the LLD is shared. Query the incident registry for the domain, identify edge cases and failure modes the developer may miss, and produce a prioritized list of test scenarios. Regression-required scenarios (from past incidents) must be in the test plan before the TDD cycle starts. This is input, not a gate — but the developer must acknowledge each scenario.
+**At design time (non-blocking):** Run `/hitl:qa:plan-tests` when the LLD is shared. Query the incident registry for the domain, identify edge cases and failure modes the developer may miss, and produce a prioritized list of test scenarios. Regression-required scenarios (from past incidents) must be in the test plan before the TDD cycle starts. This is input, not a gate — but the developer must acknowledge each scenario.
 
-**After RED test generation (gate):** Run `/qa:review-tests` after step 10 generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
+**After RED test generation (gate):** Run `/hitl:qa:review-tests` after step 10 generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
 
-**After handoff (gate):** Run `/qa:verify-quality`. The developer has delivered a stable build. You run independent verification — verify each AC against the running build, run exploratory testing beyond the happy path, and probe failure modes from the incident registry. If anything fails, run `/qa:report-defect` and block promotion.
+**After handoff (gate):** Run `/hitl:qa:verify-quality`. The developer has delivered a stable build. You run independent verification — verify each AC against the running build, run exploratory testing beyond the happy path, and probe failure modes from the incident registry. If anything fails, run `/hitl:qa:report-defect` and block promotion.
 
-**When blocking:** Run `/qa:report-defect` for every issue that blocks promotion. A block without a filed defect is not actionable — the developer cannot prioritize or fix what is not documented. After fixes, a full re-run of `/qa:verify-quality` is required before lifting the block.
+**When blocking:** Run `/hitl:qa:report-defect` for every issue that blocks promotion. A block without a filed defect is not actionable — the developer cannot prioritize or fix what is not documented. After fixes, a full re-run of `/hitl:qa:verify-quality` is required before lifting the block.
 
 ## What You Do Not Own
 
@@ -32,9 +32,9 @@ You own quality verification — independently, after the developer hands off. Y
 
 ## Progress Breadcrumbs
 
-`/qa:verify-quality` shows a 5-step breadcrumb trail. Step 5 (Block or Approve) is the gate — the breadcrumb does not advance past it until you file all defects or post the approval comment.
+`/hitl:qa:verify-quality` shows a 5-step breadcrumb trail. Step 5 (Block or Approve) is the gate — the breadcrumb does not advance past it until you file all defects or post the approval comment.
 
-![/qa:verify-quality progress breadcrumbs](../images/qa-verify-quality-flow.svg)
+![/hitl:qa:verify-quality progress breadcrumbs](../images/qa-verify-quality-flow.svg)
 
 ## Further Reading
 

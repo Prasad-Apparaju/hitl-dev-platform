@@ -44,7 +44,7 @@ that claim, and where does it assume a context (scale, team, platform)
 that differs from ours?
 ```
 
-Use the evaluation criteria from `/migrate:review-external-docs` Phase 2. The TA's job here is to apply judgment to the reliability ratings — Claude proposes ratings, the TA overrides where domain knowledge differs.
+Use the evaluation criteria from `/hitl:dev:review-external-docs` Phase 2. The TA's job here is to apply judgment to the reliability ratings — Claude proposes ratings, the TA overrides where domain knowledge differs.
 
 Approve or reject each document's use as design input before Phase 3.
 
@@ -98,13 +98,13 @@ Before approving, verify:
 To initiate handoff:
 
 ```
-/architect:design-system docs/00-migration/migration-brief.md
+/hitl:architect:design-system docs/00-migration/migration-brief.md
 ```
 
 or for slice-by-slice:
 
 ```
-/architect:design-feature
+/hitl:architect:design-feature
 ```
 
 Tell the Architect: *"The migration brief replaces the PRD. Start from `docs/00-migration/migration-brief.md`."*

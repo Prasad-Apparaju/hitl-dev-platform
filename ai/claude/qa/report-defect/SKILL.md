@@ -1,5 +1,5 @@
 ---
-name: qa-report-defect
+name: qa:report-defect
 description: Create a structured defect report when verify-quality finds issues. Files a GitHub issue with AC reference, reproduction steps, severity, environment, and incident registry link. Updates the HITL context to reflect the promotion block.
 argument-hint: "[defect description]"
 disable-model-invocation: true
@@ -108,7 +108,7 @@ qa_defects:
 
 Set `approvals.qa: blocked` in `.hitl/current-change.yaml`.
 
-Report: "Defect filed: `<issue URL>`. Promotion is blocked until this is resolved and `/qa:verify-quality` is re-run."
+Report: "Defect filed: `<issue URL>`. Promotion is blocked until this is resolved and `/hitl:qa:verify-quality` is re-run."
 
 ---
 
@@ -117,4 +117,4 @@ Report: "Defect filed: `<issue URL>`. Promotion is blocked until this is resolve
 - Severity drives urgency — Critical and High defects must be fixed before any promotion step; Medium and Low may be deferred with explicit PM and architect sign-off
 - Every block must have a corresponding GitHub issue — verbal blocks are not tracked
 - If this is a regression of a past incident, it is always at least High severity
-- After the developer fixes a defect, a full re-run of `/qa:verify-quality` is required — spot-checking the fix is not sufficient
+- After the developer fixes a defect, a full re-run of `/hitl:qa:verify-quality` is required — spot-checking the fix is not sufficient

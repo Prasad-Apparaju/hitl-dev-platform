@@ -1,5 +1,5 @@
 ---
-name: apply-change
+name: dev:apply-change
 description: Apply the HITL dev-practices workflow to analyze and plan a change before writing any code. Use when a developer is about to start implementing a feature, bug fix, or refactor and needs to produce an impact analysis, documentation plan, test plan, and execution order. Refuses to proceed if no GitHub issue exists.
 argument-hint: "[change description or issue number]"
 disable-model-invocation: true
@@ -40,7 +40,7 @@ Before any analysis, locate and confirm these exist:
 - **HLD/LLD** — path(s) that describe this area (or note they need to be created)
 - **System manifest domain** — which domain in `docs/system-manifest.yaml` is affected
 
-If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/generate-docs` first."
+If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev:generate-docs` first."
 
 ### Step 3: Impact Analysis
 Identify and list:

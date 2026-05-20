@@ -1,5 +1,5 @@
 ---
-name: ops-verify-scripts
+name: ops:verify-scripts
 description: Validate all ops artifacts for a change — migration scripts, IaC files, deployment configs, and rollback coverage — before they are needed in production. Run at two points in the workflow: after Step 6 (syntax validation + dev dry-run) and at Step 26 integration verify (full readiness gate including rollback coverage and tested-in-dev evidence). Blocks PR merge if any required artifact is missing, invalid, or untested.
 argument-hint: "[change ID or PR link] [--level syntax | dev | full]"
 disable-model-invocation: true
@@ -14,7 +14,7 @@ Validate that all ops artifacts for this change exist, are syntactically valid, 
 - `<change-ID> --level full` — Step 26 gate: syntax + dev test + rollback coverage + deployment config validity
 - Default level if omitted: `full`
 
-**Refusal rule:** If `.hitl/current-change.yaml` has no `iac_plan` key, stop: "No IaC plan found — run `/apply-change` first to identify what ops artifacts are required."
+**Refusal rule:** If `.hitl/current-change.yaml` has no `iac_plan` key, stop: "No IaC plan found — run `/hitl:dev:apply-change` first to identify what ops artifacts are required."
 
 ---
 
@@ -108,7 +108,7 @@ trufflehog filesystem infra/ deploy/ .github/ --only-verified --fail
 semgrep scan --config "p/secrets" infra/ deploy/ .github/ --error
 ```
 
-Flag any match as a **blocking violation** — hardcoded secrets in ops scripts are a BLOCKER equivalent to a plain env var detected by `/ops:detect-drift`. The fix is always: move the value to vault, reference it via environment variable or secrets manager injection.
+Flag any match as a **blocking violation** — hardcoded secrets in ops scripts are a BLOCKER equivalent to a plain env var detected by `/hitl:ops:detect-drift`. The fix is always: move the value to vault, reference it via environment variable or secrets manager injection.
 
 Report each result:
 
@@ -154,7 +154,7 @@ Capture the full plan output. Flag:
    # Apply
    alembic upgrade head
    ```
-2. Verify the schema matches the LLD — run the same column/index checks as `/ops:migrate-database` Step 5
+2. Verify the schema matches the LLD — run the same column/index checks as `/hitl:ops:migrate-database` Step 5
 3. Run a representative subset of the application's unit tests against the migrated schema (just enough to confirm the app code is compatible with the new schema — not the full suite)
 4. **Revert** — apply the rollback migration or restore from a dev database snapshot:
    ```bash
@@ -187,7 +187,7 @@ Report results in the same format as Step 2.
 For every destructive database migration (column drop, table drop, data transform, type change), verify one of the following exists:
 - A corresponding rollback migration file (naming convention: `<N>_rollback.sql` or `downgrade` function in the migration tool)
 - Explicit documentation that the old application code is schema-compatible (runs correctly on the new schema without the rollback being applied)
-- A backup strategy entry in `.hitl/current-change.yaml` under `database_backup` confirming `/ops:backup-database` will be run before migration
+- A backup strategy entry in `.hitl/current-change.yaml` under `database_backup` confirming `/hitl:ops:backup-database` will be run before migration
 
 Flag any destructive migration that has none of these: "No rollback path for `<migration-file>`. Add a rollback migration or document the compatibility strategy before this change can be merged."
 

@@ -1,5 +1,5 @@
 ---
-name: ops-detect-drift
+name: ops:detect-drift
 description: Compare the live environment against the IaC definition to detect configuration drift — manual changes, out-of-band deploys, or config values that have diverged from what IaC and the vault define. Run before every deployment as a pre-flight check and on a schedule to catch drift between releases. Reports a drift inventory and classifies each item by risk.
 argument-hint: "[environment: staging|production] [change ID or 'scheduled']"
 disable-model-invocation: true
@@ -193,7 +193,7 @@ gh issue create \
 **Findings:**
 <drift inventory>
 
-Run /ops:detect-drift <environment> for the full report."
+Run /hitl:ops:detect-drift <environment> for the full report."
 ```
 
 ---
@@ -202,8 +202,8 @@ Run /ops:detect-drift <environment> for the full report."
 
 | Context | How to trigger | Gate |
 |---|---|---|
-| Before every Tier 2+ deployment | `/ops:detect-drift <environment> <change-ID>` | `/ops:deploy` checks `drift_check.result: clear\|caution` — blocks on `blocked` |
-| Scheduled (between releases) | `/ops:detect-drift <environment> scheduled` | Not a gate — raises issues for remediation |
+| Before every Tier 2+ deployment | `/hitl:ops:detect-drift <environment> <change-ID>` | `/hitl:ops:deploy` checks `drift_check.result: clear\|caution` — blocks on `blocked` |
+| Scheduled (between releases) | `/hitl:ops:detect-drift <environment> scheduled` | Not a gate — raises issues for remediation |
 | After a suspected manual change | On demand | Not a gate — investigation tool |
 
 Recommended schedule for production: daily. Staging: weekly or before any deployment.
@@ -213,6 +213,6 @@ Recommended schedule for production: daily. Staging: weekly or before any deploy
 ## Important Rules
 
 - Drift in a domain unrelated to the current change is still reported — it is the Ops lead's call whether to proceed, not the deployer's
-- A `blocked` result from this skill must be resolved before `/ops:deploy` runs — deploying on top of unknown drift means the deployment's behaviour is unpredictable
+- A `blocked` result from this skill must be resolved before `/hitl:ops:deploy` runs — deploying on top of unknown drift means the deployment's behaviour is unpredictable
 - "We'll fix the drift after the release" is not acceptable for BLOCKER items — the risk is compounded, not deferred
 - After remediating drift (applying IaC to reconcile), re-run this skill to confirm `result: clear` before deploying

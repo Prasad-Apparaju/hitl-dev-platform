@@ -1,17 +1,17 @@
 ---
-name: ops-setup-observability
-description: Create or update dashboards and alerts for a change before it is deployed. Reads the rollout plan go/no-go criteria and wires them to named observability instruments. Blocks deployment until a named dashboard and alert exist for every criterion. Run after IaC is applied and before /ops:deploy.
+name: ops:setup-observability
+description: Create or update dashboards and alerts for a change before it is deployed. Reads the rollout plan go/no-go criteria and wires them to named observability instruments. Blocks deployment until a named dashboard and alert exist for every criterion. Run after IaC is applied and before /hitl:ops:deploy.
 argument-hint: "[change ID or domain name]"
 disable-model-invocation: true
 ---
 
 # Set Up Observability
 
-Instrument the change so that failures are visible and pages fire before the canary window closes. This is a mandatory gate before `/ops:deploy` for Tier 2+ changes.
+Instrument the change so that failures are visible and pages fire before the canary window closes. This is a mandatory gate before `/hitl:ops:deploy` for Tier 2+ changes.
 
 **Input:** $ARGUMENTS (change ID or domain name)
 
-**Refusal rule:** If `.hitl/current-change.yaml` is missing a `rollout_plan` section, stop: "No rollout plan found. Run `/ops:review-release` to produce go/no-go criteria before setting up observability."
+**Refusal rule:** If `.hitl/current-change.yaml` is missing a `rollout_plan` section, stop: "No rollout plan found. Run `/hitl:ops:review-release` to produce go/no-go criteria before setting up observability."
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash
@@ -148,7 +148,7 @@ Alerts active: <N> — routing to <on-call rotation>
 Canary criteria are now instrumented. Ready to deploy."
 ```
 
-Report: "Observability configured. `<N>` alerts active. Deployment may proceed with `/ops:deploy`."
+Report: "Observability configured. `<N>` alerts active. Deployment may proceed with `/hitl:ops:deploy`."
 
 ---
 

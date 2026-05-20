@@ -60,7 +60,7 @@ The 90-day reviews create a calibration loop: over 5-10 verified changes, the te
 
 ## AI Token Cost Tracking
 
-Token cost for the development process itself (Claude Code sessions running `/tdd`, `/generate-docs`, `/apply-change`, etc.) is tracked separately from production AI costs.
+Token cost for the development process itself (Claude Code sessions running `/hitl:dev:tdd`, `/hitl:dev:generate-docs`, `/hitl:dev:apply-change`, etc.) is tracked separately from production AI costs.
 
 ### Where costs come from
 
@@ -72,7 +72,7 @@ Token cost is not visible in Langfuse. Langfuse traces production LLM calls — 
 
 ```yaml
 token_tracking:
-  estimated:                      # Populated by /apply-change at step 3
+  estimated:                      # Populated by /hitl:dev:apply-change at step 3
     total_cost_usd: 0.85
     by_phase: {design: 0.15, build: 0.45, verify: 0.20, assess: 0.05}
   actual:                         # Filled in as sessions complete
@@ -91,7 +91,7 @@ At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/
 
 ### Estimation method (step 3)
 
-`/apply-change` estimates cost from artifact file sizes:
+`/hitl:dev:apply-change` estimates cost from artifact file sizes:
 
 | Input | Token estimate |
 |-------|---------------|

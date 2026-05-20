@@ -21,35 +21,35 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 | Slash command | File to edit |
 |---|---|
-| `/start-prd` | `ai/claude/start-prd/SKILL.md` |
-| `/start-brownfield` | `ai/claude/start-brownfield/SKILL.md` |
-| `/start-migration` | `ai/claude/start-migration/SKILL.md` |
-| `/dev-practices` | `ai/claude/dev-practices/SKILL.md` |
-| `/apply-change` | `ai/claude/apply-change/SKILL.md` |
-| `/check-conventions` | `ai/claude/check-conventions/SKILL.md` |
-| `/impact-brief` | `ai/claude/impact-brief/SKILL.md` |
-| `/tdd` | `ai/claude/tdd/SKILL.md` |
-| `/generate-docs` | `ai/claude/generate-docs/SKILL.md` |
-| `/conclude` | `ai/claude/conclude/SKILL.md` |
-| `/migrate:review-external-docs` | `ai/claude/migrate/review-external-docs/SKILL.md` |
-| `/pm:add-feature` | `ai/claude/pm/add-feature/SKILL.md` |
-| `/pm:answer-questions` | `ai/claude/pm/answer-questions/SKILL.md` |
-| `/pm:design-feature` | `ai/claude/pm/design-feature/SKILL.md` |
-| `/pm:prep-demo` | `ai/claude/pm/prep-demo/SKILL.md` |
-| `/pm:prioritize` | `ai/claude/pm/prioritize/SKILL.md` |
-| `/pm:report-bug` | `ai/claude/pm/report-bug/SKILL.md` |
-| `/pm:review-progress` | `ai/claude/pm/review-progress/SKILL.md` |
-| `/pm:review-scope-change` | `ai/claude/pm/review-scope-change/SKILL.md` |
-| `/pm:update-requirement` | `ai/claude/pm/update-requirement/SKILL.md` |
-| `/qa:plan-tests` | `ai/claude/qa/plan-tests/SKILL.md` |
-| `/qa:report-defect` | `ai/claude/qa/report-defect/SKILL.md` |
-| `/qa:review-tests` | `ai/claude/qa/review-tests/SKILL.md` |
-| `/qa:verify-quality` | `ai/claude/qa/verify-quality/SKILL.md` |
-| `/ops:build` | `ai/claude/ops/build/SKILL.md` |
-| `/ops:deploy` | `ai/claude/ops/deploy/SKILL.md` |
-| `/ops:apply-iac` | `ai/claude/ops/apply-iac/SKILL.md` |
-| `/architect:design-system` | `ai/claude/architect/design-system/SKILL.md` |
-| `/architect:design-feature` | `ai/claude/architect/design-feature/SKILL.md` |
+| `/hitl:dev:start-prd` | `ai/claude/start-prd/SKILL.md` |
+| `/hitl:dev:start-brownfield` | `ai/claude/start-brownfield/SKILL.md` |
+| `/hitl:dev:start-migration` | `ai/claude/start-migration/SKILL.md` |
+| `/hitl:dev:practices` | `ai/claude/dev-practices/SKILL.md` |
+| `/hitl:dev:apply-change` | `ai/claude/apply-change/SKILL.md` |
+| `/hitl:dev:check-conventions` | `ai/claude/check-conventions/SKILL.md` |
+| `/hitl:dev:impact-brief` | `ai/claude/impact-brief/SKILL.md` |
+| `/hitl:dev:tdd` | `ai/claude/tdd/SKILL.md` |
+| `/hitl:dev:generate-docs` | `ai/claude/generate-docs/SKILL.md` |
+| `/hitl:dev:conclude` | `ai/claude/conclude/SKILL.md` |
+| `/hitl:dev:review-external-docs` | `ai/claude/migrate/review-external-docs/SKILL.md` |
+| `/hitl:pm:add-feature` | `ai/claude/pm/add-feature/SKILL.md` |
+| `/hitl:pm:answer-questions` | `ai/claude/pm/answer-questions/SKILL.md` |
+| `/hitl:pm:design-feature` | `ai/claude/pm/design-feature/SKILL.md` |
+| `/hitl:pm:prep-demo` | `ai/claude/pm/prep-demo/SKILL.md` |
+| `/hitl:pm:prioritize` | `ai/claude/pm/prioritize/SKILL.md` |
+| `/hitl:pm:report-bug` | `ai/claude/pm/report-bug/SKILL.md` |
+| `/hitl:pm:review-progress` | `ai/claude/pm/review-progress/SKILL.md` |
+| `/hitl:pm:review-scope-change` | `ai/claude/pm/review-scope-change/SKILL.md` |
+| `/hitl:pm:update-requirement` | `ai/claude/pm/update-requirement/SKILL.md` |
+| `/hitl:qa:plan-tests` | `ai/claude/qa/plan-tests/SKILL.md` |
+| `/hitl:qa:report-defect` | `ai/claude/qa/report-defect/SKILL.md` |
+| `/hitl:qa:review-tests` | `ai/claude/qa/review-tests/SKILL.md` |
+| `/hitl:qa:verify-quality` | `ai/claude/qa/verify-quality/SKILL.md` |
+| `/hitl:ops:build` | `ai/claude/ops/build/SKILL.md` |
+| `/hitl:ops:deploy` | `ai/claude/ops/deploy/SKILL.md` |
+| `/hitl:ops:apply-iac` | `ai/claude/ops/apply-iac/SKILL.md` |
+| `/hitl:architect:design-system` | `ai/claude/architect/design-system/SKILL.md` |
+| `/hitl:architect:design-feature` | `ai/claude/architect/design-feature/SKILL.md` |
 
 ---
 

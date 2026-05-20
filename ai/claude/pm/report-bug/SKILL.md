@@ -1,5 +1,5 @@
 ---
-name: pm-report-bug
+name: pm:report-bug
 description: Document a bug report as a structured GitHub issue with steps to reproduce, expected vs actual behavior, and severity.
 argument-hint: "[bug description]"
 disable-model-invocation: true

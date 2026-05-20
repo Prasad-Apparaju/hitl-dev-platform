@@ -1,5 +1,5 @@
 ---
-name: qa-plan-tests
+name: qa:plan-tests
 description: Design-time QA contribution. QA reviews the LLD and queries the incident registry to identify test scenarios the developer may miss — edge cases from past failures, domain-specific failure modes, and integration gaps. Non-blocking input to the test plan before the TDD cycle starts.
 argument-hint: "[LLD path or GitHub issue number]"
 disable-model-invocation: true

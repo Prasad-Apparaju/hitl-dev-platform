@@ -1,6 +1,6 @@
 ---
-name: ops-backup-database
-description: Create a verified database backup before risky operations, or restore from a named backup. Detects the database engine, creates a labeled snapshot, verifies its integrity, and records the backup path in the HITL context. Restore mode executes a full restore with schema verification. Run before /ops:migrate-database, or standalone before any high-risk operation. Restore mode is used by /ops:rollback when a migration must be reversed.
+name: ops:backup-database
+description: Create a verified database backup before risky operations, or restore from a named backup. Detects the database engine, creates a labeled snapshot, verifies its integrity, and records the backup path in the HITL context. Restore mode executes a full restore with schema verification. Run before /hitl:ops:migrate-database, or standalone before any high-risk operation. Restore mode is used by /hitl:ops:rollback when a migration must be reversed.
 argument-hint: "[backup | restore] [change ID] [optional: backup-path for restore]"
 disable-model-invocation: true
 ---
@@ -203,4 +203,4 @@ Report: "Restore complete. Schema verified. Services restarted. Database is in t
 - For production restores: always stop dependent services before starting the restore
 - If restore fails partway, do not restart services against a partially-restored database — escalate immediately
 - Cloud-managed snapshots (RDS, Cloud SQL) are preferred over file dumps for production — they are atomic and faster to restore
-- After a restore in production, run `/ops:post-deploy-monitor` for at least 1 hour to confirm stability
+- After a restore in production, run `/hitl:ops:post-deploy-monitor` for at least 1 hour to confirm stability
