@@ -36,7 +36,24 @@ If a real manifest already exists, say: "Manifest found — skipping." and move 
 
 ---
 
-## Step 3 — Create your first GitHub issue
+## Step 3 — Install Graphify
+
+Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window. Install it now so it's ready when `/architect:design-system` produces docs.
+
+```bash
+uv tool install graphifyy        # install once per machine (or: pipx install graphifyy)
+graphify claude install          # register /graphify skill with Claude Code
+```
+
+Ask: "Is Graphify installed? (`graphify --version`)"  
+- If yes: confirm `graphify claude install` has been run and continue.
+- If no: show the install command above and wait for confirmation before continuing.
+
+Full setup reference: `shared/graphify-setup.md`
+
+---
+
+## Step 4 — Create your first GitHub issue
 
 - Ask: "What's the first feature you want to build?"
 - Run: `gh issue create --title "[feature name]" --body "Initial feature for [project name]. Created via HITL onboarding."`
@@ -44,7 +61,7 @@ If a real manifest already exists, say: "Manifest found — skipping." and move 
 
 ---
 
-## Step 4 — Confirm ready
+## Step 5 — Confirm ready
 
 Output this exactly:
 
@@ -60,7 +77,9 @@ Generate the design docs for your system before writing any code:
 This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
 After `/architect:design-system` completes:
-1. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it
-2. For new features after the initial build, create a GitHub issue and run `/dev-practices`
+1. Run `graphify .` to build the initial knowledge graph, then `graphify hook install` for auto-rebuild
+2. Commit `graphify-out/` (excluding `manifest.json` and `cost.json`) so teammates start with the graph
+3. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it
+4. For new features after the initial build, create a GitHub issue and run `/dev-practices`
 
 ---

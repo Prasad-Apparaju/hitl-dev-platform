@@ -48,7 +48,7 @@ command -v graphify &>/dev/null || exit 0
 
 # Incremental rebuild — only reprocesses changed files via SHA256 cache
 echo "HITL GRAPH: Rebuilding knowledge graph for $FILE_PATH (background) ..." >&2
-graphify . --update --no-viz --directed >/dev/null 2>&1 &
-echo "HITL GRAPH: Graph rebuild started (PID $!). Query after a moment or run 'graphify check-update docs/' to verify." >&2
+graphify . --update --no-viz >/dev/null 2>&1 &
+echo "HITL GRAPH: Graph rebuild started (PID $!). Query after a moment." >&2
 
 exit 0

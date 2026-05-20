@@ -284,13 +284,14 @@ Follow the instructions in Phase R5 of the `generate-docs` skill exactly. This s
 3. **Install the plugin or copy skills** — so `/architect/design-feature`, `/tdd`, `/generate-docs`, etc. are available
 4. **Copy CI actions** to `.github/workflows/`
 5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `shared/templates/issue-template.md`
-6. **Set up Graphify** — for systems with 4+ domains, the doc set produced by this session will likely exceed context window limits on future queries. Install before team onboarding:
+6. **Set up Graphify** — for systems with 4+ domains, the doc set produced by this session will exceed context window limits on future queries. Install before team onboarding (see `shared/graphify-setup.md` for full instructions):
    ```bash
-   pip install graphifyy && graphify install
-   graphify . --directed --no-viz
-   python3 -m graphify.serve graphify-out/graph.json
+   uv tool install graphifyy        # install once per machine
+   graphify claude install          # register /graphify skill with Claude Code
+   graphify .                       # build initial graph → graphify-out/graph.json
+   graphify hook install            # auto-rebuild on every git commit
    ```
-   The PostToolUse hook rebuilds the graph incrementally as docs change.
+   Commit `graphify-out/` (excluding `manifest.json` and `cost.json`) so teammates get the graph on `git pull`. The PostToolUse hook in this project also rebuilds incrementally after doc writes during a session.
 7. **Generate `docs/README.md`** — table of contents linking all HLDs, LLDs, ADRs, and the manifest
 
 ---
