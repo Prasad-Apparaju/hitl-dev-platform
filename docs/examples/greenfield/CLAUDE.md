@@ -22,12 +22,12 @@ AI proposes, humans approve. No implementation work starts unless there is an ap
 
 | Skill | When to use |
 |-------|-------------|
-| `/apply-change` | Before any code — impact analysis + HITL context init |
-| `/dev-practices` | Full change workflow reference |
-| `/tdd` | TDD cycle after LLD is approved |
-| `/impact-brief` | Downstream impact + rollout plan before PR |
-| `/generate-docs` | HLD/LLD/ADR generation or brownfield reverse-engineer |
-| `/check-conventions` | Before PR — semgrep, manifest drift, Mermaid checks |
+| `/hitl:dev:apply-change` | Before any code — impact analysis + HITL context init |
+| `/hitl:dev:practices` | Full change workflow reference |
+| `/hitl:dev:tdd` | TDD cycle after LLD is approved |
+| `/hitl:dev:impact-brief` | Downstream impact + rollout plan before PR |
+| `/hitl:dev:generate-docs` | HLD/LLD/ADR generation or brownfield reverse-engineer |
+| `/hitl:dev:check-conventions` | Before PR — semgrep, manifest drift, Mermaid checks |
 
 ## Available Agents (invoke with Task tool or @agent-name)
 
@@ -47,7 +47,7 @@ Before modifying any code, read `docs/system-manifest.yaml` and identify which d
 - Test: `pytest`
 - Lint: `ruff check .`
 - Format: `black .`
-- Convention check: `/check-conventions`
+- Convention check: `/hitl:dev:check-conventions`
 - Manifest drift: `python ci/manifest-drift/check_manifest_drift.py --source-dirs src/`
 
 ## Cross-Cutting Conventions

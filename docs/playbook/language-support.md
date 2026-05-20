@@ -6,9 +6,9 @@ The core HITL process — the 31-step workflow, TDD cycle, impact analysis, deci
 
 Everything in the process layer runs in any stack:
 
-- `/tdd` — reads an LLD and generates tests, then implementation; works in any language
-- `/architect:design-system` and `/architect:design-feature` — generate docs, not code
-- `/impact-brief`, `/qa:plan-tests`, `/qa:verify-quality` — read YAML and docs
+- `/hitl:dev:tdd` — reads an LLD and generates tests, then implementation; works in any language
+- `/hitl:architect:design-system` and `/hitl:architect:design-feature` — generate docs, not code
+- `/hitl:dev:impact-brief`, `/hitl:qa:plan-tests`, `/hitl:qa:verify-quality` — read YAML and docs
 - Decision packets, system manifest, test registry — YAML files with no language dependency
 - All enforcement hooks — shell scripts that check YAML state, not code structure
 
@@ -42,7 +42,7 @@ This is the easiest extension point. Semgrep's rule library and pattern document
 
 If semgrep does not have good coverage for your stack, add a language-native linter alongside it:
 
-1. Extend `/check-conventions` (in `ai/claude/check-conventions/SKILL.md`) to conditionally run the linter based on the stack declared in `CLAUDE.md` or `system-manifest.yaml`
+1. Extend `/hitl:dev:check-conventions` (in `ai/claude/check-conventions/SKILL.md`) to conditionally run the linter based on the stack declared in `CLAUDE.md` or `system-manifest.yaml`
 2. Map the linter's exit codes and output format to the existing pass/fail pattern
 3. The CI workflow in `ci/workflows/` should run the same linter — update it to match
 
@@ -60,14 +60,14 @@ A `tree-sitter`-based approach handles most languages with one implementation an
 
 ## Mixed stacks
 
-If your project uses multiple languages (e.g., Go backend + TypeScript frontend), apply Tiers 1-2 per language. The process layer already handles mixed stacks — LLDs describe components in whatever language they use, and `/tdd` generates tests in the appropriate language per component. The only constraint is that each domain in `system-manifest.yaml` should map to source in a single language, so the manifest drift check can apply the right parser per domain.
+If your project uses multiple languages (e.g., Go backend + TypeScript frontend), apply Tiers 1-2 per language. The process layer already handles mixed stacks — LLDs describe components in whatever language they use, and `/hitl:dev:tdd` generates tests in the appropriate language per component. The only constraint is that each domain in `system-manifest.yaml` should map to source in a single language, so the manifest drift check can apply the right parser per domain.
 
 ## Current status summary
 
 | Layer | Python-only | Language-agnostic |
 |-------|:-----------:|:-----------------:|
 | 31-step workflow | | ✓ |
-| TDD cycle (`/tdd`) | | ✓ |
+| TDD cycle (`/hitl:dev:tdd`) | | ✓ |
 | Impact analysis, decision packets | | ✓ |
 | Hooks (domain boundary, HITL context) | | ✓ |
 | Semgrep rules (`.semgrep/`) | ✓ | |

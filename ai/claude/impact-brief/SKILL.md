@@ -1,5 +1,5 @@
 ---
-name: impact-brief
+name: dev:impact-brief
 description: Generate a structured downstream impact brief and risk-rated rollout plan for a change. Use after code and tests are complete (after step 22); the brief is added to the open PR at step 25 (Verify PR completeness). Requires the HITL context file (.hitl/current-change.yaml) and an active GitHub issue.
 argument-hint: "[PR number, branch name, or change description]"
 disable-model-invocation: true
@@ -13,7 +13,7 @@ Generate a structured impact brief for a change that is ready for PR. The brief 
 
 If `$ARGUMENTS` is empty, check for unstaged changes via `git diff` and use those. If no changes found, ask: "What change should I assess? Provide a PR number or describe the change."
 
-**Refusal rule:** If `.hitl/current-change.yaml` does not exist, stop: "No HITL context file found. Run `/apply-change` first to initialize the change context."
+**Refusal rule:** If `.hitl/current-change.yaml` does not exist, stop: "No HITL context file found. Run `/hitl:dev:apply-change` first to initialize the change context."
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash

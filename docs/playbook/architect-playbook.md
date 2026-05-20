@@ -54,7 +54,7 @@ conventions from the system manifest, or edge cases not covered.
 When a new component is needed:
 
 ```
-/generate-docs
+/hitl:dev:generate-docs
 
 I need a new component: [describe]. Generate the HLD section
 first, then the LLD when I approve. Follow the existing
@@ -116,7 +116,7 @@ For each requirement: Done / Partial / Not started. What's next?
 - **IaC / Ops** — infrastructure manifests, deployment configs, migrations, monitoring setup
 - **Integration** — slices work together, not just in isolation
 - **A deployable system at all times** — after every slice ships, the system must work on the target environment
-- **Architect code review (step 19a)** — after AI rounds complete, review the implementation on GitHub using the approve/request-changes UI; the developer runs `/architect:review-code` to create the GitHub PR with the AI review summary and a 7-item judgment checklist; assess business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, and error handling; approve or request changes; the PR is not merged at this step — merging happens at step 28
+- **Architect code review (step 19a)** — after AI rounds complete, review the implementation on GitHub using the approve/request-changes UI; the developer runs `/hitl:architect:review-code` to create the GitHub PR with the AI review summary and a 7-item judgment checklist; assess business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, and error handling; approve or request changes; the PR is not merged at this step — merging happens at step 28
 
 ---
 
@@ -131,7 +131,7 @@ All escalations use documentation — no undocumented verbal decisions.
 | **Architectural decisions** | Propose as a new ADR following `docs/02-design/technical/adrs/README.md` format |
 | **PRD scope changes** | Update `docs/01-product/prd.md` with the proposed change, flag affected requirements |
 | **Design changes** | Update the relevant HLD/LLD first, then present the diff |
-| **Risk decisions** | Use the downstream impact brief (`/impact-brief`) |
+| **Risk decisions** | Use the downstream impact brief (`/hitl:dev:impact-brief`) |
 
 ---
 
@@ -140,8 +140,8 @@ All escalations use documentation — no undocumented verbal decisions.
 | I want to... | Guide |
 |---|---|
 | Make any code change | `docs/06-team/developer-playbook.md` |
-| Write a new design | `/generate-docs` skill |
-| Analyse impact of a change | `/apply-change` skill |
-| Check convention violations | `/check-conventions` skill |
-| Write a downstream impact brief | `/impact-brief` skill |
+| Write a new design | `/hitl:dev:generate-docs` skill |
+| Analyse impact of a change | `/hitl:dev:apply-change` skill |
+| Check convention violations | `/hitl:dev:check-conventions` skill |
+| Write a downstream impact brief | `/hitl:dev:impact-brief` skill |
 | Understand the full dev workflow | `ai/claude/dev-practices/SKILL.md` |

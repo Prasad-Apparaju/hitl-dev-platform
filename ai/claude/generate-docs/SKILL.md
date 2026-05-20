@@ -1,5 +1,5 @@
 ---
-name: generate-docs
+name: dev:generate-docs
 description: Generate HLD, LLD, ADR, system manifest, and CLAUDE.md for a new feature (forward design) or existing codebase (brownfield reverse-engineer). Use before implementation starts on any Tier 2+ change, or to bootstrap a documentation baseline for an existing repo. Creates files — do not invoke spontaneously.
 argument-hint: "[feature name] | [reverse-engineer]"
 disable-model-invocation: true
@@ -285,7 +285,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ---
 
-After the baseline sprint, use `/pm:design-feature` or `/pm:add-feature` for new features — the full HITL workflow (PM skills, design, TDD, review, deployment) applies identically from this point forward. The brownfield distinction ends here.
+After the baseline sprint, use `/hitl:pm:design-feature` or `/hitl:pm:add-feature` for new features — the full HITL workflow (PM skills, design, TDD, review, deployment) applies identically from this point forward. The brownfield distinction ends here.
 
 ---
 

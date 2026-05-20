@@ -1,5 +1,5 @@
 ---
-name: qa-review-tests
+name: qa:review-tests
 description: Formal QA review of test coverage after the TDD RED phase. Verifies every acceptance criterion has a test, every LLD error mode is exercised, incident regressions are present, E2E stubs exist for all ACs, and smoke suite contribution is included. Gates implementation start.
 argument-hint: "[feature name, PR link, or LLD path]"
 disable-model-invocation: true
@@ -77,7 +77,7 @@ If the smoke setup file (`tests/e2e/smoke/setup.ts`) does not exist yet, flag it
 Check `.hitl/current-change.yaml` under `required_evidence.coverage_pct`.
 
 **If `coverage_pct` is missing or below 90%:** Block immediately.
-> "Coverage gate not met. The TDD cycle must produce ≥90% line coverage before QA review proceeds. Ask the developer to run the coverage check from Phase 6 of `/tdd` and record the result in `.hitl/current-change.yaml` under `required_evidence.coverage_pct`."
+> "Coverage gate not met. The TDD cycle must produce ≥90% line coverage before QA review proceeds. Ask the developer to run the coverage check from Phase 6 of `/hitl:dev:tdd` and record the result in `.hitl/current-change.yaml` under `required_evidence.coverage_pct`."
 
 **If `coverage_pct` ≥ 90%:** note it in the approval report and proceed to Step 6.
 

@@ -1,5 +1,5 @@
 ---
-name: tdd
+name: dev:tdd
 description: Orchestrate the TDD-as-design Red → Green → Refactor cycle where tests drive the design before implementation code exists. Use after the LLD is approved and before writing any implementation code. Requires an approved LLD — refuses to proceed without one.
 argument-hint: "[LLD path or issue number and component name]"
 disable-model-invocation: true
@@ -13,15 +13,15 @@ Orchestrate the Red → Green → Refactor cycle where tests drive the design be
 
 If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD or issue."
 
-**Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/generate-docs` — this skill generates tests FROM the spec, not without one."
+**Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/hitl:dev:generate-docs` — this skill generates tests FROM the spec, not without one."
 
 **Refusal rule — no decision packet:** Before generating any tests, check `.hitl/current-change.yaml` for `source_artifacts.decision_packet`. If the field is missing or the file at that path does not exist on disk, stop:
 
 > No decision packet found for this change.
 >
-> Decision packets are created at the end of `/architect:design-feature` (Phase 10 — Step 9). They prove the change has an approved LLD, a test plan, and a scoped domain before code generation begins.
+> Decision packets are created at the end of `/hitl:architect:design-feature` (Phase 10 — Step 9). They prove the change has an approved LLD, a test plan, and a scoped domain before code generation begins.
 >
-> Run `/architect:design-feature` first. Once the architect approves the packet, resume here.
+> Run `/hitl:architect:design-feature` first. Once the architect approves the packet, resume here.
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash

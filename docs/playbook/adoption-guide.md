@@ -1,6 +1,6 @@
 # Adoption Guide — Baseline Sprint
 
-> **Greenfield (new system from PRD)?** Use `/architect:design-system` — it guides the architect through domain decomposition, manifest creation, HLDs, ADRs, LLDs, and HITL process bootstrap in one session. After it completes, use `/architect:design-feature` for every subsequent change.
+> **Greenfield (new system from PRD)?** Use `/hitl:architect:design-system` — it guides the architect through domain decomposition, manifest creation, HLDs, ADRs, LLDs, and HITL process bootstrap in one session. After it completes, use `/hitl:architect:design-feature` for every subsequent change.
 >
 > **Brownfield (existing codebase)?** Continue reading — this guide covers the reverse-engineer sprint.
 
@@ -26,10 +26,10 @@ Whatever exists — code, old wiki pages, Confluence docs, Swagger specs, README
 
 ## The Skill
 
-The `/generate-docs` skill (at `ai/claude/generate-docs/`) automates most of this sprint. Run it in **reverse-engineer mode**:
+The `/hitl:dev:generate-docs` skill (at `ai/claude/generate-docs/`) automates most of this sprint. Run it in **reverse-engineer mode**:
 
 ```
-/generate-docs reverse-engineer the existing system
+/hitl:dev:generate-docs reverse-engineer the existing system
 ```
 
 It scans the codebase, generates the manifest, HLDs, LLDs, and forensic ADRs, and sets up the process — with approval gates at each phase. The architect reviews and corrects at each gate.
@@ -117,8 +117,8 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 
 | Urgency | Process | Doc requirement |
 |---------|---------|-----------------|
-| P0 (system down) | Fix first | Use `/generate-docs` to produce LLD for affected area within 48 hours |
-| P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Use `/generate-docs` to produce LLD during PR review |
+| P0 (system down) | Fix first | Use `/hitl:dev:generate-docs` to produce LLD for affected area within 48 hours |
+| P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Use `/hitl:dev:generate-docs` to produce LLD during PR review |
 | P2+ (everything else) | Full 31-step process | Standard docs-before-code |
 
 ## Staying Operational — Week 2 and Beyond
@@ -134,7 +134,7 @@ The baseline sprint produces the starting state. Keeping the process working ove
 | `docs/03-engineering/testing/test-registry.yaml` | Developer + QA | Every test added, removed, or renamed |
 | `docs/04-operations/incident-registry.yaml` | Ops + Lead | After every production incident |
 | `docs/decisions/issue-<N>.yaml` | Architect | Created at step 9; updated only if scope changes before merge |
-| `.hitl/current-change.yaml` | Developer | Created by `/apply-change`; updated at each phase gate; deleted after merge |
+| `.hitl/current-change.yaml` | Developer | Created by `/hitl:dev:apply-change`; updated at each phase gate; deleted after merge |
 
 ### Hard requirements vs. optional
 

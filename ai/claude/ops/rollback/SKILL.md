@@ -1,6 +1,6 @@
 ---
-name: ops-rollback
-description: Execute a rollback of a deployed canary or partial release. Reads the current deployment state and rollout plan, assesses side effects, presents the rollback procedure for operator confirmation, executes, and verifies stability. Use when /ops:monitor-canary recommends a pause and the team decides to roll back rather than investigate forward.
+name: ops:rollback
+description: Execute a rollback of a deployed canary or partial release. Reads the current deployment state and rollout plan, assesses side effects, presents the rollback procedure for operator confirmation, executes, and verifies stability. Use when /hitl:ops:monitor-canary recommends a pause and the team decides to roll back rather than investigate forward.
 argument-hint: "[change ID or environment]"
 disable-model-invocation: true
 ---
@@ -114,7 +114,7 @@ Monitor the rollout: confirm the previous artifact is serving traffic and the ne
 **Database rollback (if applicable):**
 
 - If a rollback migration exists: run it using the same migration tool as the forward migration, then verify the schema matches the previous LLD
-- If no rollback migration exists: run `/ops:backup-database restore <change-ID>` — this reads `database_backup.backup_path` from `.hitl/current-change.yaml`, assesses data loss from the window between backup and now, requires `RESTORE` confirmation, executes the restore, and verifies the schema
+- If no rollback migration exists: run `/hitl:ops:backup-database restore <change-ID>` — this reads `database_backup.backup_path` from `.hitl/current-change.yaml`, assesses data loss from the window between backup and now, requires `RESTORE` confirmation, executes the restore, and verifies the schema
 - If schema compatibility is acceptable (old code can read new schema): accept divergence and document it explicitly in the rollback record — skip the restore
 
 **Feature flag (if applicable):**
@@ -158,13 +158,13 @@ gh issue comment <issue-number> \
 Next: investigate the failure, fix, and re-run from Step 25."
 ```
 
-If side effects were unresolved, open a follow-up incident with `/ops:incident`.
+If side effects were unresolved, open a follow-up incident with `/hitl:ops:incident`.
 
 ---
 
 ## Important Rules
 
-- Do not auto-rollback on transient noise — the decision to roll back is always human-made after reviewing `/ops:monitor-canary` output
+- Do not auto-rollback on transient noise — the decision to roll back is always human-made after reviewing `/hitl:ops:monitor-canary` output
 - Never rollback without reviewing the side effects first — a rollback can make things worse if data was written that the old code cannot read
 - If rollback itself fails partway through, stop and escalate — do not attempt to re-deploy the new artifact to "fix" the rollback failure
 - After rollback, the issue must be re-routed: fix the root cause, then re-run from Step 25

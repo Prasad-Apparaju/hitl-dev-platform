@@ -1,6 +1,6 @@
 # Example HITL change context file
 # Copy to .hitl/current-change.yaml at the start of each change.
-# The /apply-change skill generates this automatically.
+# The /hitl:dev:apply-change skill generates this automatically.
 
 change_id: GH-000
 tier: 2

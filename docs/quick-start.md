@@ -41,9 +41,9 @@ Default is `--tool both` (Claude Code + Codex). Use `--tool claude` or `--tool c
 | `docs/02-design/` | HLD, LLD, ADR directories |
 | `.ai/claude/settings.json` | Plugin reference + hook wiring |
 | `.hitl/hooks/*.sh` | Hook wrappers (resolve platform via `HITL_PLATFORM_ROOT`) |
-| `.semgrep/` | Semgrep convention rules (required by `/check-conventions`) |
-| `ci/manifest-drift/` | Manifest drift checker (required by `/check-conventions`) |
-| `tools/scripts/fix_mermaid_br_tags.py` | Mermaid linter (required by `/check-conventions`) |
+| `.semgrep/` | Semgrep convention rules (required by `/hitl:dev:check-conventions`) |
+| `ci/manifest-drift/` | Manifest drift checker (required by `/hitl:dev:check-conventions`) |
+| `tools/scripts/fix_mermaid_br_tags.py` | Mermaid linter (required by `/hitl:dev:check-conventions`) |
 
 Skills, agents, and commands are **not** copied — they load from the shared platform via the Claude Code plugin.
 

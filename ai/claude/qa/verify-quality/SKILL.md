@@ -1,5 +1,5 @@
 ---
-name: qa-verify-quality
+name: qa:verify-quality
 description: Post-handoff independent quality verification. QA verifies the running build against acceptance criteria, runs exploratory testing, unskips and runs E2E Playwright tests (desktop + mobile web), runs the smoke suite, and checks that past incident failure modes cannot be reproduced. Blocks or approves promotion to Ops.
 argument-hint: "[feature name or build link]"
 disable-model-invocation: true
@@ -11,7 +11,7 @@ Independent verification of the developer's handoff. You are the last gate befor
 
 **Input:** $ARGUMENTS (feature name or build URL)
 
-**Prerequisite:** The developer has completed the impact brief and test registry is up to date. If no impact brief exists in `.hitl/current-change.yaml`, stop: "Impact brief missing — ask the developer to run `/impact-brief` before QA handoff."
+**Prerequisite:** The developer has completed the impact brief and test registry is up to date. If no impact brief exists in `.hitl/current-change.yaml`, stop: "Impact brief missing — ask the developer to run `/hitl:dev:impact-brief` before QA handoff."
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash
@@ -95,7 +95,7 @@ npx playwright test tests/e2e/features/<feature-name>.spec.ts --project="iPhone 
 npx playwright test tests/e2e/features/<feature-name>.spec.ts --project="Pixel 7"
 ```
 
-For each test: record Pass / Fail and the visible assertion result. If any test fails, file a defect with `/qa:report-defect` before proceeding.
+For each test: record Pass / Fail and the visible assertion result. If any test fails, file a defect with `/hitl:qa:report-defect` before proceeding.
 
 **Smoke suite** — run the full smoke suite against the current build:
 
@@ -119,7 +119,7 @@ required_evidence:
 ## Step 6 — Block or approve
 
 **Before approving, verify coverage was recorded:** Check `.hitl/current-change.yaml` under `required_evidence.coverage_pct`. If missing or below 90%, block:
-> "QA blocked — line coverage not recorded or below 90%. The developer must run the coverage tool from `/tdd` Phase 6 and record the result before QA can approve."
+> "QA blocked — line coverage not recorded or below 90%. The developer must run the coverage tool from `/hitl:dev:tdd` Phase 6 and record the result before QA can approve."
 
 Also verify Step 5 evidence before approving:
 - `required_evidence.e2e_tests_pass` is `true`
@@ -146,7 +146,7 @@ Build is ready for Ops handoff."
 ```
 
 **If any criterion fails, regression reproduced, E2E fails, or smoke suite fails:**
-Run `/qa:report-defect` for each blocking issue. Post a comment on the main feature issue linking all defects, then report to the team:
+Run `/hitl:qa:report-defect` for each blocking issue. Post a comment on the main feature issue linking all defects, then report to the team:
 ```bash
 gh issue comment <issue-number> \
   --body "## 🚫 QA Blocked

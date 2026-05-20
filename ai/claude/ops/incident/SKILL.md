@@ -1,5 +1,5 @@
 ---
-name: ops-incident
+name: ops:incident
 description: Manage an active production incident from declaration through resolution and registry logging. Declares severity, guides response, tracks timeline, and logs a structured entry to the incident registry when resolved. Use when a production system is degraded or down — not as part of the normal delivery workflow.
 argument-hint: "[brief description of what is failing]"
 disable-model-invocation: true
@@ -98,7 +98,7 @@ Common mitigations to consider (assess applicability, do not apply blindly):
 
 | Mitigation | When to use |
 |---|---|
-| Roll back to previous artifact (`/ops:rollback`) | Deployment caused the incident |
+| Roll back to previous artifact (`/hitl:ops:rollback`) | Deployment caused the incident |
 | Toggle feature flag off | Change is behind a flag |
 | Redirect traffic to healthy region/AZ | Regional failure |
 | Scale up replicas | Capacity-related degradation |
