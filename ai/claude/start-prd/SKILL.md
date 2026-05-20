@@ -74,12 +74,12 @@ Generate the design docs for your system before writing any code:
 /architect:design-system
 ```
 
-This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
+This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 32-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
 After `/architect:design-system` completes:
 1. Run `graphify .` to build the initial knowledge graph, then `graphify hook install` for auto-rebuild
 2. Commit `graphify-out/` (excluding `manifest.json` and `cost.json`) so teammates start with the graph
-3. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it
+3. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it
 4. For new features after the initial build, create a GitHub issue and run `/dev-practices`
 
 ---

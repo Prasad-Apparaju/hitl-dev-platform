@@ -219,7 +219,7 @@ The architect runs this to produce two documents:
 
 No design work (HLD/LLD) begins until both documents are approved. The migration brief is the required input for the architect design skills — it replaces `docs/01-product/prd.md` in the standard workflow.
 
-After the review, the architect runs `/architect:design-system docs/00-migration/migration-brief.md` (full-system migration) or `/architect:design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 31-step workflow.
+After the review, the architect runs `/architect:design-system docs/00-migration/migration-brief.md` (full-system migration) or `/architect:design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 32-step workflow.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 

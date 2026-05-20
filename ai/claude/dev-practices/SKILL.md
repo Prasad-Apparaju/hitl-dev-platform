@@ -76,7 +76,7 @@ Verify
 
 Assess
 23. Downstream Impact Brief → /impact-brief — reads .hitl/current-change.yaml, diff, manifest, registries
-24. Rollout Plan            → /ops:review-release — ops reviews section 5 of step 23; approves before PR
+24. Rollout Plan            → /ops:review-release — ops reviews section 5 of step 23; plan is added to the open PR at step 25
 
 Ship
 25. Verify PR completeness → confirm PR (created at step 19a) has: issue link, HLD/LLD, IaC, code, tests, decision packet, impact brief, rollout plan; copy token costs to registry

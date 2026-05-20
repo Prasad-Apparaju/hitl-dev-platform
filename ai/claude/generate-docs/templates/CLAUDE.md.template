@@ -40,7 +40,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 31-step workflow. For structured impact analysis and test planning, use `/apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/apply-change`.
 
 ## Testing
 

@@ -58,7 +58,7 @@ For each component:
 
 ## Step 5 — Seed the registries
 
-The 31-step workflow queries these two registries at multiple points. They must exist before `/dev-practices` is run for the first time.
+The 32-step workflow queries these two registries at multiple points. They must exist before `/dev-practices` is run for the first time.
 
 **Test registry** (`docs/03-engineering/testing/test-registry.yaml`):
 - Ask: "Do you have existing tests? If so, I'll create a registry stub from your test files."
@@ -122,7 +122,7 @@ You are starting incrementally: manifest and priority component docs exist, regi
 
 For every change going forward:
 1. Create a GitHub issue — or use `/pm:add-feature` / `/pm:design-feature` to shape requirements first
-2. Run `/dev-practices` — the 31-step workflow starts here
+2. Run `/dev-practices` — the 32-step workflow starts here
 3. Update HLD/LLD if the design changes
 4. Code → tests → PR
 
