@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ai/claude/hooks/check-hitl-context.sh"
+            "command": "cd /Users/Prasad_1/Projects/hitl-dev-platform && bash ai/claude/hooks/check-hitl-context.sh"
           }
         ]
       }
@@ -17,15 +17,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ai/claude/hooks/check-domain-boundary.sh"
+            "command": "cd /Users/Prasad_1/Projects/hitl-dev-platform && bash ai/claude/hooks/check-domain-boundary.sh"
           },
           {
             "type": "command",
-            "command": "bash ai/claude/hooks/rebuild-graph.sh"
+            "command": "cd /Users/Prasad_1/Projects/hitl-dev-platform && bash ai/claude/hooks/rebuild-graph.sh"
           },
           {
             "type": "command",
-            "command": "bash ai/claude/hooks/sync-step-to-issue.sh"
+            "command": "cd /Users/Prasad_1/Projects/hitl-dev-platform && bash ai/claude/hooks/sync-step-to-issue.sh"
           }
         ]
       }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ai/claude/hooks/write-session-summary.sh"
+            "command": "cd /Users/Prasad_1/Projects/hitl-dev-platform && bash ai/claude/hooks/write-session-summary.sh"
           }
         ]
       }
