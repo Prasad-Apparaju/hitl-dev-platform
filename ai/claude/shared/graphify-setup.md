@@ -115,7 +115,7 @@ graphify-out/
 
 HITL skills check graph availability before running queries:
 ```bash
-ls graphify-out/graph.json 2>/dev/null && echo "available" || echo "unavailable"
+[ -f graphify-out/graph.json ] && echo "Graphify: available" || echo "Graphify: unavailable"
 ```
 If `graph.json` is missing, run `graphify .` to build the graph, then re-run the skill.
 
