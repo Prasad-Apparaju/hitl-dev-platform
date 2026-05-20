@@ -125,8 +125,20 @@ Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the 
 **19. Code Review Round 2** — use `/check-implementation`
 Uses the `spec-conformance-reviewer` agent. Reads implementation files, test files in `tests/`, and the test plan from `.hitl/current-change.yaml` (step 7). Reviews: edge cases, regressions, test quality, and completeness against the test plan. Fix all findings. Rerun full test suite after fixes.
 
+**19a. Architect Code Review** — use `/architect:review-code`
+Human architect reviews the implementation for judgment calls that AI cannot assess. AI rounds 1 and 2 must be complete first. The architect works through a structured checklist:
+1. **Business logic** — does the code solve the right problem, not just satisfy the spec?
+2. **Architectural consistency** — is this consistent with how similar problems are solved elsewhere in the system?
+3. **Domain boundary integrity** — does any code reach into another domain's internals instead of its facade API?
+4. **Hidden coupling** — shared mutable state, implicit ordering, timing assumptions not captured in the LLD?
+5. **Complexity** — could this be simpler? Would a future developer understand it without the design context?
+6. **Naming** — do names communicate intent to a reader who was not in the design session?
+7. **Error handling** — are failures diagnosable from logs alone? Are errors surfaced correctly to callers?
+
+The architect replies **APPROVED** or lists revision requests. Revisions are classified by severity: Minor (naming, simplification) → return to Step 16; Significant (logic, structure, domain violation) → return to Step 14; Design change (fundamental approach wrong) → return to Step 12. Either outcome is recorded in `.hitl/current-change.yaml` under `approvals.architect_code_review` and posted as a GitHub issue comment.
+
 **20. Rerun Tests**
-Confirm no regressions from Round 2 fixes. All tests must pass.
+Confirm no regressions from review fixes. All tests must pass.
 
 **21. Reconcile Docs**
 Compare implementation against the LLD at `docs/02-design/technical/lld/<component>.md`. If they diverge, make the decision explicit:
