@@ -69,7 +69,7 @@ Build (TDD)
 Verify
 18. Code Review Round 1    → /check-implementation — reads implementation + LLD (step 12) + system-manifest.yaml
 19. Code Review Round 2    → /check-implementation — reads implementation + tests/ + test plan from .hitl/current-change.yaml
-19a. Architect Code Review → /architect:review-code — human architect reviews for business logic, architectural consistency, domain boundary integrity, hidden coupling, naming; APPROVED or REVISIONS REQUIRED; revisions return to step 14 or 16
+19a. Architect Code Review → /architect:review-code — creates GitHub PR with checklist; architect reviews on GitHub (line comments + approve/request changes); revisions return to step 14 or 16; PR is NOT merged here
 20. Rerun Tests            → confirm no regressions from review fixes
 21. Reconcile Docs         → update LLD (/generate-docs) or fix code; document decision; if fix code, rerun 18–20
 22. QA Post-Handoff Verify → /qa:verify-quality — unskips + runs E2E Playwright (desktop + iPhone 15 + Pixel 7); runs smoke suite; blocks if any fail; /qa:report-defect for each blocking issue
@@ -79,7 +79,7 @@ Assess
 24. Rollout Plan            → /ops:review-release — ops reviews section 5 of step 23; approves before PR
 
 Ship
-25. Create PR              → issue + HLD/LLD + IaC + code + tests + packet + brief + plan
+25. Verify PR completeness → confirm PR (created at step 19a) has: issue link, HLD/LLD, IaC, code, tests, decision packet, impact brief, rollout plan; copy token costs to registry
 26. Integration Verify     → /architect:verify-traceability — traceability chain + E2E evidence check + smoke suite re-run + cross-slice composition
 27. Figma Comparison       → lead compares to Figma from step 2; zero unresolved differences (conditional)
 28. Build + Backup + Migrate + IaC + Observability + Drift Check + Deploy → /ops:backup-database (before migrations) → /ops:migrate-database (if migrations) → /ops:apply-iac (if IaC) → /ops:setup-observability (required) → /ops:build → /ops:detect-drift (Tier 2+, blocks on `blocked` result) → /ops:deploy → /ops:monitor-canary

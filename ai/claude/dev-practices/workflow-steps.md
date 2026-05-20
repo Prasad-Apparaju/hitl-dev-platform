@@ -126,16 +126,11 @@ Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the 
 Uses the `spec-conformance-reviewer` agent. Reads implementation files, test files in `tests/`, and the test plan from `.hitl/current-change.yaml` (step 7). Reviews: edge cases, regressions, test quality, and completeness against the test plan. Fix all findings. Rerun full test suite after fixes.
 
 **19a. Architect Code Review** — use `/architect:review-code`
-Human architect reviews the implementation for judgment calls that AI cannot assess. AI rounds 1 and 2 must be complete first. The architect works through a structured checklist:
-1. **Business logic** — does the code solve the right problem, not just satisfy the spec?
-2. **Architectural consistency** — is this consistent with how similar problems are solved elsewhere in the system?
-3. **Domain boundary integrity** — does any code reach into another domain's internals instead of its facade API?
-4. **Hidden coupling** — shared mutable state, implicit ordering, timing assumptions not captured in the LLD?
-5. **Complexity** — could this be simpler? Would a future developer understand it without the design context?
-6. **Naming** — do names communicate intent to a reader who was not in the design session?
-7. **Error handling** — are failures diagnosable from logs alone? Are errors surfaced correctly to callers?
+Creates the GitHub PR and requests the architect's review. The PR description includes: issue link, LLD path, decision packet path, AI findings carried forward from rounds 1 and 2, and a 7-item judgment checklist for the architect to complete on GitHub. The architect reviews on GitHub using line comments and the review UI — not in the Claude session.
 
-The architect replies **APPROVED** or lists revision requests. Revisions are classified by severity: Minor (naming, simplification) → return to Step 16; Significant (logic, structure, domain violation) → return to Step 14; Design change (fundamental approach wrong) → return to Step 12. Either outcome is recorded in `.hitl/current-change.yaml` under `approvals.architect_code_review` and posted as a GitHub issue comment.
+The checklist covers: (1) business logic — does the code solve the right problem, not just satisfy the spec? (2) architectural consistency — is this consistent with how similar problems are solved elsewhere? (3) domain boundary integrity — no code reaches into another domain's internals? (4) hidden coupling — shared mutable state, implicit ordering, timing assumptions not in the LLD? (5) complexity — could this be simpler? (6) naming — do names communicate intent to a future reader? (7) error handling — failures diagnosable from logs; errors surfaced correctly?
+
+The architect approves or requests changes on GitHub. Revisions are classified by severity: Minor (naming, simplification) → return to Step 16; Significant (logic, structure, domain violation) → return to Step 14; Design change (fundamental approach wrong) → return to Step 12. The outcome is recorded in `.hitl/current-change.yaml` under `approvals.architect_code_review` and posted as a GitHub issue comment. **The PR is not merged here — merging happens at Step 28.**
 
 **20. Rerun Tests**
 Confirm no regressions from review fixes. All tests must pass.
@@ -171,8 +166,8 @@ Ops reads the rollout strategy from step 23's section 5 and the incident registr
 
 ## Steps 25–30: Ship
 
-**25. Create PR**
-Includes: issue link, HLD/LLD from step 5 (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 23), approved rollout plan (step 24). Also: copy `token_tracking.actual` from `.hitl/current-change.yaml` into `docs/03-engineering/costs/token-cost-registry.yaml` and recompute the aggregate block.
+**25. Verify PR completeness**
+The PR was created at Step 19a. This step confirms it contains all required artifacts before proceeding to integration verification. Check that the PR description includes: issue link, HLD/LLD paths (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 23), and the approved rollout plan (step 24). If any are missing, add them to the PR description now. Also copy `token_tracking.actual` from `.hitl/current-change.yaml` into `docs/03-engineering/costs/token-cost-registry.yaml` and recompute the aggregate block.
 
 **26. Integration Verification** — use `/architect:verify-traceability`
 Lead runs each slice E2E and verifies cross-slice composition: do the slices integrate correctly when all are deployed together? Also verifies the traceability chain for each slice: GitHub issue → design PR merged → implementation matches LLD → test files cover the spec → impact brief complete → rollout plan approved. Signs off or sends back with findings.
