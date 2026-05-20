@@ -1,4 +1,4 @@
-# Workflow Reference — The Full 33-Step Process
+# Workflow Reference — The Full 32-Step Process
 
 ## 4. Collaborative Development: The Design Room
 
@@ -50,7 +50,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 > | **Incremental** (default) | `/start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
 > | **Full baseline sprint** (optional) | `/start-brownfield` → then `/generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
 >
-> **Once onboarded, the 33-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
+> **Once onboarded, the 32-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
@@ -151,7 +151,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 33 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **12 human-only** 👤.
+Of 32 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **12 human-only** 👤.
 
 ### 5.3 Code Review: AI Rounds and Architect Review
 

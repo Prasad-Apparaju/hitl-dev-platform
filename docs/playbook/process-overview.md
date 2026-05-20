@@ -1,6 +1,6 @@
-# Process Overview — The 33-Step HITL AI-Driven Workflow
+# Process Overview — The 32-Step HITL AI-Driven Workflow
 
-**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 33 steps.
+**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 32 steps.
 
 The process relocates human judgment to higher-leverage checkpoints — reviewing AI-generated specs before code exists, approving test plans before implementation, verifying traceability before merge — rather than eliminating it. AI does the production work. Humans hold the gates that matter.
 
@@ -38,11 +38,11 @@ graph LR
     PKT3 --> B3
 ```
 
-## The 33 Steps
+## The 32 Steps
 
 ### Step Ownership at a Glance
 
-**AI handles 21 of 33 steps** — executing or co-piloting. You gate 12 times.
+**AI handles 21 of 32 steps** — executing or co-piloting. You gate 11 times.
 
 | Phase | Steps | 🤖 AI executes | 👤🤖 AI + human | 👤 Human gate |
 |-------|:-----:|:--------------:|:---------------:|:-------------:|
@@ -53,7 +53,7 @@ graph LR
 | Assess | 2 | 0 | 1 | 1 |
 | Ship | 5 | 0 | 2 | 3 |
 | Post-Ship | 3 | 0 | 0 | 3 |
-| **Total** | **33** | **10** | **11** | **12** |
+| **Total** | **32** | **10** | **11** | **12** |
 
 ### Requirements (steps 1-2)
 1. 👤🤖 **GitHub Issue** — describe the change, root cause, proposed solution → `/pm:add-feature` · `/pm:report-bug`

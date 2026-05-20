@@ -24,22 +24,21 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 3. Run `/generate-docs` — draft HLD/LLD before writing code
 4. Get architect design approval (`/architect:review-design`)
 5. Run `/tdd` — tests first, then code
-6. Run `/check-implementation` — two-round spec conformance review against the LLD
-7. Run `/check-conventions` — fix violations before PR
-8. Run `/impact-brief` — downstream impact brief + rollout plan
-9. Create the PR — architect runs `/architect:verify-traceability` before merge (QA test review and post-handoff verification already completed at steps 11 and 22)
+6. Run `/check-conventions` — fix violations
+7. Run `/check-implementation` — two-round spec conformance review against the LLD
+8. Run `/architect:review-code` — architect reviews on GitHub; this creates the PR
+9. Run `/impact-brief` — downstream impact brief + rollout plan (added to the open PR at step 25)
+10. Architect runs `/architect:verify-traceability` before merge
 
 ## Setup Note: Graphify (recommended for large codebases)
 
 On projects with many domains, install [Graphify](https://github.com/safishamsi/graphify) so the HITL skills query the knowledge graph instead of reading the full `system-manifest.yaml` each time. This is especially valuable for `/apply-change`, `/tdd`, and `/impact-brief` on large systems.
 
 ```bash
-pip install graphifyy && graphify install
-graphify . --directed --no-viz          # run from your repo root
-python3 -m graphify.serve graphify-out/graph.json   # keep running in background
+uv tool install graphifyy
+graphify claude install
+graphify .
 ```
-
-Skills fall back to direct file reads automatically if Graphify is not running — no action needed on small repos.
 
 ## Progress Breadcrumbs
 
