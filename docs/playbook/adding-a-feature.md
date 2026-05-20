@@ -28,7 +28,7 @@ Read these once. They define the rules of the game:
 
 | Document | What it gives you |
 |---|---|
-| `CLAUDE.md` | 31-step workflow, preflight check, coding standards, cross-cutting conventions |
+| `CLAUDE.md` | 33-step workflow, preflight check, coding standards, cross-cutting conventions |
 | `docs/system-manifest.yaml` | Domain boundaries, facade APIs, 10 conventions that apply to all code |
 | `docs/playbook/process-overview.md` | Visual pipeline + detailed step descriptions |
 | `docs/02-design/technical/adrs/design-decisions.md` | 55 decisions — understand WHY things are the way they are before proposing changes |
@@ -161,11 +161,15 @@ Fix any violations before proceeding.
 
 ---
 
-### Phase 4 — Verify (Steps 17-20)
+### Phase 4 — Verify (Steps 17-20, including 19a)
 
 **17. Code review Round 1** — structure, security, LLD adherence.
 
 **18. Code review Round 2** — edge cases, regressions, completeness.
+
+**19a. Architect code review (HUMAN GATE).**
+
+Run `/architect:review-code` — this creates the GitHub PR (not a draft) with the AI review summary and a 7-item judgment checklist in the PR description (business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, error handling). The architect reviews the code on GitHub using line comments and the approve/request-changes UI. Outcome is APPROVED or revision requests. Do not proceed past this gate without architect approval.
 
 **19. Rerun tests** — confirm no regressions from review fixes.
 
@@ -200,9 +204,9 @@ Produce a 5-section brief:
 
 ### Phase 6 — Ship (Steps 23-26)
 
-**23. Create PR.**
+**23. Verify PR completeness.**
 
-Link to the GitHub issue. The PR includes docs + IaC + code + tests — all in one PR. Not separate.
+The PR was created at step 19a. This step confirms the PR description contains all required artifacts: issue link, HLD/LLD from step 5, IaC from step 6, implementation code, test files, decision packet, impact brief (step 21), and approved rollout plan (step 22). Add any missing items to the PR description now.
 
 **24. Integration verification (ARCHITECT GATE).**
 
@@ -241,7 +245,7 @@ Architectural trade-offs, PRD scope changes, and cross-team decisions → discus
 
 | I need to... | Go to... |
 |---|---|
-| Understand the 31-step workflow | `CLAUDE.md` (inlined) or `docs/playbook/process-overview.md` (visual) |
+| Understand the 33-step workflow | `CLAUDE.md` (inlined) or `docs/playbook/process-overview.md` (visual) |
 | Check domain boundaries | `docs/system-manifest.yaml` |
 | Look up an architectural decision | `docs/02-design/technical/adrs/design-decisions.md` |
 | Find the HLD for a component | `docs/02-design/technical/hld/index.md` |

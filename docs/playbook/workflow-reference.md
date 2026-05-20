@@ -1,4 +1,4 @@
-# Workflow Reference — The Full 31-Step Process
+# Workflow Reference — The Full 33-Step Process
 
 ## 4. Collaborative Development: The Design Room
 
@@ -50,7 +50,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 > | **Incremental** (default) | `/start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
 > | **Full baseline sprint** (optional) | `/start-brownfield` → then `/generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
 >
-> **Once onboarded, the 31-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
+> **Once onboarded, the 33-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
@@ -144,25 +144,25 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 | **Requirements** | Issue 👤🤖 → Figma review 👤 (if exists) |
 | **Design** | Impact analysis 🤖 → ROI estimate 👤🤖 (conditional) → Update docs 👤🤖 🔁 → Update IaC 👤🤖 → Test plan 👤🤖 🔁 → Training plan 👤🤖 → Decision packet 👤 |
 | **Build (TDD)** | Generate tests (RED) 🤖 → Human reviews tests 👤 🔁 → Tests improve design 🤖 🔁 → Verify RED 🤖 → Generate code (GREEN) 🤖 → Verify GREEN 🤖 🔁 → Refactor 👤🤖 🔁 → Convention checks 🤖 |
-| **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Rerun tests 🤖 → Reconcile docs 👤🤖 🔁 |
+| **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Architect code review 👤 🔁 → Rerun tests 🤖 → Reconcile docs 👤🤖 🔁 → QA verification 👤 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
-| **Ship** | Create PR 👤🤖 → Integration verify 👤 → Figma comparison 👤 (if exists) → Merge + canary deploy 👤🤖 → Promote or rollback 👤 |
-| **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
+| **Ship** | Verify PR completeness 👤🤖 → Integration verify 👤 → Figma comparison 👤 (if exists) → Merge + canary deploy 👤🤖 → Promote or rollback 👤 |
+| **Post-ship** | Penetration test 👤 (conditional) → 30-day ROI check 👤 → 90-day ROI check 👤 |
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 31 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **10 human-only** 👤.
+Of 33 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **12 human-only** 👤.
 
-### 5.3 The Two-Round Code Review
+### 5.3 Code Review: AI Rounds and Architect Review
 
-| | Round 1 (pre-test) | Round 2 (post-test) |
-|---|---|---|
-| **Focus** | Structure, security, spec adherence | Edge cases, regressions, completeness |
-| **What it catches** | Design-level problems | Behavior-level problems |
-| **When it saves time** | Before test investment | After tests reveal unexpected behavior |
-| **Who** | AI reviewer | AI reviewer |
+| | Round 1 (Step 18) | Round 2 (Step 19) | Step 19a (Architect) |
+|---|---|---|---|
+| **Focus** | Structure, security, spec adherence | Edge cases, regressions, completeness | Business logic, architectural consistency, domain integrity, hidden coupling, naming |
+| **What it catches** | Design-level problems | Behavior-level problems | Judgment-call problems AI cannot assess |
+| **When it saves time** | Before test investment | After tests reveal unexpected behavior | Before QA and Assess begin |
+| **Who** | AI reviewer | AI reviewer | Human architect (GitHub PR review) |
 
-Finding structural problems after tests pass means the tests are now wrong too. Round 1 catches those early.
+Finding structural problems after tests pass means the tests are now wrong too. Round 1 catches those early. After the AI rounds resolve mechanical issues, the architect reviews on GitHub for judgment calls — and also creates the GitHub PR at step 19a.
 
 ### 5.4 Design Spec: Input at the Start, Verification at the End
 

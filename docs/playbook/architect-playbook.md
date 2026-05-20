@@ -79,7 +79,7 @@ To delegate a slice to a team member, point them at the LLD and the workflow:
 Implement the component at docs/02-design/technical/lld/[path].md.
 Follow the developer playbook at docs/06-team/developer-playbook.md.
 The gates are: design check-in, tests reviewed, code review Round 1,
-code review Round 2. Do not proceed past a gate without my approval.
+code review Round 2, architect code review (step 19a). Do not proceed past a gate without my approval.
 ```
 
 ---
@@ -116,6 +116,7 @@ For each requirement: Done / Partial / Not started. What's next?
 - **IaC / Ops** — infrastructure manifests, deployment configs, migrations, monitoring setup
 - **Integration** — slices work together, not just in isolation
 - **A deployable system at all times** — after every slice ships, the system must work on the target environment
+- **Architect code review (step 19a)** — after AI rounds complete, review the implementation on GitHub using the approve/request-changes UI; the developer runs `/architect:review-code` to create the GitHub PR with the AI review summary and a 7-item judgment checklist; assess business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, and error handling; approve or request changes; the PR is not merged at this step — merging happens at step 28
 
 ---
 
