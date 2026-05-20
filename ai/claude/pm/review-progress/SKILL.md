@@ -1,5 +1,4 @@
 ---
-name: hitl:pm:review-progress
 description: Review current sprint or milestone progress against PRD goals and acceptance criteria. Surfaces gaps and blockers.
 argument-hint: "[sprint number or milestone name]"
 disable-model-invocation: true

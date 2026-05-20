@@ -18,9 +18,9 @@ Do not assume Developer mode by default.
 
 If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively offer the right start command based on the project situation:
 
-- `/start-prd` — new project, no source code yet, starting from a PRD
-- `/start-brownfield` — existing codebase to onboard into HITL
-- `/start-migration` — migrating from one system to another
+- `/hitl:dev:start-prd` — new project, no source code yet, starting from a PRD
+- `/hitl:dev:start-brownfield` — existing codebase to onboard into HITL
+- `/hitl:dev:start-migration` — migrating from one system to another
 
 Do not wait for the user to discover these on their own. Assess the project state and recommend the right one immediately if the project appears unconfigured.
 
@@ -40,7 +40,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/dev-practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev:practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/hitl:dev:apply-change`.
 
 ## Testing
 

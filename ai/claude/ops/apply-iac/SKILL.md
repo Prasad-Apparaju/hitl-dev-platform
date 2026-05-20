@@ -1,5 +1,4 @@
 ---
-name: hitl:ops:apply-iac
 description: Review and apply infrastructure changes defined in the IaC plan. Runs a dry-run, presents all changes for operator approval, applies on explicit confirmation, and verifies state matches the plan.
 argument-hint: "[change ID or IaC directory path]"
 disable-model-invocation: true

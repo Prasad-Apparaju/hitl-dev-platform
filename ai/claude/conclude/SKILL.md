@@ -1,5 +1,4 @@
 ---
-name: hitl:dev:conclude
 description: Turn a concluded Slack design-room thread into GitHub artifacts — ADR, issue, and HLD/LLD updates. Reads the thread, extracts the decision, confirms the summary, then generates and commits the artifacts. Use after a team has reached a decision in a Slack thread.
 argument-hint: "[Slack thread URL or topic description]"
 disable-model-invocation: true

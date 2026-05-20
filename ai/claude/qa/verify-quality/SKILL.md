@@ -1,5 +1,4 @@
 ---
-name: hitl:qa:verify-quality
 description: Post-handoff independent quality verification. QA verifies the running build against acceptance criteria, runs exploratory testing, unskips and runs E2E Playwright tests (desktop + mobile web), runs the smoke suite, and checks that past incident failure modes cannot be reproduced. Blocks or approves promotion to Ops.
 argument-hint: "[feature name or build link]"
 disable-model-invocation: true

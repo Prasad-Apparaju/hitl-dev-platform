@@ -1,5 +1,4 @@
 ---
-name: hitl:ops:post-deploy-monitor
 description: Required post-deployment monitoring after every Tier 2+ deployment reaches full traffic. Reads go/no-go criteria from the rollout plan, samples metrics at risk-scaled intervals over the full soak period, and produces a STABLE/WATCH/ROLLBACK verdict. Run after the final canary promotion — /hitl:ops:deploy records the required soak duration by risk level.
 argument-hint: "[change ID, e.g. 'GH-42']"
 disable-model-invocation: true

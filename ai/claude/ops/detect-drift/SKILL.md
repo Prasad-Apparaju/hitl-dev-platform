@@ -1,5 +1,4 @@
 ---
-name: hitl:ops:detect-drift
 description: Compare the live environment against the IaC definition to detect configuration drift — manual changes, out-of-band deploys, or config values that have diverged from what IaC and the vault define. Run before every deployment as a pre-flight check and on a schedule to catch drift between releases. Reports a drift inventory and classifies each item by risk.
 argument-hint: "[environment: staging|production] [change ID or 'scheduled']"
 disable-model-invocation: true

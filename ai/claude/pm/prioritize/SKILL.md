@@ -1,5 +1,4 @@
 ---
-name: hitl:pm:prioritize
 description: Help PM prioritize features or backlog items using value, effort, risk, and strategic alignment. Use when the team needs to make prioritization decisions.
 argument-hint: "[list of features or 'current backlog']"
 disable-model-invocation: true

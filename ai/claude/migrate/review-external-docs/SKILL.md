@@ -1,5 +1,4 @@
 ---
-name: hitl:dev:review-external-docs
 description: Architect deep review of external migration documentation. Reads staged reference docs, critically evaluates their reliability and gaps, and produces two outputs — a migration review (critique) and a migration brief (PRD-equivalent). The migration brief is the required input for /hitl:architect:design-system or /hitl:architect:design-feature. No HITL design work begins until both documents are approved.
 argument-hint: "[optional: specific doc or section to focus on]"
 disable-model-invocation: true

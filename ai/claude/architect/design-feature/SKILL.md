@@ -1,5 +1,4 @@
 ---
-name: hitl:architect:design-feature
 description: Orchestrate the architect's design journey for a change — steps 3 through 9. Covers impact analysis, HLD and LLD generation with approval gates, slice decomposition, test case planning, and decision packet assembly. Produces decision packets ready to hand to developers. Do not invoke spontaneously; requires a GitHub issue.
 argument-hint: "[issue number or feature description]"
 disable-model-invocation: true
@@ -89,7 +88,7 @@ If backwards-incompatible changes are identified, flag them explicitly. Do not p
 
 ### 1e. Determine the tier
 
-Use the tier definitions from `skills/hitl:dev:practices/SKILL.md`. State the tier with justification.
+Use the tier definitions from `skills/dev/practices/SKILL.md`. State the tier with justification.
 
 **Challenge the tier before accepting it:**
 - Cross-domain or multi-service changes are Tier 3 even when described as simple
@@ -100,7 +99,7 @@ Use the tier definitions from `skills/hitl:dev:practices/SKILL.md`. State the ti
 
 Estimate implementation effort (in days) based on the number of affected domains, facade API changes, and IaC scope. This determines whether step 4 (ROI) is required.
 
-For token cost estimation, use the phase-level formula from `skills/hitl:dev:practices/roi-estimation.md`.
+For token cost estimation, use the phase-level formula from `skills/dev/practices/roi-estimation.md`.
 
 ### 1g. Initialize `.hitl/current-change.yaml`
 
@@ -146,7 +145,7 @@ Do not proceed until the architect confirms.
 
 If effort estimate exceeds 1 day:
 
-Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `skills/hitl:dev:practices/roi-estimation.md`. Fill in:
+Record the ROI section in `.hitl/current-change.yaml` under `roi_estimate` using the template in `skills/dev/practices/roi-estimation.md`. Fill in:
 - Value dimension
 - Expected outcome (specific, falsifiable, with timeframe)
 - Baseline metric placeholder (note: architect must measure this now, not estimate it)
