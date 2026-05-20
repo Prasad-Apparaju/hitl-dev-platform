@@ -49,6 +49,10 @@
 
 1. (Continued from compacted context — v7 review feedback) — addressed all 4 v7 findings: (Medium) fix plugin.json description to hyphen-style commands + add manifest sync to build.sh; (Medium) add ${CLAUDE_PLUGIN_ROOT}/ prefix to bundled file refs via two-pass normalization in build.sh; (Low) delete skills/README.md + prevent rebuild; (Low) fix 31-step → 32-step in codex, fix stale source paths in generate-docs SKILL.md.
 
+## 2026-05-19 Session 07
+
+1. "more feedback `/tmp/hitl-repo-review-feedback-v10.md`" — clean pass, no blocking issues. Added CLAUDE_BIN env var override and resolved-path printing to build.sh to handle PATH shadowing by broken claude wrapper.
+
 ## 2026-05-19 Session 06
 
 1. "more feedback `/tmp/hitl-repo-review-feedback-v9.md`" — (Medium) replaced PyYAML-dependent frontmatter guard in build.sh with `claude plugin validate "$PLUGIN_DIR"` call; no new dependencies, prints skip message if claude not on PATH. v9 also confirmed live smoke test passed: skill loaded correctly with first heading returned.
