@@ -43,7 +43,26 @@ Read `.hitl/current-change.yaml`. Extract:
 - `source_artifacts.decision_packet` — path to the decision packet
 - Any AI review findings recorded from rounds 1 and 2
 
-### 1b. Create the GitHub PR
+### 1b. Pre-flight checks
+
+Before pushing, run these checks and stop if any fail:
+
+```bash
+# Must not be on main/master
+branch=$(git branch --show-current)
+[[ "$branch" == "main" || "$branch" == "master" ]] && echo "ERROR: on protected branch $branch — create a feature branch first" && exit 1
+
+# Working tree must be clean (all changes committed)
+[[ -n "$(git status --short)" ]] && echo "ERROR: uncommitted changes — commit or stash before creating PR" && exit 1
+
+# PR must not already exist for this branch
+existing=$(gh pr view --json url --jq '.url' 2>/dev/null)
+[[ -n "$existing" ]] && echo "PR already exists: $existing — use that PR, do not create a duplicate" && exit 1
+```
+
+If any check fails, stop and report the issue to the developer. Do not proceed.
+
+### 1c. Create the GitHub PR
 
 Push the current branch and open a regular PR. The PR description must include all artifacts assembled so far:
 
@@ -80,14 +99,23 @@ EOF
 )"
 ```
 
+Request the architect as a reviewer:
+
+```bash
+# Replace <architect-github-username> with the value from system-manifest.yaml or team config
+gh pr edit --add-reviewer <architect-github-username>
+```
+
+If the architect's GitHub username is not known, ask the developer before proceeding.
+
 Record the PR URL in `.hitl/current-change.yaml`:
 ```yaml
 pr_url: <PR URL from gh pr create output>
 ```
 
-Report the PR URL to the developer so they can share it with the architect.
+Report the PR URL to the developer.
 
-### 1c. Summarise AI findings (for PR description)
+### 1d. Summarise AI findings (for PR description)
 
 From rounds 1 and 2, pull findings classified as **acceptable drift** — these are decisions the developer made that AI accepted. They are the first candidates for the architect to scrutinise on the PR.
 

@@ -1,6 +1,6 @@
 # Workflow Steps — Full Detail
 
-Step-by-step reference for the 31-step HITL change workflow. The SKILL.md entrypoint has the summary; this file has the detail.
+Step-by-step reference for the 32-step HITL change workflow. The SKILL.md entrypoint has the summary; this file has the detail.
 
 ---
 
@@ -156,7 +156,7 @@ Developer has delivered a stable build with all tests passing and docs reconcile
 > **Empty incident registry:** `/impact-brief` will produce section 5 without historical failure context. The rollout strategy draft will be based on the change's risk tier alone — ops should add manual go/no-go criteria to compensate for the missing incident signal.
 
 **24. Risk-Rated Rollout Plan** — use `/ops:review-release`
-Ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist before the PR is created.
+Ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist; it will be added to the open PR description at Step 25 (Verify PR completeness).
 
 > **Empty incident registry:** Base the canary criteria on the change's risk tier and known failure modes from the LLD rather than historical incidents. Flag this in the rollout plan: "No incident history available — criteria are forward-looking only."
 >
