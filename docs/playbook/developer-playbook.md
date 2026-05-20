@@ -55,7 +55,7 @@ I implement from?
 For every change — feature, fix, or refactor — start with:
 
 ```
-/hitl:dev:practices
+/hitl:dev-practices
 ```
 
 Tell Claude what you're doing and it will confirm the tier and walk you through each step:
@@ -72,7 +72,7 @@ The workflow is: issue → impact analysis → LLD review → TDD (tests first) 
 ## Step 5 — Write tests before code (TDD)
 
 ```
-/hitl:dev:tdd
+/hitl:dev-tdd
 
 I'm implementing [component] from docs/02-design/technical/lld/[path].
 Generate the maximum set of tests from the LLD spec — happy paths,
@@ -105,7 +105,7 @@ and docs/system-manifest.yaml. Simplest correct code only.
 ## Step 7 — Review your own code before the PR
 
 ```
-/hitl:dev:check-conventions
+/hitl:dev-check-conventions
 
 Review the code I just wrote against the LLD and the system
 manifest conventions. Flag any violations, missing inline comments,
@@ -126,7 +126,7 @@ are correctly applied everywhere they're needed.
 ## Step 8 — Write the impact brief before the PR
 
 ```
-/hitl:dev:impact-brief
+/hitl:dev-impact-brief
 
 Generate the downstream impact brief for this change. Include:
 1. What flows and components changed

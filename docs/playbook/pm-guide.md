@@ -18,19 +18,19 @@ Type these in Claude Code. Claude loads the right context automatically.
 
 | Command | What it does |
 |---|---|
-| `/hitl:pm:design-feature <rough idea>` | Guided 7-phase process: shapes a rough idea into structured requirements, a UI prototype, and acceptance criteria |
-| `/hitl:pm:add-feature <description>` | Draft a new requirement in the PRD with acceptance criteria, use case, and GitHub issue |
-| `/hitl:pm:update-requirement FR-xxx-N <change>` | Update an existing requirement, flag ripple effects |
-| `/hitl:pm:review-progress` | Gap analysis: PRD requirements vs what's actually built |
-| `/hitl:pm:prioritize` | Review backlog by priority, suggest promotions/demotions |
-| `/hitl:pm:report-bug <description>` | Create a structured GitHub issue (checks for duplicates first) |
-| `/hitl:pm:answer-questions` | Walk through PRD §10 open questions one at a time, resolve them |
-| `/hitl:pm:prep-demo` | Generate a demo checklist from PRD use cases + acceptance criteria |
-| `/hitl:pm:review-scope-change <PR#>` | Summarize a team-proposed PRD change, generate review questions |
+| `/hitl:pm-design-feature <rough idea>` | Guided 7-phase process: shapes a rough idea into structured requirements, a UI prototype, and acceptance criteria |
+| `/hitl:pm-add-feature <description>` | Draft a new requirement in the PRD with acceptance criteria, use case, and GitHub issue |
+| `/hitl:pm-update-requirement FR-xxx-N <change>` | Update an existing requirement, flag ripple effects |
+| `/hitl:pm-review-progress` | Gap analysis: PRD requirements vs what's actually built |
+| `/hitl:pm-prioritize` | Review backlog by priority, suggest promotions/demotions |
+| `/hitl:pm-report-bug <description>` | Create a structured GitHub issue (checks for duplicates first) |
+| `/hitl:pm-answer-questions` | Walk through PRD §10 open questions one at a time, resolve them |
+| `/hitl:pm-prep-demo` | Generate a demo checklist from PRD use cases + acceptance criteria |
+| `/hitl:pm-review-scope-change <PR#>` | Summarize a team-proposed PRD change, generate review questions |
 
 ---
 
-## Designing a Feature with `/hitl:pm:design-feature`
+## Designing a Feature with `/hitl:pm-design-feature`
 
 Use this command when you have a rough idea and need to shape it into something the team can build from. It runs you through 7 phases — each one requires your approval before moving to the next.
 

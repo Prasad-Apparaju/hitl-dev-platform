@@ -1,5 +1,5 @@
 ---
-description: Required post-deployment monitoring after every Tier 2+ deployment reaches full traffic. Reads go/no-go criteria from the rollout plan, samples metrics at risk-scaled intervals over the full soak period, and produces a STABLE/WATCH/ROLLBACK verdict. Run after the final canary promotion — /hitl:ops:deploy records the required soak duration by risk level.
+description: Required post-deployment monitoring after every Tier 2+ deployment reaches full traffic. Reads go/no-go criteria from the rollout plan, samples metrics at risk-scaled intervals over the full soak period, and produces a STABLE/WATCH/ROLLBACK verdict. Run after the final canary promotion — /hitl:ops-deploy records the required soak duration by risk level.
 argument-hint: "[change ID, e.g. 'GH-42']"
 disable-model-invocation: true
 ---
@@ -10,7 +10,7 @@ Required monitoring after every Tier 2+ deployment reaches full traffic. Produce
 
 **Input:** $ARGUMENTS (change ID)
 
-This skill is separate from `/hitl:ops:monitor-canary` (which runs at each promotion step). This runs after the **final promotion** and covers the full soak window — the change is not done until this skill produces a STABLE verdict.
+This skill is separate from `/hitl:ops-monitor-canary` (which runs at each promotion step). This runs after the **final promotion** and covers the full soak window — the change is not done until this skill produces a STABLE verdict.
 
 **Soak duration and check interval by risk level:**
 
@@ -30,7 +30,7 @@ Read `rollout_plan.risk` from `.hitl/current-change.yaml` to determine which row
 Read `.hitl/current-change.yaml`:
 - `rollout_plan.risk` — determines soak duration and check interval (see table above)
 - `rollout_plan.go_no_go` — the criteria and their thresholds
-- `observability.dashboard` — the dashboard URL set up by `/hitl:ops:setup-observability`
+- `observability.dashboard` — the dashboard URL set up by `/hitl:ops-setup-observability`
 - `observability.alerts` — the alert names to watch
 - `deployment.deployed_at` — reference timestamp for baseline comparison
 
@@ -77,7 +77,7 @@ gh issue comment <issue-number> \
 **Threshold:** <threshold>
 **Time:** <ISO timestamp>
 
-Recommend: investigate before continuing soak. If the trend continues, consider rollback with /hitl:ops:rollback."
+Recommend: investigate before continuing soak. If the trend continues, consider rollback with /hitl:ops-rollback."
 ```
 
 ---
@@ -108,7 +108,7 @@ Rationale: <one sentence>
 
 **WATCH** — all criteria within threshold but one or more showed ⚠️ trend. Recommend a follow-up check in 24h.
 
-**ROLLBACK** — one or more criteria exceeded threshold. Run `/hitl:ops:rollback`.
+**ROLLBACK** — one or more criteria exceeded threshold. Run `/hitl:ops-rollback`.
 
 ---
 

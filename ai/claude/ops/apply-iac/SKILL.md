@@ -111,7 +111,7 @@ iac_plan:
   apply_output: <summary — N resources added, M changed, K deleted>
 ```
 
-Report: "IaC applied. `<summary>`. Ready to deploy with `/hitl:ops:deploy`."
+Report: "IaC applied. `<summary>`. Ready to deploy with `/hitl:ops-deploy`."
 
 ---
 
@@ -121,4 +121,4 @@ Report: "IaC applied. `<summary>`. Ready to deploy with `/hitl:ops:deploy`."
 - The HITL approval gate in Step 3 is mandatory — never auto-apply
 - Destructive changes (deletes, replacements) always require a second explicit confirmation
 - If apply fails partway through, stop and report the partial state — do not retry automatically; partial state must be diagnosed first
-- Record `iac_plan.status: applied` before handing off to `/hitl:ops:deploy` — the deploy skill checks this
+- Record `iac_plan.status: applied` before handing off to `/hitl:ops-deploy` — the deploy skill checks this

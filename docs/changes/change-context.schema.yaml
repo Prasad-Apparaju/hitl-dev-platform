@@ -176,7 +176,7 @@ token_tracking:
   description: "AI dev token cost for this change — used for ROI tracking and step-level optimization"
 
   estimated:
-    description: "Populated by /hitl:dev:apply-change at step 3. Derived from artifact file sizes × model rates."
+    description: "Populated by /hitl:dev-apply-change at step 3. Derived from artifact file sizes × model rates."
     total_cost_usd:
       type: number
       description: "Estimated total token cost in USD across all AI steps"

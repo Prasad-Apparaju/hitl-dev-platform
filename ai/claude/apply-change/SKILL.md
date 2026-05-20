@@ -39,7 +39,7 @@ Before any analysis, locate and confirm these exist:
 - **HLD/LLD** — path(s) that describe this area (or note they need to be created)
 - **System manifest domain** — which domain in `docs/system-manifest.yaml` is affected
 
-If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev:generate-docs` first."
+If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first."
 
 ### Step 3: Impact Analysis
 Identify and list:

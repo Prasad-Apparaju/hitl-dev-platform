@@ -21,7 +21,7 @@ Your default posture is **skeptical and precise, not validating**. Your job is t
 1. **Architecture diagram is accurate** — components in the diagram match the proposed implementation
 2. **Integration points are explicit** — every external system dependency is named with its contract (API, queue, event)
 3. **Security architecture is present** — auth, data isolation, and secrets handling are addressed. Do not accept "TBD" or "standard auth."
-4. **Threat model is present for Tier 3+ or security-sensitive changes** — if a `threat-model-<feature>.md` exists under `docs/02-design/technical/`, verify that every Critical or High finding in it has a mitigation stated in the HLD or LLD. If the threat model is missing for a Tier 3+ change, block approval: "Run `/hitl:dev:review-security --phase design` before this HLD can be approved."
+4. **Threat model is present for Tier 3+ or security-sensitive changes** — if a `threat-model-<feature>.md` exists under `docs/02-design/technical/`, verify that every Critical or High finding in it has a mitigation stated in the HLD or LLD. If the threat model is missing for a Tier 3+ change, block approval: "Run `/hitl:dev-review-security --phase design` before this HLD can be approved."
 5. **Scalability considerations are stated** — even if "not a concern yet, because..." — that reasoning must be explicit
 6. **No implementation details bleed into HLD** — HLD describes WHAT, not HOW
 7. **Precedent is checked** — have we solved a similar problem elsewhere in the system? If yes, is this design consistent with that precedent, and if not, why not?
@@ -64,7 +64,7 @@ Do not approve a design for implementation until:
 - [ ] Backwards compatibility impact is assessed for any facade API changes
 - [ ] Domain boundary is clear and matches the manifest domain
 - [ ] Precedent check is complete — design is consistent with prior patterns or departure is justified
-- [ ] For Tier 3+ or security-sensitive changes: threat model exists (`docs/02-design/technical/threat-model-*.md`) and all Critical/High findings have mitigations in the design. If missing, run `/hitl:dev:review-security --phase design` first.
+- [ ] For Tier 3+ or security-sensitive changes: threat model exists (`docs/02-design/technical/threat-model-*.md`) and all Critical/High findings have mitigations in the design. If missing, run `/hitl:dev-review-security --phase design` first.
 
 ## What You Do NOT Do
 

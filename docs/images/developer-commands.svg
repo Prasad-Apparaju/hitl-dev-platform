@@ -25,7 +25,7 @@
   <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (8)</text>
 
   <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
-  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/dev-practices</text>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:dev-practices</text>
   <text x="200" y="261" fill="#6c7086" font-size="12">  ·</text>
   <text x="213" y="261" fill="#a6adc8" font-size="12">Load the HITL workflow for a change — tiers, TDD, review, ship</text>
 
@@ -40,7 +40,7 @@
   <text x="213" y="333" fill="#a6adc8" font-size="12">TDD-as-design loop — tests first (RED) → review → code (GREEN) → refactor</text>
 
   <rect x="17" y="348" width="746" height="36" fill="transparent"/>
-  <text x="28" y="369" fill="#cba6f7" font-size="13">/apply-change</text>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:dev-apply-change</text>
   <text x="200" y="369" fill="#6c7086" font-size="12">  ·</text>
   <text x="213" y="369" fill="#a6adc8" font-size="12">Impact analysis — affected components, APIs, docs, tests</text>
 

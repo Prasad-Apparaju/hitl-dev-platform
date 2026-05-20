@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Bringing an existing codebase into HITL AI-Driven Development. Work through these steps in order — pause after each and wait for confirmation before proceeding.
 
-**Quick sanity check:** If this is a brand-new project with no source code, use `/hitl:dev:start-prd` instead. If you are migrating from one system to another (not just onboarding what exists), use `/hitl:dev:start-migration`.
+**Quick sanity check:** If this is a brand-new project with no source code, use `/hitl:dev-start-prd` instead. If you are migrating from one system to another (not just onboarding what exists), use `/hitl:dev-start-migration`.
 
 ---
 
@@ -49,15 +49,15 @@ If a real manifest already exists, read it, summarize the domains, and ask: "Is 
 Ask: "Which components are most critical and most likely to change in the near term? List up to three."
 
 For each component:
-- Say: "I'll generate an HLD and LLD for [component]. Run `/hitl:dev:generate-docs` or I can do it now — which do you prefer?"
-- If they want it now, run `/hitl:dev:generate-docs` for that component.
+- Say: "I'll generate an HLD and LLD for [component]. Run `/hitl:dev-generate-docs` or I can do it now — which do you prefer?"
+- If they want it now, run `/hitl:dev-generate-docs` for that component.
 - Note: this is incremental — you do not need to document everything before starting work.
 
 ---
 
 ## Step 5 — Seed the registries
 
-The 32-step workflow queries these two registries at multiple points. They must exist before `/hitl:dev:practices` is run for the first time.
+The 32-step workflow queries these two registries at multiple points. They must exist before `/hitl:dev-practices` is run for the first time.
 
 **Test registry** (`docs/03-engineering/testing/test-registry.yaml`):
 - Ask: "Do you have existing tests? If so, I'll create a registry stub from your test files."
@@ -67,7 +67,7 @@ The 32-step workflow queries these two registries at multiple points. They must 
 **Incident registry** (`docs/04-operations/incident-registry.yaml`):
 - Ask: "What broke in production in the last 6 months? Describe each incident in one sentence."
 - For each answer, add one entry with `description`, `domain` (best guess), and `date`.
-- If they have nothing: create an empty stub and say: "You can add entries later — after each production incident, run `/hitl:ops:log-incident`."
+- If they have nothing: create an empty stub and say: "You can add entries later — after each production incident, run `/hitl:ops-log-incident`."
 
 ---
 
@@ -113,15 +113,15 @@ Output this exactly:
 ---
 **Brownfield baseline established.**
 
-You are starting incrementally: manifest and priority component docs exist, registries are seeded. Undocumented components will need their LLDs created when you first change them — run `/hitl:dev:generate-docs` for that component, then resume.
+You are starting incrementally: manifest and priority component docs exist, registries are seeded. Undocumented components will need their LLDs created when you first change them — run `/hitl:dev-generate-docs` for that component, then resume.
 
 **What this means for your first changes:**
 - Treat AI output from steps 5, 10, and 14 as drafts — the docs are new and may not yet reflect actual behavior. Increase human review scrutiny until the docs have been corrected through real use.
-- If `/hitl:dev:practices` stops with "no LLD found" on an undocumented component, run `/hitl:dev:generate-docs` for that component, then resume. This friction decreases naturally as each component gets its first doc pass through real use.
+- If `/hitl:dev-practices` stops with "no LLD found" on an undocumented component, run `/hitl:dev-generate-docs` for that component, then resume. This friction decreases naturally as each component gets its first doc pass through real use.
 
 For every change going forward:
-1. Create a GitHub issue — or use `/hitl:pm:add-feature` / `/hitl:pm:design-feature` to shape requirements first
-2. Run `/hitl:dev:practices` — the 32-step workflow starts here
+1. Create a GitHub issue — or use `/hitl:pm-add-feature` / `/hitl:pm-design-feature` to shape requirements first
+2. Run `/hitl:dev-practices` — the 32-step workflow starts here
 3. Update HLD/LLD if the design changes
 4. Code → tests → PR
 

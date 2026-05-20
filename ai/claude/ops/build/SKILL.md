@@ -78,7 +78,7 @@ build:
   status: ready
 ```
 
-Report: "Build verified. Artifact: `<artifact>`. Ready to deploy with `/hitl:ops:deploy`."
+Report: "Build verified. Artifact: `<artifact>`. Ready to deploy with `/hitl:ops-deploy`."
 
 ---
 
