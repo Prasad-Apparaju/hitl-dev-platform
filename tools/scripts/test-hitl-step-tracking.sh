@@ -49,10 +49,10 @@ echo ""
 
 # ── Breadcrumb tests ──────────────────────────────────────────────────────────
 
-echo "-- Breadcrumb: step in the middle of 31-step workflow --"
+echo "-- Breadcrumb: step in the middle of 32-step workflow --"
 write_context "GH-42" 2 14 "Generate code (GREEN)" "Build"
 OUT=$(run_welcome)
-echo "$OUT" | grep -q "Step 14 / 31: Generate code (GREEN)" \
+echo "$OUT" | grep -q "Step 14 / 32: Generate code (GREEN)" \
     && pass "header shows correct step number and name" \
     || fail "header step 14 not found in: $OUT"
 echo "$OUT" | grep -q "HITL — Build" \
@@ -72,7 +72,7 @@ echo ""
 echo "-- Breadcrumb: step 1 (left edge of trail) --"
 write_context "GH-42" 2 1 "Create GitHub issue" "Design"
 OUT=$(run_welcome)
-echo "$OUT" | grep -q "Step 1 / 31" \
+echo "$OUT" | grep -q "Step 1 / 32" \
     && pass "step 1 header correct" \
     || fail "step 1 header wrong: $OUT"
 echo "$OUT" | grep -q "▶1\." \
@@ -84,15 +84,15 @@ echo "$OUT" | grep -qv "✓" \
     || fail "unexpected ✓ markers at step 1"
 
 echo ""
-echo "-- Breadcrumb: step 31 (right edge of trail) --"
-write_context "GH-42" 2 31 "90-day ROI review" "Review"
+echo "-- Breadcrumb: step 32 (right edge of trail) --"
+write_context "GH-42" 2 32 "90-day ROI review" "Post-Ship"
 OUT=$(run_welcome)
-echo "$OUT" | grep -q "Step 31 / 31" \
-    && pass "step 31 header correct" \
-    || fail "step 31 header wrong: $OUT"
-echo "$OUT" | grep -q "▶31\." \
-    && pass "trail marks step 31 as current" \
-    || fail "▶31 not found in: $OUT"
+echo "$OUT" | grep -q "Step 32 / 32" \
+    && pass "step 32 header correct" \
+    || fail "step 32 header wrong: $OUT"
+echo "$OUT" | grep -q "▶32\." \
+    && pass "trail marks step 32 as current" \
+    || fail "▶32 not found in: $OUT"
 
 echo ""
 echo "-- Breadcrumb: migration setup phase --"
