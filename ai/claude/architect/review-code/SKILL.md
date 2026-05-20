@@ -33,7 +33,7 @@ Format: `---` line, `**Architect Code Review — Step N / 3: [Name]**`, trail, `
 
 ---
 
-## Step 1 — Prepare the review package
+## Step 1 — Create the PR and prepare the review package
 
 ### 1a. Gather change context
 
@@ -43,104 +43,86 @@ Read `.hitl/current-change.yaml`. Extract:
 - `source_artifacts.decision_packet` — path to the decision packet
 - Any AI review findings recorded from rounds 1 and 2
 
-### 1b. Build the diff
+### 1b. Create the GitHub PR
+
+Push the current branch and open a regular PR. The PR description must include all artifacts assembled so far:
 
 ```bash
-git diff main...HEAD -- $(cat .hitl/current-change.yaml | python3 -c "
-import sys, yaml
-cy = yaml.safe_load(sys.stdin)
-paths = cy.get('allowed_paths', [])
-print(' '.join(paths))
-")
+git push -u origin HEAD
+
+gh pr create \
+  --title "<short summary of the change>" \
+  --body "$(cat <<'EOF'
+## Change
+Closes #<issue-number>
+
+## Artifacts
+- **LLD:** <source_artifacts.lld>
+- **Decision packet:** <source_artifacts.decision_packet>
+- **Test plan:** `.hitl/current-change.yaml` — `test_plan` section
+
+## AI Review Summary
+**Round 1 findings (acceptable drift carried forward):**
+- <finding or "none">
+
+**Round 2 findings (acceptable drift carried forward):**
+- <finding or "none">
+
+## Checklist (architect to complete in GitHub review)
+- [ ] Business logic — code solves the problem described in the issue, not just the spec
+- [ ] Architectural consistency — approach is consistent with similar solutions elsewhere in the system
+- [ ] Domain boundary integrity — no code reaches into another domain's internals
+- [ ] Hidden coupling — no shared mutable state, implicit ordering, or timing assumptions outside the LLD
+- [ ] Complexity — could this be simpler without losing correctness?
+- [ ] Naming — names communicate intent to a future reader
+- [ ] Error handling — failures are diagnosable from logs; errors are surfaced correctly to callers
+EOF
+)"
 ```
 
-If `allowed_paths` is empty, fall back to `git diff main...HEAD`.
-
-### 1c. Summarise AI findings
-
-From rounds 1 and 2, pull the findings that were classified as **acceptable drift** (documented, no code change required). These are the decisions the developer made that the AI accepted — they are the first candidates for the architect to scrutinise.
-
-### 1d. Present the package
-
+Record the PR URL in `.hitl/current-change.yaml`:
+```yaml
+pr_url: <PR URL from gh pr create output>
 ```
-Architect Code Review Package — <change-ID>
-────────────────────────────────────────────
-Domain:       <manifest.domain>
-LLD:          <source_artifacts.lld>
-Changed files:
-  <list each file and a one-line description of what changed>
 
-AI Round 1 findings carried forward (acceptable drift):
-  - <finding 1>
-  - <finding 2>
-  (or "none")
+Report the PR URL to the developer so they can share it with the architect.
 
-AI Round 2 findings carried forward:
-  - <finding>
-  (or "none")
-```
+### 1c. Summarise AI findings (for PR description)
+
+From rounds 1 and 2, pull findings classified as **acceptable drift** — these are decisions the developer made that AI accepted. They are the first candidates for the architect to scrutinise on the PR.
 
 ---
 
-## Step 2 — Architect review
+## Step 2 — Architect reviews on GitHub
 
-Present the checklist below to the architect. The architect reads the diff and the LLD, then answers each item. Do not answer on the architect's behalf — these are judgment calls that require a human decision.
+The architect receives a GitHub review request notification and reviews the PR on GitHub using line comments and the review UI.
 
----
+**What the architect reviews** (the checklist is in the PR description):
 
-**Architect checklist — what AI rounds did not assess:**
+**1. Business logic correctness** — Does this code actually solve the problem the GitHub issue describes, or does it solve the spec of the problem? Walk through the most important acceptance criterion manually.
 
-**1. Business logic correctness**
-The spec may be met but the logic may still be wrong. Ask:
-- Does this code actually solve the problem the GitHub issue describes, or does it solve the spec of the problem?
-- Walk through the most important acceptance criterion manually. Does the code do what you expect, step by step?
+**2. Architectural consistency** — Is this consistent with how similar problems are solved elsewhere in the same domain? If it diverges, is the divergence justified or does it introduce a second way to do the same thing?
 
-**2. Architectural consistency**
-Check whether the approach is consistent with existing patterns in the same domain or adjacent domains. Prefer a graph query:
-```
-/graphify query "similar patterns in domain: <domain-name>"
-/graphify query "how is <pattern-type> implemented elsewhere in the system"
-```
-Fall back to reading LLDs in `docs/02-design/technical/lld/` directly.
-- Is this consistent with how similar problems are solved elsewhere?
-- If it diverges, is the divergence justified or does it introduce a second way to do the same thing?
+**3. Domain boundary integrity** — Does any code reach into another domain's internals rather than calling its facade API? Check `system-manifest.yaml` `depends_on` — are any new implicit dependencies introduced?
 
-**3. Domain boundary integrity**
-- Does any code reach into another domain's internals rather than calling its facade API?
-- Does this code expose any internal implementation details that callers should not depend on?
-- Check `system-manifest.yaml` `depends_on` for the domain — are any new implicit dependencies introduced?
+**4. Hidden coupling** — Shared mutable state without coordination; implicit ordering (A must run before B but nothing enforces it); timing assumptions as magic numbers; global side effects not captured in the LLD?
 
-**4. Hidden coupling**
-Things the spec rarely captures:
-- Shared mutable state accessed without coordination
-- Implicit ordering dependency (A must run before B, but nothing enforces it)
-- Timing assumptions baked into the implementation (retry intervals, cache TTLs as magic numbers)
-- Global side effects (writes to a shared log, modifies a registry, touches the filesystem) not mentioned in the LLD
+**5. Complexity** — Could any part of this be simpler without losing correctness? Would a developer not in the design session understand each method from its name and signature?
 
-**5. Complexity**
-- Could any part of this be simpler without losing correctness?
-- Would a developer who was not part of the design session understand the intent of each method from its name and signature alone?
-- Are there abstractions that are not yet earning their complexity (only one callsite, only one implementation)?
+**6. Naming** — Do names communicate intent to a future reader? Are any names misleading in a broader reading?
 
-**6. Naming**
-- Do names communicate intent to a future reader, not just to the person who wrote them?
-- Are any names misleading — correct in the narrow context but wrong in a broader reading?
+**7. Error handling** — Will failures be diagnosable from logs alone? Are errors surfaced to callers in a way that lets them make correct decisions?
 
-**7. Error handling and observability**
-- When this code fails, will the failure be diagnosable from logs alone?
-- Are errors surfaced to callers in a way that lets them make correct decisions, or are they swallowed or over-generalised?
-
----
-
-After the architect has worked through the checklist, ask:
-
-> "Based on this review, what is your decision? Reply **APPROVED** to proceed, or list your revision requests."
+**GitHub review outcome:**
+- **Approve** the PR → proceed to recording approval below
+- **Request changes** → developer addresses, pushes commits, re-requests review
+- Do not merge the PR here — merging happens at Step 28
 
 ---
 
 ## Step 3 — Record the decision
 
-### If APPROVED
+### If APPROVED (architect approved the GitHub PR)
 
 Update `.hitl/current-change.yaml`:
 ```yaml
@@ -153,9 +135,9 @@ approvals:
 Post a comment on the GitHub issue:
 ```bash
 gh issue comment <issue-number> \
-  --body "## ✅ Architect Code Review — Approved
+  --body "## Architect Code Review — Approved
 
-Reviewed by architect at <ISO timestamp>.
+Architect approved PR <PR URL> at <ISO timestamp>.
 
 **Domain:** <domain>
 **LLD:** <lld-path>
@@ -167,9 +149,9 @@ Report: "Architect code review approved. Proceed to Step 20 — Rerun Tests."
 
 ---
 
-### If REVISIONS REQUIRED
+### If REVISIONS REQUIRED (architect requested changes on the GitHub PR)
 
-Classify each revision:
+Classify each revision request from the GitHub review:
 
 | Severity | Criteria | Return to |
 |---|---|---|
@@ -196,25 +178,15 @@ Architect revision requests — <change-ID>
   [Minor → Step 16]     <description>
   [Significant → Step 14] <description>
 
-Next action: address revisions, then re-run /architect:review-code.
-```
-
-Post a comment on the GitHub issue:
-```bash
-gh issue comment <issue-number> \
-  --body "## 🔄 Architect Code Review — Revisions Required
-
-**Revisions requested:**
-<numbered list>
-
-Developer to address and re-run architect review before proceeding."
+Next action: address revisions on the existing PR branch, then re-request architect review.
 ```
 
 ---
 
 ## Important Rules
 
-- Do not answer the checklist on behalf of the architect — present it and wait
-- The architect is reviewing for design judgment, not re-running what the AI already checked — do not re-present AI findings as if they need re-resolution
-- A SIGNIFICANT revision means the developer returns to Step 14, re-generates the code, and re-runs AI rounds 1 and 2 before this review is repeated
+- The PR is created once at this step and is not recreated at Step 25 — Step 25 verifies PR completeness
+- Do not answer the checklist on behalf of the architect — the checklist lives in the PR description and the architect fills it in via GitHub review
+- A SIGNIFICANT revision means the developer returns to Step 14, re-generates the code, and re-runs AI rounds 1 and 2 before re-requesting architect review on the same PR
 - Architect approval recorded here is distinct from `approvals.architecture` (design approval at Step 9) — both must be set before merge
+- Do not merge the PR at this step — merging is part of Step 28
