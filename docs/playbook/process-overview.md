@@ -1,6 +1,6 @@
-# Process Overview — The 31-Step HITL AI-Driven Workflow
+# Process Overview — The 33-Step HITL AI-Driven Workflow
 
-**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 31 steps.
+**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 33 steps.
 
 The process relocates human judgment to higher-leverage checkpoints — reviewing AI-generated specs before code exists, approving test plans before implementation, verifying traceability before merge — rather than eliminating it. AI does the production work. Humans hold the gates that matter.
 
@@ -38,22 +38,22 @@ graph LR
     PKT3 --> B3
 ```
 
-## The 31 Steps
+## The 33 Steps
 
 ### Step Ownership at a Glance
 
-**AI handles 21 of 31 steps** — executing or co-piloting. You gate 10 times.
+**AI handles 21 of 33 steps** — executing or co-piloting. You gate 12 times.
 
 | Phase | Steps | 🤖 AI executes | 👤🤖 AI + human | 👤 Human gate |
 |-------|:-----:|:--------------:|:---------------:|:-------------:|
 | Requirements | 2 | 0 | 1 | 1 |
 | Design | 7 | 1 | 5 | 1 |
 | Build — TDD | 8 | **6** | 1 | 1 |
-| Verify | 5 | **3** | 1 | 1 |
+| Verify | 6 | **3** | 1 | 2 |
 | Assess | 2 | 0 | 1 | 1 |
 | Ship | 5 | 0 | 2 | 3 |
-| Post-Ship | 2 | 0 | 0 | 2 |
-| **Total** | **31** | **10** | **11** | **10** |
+| Post-Ship | 3 | 0 | 0 | 3 |
+| **Total** | **33** | **10** | **11** | **12** |
 
 ### Requirements (steps 1-2)
 1. 👤🤖 **GitHub Issue** — describe the change, root cause, proposed solution → `/pm:add-feature` · `/pm:report-bug`
@@ -82,42 +82,46 @@ graph LR
 16. 👤🤖 **Refactor** — simplify passing code; remove duplication, improve naming; rerun tests after each change; done when no further simplification is possible without breaking a test
 17. 🤖 **Convention checks** — run `semgrep scan --config .semgrep/ --error` and manifest drift check against `convention-checks.yaml`; exit criterion: zero violations; fix all before proceeding → `/check-conventions`
 
-### Verify (steps 18-22)
+### Verify (steps 18–22, including 19a)
 18. 🤖 **Code review Round 1** — reads implementation files plus the LLD at `docs/02-design/technical/lld/<component>.md` (step 12) and `system-manifest.yaml`: reviews structure, security, LLD adherence, and naming conventions; fix all CRITICAL and HIGH findings before proceeding → `/check-implementation`
 19. 🤖 **Code review Round 2** — reads implementation files, test files in `tests/`, and the test plan from `.hitl/current-change.yaml` (step 7): reviews edge cases, regressions, test quality, and completeness against the test plan; fix all findings; rerun full test suite → `/check-implementation`
+19a. 👤 **Architect code review** — developer runs `/architect:review-code`, which creates a GitHub PR (not a draft) with the AI review summary and a 7-item judgment checklist in the PR description (business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, error handling); architect reviews the code on GitHub using line comments and the approve/request-changes UI — not in-session; outcome is APPROVED or revision requests; revisions return to step 14 (significant changes), step 16 (minor changes), or step 12 (design change); the PR is NOT merged here — merging happens at step 28; blocks progression until architect explicitly approves → `/architect:review-code`
 20. 🤖 **Rerun tests** — confirm no regressions from review fixes; all tests must pass
-21. 👤🤖 **Reconcile docs** — compare implementation against the LLD at `docs/02-design/technical/lld/<component>.md`; make the decision explicit: if implementation reveals a better design, update the LLD using `/generate-docs` and have architect confirm; if implementation drifted from the intended design, fix the code and rerun steps 18–20; document the decision in the PR description or as an ADR update → `/generate-docs` (if docs update branch)
+21. 👤🤖 **Reconcile docs** — compare implementation against the LLD at `docs/02-design/technical/lld/<component>.md`; make the decision explicit: if implementation reveals a better design, update the LLD using `/generate-docs` and have architect confirm; if implementation drifted from the intended design, fix the code and rerun steps 18–19a; document the decision in the PR description or as an ADR update → `/generate-docs` (if docs update branch)
 22. 👤 **QA post-handoff verification** — QA runs independent verification against the running build: verifies each acceptance criterion, runs exploratory tests beyond the happy path, probes failure modes from the incident registry; if any AC fails or a blocking defect is found, QA files `/qa:report-defect` and sets `approvals.qa: blocked` in `.hitl/current-change.yaml`; nothing advances to Assess until QA lifts the block → `/qa:verify-quality` · `/qa:report-defect` (if blocking)
 
 ### Assess (steps 23-24)
 23. 👤🤖 **Downstream impact brief** — `/impact-brief` reads `.hitl/current-change.yaml`, `git diff main...HEAD`, `system-manifest.yaml`, incident registry, and test registry; produces 5-section brief; section 5 contains the rollout strategy draft; section 4 (product mental model update) requires human judgment → `/impact-brief`
-24. 👤 **Risk-rated rollout plan** — ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains; reviews and approves canary tier and go/no-go criteria, or adjusts them; approved plan must exist before PR is created → `/ops:review-release`
+24. 👤 **Risk-rated rollout plan** — ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains; reviews and approves canary tier and go/no-go criteria, or adjusts them; approved plan must exist before step 25 (Verify PR completeness) confirms it is added to the PR → `/ops:review-release`
 
 ### Ship (steps 25-29)
-25. 👤🤖 **Create PR** — includes: issue link, HLD/LLD from step 5 (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 23), approved rollout plan (step 24)
+25. 👤🤖 **Verify PR completeness** — the PR was created at step 19a; this step confirms the PR description contains all required artifacts: issue link, HLD/LLD from step 5 (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 23), approved rollout plan (step 24); developer adds any missing items to the PR description; also copy `token_tracking.actual` to `token-cost-registry.yaml`
 26. 👤 **Integration verification** — lead runs each slice E2E and then verifies cross-slice composition: do the slices integrate correctly when all are deployed together? Lead also verifies the traceability chain for each slice: GitHub issue → design PR merged → implementation matches LLD at `docs/02-design/technical/lld/<component>.md` → test files in `tests/` cover the spec → impact brief complete → rollout plan approved; signs off or sends back with findings → `/architect:verify-traceability`
 27. 👤 **Figma comparison** (if design exists) — lead compares running implementation to the Figma spec from step 2; lists and resolves all differences; exit criterion: zero unresolved differences before merge
-28. 👤🤖 **Build, apply IaC, and deploy** — ops verifies branch state and triggers the build using `/ops:build`; if step 6 identified IaC changes, ops runs `/ops:apply-iac` (dry-run then apply with explicit approval); lead then triggers merge and deploys per the approved rollout plan from step 24 using `/ops:deploy`; remaining slices rebase against main and rerun steps 17–19 before their own merge → `/ops:build` · `/ops:apply-iac` (conditional) · `/ops:deploy` · `/ops:monitor-canary`
+28. 👤🤖 **Build, apply IaC, and deploy** — ops verifies branch state and triggers the build using `/ops:build`; ops runs `/ops:detect-drift` before deploying to detect any infrastructure drift; if step 6 identified IaC changes, ops runs `/ops:apply-iac` (dry-run then apply with explicit approval); lead then triggers merge and deploys per the approved rollout plan from step 24 using `/ops:deploy`; remaining slices rebase against main and rerun steps 17–19a before their own merge → `/ops:detect-drift` · `/ops:build` · `/ops:apply-iac` (conditional) · `/ops:deploy` · `/ops:monitor-canary`
 29. 👤 **Promote or rollback** — at each canary step, verify all go/no-go criteria from the approved plan (step 24); if all met: promote to next tier; if any fail: pause and investigate before deciding; lead makes the final call
 
-### Post-ship (steps 30-31)
-30. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `ai/claude/dev-practices/roi-estimation.md`
-31. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `ai/claude/dev-practices/roi-estimation.md`
+### Post-ship (steps 30-32)
+30. 👤 **Penetration test** (conditional — optional for Tier 2+, required for Tier 3+ features involving auth, payments, or data) — run an external or internal pentest against the deployed feature; findings must be triaged and any critical/high issues resolved before the feature is promoted to full production
+31. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `ai/claude/dev-practices/roi-estimation.md`
+32. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 31; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `ai/claude/dev-practices/roi-estimation.md`
 
 ## Key Concepts
 
-### Two-Round Code Review
-Both rounds use `/check-implementation` (the `spec-conformance-reviewer` agent) which reads the implementation against the LLD — not from its own reasoning. Round 1 focuses on structure, security, and LLD adherence. Round 2 focuses on edge cases, regressions, and test completeness against the test plan. Finding structural issues at Round 2 means the tests are wrong too — Round 1 catches those earlier.
+### Code Review: AI Rounds and Architect Review
+Both AI rounds use `/check-implementation` (the `spec-conformance-reviewer` agent) which reads the implementation against the LLD — not from its own reasoning. Round 1 focuses on structure, security, and LLD adherence. Round 2 focuses on edge cases, regressions, and test completeness against the test plan. Finding structural issues at Round 2 means the tests are wrong too — Round 1 catches those earlier.
+
+After the AI rounds resolve mechanical issues, step 19a adds a human architect review for judgment calls AI cannot make: business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, and naming. The architect reviews the code on GitHub using the approve/request-changes UI, and also creates the GitHub PR at this step. No phase after Verify begins until the architect explicitly approves.
 
 ### Slice Independence and Integration
 Slices are only parallel if they are domain-independent. The architect enforces this at step 9: each packet must touch exactly one manifest domain; no two concurrent slices may modify the same domain. If two pieces of work touch the same domain, they are sequential — complete and merge one before starting the other.
 
-Even domain-independent slices share a main branch. When the first slice merges, remaining slices must rebase against main and rerun convention checks (step 17) and code reviews (steps 18-19) before proceeding. The lead coordinates merge order at step 28.
+Even domain-independent slices share a main branch. When the first slice merges, remaining slices must rebase against main and rerun convention checks (step 17) and code reviews (steps 18–19a) before proceeding. The lead coordinates merge order at step 28.
 
-Integration verification (step 25) covers both individual slices and their composition. Each slice passes in isolation first; then the lead verifies the slices work correctly together before any canary deployment.
+Integration verification (step 26) covers both individual slices and their composition. Each slice passes in isolation first; then the lead verifies the slices work correctly together before any canary deployment.
 
 ### Artifact Grounding
-Every AI step reads specific files from the repo, not from memory or general reasoning. The LLD at `docs/02-design/technical/lld/<component>.md` is the source for test generation (step 10), code generation (step 14), and both code review rounds (steps 18-19). The test plan in `.hitl/current-change.yaml` is the source for Round 2 completeness review (step 19). The approved rollout plan from step 24 is the source for canary promotion decisions (step 29). If a command is not explicitly reading a file from the repo, it is not grounded.
+Every AI step reads specific files from the repo, not from memory or general reasoning. The LLD at `docs/02-design/technical/lld/<component>.md` is the source for test generation (step 10), code generation (step 14), and both code review rounds (steps 18–19a). The test plan in `.hitl/current-change.yaml` is the source for Round 2 completeness review (step 19). The approved rollout plan from step 24 is the source for canary promotion decisions (step 29). If a command is not explicitly reading a file from the repo, it is not grounded.
 
 ### Design Spec Bookends
 If a visual design exists, it appears twice: at the beginning (feeding requirements into the issue at step 2) and at the end (Figma comparison before merge at step 27). The design is both input and acceptance criteria.
