@@ -1,5 +1,5 @@
 ---
-name: pm:answer-questions
+name: hitl:pm:answer-questions
 description: Answer product or business questions about the system using the PRD, HLDs, and existing docs. Use when a PM has questions about current capabilities, scope, or constraints.
 argument-hint: "[question about the product or system]"
 disable-model-invocation: true

@@ -1,5 +1,5 @@
 ---
-name: ops:setup-observability
+name: hitl:ops:setup-observability
 description: Create or update dashboards and alerts for a change before it is deployed. Reads the rollout plan go/no-go criteria and wires them to named observability instruments. Blocks deployment until a named dashboard and alert exist for every criterion. Run after IaC is applied and before /hitl:ops:deploy.
 argument-hint: "[change ID or domain name]"
 disable-model-invocation: true

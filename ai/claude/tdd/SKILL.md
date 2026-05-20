@@ -1,5 +1,5 @@
 ---
-name: dev:tdd
+name: hitl:dev:tdd
 description: Orchestrate the TDD-as-design Red → Green → Refactor cycle where tests drive the design before implementation code exists. Use after the LLD is approved and before writing any implementation code. Requires an approved LLD — refuses to proceed without one.
 argument-hint: "[LLD path or issue number and component name]"
 disable-model-invocation: true

@@ -1,5 +1,5 @@
 ---
-name: qa:review-tests
+name: hitl:qa:review-tests
 description: Formal QA review of test coverage after the TDD RED phase. Verifies every acceptance criterion has a test, every LLD error mode is exercised, incident regressions are present, E2E stubs exist for all ACs, and smoke suite contribution is included. Gates implementation start.
 argument-hint: "[feature name, PR link, or LLD path]"
 disable-model-invocation: true

@@ -1,5 +1,5 @@
 ---
-name: ops:rollback
+name: hitl:ops:rollback
 description: Execute a rollback of a deployed canary or partial release. Reads the current deployment state and rollout plan, assesses side effects, presents the rollback procedure for operator confirmation, executes, and verifies stability. Use when /hitl:ops:monitor-canary recommends a pause and the team decides to roll back rather than investigate forward.
 argument-hint: "[change ID or environment]"
 disable-model-invocation: true

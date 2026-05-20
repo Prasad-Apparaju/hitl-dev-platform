@@ -1,5 +1,5 @@
 ---
-name: dev:practices
+name: hitl:dev:practices
 description: Full HITL development practices workflow covering change tiers, TDD-as-design, doc-driven development, code review, integration verification, downstream impact, rollout planning, and ROI tracking. Load this skill when starting any Tier 1+ change or when the developer asks how to apply the HITL process to a change.
 argument-hint: "[change description or issue number]"
 disable-model-invocation: true
