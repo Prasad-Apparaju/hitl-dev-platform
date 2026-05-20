@@ -118,7 +118,7 @@ Once approved:
 2. Post a pointer comment on the GitHub issue — the full brief belongs in the PR description, not the issue:
    ```bash
    gh issue comment <issue-number> \
-     --body "## 📋 Impact Brief Complete\n\nRollout risk: <level>. Full brief in PR description at step 25."
+     --body "## 📋 Impact Brief Complete\n\nRollout risk: <level>. Full brief will be added to the open PR at step 25 (Verify PR completeness)."
    ```
 
 ---
