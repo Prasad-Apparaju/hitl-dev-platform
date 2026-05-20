@@ -1,6 +1,6 @@
 ---
 name: impact-brief
-description: Generate a structured downstream impact brief and risk-rated rollout plan for a change that is ready for PR. Use after code and tests are complete, before creating the PR. Requires the HITL context file (.hitl/current-change.yaml) and an active GitHub issue.
+description: Generate a structured downstream impact brief and risk-rated rollout plan for a change. Use after code and tests are complete (after step 22); the brief is added to the open PR at step 25 (Verify PR completeness). Requires the HITL context file (.hitl/current-change.yaml) and an active GitHub issue.
 argument-hint: "[PR number, branch name, or change description]"
 disable-model-invocation: true
 ---
