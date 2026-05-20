@@ -1,5 +1,5 @@
 ---
-name: architect:design-feature
+name: hitl:architect:design-feature
 description: Orchestrate the architect's design journey for a change — steps 3 through 9. Covers impact analysis, HLD and LLD generation with approval gates, slice decomposition, test case planning, and decision packet assembly. Produces decision packets ready to hand to developers. Do not invoke spontaneously; requires a GitHub issue.
 argument-hint: "[issue number or feature description]"
 disable-model-invocation: true

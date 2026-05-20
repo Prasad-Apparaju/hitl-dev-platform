@@ -1,5 +1,5 @@
 ---
-name: ops:incident
+name: hitl:ops:incident
 description: Manage an active production incident from declaration through resolution and registry logging. Declares severity, guides response, tracks timeline, and logs a structured entry to the incident registry when resolved. Use when a production system is degraded or down — not as part of the normal delivery workflow.
 argument-hint: "[brief description of what is failing]"
 disable-model-invocation: true

@@ -1,5 +1,5 @@
 ---
-name: ops:migrate-database
+name: hitl:ops:migrate-database
 description: Run database schema migrations safely before deploying the new application version. Verifies a backup exists, runs a dry-run, presents all schema changes for operator approval, executes the migration, and verifies the resulting schema. Conditional — only run when the change includes database migrations.
 argument-hint: "[change ID or migration file path]"
 disable-model-invocation: true

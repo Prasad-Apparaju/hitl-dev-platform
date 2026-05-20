@@ -1,5 +1,5 @@
 ---
-name: qa:report-defect
+name: hitl:qa:report-defect
 description: Create a structured defect report when verify-quality finds issues. Files a GitHub issue with AC reference, reproduction steps, severity, environment, and incident registry link. Updates the HITL context to reflect the promotion block.
 argument-hint: "[defect description]"
 disable-model-invocation: true

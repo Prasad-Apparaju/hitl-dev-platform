@@ -1,5 +1,5 @@
 ---
-name: architect:review-code
+name: hitl:architect:review-code
 description: Human architect code review — step 19a. After AI rounds 1 and 2 have resolved mechanical issues (LLD conformance, conventions, test coverage), the architect reviews for judgment calls that AI cannot assess: business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, and naming clarity. Blocks progression to step 20 until the architect explicitly approves.
 argument-hint: "[change ID or issue number]"
 disable-model-invocation: true

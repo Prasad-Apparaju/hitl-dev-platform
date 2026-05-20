@@ -1,5 +1,5 @@
 ---
-name: pm:add-feature
+name: hitl:pm:add-feature
 description: Add a new feature requirement to the PRD with acceptance criteria, requirement ID, and use case. Use when a PM wants to document a new feature request into the product requirements.
 argument-hint: "[feature description]"
 disable-model-invocation: true

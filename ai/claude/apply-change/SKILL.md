@@ -1,5 +1,5 @@
 ---
-name: dev:apply-change
+name: hitl:dev:apply-change
 description: Apply the HITL dev-practices workflow to analyze and plan a change before writing any code. Use when a developer is about to start implementing a feature, bug fix, or refactor and needs to produce an impact analysis, documentation plan, test plan, and execution order. Refuses to proceed if no GitHub issue exists.
 argument-hint: "[change description or issue number]"
 disable-model-invocation: true

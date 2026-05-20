@@ -1,5 +1,5 @@
 ---
-name: dev:start-brownfield
+name: hitl:dev:start-brownfield
 description: Onboard an existing codebase into the HITL process. Generates a documentation baseline from existing code, seeds the test and incident registries, and prepares for docs-first development going forward.
 argument-hint: "[optional: path to source root or description of the codebase]"
 disable-model-invocation: true

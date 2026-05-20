@@ -1,5 +1,5 @@
 ---
-name: pm:design-feature
+name: hitl:pm:design-feature
 description: Collaborate with PM to design a feature from a rough idea into a structured requirement with user stories, acceptance criteria, and scope boundaries.
 argument-hint: "[rough feature idea]"
 disable-model-invocation: true

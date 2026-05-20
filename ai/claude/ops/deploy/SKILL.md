@@ -1,5 +1,5 @@
 ---
-name: ops:deploy
+name: hitl:ops:deploy
 description: Deploy a verified build artifact to a target environment following the approved rollout plan. Reads rollout strategy from .hitl/current-change.yaml and executes deployment with canary configuration where applicable.
 argument-hint: "[environment: staging|canary|production] [branch or artifact reference]"
 disable-model-invocation: true

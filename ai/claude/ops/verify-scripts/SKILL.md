@@ -1,5 +1,5 @@
 ---
-name: ops:verify-scripts
+name: hitl:ops:verify-scripts
 description: Validate all ops artifacts for a change — migration scripts, IaC files, deployment configs, and rollback coverage — before they are needed in production. Run at two points in the workflow: after Step 6 (syntax validation + dev dry-run) and at Step 26 integration verify (full readiness gate including rollback coverage and tested-in-dev evidence). Blocks PR merge if any required artifact is missing, invalid, or untested.
 argument-hint: "[change ID or PR link] [--level syntax | dev | full]"
 disable-model-invocation: true
