@@ -19,14 +19,16 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 
 ## What you receive
 
-The architect hands you a **decision packet** at `docs/decisions/issue-<N>.yaml`. It contains your GitHub issue number, the single domain you're working in, the LLD path that is your implementation spec, the test plan, and the rollout risk level. Read it before opening Claude Code — it is your starting point for everything.
+When the architect completes the design and the TA approves it, GitHub posts a **"Ready for Development"** comment on your assigned issue. That comment contains your decision packet path, your domain, your LLD, and the exact prompt to paste into Claude Code. The issue is your starting point — you do not need to navigate the repo manually.
+
+The decision packet (`docs/decisions/issue-<N>.yaml`) contains your GitHub issue number, the single domain you're working in, the LLD path that is your implementation spec, the test plan, and the rollout risk level. Claude reads it for you when you run `/hitl:dev-tdd`.
 
 ## Workflow in Brief
 
-1. Read your decision packet — `docs/decisions/issue-<N>.yaml`
-2. Open the LLD it references — that document drives tests, code, and review
+1. Open your assigned GitHub issue — find the "Ready for Development" comment and copy the starting prompt
+2. Run `/hitl:dev-tdd` with that prompt — Claude reads the decision packet, loads the LLD, and confirms what you're building before writing any tests
 3. Run `/hitl:dev-apply-change` — initialize the change context
-4. Run `/hitl:dev-tdd` — generates tests from the LLD, you review them, then it generates the implementation code
+4. Continue the TDD cycle — tests, review, then implementation code
 5. Run `/hitl:dev-check-conventions` — fix violations
 6. Run `/hitl:dev-check-implementation` — two-round spec conformance review against the LLD
 7. Run `/hitl:architect-review-code` — architect reviews on GitHub; this creates the PR
