@@ -12,6 +12,18 @@ Orchestrate the Red → Green → Refactor cycle where tests drive the design be
 
 If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD or issue."
 
+**Refusal rule — design not approved:** Read `.hitl/current-change.yaml`. If the file exists and `status` is not `implementation-approved`, stop:
+
+> Design approval is required before implementation can begin.
+>
+> Current status: `[status]`
+>
+> - If the architect is still in the design phase, wait for them to complete `/hitl:architect-design-feature` and reach all gates.
+> - If a gate is awaiting review, the TA must run `/hitl:ta-approve` to advance it.
+> - If status is `blocked`, the architect must resolve the finding first.
+>
+> Do not start the TDD cycle until status is `implementation-approved`.
+
 **Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/hitl:dev-generate-docs` — this skill generates tests FROM the spec, not without one."
 
 **Refusal rule — no decision packet:** Before generating any tests, check `.hitl/current-change.yaml` for `source_artifacts.decision_packet`. If the field is missing or the file at that path does not exist on disk, stop:

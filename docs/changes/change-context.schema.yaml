@@ -30,13 +30,22 @@ tier:
 status:
   type: string
   enum:
-    - planning             # apply-change run, context initialized
-    - design-review        # LLD submitted, awaiting architect approval
-    - implementation-approved  # LLD approved, code generation may begin
+    # --- Design phase (AI writes awaiting-* states; only /hitl:ta-approve writes *-approved states) ---
+    - planning                  # apply-change run, context initialized
+    - awaiting-scope-approval   # impact analysis complete; TA must run /hitl:ta-approve
+    - scope-approved            # TA confirmed scope; AI may generate HLD
+    - awaiting-hld-approval     # HLD generated; TA must run /hitl:ta-approve
+    - hld-approved              # TA approved HLD; AI may generate LLDs
+    - awaiting-lld-approval     # LLD(s) generated; TA must run /hitl:ta-approve
+    - lld-approved              # TA approved LLD(s); AI may assemble decision packet
+    - awaiting-packet-approval  # decision packet assembled; TA + PM must run /hitl:ta-approve
+    - blocked                   # TA rejected a gate; see blocker field for details
+    # --- Implementation phase (developer may write source code) ---
+    - implementation-approved   # TA + PM approved packet; developer may write code
     - conformance-review-pending  # implementation done, spec conformance not yet run
-    - qa-review-pending    # conformance passed, QA review not yet run
-    - pr-ready             # all evidence complete, PR may be created
-    - merged               # change is merged
+    - qa-review-pending         # conformance passed, QA review not yet run
+    - pr-ready                  # all evidence complete, PR may be created
+    - merged                    # change is merged
   required: true
 
 # --- Source artifacts (required for Tier 2+) ---
@@ -141,6 +150,24 @@ approvals:
     type: string
     enum: [pending, approved, not-required]
     description: "Ops release review approval (required for Tier 3+)"
+
+# --- Gate rejection record ---
+
+blocker:
+  description: |
+    Populated by /hitl:ta-approve when the TA rejects a gate. Cleared when the
+    architect re-runs the skill and the reworked artifact is re-submitted.
+  gate:
+    type: string
+    description: "Which gate was rejected (scope | hld | lld | packet)"
+    example: "hld"
+  finding:
+    type: string
+    description: "What the TA found wrong — specific enough for the architect to act on"
+    example: "Domain boundary leaks billing logic into the payments domain"
+  rejected_at:
+    type: string
+    description: "ISO 8601 timestamp of the rejection"
 
 # --- Workflow breadcrumb ---
 

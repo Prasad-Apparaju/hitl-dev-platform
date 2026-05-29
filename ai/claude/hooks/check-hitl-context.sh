@@ -80,12 +80,26 @@ for field in "${REQUIRED_FIELDS[@]}"; do
   fi
 done
 
-# Warn if design approval is still pending
+# Block source code edits unless the design has been approved.
+# Only these statuses permit writing source files:
 STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
-if [[ "$STATUS" == "planning" || "$STATUS" == "design-review" ]]; then
-  echo "HITL WARNING: Change status is '${STATUS}' — design approval is pending." >&2
-  echo "Source code edits before design approval are recorded but not blocked." >&2
-  echo "Ensure LLD is approved before requesting code review." >&2
+ALLOWED_STATUSES=("implementation-approved" "conformance-review-pending" "qa-review-pending" "pr-ready" "merged")
+
+ALLOWED=false
+for s in "${ALLOWED_STATUSES[@]}"; do
+  if [[ "$STATUS" == "$s" ]]; then
+    ALLOWED=true
+    break
+  fi
+done
+
+if [[ "$ALLOWED" == "false" ]]; then
+  echo "HITL BLOCKED: status '${STATUS}' does not permit source code edits." >&2
+  echo "Design approval is required before writing implementation code." >&2
+  echo "  • If design is in progress: wait for the architect to reach the next gate." >&2
+  echo "  • If a gate is awaiting review: run /hitl:ta-approve to advance it." >&2
+  echo "  • If status is 'blocked': resolve the finding in .hitl/current-change.yaml first." >&2
+  exit 2
 fi
 
 exit 0
