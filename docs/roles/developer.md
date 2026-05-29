@@ -10,25 +10,28 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 |---------|-------------|
 | `/hitl:dev-practices` | Starting any Tier 1+ change — loads the full HITL workflow with the right steps for your change tier |
 | `/hitl:dev-generate-docs` | Before writing code — generate HLD, LLD, ADR from a feature description; or reverse-engineer docs from existing code |
-| `/hitl:dev-tdd` | After the LLD is approved — runs the RED → GREEN → REFACTOR cycle, tests first |
+| `/hitl:dev-tdd` | After the LLD is approved — generates tests from the LLD, gets your review, then generates the implementation code. Full RED → GREEN → REFACTOR cycle. **This is the command for writing code.** |
 | `/hitl:dev-apply-change` | Before touching code — impact analysis across components, APIs, docs, and tests |
 | `/hitl:dev-check-conventions` | At any point — runs semgrep, manifest drift, and convention checks in-chat before CI catches them |
 | `/hitl:dev-check-implementation` | After TDD — two-round spec conformance review comparing implementation against the LLD and manifest |
 | `/hitl:dev-impact-brief` | When the PR is ready — generates the downstream impact brief and rollout plan for the architect to review |
 | `/hitl:dev-conclude` | After a design-room thread reaches a decision — turns the Slack thread into an ADR, GitHub issue, and HLD/LLD updates |
 
+## What you receive
+
+The architect hands you a **decision packet** at `docs/decisions/issue-<N>.yaml`. It contains your GitHub issue number, the single domain you're working in, the LLD path that is your implementation spec, the test plan, and the rollout risk level. Read it before opening Claude Code — it is your starting point for everything.
+
 ## Workflow in Brief
 
-1. Open a GitHub issue
-2. Run `/hitl:dev-apply-change` — understand what you're touching
-3. Run `/hitl:dev-generate-docs` — draft HLD/LLD before writing code
-4. Get architect design approval (`/hitl:architect-review-design`)
-5. Run `/hitl:dev-tdd` — tests first, then code
-6. Run `/hitl:dev-check-conventions` — fix violations
-7. Run `/hitl:dev-check-implementation` — two-round spec conformance review against the LLD
-8. Run `/hitl:architect-review-code` — architect reviews on GitHub; this creates the PR
-9. Run `/hitl:dev-impact-brief` — downstream impact brief + rollout plan (added to the open PR at step 25)
-10. Architect runs `/hitl:architect-verify-traceability` before merge
+1. Read your decision packet — `docs/decisions/issue-<N>.yaml`
+2. Open the LLD it references — that document drives tests, code, and review
+3. Run `/hitl:dev-apply-change` — initialize the change context
+4. Run `/hitl:dev-tdd` — generates tests from the LLD, you review them, then it generates the implementation code
+5. Run `/hitl:dev-check-conventions` — fix violations
+6. Run `/hitl:dev-check-implementation` — two-round spec conformance review against the LLD
+7. Run `/hitl:architect-review-code` — architect reviews on GitHub; this creates the PR
+8. Run `/hitl:dev-impact-brief` — downstream impact brief + rollout plan added to the PR
+9. Architect runs `/hitl:architect-verify-traceability` before merge
 
 ## Setup Note: Graphify (recommended for large codebases)
 

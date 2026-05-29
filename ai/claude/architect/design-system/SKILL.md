@@ -12,6 +12,67 @@ disable-model-invocation: true
 
 ---
 
+## Startup — Status Router
+
+Before doing anything else, check `.hitl/design-system.yaml`:
+
+```bash
+[ -f .hitl/design-system.yaml ] && grep "^status:" .hitl/design-system.yaml || echo "status: not-found"
+```
+
+Route based on the current status:
+
+| Status | Action |
+|--------|--------|
+| File not found | Initialize `.hitl/design-system.yaml` with `status: initializing`, then proceed from Phase 1 |
+| `initializing` | Proceed from Phase 1 |
+| `awaiting-requirements` | Output the gate-pending message and STOP |
+| `requirements-confirmed` | Skip to Phase 2 (Domain Decomposition) |
+| `awaiting-domains` | Output the gate-pending message and STOP |
+| `domains-confirmed` | Skip to Phase 3 (System Manifest) |
+| `awaiting-manifest` | Output the gate-pending message and STOP |
+| `manifest-confirmed` | Skip to Phase 5 (HLDs) |
+| `awaiting-hld-approval` | Output the gate-pending message and STOP |
+| `hld-approved` | Skip to Phase 6 (LLDs) |
+| `awaiting-lld-approval` | Output the gate-pending message and STOP |
+| `lld-approved` | Skip to Phase 8 (Delivery Plan) |
+| `awaiting-delivery-plan` | Output the gate-pending message and STOP |
+| `complete` | Output: "System design is complete. Decision packets are ready — assign them to developers to begin `/hitl:dev-tdd`." and STOP |
+| `blocked` | Output the blocked message and STOP |
+
+**Gate-pending message** (for any `awaiting-*` status):
+```
+Gate pending — waiting for TA approval.
+
+Status:   [current status]
+
+The TA must run /hitl:ta-approve to review the current artifact and advance this gate.
+Once approved, re-run this command to continue to the next phase.
+```
+
+**Blocked message** (for `blocked` status):
+```
+This system design is blocked — a gate was rejected by the TA.
+
+Gate:     [blocker.gate]
+Finding:  [blocker.finding]
+
+Address the finding above, then re-run this command. The skill will resume
+at the rejected phase so you can rework the artifact.
+```
+
+For `blocked` status: after showing the blocked message, ask: "Are you ready to rework the [blocker.gate] artifact? Say 'yes' to resume." On confirmation, clear the `blocked` status and route to the appropriate phase.
+
+**`.hitl/design-system.yaml` initial content** (written when file not found):
+```yaml
+status: initializing
+prd: "[path from $ARGUMENTS]"
+```
+
+Ensure the `.hitl/` directory exists: `mkdir -p .hitl`
+
+---
+
 ## Phase 1 — PRD Analysis
 
 ### 1a. Read the PRD
@@ -53,14 +114,17 @@ Run through the full NFR checklist in `shared/challenge-stance.md` (Minimum NFR 
 
 Present the extracted summary and gaps.
 
-**STOP:**
-> "Here is what I've extracted from the PRD. Before I propose a domain breakdown, please confirm:
-> 1. Are the core use cases correct and complete?
-> 2. Are there NFRs I missed that will affect the architecture?
-> 3. Are the external integrations listed complete?
-> 4. Is the tech stack already decided, or is that an open decision?
->
-> Say **"requirements confirmed"** to proceed to domain decomposition."
+Update `.hitl/design-system.yaml`: set `status: awaiting-requirements`.
+
+Output:
+```
+Gate 1 reached — status set to 'awaiting-requirements'.
+
+The TA must run /hitl:ta-approve to confirm requirements before domain decomposition begins.
+Re-run /hitl:architect-design-system after TA approval to continue.
+```
+
+**STOP. Do not propose a domain breakdown. This session ends here.**
 
 ---
 
@@ -116,20 +180,18 @@ Before presenting to the architect, challenge it yourself:
 
 Present the proposed domains and interaction map.
 
-**STOP:**
-> "Here is my proposed domain breakdown. Domain boundaries are the hardest decision to change later — please review carefully:
->
-> [present domain list and interaction matrix]
->
-> Specifically:
-> 1. Is each domain's data ownership clear and non-overlapping?
-> 2. Are there any circular dependencies I should resolve differently?
-> 3. Any domains that should be merged (too small / always change together)?
-> 4. Any domains that should be split (too many responsibilities)?
->
-> Say **"domains confirmed"** to generate the system manifest."
+Update `.hitl/design-system.yaml`: set `status: awaiting-domains`.
 
-Do not proceed until the architect explicitly confirms. If the architect requests changes, revise and re-present before continuing.
+Output:
+```
+Gate 2 reached — status set to 'awaiting-domains'.
+
+Domain boundaries are the hardest decision to change later.
+The TA must run /hitl:ta-approve to confirm the domain decomposition before manifest generation begins.
+Re-run /hitl:architect-design-system after TA approval to continue.
+```
+
+**STOP. Do not generate the system manifest. This session ends here.**
 
 ---
 
@@ -150,13 +212,18 @@ Interaction matrix: populate from Phase 2b.
 
 **Important:** Every human-authored field (`facade_apis`, `boundary_entities`, `events_*`) must be marked `DRAFT — architect to verify`. These are proposals from the PRD, not ground truth. The architect fills in the real values as the first implementations run.
 
-**STOP:**
-> "System manifest draft is ready. The facade APIs and boundary entities are proposals — they are the intended public contracts, not final ones. Please review:
-> 1. Are the boundary entities the right shapes?
-> 2. Are the facade API signatures approximately right?
-> 3. Are the domain dependencies correct?
->
-> Say **"manifest approved"** to proceed to ADRs."
+Update `.hitl/design-system.yaml`: set `status: awaiting-manifest`.
+
+Output:
+```
+Gate 3 reached — status set to 'awaiting-manifest'.
+
+System manifest and foundational ADRs are ready for TA review.
+The TA must run /hitl:ta-approve to confirm before HLD generation begins.
+Re-run /hitl:architect-design-system after TA approval to continue.
+```
+
+**STOP. Do not generate ADRs or HLDs yet. This session ends here.**
 
 ---
 
@@ -188,8 +255,9 @@ For open decisions: fill `Status: Proposed`, list the options and their tradeoff
 
 Update `docs/02-design/technical/adrs/README.md` with all new ADRs.
 
-**STOP after all foundational ADRs:**
-> "Foundational ADRs are in place. Open decisions are resolved. Please confirm the ADRs accurately reflect the decisions made before I generate the HLDs."
+Confirm with the architect: "Are all foundational ADRs accurate before I generate the HLDs? Say 'yes' to continue."
+
+On confirmation, update `.hitl/design-system.yaml`: set `status: manifest-confirmed`. Then continue to Phase 5 in the same session.
 
 ---
 
@@ -236,15 +304,20 @@ Generate the following HLDs using `shared/templates/hld-template.md`. Each must 
 
 Update `docs/02-design/technical/hld/index.md` after all HLDs.
 
-**STOP after each HLD:**
-> "HLD: [name] is ready for review. Check:
-> 1. Does this match the decisions in the ADRs?
-> 2. Are the diagrams accurate?
-> 3. Any architectural concerns at this level?
->
-> Say **"[name] HLD approved"** to continue."
+After all HLDs are written, update `.hitl/design-system.yaml`: set `status: awaiting-hld-approval`.
 
-Do not generate LLDs until all HLDs are approved.
+Output:
+```
+Gate 4 reached — status set to 'awaiting-hld-approval'.
+
+All system HLDs are ready for TA review:
+  [list each HLD path]
+
+The TA must run /hitl:ta-approve to review the HLDs before LLD generation begins.
+Re-run /hitl:architect-design-system after TA approval to continue.
+```
+
+**STOP. Do not generate LLDs. This session ends here.**
 
 ---
 
@@ -264,13 +337,20 @@ After each LLD, update:
 
 After all domain LLDs, generate `docs/02-design/technical/lld/packages.md` — a Mermaid `graph TD` showing the domain dependency structure using the confirmed interaction matrix.
 
-**STOP after each LLD:**
-> "LLD for [domain] is ready. Check:
-> 1. Are the method signatures precise enough that a developer could generate tests directly from this?
-> 2. Do the facade APIs match what's in the manifest?
-> 3. Are the error modes and preconditions complete?
->
-> Say **"[domain] LLD approved"** to continue."
+After all LLDs are written, update `.hitl/design-system.yaml`: set `status: awaiting-lld-approval`.
+
+Output:
+```
+Gate 5 reached — status set to 'awaiting-lld-approval'.
+
+All domain LLDs are ready for TA review:
+  [list each LLD path]
+
+The TA must run /hitl:ta-approve to review the LLDs before the delivery plan is assembled.
+Re-run /hitl:architect-design-system after TA approval to continue.
+```
+
+**STOP. Do not begin the HITL process bootstrap or delivery plan. This session ends here.**
 
 ---
 
@@ -333,15 +413,21 @@ Present as a table:
 | 1 | domain-b-1 | | | | domain-a-1 |
 | 2 | domain-c-1 | | | | — |
 
-### 8c. Gate — architect confirms delivery plan
+### 8c. Gate — delivery plan review
 
-**STOP:**
-> "Here is the initial delivery plan — [N] slices across [M] domains. Before I generate decision packets:
-> 1. Does each slice's demo check produce something a PM can verify in the running app?
-> 2. Is the sequencing correct given the dependencies?
-> 3. Any slices that should be merged (too granular) or split (too large for one developer)?
->
-> Say **"delivery plan confirmed"** to generate decision packets."
+Update `.hitl/design-system.yaml`: set `status: awaiting-delivery-plan`.
+
+Output:
+```
+Gate 6 reached — status set to 'awaiting-delivery-plan'.
+
+Delivery plan is ready for TA review: [N] slices across [M] domains.
+
+The TA must run /hitl:ta-approve to confirm the delivery plan before decision packets are generated.
+Re-run /hitl:architect-design-system after TA approval to continue.
+```
+
+**STOP. Do not generate decision packets. This session ends here.**
 
 ### 8d. Generate decision packets
 
@@ -396,6 +482,8 @@ approvals:
 ```
 
 The `pm_mental_model` line is the demo check from 8a in one sentence — it is the handoff signal to the PM that this slice is complete.
+
+After all decision packets are written, update `.hitl/design-system.yaml`: set `status: complete`.
 
 ---
 

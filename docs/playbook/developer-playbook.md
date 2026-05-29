@@ -4,6 +4,29 @@
 
 ---
 
+## What you receive before you start
+
+The architect hands you a **decision packet** — a YAML file at `docs/decisions/issue-<N>.yaml` (or `issue-<N>-slice-<M>.yaml` for multi-slice work). It contains everything you need to begin:
+
+| Field | What it tells you |
+|-------|------------------|
+| `issue` | The GitHub issue number for your slice |
+| `domains` | The one manifest domain you're working in |
+| `source_docs.lld` | The LLD path — your implementation spec |
+| `source_docs.hld` | The HLD — context for how your domain fits the system |
+| `tests.plan` | The test scenarios to cover |
+| `rollout.risk` | How carefully to stage the deployment |
+
+Before writing any code, read your packet:
+
+```bash
+cat docs/decisions/issue-<N>.yaml
+```
+
+Then open the LLD it references — that document drives everything that follows: tests, implementation, and code review.
+
+---
+
 ## Step 1 — Set up your environment
 
 ```bash
@@ -39,14 +62,21 @@ Tell me:
 
 ---
 
-## Step 3 — Find your next task
+## Step 3 — Start from your assigned GitHub issue
+
+When the architect finishes the design and the TA approves the decision packet, GitHub posts a **"Ready for Development"** comment on the issue assigned to you. That comment contains your packet path, your domain, and your starting command.
+
+Open Claude Code and point it at the issue:
 
 ```
-Read docs/01-product/prd.md and the current GitHub issues.
-What's the next piece of work ready to be picked up?
-What does "done" look like for it, and what LLD should
-I implement from?
+/hitl:dev-tdd
+
+I have been assigned GitHub issue #[N]. Read the decision packet at
+docs/decisions/issue-[N].yaml and tell me what I am building,
+what domain I am in, and what the test plan requires me to cover.
 ```
+
+Claude reads the packet, loads the LLD, and confirms what you're building before generating any tests. If it can't find the packet, check that the architect has completed `/hitl:architect-design-feature` and the TA has run `/hitl:ta-approve`.
 
 ---
 
@@ -69,36 +99,29 @@ The workflow is: issue → impact analysis → LLD review → TDD (tests first) 
 
 ---
 
-## Step 5 — Write tests before code (TDD)
+## Step 5 — Write tests and build the implementation
+
+`/hitl:dev-tdd` is the command for writing code. It runs the full cycle in one session: generates tests from the LLD, pauses for your review, then generates the implementation that makes all tests pass.
 
 ```
 /hitl:dev-tdd
 
-I'm implementing [component] from docs/02-design/technical/lld/[path].
-Generate the maximum set of tests from the LLD spec — happy paths,
-error paths, edge cases, contract compliance, and any regression
-tests linked to past incidents. No implementation code yet.
+I have been assigned GitHub issue #[N]. Read the decision packet at
+docs/decisions/issue-[N].yaml and tell me what I am building,
+what domain I am in, and what the test plan requires me to cover.
 ```
 
-Review the generated tests carefully. Add cases Claude missed:
+The skill walks you through seven phases automatically:
 
-```
-I want to add these test cases you missed: [describe them].
-Update the test file and flag any gaps they reveal in the LLD.
-```
+1. **RED** — generates tests from the LLD (happy paths, error paths, edge cases, regression tests from past incidents)
+2. **Review** — pauses and shows you the tests; you add anything Claude missed
+3. **Improve design** — flags any test that reveals a gap in the LLD and proposes an LLD update
+4. **Verify RED** — confirms all new tests fail before any implementation exists
+5. **GREEN** — generates the implementation code that makes all tests pass
+6. **Verify GREEN** — confirms all tests pass with no regressions
+7. **Refactor** — simplifies the passing code without breaking tests
 
----
-
-## Step 6 — Generate the implementation
-
-Once tests are written, reviewed, and all failing (RED):
-
-```
-All tests are written and confirmed failing. Generate the
-implementation code from docs/02-design/technical/lld/[path]
-that makes all tests pass. Follow every convention in CLAUDE.md
-and docs/system-manifest.yaml. Simplest correct code only.
-```
+You do not need to type separate prompts for tests and code — the skill handles both. Your only judgment call is the review step: add test cases Claude missed, remove tests that check implementation details rather than behaviour.
 
 ---
 
