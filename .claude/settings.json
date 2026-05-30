@@ -1,4 +1,7 @@
 {
+  "env": {
+    "LLD_HOOK_MODE": "warn"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -39,6 +42,30 @@
           }
         ]
       }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git log *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git fetch *)",
+      "Bash(git merge-base *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(pytest *)",
+      "Bash(ruff check *)",
+      "Bash(semgrep *)",
+      "Bash(python3 *)",
+      "Bash(find docs/*)",
+      "Bash(find ai/*)",
+      "Bash(cat docs/*)",
+      "Bash(cat ai/*)"
     ]
   }
 }
