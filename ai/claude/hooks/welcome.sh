@@ -3,26 +3,13 @@
 # When a change is in progress with a known current_step: shows breadcrumbs every prompt.
 # Otherwise: shows the static startup menu once per session.
 
-# --- Graphify pre-flight (fast-fail) ---
+# --- Graphify pre-flight (advisory only — Graphify is optional) ---
 if ! command -v graphify &>/dev/null; then
-  echo "HITL BLOCKED: Graphify is not installed." >&2
-  echo "" >&2
-  echo "Graphify is required for HITL skills to query design docs." >&2
-  echo "Run these commands, then re-open Claude Code:" >&2
-  echo "" >&2
-  echo "  uv tool install graphifyy" >&2
-  echo "  graphify claude install" >&2
-  echo "  graphify ." >&2
-  exit 2
-fi
-
-if [[ ! -f "graphify-out/graph.json" ]]; then
-  echo "HITL BLOCKED: Graphify is installed but the graph has not been built for this project." >&2
-  echo "" >&2
-  echo "Run this in your project root, then re-open Claude Code:" >&2
-  echo "" >&2
-  echo "  graphify ." >&2
-  exit 2
+  echo "HITL NOTE: Graphify is not installed — skills will read docs directly (higher token cost on large projects)." >&2
+  echo "To install: uv tool install graphifyy && graphify claude install && graphify ." >&2
+elif [[ ! -f "graphify-out/graph.json" ]]; then
+  echo "HITL NOTE: Graphify is installed but the graph has not been built for this project." >&2
+  echo "Run 'graphify .' in your project root to enable graph queries (optional but recommended)." >&2
 fi
 # --- end Graphify pre-flight ---
 
