@@ -174,6 +174,6 @@ Code generation is strictly gated on LLD existence. Three mechanisms work togeth
 |---|---|---|
 | LLD Confirmation Gate | `ai/claude/apply-change/SKILL.md` Step 2 | Claude reads the LLD and presents scope for human approval before any code is written |
 | PreToolUse Hook | `.claude/settings.json` + `tools/scripts/check-lld-exists.sh` | Blocks file writes at the OS level when no LLD exists for the target domain |
-| LLD Adherence Review | `ai/claude/review-lld-adherence.md` | Post-generation check — verifies every LLD element is implemented and no unspecified public interfaces were added. Required before PR. |
+| LLD Adherence Review | `ai/claude/review-lld-adherence/SKILL.md` | Post-generation check — verifies every LLD element is implemented and no unspecified public interfaces were added. Required before PR. |
 
 See [hooks-setup.md](hooks-setup.md) for hook installation instructions.
