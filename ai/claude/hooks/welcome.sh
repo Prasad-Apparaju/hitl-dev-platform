@@ -3,25 +3,10 @@
 # When a change is in progress with a known current_step: shows breadcrumbs every prompt.
 # Otherwise: shows the static startup menu once per session.
 
-# --- Graphify pre-flight ---
-# Source .env if present so Graphify can find LLM API keys without manual export.
+# Source .env if present — makes LLM keys (e.g. for Graphify) available without manual export.
 if [[ -f ".env" ]]; then
   set -a; source ".env"; set +a
 fi
-
-if ! command -v graphify &>/dev/null; then
-  echo "HITL NOTE: Graphify is not installed — skills will read docs directly (higher token cost on large projects)." >&2
-  echo "To install: uv tool install graphifyy && graphify claude install && graphify ." >&2
-elif [[ ! -f "graphify-out/graph.json" ]]; then
-  echo "HITL: Building Graphify knowledge graph (first run)..." >&2
-  if graphify . 2>&1; then
-    echo "HITL: Graph built successfully." >&2
-  else
-    echo "HITL NOTE: Could not build Graphify graph — skills will read docs directly." >&2
-    echo "To build manually: set an LLM key in .env (e.g. ANTHROPIC_API_KEY=...) and run 'graphify .'" >&2
-  fi
-fi
-# --- end Graphify pre-flight ---
 
 HITL_FILE=".hitl/current-change.yaml"
 SEP="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
