@@ -38,7 +38,7 @@ Claude reads the PRD and scans the codebase. Gives you a table of every requirem
 When you have a rough idea and want to think it through properly:
 
 ```
-/hitl:pm-design-feature [describe your idea]
+/hitl:pm-design-feature a way for users to refer friends and earn store credit
 ```
 
 Claude walks you through 7 phases — discovery, user journey, edge cases, UX mockup, acceptance criteria, impact analysis, and writing to the PRD. You approve each phase before it moves to the next. A GitHub issue is created immediately after Phase 1 discovery so the work is tracked from the start; the PRD reference is added to it at the end.
@@ -50,7 +50,7 @@ Claude walks you through 7 phases — discovery, user journey, edge cases, UX mo
 When you already know what you want and just need it in the PRD:
 
 ```
-/hitl:pm-add-feature [describe the requirement]
+/hitl:pm-add-feature users should be able to export their full order history as a CSV file
 ```
 
 Claude creates a draft GitHub issue first to track the work, then drafts the requirement in the right format, checks for conflicts with existing requirements, gets your approval, updates the PRD, and adds the PRD reference to the issue.
@@ -60,7 +60,7 @@ Claude creates a draft GitHub issue first to track the work, then drafts the req
 ## Step 5 — Update an existing requirement
 
 ```
-/hitl:pm-update-requirement FR-[ID] [describe what to change]
+/hitl:pm-update-requirement FR-005-2 change the export format to also include product images as URLs
 ```
 
 Claude shows you the current requirement, drafts the change, flags any ripple effects on other requirements, and updates the PRD on your approval.
@@ -72,7 +72,7 @@ Claude shows you the current requirement, drafts the change, flags any ripple ef
 When a developer opens a PR that changes the PRD:
 
 ```
-/hitl:pm-review-scope-change [PR number]
+/hitl:pm-review-scope-change 87
 ```
 
 Claude summarises what changed, assesses the impact, generates review questions for you to ask the team, and lets you approve or request changes — all within Claude Code.
@@ -94,7 +94,7 @@ Claude walks through each open question one at a time, takes your answer, and up
 ## Step 8 — Report a bug
 
 ```
-/hitl:pm-report-bug [describe what went wrong]
+/hitl:pm-report-bug the referral link stops working after a user resets their password
 ```
 
 Claude gathers the details, checks for duplicates, and creates a well-structured GitHub issue.
@@ -106,7 +106,7 @@ Claude gathers the details, checks for duplicates, and creates a well-structured
 Every non-trivial change produces an impact brief before it ships. Section 4 is the product mental model update — written for you. Ask Claude to surface it:
 
 ```
-/hitl:dev-impact-brief [PR number or describe the change]
+/hitl:dev-impact-brief 42
 ```
 
 Then ask follow-up questions before you approve:
@@ -122,7 +122,7 @@ Which users see this first in the canary?
 ## Step 10 — Prepare a demo
 
 ```
-/hitl:pm-prep-demo [feature or sprint you're demoing]
+/hitl:pm-prep-demo the referral program feature for the Q2 stakeholder demo
 ```
 
 Claude produces a structured demo script: what to show, in what order, what to say at each step, and what edge cases to avoid.

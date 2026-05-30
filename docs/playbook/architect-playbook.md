@@ -11,8 +11,9 @@ At the start of any new piece of work, reload your context:
 ```
 Read docs/02-design/technical/adrs/design-decisions.md,
 docs/system-manifest.yaml, and docs/02-design/technical/hld/system.md.
-Summarize the key architectural decisions, the 10 cross-cutting
-conventions, and the domain boundaries I must respect.
+Summarise the key architectural decisions, the cross-cutting conventions,
+and the domain boundaries I must respect before I start designing
+the payments refund flow.
 ```
 
 ---
@@ -23,18 +24,18 @@ When requirements change or new capabilities are needed:
 
 ```
 Read the HLDs at docs/02-design/technical/hld/ relevant to
-[feature/capability]. Compare against the updated PRD at
+the payments domain. Compare against the updated PRD at
 docs/01-product/prd.md. Flag gaps, inconsistencies, or areas
-where the design needs to evolve. Propose improvements and update
-the HLD documents.
+where the design needs to evolve to support the refund flow.
+Propose improvements and update the HLD documents.
 ```
 
 For any proposed architectural change:
 
 ```
-I want to [describe change]. What ADRs are relevant? What
-are the trade-offs? Draft a new ADR following
-docs/02-design/technical/adrs/README.md format — options,
+I want to add idempotency key enforcement to all refund API calls.
+What ADRs are relevant? What are the trade-offs? Draft a new ADR
+following docs/02-design/technical/adrs/README.md format — options,
 trade-offs, and a recommendation.
 ```
 
@@ -45,7 +46,7 @@ trade-offs, and a recommendation.
 Before delegating any work to the team:
 
 ```
-Read the LLD at docs/02-design/technical/lld/[path].md.
+Read the LLD at docs/02-design/technical/lld/payments/refund-flow.md.
 Does it fully specify the component for implementation?
 Flag underspecified areas, missing error paths, missing
 conventions from the system manifest, or edge cases not covered.
@@ -56,9 +57,10 @@ When a new component is needed:
 ```
 /hitl:dev-generate-docs
 
-I need a new component: [describe]. Generate the HLD section
-first, then the LLD when I approve. Follow the existing
-conventions from docs/system-manifest.yaml.
+I need an LLD for the payments refund flow — a new component that
+handles refund requests idempotently and posts a reversal event.
+Generate the HLD section first, then the LLD once I approve.
+Follow the existing conventions from docs/system-manifest.yaml.
 ```
 
 ---
@@ -68,18 +70,19 @@ conventions from docs/system-manifest.yaml.
 Once designs are approved:
 
 ```
-From the approved HLDs and LLDs, propose a phased build plan.
-Each phase is a shippable, independently testable slice.
-Sequence them to minimize integration risk.
+From the approved HLDs and LLDs for the payments domain, propose
+a phased build plan. Each phase is a shippable, independently testable
+slice. Sequence them to minimise integration risk.
 ```
 
 To delegate a slice to a team member, point them at the LLD and the workflow:
 
 ```
-Implement the component at docs/02-design/technical/lld/[path].md.
-Follow the developer playbook at docs/06-team/developer-playbook.md.
-The gates are: design check-in, tests reviewed, code review Round 1,
-code review Round 2, architect code review (step 19a). Do not proceed past a gate without my approval.
+Implement the payments refund flow from
+docs/02-design/technical/lld/payments/refund-flow.md.
+Follow the developer playbook. The gates are: tests reviewed, code
+review Rounds 1 and 2, architect code review (step 19a).
+Do not proceed past a gate without my approval.
 ```
 
 ---
@@ -89,10 +92,11 @@ code review Round 2, architect code review (step 19a). Do not proceed past a gat
 For work you're implementing yourself:
 
 ```
-I'm implementing [component] from
-docs/02-design/technical/lld/[path].md. Claude proposes
-code, I approve each piece. Start with the GitHub issue and
-follow the dev-practices workflow.
+/hitl:dev-tdd
+
+I have been assigned GitHub issue #42. Read the decision packet at
+docs/decisions/issue-42.yaml and tell me what I am building,
+what domain I am in, and what the test plan requires me to cover.
 ```
 
 ---
@@ -101,8 +105,8 @@ follow the dev-practices workflow.
 
 ```
 Based on docs/01-product/prd.md and the current state of the codebase,
-show me the gap between requirements and what's built.
-For each requirement: Done / Partial / Not started. What's next?
+show me the gap between requirements and what's built. For each
+requirement: Done / Partial / Not started. Focus on the payments domain.
 ```
 
 ---

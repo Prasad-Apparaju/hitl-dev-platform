@@ -6,13 +6,49 @@ You own the release. You take the handoff from QA, assess deployment risk, deplo
 
 ![Ops slash commands in Claude Code](../images/ops-commands.svg)
 
-| Command | When to use |
-|---------|-------------|
-| `/hitl:ops-review-release` | After the developer completes the impact brief — review rollout plan, canary criteria, observability readiness, and rollback procedure |
-| `/hitl:ops-apply-iac` | Before deployment — when the change plan includes IaC changes, review and apply them with a dry-run gate |
-| `/hitl:ops-build` | Before deployment — build the app from the release branch, verify CI artifact and run smoke check |
-| `/hitl:ops-deploy` | After build and IaC are verified — deploy to target environment per the approved rollout plan |
-| `/hitl:ops-monitor-canary` | During an active canary deployment — read dashboards against go/no-go criteria and produce a promotion recommendation |
+**`/hitl:ops-review-release`** — After the developer completes the impact brief, review the rollout plan, canary criteria, observability readiness, and rollback procedure. Required for Tier 3+.
+```
+/hitl:ops-review-release
+
+Review the rollout plan for issue #42 — payments refund flow.
+Confirm canary percentages and soak times are appropriate, go/no-go
+criteria are specific measurable numbers, and rollback is defined.
+```
+
+**`/hitl:ops-apply-iac`** — When the change plan includes infrastructure changes, review and apply them with a dry-run gate before any deployment.
+```
+/hitl:ops-apply-iac
+
+Apply the IaC changes for the payments domain in issue #42.
+Run a dry-run first and show me all adds, updates, and deletes
+before I confirm the apply.
+```
+
+**`/hitl:ops-build`** — Build the app from the release branch, verify the CI artifact, and run a smoke check. Run before every deployment.
+```
+/hitl:ops-build
+
+Build the release artifact from branch feat/42-refund-flow.
+Verify the CI run passed, confirm the artifact digest matches,
+and run the smoke suite.
+```
+
+**`/hitl:ops-deploy`** — After build and IaC are verified, deploy to the target environment per the approved rollout plan.
+```
+/hitl:ops-deploy
+
+Deploy issue #42 — payments refund flow — per the approved rollout plan.
+Start at 5% canary. Show me the exact deployment command before running it.
+```
+
+**`/hitl:ops-monitor-canary`** — During an active canary, read dashboards against go/no-go criteria and produce a promotion or hold recommendation.
+```
+/hitl:ops-monitor-canary
+
+Monitor the canary for issue #42. Read the payments error rate and
+p99 latency dashboards. Compare against the go/no-go criteria in the
+approved rollout plan and tell me whether to promote or hold.
+```
 
 ## Your Role in the Workflow
 
