@@ -6,16 +6,70 @@ You own the full vertical slice — docs, code, tests, IaC, and bugs. AI handles
 
 ![Developer slash commands in Claude Code](../images/developer-commands.svg)
 
-| Command | When to use |
-|---------|-------------|
-| `/hitl:dev-practices` | Starting any Tier 1+ change — loads the full HITL workflow with the right steps for your change tier |
-| `/hitl:dev-generate-docs` | Before writing code — generate HLD, LLD, ADR from a feature description; or reverse-engineer docs from existing code |
-| `/hitl:dev-tdd` | After the LLD is approved — generates tests from the LLD, gets your review, then generates the implementation code. Full RED → GREEN → REFACTOR cycle. **This is the command for writing code.** |
-| `/hitl:dev-apply-change` | Before touching code — impact analysis across components, APIs, docs, and tests |
-| `/hitl:dev-check-conventions` | At any point — runs semgrep, manifest drift, and convention checks in-chat before CI catches them |
-| `/hitl:dev-check-implementation` | After TDD — two-round spec conformance review comparing implementation against the LLD and manifest |
-| `/hitl:dev-impact-brief` | When the PR is ready — generates the downstream impact brief and rollout plan for the architect to review |
-| `/hitl:dev-conclude` | After a design-room thread reaches a decision — turns the Slack thread into an ADR, GitHub issue, and HLD/LLD updates |
+**`/hitl:dev-tdd`** — **This is the command for writing code.** Generates tests from the LLD, pauses for your review, then generates the implementation. Full RED → GREEN → REFACTOR cycle.
+```
+/hitl:dev-tdd
+
+I have been assigned GitHub issue #42. Read the decision packet at
+docs/decisions/issue-42.yaml and tell me what I am building,
+what domain I am in, and what the test plan requires me to cover.
+```
+
+**`/hitl:dev-apply-change`** — Impact analysis before touching code. Identifies affected components, APIs, docs, and tests.
+```
+/hitl:dev-apply-change 42
+
+Initialise the change context for issue #42 — payments refund flow.
+```
+
+**`/hitl:dev-check-conventions`** — Runs semgrep, manifest drift, and convention checks in-chat before CI catches them.
+```
+/hitl:dev-check-conventions
+
+Check the code I just wrote in src/payments/ against the LLD and
+system manifest conventions. Flag any violations.
+```
+
+**`/hitl:dev-check-implementation`** — Two-round spec conformance review comparing implementation against the LLD and manifest.
+```
+/hitl:dev-check-implementation
+
+Review my implementation against docs/02-design/technical/lld/payments/refund-flow.md.
+Round 1: structure, security, LLD adherence. Round 2: edge cases and test completeness.
+```
+
+**`/hitl:dev-impact-brief`** — Generates the downstream impact brief and rollout plan. Run when the PR is ready.
+```
+/hitl:dev-impact-brief
+
+Generate the impact brief for issue #42 — payments refund flow.
+Include what flows changed, risk assessment, QA scenarios, PM mental model update,
+and rollout strategy.
+```
+
+**`/hitl:dev-generate-docs`** — Generate HLD, LLD, ADR from a feature description, or reverse-engineer docs from existing code.
+```
+/hitl:dev-generate-docs
+
+Generate an LLD for the refund flow in the payments domain based on
+docs/02-design/technical/hld/payments.md and GitHub issue #42.
+```
+
+**`/hitl:dev-conclude`** — Turns a design-room Slack thread into an ADR, GitHub issue, and HLD/LLD updates.
+```
+/hitl:dev-conclude
+
+We decided in Slack to use idempotency keys for all refund API calls.
+Create an ADR and update the payments LLD to reflect this.
+```
+
+**`/hitl:dev-practices`** — Loads the full HITL workflow for any Tier 1+ change. Use when you want Claude to walk you through every step.
+```
+/hitl:dev-practices
+
+I am implementing a refund flow for issue #42. What tier is this
+and what steps do I need to follow?
+```
 
 ## What you receive
 
