@@ -13,6 +13,7 @@
     "ai/claude/tdd",
     "ai/claude/generate-docs",
     "ai/claude/conclude",
+    "ai/claude/review-lld-adherence",
     "ai/claude/review-security",
     "ai/claude/migrate/review-external-docs",
     "ai/claude/architect/design-system",
