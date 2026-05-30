@@ -49,9 +49,9 @@ and what domains does the system manifest define?
 Before writing any code, load the context for your domain:
 
 ```
-I'm about to work on the [domain name] domain. Read the system
-manifest entry for this domain and the relevant LLD at
-docs/02-design/technical/lld/.
+I'm about to work on the payments domain. Read the system manifest
+entry for this domain and the LLD at
+docs/02-design/technical/lld/payments/refund-flow.md.
 
 Tell me:
 1. What files this domain owns
@@ -86,13 +86,9 @@ For every change — feature, fix, or refactor — start with:
 
 ```
 /hitl:dev-practices
-```
 
-Tell Claude what you're doing and it will confirm the tier and walk you through each step:
-
-```
-I'm implementing [feature/fix]. What tier is this and what
-steps do I need to follow?
+I'm implementing the refund flow for issue #42. What tier is this
+and what steps do I need to follow?
 ```
 
 The workflow is: issue → impact analysis → LLD review → TDD (tests first) → code → two-round review → impact brief → PR.
@@ -130,18 +126,21 @@ You do not need to type separate prompts for tests and code — the skill handle
 ```
 /hitl:dev-check-conventions
 
-Review the code I just wrote against the LLD and the system
-manifest conventions. Flag any violations, missing inline comments,
-missing idempotency keys, unguarded external calls, or places where
-the implementation diverged from the spec.
+Review the code I just wrote in src/payments/ against the LLD at
+docs/02-design/technical/lld/payments/refund-flow.md and the system
+manifest conventions. Flag any violations, missing idempotency keys,
+unguarded external calls, or places where the implementation diverged
+from the spec.
 ```
 
 Fix what's flagged, then run a second pass:
 
 ```
-Second review pass: focus on edge cases, error paths,
-and whether retry/idempotency/tenant-isolation conventions
-are correctly applied everywhere they're needed.
+/hitl:dev-check-implementation
+
+Second review pass on the payments refund flow: focus on edge cases,
+error paths, and whether retry and idempotency conventions are correctly
+applied everywhere they're needed.
 ```
 
 ---
@@ -151,12 +150,10 @@ are correctly applied everywhere they're needed.
 ```
 /hitl:dev-impact-brief
 
-Generate the downstream impact brief for this change. Include:
-1. What flows and components changed
-2. Risk assessment
-3. Manual verification scenarios for QA
-4. What the PM needs to know (mental model update)
-5. Rollout strategy and go/no-go criteria
+Generate the downstream impact brief for issue #42 — payments refund flow.
+Include what flows and components changed, risk assessment, manual
+verification scenarios for QA, what the PM needs to know about the
+mental model update, and the rollout strategy with go/no-go criteria.
 ```
 
 ---
@@ -164,19 +161,20 @@ Generate the downstream impact brief for this change. Include:
 ## Step 9 — Ask about anything you're unsure of
 
 ```
-Why does [thing] work this way? Where is that decision documented?
+Why does the payments domain use idempotency keys for refunds?
+Where is that decision documented?
 ```
 
 ```
-I'm not sure whether to [option A] or [option B] here. What do
-the ADRs and LLD say, and what would be consistent with how
-the rest of the system handles this?
+I'm not sure whether to process the refund synchronously or queue it.
+What do the ADRs and LLD say, and what would be consistent with how
+the rest of the payments domain handles external calls?
 ```
 
 ```
-This test is failing in an unexpected way. Read the LLD, the
-test, and the implementation and help me diagnose whether this
-is a test bug, an implementation bug, or an LLD gap.
+The test_refund_exceeds_original_amount test is failing in an unexpected
+way. Read the LLD, the test, and the implementation and help me diagnose
+whether this is a test bug, an implementation bug, or an LLD gap.
 ```
 
 ---

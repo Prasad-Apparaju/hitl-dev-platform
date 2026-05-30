@@ -95,16 +95,20 @@ Before approving, verify:
 
 **Do not hand off with open questions unassigned.** Unanswered NFRs at handoff become architecture mistakes at build time.
 
-To initiate handoff:
+To initiate handoff for full system design:
 
 ```
 /hitl:architect-design-system docs/00-migration/migration-brief.md
 ```
 
-or for slice-by-slice:
+To initiate handoff for a specific slice:
 
 ```
-/hitl:architect-design-feature
+/hitl:architect-design-feature 42
+
+Design the billing domain migration for issue #42. The migration brief
+at docs/00-migration/migration-brief.md replaces the PRD — start from
+there, not from docs/01-product/prd.md.
 ```
 
 Tell the Architect: *"The migration brief replaces the PRD. Start from `docs/00-migration/migration-brief.md`."*

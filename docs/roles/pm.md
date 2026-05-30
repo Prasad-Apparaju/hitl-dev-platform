@@ -6,17 +6,50 @@ You define what gets built and why. You review AI-drafted PRDs, accept or reques
 
 ![PM slash commands in Claude Code](../images/pm-commands.svg)
 
-| Command | When to use |
-|---------|-------------|
-| `/hitl:pm-add-feature` | A new feature needs to be documented — adds it to the PRD with acceptance criteria and a requirement ID |
-| `/hitl:pm-design-feature` | You have a rough idea — 7-phase guided process: discovery, user journey, edge cases, UI prototype, acceptance criteria, impact, PRD. Shows a progress breadcrumb at every phase. |
-| `/hitl:pm-update-requirement` | An existing requirement changes — updates the PRD with new criteria or scope |
-| `/hitl:pm-review-scope-change` | The team flags a scope change — analyzes downstream impact before you decide |
-| `/hitl:pm-prioritize` | Backlog grooming — scores features by value, effort, risk, and strategic alignment |
-| `/hitl:pm-review-progress` | Sprint or milestone check-in — reviews progress against PRD goals |
-| `/hitl:pm-report-bug` | You found a bug — documents it as a structured GitHub issue with reproduction steps |
-| `/hitl:pm-prep-demo` | Before a demo — generates a script and talking points for the feature |
-| `/hitl:pm-answer-questions` | Stakeholder question — answers product or business questions using the existing docs |
+**`/hitl:pm-design-feature`** — You have a rough idea. 7-phase guided process: discovery, user journey, edge cases, UI prototype, acceptance criteria, impact analysis, and PRD write. Shows a progress breadcrumb at every phase.
+```
+/hitl:pm-design-feature a way for users to refer friends and earn store credit
+```
+
+**`/hitl:pm-add-feature`** — You know what you want. Drafts a structured requirement in the PRD with acceptance criteria and a requirement ID, then creates a GitHub issue.
+```
+/hitl:pm-add-feature users should be able to export their full order history as a CSV file
+```
+
+**`/hitl:pm-update-requirement`** — An existing requirement changes. Shows the current text, drafts the change, flags ripple effects on related requirements.
+```
+/hitl:pm-update-requirement FR-005-2 change the export format to also include product images as URLs
+```
+
+**`/hitl:pm-review-scope-change`** — The team proposes a change to the PRD via a PR. Summarises what changed, assesses downstream impact, and generates review questions.
+```
+/hitl:pm-review-scope-change 87
+```
+
+**`/hitl:pm-prioritize`** — Backlog grooming. Scores open features by value, effort, risk, and strategic alignment, then helps you decide what to promote or defer.
+```
+/hitl:pm-prioritize
+```
+
+**`/hitl:pm-review-progress`** — Sprint or milestone check-in. Compares PRD requirements against what is actually built and shows Done / Partial / Not started for each.
+```
+/hitl:pm-review-progress
+```
+
+**`/hitl:pm-report-bug`** — You found a bug. Checks for duplicates, gathers reproduction steps, and creates a structured GitHub issue.
+```
+/hitl:pm-report-bug the referral link stops working after a user resets their password
+```
+
+**`/hitl:pm-prep-demo`** — Before a demo. Generates a structured script: what to show, in what order, what to say at each step, and what edge cases to avoid.
+```
+/hitl:pm-prep-demo the referral program feature for the Q2 stakeholder demo
+```
+
+**`/hitl:pm-answer-questions`** — Walks through unresolved questions in the PRD one at a time, takes your answers, and updates the document.
+```
+/hitl:pm-answer-questions
+```
 
 ## Your Role in the Workflow
 

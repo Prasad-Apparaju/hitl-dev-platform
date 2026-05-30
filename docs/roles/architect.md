@@ -6,41 +6,90 @@ You hold the design and integration gates. You review designs before implementat
 
 ![Architect slash commands in Claude Code](../images/architect-commands.svg)
 
-| Command | When to use | Gate it covers |
-|---------|-------------|----------------|
-| `/hitl:architect-design-system` | New project — designing the full system from a PRD | System foundation (one-time) |
-| `/hitl:architect-design-feature` | Starting any Tier 2+ change — steps 3–9 end-to-end | Impact analysis through decision packet handoff |
-| `/hitl:architect-review-design` | After design docs are produced — before implementation starts | Design approval gate |
-| `/hitl:architect-verify-traceability` | Final check before approving merge | Integration verification gate |
-| `/hitl:qa-plan-tests` | At design time — contribute test scenarios from incident history before TDD starts | QA gate (when covering QA) |
-| `/hitl:qa-review-tests` | After RED test generation — review coverage before implementation begins; ACs, LLD edges, regressions | QA gate (when covering QA) |
-| `/hitl:qa-verify-quality` | After developer handoff — independent quality verification | QA gate (when covering QA) |
-| `/hitl:qa-report-defect` | When verify-quality blocks — file structured defect with AC reference and severity | QA gate (when covering QA) |
-| `/hitl:ops-review-release` | Before release — assess rollout plan, canary criteria, rollback | Ops gate (when covering Ops) |
-| `/hitl:ops-monitor-canary` | During active canary — read dashboards, produce go/no-go | Ops gate (when covering Ops) |
+**`/hitl:architect-design-system`** — Run once at project inception. Takes the PRD and produces domain decomposition, `docs/system-manifest.yaml`, system HLDs, foundational ADRs, domain LLDs, and the HITL process bootstrap. The domain decomposition gate is the most consequential — domain boundary errors cascade through every subsequent artifact.
+```
+/hitl:architect-design-system docs/01-product/prd.md
+```
 
-## Your Commands in Context
+**`/hitl:architect-design-feature`** — Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with TA approval gates, ADR capture, slice decomposition, test planning, and decision packet assembly.
+```
+/hitl:architect-design-feature 42
 
-### New System (`/hitl:architect-design-system`)
-Run once at project inception. Takes the PRD and produces: domain decomposition, `docs/system-manifest.yaml`, system HLDs, foundational ADRs, domain LLDs, and the HITL process bootstrap. The domain decomposition gate is the most consequential — domain boundary errors cascade through every subsequent artifact.
+I am designing the refund flow for issue #42. The change affects the
+payments domain — refunds need to be idempotent and reversible.
+```
 
-### New Change (`/hitl:architect-design-feature`)
-Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with approval gates, ADR capture, slice decomposition (domain independence + demoable/observable check), test case planning, and decision packet assembly. Produces `.hitl/current-change.yaml` set to `implementation-approved` and hands one decision packet per slice to each developer.
+**`/hitl:architect-review-design`** — After design docs are produced, before implementation starts. Checks LLD precision, manifest facade API updates, and ADR completeness.
+```
+/hitl:architect-review-design
 
-### Design Review (`/hitl:architect-review-design`)
-Run after design docs are produced — before implementation starts. Check:
-- LLD is precise enough to generate tests from — every method has a signature, error modes are enumerated, preconditions are explicit
-- Manifest facade APIs are updated if new domain APIs are introduced
-- ADRs are written for all tradeoffs — specific rationale, genuine alternatives, honest consequences
+Review the LLD at docs/02-design/technical/lld/payments/refund-flow.md.
+Confirm method signatures are precise enough for test generation, all
+error modes are enumerated, and the manifest is updated.
+```
 
-Do not approve implementation until the LLD has `status: approved` in its frontmatter.
+**`/hitl:architect-verify-traceability`** — Final check before approving merge. Confirms the full chain: issue → design → implementation → tests → impact brief → rollout plan.
+```
+/hitl:architect-verify-traceability
 
-### Integration Verification (`/hitl:architect-verify-traceability`)
-Final check before approving merge. Confirm the chain is unbroken:
+Verify traceability for issue #42 — payments refund flow — before I
+approve the merge. Confirm the implementation matches the LLD and all
+evidence is complete.
+```
 
-GitHub issue exists → design PR merged → implementation matches LLD → tests cover the spec → impact brief complete → rollout plan approved
+**`/hitl:qa-plan-tests`** — At design time, contribute test scenarios from incident history before the TDD cycle starts. Non-blocking input to the test plan.
+```
+/hitl:qa-plan-tests
 
-Run the feature end-to-end and ask: "Does this actually do what the design said it would?"
+Review the LLD at docs/02-design/technical/lld/payments/refund-flow.md
+and the incident registry for the payments domain. What test scenarios
+should the developer add beyond the happy path?
+```
+
+**`/hitl:qa-review-tests`** — After RED test generation, formal review before implementation begins. Checks ACs, LLD edge cases, and incident regressions.
+```
+/hitl:qa-review-tests
+
+Review the tests generated for the payments refund flow. Verify every
+acceptance criterion in issue #42 has a test and all LLD error modes
+are exercised.
+```
+
+**`/hitl:qa-verify-quality`** — After developer handoff, independent quality verification against the running build. This is the gate before Ops.
+```
+/hitl:qa-verify-quality
+
+Verify the payments refund flow against the acceptance criteria in
+issue #42. Run exploratory tests beyond the happy path and probe the
+failure modes in the incident registry.
+```
+
+**`/hitl:qa-report-defect`** — When verify-quality finds a blocking issue. Files a structured defect with AC reference, reproduction steps, and severity.
+```
+/hitl:qa-report-defect
+
+AC-3 fails: when a refund amount exceeds the original transaction total,
+the API returns 200 instead of 422. Reproduction: POST /refunds with
+amount: 9999 on a $10 order. Severity: high — blocks issue #42.
+```
+
+**`/hitl:ops-review-release`** — Before release, assess the rollout plan, canary criteria, observability readiness, and rollback procedure.
+```
+/hitl:ops-review-release
+
+Review the rollout plan for issue #42 — payments refund flow.
+Check canary percentages, soak times, go/no-go criteria, and
+confirm rollback is defined.
+```
+
+**`/hitl:ops-monitor-canary`** — During an active canary deployment, read dashboards against go/no-go criteria and produce a promotion recommendation.
+```
+/hitl:ops-monitor-canary
+
+Monitor the canary deployment for issue #42. Check the payments
+error rate and p99 latency dashboards against the criteria in the
+approved rollout plan.
+```
 
 ## Delegation When Unavailable
 

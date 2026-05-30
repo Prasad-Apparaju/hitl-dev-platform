@@ -16,17 +16,50 @@ Claude auto-loads the PRD, architecture, and process docs — you don't need to 
 
 Type these in Claude Code. Claude loads the right context automatically.
 
-| Command | What it does |
-|---|---|
-| `/hitl:pm-design-feature <rough idea>` | Guided 7-phase process: shapes a rough idea into structured requirements, a UI prototype, and acceptance criteria |
-| `/hitl:pm-add-feature <description>` | Draft a new requirement in the PRD with acceptance criteria, use case, and GitHub issue |
-| `/hitl:pm-update-requirement FR-xxx-N <change>` | Update an existing requirement, flag ripple effects |
-| `/hitl:pm-review-progress` | Gap analysis: PRD requirements vs what's actually built |
-| `/hitl:pm-prioritize` | Review backlog by priority, suggest promotions/demotions |
-| `/hitl:pm-report-bug <description>` | Create a structured GitHub issue (checks for duplicates first) |
-| `/hitl:pm-answer-questions` | Walk through PRD §10 open questions one at a time, resolve them |
-| `/hitl:pm-prep-demo` | Generate a demo checklist from PRD use cases + acceptance criteria |
-| `/hitl:pm-review-scope-change <PR#>` | Summarize a team-proposed PRD change, generate review questions |
+**`/hitl:pm-design-feature`** — Guided 7-phase process: shapes a rough idea into structured requirements, a UI prototype, and acceptance criteria.
+```
+/hitl:pm-design-feature a way for users to refer friends and earn store credit
+```
+
+**`/hitl:pm-add-feature`** — Draft a new requirement in the PRD with acceptance criteria, use case, and GitHub issue.
+```
+/hitl:pm-add-feature users should be able to export their full order history as a CSV file
+```
+
+**`/hitl:pm-update-requirement`** — Update an existing requirement and flag ripple effects.
+```
+/hitl:pm-update-requirement FR-005-2 change the export format to also include product images as URLs
+```
+
+**`/hitl:pm-review-progress`** — Gap analysis: PRD requirements vs what's actually built.
+```
+/hitl:pm-review-progress
+```
+
+**`/hitl:pm-prioritize`** — Review backlog by priority, suggest promotions/demotions.
+```
+/hitl:pm-prioritize
+```
+
+**`/hitl:pm-report-bug`** — Create a structured GitHub issue (checks for duplicates first).
+```
+/hitl:pm-report-bug the referral link stops working after a user resets their password
+```
+
+**`/hitl:pm-answer-questions`** — Walk through PRD open questions one at a time and resolve them.
+```
+/hitl:pm-answer-questions
+```
+
+**`/hitl:pm-prep-demo`** — Generate a demo checklist from PRD use cases and acceptance criteria.
+```
+/hitl:pm-prep-demo the referral program feature for the Q2 stakeholder demo
+```
+
+**`/hitl:pm-review-scope-change`** — Summarise a team-proposed PRD change and generate review questions.
+```
+/hitl:pm-review-scope-change 87
+```
 
 ---
 
