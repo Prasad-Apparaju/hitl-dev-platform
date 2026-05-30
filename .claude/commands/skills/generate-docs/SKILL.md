@@ -193,9 +193,9 @@ This mode reads the existing codebase and generates the full documentation basel
      - File content requirement → `file_contains`
    - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
-3. **Copy the skills** to `.claude/commands/` if they don't exist:
-   - `skills/dev-practices.md` — the 28-step workflow
-   - `workflows/apply-change.md` — the impact analysis workflow
+3. **Wire the skills** via `init-project.sh` if `.claude/commands/` doesn't exist:
+   - `ai/claude/dev-practices/SKILL.md` — the 32-step workflow (`/hitl:dev-practices`)
+   - `ai/claude/apply-change/SKILL.md` — the impact analysis workflow (`/hitl:dev-apply-change`)
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR
