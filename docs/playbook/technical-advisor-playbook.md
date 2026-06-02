@@ -127,6 +127,18 @@ If any gate answer is no, the TA raises it as a finding — the Architect decide
 
 ---
 
+## Your Command
+
+**`/hitl:ta-approve`** — The only command that advances a design gate. Run it after reviewing the artifact the Architect produced at the current gate (`awaiting-hld-approval`, `awaiting-lld-approval`, `awaiting-packet-approval`, etc.). Reads `.hitl/current-change.yaml` or `.hitl/design-system.yaml`, confirms the gate, and advances the status to `*-approved` so the next phase can proceed.
+
+```
+/hitl:ta-approve
+```
+
+Claude will show you the artifact at the current gate and ask for your explicit approval before advancing. If you are not satisfied, do not run this command — add your findings as comments and ask the Architect to address them first.
+
+---
+
 ## How to tell Claude you are the TA
 
 At session start, say: *"I am the Technical Advisor for this session."*

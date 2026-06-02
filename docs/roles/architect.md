@@ -28,6 +28,14 @@ Confirm method signatures are precise enough for test generation, all
 error modes are enumerated, and the manifest is updated.
 ```
 
+**`/hitl:architect-review-code`** — Step 19a. After AI review rounds complete, creates the GitHub PR with the AI findings summary and a 7-item judgment checklist. You review on GitHub using line comments and approve or request changes.
+```
+/hitl:architect-review-code 42
+
+Create the PR for issue #42 — payments refund flow. Include the
+AI review summary and the judgment checklist in the description.
+```
+
 **`/hitl:architect-verify-traceability`** — Final check before approving merge. Confirms the full chain: issue → design → implementation → tests → impact brief → rollout plan.
 ```
 /hitl:architect-verify-traceability

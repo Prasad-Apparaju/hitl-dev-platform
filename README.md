@@ -77,7 +77,7 @@ Pick the path that matches where you are:
 |------|----------|-------|
 | **Developer** | `/hitl:dev-practices`, `/hitl:generate-docs`, `/hitl:tdd`, `/hitl:apply-change`, `/hitl:check-conventions`, `/hitl:impact-brief`, `/hitl:conclude` | [Developer guide](docs/roles/developer.md) |
 | **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
-| **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-design`, `/hitl:architect-verify-traceability` | [Architect guide](docs/roles/architect.md) |
+| **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-design`, `/hitl:architect-review-code`, `/hitl:architect-verify-traceability` | [Architect guide](docs/roles/architect.md) |
 | **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
 | **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-apply-iac`, `/hitl:ops-review-release`, `/hitl:ops-monitor-canary` | [Ops guide](docs/roles/ops.md) |
 
