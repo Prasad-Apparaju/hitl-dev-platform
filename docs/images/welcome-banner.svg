@@ -26,11 +26,11 @@
   <!-- /hitl:dev-start-prd -->
   <text x="16" y="136" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-start-prd</tspan>          new project from a PRD</text>
 
-  <!-- /start-brownfield -->
-  <text x="16" y="156" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/start-brownfield</tspan>   onboard an existing codebase</text>
+  <!-- /hitl:dev-start-brownfield -->
+  <text x="16" y="156" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-start-brownfield</tspan>   onboard an existing codebase</text>
 
-  <!-- /start-migration -->
-  <text x="16" y="176" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/start-migration</tspan>    migrate from one system to another</text>
+  <!-- /hitl:dev-start-migration -->
+  <text x="16" y="176" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-start-migration</tspan>    migrate from one system to another</text>
 
   <!-- Run a change label -->
   <text x="16" y="208" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Run a change:</text>
@@ -39,7 +39,7 @@
   <text x="16" y="228" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-practices</tspan>      begin a new change (full 32-step workflow)</text>
 
   <!-- Roles -->
-  <text x="16" y="262" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Roles: <tspan fill="#cba6f7">/pm</tspan>  <tspan fill="#cba6f7">/architect</tspan>  <tspan fill="#cba6f7">/qa</tspan>  <tspan fill="#cba6f7">/ops</tspan></text>
+  <text x="16" y="262" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Roles: <tspan fill="#cba6f7">/hitl:pm</tspan>  <tspan fill="#cba6f7">/hitl:architect</tspan>  <tspan fill="#cba6f7">/hitl:qa</tspan>  <tspan fill="#cba6f7">/hitl:ops</tspan></text>
 
   <!-- Separator bottom -->
   <text x="16" y="292" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#7aa2f7" xml:space="preserve">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</text>

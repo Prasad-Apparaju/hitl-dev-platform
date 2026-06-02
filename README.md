@@ -88,13 +88,15 @@ Pick the path that matches where you are:
 Install the Claude Code plugin into your project:
 
 ```bash
-claude plugin install pappar/hitl-claude-plugin
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
 ```
 
 To update to the latest version later:
 
 ```bash
-claude plugin update hitl-claude-plugin
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
 ```
 
 Once installed, open Claude Code in your project directory and run the command that matches your situation:
