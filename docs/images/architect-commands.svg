@@ -22,8 +22,8 @@
   <text x="28" y="168" fill="#89b4fa" font-size="13">╰─────────────────────────────────────────╯</text>
 
   <!-- Command input -->
-  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /architect</text>
-  <rect x="100" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
+  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /hitl:architect-</text>
+  <rect x="152" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
   <!-- Dropdown outer box -->
   <rect x="16" y="212" width="748" height="448" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
@@ -38,27 +38,27 @@
 
   <!-- Row 1: design-system (highlighted) -->
   <rect x="17" y="260" width="746" height="36" fill="#313244" rx="0"/>
-  <text x="28" y="281" fill="#cba6f7" font-size="13" font-weight="bold">/architect:design-system</text>
-  <text x="270" y="281" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="281" fill="#a6adc8" font-size="12">Design new system from PRD — domains, manifest, HLDs, ADRs, LLDs</text>
+  <text x="28" y="281" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:architect-design-system</text>
+  <text x="310" y="281" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="281" fill="#a6adc8" font-size="12">Design new system from PRD — domains, manifest, HLDs, ADRs, LLDs</text>
 
   <!-- Row 2: design-feature -->
   <rect x="17" y="296" width="746" height="36" fill="transparent"/>
-  <text x="28" y="317" fill="#cba6f7" font-size="13">/architect:design-feature</text>
-  <text x="270" y="317" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="317" fill="#a6adc8" font-size="12">Steps 3–9: impact analysis, HLD, LLD, slice decomp, decision packets</text>
+  <text x="28" y="317" fill="#cba6f7" font-size="13">/hitl:architect-design-feature</text>
+  <text x="310" y="317" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="317" fill="#a6adc8" font-size="12">Steps 3–9: impact analysis, HLD, LLD, slice decomp, decision packets</text>
 
   <!-- Row 3: review-design -->
   <rect x="17" y="332" width="746" height="36" fill="transparent"/>
-  <text x="28" y="353" fill="#cba6f7" font-size="13">/architect:review-design</text>
-  <text x="270" y="353" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="353" fill="#a6adc8" font-size="12">Review HLD, LLD, ADR — approve design before implementation starts</text>
+  <text x="28" y="353" fill="#cba6f7" font-size="13">/hitl:architect-review-design</text>
+  <text x="310" y="353" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="353" fill="#a6adc8" font-size="12">Review HLD, LLD, ADR — approve design before implementation starts</text>
 
   <!-- Row 4: verify-traceability -->
   <rect x="17" y="368" width="746" height="36" fill="transparent"/>
-  <text x="28" y="389" fill="#cba6f7" font-size="13">/architect:verify-traceability</text>
-  <text x="270" y="389" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="389" fill="#a6adc8" font-size="12">Integration verify — issue → design → code → tests → brief chain</text>
+  <text x="28" y="389" fill="#cba6f7" font-size="13">/hitl:architect-verify-traceability</text>
+  <text x="310" y="389" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="389" fill="#a6adc8" font-size="12">Integration verify — issue → design → code → tests → brief chain</text>
 
   <!-- Section 2: WHEN COVERING QA (4) -->
   <rect x="17" y="404" width="746" height="20" fill="#2e2a1a"/>
@@ -67,27 +67,27 @@
 
   <!-- Row 5: qa:plan-tests -->
   <rect x="17" y="424" width="746" height="36" fill="transparent"/>
-  <text x="28" y="445" fill="#cba6f7" font-size="13">/qa:plan-tests</text>
-  <text x="270" y="445" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="445" fill="#a6adc8" font-size="12">Design time — test scenarios from incident history before TDD starts</text>
+  <text x="28" y="445" fill="#cba6f7" font-size="13">/hitl:qa-plan-tests</text>
+  <text x="310" y="445" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="445" fill="#a6adc8" font-size="12">Design time — test scenarios from incident history before TDD starts</text>
 
   <!-- Row 6: qa:review-tests -->
   <rect x="17" y="460" width="746" height="36" fill="transparent"/>
-  <text x="28" y="481" fill="#cba6f7" font-size="13">/qa:review-tests</text>
-  <text x="270" y="481" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="481" fill="#a6adc8" font-size="12">Formal test coverage review — ACs, LLD edge cases, incident regressions</text>
+  <text x="28" y="481" fill="#cba6f7" font-size="13">/hitl:qa-review-tests</text>
+  <text x="310" y="481" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="481" fill="#a6adc8" font-size="12">Formal test coverage review — ACs, LLD edge cases, incident regressions</text>
 
   <!-- Row 7: qa:verify-quality -->
   <rect x="17" y="496" width="746" height="36" fill="transparent"/>
-  <text x="28" y="517" fill="#cba6f7" font-size="13">/qa:verify-quality</text>
-  <text x="270" y="517" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="517" fill="#a6adc8" font-size="12">Post-handoff independent quality verification — block or approve promotion</text>
+  <text x="28" y="517" fill="#cba6f7" font-size="13">/hitl:qa-verify-quality</text>
+  <text x="310" y="517" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="517" fill="#a6adc8" font-size="12">Post-handoff independent quality verification — block or approve promotion</text>
 
   <!-- Row 8: qa:report-defect -->
   <rect x="17" y="532" width="746" height="36" fill="transparent"/>
-  <text x="28" y="553" fill="#cba6f7" font-size="13">/qa:report-defect</text>
-  <text x="270" y="553" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="553" fill="#a6adc8" font-size="12">File structured defect when blocking — AC reference, repro steps, severity</text>
+  <text x="28" y="553" fill="#cba6f7" font-size="13">/hitl:qa-report-defect</text>
+  <text x="310" y="553" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="553" fill="#a6adc8" font-size="12">File structured defect when blocking — AC reference, repro steps, severity</text>
 
   <!-- Section 3: WHEN COVERING OPS (2) -->
   <rect x="17" y="568" width="746" height="20" fill="#2e1a1a"/>
@@ -96,15 +96,15 @@
 
   <!-- Row 9: ops:review-release -->
   <rect x="17" y="588" width="746" height="36" fill="transparent"/>
-  <text x="28" y="609" fill="#cba6f7" font-size="13">/ops:review-release</text>
-  <text x="270" y="609" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="609" fill="#a6adc8" font-size="12">Assess rollout plan, canary criteria, observability, and rollback before release</text>
+  <text x="28" y="609" fill="#cba6f7" font-size="13">/hitl:ops-review-release</text>
+  <text x="310" y="609" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="609" fill="#a6adc8" font-size="12">Assess rollout plan, canary criteria, observability, and rollback before release</text>
 
   <!-- Row 10: ops:monitor-canary -->
   <rect x="17" y="624" width="746" height="36" fill="transparent"/>
-  <text x="28" y="645" fill="#cba6f7" font-size="13">/ops:monitor-canary</text>
-  <text x="270" y="645" fill="#6c7086" font-size="12">  ·</text>
-  <text x="283" y="645" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation</text>
+  <text x="28" y="645" fill="#cba6f7" font-size="13">/hitl:ops-monitor-canary</text>
+  <text x="310" y="645" fill="#6c7086" font-size="12">  ·</text>
+  <text x="323" y="645" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation</text>
 
   <!-- Separator + nav hint -->
   <line x1="16" y1="662" x2="764" y2="662" stroke="#45475a" stroke-width="1" opacity="0.5"/>
@@ -113,5 +113,5 @@
 
   <!-- Footer -->
   <rect x="0" y="682" width="780" height="18" fill="#313244" opacity="0.5"/>
-  <text x="16" y="695" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  4 architect + 4 qa + 2 ops commands  —  also use /qa: and /ops: namespaces</text>
+  <text x="16" y="695" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  4 architect + 4 qa + 2 ops commands  —  also use /hitl:qa- and /hitl:ops- commands</text>
 </svg>

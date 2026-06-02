@@ -16,58 +16,58 @@
   <text x="28" y="150" fill="#89b4fa" font-size="13">│  How can I help with your-project today? │</text>
   <text x="28" y="168" fill="#89b4fa" font-size="13">╰─────────────────────────────────────────╯</text>
 
-  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /pm</text>
-  <rect x="60" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
+  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /hitl:pm-</text>
+  <rect x="110" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
   <rect x="16" y="212" width="748" height="388" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (9)  —  namespace: pm</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (9)</text>
 
   <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
-  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/pm:add-feature</text>
-  <text x="190" y="261" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="261" fill="#a6adc8" font-size="12">Add a new feature requirement to the PRD with acceptance criteria</text>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:pm-add-feature</text>
+  <text x="260" y="261" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="261" fill="#a6adc8" font-size="12">Add a new feature requirement to the PRD with acceptance criteria</text>
 
   <rect x="17" y="276" width="746" height="36" fill="transparent"/>
-  <text x="28" y="297" fill="#cba6f7" font-size="13">/pm:design-feature</text>
-  <text x="190" y="297" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="297" fill="#a6adc8" font-size="12">Design a feature from a rough idea into structured requirements</text>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/hitl:pm-design-feature</text>
+  <text x="260" y="297" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="297" fill="#a6adc8" font-size="12">Design a feature from a rough idea into structured requirements</text>
 
   <rect x="17" y="312" width="746" height="36" fill="transparent"/>
-  <text x="28" y="333" fill="#cba6f7" font-size="13">/pm:update-requirement</text>
-  <text x="190" y="333" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="333" fill="#a6adc8" font-size="12">Update an existing PRD requirement with new criteria or scope</text>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:pm-update-requirement</text>
+  <text x="260" y="333" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="333" fill="#a6adc8" font-size="12">Update an existing PRD requirement with new criteria or scope</text>
 
   <rect x="17" y="348" width="746" height="36" fill="transparent"/>
-  <text x="28" y="369" fill="#cba6f7" font-size="13">/pm:review-scope-change</text>
-  <text x="190" y="369" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="369" fill="#a6adc8" font-size="12">Analyze a requested scope change and its downstream impact</text>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:pm-review-scope-change</text>
+  <text x="260" y="369" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="369" fill="#a6adc8" font-size="12">Analyze a requested scope change and its downstream impact</text>
 
   <rect x="17" y="384" width="746" height="36" fill="transparent"/>
-  <text x="28" y="405" fill="#cba6f7" font-size="13">/pm:prioritize</text>
-  <text x="190" y="405" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="405" fill="#a6adc8" font-size="12">Prioritize features using value, effort, risk, and strategic alignment</text>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:pm-prioritize</text>
+  <text x="260" y="405" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="405" fill="#a6adc8" font-size="12">Prioritize features using value, effort, risk, and strategic alignment</text>
 
   <rect x="17" y="420" width="746" height="36" fill="transparent"/>
-  <text x="28" y="441" fill="#cba6f7" font-size="13">/pm:review-progress</text>
-  <text x="190" y="441" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="441" fill="#a6adc8" font-size="12">Review sprint or milestone progress against PRD goals</text>
+  <text x="28" y="441" fill="#cba6f7" font-size="13">/hitl:pm-review-progress</text>
+  <text x="260" y="441" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="441" fill="#a6adc8" font-size="12">Review sprint or milestone progress against PRD goals</text>
 
   <rect x="17" y="456" width="746" height="36" fill="transparent"/>
-  <text x="28" y="477" fill="#cba6f7" font-size="13">/pm:report-bug</text>
-  <text x="190" y="477" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="477" fill="#a6adc8" font-size="12">Document a bug report as a structured GitHub issue</text>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:pm-report-bug</text>
+  <text x="260" y="477" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="477" fill="#a6adc8" font-size="12">Document a bug report as a structured GitHub issue</text>
 
   <rect x="17" y="492" width="746" height="36" fill="transparent"/>
-  <text x="28" y="513" fill="#cba6f7" font-size="13">/pm:prep-demo</text>
-  <text x="190" y="513" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="513" fill="#a6adc8" font-size="12">Prepare a demo script or talking points for a feature</text>
+  <text x="28" y="513" fill="#cba6f7" font-size="13">/hitl:pm-prep-demo</text>
+  <text x="260" y="513" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="513" fill="#a6adc8" font-size="12">Prepare a demo script or talking points for a feature</text>
 
   <rect x="17" y="528" width="746" height="36" fill="transparent"/>
-  <text x="28" y="549" fill="#cba6f7" font-size="13">/pm:answer-questions</text>
-  <text x="190" y="549" fill="#6c7086" font-size="12">  ·</text>
-  <text x="203" y="549" fill="#a6adc8" font-size="12">Answer product or business questions using existing docs</text>
+  <text x="28" y="549" fill="#cba6f7" font-size="13">/hitl:pm-answer-questions</text>
+  <text x="260" y="549" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="549" fill="#a6adc8" font-size="12">Answer product or business questions using existing docs</text>
 
   <line x1="16" y1="566" x2="764" y2="566" stroke="#45475a" stroke-width="1" opacity="0.5"/>
   <text x="28" y="580" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>

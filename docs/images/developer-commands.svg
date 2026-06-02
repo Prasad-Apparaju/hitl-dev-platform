@@ -30,22 +30,22 @@
   <text x="283" y="261" fill="#a6adc8" font-size="12">Load the HITL workflow for a change — tiers, TDD, review, ship</text>
 
   <rect x="17" y="276" width="826" height="36" fill="transparent"/>
-  <text x="28" y="297" fill="#cba6f7" font-size="13">/hitl:dev-generate-docs</text>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/hitl:generate-docs</text>
   <text x="270" y="297" fill="#6c7086" font-size="12">  ·</text>
   <text x="283" y="297" fill="#a6adc8" font-size="12">Generate HLD, LLD, ADR from feature description or existing code</text>
 
   <rect x="17" y="312" width="826" height="36" fill="transparent"/>
-  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:dev-tdd</text>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:tdd</text>
   <text x="270" y="333" fill="#6c7086" font-size="12">  ·</text>
   <text x="283" y="333" fill="#a6adc8" font-size="12">TDD-as-design loop — tests first (RED) → review → code (GREEN) → refactor</text>
 
   <rect x="17" y="348" width="826" height="36" fill="transparent"/>
-  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:dev-apply-change</text>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:apply-change</text>
   <text x="270" y="369" fill="#6c7086" font-size="12">  ·</text>
   <text x="283" y="369" fill="#a6adc8" font-size="12">Impact analysis — affected components, APIs, docs, tests</text>
 
   <rect x="17" y="384" width="826" height="36" fill="transparent"/>
-  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:dev-check-conventions</text>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:check-conventions</text>
   <text x="270" y="405" fill="#6c7086" font-size="12">  ·</text>
   <text x="283" y="405" fill="#a6adc8" font-size="12">Run semgrep, manifest drift, and convention checks in-chat</text>
 
@@ -55,12 +55,12 @@
   <text x="283" y="441" fill="#a6adc8" font-size="12">Spec conformance review — implementation vs LLD + manifest, two rounds</text>
 
   <rect x="17" y="456" width="826" height="36" fill="transparent"/>
-  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:dev-impact-brief</text>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:impact-brief</text>
   <text x="270" y="477" fill="#6c7086" font-size="12">  ·</text>
   <text x="283" y="477" fill="#a6adc8" font-size="12">Generate downstream impact brief and rollout plan for a PR</text>
 
   <rect x="17" y="492" width="826" height="36" fill="transparent"/>
-  <text x="28" y="513" fill="#cba6f7" font-size="13">/hitl:dev-conclude</text>
+  <text x="28" y="513" fill="#cba6f7" font-size="13">/hitl:conclude</text>
   <text x="270" y="513" fill="#6c7086" font-size="12">  ·</text>
   <text x="283" y="513" fill="#a6adc8" font-size="12">Turn a concluded Slack design-room thread into ADR, issue, HLD/LLD updates</text>
 

@@ -16,38 +16,38 @@
   <text x="28" y="150" fill="#89b4fa" font-size="13">│  How can I help with your-project today? │</text>
   <text x="28" y="168" fill="#89b4fa" font-size="13">╰─────────────────────────────────────────╯</text>
 
-  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /ops</text>
-  <rect x="62" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
+  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /hitl:ops-</text>
+  <rect x="112" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
   <rect x="16" y="212" width="748" height="208" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (5)  —  namespace: ops</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (5)</text>
 
   <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
-  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/ops:review-release</text>
-  <text x="210" y="261" fill="#6c7086" font-size="12">  ·</text>
-  <text x="223" y="261" fill="#a6adc8" font-size="12">Assess rollout plan, canary criteria, observability, and rollback before release</text>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:ops-review-release</text>
+  <text x="250" y="261" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="261" fill="#a6adc8" font-size="12">Assess rollout plan, canary criteria, observability, and rollback before release</text>
 
   <rect x="17" y="276" width="746" height="36" fill="transparent"/>
-  <text x="28" y="297" fill="#cba6f7" font-size="13">/ops:apply-iac</text>
-  <text x="210" y="297" fill="#6c7086" font-size="12">  ·</text>
-  <text x="223" y="297" fill="#a6adc8" font-size="12">Review and apply IaC changes — dry-run plan, approve, apply, verify state</text>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/hitl:ops-apply-iac</text>
+  <text x="250" y="297" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="297" fill="#a6adc8" font-size="12">Review and apply IaC changes — dry-run plan, approve, apply, verify state</text>
 
   <rect x="17" y="312" width="746" height="36" fill="transparent"/>
-  <text x="28" y="333" fill="#cba6f7" font-size="13">/ops:build</text>
-  <text x="210" y="333" fill="#6c7086" font-size="12">  ·</text>
-  <text x="223" y="333" fill="#a6adc8" font-size="12">Build from branch — verify CI run, artifact integrity, and smoke readiness</text>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:ops-build</text>
+  <text x="250" y="333" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="333" fill="#a6adc8" font-size="12">Build from branch — verify CI run, artifact integrity, and smoke readiness</text>
 
   <rect x="17" y="348" width="746" height="36" fill="transparent"/>
-  <text x="28" y="369" fill="#cba6f7" font-size="13">/ops:deploy</text>
-  <text x="210" y="369" fill="#6c7086" font-size="12">  ·</text>
-  <text x="223" y="369" fill="#a6adc8" font-size="12">Deploy a verified artifact to an environment per the approved rollout plan</text>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:ops-deploy</text>
+  <text x="250" y="369" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="369" fill="#a6adc8" font-size="12">Deploy a verified artifact to an environment per the approved rollout plan</text>
 
   <rect x="17" y="384" width="746" height="36" fill="transparent"/>
-  <text x="28" y="405" fill="#cba6f7" font-size="13">/ops:monitor-canary</text>
-  <text x="210" y="405" fill="#6c7086" font-size="12">  ·</text>
-  <text x="223" y="405" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation per step</text>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:ops-monitor-canary</text>
+  <text x="250" y="405" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="405" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation per step</text>
 
   <line x1="16" y1="422" x2="764" y2="422" stroke="#45475a" stroke-width="1" opacity="0.5"/>
   <text x="28" y="436" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>

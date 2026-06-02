@@ -75,7 +75,7 @@ Pick the path that matches where you are:
 
 | Role | Commands | Guide |
 |------|----------|-------|
-| **Developer** | `/hitl:dev-practices`, `/hitl:dev-generate-docs`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude` | [Developer guide](docs/roles/developer.md) |
+| **Developer** | `/hitl:dev-practices`, `/hitl:generate-docs`, `/hitl:tdd`, `/hitl:apply-change`, `/hitl:check-conventions`, `/hitl:impact-brief`, `/hitl:conclude` | [Developer guide](docs/roles/developer.md) |
 | **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
 | **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-design`, `/hitl:architect-verify-traceability` | [Architect guide](docs/roles/architect.md) |
 | **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
