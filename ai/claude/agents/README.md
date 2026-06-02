@@ -11,6 +11,6 @@ Each `.md` file defines a subagent: its role, responsibilities, what it reads, a
 | `qa-reviewer.md` | `/hitl:qa-verify-quality` | Independent quality verification against running build |
 | `ops-release-reviewer.md` | `/hitl:ops-review-release` | Assesses rollout plan and canary criteria |
 | `pm-reviewer.md` | `/hitl:pm-review-progress` | Reviews progress against PRD requirements |
-| `developer-implementer.md` | `/hitl:dev-tdd` | Generates code from failing tests and LLD |
+| `developer-implementer.md` | `/hitl:tdd` | Generates code from failing tests and LLD |
 
 To customize an agent's behavior, edit its `.md` file directly.

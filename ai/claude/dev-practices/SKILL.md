@@ -28,7 +28,7 @@ When in doubt, use the heavier process. If you are touching more than one domain
 >
 > - **New project:** Run `/architect/design-system` to generate design docs from your PRD first.
 > - **Existing codebase not yet in HITL** (no manifest, no registries): Run `/hitl:dev-start-brownfield` to establish the full baseline — manifest, priority LLDs, and registry stubs — before starting change work.
-> - **Existing HITL project, one undocumented component:** Run `/hitl:dev-generate-docs` for the affected component to create its LLD. Then verify that the test registry and incident registry exist (see Prerequisites in workflow-steps.md) before resuming.
+> - **Existing HITL project, one undocumented component:** Run `/hitl:generate-docs` for the affected component to create its LLD. Then verify that the test registry and incident registry exist (see Prerequisites in workflow-steps.md) before resuming.
 
 **Source-of-truth order:**
 1. GitHub issue or PRD
@@ -45,9 +45,9 @@ Requirements
 2.  Figma Review           → manual extraction into issue (conditional)
 
 Design
-3.  Impact Analysis        → /hitl:dev-apply-change — reads system-manifest.yaml, registries; outputs .hitl/current-change.yaml
+3.  Impact Analysis        → /hitl:apply-change — reads system-manifest.yaml, registries; outputs .hitl/current-change.yaml
 4.  ROI Estimate           → if >1 day effort, record in `.hitl/current-change.yaml` under `roi_estimate`; post pointer comment on issue; see roi-estimation.md (conditional)
-5.  Update Docs            → /hitl:dev-generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
+5.  Update Docs            → /hitl:generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
 5a. Security Review (Design) → /hitl:dev-review-security --phase design — threat model + STRIDE; required Tier 3+, recommended Tier 2+; LLD cannot be architect-approved until Critical/High findings have mitigations (conditional)
 6.  Update IaC + Verify Scripts → manifests, migrations, rollback migrations, configs; exit requires /hitl:ops-verify-scripts --level syntax (conditional)
 7.  Test Case Planning     → /hitl:qa-plan-tests — QA queries incident history; QA scenarios acknowledged before TDD
@@ -55,26 +55,26 @@ Design
 9.  Package Decision Packet → architect assembles docs/decisions/issue-<N>.yaml; one per domain-independent slice
 
 Build (TDD)
-10. Generate Tests (RED)   → /hitl:dev-tdd — unit tests + integration tests + Playwright E2E stubs (test.skip) + smoke journey; all written before any implementation
+10. Generate Tests (RED)   → /hitl:tdd — unit tests + integration tests + Playwright E2E stubs (test.skip) + smoke journey; all written before any implementation
 11. Human Reviews Tests    → /hitl:qa-review-tests — verifies unit, integration, E2E stubs (one per AC), smoke journey, incident regressions, ≥90% coverage gate; blocks implementation if gaps
-12. Tests Improve Design   → /hitl:dev-tdd — updates LLD at same path if gaps found; architect re-reviews if significant
+12. Tests Improve Design   → /hitl:tdd — updates LLD at same path if gaps found; architect re-reviews if significant
 13. Verify RED             → unit/integration tests must fail; E2E stubs skipped; smoke suite runs (existing journeys only)
-14. Generate Code (GREEN)  → /hitl:dev-tdd — reads tests/, LLD (step 12), system-manifest.yaml, CLAUDE.md
+14. Generate Code (GREEN)  → /hitl:tdd — reads tests/, LLD (step 12), system-manifest.yaml, CLAUDE.md
 15. Verify GREEN           → unit + integration pass; coverage ≥90% enforced (AI generates gap tests if needed); smoke runs
 16. Refactor               → rerun tests after each change; done when no further simplification possible
 16a. Security Review (Code) → /hitl:dev-review-security --phase code — SAST (semgrep OWASP, Bandit, ESLint-security, Gosec) + code-level OWASP checklist; required Tier 3+, recommended Tier 2+; Critical/High block PR (conditional)
-17. Convention Checks      → /hitl:dev-check-conventions — zero violations required before proceeding
+17. Convention Checks      → /hitl:check-conventions — zero violations required before proceeding
 
 Verify
 18. Code Review Round 1    → /hitl:dev-check-implementation — reads implementation + LLD (step 12) + system-manifest.yaml
 19. Code Review Round 2    → /hitl:dev-check-implementation — reads implementation + tests/ + test plan from .hitl/current-change.yaml
 19a. Architect Code Review → /hitl:architect-review-code — creates GitHub PR with checklist; architect reviews on GitHub (line comments + approve/request changes); revisions return to step 14 or 16; PR is NOT merged here
 20. Rerun Tests            → confirm no regressions from review fixes
-21. Reconcile Docs         → update LLD (/hitl:dev-generate-docs) or fix code; document decision; if fix code, rerun 18–20
+21. Reconcile Docs         → update LLD (/hitl:generate-docs) or fix code; document decision; if fix code, rerun 18–20
 22. QA Post-Handoff Verify → /hitl:qa-verify-quality — unskips + runs E2E Playwright (desktop + iPhone 15 + Pixel 7); runs smoke suite; blocks if any fail; /hitl:qa-report-defect for each blocking issue
 
 Assess
-23. Downstream Impact Brief → /hitl:dev-impact-brief — reads .hitl/current-change.yaml, diff, manifest, registries
+23. Downstream Impact Brief → /hitl:impact-brief — reads .hitl/current-change.yaml, diff, manifest, registries
 24. Rollout Plan            → /hitl:ops-review-release — ops reviews section 5 of step 23; plan is added to the open PR at step 25
 
 Ship

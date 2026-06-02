@@ -55,7 +55,7 @@ conventions from the system manifest, or edge cases not covered.
 When a new component is needed:
 
 ```
-/hitl:dev-generate-docs
+/hitl:generate-docs
 
 I need an LLD for the payments refund flow — a new component that
 handles refund requests idempotently and posts a reversal event.
@@ -92,7 +92,7 @@ Do not proceed past a gate without my approval.
 For work you're implementing yourself:
 
 ```
-/hitl:dev-tdd
+/hitl:tdd
 
 I have been assigned GitHub issue #42. Read the decision packet at
 docs/decisions/issue-42.yaml and tell me what I am building,
@@ -135,7 +135,7 @@ All escalations use documentation — no undocumented verbal decisions.
 | **Architectural decisions** | Propose as a new ADR following `docs/02-design/technical/adrs/README.md` format |
 | **PRD scope changes** | Update `docs/01-product/prd.md` with the proposed change, flag affected requirements |
 | **Design changes** | Update the relevant HLD/LLD first, then present the diff |
-| **Risk decisions** | Use the downstream impact brief (`/hitl:dev-impact-brief`) |
+| **Risk decisions** | Use the downstream impact brief (`/hitl:impact-brief`) |
 
 ---
 
@@ -144,8 +144,8 @@ All escalations use documentation — no undocumented verbal decisions.
 | I want to... | Guide |
 |---|---|
 | Make any code change | `docs/06-team/developer-playbook.md` |
-| Write a new design | `/hitl:dev-generate-docs` skill |
-| Analyse impact of a change | `/hitl:dev-apply-change` skill |
-| Check convention violations | `/hitl:dev-check-conventions` skill |
-| Write a downstream impact brief | `/hitl:dev-impact-brief` skill |
+| Write a new design | `/hitl:generate-docs` skill |
+| Analyse impact of a change | `/hitl:apply-change` skill |
+| Check convention violations | `/hitl:check-conventions` skill |
+| Write a downstream impact brief | `/hitl:impact-brief` skill |
 | Understand the full dev workflow | `ai/claude/dev-practices/SKILL.md` |

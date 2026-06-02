@@ -49,8 +49,8 @@ If a real manifest already exists, read it, summarize the domains, and ask: "Is 
 Ask: "Which components are most critical and most likely to change in the near term? List up to three."
 
 For each component:
-- Say: "I'll generate an HLD and LLD for [component]. Run `/hitl:dev-generate-docs` or I can do it now — which do you prefer?"
-- If they want it now, run `/hitl:dev-generate-docs` for that component.
+- Say: "I'll generate an HLD and LLD for [component]. Run `/hitl:generate-docs` or I can do it now — which do you prefer?"
+- If they want it now, run `/hitl:generate-docs` for that component.
 - Note: this is incremental — you do not need to document everything before starting work.
 
 ---
@@ -113,11 +113,11 @@ Output this exactly:
 ---
 **Brownfield baseline established.**
 
-You are starting incrementally: manifest and priority component docs exist, registries are seeded. Undocumented components will need their LLDs created when you first change them — run `/hitl:dev-generate-docs` for that component, then resume.
+You are starting incrementally: manifest and priority component docs exist, registries are seeded. Undocumented components will need their LLDs created when you first change them — run `/hitl:generate-docs` for that component, then resume.
 
 **What this means for your first changes:**
 - Treat AI output from steps 5, 10, and 14 as drafts — the docs are new and may not yet reflect actual behavior. Increase human review scrutiny until the docs have been corrected through real use.
-- If `/hitl:dev-practices` stops with "no LLD found" on an undocumented component, run `/hitl:dev-generate-docs` for that component, then resume. This friction decreases naturally as each component gets its first doc pass through real use.
+- If `/hitl:dev-practices` stops with "no LLD found" on an undocumented component, run `/hitl:generate-docs` for that component, then resume. This friction decreases naturally as each component gets its first doc pass through real use.
 
 For every change going forward:
 1. Create a GitHub issue — or use `/hitl:pm-add-feature` / `/hitl:pm-design-feature` to shape requirements first

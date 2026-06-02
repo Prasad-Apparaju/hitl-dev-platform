@@ -106,7 +106,7 @@ Claude gathers the details, checks for duplicates, and creates a well-structured
 Every non-trivial change produces an impact brief before it ships. Section 4 is the product mental model update — written for you. Ask Claude to surface it:
 
 ```
-/hitl:dev-impact-brief 42
+/hitl:impact-brief 42
 ```
 
 Then ask follow-up questions before you approve:
@@ -177,6 +177,6 @@ Check docs/04-operations/incident-registry.yaml.
 | Review a scope change PR | `/hitl:pm-review-scope-change [PR number]` |
 | Work through open questions | `/hitl:pm-answer-questions` |
 | Report a bug | `/hitl:pm-report-bug [description]` |
-| Review an impact brief | `/hitl:dev-impact-brief [PR or change]` |
+| Review an impact brief | `/hitl:impact-brief [PR or change]` |
 | Prepare a demo | `/hitl:pm-prep-demo [feature]` |
 | Prioritize the backlog | `/hitl:pm-prioritize` |

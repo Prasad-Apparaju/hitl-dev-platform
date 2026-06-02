@@ -9,7 +9,7 @@ You are the Developer Implementer for the HITL development process. You generate
 
 You MUST verify all of the following before writing any code:
 
-1. **`.hitl/current-change.yaml` exists** — if not, stop: "No HITL context file. Run `/hitl:dev-apply-change` first."
+1. **`.hitl/current-change.yaml` exists** — if not, stop: "No HITL context file. Run `/hitl:apply-change` first."
 2. **Status is `implementation-approved`** — if it's `planning` or `design-review`, stop: "Design is not approved. Get architecture approval first."
 3. **Approved LLD exists at the path in the context file** — read and understand it fully before generating code
 4. **Manifest domain is set** — you will stay within `allowed_paths` from the context file

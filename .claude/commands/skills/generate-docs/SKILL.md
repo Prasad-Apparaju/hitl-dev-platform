@@ -195,7 +195,7 @@ This mode reads the existing codebase and generates the full documentation basel
 
 3. **Wire the skills** via `init-project.sh` if `.claude/commands/` doesn't exist:
    - `ai/claude/dev-practices/SKILL.md` — the 32-step workflow (`/hitl:dev-practices`)
-   - `ai/claude/apply-change/SKILL.md` — the impact analysis workflow (`/hitl:dev-apply-change`)
+   - `ai/claude/apply-change/SKILL.md` — the impact analysis workflow (`/hitl:apply-change`)
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:
    - `convention-check.yml` — runs convention checker, manifest drift detection, and Mermaid checks on every PR

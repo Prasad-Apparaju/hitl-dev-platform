@@ -208,7 +208,7 @@ Architecture approved. If this issue is assigned to you, you can begin now.
 
 Open Claude Code in the repo and run:
 \`\`\`
-/hitl:dev-tdd
+/hitl:tdd
 
 I have been assigned GitHub issue #${ISSUE_NUM}. Read the decision packet at
 docs/decisions/issue-${ISSUE_NUM}.yaml and tell me what I am building,

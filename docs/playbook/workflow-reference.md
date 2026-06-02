@@ -48,7 +48,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 > | Approach | Steps | Tradeoff |
 > |---|---|---|
 > | **Incremental** (default) | `/hitl:dev-start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
-> | **Full baseline sprint** (optional) | `/hitl:dev-start-brownfield` → then `/hitl:dev-generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
+> | **Full baseline sprint** (optional) | `/hitl:dev-start-brownfield` → then `/hitl:generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
 >
 > **Once onboarded, the 32-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 

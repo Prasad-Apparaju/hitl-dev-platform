@@ -423,12 +423,12 @@ Feature work proceeds when blockers are zero.
 | `/hitl:ops-deploy` | [ai/claude/ops/deploy/SKILL.md](../ai/claude/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
 | `/hitl:ops-review-release` | [ai/claude/commands/ops/review-release.md](../ai/claude/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
 | `/hitl:ops-monitor-canary` | [ai/claude/commands/ops/monitor-canary.md](../ai/claude/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
-| `/hitl:dev-apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
-| `/hitl:dev-generate-docs` | [ai/claude/generate-docs/SKILL.md](../ai/claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
-| `/hitl:dev-tdd` | [ai/claude/tdd/SKILL.md](../ai/claude/tdd/SKILL.md) | TDD-as-design loop |
-| `/hitl:dev-impact-brief` | [ai/claude/impact-brief/SKILL.md](../ai/claude/impact-brief/SKILL.md) | 5-section downstream impact brief |
-| `/hitl:dev-check-conventions` | [ai/claude/check-conventions/SKILL.md](../ai/claude/check-conventions/SKILL.md) | Convention checker in-chat |
-| `/hitl:dev-conclude` | [ai/claude/conclude/SKILL.md](../ai/claude/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
+| `/hitl:apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
+| `/hitl:generate-docs` | [ai/claude/generate-docs/SKILL.md](../ai/claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
+| `/hitl:tdd` | [ai/claude/tdd/SKILL.md](../ai/claude/tdd/SKILL.md) | TDD-as-design loop |
+| `/hitl:impact-brief` | [ai/claude/impact-brief/SKILL.md](../ai/claude/impact-brief/SKILL.md) | 5-section downstream impact brief |
+| `/hitl:check-conventions` | [ai/claude/check-conventions/SKILL.md](../ai/claude/check-conventions/SKILL.md) | Convention checker in-chat |
+| `/hitl:conclude` | [ai/claude/conclude/SKILL.md](../ai/claude/conclude/SKILL.md) | Turn a Slack thread into GitHub artifacts (ADR, issue, HLD/LLD updates) |
 | Manifest generator | [tools/generate-manifest/](../tools/generate-manifest/) | Auto-generate system-manifest.yaml |
 | Convention rules (semgrep) | [.semgrep/](../.semgrep/) | Project convention rules — semgrep YAML |
 | Mermaid fixer | [tools/scripts/fix_mermaid_br_tags.py](../tools/scripts/fix_mermaid_br_tags.py) | Remove `<br/>` for Obsidian (utility script) |

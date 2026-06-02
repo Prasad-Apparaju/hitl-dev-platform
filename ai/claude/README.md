@@ -6,7 +6,7 @@ Each subdirectory is one slash command. The `SKILL.md` file inside it is the pro
 
 | Namespace | Commands |
 |-----------|----------|
-| *(root)* | `/hitl:dev-practices`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-generate-docs`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude` |
+| *(root)* | `/hitl:dev-practices`, `/hitl:tdd`, `/hitl:apply-change`, `/hitl:generate-docs`, `/hitl:check-conventions`, `/hitl:impact-brief`, `/hitl:conclude` |
 | `/hitl:dev-start-*` | `/hitl:dev-start-prd`, `/hitl:dev-start-brownfield`, `/hitl:dev-start-migration` |
 | `/hitl:architect-` | `design-system`, `design-feature` |
 | `/hitl:pm-` | `add-feature`, `design-feature`, `prioritize`, `report-bug`, + 4 more |

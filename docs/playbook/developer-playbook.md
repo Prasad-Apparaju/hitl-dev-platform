@@ -69,7 +69,7 @@ When the architect finishes the design and the TA approves the decision packet, 
 Open Claude Code and point it at the issue:
 
 ```
-/hitl:dev-tdd
+/hitl:tdd
 
 I have been assigned GitHub issue #[N]. Read the decision packet at
 docs/decisions/issue-[N].yaml and tell me what I am building,
@@ -97,10 +97,10 @@ The workflow is: issue → impact analysis → LLD review → TDD (tests first) 
 
 ## Step 5 — Write tests and build the implementation
 
-`/hitl:dev-tdd` is the command for writing code. It runs the full cycle in one session: generates tests from the LLD, pauses for your review, then generates the implementation that makes all tests pass.
+`/hitl:tdd` is the command for writing code. It runs the full cycle in one session: generates tests from the LLD, pauses for your review, then generates the implementation that makes all tests pass.
 
 ```
-/hitl:dev-tdd
+/hitl:tdd
 
 I have been assigned GitHub issue #[N]. Read the decision packet at
 docs/decisions/issue-[N].yaml and tell me what I am building,
@@ -124,7 +124,7 @@ You do not need to type separate prompts for tests and code — the skill handle
 ## Step 7 — Review your own code before the PR
 
 ```
-/hitl:dev-check-conventions
+/hitl:check-conventions
 
 Review the code I just wrote in src/payments/ against the LLD at
 docs/02-design/technical/lld/payments/refund-flow.md and the system
@@ -148,7 +148,7 @@ applied everywhere they're needed.
 ## Step 8 — Write the impact brief before the PR
 
 ```
-/hitl:dev-impact-brief
+/hitl:impact-brief
 
 Generate the downstream impact brief for issue #42 — payments refund flow.
 Include what flows and components changed, risk assessment, manual

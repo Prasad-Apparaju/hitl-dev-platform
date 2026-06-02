@@ -10,7 +10,7 @@ Independent verification of the developer's handoff. You are the last gate befor
 
 **Input:** $ARGUMENTS (feature name or build URL)
 
-**Prerequisite:** The developer has completed the impact brief and test registry is up to date. If no impact brief exists in `.hitl/current-change.yaml`, stop: "Impact brief missing — ask the developer to run `/hitl:dev-impact-brief` before QA handoff."
+**Prerequisite:** The developer has completed the impact brief and test registry is up to date. If no impact brief exists in `.hitl/current-change.yaml`, stop: "Impact brief missing — ask the developer to run `/hitl:impact-brief` before QA handoff."
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash
@@ -118,7 +118,7 @@ required_evidence:
 ## Step 6 — Block or approve
 
 **Before approving, verify coverage was recorded:** Check `.hitl/current-change.yaml` under `required_evidence.coverage_pct`. If missing or below 90%, block:
-> "QA blocked — line coverage not recorded or below 90%. The developer must run the coverage tool from `/hitl:dev-tdd` Phase 6 and record the result before QA can approve."
+> "QA blocked — line coverage not recorded or below 90%. The developer must run the coverage tool from `/hitl:tdd` Phase 6 and record the result before QA can approve."
 
 Also verify Step 5 evidence before approving:
 - `required_evidence.e2e_tests_pass` is `true`

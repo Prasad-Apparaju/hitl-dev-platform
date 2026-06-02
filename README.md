@@ -28,7 +28,7 @@ hitl-dev-platform/
 │
 │  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
 ├── ai/claude/
-│   ├── [skill folders]   Slash command prompts — /hitl:dev-practices, /hitl:dev-tdd, /hitl:architect-*, /hitl:pm-*, /hitl:qa-*, /hitl:ops-*
+│   ├── [skill folders]   Slash command prompts — /hitl:dev-practices, /hitl:tdd, /hitl:architect-*, /hitl:pm-*, /hitl:qa-*, /hitl:ops-*
 │   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
 │   └── hooks/            Enforcement hooks — fire at PreToolUse/PostToolUse during every Claude session
