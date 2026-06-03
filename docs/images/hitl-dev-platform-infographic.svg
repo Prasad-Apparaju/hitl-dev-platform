@@ -129,10 +129,10 @@
   <text class="label" x="162" y="965">Dev 1 + Claude</text>
 
   <rect class="card cyan" x="410" y="925" width="235" height="65"/>
-  <text class="label" x="459" y="965">Dev 2 + Cursor</text>
+  <text class="label" x="459" y="965">Dev 2 + Codex</text>
 
   <rect class="card violet" x="695" y="925" width="235" height="65"/>
-  <text class="label" x="733" y="965">Dev 3 + Windsurf</text>
+  <text class="label" x="733" y="965">Dev 3 + Cursor</text>
 
   <rect class="card green" x="980" y="925" width="235" height="65"/>
   <text class="label" x="1036" y="965">QA + AI tool</text>
