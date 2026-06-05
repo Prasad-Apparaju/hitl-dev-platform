@@ -112,7 +112,7 @@ fi
 # --- HLD/LLD templates ---
 
 mkdir -p "$TARGET_DIR/ai/shared/templates"
-for tmpl in hld-template.md lld-component-template.md; do
+for tmpl in hld-template.md lld-component-template.md adr-template.md; do
   SRC="$PLATFORM_ROOT/ai/claude/generate-docs/templates/$tmpl"
   if [[ -f "$SRC" ]]; then
     cp "$SRC" "$TARGET_DIR/ai/shared/templates/$tmpl"

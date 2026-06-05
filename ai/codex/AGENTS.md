@@ -39,6 +39,8 @@ In all roles: humans approve every gate before you proceed. You do not make desi
 
 5. **Source-of-truth order:** GitHub issue / PRD → approved HLD/LLD → ADR → `docs/system-manifest.yaml` → existing code. When these conflict, flag the conflict rather than silently resolving it.
 
+6. **Design gates block source code edits.** If `.hitl/current-change.yaml` exists but `status` is any of `planning`, `awaiting-scope-approval`, `scope-approved`, `awaiting-hld-approval`, `hld-approved`, `awaiting-lld-approval`, `lld-approved`, `awaiting-packet-approval`, or `blocked` — stop and say: "Design approval is required before writing implementation code. Current status: `[status]`. The TA must run the TA Gate Approval workflow to advance this gate." The only statuses that permit source code edits are: `implementation-approved`, `conformance-review-pending`, `qa-review-pending`, `pr-ready`, and `merged`.
+
 ---
 
 ## Change Tiers
@@ -619,6 +621,55 @@ Run when a design needs review before implementation. This replaces the `archite
 
 ---
 
+## Architect Code Review (Step 19a)
+
+Run after the developer has generated code and before traceability is verified. This is step 19a in the 32-step workflow — it sits between spec conformance review and traceability verification.
+
+**Trigger:** User asks to "architect review code", "review the implementation", or "step 19a".
+
+**Context required:** `.hitl/current-change.yaml` must exist with `status: conformance-review-pending` or later.
+
+### What to check
+
+1. Read the diff: `git diff main...HEAD`
+2. Read the governing LLD for each modified domain (paths from `.hitl/current-change.yaml`)
+3. Assess each modified file:
+
+**Structural conformance:**
+- Does every class and method specified in the LLD exist in the code?
+- Are method signatures consistent with the LLD (parameter types, return types)?
+- Are there any public interfaces in the code that are NOT in the LLD?
+
+**Design intent:**
+- Does the implementation reflect the same design decisions recorded in the HLD/ADRs?
+- Are there any workarounds or clever tricks that bypass the intended architecture?
+- Are domain boundaries respected — no direct cross-domain data access?
+
+**Quality signals:**
+- Are LLD-cited comments present (e.g., `# LLD: §3.2 — rate limit handling`)?
+- Do method implementations match their preconditions and error modes from the LLD?
+
+### Output format
+
+```
+## Architect Code Review: [feature/component name]
+
+### APPROVED / REVISIONS REQUIRED
+
+### Structural Conformance
+- [PASS/FAIL]: [check] — [notes]
+
+### Design Intent
+- [PASS/FAIL]: [check] — [notes]
+
+### Items Requiring Developer Action
+1. [specific change needed — reference LLD section]
+```
+
+If approved: update `.hitl/current-change.yaml` with `architect_code_review: approved` under `approvals`.
+
+---
+
 ## Greenfield System Design (New System from PRD)
 
 Run once at project inception when designing a new system from scratch.
@@ -805,6 +856,27 @@ Run when the architect is starting a new change and needs to drive the full desi
 
 This section covers everything from impact analysis through decision packet assembly. Use the `Architecture Review` section (above) for the narrower case of reviewing existing design docs.
 
+### Startup — detect status and resume
+
+Before doing any work, read `.hitl/current-change.yaml`. If it does not exist, start from Phase 1.
+
+If it exists, read the `status` field and resume from the correct phase:
+
+| Status | Resume at |
+|--------|-----------|
+| `planning` | Phase 1 (impact analysis not yet complete) |
+| `awaiting-scope-approval` | **STOP** — "Scope gate is pending TA review. Ask the TA to run the TA Gate Approval workflow." |
+| `scope-approved` | Phase 3 (HLD generation) |
+| `awaiting-hld-approval` | **STOP** — "HLD gate is pending TA review. Ask the TA to run the TA Gate Approval workflow." |
+| `hld-approved` | Phase 4 (ADRs) |
+| `awaiting-lld-approval` | **STOP** — "LLD gate is pending TA review. Ask the TA to run the TA Gate Approval workflow." |
+| `lld-approved` | Phase 6 (IaC planning) |
+| `awaiting-packet-approval` | **STOP** — "Decision packet gate is pending TA review. Ask the TA to run the TA Gate Approval workflow." |
+| `blocked` | Report the blocker: "This change is blocked. Finding: `[blocker.finding]` (gate: `[blocker.gate]`). Rework the artifact and re-submit." |
+| `implementation-approved` | Design is complete — nothing left to do in this workflow. |
+
+If status is `awaiting-*` or `blocked`, output the message and stop. Do not re-run completed phases.
+
 ### Phase 1 — Impact Analysis and Scope
 
 1. Fetch and challenge the GitHub issue. If no issue exists, stop: "Create a GitHub issue first with `gh issue create`." Detect the requirements source: if `docs/00-migration/migration-brief.md` exists this is a migration project — read the brief as the requirements source (it replaces `docs/01-product/prd.md`; slices reference `MR-<ID>` not `FR-<ID>`). Otherwise extract the PRD reference (`FR-<ID>`) from the issue and read `docs/01-product/prd.md` at that requirement — the issue is a pointer, the PRD is the source of truth. Before reading the manifest, challenge: Is the problem backed by evidence? Are the AC testable and specific? Are NFRs for the affected domain stated? Is there a simpler approach? Resolve gaps now. See `ai/shared/challenge-stance.md` for the full standard.
@@ -822,8 +894,11 @@ This section covers everything from impact analysis through decision packet asse
 4. Identify affected domains, facade API changes, boundary entity changes, IaC scope, and backwards compatibility.
 5. Determine tier (from `ai/claude/dev-practices/SKILL.md`). Challenge scope: cross-domain or multi-service changes are Tier 3 even when described as simple.
 6. Estimate effort and token cost (phase-level formula from `ai/claude/dev-practices/roi-estimation.md`).
-7. Initialize or update `.hitl/current-change.yaml` with `status: planning`.
-8. **STOP — present impact summary and ask architect to confirm scope and tier.**
+7. Initialize or update `.hitl/current-change.yaml` with `status: awaiting-scope-approval`. Post a scope summary comment on the GitHub issue:
+   ```bash
+   gh issue comment <issue-number> --body "## ⏳ Scope Gate — Awaiting TA Review\n\nImpact analysis complete. Awaiting TA approval before HLD generation.\n\n**Affected domains:** <list>\n**Tier:** <N>\n**Estimated effort:** <N days>"
+   ```
+8. **STOP — present impact summary. The TA must run the TA Gate Approval workflow to advance to `scope-approved` before this workflow continues.**
 
 ### Phase 2 — ROI Trigger (Step 4)
 
@@ -834,19 +909,13 @@ If effort > 1 day: record the ROI section in `.hitl/current-change.yaml` under `
 For Tier 2+:
 - Generate HLD at `docs/02-design/technical/hld/<feature>.md` following the `Generate Documentation` section below.
 - Update `docs/02-design/technical/hld/index.md` and `source_artifacts.hld` in `.hitl/current-change.yaml`.
-- **STOP — ask architect to approve HLD.** Do not generate LLDs until approval.
-
-After architect says "HLD approved", post a comment on the GitHub issue:
-```bash
-gh issue comment <issue-number> \
-  --body "## ✅ HLD Approved
-
-High-Level Design reviewed and approved by architect.
-
-**HLD:** \`docs/02-design/technical/hld/<feature-name>.md\`
-
-Proceeding to ADRs and LLD generation."
-```
+- Set `status: awaiting-hld-approval` in `.hitl/current-change.yaml`.
+- Post a gate comment on the GitHub issue:
+  ```bash
+  gh issue comment <issue-number> \
+    --body "## ⏳ HLD Gate — Awaiting TA Review\n\nHLD is ready for review.\n\n**HLD:** \`docs/02-design/technical/hld/<feature-name>.md\`\n\nTA: run the TA Gate Approval workflow to approve or reject."
+  ```
+- **STOP — the TA must run the TA Gate Approval workflow to advance to `hld-approved`. Do not generate LLDs until the status is `hld-approved`.**
 
 ### Phase 4 — ADR Capture (Step 5, Part 2)
 
@@ -859,20 +928,16 @@ After HLD approval:
 
 For each affected domain:
 - Generate LLD following the `Generate Documentation` section below.
-- **STOP after each LLD — ask architect:** "Is this precise enough to generate tests from?"
-- Update `source_artifacts.lld` in `.hitl/current-change.yaml` after each approval.
+- Update `source_artifacts.lld` in `.hitl/current-change.yaml` after each LLD is written.
 
-After all domain LLDs are approved, post a comment on the GitHub issue:
-```bash
-gh issue comment <issue-number> \
-  --body "## ✅ LLDs Approved
-
-Low-Level Designs reviewed and approved for all affected domains: <domain list>.
-
-**LLD(s):** \`docs/02-design/technical/lld/...\`
-
-Proceeding to slice decomposition and test planning."
-```
+After all domain LLDs are generated:
+- Set `status: awaiting-lld-approval` in `.hitl/current-change.yaml`.
+- Post a gate comment on the GitHub issue:
+  ```bash
+  gh issue comment <issue-number> \
+    --body "## ⏳ LLD Gate — Awaiting TA Review\n\nLLDs are ready for review.\n\n**LLD(s):** \`docs/02-design/technical/lld/...\`\n**Domains covered:** <list>\n\nTA: run the TA Gate Approval workflow to approve or reject."
+  ```
+- **STOP — the TA must run the TA Gate Approval workflow to advance to `lld-approved`. Do not proceed to slice decomposition until the status is `lld-approved`.**
 
 ### Phase 6 — IaC Planning (Step 6)
 
@@ -919,24 +984,16 @@ If required: create stub at `docs/03-engineering/training/<capability>.md` using
 
 For each confirmed slice, generate `docs/decisions/issue-<N>-slice-<M>.yaml` (or `docs/decisions/issue-<N>.yaml` for single-slice) using `ai/shared/templates/decision-packet-template.yaml`. Fill all fields: issue, domain (one only), LLD path, HLD path, ADR paths, IaC plan, test plan, rollout risk, ROI flag, impact brief placeholders.
 
-**STOP after each packet — ask architect to approve.** After all packets approved:
-- Set `approvals.architecture: approved` in `.hitl/current-change.yaml`
-- Set `status: implementation-approved`
+After all packets are assembled:
+- Set `status: awaiting-packet-approval` in `.hitl/current-change.yaml`.
+- Post a gate comment on the GitHub issue:
+  ```bash
+  gh issue comment <issue-number> \
+    --body "## ⏳ Decision Packet Gate — Awaiting TA Review\n\nDecision packet(s) assembled and ready for final TA review.\n\n**Packet(s):** \`docs/decisions/issue-<N>...\`\n**Slices:** <slice plan>\n**Estimated effort:** <N days>\n**Rollout risk:** <level>\n\nTA: run the TA Gate Approval workflow to approve and hand off to developers."
+  ```
+- **STOP — the TA must run the TA Gate Approval workflow to advance to `implementation-approved`. Developers cannot begin until that gate is approved.**
 
-Post a comment on the GitHub issue signalling the feature is ready for development:
-```bash
-gh issue comment <issue-number> \
-  --body "## ✅ Architecture Approved — Ready for Development
-
-Design complete. Decision packet(s) assembled and approved by architect.
-
-**Slices:** <slice plan>
-**Decision packet(s):** \`docs/decisions/issue-<N>...\`
-**Estimated effort:** <N days>
-**Rollout risk:** <level>
-
-Developers can begin implementation. Run \`/hitl:tdd\` with the assigned LLD."
-```
+When the TA approves the packet gate, the TA Gate Approval workflow will post the developer handoff comment on the issue automatically.
 
 ### Output format
 
@@ -950,9 +1007,9 @@ Artifacts:
   ADRs: N stubs (architect to fill rationale)
   Decision packets: N files
   Training stub: [path or "not required"]
-  .hitl context: implementation-approved
+  .hitl context: awaiting-packet-approval (TA approval pending)
 
-Slice handoff:
+Slice handoff (pending TA approval):
   Slice 1: domain [A] [PARALLEL OK]
     LLD: docs/.../lld/[A]/...
     Packet: docs/decisions/issue-<N>-s1.yaml
@@ -960,8 +1017,197 @@ Slice handoff:
     LLD: docs/.../lld/[B]/...
     Packet: docs/decisions/issue-<N>-s2.yaml
 
-Next: assign packets to developers; each runs /hitl:tdd with their LLD path
+Next: TA runs the TA Gate Approval workflow; developers assigned after approval
 ```
+
+---
+
+## TA Gate Approval
+
+Run when the architect has set a gate to `awaiting-*` status and the Technical Advisor needs to review and advance (or reject) it. This replaces the `/hitl:ta-approve` skill from the Claude Code plugin.
+
+**Who runs this:** Technical Advisor only. This workflow cannot be run by the architect on their own behalf.
+
+**Trigger:** TA says "ta-approve", "approve the gate", "review the design gate", or the GitHub issue has a `⏳ Gate — Awaiting TA Review` comment.
+
+**Refusal:** If `.hitl/current-change.yaml` does not exist AND `.hitl/design-system.yaml` does not exist, stop: "No active HITL context found. This workflow requires either `.hitl/current-change.yaml` or `.hitl/design-system.yaml`."
+
+### Step 1 — Detect context and current gate
+
+Read whichever context file exists. Extract the `status` field. Determine what gate is pending:
+
+| Status | Gate | Artifact to review |
+|--------|------|--------------------|
+| `awaiting-scope-approval` | Scope | Impact summary in session output; `source_artifacts.hld: pending` |
+| `awaiting-hld-approval` | HLD | `source_artifacts.hld` path |
+| `awaiting-lld-approval` | LLD | `source_artifacts.lld` path(s) |
+| `awaiting-packet-approval` | Decision packet | `source_artifacts.decision_packet` path(s) |
+| `awaiting-requirements` | Requirements (design-system) | PRD extraction in session output |
+| `awaiting-domains` | Domains (design-system) | Domain decomposition in session output |
+| `awaiting-manifest` | Manifest + ADRs (design-system) | `docs/system-manifest.yaml` and `docs/02-design/technical/adrs/` |
+| `awaiting-delivery-plan` | Delivery plan (design-system) | `docs/decisions/` |
+
+If status is NOT one of the `awaiting-*` values above, stop:
+
+> "No gate is pending. Current status: `[status]`. This workflow only acts when the architect has reached a checkpoint and is waiting for TA review."
+
+If status is `blocked`, stop:
+
+> "This change is currently blocked. Finding: `[blocker.finding]` (gate: `[blocker.gate]`). The architect must rework the `[blocker.gate]` artifact and re-submit before the gate can advance."
+
+### Step 2 — Surface the artifact
+
+Load and display the artifact path(s) from the context file:
+
+```
+Gate pending: [gate name]
+Artifact:     [path or description]
+Change:       [change_id] — [title if available]
+```
+
+If the artifact path points to a file that does not exist, stop:
+
+> "Artifact not found at `[path]`. The architect may not have completed this phase yet. Ask the architect to re-run the design workflow and confirm the artifact was written."
+
+Remind the TA: "If you are on a different machine than the architect, run `git pull` now to ensure you have the latest artifacts before reviewing."
+
+### Step 3 — Present the gate checklist
+
+Present the checklist for the current gate. Ask all items as a numbered list — do not proceed until every item is answered.
+
+**Scope gate (`awaiting-scope-approval`)**
+1. Are the affected domains correct — neither over-counted (scope creep) nor under-counted (hidden blast radius)?
+2. Is the tier assignment correct for this change?
+3. Is the ROI trigger noted if effort > 1 day?
+4. Are any backwards-incompatible changes flagged with a compatibility strategy?
+
+**HLD gate (`awaiting-hld-approval`)**
+1. Are the component boundaries correct — does each component have a clear single responsibility?
+2. Is the security model correct for this feature (auth, data isolation, secrets handling)?
+3. Are design decisions that need ADRs flagged — no undocumented tradeoffs embedded in the diagram?
+4. Is there no implementation bias — does the HLD describe *what*, not *how*?
+
+**LLD gate (`awaiting-lld-approval`)**
+1. Are method signatures precise enough that a developer could generate tests directly from the LLD without reading other docs?
+2. Are preconditions and error modes complete for every public method?
+3. Does the LLD correctly reflect the decisions in the approved HLD?
+4. Is the slice demo answer concrete — does each slice describe what the PM will see and verify in the running app?
+
+**Decision packet gate (`awaiting-packet-approval`)**
+1. Does each packet cover exactly one manifest domain (no cross-domain scope)?
+2. Is the LLD path in the packet correct and the file present on disk?
+3. Is the test plan complete enough for a developer to start the TDD cycle without clarification?
+4. Is the rollout risk level correct for this change?
+5. Has PM confirmed the acceptance criteria and scope (product approval)?
+
+**Requirements gate — design-system (`awaiting-requirements`)**
+1. Are the core use cases correct and complete (the 3–5 workflows that matter most)?
+2. Are NFRs specific enough to drive architecture decisions?
+3. Are all external integrations listed?
+4. Are tech stack constraints captured or flagged as open decisions?
+
+**Domain decomposition gate — design-system (`awaiting-domains`)**
+1. Is data ownership unambiguous — each domain owns its data with no overlap?
+2. Are there any circular dependencies that indicate a boundary is in the wrong place?
+3. Are domains right-sized — none doing too many unrelated things, none always changed together?
+
+**Manifest + ADRs gate — design-system (`awaiting-manifest`)**
+1. Are facade APIs and boundary entities approximately correct (DRAFT is acceptable)?
+2. Do domain dependencies match the interaction matrix from domain decomposition?
+3. Are all foundational ADRs resolved — no open decisions on: language/framework, data storage, auth, API style, deployment model?
+
+**Delivery plan gate — design-system (`awaiting-delivery-plan`)**
+1. Does every slice have a concrete PM demo check — something visible or measurable?
+2. Does the sequencing match the dependencies from the interaction matrix?
+3. Is every slice 2–5 days in scope?
+
+### Step 4 — Collect TA answers
+
+For each checklist item, record the TA's answer (yes / no / with-caveat).
+
+If any item is **no** or flagged as a problem, go to **Step 5 — Rejection**.
+If all items are **yes**, go to **Step 6 — Approval**.
+
+### Step 5 — Rejection
+
+Ask the TA: "What specifically needs to change? Be concrete enough for the architect to act on it."
+
+Update the context file:
+
+```yaml
+status: blocked
+blocker:
+  gate: [scope|hld|lld|packet|requirements|domains|manifest|delivery-plan]
+  finding: "[TA's specific finding]"
+  rejected_at: "[ISO 8601 timestamp]"
+```
+
+Post a GitHub issue comment (if `change_id` is in GH-N format):
+```bash
+ISSUE_NUM="${CHANGE_ID#GH-}"
+gh issue comment "$ISSUE_NUM" --body "## ❌ Gate Rejected — [gate name]
+
+**Finding:** [TA's finding]
+
+The architect must rework the [gate name] artifact and re-submit.
+Re-run the Architect Design Journey to address the finding and reach this gate again."
+```
+
+If on a different machine: "Push this change so the architect can pull and see the rejection: `git add .hitl/ && git commit -m 'hitl: gate rejected — [gate name]' && git push`"
+
+Stop here.
+
+### Step 6 — Approval
+
+Determine the next status from the transition table:
+
+| Current status | Next status |
+|----------------|-------------|
+| `awaiting-scope-approval` | `scope-approved` |
+| `awaiting-hld-approval` | `hld-approved` |
+| `awaiting-lld-approval` | `lld-approved` |
+| `awaiting-packet-approval` | `implementation-approved` |
+| `awaiting-requirements` | `requirements-confirmed` |
+| `awaiting-domains` | `domains-confirmed` |
+| `awaiting-manifest` | `manifest-confirmed` |
+| `awaiting-delivery-plan` | `complete` |
+
+Update the context file:
+1. Set `status` to the next value from the table.
+2. For `awaiting-packet-approval` → also set `approvals.architecture: approved` and `approvals.product: approved`.
+3. Clear any previous `blocker` field.
+
+Post a GitHub issue comment:
+
+**If approving `awaiting-packet-approval`** (final design gate — developers start now):
+```bash
+ISSUE_NUM="${CHANGE_ID#GH-}"
+gh issue comment "$ISSUE_NUM" \
+  --body "## ✅ Ready for Development
+
+Architecture approved. If this issue is assigned to you, you can begin now.
+
+**Decision packet:** \`docs/decisions/issue-${ISSUE_NUM}.yaml\` (or slice variant)
+**Your domain:** [domain from packet]
+**LLD:** [lld path from packet]
+
+Open Codex in the repo and run the TDD workflow with:
+\`I have been assigned GitHub issue #${ISSUE_NUM}. Read the decision packet at docs/decisions/issue-${ISSUE_NUM}.yaml and tell me what I am building, what domain I am in, and what the test plan requires me to cover.\`"
+```
+
+**For all other gates** (scope, HLD, LLD — architect continues):
+```bash
+ISSUE_NUM="${CHANGE_ID#GH-}"
+gh issue comment "$ISSUE_NUM" \
+  --body "## ✅ Gate Approved — [gate name]
+
+TA has reviewed and approved the [gate name] artifact.
+
+**Status:** \`[next-status]\`
+**Next step:** Architect re-runs the Architect Design Journey to continue to the next phase."
+```
+
+If on a different machine: "Push this change so the next person can pull and continue: `git add .hitl/ && git commit -m 'hitl: [gate name] approved' && git push`"
 
 ---
 
@@ -1051,12 +1297,104 @@ If the user says "reverse engineer", "existing codebase", or "brownfield": read 
 Verify all of the following:
 
 - [ ] `.hitl/current-change.yaml` status is `conformance-review-pending` or later
+- [ ] LLD adherence review passes (run the `Review LLD Adherence` workflow below — all ❌ items resolved)
 - [ ] Convention checks pass (zero semgrep violations)
 - [ ] All new tests pass
 - [ ] No regressions in existing tests
 - [ ] LLD is up to date (no unresolved drift from conformance review)
-- [ ] Downstream impact brief exists (run `/hitl:impact-brief` or ask Codex to generate one)
+- [ ] Downstream impact brief exists (ask Codex to generate one using the `Impact Brief` workflow)
 - [ ] PR description includes: GitHub issue link, HLD/LLD links, test plan summary, rollout notes
+
+---
+
+## Review LLD Adherence
+
+Run before opening any PR to verify that generated code strictly matches what the LLD specifies. This is a required step — ❌ items are merge blockers.
+
+**Trigger:** User asks to "review LLD adherence", "check code against LLD", or "verify implementation matches spec". Also run as part of the `Before Creating a PR` checklist.
+
+**Input:** Optional — component name, file path, or PR description. If empty, uses current git diff.
+
+### Step 1 — Identify what was built
+
+1. Read the diff: `git diff main...HEAD` or staged changes
+2. List every source file that was added or modified
+3. For each file, look up its governing LLD via `docs/system-manifest.yaml`
+4. If a modified file has no LLD entry → flag immediately: "⚠️ `[file]` has no LLD. Either add it to the manifest and create an LLD, or confirm with the architect that this file is exempt."
+
+### Step 2 — Read the governing LLDs
+
+For each domain touched by the diff:
+1. Read the full LLD document
+2. Extract every class, method, interface, and data structure the LLD specifies
+3. Note any sections marked DRAFT, TODO, or TBD — these are ambiguous and need architect sign-off
+
+### Step 3 — Check LLD → Code (nothing missing)
+
+For each element specified in the LLD, verify it exists in the generated code:
+
+| LLD Element | Expected | Found in Code | Status |
+|---|---|---|---|
+| `ClassName` | class with fields X, Y, Z | `src/foo.py:12` | ✅ |
+| `method_name(args) -> ReturnType` | method signature | — | ❌ MISSING |
+
+Mark each as:
+- ✅ **Present and matches** — implementation matches LLD spec
+- ⚠️ **Present but diverged** — exists but signature, behavior, or naming differs
+- ❌ **Missing** — LLD specifies it, code does not have it
+
+### Step 4 — Check Code → LLD (nothing extra)
+
+For each class, method, and public interface in the generated code, verify it appears in the LLD:
+
+| Code Element | File | In LLD? | Status |
+|---|---|---|---|
+| `ExtraHelper` class | `src/foo.py:78` | No | ❌ NOT SPECIFIED |
+| `_private_method` | `src/foo.py:90` | N/A (private) | ✅ EXEMPT |
+
+Private methods and internal helpers are exempt. Public classes, public methods, and any code that crosses a domain boundary must be in the LLD.
+
+### Step 5 — Check cross-cutting conventions
+
+Read the `cross_cutting` section of `docs/system-manifest.yaml`. Verify each convention is followed. Flag any violation.
+
+### Step 6 — Report
+
+```
+## LLD Adherence Report
+
+**LLD reviewed:** [path]
+**Files checked:** [list]
+
+### ✅ Matching ([N] elements)
+All LLD-specified elements found and matching.
+
+### ⚠️ Diverged ([N] elements — architect decision required)
+- [element]: LLD specifies [X], code implements [Y].
+  Options: (a) update LLD to reflect better design, (b) fix code to match LLD.
+
+### ❌ Missing ([N] elements — must fix before merge)
+- [element]: specified in LLD at [section], not found in code.
+
+### ❌ Not Specified ([N] elements — must fix before merge)
+- [element] in [file:line]: public interface not in LLD.
+
+### Convention Violations ([N] — must fix before merge)
+- [file:line]: [convention name] violated.
+
+### Verdict
+[ ] PASS — all elements match, no violations.
+[ ] PASS WITH NOTES — diverged items logged; architect must acknowledge before merge.
+[ ] BLOCK — missing elements or unspecified public interfaces. Fix before PR.
+```
+
+### Step 7 — Handle divergence
+
+For each ⚠️ diverged item, present the choice explicitly — do NOT silently normalize divergence:
+
+> "The LLD specifies `method_name(user_id: str) -> User`. The implementation uses `method_name(user: UserDTO) -> UserResponse`. Options:
+> (a) **Update the LLD** — if the implementation reflects a better design. Requires architect approval before merge.
+> (b) **Fix the code** — if the implementation drifted unintentionally."
 
 ---
 

@@ -84,20 +84,28 @@ Codex reads `AGENTS.md` automatically and follows the Change Initialization work
 ## What happens during development
 
 ```bash
-# Design first (Tier 2+ changes)
-codex "Generate the HLD for the authentication service"
-# → Codex creates docs/02-design/technical/hld/auth-service.md using ai/shared/templates/hld-template.md
-# → You review and approve before it proceeds to LLD
+# Architect: run the design phase (Tier 2+ changes)
+codex "architect design-feature for GH-42"
+# → Codex runs impact analysis, sets status: awaiting-scope-approval, STOPS
+# → TA reviews scope and runs: codex "ta-approve"
+# → Codex presents scope gate checklist; TA answers; advances to scope-approved
+# → Architect resumes: codex "architect design-feature for GH-42"
+# → Codex generates HLD, sets status: awaiting-hld-approval, STOPS
+# → TA approves HLD → Codex generates LLD → TA approves LLD → Codex assembles packets
+# → TA approves packets → status: implementation-approved → developer can start
 
-# Then implement with TDD
+# Developer: implement with TDD (only after implementation-approved)
 codex "Run the TDD workflow for the user login component"
 # → Codex generates tests first, stops for your review
 # → After 'tests approved', generates implementation code
 
+# Verify code matches the LLD before opening a PR
+codex "Review LLD adherence for this change"
+
 # Check conventions before PR
 bash ai/codex/scripts/hitl-conventions.sh
 
-# Commit — pre-commit hook verifies .hitl/current-change.yaml exists
+# Commit — pre-commit hook verifies .hitl/current-change.yaml exists and status allows edits
 git add . && git commit -m "feat: add user login"
 # → post-commit writes docs/session-logs/hitl-session-GH-1-<timestamp>.md
 ```
@@ -106,8 +114,8 @@ git add . && git commit -m "feat: add user login"
 
 | Layer | What it enforces | When |
 |-------|-----------------|------|
-| `AGENTS.md` instructions | Checks context file before source edits; refuses to implement without approved LLD | Every Codex prompt |
-| Codex lifecycle hooks (`.ai/codex/hooks.json`) | Blocks Write/Edit before context file exists; warns on boundary violations after edits | Every file edit (requires `codex_hooks = true`) |
+| `AGENTS.md` instructions | Checks context file before source edits; blocks edits if status is any design-phase `awaiting-*` value; refuses to implement without `implementation-approved` | Every Codex prompt |
+| Codex lifecycle hooks (`.ai/codex/hooks.json`) | Blocks Write/Edit before context file exists; checks status gate; warns on boundary violations after edits | Every file edit (requires `codex_hooks = true`) |
 | `pre-commit` hook (default) | Blocks source commits without context file; warns on status and boundary issues | Every `git commit` |
 | `pre-commit` hook (strict mode) | Also blocks Tier 2+ commits without `implementation-approved`; blocks boundary violations | Every `git commit` with `HITL_STRICT=1` |
 | `post-commit` hook | Writes session summary with evidence checklist | Every `git commit` |

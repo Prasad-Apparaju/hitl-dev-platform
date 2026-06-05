@@ -65,7 +65,7 @@ if [[ ! -f "$CONTEXT_FILE" ]]; then
   echo "HITL CONTEXT MISSING: No .hitl/current-change.yaml found." >&2
   echo "Before editing source code, initialize the change context:" >&2
   echo "  Codex: run the Change Initialization workflow in AGENTS.md" >&2
-  echo "  Claude Code: /hitl:dev-apply-change [issue-number] [description]" >&2
+  echo "  Claude Code: /hitl:apply-change [issue-number] [description]" >&2
   echo "This creates the required context file and verifies source artifacts exist." >&2
   exit 2
 fi
