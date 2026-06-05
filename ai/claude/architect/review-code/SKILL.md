@@ -10,7 +10,7 @@ Human architect review of the implementation. AI rounds 1 and 2 verified LLD con
 
 **Input:** $ARGUMENTS (change ID or issue number)
 
-**Refusal rule:** If `.hitl/current-change.yaml` does not show both `code_review.round_1: complete` and `code_review.round_2: complete`, stop: "AI review rounds 1 and 2 must complete before architect review. Run `/hitl:dev-check-implementation` for Round 1, then Round 2."
+**Refusal rule:** If `.hitl/current-change.yaml` does not show both `code_review.round_1: complete` and `code_review.round_2: complete`, stop: "AI review rounds 1 and 2 must complete before architect review. Run `/hitl:review-lld-adherence` for Round 1, then Round 2."
 
 **Graphify pre-flight:** Before the first step, run:
 ```bash

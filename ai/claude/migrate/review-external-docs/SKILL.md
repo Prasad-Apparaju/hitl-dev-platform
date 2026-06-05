@@ -12,7 +12,7 @@ disable-model-invocation: true
 - `docs/00-migration/migration-review.md` — critical evaluation of the external docs
 - `docs/00-migration/migration-brief.md` — PRD-equivalent requirements for the target system
 
-**Refusal rule:** If `docs/00-migration/external-reference/` is empty and no migration context exists, stop and say: "Run `/hitl:dev-start-migration` first — the external docs must be staged and migration context recorded before the review can begin."
+**Refusal rule:** If `docs/00-migration/external-reference/` is empty and no migration context exists, stop and say: "Run `/hitl:start-migration` first — the external docs must be staged and migration context recorded before the review can begin."
 
 Work through phases in order. Pause after each output and wait for architect approval before proceeding.
 
@@ -33,7 +33,7 @@ Read `docs/00-migration/migration-context.yaml`. Extract:
 | Migration trigger | |
 | External docs available | |
 
-If the file does not exist, stop: "Migration context not found. Run `/hitl:dev-start-migration` first."
+If the file does not exist, stop: "Migration context not found. Run `/hitl:start-migration` first."
 
 ### 1b. Inventory external reference docs
 
@@ -62,7 +62,7 @@ For each external doc, identify which claims can be trusted as design input:
 
 - **Strong signal:** vendor-produced migration guides for the target platform, field-mapping specs produced by domain experts, runbooks proven in production migrations
 - **Weak signal:** consultant deliverables without validation evidence, "best practice" guides without context for this specific source/target pair, docs older than 18 months on rapidly-evolving platforms
-- **Flag explicitly:** anything that conflicts with what `/hitl:dev-start-migration` recorded as the migration trigger or target architecture
+- **Flag explicitly:** anything that conflicts with what `/hitl:start-migration` recorded as the migration trigger or target architecture
 
 ### 2b. Gap analysis
 

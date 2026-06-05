@@ -6,7 +6,7 @@ Each `.md` file defines a subagent: its role, responsibilities, what it reads, a
 
 | Agent | Invoked by | Role |
 |-------|-----------|------|
-| `spec-conformance-reviewer.md` | `/hitl:dev-check-implementation` | Reviews implementation against LLD and system manifest |
+| `spec-conformance-reviewer.md` | `/hitl:review-lld-adherence` | Reviews implementation against LLD and system manifest |
 | `architect-reviewer.md` | `/hitl:architect-review-design` | Evaluates HLD/LLD quality before implementation |
 | `qa-reviewer.md` | `/hitl:qa-verify-quality` | Independent quality verification against running build |
 | `ops-release-reviewer.md` | `/hitl:ops-review-release` | Assesses rollout plan and canary criteria |

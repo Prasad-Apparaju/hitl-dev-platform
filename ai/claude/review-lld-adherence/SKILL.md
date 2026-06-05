@@ -1,3 +1,9 @@
+---
+description: "Review generated code against the approved LLD to verify structural conformance. Checks LLD→code (nothing missing) and code→LLD (no unspecified public interfaces). Run before opening any PR — ❌ items are merge blockers."
+argument-hint: "[component name, file path, or PR description]"
+disable-model-invocation: false
+---
+
 # Review LLD Adherence
 
 Check that generated code strictly matches what the LLD specifies. Run this before opening any PR. It is a required step in the change workflow.

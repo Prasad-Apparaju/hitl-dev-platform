@@ -36,7 +36,7 @@ Ask the following questions and record the answers. Do not proceed until all fou
 Record the answers in `docs/00-migration/migration-context.yaml` (create it now — this is project-level bootstrap state, separate from the per-change `.hitl/current-change.yaml`):
 
 ```yaml
-# Migration project context — written once during /hitl:dev-start-migration
+# Migration project context — written once during /hitl:start-migration
 # This is project-level metadata, not a per-change runtime file.
 source_system: <description>
 target_system: <description>

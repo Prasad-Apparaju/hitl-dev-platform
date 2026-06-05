@@ -10,12 +10,12 @@ Before step 1, ensure these artifacts exist:
 
 | Artifact | New project | Brownfield |
 |---|---|---|
-| `docs/system-manifest.yaml` | Run `/architect/design-system` from your PRD | Run `/hitl:dev-start-brownfield` → baseline sprint (`/hitl:generate-docs reverse-engineer`) |
+| `docs/system-manifest.yaml` | Run `/architect/design-system` from your PRD | Run `/hitl:start-brownfield` → baseline sprint (`/hitl:generate-docs reverse-engineer`) |
 | HLDs + LLDs | Produced by `/architect/design-system` | Produced by brownfield baseline sprint |
 | `docs/03-engineering/testing/test-registry.yaml` | Created empty by `/architect/design-system`; populated as changes land | Populate during baseline sprint from existing test catalog |
 | `docs/04-operations/incident-registry.yaml` | Starts empty; populated after each production incident | Seed during baseline sprint: "what broke in the last 6 months?" |
 
-If you have not done this yet, run `/hitl:dev-start-prd`, `/hitl:dev-start-brownfield`, or `/hitl:dev-start-migration` — choose the one that fits your situation.
+If you have not done this yet, run `/hitl:start-prd`, `/hitl:start-brownfield`, or `/hitl:start-migration` — choose the one that fits your situation.
 
 **Brownfield accuracy note:** The manifest and LLDs produced by the baseline sprint start at 55–75% accuracy and improve as changes correct each area. For the first several changes on a brownfield project, treat AI output from steps 5, 10, and 14 as drafts requiring closer human review than on a well-established codebase.
 
@@ -119,10 +119,10 @@ Run `semgrep scan --config .semgrep/ --error` and manifest drift check against `
 
 ## Steps 18–22: Verify
 
-**18. Code Review Round 1** — use `/hitl:dev-check-implementation`
+**18. Code Review Round 1** — use `/hitl:review-lld-adherence`
 Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the LLD at `docs/02-design/technical/lld/<component>.md` (step 12) and `system-manifest.yaml`. Reviews: structure, security, LLD adherence, naming conventions. Fix all CRITICAL and HIGH findings before proceeding. MEDIUM findings are documented for Round 2.
 
-**19. Code Review Round 2** — use `/hitl:dev-check-implementation`
+**19. Code Review Round 2** — use `/hitl:review-lld-adherence`
 Uses the `spec-conformance-reviewer` agent. Reads implementation files, test files in `tests/`, and the test plan from `.hitl/current-change.yaml` (step 7). Reviews: edge cases, regressions, test quality, and completeness against the test plan. Fix all findings. Rerun full test suite after fixes.
 
 **19a. Architect Code Review** — use `/hitl:architect-review-code`

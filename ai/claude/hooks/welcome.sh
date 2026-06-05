@@ -79,9 +79,9 @@ cat << 'BANNER'
   HITL AI-Driven Development — platform active
 
   Start a project:
-    /hitl:dev-start-prd          new project from a PRD
-    /hitl:dev-start-brownfield   onboard an existing codebase
-    /hitl:dev-start-migration    migrate from one system to another
+    /hitl:start-prd          new project from a PRD
+    /hitl:start-brownfield   onboard an existing codebase
+    /hitl:start-migration    migrate from one system to another
 
   Run a change:
     /hitl:dev-practices      begin a new change (full 32-step workflow)

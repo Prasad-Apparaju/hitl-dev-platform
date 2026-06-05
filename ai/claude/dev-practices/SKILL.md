@@ -27,7 +27,7 @@ When in doubt, use the heavier process. If you are touching more than one domain
 > No LLD found for this component.
 >
 > - **New project:** Run `/architect/design-system` to generate design docs from your PRD first.
-> - **Existing codebase not yet in HITL** (no manifest, no registries): Run `/hitl:dev-start-brownfield` to establish the full baseline — manifest, priority LLDs, and registry stubs — before starting change work.
+> - **Existing codebase not yet in HITL** (no manifest, no registries): Run `/hitl:start-brownfield` to establish the full baseline — manifest, priority LLDs, and registry stubs — before starting change work.
 > - **Existing HITL project, one undocumented component:** Run `/hitl:generate-docs` for the affected component to create its LLD. Then verify that the test registry and incident registry exist (see Prerequisites in workflow-steps.md) before resuming.
 
 **Source-of-truth order:**
@@ -66,8 +66,8 @@ Build (TDD)
 17. Convention Checks      → /hitl:check-conventions — zero violations required before proceeding
 
 Verify
-18. Code Review Round 1    → /hitl:dev-check-implementation — reads implementation + LLD (step 12) + system-manifest.yaml
-19. Code Review Round 2    → /hitl:dev-check-implementation — reads implementation + tests/ + test plan from .hitl/current-change.yaml
+18. Code Review Round 1    → /hitl:review-lld-adherence — reads implementation + LLD (step 12) + system-manifest.yaml
+19. Code Review Round 2    → /hitl:review-lld-adherence — reads implementation + tests/ + test plan from .hitl/current-change.yaml
 19a. Architect Code Review → /hitl:architect-review-code — creates GitHub PR with checklist; architect reviews on GitHub (line comments + approve/request changes); revisions return to step 14 or 16; PR is NOT merged here
 20. Rerun Tests            → confirm no regressions from review fixes
 21. Reconcile Docs         → update LLD (/hitl:generate-docs) or fix code; document decision; if fix code, rerun 18–20
@@ -110,6 +110,6 @@ Detailed procedures are in supporting files — load only what you need:
 
 **API design:** endpoints scoped to owning entity; consistent auth; 404 not 403 for ownership failures; version for backwards compatibility.
 
-**Code review:** two rounds using `/hitl:dev-check-implementation` (`spec-conformance-reviewer` agent) — Round 1 reads implementation + LLD + system-manifest (structure/security/LLD adherence); Round 2 reads implementation + tests + test plan (edge cases/regressions/completeness). Both rounds read from repo files, not from memory.
+**Code review:** two rounds using `/hitl:review-lld-adherence` (`spec-conformance-reviewer` agent) — Round 1 reads implementation + LLD + system-manifest (structure/security/LLD adherence); Round 2 reads implementation + tests + test plan (edge cases/regressions/completeness). Both rounds read from repo files, not from memory.
 
 **Integration verification (team lead only):** run feature E2E; compare against HLD/LLD; check full traceability chain; Figma comparison if design exists.
