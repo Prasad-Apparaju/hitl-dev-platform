@@ -77,9 +77,9 @@ Pick the path that matches where you are:
 |------|----------|-------|
 | **Developer** | `/hitl:dev-practices`, `/hitl:generate-docs`, `/hitl:tdd`, `/hitl:apply-change`, `/hitl:check-conventions`, `/hitl:impact-brief`, `/hitl:conclude` | [Developer guide](docs/roles/developer.md) |
 | **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
-| **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-design`, `/hitl:architect-review-code`, `/hitl:architect-verify-traceability` | [Architect guide](docs/roles/architect.md) |
+| **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code` | [Architect guide](docs/roles/architect.md) |
 | **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
-| **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-apply-iac`, `/hitl:ops-review-release`, `/hitl:ops-monitor-canary` | [Ops guide](docs/roles/ops.md) |
+| **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-apply-iac`, `/hitl:ops-rollback`, `/hitl:ops-post-deploy-monitor`, + 7 more | [Ops guide](docs/roles/ops.md) |
 
 ---
 
@@ -92,21 +92,15 @@ claude plugin marketplace add pappar/hitl-claude-plugin
 claude plugin install hitl@hitl
 ```
 
-To update to the latest version later:
-
-```bash
-claude plugin marketplace add pappar/hitl-claude-plugin
-claude plugin install hitl@hitl
-```
-
 Once installed, open Claude Code in your project directory and run the command that matches your situation:
 
 | Situation | Command |
 |-----------|---------|
-| New project — greenfield from a PRD | `/hitl:dev-start-prd` |
-| Existing codebase — adopt the process | `/hitl:dev-start-brownfield` |
-| Migrating a system | `/hitl:dev-start-migration` |
+| New project — greenfield from a PRD | `/hitl:start-prd` |
+| Existing codebase — adopt the process | `/hitl:start-brownfield` |
+| Migrating a system | `/hitl:start-migration` |
 | Already set up — start a change | `/hitl:dev-practices` |
+| Update the plugin to the latest version | `/hitl:update` |
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
 
