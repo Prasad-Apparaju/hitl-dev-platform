@@ -1,6 +1,6 @@
 # Downstream Impact Assessment + Rollout Plan — Reference
 
-> Use the `/hitl:impact-brief` skill to produce these artifacts. This file is the reference.
+> Use the `/hitl:dev-impact-brief` skill to produce these artifacts. This file is the reference.
 
 ## When it fires (Steps 14–15)
 

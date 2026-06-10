@@ -26,7 +26,7 @@ Present this completion summary after all packets are approved:
 ├─────────────────────────────────────────────────┤
 │ NEXT STEPS                                      │
 │  1. Assign packet(s) to developer(s)            │
-│  2. Each developer runs /hitl:tdd with their LLD     │
+│  2. Each developer runs /hitl:dev-tdd with their LLD     │
 │  3. Sequential slices: merge slice 1 before     │
 │     handing off slice 2                         │
 └─────────────────────────────────────────────────┘

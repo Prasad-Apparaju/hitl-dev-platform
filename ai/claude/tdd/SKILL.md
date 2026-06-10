@@ -24,7 +24,7 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 >
 > Do not start the TDD cycle until status is `implementation-approved`.
 
-**Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/hitl:generate-docs` — this skill generates tests FROM the spec, not without one."
+**Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/hitl:dev-generate-docs` — this skill generates tests FROM the spec, not without one."
 
 **Refusal rule — no decision packet:** Before generating any tests, check `.hitl/current-change.yaml` for `source_artifacts.decision_packet`. If the field is missing or the file at that path does not exist on disk, stop:
 

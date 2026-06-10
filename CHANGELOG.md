@@ -4,6 +4,42 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.4] — 2026-06-09
+
+### Fixed
+
+**`/hitl:ta-approve` — Technical Advisor role now published correctly.**
+
+- `ta-approve` was missing from `plugin.json`, so it was not included in the plugin.
+- When it was accidentally added by a prior build, it had the wrong name (`dev-ta-approve`) because the build script was applying the `dev-` prefix intended for developer skills.
+- Fixed: `ta-approve` is now a special case in the build script and maps to `/hitl:ta-approve` — its own role prefix, distinct from `dev-`, `architect-`, `pm-`, `qa-`, and `ops-`.
+
+**Stale `dev-ta-approve` removed.** The wrongly-named duplicate is deleted from the plugin.
+
+**All internal command cross-references corrected.** Skill files (dev-practices, architect skills, qa skills, ops skills, ta-approve itself) referenced developer commands without the `dev-` prefix. All corrected:
+
+| Was | Now |
+|---|---|
+| `/hitl:tdd` (in cross-references) | `/hitl:dev-tdd` |
+| `/hitl:apply-change` (in cross-references) | `/hitl:dev-apply-change` |
+| `/hitl:generate-docs` (in cross-references) | `/hitl:dev-generate-docs` |
+| `/hitl:check-conventions` (in cross-references) | `/hitl:dev-check-conventions` |
+| `/hitl:impact-brief` (in cross-references) | `/hitl:dev-impact-brief` |
+| `/hitl:review-lld-adherence` (in cross-references) | `/hitl:dev-review-lld-adherence` |
+
+**README By Role table updated:** Added Technical Advisor row. Added missing developer skills (`dev-review-lld-adherence`, `dev-review-security`) to Developer row.
+
+### Upgrade guide — 1.0.3 → 1.0.4
+
+```bash
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
+```
+
+Restart Claude Code.
+
+---
+
 ## [1.0.3] — 2026-06-09
 
 ### Fixed

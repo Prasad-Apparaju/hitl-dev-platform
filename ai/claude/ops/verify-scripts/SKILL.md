@@ -13,7 +13,7 @@ Validate that all ops artifacts for this change exist, are syntactically valid, 
 - `<change-ID> --level full` — Step 26 gate: syntax + dev test + rollback coverage + deployment config validity
 - Default level if omitted: `full`
 
-**Refusal rule:** If `.hitl/current-change.yaml` has no `iac_plan` key, stop: "No IaC plan found — run `/hitl:apply-change` first to identify what ops artifacts are required."
+**Refusal rule:** If `.hitl/current-change.yaml` has no `iac_plan` key, stop: "No IaC plan found — run `/hitl:dev-apply-change` first to identify what ops artifacts are required."
 
 ---
 

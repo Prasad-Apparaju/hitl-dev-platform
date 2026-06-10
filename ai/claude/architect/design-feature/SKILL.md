@@ -33,7 +33,7 @@ Route based on the current status:
 | `awaiting-lld-approval` | Output the gate-pending message below and STOP |
 | `lld-approved` | Skip to Phase 10 (Decision Packet) |
 | `awaiting-packet-approval` | Output the gate-pending message below and STOP |
-| `implementation-approved` | Output: "Design is complete. Decision packets are ready — hand them to developers to begin `/hitl:tdd`." and STOP |
+| `implementation-approved` | Output: "Design is complete. Decision packets are ready — hand them to developers to begin `/hitl:dev-tdd`." and STOP |
 | `blocked` | Output the blocked message below and STOP |
 
 **Gate-pending message** (for any `awaiting-*` status):
@@ -510,7 +510,7 @@ tests:
   plan: "<summary>"               # test plan summary from Phase 8
   new_tests:
     - "<tests/file.py::test_name>"  # full list from Phase 8
-  registry_updated: false         # developer sets true during /hitl:tdd
+  registry_updated: false         # developer sets true during /hitl:dev-tdd
 
 incidents:
   checked: true
@@ -580,7 +580,7 @@ Gate 4 reached — status set to 'awaiting-packet-approval'.
 
 The TA (and PM) must run /hitl:ta-approve to approve the decision packet(s).
 Once approved, status will advance to 'implementation-approved' and developers
-can begin /hitl:tdd.
+can begin /hitl:dev-tdd.
 
 This session ends here.
 ```
