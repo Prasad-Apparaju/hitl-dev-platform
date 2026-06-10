@@ -17,6 +17,15 @@ Running `/hitl:update` will:
 4. Re-wire `.hitl/hooks/` if they are missing or point to the wrong path
 5. Prompt you to restart Claude Code
 
+### Fixed
+
+**README corrections:**
+
+- Install and update instructions now clearly separated — install once with the marketplace commands, update thereafter with `/hitl:update`. Explicit note added not to re-run install commands to update.
+- Stale command names in the install table corrected: `dev-start-prd/brownfield/migration` → `start-prd/brownfield/migration`
+- Removed two phantom Architect commands that were listed but never existed: `/hitl:architect-review-design`, `/hitl:architect-verify-traceability`
+- Removed two phantom Ops commands: `/hitl:ops-review-release`, `/hitl:ops-monitor-canary`. Replaced with actual ops commands.
+
 ### Upgrade guide — 1.0.1 → 1.0.2
 
 Pull once manually (this is the last time):
