@@ -35,12 +35,24 @@ If not:
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these six hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`. Each wrapper is:
+2. Create `.hitl/hooks/` and write a wrapper for each of these six hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`. Each wrapper resolves the plugin path dynamically from `~/.claude/settings.json` so it survives plugin updates and reinstalls without any hardcoded path:
    ```bash
    #!/usr/bin/env bash
-   exec bash "${HITL_PLUGIN_ROOT:-<plugin-path>}/hooks/<name>.sh" "$@"
+   PLUGIN_ROOT=$(python3 -c "
+   import json,os,sys
+   cfg=os.path.expanduser('~/.claude/settings.json')
+   try:
+     data=json.load(open(cfg))
+     for p in data.get('plugins',[]):
+       path=p if isinstance(p,str) else p.get('path','')
+       if os.path.isfile(os.path.join(path,'.claude-plugin/plugin.json')):
+         print(path);sys.exit(0)
+   except:pass
+   " 2>/dev/null)
+   [[ -z "$PLUGIN_ROOT" ]] && exit 0
+   exec bash "$PLUGIN_ROOT/hooks/<name>.sh" "$@"
    ```
-   Replace `<plugin-path>` with the path found above and `<name>` with the hook name. Run `chmod 750` on each file.
+   Replace `<name>` with the hook name for each file. Run `chmod 750` on each file.
 
 3. Create `.claude/settings.json` only if it does not already exist:
    ```json

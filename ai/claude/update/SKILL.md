@@ -78,12 +78,12 @@ Check whether `.hitl/hooks/` exists in the current project.
 
 If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:dev-start-from-prd`: create the wrapper scripts and `.claude/settings.json`.
 
-If it already exists, check whether the wrappers point to the correct plugin path:
+If it already exists, check whether the wrappers use dynamic path discovery (the correct pattern):
 ```bash
-grep "HITL_PLUGIN_ROOT" .hitl/hooks/welcome.sh
+grep "claude/settings.json" .hitl/hooks/welcome.sh
 ```
 
-If the fallback path in the wrappers does not match the plugin path, say: "Hook wrappers exist but point to a different path. Re-run `/hitl:dev-start-from-prd` (or the appropriate start skill) to recreate them."
+If the wrappers do NOT contain `claude/settings.json` (i.e. they use an old hardcoded path or env var), delete `.hitl/hooks/` and re-create all six wrappers using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`. Say: "Hook wrappers were using a stale path pattern — recreated with dynamic discovery."
 
 ---
 
