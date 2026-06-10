@@ -4,6 +4,32 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.2] — 2026-06-09
+
+### Added
+
+**`/hitl:update` skill** — update the plugin from inside Claude Code without touching a terminal.
+
+Running `/hitl:update` will:
+1. Locate the plugin installation from `~/.claude/settings.json`
+2. Pull the latest changes (`git pull`)
+3. Show the version change and a summary of what was updated
+4. Re-wire `.hitl/hooks/` if they are missing or point to the wrong path
+5. Prompt you to restart Claude Code
+
+### Upgrade guide — 1.0.1 → 1.0.2
+
+Pull once manually (this is the last time):
+
+```bash
+cd /path/to/hitl-dev-platform
+git pull
+```
+
+Restart Claude Code. From now on, just run `/hitl:update` whenever you want to upgrade.
+
+---
+
 ## [1.0.1] — 2026-06-09
 
 ### Fixed
