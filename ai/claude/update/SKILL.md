@@ -19,7 +19,7 @@ try:
     data = json.load(open(cfg))
     for p in data.get('plugins', []):
         path = p if isinstance(p, str) else p.get('path', '')
-        pj = os.path.join(path, 'ai/claude/plugin/plugin.json')
+        pj = os.path.join(path, '.claude-plugin/plugin.json')
         if os.path.isfile(pj):
             print(json.load(open(pj))['version']); sys.exit(0)
 except: pass
@@ -56,7 +56,7 @@ try:
     data = json.load(open(cfg))
     for p in data.get('plugins', []):
         path = p if isinstance(p, str) else p.get('path', '')
-        pj = os.path.join(path, 'ai/claude/plugin/plugin.json')
+        pj = os.path.join(path, '.claude-plugin/plugin.json')
         if os.path.isfile(pj):
             print(json.load(open(pj))['version']); sys.exit(0)
 except: pass
@@ -80,7 +80,7 @@ If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:dev-
 
 If it already exists, check whether the wrappers point to the correct plugin path:
 ```bash
-grep "HITL_PLATFORM_ROOT" .hitl/hooks/welcome.sh
+grep "HITL_PLUGIN_ROOT" .hitl/hooks/welcome.sh
 ```
 
 If the fallback path in the wrappers does not match the plugin path, say: "Hook wrappers exist but point to a different path. Re-run `/hitl:dev-start-from-prd` (or the appropriate start skill) to recreate them."
