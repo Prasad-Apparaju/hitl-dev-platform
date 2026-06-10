@@ -4,6 +4,33 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.6] — 2026-06-10
+
+### Fixed
+
+**`/hitl:dev-update` now correctly detects the installed version and upgrades the plugin.**
+
+Three bugs prevented the update skill from working on current Claude Code:
+
+1. **Version always showed `NOT_FOUND`.** The detection script read from `~/.claude/settings.json`, but Claude Code stores installed plugin records in `~/.claude/plugins/installed_plugins.json`. Fixed: reads `installed_plugins.json` first, falls back to scanning `settings.json` for the plugin path.
+
+2. **`claude plugin install` is a no-op when already installed.** Step 2 was using the install command, which prints "already installed" and does nothing. Fixed: now uses `claude plugin marketplace update hitl` (refreshes the cached manifest) followed by `claude plugin update hitl@hitl` (installs the new version).
+
+3. **`CHANGELOG.md` was not present in the installed plugin.** Step 3 tries to show the changelog from the plugin directory, but the file was never copied there. Fixed: `build.sh` now copies `CHANGELOG.md` from the source repo on every build. Step 3 falls back to the source repo URL if the file is missing.
+
+### Upgrade guide — 1.0.5 → 1.0.6
+
+Since `/hitl:dev-update` was broken in 1.0.5, upgrade manually this once:
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Restart Claude Code. After this, `/hitl:dev-update` will work correctly for all future upgrades.
+
+---
+
 ## [1.0.5] — 2026-06-10
 
 ### Fixed
