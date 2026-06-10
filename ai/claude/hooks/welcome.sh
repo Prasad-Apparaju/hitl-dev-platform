@@ -70,7 +70,7 @@ if [[ -f "$HITL_FILE" ]] && grep -q "^current_step:" "$HITL_FILE" 2>/dev/null; t
 fi
 
 # No active change — show static startup menu once per session
-SESSION_MARKER="/tmp/hitl-welcomed-${PPID}"
+SESSION_MARKER="${TMPDIR:-${TMP:-/tmp}}/hitl-welcomed-${PPID}"
 [[ -f "$SESSION_MARKER" ]] && exit 0
 touch "$SESSION_MARKER"
 

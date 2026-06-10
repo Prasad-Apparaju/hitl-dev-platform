@@ -45,7 +45,7 @@ ISSUE_NUM="${CHANGE_ID#GH-}"
 [[ "$ISSUE_NUM" == "$CHANGE_ID" || -z "$ISSUE_NUM" ]] && exit 0  # not GH-N format
 
 # Step advancement check — only post when the step number actually increases
-CACHE_FILE="/tmp/hitl-last-step-${CHANGE_ID}"
+CACHE_FILE="${TMPDIR:-${TMP:-/tmp}}/hitl-last-step-${CHANGE_ID}"
 LAST_STEP=0
 [[ -f "$CACHE_FILE" ]] && LAST_STEP=$(cat "$CACHE_FILE" 2>/dev/null || echo 0)
 

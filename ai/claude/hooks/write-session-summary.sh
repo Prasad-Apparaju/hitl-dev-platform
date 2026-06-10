@@ -16,7 +16,7 @@ TIER=$(grep "^tier:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' 2>/dev/null 
 # Get changed files from git
 CHANGED_FILES=$(git diff --name-only HEAD 2>/dev/null || echo "")
 STAGED_FILES=$(git diff --name-only --cached 2>/dev/null || echo "")
-ALL_CHANGED=$(echo -e "$CHANGED_FILES\n$STAGED_FILES" | sort -u | grep -v '^$' || echo "")
+ALL_CHANGED=$(printf '%s\n%s\n' "$CHANGED_FILES" "$STAGED_FILES" | sort -u | grep -v '^$' || echo "")
 
 # Get required evidence from context file
 REQUIRED_EVIDENCE=$(python3 - << 'PYEOF'

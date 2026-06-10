@@ -46,6 +46,5 @@
     "ai/claude/pm/update-requirement"
   ],
   "agents": "ai/claude/agents/",
-  "commands": "ai/claude/commands/",
-  "hooks": "ai/claude/hooks/hooks.json"
+  "commands": "ai/claude/commands/"
 }
