@@ -84,6 +84,21 @@ Pick the path that matches where you are:
 
 ---
 
+## Prerequisites
+
+| Dependency | Required | Used by |
+|---|---|---|
+| `bash` | Hard | All hooks |
+| `python3` | Hard | All hooks (JSON/YAML parsing) |
+| `PyYAML` (`pip install pyyaml`) | Hard | `check-domain-boundary.sh`, `write-session-summary.sh` — hooks silently no-op if missing |
+| `git` (inside a git repo) | Hard | `write-session-summary.sh`, overall workflow |
+| `gh` (GitHub CLI) | Recommended | Step → issue comment sync in `sync-step-to-issue.sh`; skipped silently if absent |
+| `graphify` (`pip install graphifyy`) | Optional | `rebuild-graph.sh`; skipped silently if absent |
+
+Claude Code itself must be installed. No SSH key or GitHub account is needed to install this plugin — see [Troubleshooting](#troubleshooting) if the install fails.
+
+---
+
 ## Install
 
 **First time — install the plugin:**
@@ -121,10 +136,54 @@ The HITL process works fully without Graphify. On systems with many domains or l
 ```bash
 uv tool install graphifyy
 graphify claude install
-graphify .
 ```
 
+**Billing note for Claude subscription users (no API key):** The initial build (`graphify .`) runs LLM extraction over your docs. Graphify's auto-detect skips the subscription backend — pass it explicitly to avoid charging API credits:
+
+```bash
+graphify . --directed --no-viz --backend claude-cli     # initial build
+graphify extract . --backend claude-cli                 # headless re-extraction
+```
+
+Do **not** put `ANTHROPIC_API_KEY` in `.env` if you are on a subscription — that routes builds to the paid API. The PostToolUse hook (`rebuild-graph.sh`) does code AST re-extraction only and never calls an LLM, so it is always free.
+
+If you have an API key and want to use it: `graphify . --directed --no-viz` (no extra flag needed).
+
 The PostToolUse hook triggers an incremental rebuild automatically after every design doc edit.
+
+---
+
+## Troubleshooting
+
+### `claude plugin install` fails with "Host key verification failed"
+
+`marketplace add` succeeds but `plugin install` tries SSH and fails on machines with no GitHub SSH key configured:
+
+```
+✘ Failed to install plugin "hitl@hitl": Failed to clone repository:
+  No ED25519 host key is known for github.com and you have requested strict checking.
+  Host key verification failed.
+  fatal: Could not read from remote repository.
+  Please make sure you have the correct access rights and the repository exists.
+```
+
+The repo is public — the error is about SSH, not permissions. Fix:
+
+```bash
+# Trust GitHub's host key
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+# Force GitHub clones over HTTPS (needed when no SSH key is present)
+git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+
+# Retry
+claude plugin install hitl@hitl
+```
+
+> Note: use `--add` on both `git config` calls so the second doesn't overwrite the first.
+
+This is a known gap in `claude plugin install` — `marketplace add` already falls back to HTTPS automatically; `plugin install` does not yet.
 
 ---
 
