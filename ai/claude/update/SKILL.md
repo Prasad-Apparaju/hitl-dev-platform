@@ -14,8 +14,16 @@ Run:
 ```bash
 python3 -c "
 import json, os, sys
-cfg = os.path.expanduser('~/.claude/settings.json')
+# Try installed_plugins.json first (current Claude Code)
 try:
+    p = os.path.expanduser('~/.claude/plugins/installed_plugins.json')
+    data = json.load(open(p))
+    entry = data['plugins']['hitl@hitl'][0]
+    print(entry['version']); sys.exit(0)
+except: pass
+# Fallback: scan settings.json for plugin path, then read plugin.json
+try:
+    cfg = os.path.expanduser('~/.claude/settings.json')
     data = json.load(open(cfg))
     for p in data.get('plugins', []):
         path = p if isinstance(p, str) else p.get('path', '')
@@ -27,7 +35,7 @@ print('NOT_FOUND')
 "
 ```
 
-If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Confirm it was installed with `claude plugin install hitl@hitl`."
+If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found. Confirm it was installed with `claude plugin install hitl@hitl`."
 
 Record the version shown as the **old version**.
 
@@ -37,11 +45,11 @@ Record the version shown as the **old version**.
 
 Run:
 ```bash
-claude plugin marketplace add pappar/hitl-claude-plugin
-claude plugin install hitl@hitl
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
 ```
 
-These are the same commands used to install — re-running them updates the plugin to the latest release.
+`marketplace update` refreshes the cached manifest so the latest release is visible. `plugin update` installs it.
 
 ---
 
@@ -51,8 +59,14 @@ Run:
 ```bash
 python3 -c "
 import json, os, sys
-cfg = os.path.expanduser('~/.claude/settings.json')
 try:
+    p = os.path.expanduser('~/.claude/plugins/installed_plugins.json')
+    data = json.load(open(p))
+    entry = data['plugins']['hitl@hitl'][0]
+    print(entry['version']); sys.exit(0)
+except: pass
+try:
+    cfg = os.path.expanduser('~/.claude/settings.json')
     data = json.load(open(cfg))
     for p in data.get('plugins', []):
         path = p if isinstance(p, str) else p.get('path', '')
@@ -68,7 +82,7 @@ If the version is the same as before, say: "Already on the latest version — no
 
 Show: "Updated: **v\<old\>** → **v\<new\>**"
 
-Then show the relevant section of `CHANGELOG.md` from the plugin directory for the new version.
+Then show the relevant `## [<new-version>]` section from `CHANGELOG.md` in the plugin directory. If `CHANGELOG.md` is not present, say: "Full release notes: https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/CHANGELOG.md"
 
 ---
 
