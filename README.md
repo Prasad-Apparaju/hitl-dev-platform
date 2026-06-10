@@ -28,7 +28,7 @@ hitl-dev-platform/
 │
 │  ── AI runtime (Claude Code loads and executes these) ──────────────────────────
 ├── ai/claude/
-│   ├── [skill folders]   Slash command prompts — /hitl:dev-practices, /hitl:tdd, /hitl:architect-*, /hitl:pm-*, /hitl:qa-*, /hitl:ops-*
+│   ├── [skill folders]   Slash command prompts — /hitl:dev-practices, /hitl:dev-tdd, /hitl:architect-*, /hitl:pm-*, /hitl:qa-*, /hitl:ops-*
 │   ├── agents/           Subagent role definitions (code reviewer, QA verifier, ops reviewer, etc.)
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
 │   └── hooks/            Enforcement hooks — fire at PreToolUse/PostToolUse during every Claude session
@@ -75,7 +75,7 @@ Pick the path that matches where you are:
 
 | Role | Commands | Guide |
 |------|----------|-------|
-| **Developer** | `/hitl:dev-practices`, `/hitl:generate-docs`, `/hitl:tdd`, `/hitl:apply-change`, `/hitl:check-conventions`, `/hitl:impact-brief`, `/hitl:conclude` | [Developer guide](docs/roles/developer.md) |
+| **Developer** | `/hitl:dev-practices`, `/hitl:dev-generate-docs`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude` | [Developer guide](docs/roles/developer.md) |
 | **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
 | **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code` | [Architect guide](docs/roles/architect.md) |
 | **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
@@ -97,10 +97,10 @@ Restart Claude Code after installing.
 **To update later — ask Claude:**
 
 ```
-/hitl:update
+/hitl:dev-update
 ```
 
-That's it. `/hitl:update` pulls the latest version, shows what changed, and tells you when to restart. Do not re-run the install commands to update.
+That's it. `/hitl:dev-update` pulls the latest version, shows what changed, and tells you when to restart. Do not re-run the install commands to update.
 
 ---
 
@@ -108,9 +108,9 @@ Once installed, open Claude Code in your project directory and run the command t
 
 | Situation | Command |
 |-----------|---------|
-| New project — greenfield from a PRD | `/hitl:start-prd` |
-| Existing codebase — adopt the process | `/hitl:start-brownfield` |
-| Migrating a system | `/hitl:start-migration` |
+| New project — greenfield from a PRD | `/hitl:dev-start-from-prd` |
+| Existing codebase — adopt the process | `/hitl:dev-start-brownfield` |
+| Migrating a system | `/hitl:dev-start-migration` |
 | Already set up — start a change | `/hitl:dev-practices` |
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)

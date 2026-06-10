@@ -6,8 +6,8 @@ Each subdirectory is one slash command. The `SKILL.md` file inside it is the pro
 
 | Namespace | Commands |
 |-----------|----------|
-| *(root)* | `/hitl:dev-practices`, `/hitl:tdd`, `/hitl:apply-change`, `/hitl:generate-docs`, `/hitl:check-conventions`, `/hitl:impact-brief`, `/hitl:conclude`, `/hitl:review-lld-adherence`, `/hitl:review-security`, `/hitl:ta-approve` |
-| `/hitl:start-*` | `/hitl:start-prd`, `/hitl:start-brownfield`, `/hitl:start-migration` |
+| *(root)* | `/hitl:dev-practices`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-generate-docs`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude`, `/hitl:dev-review-lld-adherence`, `/hitl:dev-review-security`, `/hitl:dev-update`, `/hitl:ta-approve` |
+| `/hitl:dev-start-*` | `/hitl:dev-start-from-prd`, `/hitl:dev-start-brownfield`, `/hitl:dev-start-migration` |
 | `/hitl:architect-` | `design-system`, `design-feature`, `review-code` |
 | `/hitl:pm-` | `add-feature`, `design-feature`, `prioritize`, `report-bug`, + 4 more |
 | `/hitl:qa-` | `plan-tests`, `review-tests`, `verify-quality`, `report-defect` |

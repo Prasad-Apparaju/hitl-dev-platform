@@ -15,7 +15,7 @@ Before step 1, ensure these artifacts exist:
 | `docs/03-engineering/testing/test-registry.yaml` | Created empty by `/architect/design-system`; populated as changes land | Populate during baseline sprint from existing test catalog |
 | `docs/04-operations/incident-registry.yaml` | Starts empty; populated after each production incident | Seed during baseline sprint: "what broke in the last 6 months?" |
 
-If you have not done this yet, run `/hitl:start-prd`, `/hitl:start-brownfield`, or `/hitl:start-migration` — choose the one that fits your situation.
+If you have not done this yet, run `/hitl:dev-start-from-prd`, `/hitl:dev-start-brownfield`, or `/hitl:dev-start-migration` — choose the one that fits your situation.
 
 **Brownfield accuracy note:** The manifest and LLDs produced by the baseline sprint start at 55–75% accuracy and improve as changes correct each area. For the first several changes on a brownfield project, treat AI output from steps 5, 10, and 14 as drafts requiring closer human review than on a well-established codebase.
 

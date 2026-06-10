@@ -76,14 +76,14 @@ Then show the relevant section of `CHANGELOG.md` from the plugin directory for t
 
 Check whether `.hitl/hooks/` exists in the current project.
 
-If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:start-prd`: create the wrapper scripts and `.claude/settings.json`.
+If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:dev-start-from-prd`: create the wrapper scripts and `.claude/settings.json`.
 
 If it already exists, check whether the wrappers point to the correct plugin path:
 ```bash
 grep "HITL_PLATFORM_ROOT" .hitl/hooks/welcome.sh
 ```
 
-If the fallback path in the wrappers does not match the plugin path, say: "Hook wrappers exist but point to a different path. Re-run `/hitl:start-prd` (or the appropriate start skill) to recreate them."
+If the fallback path in the wrappers does not match the plugin path, say: "Hook wrappers exist but point to a different path. Re-run `/hitl:dev-start-from-prd` (or the appropriate start skill) to recreate them."
 
 ---
 

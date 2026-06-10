@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Bringing an existing codebase into HITL AI-Driven Development. Work through these steps in order — pause after each and wait for confirmation before proceeding.
 
-**Quick sanity check:** If this is a brand-new project with no source code, use `/hitl:start-prd` instead. If you are migrating from one system to another (not just onboarding what exists), use `/hitl:start-migration`.
+**Quick sanity check:** If this is a brand-new project with no source code, use `/hitl:dev-start-from-prd` instead. If you are migrating from one system to another (not just onboarding what exists), use `/hitl:dev-start-migration`.
 
 ---
 

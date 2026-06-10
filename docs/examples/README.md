@@ -4,6 +4,6 @@
 
 | Example | What it shows |
 |---------|--------------|
-| `greenfield/` | A new project set up from scratch with `/hitl:dev-start-prd` — PRD, manifest, first decision packet, and initial slice |
+| `greenfield/` | A new project set up from scratch with `/hitl:dev-start-from-prd` — PRD, manifest, first decision packet, and initial slice |
 
 Examples are read-only reference material. They are not connected to any live system.

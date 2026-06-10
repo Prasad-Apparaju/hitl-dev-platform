@@ -4,13 +4,47 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.3] — 2026-06-09
+
+### Fixed
+
+**Command names now match the actual plugin commands.**
+
+The published plugin prefixes all flat developer skills with `dev-` (e.g. `/hitl:dev-start-from-prd`, `/hitl:dev-update`). All documentation and scripts now use the correct names. Previously the README, CHANGELOG, and reinstall script showed names without the prefix, which caused "command not found" confusion.
+
+Corrected names:
+
+| Was (wrong) | Now (correct) |
+|---|---|
+| `/hitl:dev-start-from-prd` | `/hitl:dev-start-from-prd` |
+| `/hitl:start-brownfield` | `/hitl:dev-start-brownfield` |
+| `/hitl:start-migration` | `/hitl:dev-start-migration` |
+| `/hitl:update` | `/hitl:dev-update` |
+| `/hitl:apply-change` | `/hitl:dev-apply-change` |
+| `/hitl:check-conventions` | `/hitl:dev-check-conventions` |
+| `/hitl:impact-brief` | `/hitl:dev-impact-brief` |
+| `/hitl:tdd` | `/hitl:dev-tdd` |
+| `/hitl:generate-docs` | `/hitl:dev-generate-docs` |
+| `/hitl:conclude` | `/hitl:dev-conclude` |
+
+### Upgrade guide — 1.0.2 → 1.0.3
+
+```bash
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
+```
+
+Restart Claude Code. No other action needed — this is a documentation-only fix.
+
+---
+
 ## [1.0.2] — 2026-06-09
 
 ### Added
 
-**`/hitl:update` skill** — update the plugin from inside Claude Code without touching a terminal.
+**`/hitl:dev-update` skill** — update the plugin from inside Claude Code without touching a terminal.
 
-Running `/hitl:update` will:
+Running `/hitl:dev-update` will:
 1. Locate the plugin installation from `~/.claude/settings.json`
 2. Re-run the plugin install command to fetch the latest release
 3. Show the version change and a summary of what was updated
@@ -22,7 +56,7 @@ Running `/hitl:update` will:
 **README corrections:**
 
 - Install and update instructions now clearly separated — install once with the marketplace commands, update thereafter with `/hitl:update`. Explicit note added not to re-run install commands to update.
-- Stale command names in the install table corrected: `dev-start-prd/brownfield/migration` → `start-prd/brownfield/migration`
+- Install table corrected to list all available commands (phantom `architect-review-design`, `architect-verify-traceability`, `ops-review-release`, `ops-monitor-canary` removed)
 - Removed two phantom Architect commands that were listed but never existed: `/hitl:architect-review-design`, `/hitl:architect-verify-traceability`
 - Removed two phantom Ops commands: `/hitl:ops-review-release`, `/hitl:ops-monitor-canary`. Replaced with actual ops commands.
 
@@ -35,7 +69,7 @@ claude plugin marketplace add pappar/hitl-claude-plugin
 claude plugin install hitl@hitl
 ```
 
-Restart Claude Code. From now on, just run `/hitl:update` whenever you want to upgrade.
+Restart Claude Code. From now on, just run `/hitl:dev-update` whenever you want to upgrade.
 
 ---
 
@@ -59,7 +93,7 @@ Previously, hooks were defined in `plugin.json` and ran from the plugin director
 | File | Change |
 |---|---|
 | `ai/claude/plugin/plugin.json` | Removed `"hooks"` entry — plugin-level hooks are the wrong mechanism |
-| `ai/claude/start-prd/SKILL.md` | Added Step 0: auto-wires `.hitl/hooks/` and `.claude/settings.json` |
+| `ai/claude/start-from-prd/SKILL.md` | Added Step 0: auto-wires `.hitl/hooks/` and `.claude/settings.json` |
 | `ai/claude/start-brownfield/SKILL.md` | Added Step 0: same hook wiring |
 | `ai/claude/start-migration/SKILL.md` | Added Step 0: same hook wiring |
 | `.claude/settings.json` | Removed hardcoded `/Users/Prasad_1/…` path prefix from all hook commands |
@@ -69,7 +103,7 @@ Previously, hooks were defined in `plugin.json` and ran from the plugin director
 
 ### How hooks now work
 
-Each start skill (`/hitl:start-prd`, `/hitl:start-brownfield`, `/hitl:start-migration`) includes a **Step 0** that runs once per project:
+Each start skill (`/hitl:dev-start-from-prd`, `/hitl:dev-start-brownfield`, `/hitl:dev-start-migration`) includes a **Step 0** that runs once per project:
 
 1. Discovers the plugin installation path from `~/.claude/settings.json`
 2. Creates `.hitl/hooks/*.sh` wrapper scripts in the user's project — each wrapper delegates to the real script in the plugin via `${HITL_PLATFORM_ROOT:-<discovered-path>}`
@@ -101,15 +135,15 @@ No further action needed. Run your start skill as normal — Step 0 will wire th
 Your project does not have `.hitl/hooks/` wrappers yet. Create them now by running the appropriate start skill — it is **idempotent** and will skip any setup that is already in place:
 
 ```
-/hitl:start-prd
+/hitl:dev-start-from-prd
 ```
 or
 ```
-/hitl:start-brownfield
+/hitl:dev-start-brownfield
 ```
 or
 ```
-/hitl:start-migration
+/hitl:dev-start-migration
 ```
 
 Step 0 will detect that `.hitl/hooks/` is missing, wire everything up, and prompt you to restart Claude Code. After the restart, hooks will fire correctly on every edit.

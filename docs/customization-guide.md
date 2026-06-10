@@ -21,7 +21,7 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 
 | Slash command | File to edit |
 |---|---|
-| `/hitl:dev-start-prd` | `ai/claude/start-prd/SKILL.md` |
+| `/hitl:dev-start-from-prd` | `ai/claude/start-from-prd/SKILL.md` |
 | `/hitl:dev-start-brownfield` | `ai/claude/start-brownfield/SKILL.md` |
 | `/hitl:dev-start-migration` | `ai/claude/start-migration/SKILL.md` |
 | `/hitl:dev-practices` | `ai/claude/dev-practices/SKILL.md` |

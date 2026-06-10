@@ -1,10 +1,10 @@
 {
   "name": "hitl",
-  "version": "1.0.2",
-  "description": "HITL AI-Driven Development. Use /hitl:start-prd, /hitl:start-brownfield, or /hitl:start-migration to set up a project. Then /hitl:dev-practices for the full 32-step delivery workflow.",
+  "version": "1.0.3",
+  "description": "HITL AI-Driven Development. Use /hitl:dev-start-from-prd, /hitl:dev-start-brownfield, or /hitl:dev-start-migration to set up a project. Then /hitl:dev-practices for the full 32-step delivery workflow.",
   "skills": [
     "ai/claude/update",
-    "ai/claude/start-prd",
+    "ai/claude/start-from-prd",
     "ai/claude/start-brownfield",
     "ai/claude/start-migration",
     "ai/claude/dev-practices",
