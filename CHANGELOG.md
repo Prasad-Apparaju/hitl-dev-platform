@@ -49,6 +49,11 @@ Previously, hooks were defined in `plugin.json` and ran from the plugin director
 - Scripts could not find `.hitl/current-change.yaml` (which lives in the user's project, not the plugin)
 - On machines where the plugin path differed from the path baked into `.claude/settings.json`, every hook fired a "No such file or directory" error
 
+**Windows / WSL compatibility fixes** — hook scripts now work correctly when Claude Code runs inside WSL on Windows.
+
+- `welcome.sh`, `sync-step-to-issue.sh`: replaced hardcoded `/tmp/` paths with `${TMPDIR:-${TMP:-/tmp}}`, which resolves correctly on macOS, Linux, WSL, and Git Bash
+- `write-session-summary.sh`: replaced `echo -e` with `printf` — portable across all shells including those on Windows
+
 ### What changed
 
 | File | Change |
@@ -58,9 +63,9 @@ Previously, hooks were defined in `plugin.json` and ran from the plugin director
 | `ai/claude/start-brownfield/SKILL.md` | Added Step 0: same hook wiring |
 | `ai/claude/start-migration/SKILL.md` | Added Step 0: same hook wiring |
 | `.claude/settings.json` | Removed hardcoded `/Users/Prasad_1/…` path prefix from all hook commands |
-| `ai/claude/hooks/welcome.sh` | Replaced `/tmp` hardcode with `${TMPDIR:-${TMP:-/tmp}}` (Windows/WSL compatible) |
+| `ai/claude/hooks/welcome.sh` | Replaced `/tmp` hardcode with `${TMPDIR:-${TMP:-/tmp}}` |
 | `ai/claude/hooks/sync-step-to-issue.sh` | Same `/tmp` fix |
-| `ai/claude/hooks/write-session-summary.sh` | Replaced `echo -e` with `printf` (portable across shells) |
+| `ai/claude/hooks/write-session-summary.sh` | Replaced `echo -e` with portable `printf` |
 
 ### How hooks now work
 
