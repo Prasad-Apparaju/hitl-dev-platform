@@ -85,12 +85,24 @@ Pick the path that matches where you are:
 
 ## Install
 
-Install the Claude Code plugin into your project:
+**First time — install the plugin:**
 
 ```bash
 claude plugin marketplace add pappar/hitl-claude-plugin
 claude plugin install hitl@hitl
 ```
+
+Restart Claude Code after installing.
+
+**To update later — ask Claude:**
+
+```
+/hitl:update
+```
+
+That's it. `/hitl:update` pulls the latest version, shows what changed, and tells you when to restart. Do not re-run the install commands to update.
+
+---
 
 Once installed, open Claude Code in your project directory and run the command that matches your situation:
 
@@ -100,7 +112,6 @@ Once installed, open Claude Code in your project directory and run the command t
 | Existing codebase — adopt the process | `/hitl:start-brownfield` |
 | Migrating a system | `/hitl:start-migration` |
 | Already set up — start a change | `/hitl:dev-practices` |
-| Update the plugin to the latest version | `/hitl:update` |
 
 ### Optional: Graphify (knowledge graph — recommended for Level 4+ systems)
 
