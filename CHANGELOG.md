@@ -12,7 +12,7 @@ All notable changes to the HITL plugin are documented here.
 
 Running `/hitl:update` will:
 1. Locate the plugin installation from `~/.claude/settings.json`
-2. Pull the latest changes (`git pull`)
+2. Re-run the plugin install command to fetch the latest release
 3. Show the version change and a summary of what was updated
 4. Re-wire `.hitl/hooks/` if they are missing or point to the wrong path
 5. Prompt you to restart Claude Code
@@ -28,11 +28,11 @@ Running `/hitl:update` will:
 
 ### Upgrade guide — 1.0.1 → 1.0.2
 
-Pull once manually (this is the last time):
+Run the plugin install command to update:
 
 ```bash
-cd /path/to/hitl-dev-platform
-git pull
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
 ```
 
 Restart Claude Code. From now on, just run `/hitl:update` whenever you want to upgrade.
@@ -83,11 +83,11 @@ This is the same pattern `init-project.sh` used, now delivered automatically thr
 
 ### Everyone
 
-Pull the latest plugin:
+Run the plugin install command to update:
 
 ```bash
-cd /path/to/hitl-dev-platform
-git pull
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
 ```
 
 Restart Claude Code so the updated `plugin.json` is reloaded.

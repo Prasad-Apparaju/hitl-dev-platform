@@ -1,5 +1,5 @@
 ---
-description: Update the HITL plugin to the latest version. Pulls the latest changes from the plugin repo, shows what changed, and re-wires hooks if needed.
+description: Update the HITL plugin to the latest version. Re-runs the plugin install command to pull the latest release, shows what changed, and re-wires hooks if needed.
 argument-hint: ""
 disable-model-invocation: true
 ---
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 ---
 
-## Step 1 — Find the plugin
+## Step 1 — Read the current version
 
 Run:
 ```bash
@@ -19,47 +19,56 @@ try:
     data = json.load(open(cfg))
     for p in data.get('plugins', []):
         path = p if isinstance(p, str) else p.get('path', '')
-        if os.path.isfile(os.path.join(path, 'ai/claude/plugin/plugin.json')):
-            print(path); sys.exit(0)
+        pj = os.path.join(path, 'ai/claude/plugin/plugin.json')
+        if os.path.isfile(pj):
+            print(json.load(open(pj))['version']); sys.exit(0)
 except: pass
 print('NOT_FOUND')
 "
 ```
 
-If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Confirm it was installed with `claude plugin add /path/to/hitl-dev-platform`."
+If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Confirm it was installed with `claude plugin install hitl@hitl`."
+
+Record the version shown as the **old version**.
 
 ---
 
-## Step 2 — Pull the latest version
+## Step 2 — Update the plugin
 
-Record the current version before pulling:
+Run:
 ```bash
-python3 -c "import json; d=json.load(open('<plugin-path>/ai/claude/plugin/plugin.json')); print(d['version'])"
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
 ```
 
-Pull:
+These are the same commands used to install — re-running them updates the plugin to the latest release.
+
+---
+
+## Step 3 — Read the new version
+
+Run:
 ```bash
-git -C <plugin-path> pull
+python3 -c "
+import json, os, sys
+cfg = os.path.expanduser('~/.claude/settings.json')
+try:
+    data = json.load(open(cfg))
+    for p in data.get('plugins', []):
+        path = p if isinstance(p, str) else p.get('path', '')
+        pj = os.path.join(path, 'ai/claude/plugin/plugin.json')
+        if os.path.isfile(pj):
+            print(json.load(open(pj))['version']); sys.exit(0)
+except: pass
+print('NOT_FOUND')
+"
 ```
 
-Show the git output. If already up to date, say "Already up to date — no changes." and stop.
-
-If changes were pulled, record the new version:
-```bash
-python3 -c "import json; d=json.load(open('<plugin-path>/ai/claude/plugin/plugin.json')); print(d['version'])"
-```
+If the version is the same as before, say: "Already on the latest version — no changes." and stop.
 
 Show: "Updated: **v\<old\>** → **v\<new\>**"
 
----
-
-## Step 3 — Show what changed
-
-```bash
-git -C <plugin-path> log --oneline ORIG_HEAD..HEAD
-```
-
-Print each commit as a bullet point.
+Then show the relevant section of `CHANGELOG.md` from the plugin directory for the new version.
 
 ---
 
@@ -74,7 +83,7 @@ If it already exists, check whether the wrappers point to the correct plugin pat
 grep "HITL_PLATFORM_ROOT" .hitl/hooks/welcome.sh
 ```
 
-If the fallback path in the wrappers does not match `<plugin-path>`, say: "Hook wrappers exist but point to a different path. Re-run `/hitl:start-prd` (or the appropriate start skill) to recreate them."
+If the fallback path in the wrappers does not match the plugin path, say: "Hook wrappers exist but point to a different path. Re-run `/hitl:start-prd` (or the appropriate start skill) to recreate them."
 
 ---
 
