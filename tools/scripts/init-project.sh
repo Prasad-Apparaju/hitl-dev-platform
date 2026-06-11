@@ -13,11 +13,11 @@
 #   bash ~/tools/hitl-dev-platform/tools/scripts/init-project.sh ~/code/my-product
 #
 # Claude Code — what gets created in the product repo:
-#   .claude/settings.json          plugin reference + project-relative hook paths
-#   .hitl/hooks/*.sh            wrapper scripts; resolve platform via HITL_PLATFORM_ROOT
-#   .semgrep/                   semgrep convention rules (required by /hitl:dev-check-conventions)
-#   ci/manifest-drift/       manifest drift checker (required by /hitl:dev-check-conventions)
-#   scripts/fix_mermaid_br_tags.py  Mermaid linter (required by /hitl:dev-check-conventions)
+#   .claude/settings.json          project-relative hook wiring
+#   .hitl/hooks/*.sh               wrapper scripts; discover plugin path dynamically
+#   .semgrep/                      semgrep convention rules (required by /hitl:dev-check-conventions)
+#   ci/manifest-drift/             manifest drift checker (required by /hitl:dev-check-conventions)
+#   scripts/fix_mermaid_br_tags.py Mermaid linter (required by /hitl:dev-check-conventions)
 #
 # Skills, agents, and commands are never copied — they load from the shared
 # platform via the Claude Code plugin.
@@ -25,18 +25,9 @@
 # Codex — what gets created (via ai/codex/install.sh):
 #   AGENTS.md, .ai/codex/, ai/codex/hook-scripts/, .git/hooks/
 #
-# Version isolation:
-#   All products on one machine share one platform checkout by default.
-#   If a product needs a specific platform version, clone the fork to a
-#   different path and pass it:
-#     git clone ... ~/tools/hitl-dev-platform-v2
-#     HITL_PLATFORM_ROOT=~/tools/hitl-dev-platform-v2 \
-#       bash ~/tools/hitl-dev-platform-v2/tools/scripts/init-project.sh ~/code/my-product
-#
-# CI setup:
-#   Hook wrappers resolve HITL_PLATFORM_ROOT at runtime. On CI machines, set:
-#     export HITL_PLATFORM_ROOT=/path/to/platform-clone
-#   or clone to the default path (~/tools/hitl-dev-platform).
+# Hook wrappers discover the installed plugin path at runtime by reading
+# ~/.claude/settings.json — no env vars or hardcoded paths required.
+# This survives plugin version updates and works cross-platform.
 
 set -euo pipefail
 
@@ -168,8 +159,7 @@ setup_tools() {
 
 # ---- Claude Code setup ----
 # Skills, agents, and commands load from the shared platform via the plugin.
-# Hook wrappers use HITL_PLATFORM_ROOT so the product repo is portable across
-# machines and CI without hardcoded paths.
+# Hook wrappers discover the installed plugin path at runtime — no env vars needed.
 
 setup_claude() {
   mkdir -p "$TARGET_DIR/.claude"
@@ -248,21 +238,33 @@ JSON
     echo "  .claude/commands/ already exists — skipping"
   fi
 
-  # Hook wrappers — project-relative scripts that resolve the platform path at
-  # runtime via HITL_PLATFORM_ROOT, falling back to the path baked in at init time.
+  # Hook wrappers — project-relative scripts that discover the installed plugin
+  # path at runtime by reading ~/.claude/settings.json. No hardcoded paths or
+  # env vars — survives plugin version updates and works cross-platform.
   local HOOKS_DIR="$TARGET_DIR/.hitl/hooks"
   if [[ ! -d "$HOOKS_DIR" ]]; then
     mkdir -p "$HOOKS_DIR"
-    local DEFAULT_PLATFORM="$PLATFORM_ROOT"
     for hook in welcome check-hitl-context check-domain-boundary rebuild-graph \
                 write-session-summary sync-step-to-issue; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
-exec bash "\${HITL_PLATFORM_ROOT:-$DEFAULT_PLATFORM}/ai/claude/hooks/$hook.sh" "\$@"
+PLUGIN_ROOT=\$(python3 -c "
+import json,os,sys
+cfg=os.path.expanduser('~/.claude/settings.json')
+try:
+  data=json.load(open(cfg))
+  for p in data.get('plugins',[]):
+    path=p if isinstance(p,str) else p.get('path','')
+    if os.path.isfile(os.path.join(path,'.claude-plugin/plugin.json')):
+      print(path);sys.exit(0)
+except:pass
+" 2>/dev/null)
+[[ -z "\$PLUGIN_ROOT" ]] && exit 0
+exec bash "\$PLUGIN_ROOT/hooks/$hook.sh" "\$@"
 WRAPPER
       chmod 750 "$HOOKS_DIR/$hook.sh"
     done
-    echo "✓ .hitl/hooks/ — wrappers resolving via HITL_PLATFORM_ROOT (default: $DEFAULT_PLATFORM)"
+    echo "✓ .hitl/hooks/ — wrappers with dynamic plugin path discovery"
   else
     echo "  .hitl/hooks/ already exists — skipping"
   fi
@@ -319,7 +321,6 @@ echo "To edit a skill, agent, or hook prompt:"
 echo "  Platform: $PLATFORM_ROOT"
 echo "  Guide:    $PLATFORM_ROOT/docs/customization-guide.md"
 echo ""
-echo "CI setup — set HITL_PLATFORM_ROOT before running Claude Code:"
-echo "  export HITL_PLATFORM_ROOT=/path/to/your-platform-clone"
-echo "  (or clone to the default: ~/tools/hitl-dev-platform)"
+echo "Hook wrappers discover the plugin path automatically via ~/.claude/settings.json."
+echo "No HITL_PLATFORM_ROOT or other env vars needed."
 echo ""
