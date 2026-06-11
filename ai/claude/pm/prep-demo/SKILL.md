@@ -3,6 +3,20 @@ description: Prepare a demo script or talking points for a feature. Use before p
 argument-hint: "[feature name or PR number]"
 disable-model-invocation: true
 ---
+
+**Before doing anything else:** Check whether `.hitl/` exists in the current directory. If it does not, stop immediately and output this — do not proceed with any steps:
+
+```
+This project hasn't been set up for HITL.
+To get started, run one of these commands in your project directory:
+
+  /hitl:dev-start-from-prd      new project from a PRD
+  /hitl:dev-start-brownfield    adopt HITL on an existing codebase
+  /hitl:dev-start-migration     migrate a system
+```
+
+---
+
 # Prepare for Demo Review
 
 Generate a demo checklist from the PRD so the PM knows exactly what to test and verify.

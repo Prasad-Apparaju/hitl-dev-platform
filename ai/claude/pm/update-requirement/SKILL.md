@@ -3,6 +3,20 @@ description: Update an existing PRD requirement with new acceptance criteria, sc
 argument-hint: "[requirement ID and change description]"
 disable-model-invocation: true
 ---
+
+**Before doing anything else:** Check whether `.hitl/` exists in the current directory. If it does not, stop immediately and output this — do not proceed with any steps:
+
+```
+This project hasn't been set up for HITL.
+To get started, run one of these commands in your project directory:
+
+  /hitl:dev-start-from-prd      new project from a PRD
+  /hitl:dev-start-brownfield    adopt HITL on an existing codebase
+  /hitl:dev-start-migration     migrate a system
+```
+
+---
+
 # Update an Existing Requirement
 
 **Input:** $ARGUMENTS (requirement ID and what to change, e.g., "FR-CAMP-3 add support for TikTok publishing")

@@ -4,6 +4,20 @@ argument-hint: "[brief description of what is failing]"
 disable-model-invocation: true
 ---
 
+**Before doing anything else:** Check whether `.hitl/` exists in the current directory. If it does not, stop immediately and output this — do not proceed with any steps:
+
+```
+This project hasn't been set up for HITL.
+To get started, run one of these commands in your project directory:
+
+  /hitl:dev-start-from-prd      new project from a PRD
+  /hitl:dev-start-brownfield    adopt HITL on an existing codebase
+  /hitl:dev-start-migration     migrate a system
+```
+
+---
+
+
 # Incident Response
 
 Manage a production incident from declaration to registry entry. This skill is triggered reactively — not as part of the delivery workflow.

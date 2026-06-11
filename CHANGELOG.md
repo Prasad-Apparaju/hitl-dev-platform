@@ -4,6 +4,44 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.8] — 2026-06-11
+
+### Added
+
+**All skills now exit immediately in projects that haven't adopted HITL.**
+
+Every skill except the three start skills and `/hitl:dev-update` now checks for `.hitl/` at the start. If the directory is absent, the skill outputs a setup prompt and stops — nothing else happens:
+
+```
+This project hasn't been set up for HITL.
+To get started, run one of these commands in your project directory:
+
+  /hitl:dev-start-from-prd      new project from a PRD
+  /hitl:dev-start-brownfield    adopt HITL on an existing codebase
+  /hitl:dev-start-migration     migrate a system
+```
+
+This covers all 37 non-setup skills: `dev-practices`, `dev-tdd`, `dev-apply-change`, `dev-check-conventions`, `dev-generate-docs`, `dev-conclude`, `dev-impact-brief`, `dev-review-lld-adherence`, `dev-review-security`, `ta-approve`, all `architect-*`, `pm-*`, `qa-*`, `ops-*`, and `migrate-review-external-docs`.
+
+**Known limitation (tracked):** `/hitl:*` commands appear in Claude Code's command palette in every project because Claude Code does not yet support per-project plugin skill visibility. The guard above is the mitigation — commands are visible but safe to invoke anywhere. A feature request has been filed with Anthropic to add project-scoped skill loading.
+
+**README: opt-in model, opt-out instructions, and clean removal guide added to both repos.**
+
+- "What happens when you install" — explains what is global (commands in palette) vs per-project (hooks, banner)
+- "Opting a project out" — delete `.hitl/hooks/` and `.claude/settings.json`
+- "Removing the plugin entirely" — `claude plugin uninstall hitl@hitl` + project cleanup
+
+### Upgrade guide — 1.0.7 → 1.0.8
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Restart Claude Code. No project-level changes needed.
+
+---
+
 ## [1.0.7] — 2026-06-11
 
 ### Fixed

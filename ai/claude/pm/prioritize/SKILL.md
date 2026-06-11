@@ -3,6 +3,20 @@ description: Help PM prioritize features or backlog items using value, effort, r
 argument-hint: "[list of features or 'current backlog']"
 disable-model-invocation: true
 ---
+
+**Before doing anything else:** Check whether `.hitl/` exists in the current directory. If it does not, stop immediately and output this — do not proceed with any steps:
+
+```
+This project hasn't been set up for HITL.
+To get started, run one of these commands in your project directory:
+
+  /hitl:dev-start-from-prd      new project from a PRD
+  /hitl:dev-start-brownfield    adopt HITL on an existing codebase
+  /hitl:dev-start-migration     migrate a system
+```
+
+---
+
 # Prioritize the Backlog
 
 Review all requirements and help the PM prioritize.

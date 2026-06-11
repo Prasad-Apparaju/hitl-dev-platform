@@ -120,7 +120,23 @@ That's it. `/hitl:dev-update` pulls the latest version, shows what changed, and 
 
 ---
 
-Once installed, open Claude Code in your project directory and run the command that matches your situation:
+## What happens when you install
+
+The plugin is installed at the user level — it's available across all your Claude Code sessions. Here's exactly what that means:
+
+**What is global (affects all projects):**
+- `/hitl:*` commands appear in Claude Code's command palette everywhere. This is a current limitation of how Claude Code loads plugin skills — there is no per-project skill visibility yet. If you run a HITL command in a non-HITL project, the skill detects the missing `.hitl/` directory and stops with a setup prompt rather than doing anything.
+
+**What is per-project (opt-in only):**
+- Enforcement hooks (context checks, domain boundary, session summary) only fire in projects where you explicitly ran a start skill. They are wired into `.hitl/hooks/` and `.claude/settings.json` inside the project directory. No `.hitl/` directory means no hooks, no banner, no HITL activity of any kind.
+
+**Net result:** Installing the plugin adds commands to your palette. Nothing enforces anything, blocks anything, or injects any output into any project until you opt that project in by running a start skill.
+
+---
+
+## Opting a project in
+
+Open Claude Code in your project directory and run the command that matches your situation:
 
 | Situation | Command |
 |-----------|---------|
@@ -184,6 +200,35 @@ claude plugin install hitl@hitl
 > Note: use `--add` on both `git config` calls so the second doesn't overwrite the first.
 
 This is a known gap in `claude plugin install` — `marketplace add` already falls back to HTTPS automatically; `plugin install` does not yet.
+
+---
+
+## Opting a project out
+
+To stop HITL from running in a specific project, remove the two things Step 0 created:
+
+```bash
+# Remove hook wiring (hooks stop firing immediately)
+rm -rf .hitl/hooks/
+rm .claude/settings.json   # or edit it to remove the "hooks" block if you have other hooks
+
+# Optionally remove all HITL tracking files
+rm -rf .hitl/
+```
+
+The plugin itself and its commands are unaffected — other opted-in projects continue to work.
+
+## Removing the plugin entirely
+
+```bash
+# 1. Uninstall the plugin
+claude plugin uninstall hitl@hitl
+
+# 2. Clean up any projects you had opted in
+rm -rf .hitl/hooks/ .claude/settings.json .hitl/
+```
+
+Restart Claude Code after uninstalling. The `/hitl:*` commands will disappear from the palette.
 
 ---
 
