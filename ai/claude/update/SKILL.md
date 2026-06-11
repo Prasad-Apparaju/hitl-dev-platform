@@ -97,7 +97,11 @@ If it already exists, check whether the wrappers use dynamic path discovery (the
 grep "claude/settings.json" .hitl/hooks/welcome.sh
 ```
 
-If the wrappers do NOT contain `claude/settings.json` (i.e. they use an old hardcoded path or env var), delete `.hitl/hooks/` and re-create all six wrappers using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`. Say: "Hook wrappers were using a stale path pattern — recreated with dynamic discovery."
+If the wrappers do NOT contain `claude/settings.json`, they are stale — either using `HITL_PLATFORM_ROOT` (the old env-var pattern from `init-project.sh`) or a hardcoded absolute path (an older Step 0 pattern). Both break when the platform isn't cloned at the expected path or the plugin version changes.
+
+Delete `.hitl/hooks/` and re-create all six wrappers using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`. Say:
+
+"Hook wrappers were stale (`HITL_PLATFORM_ROOT` or hardcoded path pattern detected) — recreated with dynamic discovery. Hooks now read `~/.claude/settings.json` at runtime to locate the plugin, so they survive version updates and work on any machine without env vars."
 
 ---
 
