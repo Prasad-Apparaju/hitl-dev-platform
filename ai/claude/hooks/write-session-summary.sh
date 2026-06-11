@@ -2,6 +2,8 @@
 # Stop hook: generate a HITL session summary when Claude Code finishes a session.
 # Lists artifacts changed, evidence collected, and missing evidence.
 
+[[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
+
 set -euo pipefail
 
 CONTEXT_FILE=".hitl/current-change.yaml"

@@ -4,6 +4,8 @@
 # and Codex input (tool_name: apply_patch, tool_input.command with patch text).
 # Exits 2 to block the tool call; exits 0 to allow.
 
+[[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
+
 set -euo pipefail
 
 INPUT=$(cat)

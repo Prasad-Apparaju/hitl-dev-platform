@@ -4,6 +4,35 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.7] — 2026-06-11
+
+### Fixed
+
+**Plugin hooks no longer activate in projects that never opted into HITL.**
+
+`hooks/hooks.json` was shipped in the plugin and auto-loaded by Claude Code, registering all hooks at user/global scope. This meant every project on the machine — including those with no `.hitl/` directory — had the HITL hooks firing. The immediate impact: `check-hitl-context.sh` exits 2 (blocking all `Edit`/`Write` tool calls) in any repo where `.hitl/current-change.yaml` is absent, even if that repo has nothing to do with HITL.
+
+**Two changes:**
+
+1. **`hooks/hooks.json` deleted.** The project-level hook wiring (`.hitl/hooks/` + `.claude/settings.json`, created by Step 0 of any start skill) is the correct mechanism and is unaffected. The global registration file is gone.
+
+2. **All 6 hook scripts now guard on `.hitl/` presence.** As a safety net for any user who has plugin-level hooks wired in their user settings from an older install, every script now exits 0 immediately if `.hitl/` does not exist in the current working directory:
+   ```bash
+   [[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
+   ```
+   This covers: `welcome.sh`, `check-hitl-context.sh`, `check-domain-boundary.sh`, `rebuild-graph.sh`, `sync-step-to-issue.sh`, `write-session-summary.sh`.
+
+### Upgrade guide — 1.0.6 → 1.0.7
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Restart Claude Code. No project-level changes needed — the fix is entirely in the plugin.
+
+---
+
 ## [1.0.6] — 2026-06-10
 
 ### Fixed

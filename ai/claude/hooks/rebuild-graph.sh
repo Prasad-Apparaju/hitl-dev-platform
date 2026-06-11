@@ -3,6 +3,8 @@
 # Skips silently if graphify is not installed or no graph has been built yet.
 # Handles both Claude Code input (tool_name: Edit/Write) and Codex apply_patch input.
 
+[[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
+
 set -euo pipefail
 
 INPUT=$(cat)

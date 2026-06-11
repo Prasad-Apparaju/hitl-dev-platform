@@ -4,6 +4,8 @@
 # Uses /tmp/hitl-last-step-<change_id> to detect advancement — skips duplicate posts.
 # Non-blocking — never exits with a non-zero code that would surface to the user.
 
+[[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
+
 set -uo pipefail
 
 HITL_FILE=".hitl/current-change.yaml"

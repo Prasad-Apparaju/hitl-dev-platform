@@ -3,6 +3,8 @@
 # When a change is in progress with a known current_step: shows breadcrumbs every prompt.
 # Otherwise: shows the static startup menu once per session.
 
+[[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
+
 # Source .env if present — makes LLM keys (e.g. for Graphify) available without manual export.
 if [[ -f ".env" ]]; then
   set -a; source ".env"; set +a
