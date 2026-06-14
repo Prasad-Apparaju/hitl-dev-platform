@@ -42,22 +42,17 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev-practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/hitl:apply-change`.
 
-## Testing
+## Validation (Mandatory — no exceptions)
 
-After every change, validate it before reporting done. This applies to code, docs, scripts, hooks, config files, and skill or agent instructions.
+After completing any task, run `/hitl:dev-validate` before reporting done. This skill runs an iterative check → fix → re-check loop and only exits when all checks pass.
 
-**For code:** Run with representative inputs covering the happy path and key edge cases.
+**Never say done without running it.** If you cannot run a check locally (live service, missing dependency), say so explicitly — do not claim success.
 
-**For documentation:**
-- File paths mentioned in the doc exist on disk
-- Commands shown actually execute without error
-- YAML/JSON blocks are syntactically valid (`python3 -c "import yaml; yaml.safe_load(open('<file>'))"`)
-- Mermaid blocks contain no `<br/>` tags (`grep -n '<br' <file>`)
-- Cross-references are live: if the doc says "see §N.M", verify that heading exists in the target file
-- Template placeholders (`{{variable}}`) are not left unfilled (`grep -n '{{' <file>`)
-- Index files are updated when a new doc is created
-
-Fix failures before reporting done. If a change cannot be validated locally, say so explicitly rather than claiming success.
+The loop:
+1. Check everything produced — code, tests, docs, YAML/JSON, scripts, skill files
+2. Fix every failure found
+3. Re-check — repeat until zero failures
+4. Report what was checked, what was fixed, what (if anything) could not be resolved
 
 ## System Manifest — Read Before Every Change
 

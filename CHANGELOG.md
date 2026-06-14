@@ -4,6 +4,53 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.10] — 2026-06-13
+
+### Added
+
+**New skill: `/hitl:dev-validate` — iterative validation loop.**
+
+Runs a check → fix → re-check loop until every artifact from the session passes. Never exits until all checks pass (or explicitly marks items as unresolvable with a reason).
+
+**What it validates by artifact type:**
+
+| Type | Checks |
+|---|---|
+| Source code | Test suite (no regressions), coverage gate, linter, happy-path run |
+| Tests | Execute without error, behavior-named, no unexplained skips |
+| Docs (`.md`) | File paths exist, commands execute, no `{{placeholder}}`, no `<br/>` in Mermaid, index updated, cross-refs live |
+| YAML / JSON | Parses, no placeholders, required fields present |
+| Scripts / hooks | Executes, execute bit set, shebang present, `.hitl/` guard in hooks |
+| Skill / agent files | Frontmatter valid, command names exist in `plugin.json`, paths exist, no placeholders |
+
+**The loop:**
+1. Inventory all files produced/modified
+2. Run all applicable checks — log each PASS / FAIL
+3. Fix every FAIL
+4. Re-check — repeat from step 3 until zero failures
+5. Report: what was checked, what was fixed, what (if anything) is genuinely unresolvable
+
+**`CLAUDE.md.template` updated.** The Testing section is now a Validation Gate that directs Claude to run `/hitl:dev-validate` before reporting done on any task. Applies to all 40 skills universally.
+
+### Upgrade guide — 1.0.9 → 1.0.10
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Restart Claude Code. No project-level changes needed — the new skill and updated CLAUDE.md template are available immediately after restart.
+
+**Existing projects:** The CLAUDE.md template update only applies to new projects initialized after this release. To apply it to an existing project, add this section to your `CLAUDE.md`:
+
+```markdown
+## Validation (Mandatory — no exceptions)
+
+After completing any task, run `/hitl:dev-validate` before reporting done.
+```
+
+---
+
 ## [1.0.9] — 2026-06-13
 
 ### Fixed
