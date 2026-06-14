@@ -134,6 +134,19 @@ if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
   fi
 fi
 
+# Default ADR stubs — copied once, never overwritten
+ADR_DIR="$TARGET_DIR/docs/02-design/technical/adrs"
+_adr_count=0
+for tmpl in "$PLATFORM_ROOT/ai/shared/templates"/adr-000*.md; do
+  [[ -f "$tmpl" ]] || continue
+  dest="$ADR_DIR/$(basename "$tmpl")"
+  if [[ ! -f "$dest" ]]; then
+    cp "$tmpl" "$dest"
+    (( _adr_count++ )) || true
+  fi
+done
+[[ $_adr_count -gt 0 ]] && echo "✓ docs/02-design/technical/adrs/ — $_adr_count default ADR stubs (customize before use)"
+
 # ---- Convention tool assets ----
 # check-conventions and related skills invoke these tools via project-relative
 # paths. They must live in the product repo, not the shared platform.

@@ -87,7 +87,17 @@ If not:
    grep -q "docs/session-logs" .gitignore 2>/dev/null || printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> .gitignore
    ```
 
-5. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, and `.gitignore` updated. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
+5. Copy default ADR stubs into `docs/02-design/technical/adrs/` — skip any file that already exists (never overwrite existing ADRs):
+   ```bash
+   mkdir -p docs/02-design/technical/adrs
+   for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
+     dest="docs/02-design/technical/adrs/$(basename "$f")"
+     [[ -f "$dest" ]] || cp "$f" "$dest"
+   done
+   ```
+   Then fill in today's date in `adr-0001-hitl-adoption.md` and `adr-0002-documentation-first.md` (replace `[fill in: project start date]` with today's ISO date).
+
+6. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, and 4 default ADRs created in `docs/02-design/technical/adrs/`. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
 ---
 

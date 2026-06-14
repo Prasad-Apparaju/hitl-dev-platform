@@ -4,6 +4,52 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.12] — 2026-06-14
+
+### Added
+
+**Default ADR stubs written to `docs/02-design/technical/adrs/` during project setup.**
+
+Every new HITL project now gets four starter ADRs that document the foundational decisions teams always need to make. They are created by both `init-project.sh` and Step 0 of all three start skills (`/hitl:dev-start-from-prd`, `/hitl:dev-start-brownfield`, `/hitl:dev-start-migration`). Existing files are never overwritten — safe to run on projects that already have ADRs.
+
+| File | Status at creation | Purpose |
+|---|---|---|
+| `adr-0001-hitl-adoption.md` | Accepted (pre-filled) | Why the team adopted HITL; rationale, alternatives, ROI tracking |
+| `adr-0002-documentation-first.md` | Accepted (pre-filled) | Decision to write HLD/LLD before code; consequences, exceptions |
+| `adr-0003-test-strategy.md` | Draft (fill before first Tier 2 change) | Test framework, coverage gate, mocking policy, CI gates |
+| `adr-0004-change-tier-policy.md` | Draft (fill at project kickoff) | Project-specific Tier 0–4 definitions; Tier 3 high-risk list |
+
+ADR-0001 and ADR-0002 include pre-filled rationale that applies to any HITL project. ADR-0003 and ADR-0004 are stubs with prompts — the team fills them in at kickoff.
+
+### Upgrade guide — 1.0.11 → 1.0.12
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+For existing projects, copy the ADR stubs manually:
+
+```bash
+mkdir -p docs/02-design/technical/adrs
+PLUGIN_ROOT=$(python3 -c "
+import json,os,sys
+try:
+  d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+  for inst in d.get('plugins',{}).get('hitl@hitl',[]):
+    p=inst.get('installPath','')
+    if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
+      print(p);sys.exit(0)
+except:pass
+" 2>/dev/null)
+for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
+  dest="docs/02-design/technical/adrs/$(basename "$f")"
+  [[ -f "$dest" ]] || cp "$f" "$dest"
+done
+```
+
+---
+
 ## [1.0.11] — 2026-06-13
 
 ### Fixed
