@@ -168,13 +168,13 @@ setup_claude() {
   if [[ -f "$SETTINGS" ]]; then
     echo "  .claude/settings.json already exists — skipping"
   else
-    cat > "$SETTINGS" <<JSON
+    cat > "$SETTINGS" <<'JSON'
 {
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "bash .hitl/hooks/welcome.sh" }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/welcome.sh\"" }
         ]
       }
     ],
@@ -182,7 +182,7 @@ setup_claude() {
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash .hitl/hooks/check-hitl-context.sh" }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" }
         ]
       }
     ],
@@ -190,16 +190,16 @@ setup_claude() {
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash .hitl/hooks/check-domain-boundary.sh" },
-          { "type": "command", "command": "bash .hitl/hooks/rebuild-graph.sh" },
-          { "type": "command", "command": "bash .hitl/hooks/sync-step-to-issue.sh" }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-domain-boundary.sh\"" },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/rebuild-graph.sh\"" },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/sync-step-to-issue.sh\"" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash .hitl/hooks/write-session-summary.sh" }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/write-session-summary.sh\"" }
         ]
       }
     ]
@@ -250,10 +250,16 @@ JSON
 #!/usr/bin/env bash
 PLUGIN_ROOT=\$(python3 -c "
 import json,os,sys
-cfg=os.path.expanduser('~/.claude/settings.json')
 try:
-  data=json.load(open(cfg))
-  for p in data.get('plugins',[]):
+  d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+  for inst in d.get('plugins',{}).get('hitl@hitl',[]):
+    p=inst.get('installPath','')
+    if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
+      print(p);sys.exit(0)
+except:pass
+try:
+  d=json.load(open(os.path.expanduser('~/.claude/settings.json')))
+  for p in d.get('plugins',[]):
     path=p if isinstance(p,str) else p.get('path','')
     if os.path.isfile(os.path.join(path,'.claude-plugin/plugin.json')):
       print(path);sys.exit(0)

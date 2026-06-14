@@ -22,10 +22,16 @@ If not:
    ```bash
    python3 -c "
    import json, os, sys
-   cfg = os.path.expanduser('~/.claude/settings.json')
    try:
-       data = json.load(open(cfg))
-       for p in data.get('plugins', []):
+       d = json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+       for inst in d.get('plugins', {}).get('hitl@hitl', []):
+           p = inst.get('installPath', '')
+           if os.path.isfile(os.path.join(p, '.claude-plugin/plugin.json')):
+               print(p); sys.exit(0)
+   except: pass
+   try:
+       d = json.load(open(os.path.expanduser('~/.claude/settings.json')))
+       for p in d.get('plugins', []):
            path = p if isinstance(p, str) else p.get('path', '')
            if os.path.isfile(os.path.join(path, '.claude-plugin/plugin.json')):
                print(path); sys.exit(0)
@@ -35,15 +41,21 @@ If not:
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these six hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`. Each wrapper resolves the plugin path dynamically from `~/.claude/settings.json` so it survives plugin updates and reinstalls without any hardcoded path:
+2. Create `.hitl/hooks/` and write a wrapper for each of these six hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`. Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
    ```bash
    #!/usr/bin/env bash
    PLUGIN_ROOT=$(python3 -c "
    import json,os,sys
-   cfg=os.path.expanduser('~/.claude/settings.json')
    try:
-     data=json.load(open(cfg))
-     for p in data.get('plugins',[]):
+     d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+     for inst in d.get('plugins',{}).get('hitl@hitl',[]):
+       p=inst.get('installPath','')
+       if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
+         print(p);sys.exit(0)
+   except:pass
+   try:
+     d=json.load(open(os.path.expanduser('~/.claude/settings.json')))
+     for p in d.get('plugins',[]):
        path=p if isinstance(p,str) else p.get('path','')
        if os.path.isfile(os.path.join(path,'.claude-plugin/plugin.json')):
          print(path);sys.exit(0)
@@ -58,14 +70,14 @@ If not:
    ```json
    {
      "hooks": {
-       "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash .hitl/hooks/welcome.sh" }] }],
-       "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash .hitl/hooks/check-hitl-context.sh" }] }],
+       "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/welcome.sh\"" }] }],
+       "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" }] }],
        "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [
-         { "type": "command", "command": "bash .hitl/hooks/check-domain-boundary.sh" },
-         { "type": "command", "command": "bash .hitl/hooks/rebuild-graph.sh" },
-         { "type": "command", "command": "bash .hitl/hooks/sync-step-to-issue.sh" }
+         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-domain-boundary.sh\"" },
+         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/rebuild-graph.sh\"" },
+         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/sync-step-to-issue.sh\"" }
        ]}],
-       "Stop": [{ "hooks": [{ "type": "command", "command": "bash .hitl/hooks/write-session-summary.sh" }] }]
+       "Stop": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/write-session-summary.sh\"" }] }]
      }
    }
    ```
