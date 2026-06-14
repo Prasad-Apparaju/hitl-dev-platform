@@ -4,6 +4,45 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.11] — 2026-06-13
+
+### Fixed
+
+**Session logs no longer end up in the product repo's git history.**
+
+`write-session-summary.sh` writes to `docs/session-logs/` inside the project directory. Nothing previously added that path to `.gitignore`, so session logs were silently committed on the next `git add`.
+
+**Three-layer fix:**
+
+1. **Step 0 of all start skills** now adds `docs/session-logs/` to `.gitignore` as part of initial project setup — same step that wires hooks and creates `.claude/settings.json`.
+
+2. **`init-project.sh`** adds the `.gitignore` entry when creating the docs directory structure.
+
+3. **`write-session-summary.sh` hook** adds the entry as a safety net on every session end — idempotent, only adds if missing. Covers existing projects that were set up before this fix without requiring a manual step.
+
+**For existing projects with session logs already committed:**
+
+```bash
+# Remove from tracking (keeps the files on disk)
+git rm -r --cached docs/session-logs/
+
+# Commit the removal
+git commit -m "chore: untrack HITL session logs"
+```
+
+The `.gitignore` entry will be added automatically on the next session end by the updated hook.
+
+### Upgrade guide — 1.0.10 → 1.0.11
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Restart Claude Code. The safety-net fix in `write-session-summary.sh` activates on the next session end — no other action needed for existing projects.
+
+---
+
 ## [1.0.10] — 2026-06-13
 
 ### Added

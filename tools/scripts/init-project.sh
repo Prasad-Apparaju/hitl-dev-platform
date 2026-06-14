@@ -119,6 +119,13 @@ mkdir -p \
   "$TARGET_DIR/docs/session-logs"
 echo "✓ docs/ directory structure"
 
+# Session logs are operational artifacts — keep them out of the product repo
+GITIGNORE="$TARGET_DIR/.gitignore"
+if ! grep -q "docs/session-logs" "$GITIGNORE" 2>/dev/null; then
+  printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> "$GITIGNORE"
+  echo "✓ .gitignore — docs/session-logs/ excluded"
+fi
+
 if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
   MANIFEST_TMPL="$PLATFORM_ROOT/ai/shared/templates/system-manifest-template.yaml"
   if [[ -f "$MANIFEST_TMPL" ]]; then

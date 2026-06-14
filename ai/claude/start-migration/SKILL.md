@@ -82,7 +82,12 @@ If not:
    }
    ```
 
-4. Say: "Hooks wired. `.hitl/hooks/` and `.claude/settings.json` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
+4. Update `.gitignore` so session logs don't end up in the product repo — add the entry if not already present:
+   ```bash
+   grep -q "docs/session-logs" .gitignore 2>/dev/null || printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> .gitignore
+   ```
+
+5. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, and `.gitignore` updated. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
 ---
 

@@ -35,6 +35,11 @@ PYEOF
 
 SUMMARY_DIR="docs/session-logs"
 mkdir -p "$SUMMARY_DIR"
+
+# Safety net: ensure session logs are gitignored — idempotent, adds entry only if missing
+if ! grep -q "docs/session-logs" .gitignore 2>/dev/null; then
+  printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> .gitignore
+fi
 TIMESTAMP=$(date +"%Y-%m-%d-%H%M%S")
 SUMMARY_FILE="$SUMMARY_DIR/hitl-session-${CHANGE_ID}-${TIMESTAMP}.md"
 
