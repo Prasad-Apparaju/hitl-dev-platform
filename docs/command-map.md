@@ -9,29 +9,22 @@ All commands across every workflow, showing where each one appears in the delive
 The three setup paths converge into a single repeating change loop.
 
 ```mermaid
-graph TB
-  subgraph SETUP["Project Setup — run once per project"]
-    direction LR
-    prd["/hitl:dev-start-from-prd"]
-    brown["/hitl:dev-start-brownfield"]
-    mig["/hitl:dev-start-migration"]
-  end
+graph LR
+  prd["/hitl:dev-start-from-prd"]
+  brown["/hitl:dev-start-brownfield"]
+  mig["/hitl:dev-start-migration"]
 
-  subgraph CHANGE["Per-Change Loop — repeat for every Tier 1+ change"]
-    direction LR
-    PM["PM phase"]
-    ARCH["Architect phase"]
-    DEV["Dev phase (32 steps)"]
-    QA["QA phase"]
-    OPS["Ops phase"]
-    PM --> ARCH --> DEV --> QA --> OPS
-  end
+  pm["PM phase"]
+  arch["Architect phase"]
+  dev["Dev phase — 32 steps"]
+  qa["QA phase"]
+  ops["Ops phase"]
 
-  prd --> CHANGE
-  brown --> CHANGE
-  mig --> CHANGE
-
-  CHANGE -->|"next change"| CHANGE
+  prd --> pm
+  brown --> pm
+  mig --> pm
+  pm --> arch --> dev --> qa --> ops
+  ops -->|"next change"| pm
 ```
 
 ---
@@ -43,7 +36,6 @@ Each path produces a different starting artifact before the change loop begins.
 ```mermaid
 graph TB
   subgraph PRD["Start from PRD"]
-    direction TB
     s1["/hitl:dev-start-from-prd"]
     s2["/hitl:architect-design-system"]
     s3["Manifest + HLDs + LLDs + delivery plan"]
@@ -51,18 +43,17 @@ graph TB
   end
 
   subgraph BROWN["Start brownfield"]
-    direction TB
     b1["/hitl:dev-start-brownfield"]
     b2["/hitl:dev-generate-docs"]
     b3["/hitl:architect-review-existing"]
     b4["Manifest + baseline docs + ADRs"]
     b1 --> b3
     b1 --> b2
-    b2 & b3 --> b4
+    b2 --> b4
+    b3 --> b4
   end
 
   subgraph MIG["Start migration"]
-    direction TB
     m1["/hitl:dev-start-migration"]
     m2["/hitl:dev-review-external-docs"]
     m3["/hitl:architect-design-system"]
@@ -80,19 +71,19 @@ The full command sequence for a Tier 2+ change, by role.
 ```mermaid
 graph TB
   subgraph PM_PHASE["PM — Shape the change"]
-    direction LR
     pm1["/hitl:pm-prioritize"]
     pm2["/hitl:pm-design-feature"]
     pm3["/hitl:pm-add-feature"]
     pm4["/hitl:pm-enhance-feature"]
     pm5["/hitl:pm-update-requirement"]
-    ISSUE["GitHub Issue"]
-    pm1 --> pm2
-    pm2 & pm3 & pm4 & pm5 --> ISSUE
+    issue["GitHub Issue"]
+    pm1 --> pm2 --> issue
+    pm3 --> issue
+    pm4 --> issue
+    pm5 --> issue
   end
 
   subgraph ARCH_PHASE["Architect — Design"]
-    direction LR
     a1["/hitl:architect-design-feature"]
     a2["HLD + LLD approved"]
     ta1["/hitl:ta-approve — design gate"]
@@ -104,7 +95,6 @@ graph TB
   end
 
   subgraph DEV_PHASE["Developer — Build (steps 1-25)"]
-    direction TB
     d1["/hitl:dev-apply-change"]
     d2["/hitl:dev-generate-docs"]
     d3["/hitl:dev-tdd"]
@@ -118,7 +108,6 @@ graph TB
   end
 
   subgraph QA_REVIEW["QA — Review and verify"]
-    direction LR
     q2["/hitl:qa-review-tests — step 11"]
     q3["/hitl:qa-verify-quality — step 22"]
     q4["/hitl:qa-report-defect"]
@@ -131,7 +120,6 @@ graph TB
   end
 
   subgraph OPS_PHASE["Ops — Ship"]
-    direction LR
     o1["/hitl:ops-build"]
     o2["/hitl:ops-deploy"]
     o3["/hitl:ops-post-deploy-monitor"]
@@ -152,10 +140,10 @@ graph TB
 
 ## 4. Ops Command Landscape
 
-Ops commands span three concerns. Most are called from within `/hitl:ops-deploy` or independently.
-
 ```mermaid
-graph LR
+graph TB
+  deploy["/hitl:ops-deploy"]
+
   subgraph INFRA["Infrastructure"]
     iac["/hitl:ops-apply-iac"]
     obs["/hitl:ops-setup-observability"]
@@ -167,7 +155,6 @@ graph LR
   subgraph DATA["Data"]
     mdb["/hitl:ops-migrate-database"]
     bdb["/hitl:ops-backup-database"]
-    mdb -->|"before deploy"| bdb
   end
 
   subgraph INCIDENT["Incident response"]
@@ -176,10 +163,10 @@ graph LR
     inc --> roll
   end
 
-  deploy["/hitl:ops-deploy"]
   deploy --> iac
-  deploy --> mdb
   deploy --> obs
+  deploy --> mdb
+  mdb --> bdb
 ```
 
 ---
