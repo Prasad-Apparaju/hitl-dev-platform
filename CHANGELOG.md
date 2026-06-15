@@ -4,6 +4,32 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.14] — 2026-06-14
+
+### Added
+
+**New skill: `/hitl:help` — command discovery.**
+
+Describe what you're trying to do and get a recommendation, or run it with no argument for the full command directory grouped by role.
+
+```
+/hitl:help                          # full directory — all commands by role
+/hitl:help I want to enhance a feature that already exists
+/hitl:help how do I start a TDD cycle
+/hitl:help the code doesn't match the design doc
+```
+
+Covers all 40+ commands across dev, architect, QA, PM, and ops. Always gives a best guess — never says "I'm not sure" without recommending something.
+
+### Upgrade guide — 1.0.13 → 1.0.14
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+---
+
 ## [1.0.13] — 2026-06-14
 
 ### Added
