@@ -4,6 +4,35 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.13] — 2026-06-14
+
+### Added
+
+**New skill: `/hitl:pm-enhance-feature` — structured enhancement workflow for any existing feature.**
+
+Works for product capabilities, PRD requirements, skills, agents, services, or any named component. Fills the gap between `/hitl:pm-update-requirement` (assumes you already know what to change) and `/hitl:pm-add-feature` (for new features from scratch).
+
+**Five-phase flow:**
+
+| Phase | What happens |
+|---|---|
+| 1 — Discover | Finds all artifacts related to the feature: PRD requirement, HLD/LLD, SKILL.md/AGENT.md, source paths from the system manifest, open GitHub issues |
+| 2 — Explain | Summarizes current behavior in plain business language (no code, no YAML) — confirms the PM is looking at the right thing |
+| 3 — Interview | Asks about the gap, affected users, impact, desired outcome, what must stay unchanged, constraints |
+| 4 — Draft | Produces a structured enhancement request with problem statement, proposed changes, acceptance criteria, and explicit out-of-scope list |
+| 5 — Record | Updates the PRD, creates a GitHub issue, and tells the PM what happens next (tier assessment → design → dev) |
+
+Supports rigorous / moderate / light challenge modes. Never drafts the requirement until Phase 3 is complete. Never accepts unmeasurable acceptance criteria ("make it better", "improve it") without pushing for specifics.
+
+### Upgrade guide — 1.0.12 → 1.0.13
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+---
+
 ## [1.0.12] — 2026-06-14
 
 ### Added
