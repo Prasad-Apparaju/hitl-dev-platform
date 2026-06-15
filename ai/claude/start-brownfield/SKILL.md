@@ -134,7 +134,20 @@ If a real manifest already exists, read it, summarize the domains, and ask: "Is 
 
 ---
 
-## Step 4 — Identify priority components for documentation
+## Step 4 — Review existing architecture
+
+Run `/hitl:architect-review-existing` to reconstruct the architectural decisions already in the codebase, interview the architect to confirm rationale and constraints, and document them as real ADRs before any incremental work begins.
+
+This step produces:
+- A tech stack summary
+- ADR-0005+ for significant existing decisions (framework, data, auth, API style, deployment, test strategy)
+- A list of architectural concerns that affect HITL compliance or first-change risk
+
+Do not proceed to Step 5 until the architect has confirmed the ADRs are accurate.
+
+---
+
+## Step 5 — Identify priority components for documentation
 
 Ask: "Which components are most critical and most likely to change in the near term? List up to three."
 
@@ -145,7 +158,7 @@ For each component:
 
 ---
 
-## Step 5 — Seed the registries
+## Step 6 — Seed the registries
 
 The 32-step workflow queries these two registries at multiple points. They must exist before `/hitl:dev-practices` is run for the first time.
 
@@ -161,7 +174,7 @@ The 32-step workflow queries these two registries at multiple points. They must 
 
 ---
 
-## Step 6 — Install Graphify
+## Step 7 — Install Graphify
 
 Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window.
 
@@ -188,7 +201,7 @@ Full setup reference: `shared/graphify-setup.md`
 
 ---
 
-## Step 7 — Create your first change issue
+## Step 8 — Create your first change issue
 
 Ask: "What's the first change you want to make now that this project is onboarded?"
 - Run: `gh issue create --title "[change description]" --body "First tracked change after HITL brownfield onboarding."`
@@ -196,7 +209,7 @@ Ask: "What's the first change you want to make now that this project is onboarde
 
 ---
 
-## Step 8 — Confirm ready
+## Step 9 — Confirm ready
 
 Output this exactly:
 

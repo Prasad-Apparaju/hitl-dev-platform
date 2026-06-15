@@ -4,6 +4,36 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.16] — 2026-06-15
+
+### Added
+
+**New skill: `/hitl:architect-review-existing` — reconstruct and document architecture decisions in an existing codebase.**
+
+Fills the gap in the brownfield onboarding flow: the system manifest captures domain boundaries, but nothing captured *why* the existing technology choices were made or what constraints they impose. This skill reads the codebase and interviews the architect to produce real ADRs (not generic stubs) before incremental work begins.
+
+**Six-phase flow:**
+
+| Phase | What happens |
+|---|---|
+| 1 — Landscape | Reads system manifest + key technology indicator files; produces a Tech Stack Summary |
+| 2 — Extract decisions | Identifies concrete decisions across 8 categories: service architecture, data, auth, API style, cross-domain communication, deployment, test strategy as-built, non-obvious patterns |
+| 3 — Interview | Asks architect which decisions were deliberate vs inherited, confirms rationale, surfaces constraints and regrets |
+| 4 — Document ADRs | Creates real ADRs (ADR-0005+) for significant decisions — status Accepted or Under review; never fabricates rationale |
+| 5 — Surface concerns | Categorizes concerns as blocking HITL compliance (🔴), address in first changes (🟡), or worth noting (🟢) |
+| 6 — Handoff | Produces summary of ADRs created, key constraints, and pre-conditions for first Tier 2 change |
+
+**Brownfield flow updated:** New Step 4 added between system manifest generation (Step 3) and priority component documentation (now Step 5). Steps 4–8 renumbered to 5–9. Architect must confirm ADRs before proceeding to Step 5.
+
+### Upgrade guide — 1.0.15 → 1.0.16
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+---
+
 ## [1.0.15] — 2026-06-14
 
 ### Fixed
