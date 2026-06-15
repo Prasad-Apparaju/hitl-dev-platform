@@ -60,8 +60,8 @@ if [ -f "$YAML_FILE" ]; then
 
     case "$phase" in
       "Migration Setup")
-        NAMES=("" "Context" "CLAUDE.md" "Manifest" "DirSetup" "ExtDocs" "Registries" "Issue" "Handoff")
-        total=8
+        NAMES=("" "Context" "CLAUDE.md" "Manifest" "DirSetup" "SrcAnal" "ExtDocs" "Registries" "Issue" "Handoff")
+        total=9
         ;;
       "Development")
         NAMES=("" "Issue" "Figma" "Impact" "ROI" "Docs" "IaC" "Tests" "Train" "Packet"

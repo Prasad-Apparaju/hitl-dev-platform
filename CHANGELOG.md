@@ -4,6 +4,42 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.17] — 2026-06-15
+
+### Added
+
+**Migration flow: source codebase analysis (`/hitl:dev-start-migration` Step 5).**
+
+The migration flow previously had no step that read the existing source code. The behavioral inventory produced by vendor runbooks or verbal description alone missed behaviors that are only visible in the actual code. This fills that gap.
+
+**New Step 5 — Analyze source codebase:**
+
+| Source location | What happens |
+|---|---|
+| Local path (same or sibling repo) | Reads top-level structure and key files; extracts APIs, domain behaviors, data contracts, integration points, auth rules, background jobs |
+| Remote-only or inaccessible | User describes behavior verbally; entries marked `confidence: low` |
+
+Output: `docs/00-migration/source-behavioral-inventory.md` — a table-structured inventory of every BI-NNN item that the target system must implement. This file is the objective definition of "migration complete."
+
+**`/hitl:dev-review-external-docs` updated (Phase 1b + migration brief):**
+
+- New Phase 1b reads `source-behavioral-inventory.md` before evaluating external docs. If absent, the skill warns and asks whether to proceed without it.
+- Migration brief template now includes a **behavior coverage matrix** — one row per BI ID, with fields for target slice and status (`Not started / In progress / Complete / Descoped`). Each migration slice must declare which BI IDs it covers in its GitHub issue.
+
+**Migration is complete when** every BI entry in the inventory has status `Complete` or `Descoped` in the coverage matrix. `Descoped` requires an explicit architect decision.
+
+**Migration flow step renumbering:** old Steps 5–8 became Steps 6–9. Statusline updated to 9 steps, with new `SrcAnal` label at position 5.
+
+### Upgrade guide — 1.0.16 → 1.0.17
+
+```bash
+/hitl:dev-update
+```
+
+Existing migration projects: run `/hitl:dev-start-migration` Step 5 manually to generate the behavioral inventory from your source codebase, then rerun `/hitl:dev-review-external-docs` to add the coverage matrix to your migration brief.
+
+---
+
 ## [1.0.16] — 2026-06-15
 
 ### Added

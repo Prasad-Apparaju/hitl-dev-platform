@@ -188,10 +188,11 @@ Create the following directories if they do not exist:
 
 ```
 docs/00-migration/
-  migration-context.yaml    ← written in Step 1 (project-level bootstrap state)
-  external-reference/       ← external docs go here (reference only, never canonical)
-  migration-review.md       ← produced by /hitl:dev-review-external-docs (stub for now)
-  migration-brief.md        ← produced by /hitl:dev-review-external-docs (PRD-equivalent)
+  migration-context.yaml          ← written in Step 1 (project-level bootstrap state)
+  source-behavioral-inventory.md  ← written in Step 5 (source of truth for migration coverage)
+  external-reference/             ← external docs go here (reference only, never canonical)
+  migration-review.md             ← produced by /hitl:dev-review-external-docs (stub for now)
+  migration-brief.md              ← produced by /hitl:dev-review-external-docs (PRD-equivalent)
 ```
 
 ```bash
@@ -202,11 +203,111 @@ Say: "Migration directory structure created. External docs staged in `docs/00-mi
 
 ---
 
-## Step 5 — Ingest external documentation (optional)
+## Step 5 — Analyze source codebase
 
 Update `.hitl/current-change.yaml` — set `current_step`:
 ```yaml
   number: 5
+  name: "Analyze source codebase"
+  phase: "Migration Setup"
+```
+
+The source codebase is the ground truth for what the target system must do. This step extracts a **behavioral inventory** — the definitive list of APIs, domain behaviors, data contracts, and integration points that the target system must reproduce. Migration is only complete when every item in the inventory is covered.
+
+**Locate the source code:**
+
+Ask: "Where is the source system's code?"
+- **(A)** A directory in this repo at path: ___
+- **(B)** A separate local repository at path: ___
+- **(C)** Remote-only or inaccessible — I'll describe its behavior from memory or docs
+
+**If A or B — read the source code:**
+
+1. Read the top-level structure to orient, then focus on:
+
+   | What to extract | Where to look |
+   |---|---|
+   | Exposed APIs | REST routes, GraphQL schema, gRPC `.proto` files, event topics published |
+   | Core domain logic | Services, use cases, domain objects, business rule implementations |
+   | Data contracts | DB schema, migration files, ORM models, key data shapes |
+   | Integration points | Outbound HTTP clients, queue consumers, webhook handlers, third-party SDKs |
+   | Auth and access control | Who can call what — roles, scopes, ownership rules |
+   | Background jobs | Scheduled tasks, workers, async processors |
+
+2. Use Graphify if available on the source repo:
+   ```
+   /graphify query "API endpoints domain services data models integrations auth"
+   ```
+
+3. Produce `docs/00-migration/source-behavioral-inventory.md`:
+
+```markdown
+# Source Behavioral Inventory — [Source System Name]
+
+**Extracted from:** [repo path or URL]
+**Extraction date:** [today's date]
+**Status:** DRAFT — review with source system owner before use as migration target
+
+## API surface
+
+| ID | Endpoint / contract | Type | Domain | Notes |
+|---|---|---|---|---|
+| BI-001 | GET /users/{id} | REST | User | Returns user profile |
+
+## Core behaviors
+
+| ID | Behavior | Domain | Source location | Notes |
+|---|---|---|---|---|
+| BI-010 | Calculate order total with tax | Order | OrderService.java:45 | Includes promotional discount logic |
+
+## Data contracts
+
+| ID | Entity | Storage | Key fields | Notes |
+|---|---|---|---|---|
+| BI-020 | User | users table (PostgreSQL) | id, email, tenant_id | Multi-tenant — tenant_id on every query |
+
+## Integration contracts
+
+| ID | Integration | Direction | Protocol | Notes |
+|---|---|---|---|---|
+| BI-030 | Payment gateway | Outbound | REST | Stripe v3, async webhook confirmation |
+
+## Background jobs
+
+| ID | Job | Schedule / trigger | Domain | Notes |
+|---|---|---|---|---|
+| BI-040 | Invoice generation | Nightly 02:00 UTC | Billing | |
+
+## Auth and access control
+
+| ID | Rule | Scope | Notes |
+|---|---|---|---|
+| BI-050 | Admins can delete any user | Admin role | Non-admins see 403 |
+
+## Known gaps
+
+[Behaviors that could not be determined from code alone — require source system owner clarification]
+```
+
+Ask: "Does this inventory capture everything the source system does? Anything I missed or got wrong?"
+
+Incorporate feedback and finalize. This file is the migration's definition of done — the target must implement every BI entry.
+
+**If C — source is inaccessible:**
+
+Ask: "Describe the source system's key APIs, core business behaviors, data contracts, and integration points. I'll structure them as the behavioral inventory."
+
+Record what the user provides. Mark every entry `confidence: low — from description only`. Say: "The behavioral inventory is based on your description since the source code isn't available. Treat it as a starting point — expand it whenever a gap is discovered during development."
+
+Write `docs/00-migration/source-behavioral-inventory.md` with entries marked `confidence: low`.
+
+---
+
+## Step 6 — Ingest external documentation (optional)
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 6
   name: "Ingest external docs"
   phase: "Migration Setup"
 ```
@@ -214,7 +315,7 @@ Update `.hitl/current-change.yaml` — set `current_step`:
 Present the following choice to the user:
 
 ---
-**Step 5 is optional — choose one:**
+**Step 6 is optional — choose one:**
 
 **A — Copy docs into this repo** (`docs/00-migration/external-reference/`)
 > Best when: the reference repo is private, may become unavailable, or team members lack access.
@@ -239,11 +340,11 @@ Present the following choice to the user:
 
 ---
 
-## Step 6 — Seed the registries
+## Step 7 — Seed the registries
 
 Update `.hitl/current-change.yaml` — set `current_step`:
 ```yaml
-  number: 6
+  number: 7
   name: "Seed registries"
   phase: "Migration Setup"
 ```
@@ -260,11 +361,11 @@ Update `.hitl/current-change.yaml` — set `current_step`:
 
 ---
 
-## Step 7 — Create the migration tracking issue
+## Step 8 — Create the migration tracking issue
 
 Update `.hitl/current-change.yaml` — set `current_step`:
 ```yaml
-  number: 7
+  number: 8
   name: "Create tracking issue"
   phase: "Migration Setup"
 ```
@@ -273,18 +374,18 @@ Run:
 ```bash
 gh issue create \
   --title "Migration: [source system] → [target system]" \
-  --body "Migration project initialized via HITL. Context: docs/00-migration/migration-context.yaml. External reference docs staged in docs/00-migration/external-reference/. Next: /hitl:dev-review-external-docs produces migration-review.md and migration-brief.md before any design begins."
+  --body "Migration project initialized via HITL. Context: docs/00-migration/migration-context.yaml. Behavioral inventory (source of truth): docs/00-migration/source-behavioral-inventory.md. External reference docs staged in docs/00-migration/external-reference/. Next: /hitl:dev-review-external-docs produces migration-review.md and migration-brief.md before any design begins."
 ```
 
 Show the issue URL. Then update `.hitl/current-change.yaml`: set `change_id: GH-<issue-number>` (replace the `migration-setup` placeholder).
 
 ---
 
-## Step 8 — Confirm ready and hand off
+## Step 9 — Confirm ready and hand off
 
 Update `.hitl/current-change.yaml` — set `current_step`:
 ```yaml
-  number: 8
+  number: 9
   name: "Confirm and hand off"
   phase: "Migration Setup"
 ```
@@ -294,7 +395,7 @@ Output this exactly:
 ---
 **Migration project initialized.**
 
-Project structure, conventions, target manifest, and external reference docs are in place.
+Project structure, conventions, target manifest, behavioral inventory, and external reference docs are in place.
 
 **Next step — Architect deep review:**
 
@@ -303,13 +404,15 @@ Project structure, conventions, target manifest, and external reference docs are
 ```
 
 The architect runs this to produce two documents:
-- `docs/00-migration/migration-review.md` — critique of the external docs: what is reliable, what has gaps, what the HITL design should diverge from
-- `docs/00-migration/migration-brief.md` — PRD-equivalent requirements for the target system
+- `docs/00-migration/migration-review.md` — critique of the external docs: what is reliable, what has gaps, what HITL design should diverge from
+- `docs/00-migration/migration-brief.md` — PRD-equivalent requirements for the target system, including a behavior coverage matrix keyed to BI IDs from the behavioral inventory
 
 No design work (HLD/LLD) begins until both documents are approved. The migration brief is the required input for the architect design skills — it replaces `docs/01-product/prd.md` in the standard workflow.
 
-After the review, the architect runs `/hitl:architect-design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 32-step workflow.
+After the review, the architect runs `/hitl:architect-design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 32-step workflow, and must declare which BI IDs it covers.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
+
+**Migration is complete when:** every BI entry in `docs/00-migration/source-behavioral-inventory.md` has status `Complete` or `Descoped` in the migration brief's coverage matrix.
 
 ---

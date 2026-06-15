@@ -49,7 +49,14 @@ Read `docs/00-migration/migration-context.yaml`. Extract:
 
 If the file does not exist, stop: "Migration context not found. Run `/hitl:start-migration` first."
 
-### 1b. Inventory external reference docs
+### 1b. Read the source behavioral inventory
+
+Check whether `docs/00-migration/source-behavioral-inventory.md` exists.
+
+- **If it exists:** read it in full. The behavioral inventory is the ground truth for migration — it defines every API, behavior, data contract, and integration that the target system must implement. Note the BI IDs; the migration brief's coverage matrix (Phase 4) will reference them.
+- **If it is absent:** say: "No source behavioral inventory found. Without it, the migration brief cannot include a coverage matrix and there is no objective definition of 'migration complete.' Strongly recommended: go back to Step 5 of `/hitl:dev-start-migration` and run source code analysis before proceeding." Ask: "Do you want to proceed without the inventory, or pause to generate it?"
+
+### 1c. Inventory external reference docs
 
 List all files under `docs/00-migration/external-reference/`. For each:
 - File name and type
@@ -58,7 +65,7 @@ List all files under `docs/00-migration/external-reference/`. For each:
 
 Show the inventory to the architect. Ask: "Is anything missing from this list? Are there docs that didn't make it into the reference directory?"
 
-### 1c. Read all external docs
+### 1d. Read all external docs
 
 Read each file in full. Do not summarize yet — full comprehension before evaluation.
 
@@ -207,6 +214,22 @@ Write `docs/00-migration/migration-brief.md` with the following structure:
 ## Open questions
 
 [Questions the architect must resolve before HLD work can begin. Source them from the gap list in the review.]
+
+## Behavior coverage matrix
+
+Tracks every item from `docs/00-migration/source-behavioral-inventory.md`. Migration is complete when every row is `Complete` or `Descoped`.
+
+| BI ID | Behavior | Domain | Target slice | Status |
+|---|---|---|---|---|
+| BI-001 | [from inventory] | [domain] | TBD | Not started |
+
+Status values: `Not started` / `In progress` / `Complete` / `Descoped`
+
+Rules:
+- Every BI ID from the inventory must appear here — none may be silently dropped
+- `Descoped` requires an explicit architect decision recorded in the Notes column
+- Each migration slice, when created, must list which BI IDs it covers in its GitHub issue
+- Update this matrix after each slice ships — it is the live definition of migration progress
 
 ## Slice criterion reminder
 
