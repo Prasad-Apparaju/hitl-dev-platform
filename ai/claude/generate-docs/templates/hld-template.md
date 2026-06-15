@@ -15,6 +15,10 @@
 
 ## 2. System Architecture
 
+<!-- Mermaid rules (enforced by /hitl:dev-validate — violations block the PR):
+     • Node labels must be single-line: no \n, no <br/> — use a short descriptive label
+     • Quote labels that contain (), -, or /  e.g.  Node["Auth Service (v2)"]
+     • classDiagram: single-level generics only — write ~List of Order~, never ~List~Order~~ -->
 ```mermaid
 graph TB
     subgraph External["External Systems"]

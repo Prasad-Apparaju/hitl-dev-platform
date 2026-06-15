@@ -59,6 +59,8 @@ Run every applicable check below for each group. Record each result as **PASS** 
 - Every bash command shown in a code block executes without error.
 - No `{{placeholder}}` left unfilled: `grep -n '{{' <file>`
 - No `<br/>` inside Mermaid code blocks: `grep -n '<br' <file>`
+- No nested generics in Mermaid `classDiagram` (double `~~` breaks GitHub rendering): `grep -n '~~' <file>`
+- No literal `\n` in Mermaid node labels (renders as text, not line break): `grep -n '\\n' <file>` — use single-line labels
 - If the doc appears in an index, table of contents, or `SUMMARY.md`, that index is updated.
 - Cross-references resolve: if the doc says "see §N.M" or links to another file, confirm the heading/file exists.
 

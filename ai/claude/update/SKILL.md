@@ -99,18 +99,19 @@ grep "installed_plugins.json" .hitl/hooks/welcome.sh
 
 If the wrappers do NOT contain `installed_plugins.json`, they are stale — using `HITL_PLATFORM_ROOT` (very old), a hardcoded path, or the old `settings.json["plugins"]` discovery from v1.0.5–1.0.8. All break on current Claude Code which stores plugin records in `~/.claude/plugins/installed_plugins.json`.
 
-Delete `.hitl/hooks/` and re-create all six wrappers using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
+Delete `.hitl/hooks/` and re-create all seven wrappers (including `statusline-hitl`) using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
 
-Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix:
+Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix and the `statusLine` entry:
 ```bash
 grep "CLAUDE_PROJECT_DIR" .claude/settings.json
+grep "statusLine" .claude/settings.json
 ```
 
-If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. Delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
+If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent, the persistent HITL breadcrumb is missing. In either case, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
 
 Say:
 
-"Hook wrappers and settings.json re-created with current patterns. Wrappers now check `~/.claude/plugins/installed_plugins.json` first (current Claude Code) with fallback to legacy `settings.json`. Hook commands now use `$CLAUDE_PROJECT_DIR` for reliable path resolution."
+"Hook wrappers and settings.json re-created with current patterns. Wrappers now check `~/.claude/plugins/installed_plugins.json` first (current Claude Code) with fallback to legacy `settings.json`. Hook commands now use `$CLAUDE_PROJECT_DIR` for reliable path resolution. `statusLine` added for persistent HITL breadcrumb."
 
 ---
 

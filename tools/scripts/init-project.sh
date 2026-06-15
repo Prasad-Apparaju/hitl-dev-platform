@@ -190,6 +190,7 @@ setup_claude() {
   else
     cat > "$SETTINGS" <<'JSON'
 {
+  "statusLine": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -265,7 +266,7 @@ JSON
   if [[ ! -d "$HOOKS_DIR" ]]; then
     mkdir -p "$HOOKS_DIR"
     for hook in welcome check-hitl-context check-domain-boundary rebuild-graph \
-                write-session-summary sync-step-to-issue; do
+                write-session-summary sync-step-to-issue statusline-hitl; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
 PLUGIN_ROOT=\$(python3 -c "

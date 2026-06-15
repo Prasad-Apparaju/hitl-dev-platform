@@ -4,6 +4,44 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.15] — 2026-06-14
+
+### Fixed
+
+**Persistent HITL breadcrumb via `statusLine` (fixes #7, #8).**
+
+The `UserPromptSubmit` `welcome.sh` banner was routed into Claude's model context as `<system-reminder>` — not visible to the user. The fix adds a `statusLine` command to `.claude/settings.json` that Claude Code renders persistently in the UI status bar, showing the active change, phase, step number, and a windowed step trail:
+
+```
+HITL: Development · Step 14/31: GREEN [FR-42 · T2]
+     ✓11.RED ✓12.TstRvw ✓13.VfyRED ▶14.GREEN ·15.VfyGRN ·16.Refact ·17.Conv …
+```
+
+Changes:
+- `ai/claude/hooks/statusline-hitl.sh` — moved from `ai/claude/` (was never distributed by build.sh) into `hooks/` so it is now synced to the plugin; YAML path fixed from relative `$(dirname $0)/../` to `$CLAUDE_PROJECT_DIR` anchor
+- `init-project.sh` and Step 0 of all three start skills — `statusLine` key added to `.claude/settings.json` template; `statusline-hitl` added to the hook wrapper generation loop
+- `/hitl:dev-update` Step 4 — now checks for `statusLine` in `.claude/settings.json` and regenerates if absent
+
+**Mermaid diagram constraints (fixes #9).**
+
+Generated HLD/LLD diagrams broke GitHub rendering in two ways: nested generics in `classDiagram` (`~~` double-close from Java types like `ResponseEntity<Page<Order>>`) and literal `\n` in flowchart node labels. Both patterns now have:
+
+1. **Template guardrails** — `hld-template.md` and `lld-component-template.md` have inline `<!-- Mermaid rules -->` comments that the architect skills read during generation
+2. **`/hitl:dev-validate` checks** — two new checks added alongside the existing `<br/>` check:
+   - `grep -n '~~' <file>` — catches nested generics before they reach GitHub
+   - `grep -n '\\n' <file>` — catches literal `\n` in node labels
+
+### Upgrade guide — 1.0.14 → 1.0.15
+
+```bash
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Then run `/hitl:dev-update` in each project to add the `statusLine` to `.claude/settings.json` and regenerate hook wrappers. Restart Claude Code after.
+
+---
+
 ## [1.0.14] — 2026-06-14
 
 ### Added

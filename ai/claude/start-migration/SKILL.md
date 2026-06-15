@@ -41,7 +41,7 @@ If not:
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these six hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`. Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
+2. Create `.hitl/hooks/` and write a wrapper for each of these seven hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
    ```bash
    #!/usr/bin/env bash
    PLUGIN_ROOT=$(python3 -c "
@@ -69,6 +69,7 @@ If not:
 3. Create `.claude/settings.json` only if it does not already exist:
    ```json
    {
+     "statusLine": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"",
      "hooks": {
        "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/welcome.sh\"" }] }],
        "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" }] }],

@@ -14,6 +14,11 @@
 
 ## 2. Class Diagram
 
+<!-- Mermaid classDiagram rules (enforced by /hitl:dev-validate):
+     • Single-level generics only — write ~List of Order~, never ~List~Order~~
+       Wrong:  +getOrders() ResponseEntity~Page~Order~~
+       Right:  +getOrders() ResponseEntity~Page of Order~
+     • No \n or <br/> in labels — keep member names on one line -->
 ```mermaid
 classDiagram
     class ComponentName {
