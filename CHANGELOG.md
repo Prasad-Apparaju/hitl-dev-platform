@@ -4,6 +4,25 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.23] — 2026-06-16
+
+### Added
+
+**Deployment view staleness detection.**
+Two automatic detection points prevent the deployment view HLD from drifting out of sync with infrastructure:
+
+1. **Edit-time hook** (`check-domain-boundary.sh`): fires automatically whenever an IaC file is edited (Dockerfile, docker-compose, k8s/, helm/, terraform/, serverless.yml, .github/workflows/, infra/). If `docs/02-design/technical/hld/deployment-view.md` exists, a warning is emitted noting the view may be stale and pointing to the file or `/hitl:architect-review-existing` Phase 4c to regenerate.
+
+2. **Post-apply step** (`/hitl:ops-apply-iac` Step 6): after every successful IaC apply, compares what changed against the deployment view and updates affected sections in place — services table, external dependencies, environments, CI/CD pipeline diagram. Skips silently if only config tuning or version bumps occurred with no topology change.
+
+### Upgrade guide — 1.0.22 → 1.0.23
+
+```bash
+/hitl:dev-update
+```
+
+---
+
 ## [1.0.22] — 2026-06-16
 
 ### Added
