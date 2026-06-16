@@ -122,7 +122,9 @@ graph TB
   end
 
   subgraph DESIGN["Design (Steps 3-9)"]
+    d3a["3 - Create feature branch issue/N-slug + commit initial current-change.yaml"]
     d3["3 - Impact analysis - /hitl:dev-apply-change"]
+    d3a --> d3
     d4["4 - ROI estimate (cond)"]
     d5["5 - HLD + LLD - /hitl:dev-generate-docs or /hitl:architect-design-feature"]
     d5a["5a - Security review design - /hitl:dev-review-security --phase design (cond)"]

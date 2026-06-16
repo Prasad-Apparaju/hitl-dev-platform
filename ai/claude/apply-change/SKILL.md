@@ -55,6 +55,45 @@ Before any analysis, locate and confirm these exist:
 
 If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first."
 
+### Step 2a: Create feature branch
+
+All work for this change must happen on a dedicated branch so that `.hitl/current-change.yaml` and every commit are isolated to this issue.
+
+```bash
+# Derive branch name from issue number and title
+N=<issue-number>
+TITLE=$(gh issue view $N --json title -q .title \
+  | tr '[:upper:]' '[:lower:]' \
+  | tr -cs 'a-z0-9' '-' \
+  | sed 's/^-//;s/-$//' \
+  | cut -c1-50)
+BRANCH="issue/${N}-${TITLE}"
+CURRENT=$(git branch --show-current)
+```
+
+- If already on `$BRANCH`: say "Already on branch `$BRANCH` — continuing." and proceed.
+- If branch exists but not checked out: `git checkout "$BRANCH"` and say "Switched to existing branch `$BRANCH`."
+- If branch does not exist: `git checkout -b "$BRANCH"` and say "Created branch `$BRANCH`."
+
+After switching, write an initial `.hitl/current-change.yaml` stub and commit it immediately so the file is branch-tracked from the start:
+
+```yaml
+change_id: GH-<N>
+tier: <from Step 1>
+status: planning
+current_step:
+  number: 3
+  name: "Impact analysis"
+  phase: "Development"
+```
+
+```bash
+git add .hitl/current-change.yaml
+git commit -m "chore(hitl): initialize change context for GH-<N>"
+```
+
+This commit anchors the file to this branch. Every subsequent step that updates the file will produce a new commit (or the file will be amended into the next logical commit) — whichever keeps the branch diff clean.
+
 ### Step 3: Impact Analysis
 Identify and list:
 - **Affected endpoints/APIs** — what callers will see different behavior?
