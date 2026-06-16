@@ -207,6 +207,94 @@ Use the next available number after the baseline stubs (start from ADR-0005 unle
 
 After creating each ADR, confirm with the architect: "Does this accurately capture the decision and its rationale?"
 
+### 4c — Generate deployment view HLD
+
+Using the infrastructure files already read in Phase 1b (Dockerfile, docker-compose.yml, k8s/, terraform/, serverless.yml, CI/CD configs) and the deployment decision confirmed in Phase 3, generate `docs/02-design/technical/hld/deployment-view.md`.
+
+**If no infrastructure files were found in Phase 1b** (no Dockerfile, no k8s/, no terraform/, no CI/CD config): skip this step and flag it in Phase 5 as a 🟡 concern: "Deployment not captured in IaC or config — deployment view cannot be generated."
+
+**Otherwise**, create the file with this structure (fill in from the actual manifests — do not leave template placeholders):
+
+```markdown
+# Deployment View
+
+> Generated from IaC and deployment config during brownfield onboarding.
+> Update this document when infrastructure changes.
+
+## Summary
+
+[One paragraph: cloud provider, orchestration layer, key deployment technology — e.g. "Deployed as Docker containers orchestrated by Kubernetes on GKE. Infrastructure managed with Terraform. CI/CD via GitHub Actions."]
+
+## Environments
+
+| Environment | URL / endpoint | Notable differences from production |
+|---|---|---|
+| Production | [from IaC/config] | — |
+| Staging | [from IaC/config] | [e.g., single replica, smaller DB tier] |
+| Development | local / docker-compose | [e.g., no TLS, mock external services] |
+
+Fill each row from what the IaC and CI/CD config actually say — leave a cell blank only when the information is genuinely absent from the files.
+
+## Infrastructure Diagram
+
+<!-- Node labels must be single-line. Quote labels containing (), -, or /. No <br/> tags. -->
+\`\`\`mermaid
+graph TB
+  subgraph prod["Production"]
+    ing["Ingress / Load Balancer"] --> api["API Service"]
+    api --> db[("Database")]
+    api --> cache[("Cache")]
+  end
+  ext["External Services"] --> api
+\`\`\`
+
+Replace the template nodes above with actual services and components from k8s/ or terraform/. Include: ingress/load balancer, application services, databases, caches, queues. Group by environment where relevant.
+
+## Services and Containers
+
+| Service | Image / runtime | Port | Replicas | Purpose |
+|---|---|---|---|---|
+| [from Dockerfile or k8s Deployment manifests] | | | | |
+
+## External Dependencies
+
+| Service | Type | Used for |
+|---|---|---|
+| [third-party APIs, managed cloud services, identity providers — from env examples and connection configs] | | |
+
+## CI/CD Pipeline
+
+<!-- Node labels must be single-line. No <br/> tags. -->
+\`\`\`mermaid
+flowchart LR
+  commit["Git commit"] --> ci["CI: test + build"]
+  ci --> staging["Deploy staging"]
+  staging --> gate{"Manual gate?"}
+  gate -- yes --> approval["Approval"]
+  gate -- no --> prod["Deploy production"]
+  approval --> prod
+\`\`\`
+
+Replace this template with the actual pipeline steps from the CI/CD config files.
+
+## Gaps and Notes
+
+- [Infrastructure not yet captured in IaC]
+- [Environments referenced in code but absent from config]
+- [Anything the architect clarified verbally in Phase 3 that does not appear in files]
+```
+
+After saving the file:
+- Update `docs/02-design/technical/hld/index.md` — add a row for the deployment view. If the index file does not exist, create it:
+  ```markdown
+  # HLD Index
+
+  | Document | Scope | Status | Date |
+  |---|---|---|---|
+  | [Deployment View](deployment-view.md) | System-wide | Baseline | [today's ISO date] |
+  ```
+- Validate: run `grep -n '<br' docs/02-design/technical/hld/deployment-view.md` — output must be empty.
+
 ---
 
 ## Phase 5 — Surface architectural concerns
@@ -242,6 +330,8 @@ Output this exactly (fill in the blanks):
 
 **Decisions documented:**
 [List each ADR created with its title and file path]
+
+**Deployment view:** [path to deployment-view.md if generated, or "skipped — no IaC files found"]
 
 **Key constraints for the team:**
 [2–4 bullet points — the most important things every developer must know before starting a change]
