@@ -134,28 +134,17 @@ Record answers alongside each decision.
 
 ## Phase 4 — Document as ADRs
 
-### 4a — Review baseline ADR stubs first
+### 4a — Review and fill baseline ADR stubs
 
-Before creating any new ADRs, check what the plugin has already provided:
+Before creating any new ADRs, ensure the baseline stubs are present and offer the architect the chance to fill in any of them now.
+
+**Step 1 — Copy any missing stubs:**
 
 ```bash
 ls docs/02-design/technical/adrs/adr-000*.md 2>/dev/null
 ```
 
-**Expected baseline stubs (created by `/hitl:dev-start-brownfield` Step 0):**
-
-| File | Status | What to do |
-|---|---|---|
-| `adr-0001-hitl-adoption.md` | Pre-filled | Confirm the project start date is correct |
-| `adr-0002-documentation-first.md` | Pre-filled | Confirm it applies as-is |
-| `adr-0003-test-strategy.md` | **Stub — needs architect input** | Fill in the test framework, coverage threshold, and any exceptions for this project |
-| `adr-0004-change-tier-policy.md` | **Stub — needs architect input** | Confirm or adjust the default tier thresholds for this project's risk profile |
-| `adr-0005-observability-strategy.md` | **Stub — needs architect input** | Fill in the observability stack found in Phase 1b and Decision 9: logging, metrics, tracing, error tracking, alerting, on-call routing, token cost registry |
-| `adr-0006-branching-and-pr-strategy.md` | **Stub — needs architect input** | Fill in the branching model, branch naming convention, PR size expectation, required reviewers by tier, and merge strategy |
-| `adr-0007-security-baseline.md` | **Stub — needs architect input** | Fill in secret management approach, dependency scanning tool, SAST config, security review gates (when `/hitl:review-security` and `/hitl:ops-pentest` are mandatory), and compliance scope |
-| `adr-0008-data-backup-and-recovery.md` | **Stub — needs architect input** | Fill in RTO/RPO targets, backup approach per data store, restore procedure, verification cadence, and pre-deploy backup gate |
-
-If any of these files are missing, copy them now from the plugin:
+If any of the 8 baseline stubs are missing, copy them now from the plugin:
 ```bash
 PLUGIN_ROOT=$(python3 -c "
 import json,os,sys
@@ -181,25 +170,47 @@ for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
 done
 ```
 
-Ask the architect to work through the stubs that need input. Present them grouped by when they gate something:
+**Step 2 — Present the full baseline menu and let the architect choose:**
 
-**Before the first Tier 2 change:**
-- ADR-0003 (test strategy) — coverage gate cannot be enforced without it
-- ADR-0004 (change tier policy) — tier classification has no agreed thresholds
-- ADR-0006 (branching and PR strategy) — review gates and PR conventions are undefined
+Output this table:
 
-**Before the first Tier 2 production deploy:**
-- ADR-0005 (observability) — `/hitl:ops-setup-observability` requires the tooling stack to be defined
-- ADR-0007 (security baseline) — `/hitl:review-security` enforces standards defined here
-- ADR-0008 (data backup and recovery) — `/hitl:ops-backup-database` requires RTO/RPO and restore procedure
+| ADR | Topic | What it covers | Gates |
+|---|---|---|---|
+| 0001 | HITL adoption | Why HITL was adopted, expected ROI | — (pre-filled) |
+| 0002 | Documentation-first | Docs-before-code policy | — (pre-filled) |
+| 0003 | Test strategy | Framework, coverage threshold, mocking policy, CI gate | First Tier 2 change |
+| 0004 | Change tier policy | Tier classification thresholds for this project | First Tier 2 change |
+| 0005 | Observability strategy | Logging, metrics, tracing, error tracking, alerting, on-call, token cost | First Tier 2 prod deploy |
+| 0006 | Branching and PR strategy | Branching model, naming, PR size, reviewers by tier, merge strategy | First PR |
+| 0007 | Security baseline | Secret management, dependency scanning, SAST, security review gates, compliance | First Tier 2 prod deploy |
+| 0008 | Data backup and recovery | RTO/RPO, backup approach per store, restore procedure, verification cadence | First prod data write |
 
-Do not proceed to Phase 5 until at minimum ADR-0003, ADR-0004, and ADR-0006 are accepted.
+Then ask:
+
+> "These are the 8 baseline ADRs for this project. ADR-0001 and ADR-0002 are pre-filled — I'll confirm the dates are correct.
+>
+> For the remaining 6, which would you like to complete now? You can fill in all of them, pick a few to start, or defer them all. I'll pre-fill every field I can from the code and architecture review — you only need to answer what I can't infer."
+
+**Step 3 — Fill in whichever the architect selects:**
+
+For each ADR the architect wants to complete:
+- Read the stub file
+- Pre-fill every field already answerable from Phase 1b or Phase 2 (e.g., test framework found in CI config, branching model observed in git, observability stack from config files, backup tool from IaC)
+- Ask the architect only for fields that cannot be inferred from the codebase (e.g., RTO/RPO targets, compliance scope, required reviewer names, PR size policy)
+- Write the completed ADR and confirm: "Does ADR-XXXX look accurate?"
+- Repeat for each selected ADR before moving to the next
+
+**Step 4 — Note what remains outstanding:**
+
+After filling in the selected ADRs, list any deferred stubs and what they gate:
+
+> "Still outstanding: [list]. These can be filled in at any time by re-running `/hitl:architect-review-existing`. Note that [ADR-XXXX] is needed before [gate] — flag this with the team."
 
 ### 4b — Create ADRs for decisions from Phase 3
 
 For each decision that was deliberate, has significant constraints, or would surprise a new team member — create a real ADR in `docs/02-design/technical/adrs/`.
 
-Use the next available number after the baseline stubs (start from ADR-0005 unless higher-numbered ADRs already exist).
+Use the next available number after the baseline stubs (start from ADR-0009 unless higher-numbered ADRs already exist).
 
 **ADR format** (follow the same structure as `adr-0001-hitl-adoption.md` — confirmed present from 4a above — use it as the reference for section headings and the ROI Estimate block):
 
