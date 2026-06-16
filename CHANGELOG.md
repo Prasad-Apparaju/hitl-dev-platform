@@ -4,6 +4,32 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.20] — 2026-06-16
+
+### Added
+
+**Comprehensive usage guide (`shared/usage-guide.md`).**
+Distributed with the plugin. Covers all six team scenarios with start commands, step-by-step flows, human gates, and what each path produces:
+
+1. New project from a PRD
+2. Existing codebase (brownfield onboarding)
+3. Migration (source → target system replacement)
+4. Enhancement (day-to-day 32-step workflow)
+5. Bug fix (Tier 1 abbreviated path)
+6. Incident response (P0 fix-first, P1 abbreviated)
+
+Includes role-specific command tables for PM, Architect, QA, and Ops, plus context-switching guidance and a full quick-reference table.
+
+### Upgrade guide — 1.0.19 → 1.0.20
+
+```bash
+/hitl:dev-update
+```
+
+No project changes needed. The usage guide is available at `${CLAUDE_PLUGIN_ROOT}/shared/usage-guide.md` after updating.
+
+---
+
 ## [1.0.19] — 2026-06-16
 
 ### Fixed
