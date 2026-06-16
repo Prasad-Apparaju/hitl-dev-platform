@@ -78,7 +78,22 @@ print('NOT_FOUND')
 "
 ```
 
-If the version is the same as before, say: "Already on the latest version — no changes." and stop.
+If the version **changed**, continue to Step 4.
+
+If the version is **the same as before**, the plugin catalog cache is stale — run a cache-bust update:
+
+```bash
+# Delete the catalog cache so Claude Code fetches a fresh copy
+rm -f ~/.claude/plugins/plugin-catalog-cache.json
+
+# Re-fetch the marketplace and update
+claude plugin marketplace update hitl
+claude plugin update hitl@hitl
+```
+
+Then re-read the version (repeat the python3 block above). If it still hasn't changed, the installed commit SHA already matches what the marketplace advertises — the user is genuinely on the latest. Say: "Already on the latest version — no changes." and stop.
+
+If it changed after the cache bust, continue to Step 4.
 
 Show: "Updated: **v\<old\>** → **v\<new\>**"
 
