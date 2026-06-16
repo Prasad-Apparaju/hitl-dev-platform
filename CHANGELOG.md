@@ -4,6 +4,45 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.26] — 2026-06-16
+
+### Added
+
+**Baseline ADR set completed: ADR-0006, 0007, and 0008.**
+
+All three are picked up automatically by the `adr-000*.md` glob in Step 0 of every setup flow — no manual copy needed.
+
+- **ADR-0006 (Branching and PR strategy)**: branching model, branch naming convention, PR size expectations, required reviewers by change tier, merge strategy, and branch protection rules. Gates: first PR merged via the HITL workflow.
+
+- **ADR-0007 (Security baseline)**: secret management approach, dependency vulnerability scanning tool, SAST configuration, security review gates (when `/hitl:review-security` and `/hitl:ops-pentest` are mandatory), and compliance scope. Gates: first Tier 2 production deploy.
+
+- **ADR-0008 (Data backup and recovery)**: RTO/RPO targets, backup approach per data store, tested restore procedure, verification cadence, and the pre-deploy backup gate used by `/hitl:ops-backup-database`. Gates: first production data write.
+
+`/hitl:architect-review-existing` Phase 4a now lists all 8 baseline stubs with their gates, and groups the "ask architect" prompt by priority: stubs that block the first Tier 2 change vs stubs that block the first Tier 2 production deploy.
+
+**Complete baseline ADR set:**
+
+| ADR | Topic | Type | Gates |
+|---|---|---|---|
+| 0001 | HITL adoption | Pre-filled | — |
+| 0002 | Documentation-first | Pre-filled | — |
+| 0003 | Test strategy | Stub | First Tier 2 change |
+| 0004 | Change tier policy | Stub | First Tier 2 change |
+| 0005 | Observability strategy | Stub | First Tier 2 prod deploy |
+| 0006 | Branching and PR strategy | Stub | First PR |
+| 0007 | Security baseline | Stub | First Tier 2 prod deploy |
+| 0008 | Data backup and recovery | Stub | First prod data write |
+
+### Upgrade guide — 1.0.25 → 1.0.26
+
+```bash
+/hitl:dev-update
+```
+
+Existing projects: re-run `/hitl:architect-review-existing` — Phase 4a will copy ADR-0006, 0007, and 0008 stubs and prompt the architect to fill them in.
+
+---
+
 ## [1.0.25] — 2026-06-16
 
 ### Added
