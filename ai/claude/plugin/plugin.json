@@ -6,6 +6,7 @@
     "ai/claude/help",
     "ai/claude/update",
     "ai/claude/validate",
+    "ai/claude/switch-context",
     "ai/claude/start-from-prd",
     "ai/claude/start-brownfield",
     "ai/claude/start-migration",

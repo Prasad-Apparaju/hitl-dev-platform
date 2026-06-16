@@ -104,4 +104,19 @@ if [[ "$ALLOWED" == "false" ]]; then
   exit 2
 fi
 
+# Branch / change_id consistency check — catches context switches within a session.
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+BRANCH_ISSUE=$(echo "$CURRENT_BRANCH" | sed -n 's|issue/\([0-9]*\)-.*|\1|p')
+if [[ -n "$BRANCH_ISSUE" ]]; then
+  YAML_CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "")
+  YAML_ISSUE=$(echo "$YAML_CHANGE_ID" | sed -n 's|GH-\([0-9]*\)|\1|p')
+  if [[ -n "$YAML_ISSUE" && "$BRANCH_ISSUE" != "$YAML_ISSUE" ]]; then
+    echo "HITL CONTEXT MISMATCH: branch is 'issue/${BRANCH_ISSUE}-...' but current-change.yaml is for ${YAML_CHANGE_ID}." >&2
+    echo "All source edits are blocked until the context is realigned." >&2
+    echo "  • Run /hitl:dev-switch-context to reload context for issue #${BRANCH_ISSUE}." >&2
+    echo "  • Or start a new Claude Code session (recommended for clean context)." >&2
+    exit 2
+  fi
+fi
+
 exit 0
