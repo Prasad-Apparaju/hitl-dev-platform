@@ -4,6 +4,32 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.25] — 2026-06-16
+
+### Added
+
+**Observability setup added to all three onboarding flows. New ADR-0005 baseline stub.**
+
+- **New `adr-0005-observability-strategy.md` stub**: covers application observability (logging, metrics, tracing, error tracking, dashboards, alerting, on-call routing) and agentic observability (session logs, token cost registry). Automatically copied to every project during Step 0 setup via the existing `adr-000*.md` glob.
+
+- **Brownfield** (`/hitl:dev-start-brownfield`) — new Step 6 surveys existing observability infrastructure, seeds the token cost registry from the plugin template, fills in ADR-0005 with the architect, and flags gaps by severity (no logging = 🔴, no alerting = 🟡). Old Steps 6–10 shift to Steps 7–11.
+
+- **PRD** (`/hitl:dev-start-from-prd`) — Step 4 handoff now includes observability provisioning as item 3: set up app observability stack and token cost registry before first deploy.
+
+- **Migration** (`/hitl:dev-start-migration`) — Step 9 handoff now gates first production slice on observability infrastructure being in place for the target system.
+
+- **`/hitl:architect-review-existing`** — Phase 2 adds Decision 9 (Observability as-built): extracts logging format, metrics tooling, tracing, error tracking, and on-call routing. Phase 4a adds ADR-0005 to the baseline stubs table; all three stubs (ADR-0003, 0004, 0005) must be accepted before the first Tier 2 production deploy.
+
+### Upgrade guide — 1.0.24 → 1.0.25
+
+```bash
+/hitl:dev-update
+```
+
+Existing brownfield projects: re-run `/hitl:architect-review-existing` — Phase 4a will copy the missing ADR-0005 stub and ask the architect to fill it in. Then run Step 6 of `/hitl:dev-start-brownfield` as a standalone observability check.
+
+---
+
 ## [1.0.24] — 2026-06-16
 
 ### Added
