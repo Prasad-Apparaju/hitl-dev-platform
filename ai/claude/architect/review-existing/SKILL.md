@@ -132,11 +132,58 @@ Record answers alongside each decision.
 
 ## Phase 4 — Document as ADRs
 
+### 4a — Review baseline ADR stubs first
+
+Before creating any new ADRs, check what the plugin has already provided:
+
+```bash
+ls docs/02-design/technical/adrs/adr-000*.md 2>/dev/null
+```
+
+**Expected baseline stubs (created by `/hitl:dev-start-brownfield` Step 0):**
+
+| File | Status | What to do |
+|---|---|---|
+| `adr-0001-hitl-adoption.md` | Pre-filled | Confirm the project start date is correct |
+| `adr-0002-documentation-first.md` | Pre-filled | Confirm it applies as-is |
+| `adr-0003-test-strategy.md` | **Stub — needs architect input** | Fill in the test framework, coverage threshold, and any exceptions for this project |
+| `adr-0004-change-tier-policy.md` | **Stub — needs architect input** | Confirm or adjust the default tier thresholds for this project's risk profile |
+
+If any of these files are missing, copy them now from the plugin:
+```bash
+PLUGIN_ROOT=$(python3 -c "
+import json,os,sys
+try:
+  d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+  for inst in d.get('plugins',{}).get('hitl@hitl',[]):
+    p=inst.get('installPath','')
+    if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
+      print(p);sys.exit(0)
+except:pass
+try:
+  d=json.load(open(os.path.expanduser('~/.claude/settings.json')))
+  for p in d.get('plugins',[]):
+    path=p if isinstance(p,str) else p.get('path','')
+    if os.path.isfile(os.path.join(path,'.claude-plugin/plugin.json')):
+      print(path);sys.exit(0)
+except:pass
+" 2>/dev/null)
+mkdir -p docs/02-design/technical/adrs
+for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
+  dest="docs/02-design/technical/adrs/$(basename "$f")"
+  [[ -f "$dest" ]] || cp "$f" "$dest"
+done
+```
+
+Ask the architect to fill in ADR-0003 and ADR-0004 now. These gate the first Tier 2 change — do not proceed to Phase 5 without them.
+
+### 4b — Create ADRs for decisions from Phase 3
+
 For each decision that was deliberate, has significant constraints, or would surprise a new team member — create a real ADR in `docs/02-design/technical/adrs/`.
 
-Use the next available number after the default stubs (start from ADR-0005 unless higher-numbered ADRs already exist).
+Use the next available number after the baseline stubs (start from ADR-0005 unless higher-numbered ADRs already exist).
 
-**ADR format** (follow the same structure as `docs/02-design/technical/adrs/adr-0001-hitl-adoption.md` — use it as a reference for section headings and the ROI Estimate block):
+**ADR format** (follow the same structure as `adr-0001-hitl-adoption.md` — confirmed present from 4a above — use it as the reference for section headings and the ROI Estimate block):
 
 | Field | What to fill in for brownfield ADRs |
 |---|---|

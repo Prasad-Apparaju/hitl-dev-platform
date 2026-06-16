@@ -14,9 +14,34 @@ Bringing an existing codebase into HITL AI-Driven Development. Work through thes
 
 ## Step 0 — Wire up HITL hooks (once per project)
 
-Check whether `.hitl/hooks/` already exists. If it does, say "Hooks already wired — skipping." and proceed to Step 1.
+Check whether `.hitl/hooks/` already exists.
 
-If not:
+**If it does — hooks are already wired. Skip sub-steps 1–3, but still run sub-steps 4–5** (gitignore and ADR stubs are idempotent and must always be present):
+
+1. Find the plugin root (needed for the ADR copy):
+   ```bash
+   python3 -c "
+   import json, os, sys
+   try:
+       d = json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+       for inst in d.get('plugins', {}).get('hitl@hitl', []):
+           p = inst.get('installPath', '')
+           if os.path.isfile(os.path.join(p, '.claude-plugin/plugin.json')):
+               print(p); sys.exit(0)
+   except: pass
+   try:
+       d = json.load(open(os.path.expanduser('~/.claude/settings.json')))
+       for p in d.get('plugins', []):
+           path = p if isinstance(p, str) else p.get('path', '')
+           if os.path.isfile(os.path.join(path, '.claude-plugin/plugin.json')):
+               print(path); sys.exit(0)
+   except: pass
+   print('NOT_FOUND')
+   "
+   ```
+2. Run sub-steps 4 and 5 below (gitignore + ADR stubs), then say "Hooks already wired — skipped hook creation, ensured ADR stubs present." and proceed to Step 1.
+
+**If it does not exist — run all sub-steps:**
 
 1. Find the HITL plugin path:
    ```bash
