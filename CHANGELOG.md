@@ -4,6 +4,61 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.18] — 2026-06-16
+
+### Added
+
+**Per-issue feature branches with context isolation.**
+`/hitl:dev-apply-change` now creates an `issue/{N}-{slug}` branch before writing `.hitl/current-change.yaml` and commits the file immediately to anchor it to the branch. Each issue gets its own isolated YAML state automatically through git.
+
+**Three-layer context conflict detection.**
+Switching between issues in the same Claude Code session previously risked carrying stale context from the prior issue. Three defences now prevent this:
+
+1. `check-hitl-context.sh` (PreToolUse hook) — blocks source code edits if the current branch's issue number doesn't match the YAML's `change_id`. Exit code 2 stops the tool call.
+2. `welcome.sh` (UserPromptSubmit hook) — injects a visible `⚠️ HITL CONTEXT MISMATCH` warning into the model context on every prompt when branch and YAML diverge, even before any edit is attempted.
+3. `/hitl:dev-switch-context` (new skill) — explicit context reload: stashes uncommitted work, checks out the target branch, reads `current-change.yaml`, reloads the GitHub issue + HLD + LLD from disk, and outputs a context-reset block instructing the model to discard all prior conversation context.
+
+**Statusline breadcrumbs for all setup paths.**
+Previously only `Migration Setup` and `Development` phases showed breadcrumbs. Three new phases added:
+
+| Phase | Steps | Breadcrumb labels |
+|---|---|---|
+| `PRD Setup` | 4 | CLAUDE.md · Manifest · Issue · Handoff |
+| `Brownfield Setup` | 9 | MapCode · CLAUDE.md · Manifest · ArchRvw · Docs · Registries · Graphify · Issue · Handoff |
+| `Migration Review` | 5 | Context · Evaluate · MigReview · Brief · Handoff |
+
+All three start skills (`dev-start-from-prd`, `dev-start-brownfield`, `dev-start-migration`) now write `.hitl/current-change.yaml` at Step 1 and update `current_step` at each subsequent step.
+
+**Migration: source code is read-only.**
+The migration skill now explicitly states that the source codebase is being *replaced*, not extended. A mandatory block is appended to the project's `CLAUDE.md` during setup: source code is reference only; all target behaviors must be implemented from scratch using the behavioral inventory as the only bridge.
+
+**Workflow docs distributed with plugin.**
+`shared/workflow-prd.md`, `shared/workflow-brownfield.md`, and `shared/workflow-migration.md` are now bundled with the plugin. `build.sh` auto-syncs these on every build.
+
+### Fixed
+
+**Graphify install gate removed from setup skills.**
+`/hitl:dev-start-from-prd` and `/hitl:dev-start-brownfield` previously blocked setup with a machine-level install step (`uv tool install graphifyy`). The gate is removed; per-project commands (`graphify .`, `graphify hook install`) are retained as conditional steps that run only if Graphify is already installed.
+
+**Stale command names swept.**
+`/hitl:start-brownfield`, `/hitl:start-migration`, `/hitl:start-prd`, and `/hitl:ops-log-incident` replaced with current names across all skills and templates.
+
+**Release logic corrected.**
+`build.sh` previously set `marketplace.json source.commit` to the HEAD *before* the build commit, meaning installations always resolved to the prior version. A new `release.sh` script fixes the ordering: build → commit → pin SHA → create `hitl--vX.Y.Z` tag → commit marketplace update.
+
+**Adoption guide updated.**
+`docs/playbook/adoption-guide.md` referenced the deprecated `generate-docs reverse-engineer` sprint. Updated to reflect the current `/hitl:dev-start-brownfield` flow with `architect-review-existing` producing real ADRs.
+
+### Upgrade guide — 1.0.17 → 1.0.18
+
+```bash
+/hitl:dev-update
+```
+
+No migration needed for existing projects. New behaviour is additive — branches are created on next `/hitl:dev-apply-change` run. If you have an existing `.hitl/current-change.yaml` on `main`, it will continue to work; breadcrumbs and context checks activate on the next change.
+
+---
+
 ## [1.0.17] — 2026-06-15
 
 ### Added
