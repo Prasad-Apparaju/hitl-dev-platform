@@ -6,7 +6,9 @@ disable-model-invocation: true
 
 # Start a Migration Project
 
-Setting up a migration project for HITL AI-Driven Development. Migration is treated as a variant of brownfield: the source system is documented, the target system is designed, and external migration documentation is ingested as reference material — not as canonical HITL docs.
+Setting up a migration project for HITL AI-Driven Development.
+
+**Migration is not brownfield.** In brownfield you work *inside* the existing codebase — it is the live product. In migration the source codebase is being *replaced*: it is read-only reference. Only behaviors transfer to the target, never code. The behavioral inventory (`docs/00-migration/source-behavioral-inventory.md`) is the only bridge between the two systems.
 
 Work through these steps in order — pause after each and wait for confirmation before proceeding.
 
@@ -153,6 +155,23 @@ If `CLAUDE.md` has template placeholders (`{{coding_standards}}`, `{{#convention
 
 If `CLAUDE.md` already has real content, say: "`CLAUDE.md` looks customized — skipping." and move on.
 
+**Regardless of whether CLAUDE.md was just created or already existed, append the following block.** This rule must be present in every session so the agent never silently copies source code:
+
+```markdown
+## Migration — source code is read-only
+
+The source codebase (location recorded in `docs/00-migration/migration-context.yaml`) is
+reference only. It is being replaced, not extended.
+
+**Never copy, import, port, or adapt source code into the target.** All target behaviors
+must be implemented from scratch. The behavioral inventory at
+`docs/00-migration/source-behavioral-inventory.md` is the only bridge: each BI-NNN entry
+describes what the target must do; how it does it is a fresh design decision.
+
+If source code helps you understand a behavior, read it — then implement the behavior
+anew in the target language, framework, and style.
+```
+
 ---
 
 ## Step 3 — Initialize the system manifest for the target
@@ -212,7 +231,9 @@ Update `.hitl/current-change.yaml` — set `current_step`:
   phase: "Migration Setup"
 ```
 
-The source codebase is the ground truth for what the target system must do. This step extracts a **behavioral inventory** — the definitive list of APIs, domain behaviors, data contracts, and integration points that the target system must reproduce. Migration is only complete when every item in the inventory is covered.
+The source codebase is the ground truth for what the target must **do** — not for how to build it. This step extracts a **behavioral inventory**: the definitive list of APIs, domain behaviors, data contracts, and integration points that the target system must reproduce. Migration is only complete when every item in the inventory is covered.
+
+**Read-only rule:** the source code is reference material only. After this step, it must not influence the target's implementation — only the BI-NNN entries do. If source code clarifies a behavior during development, read it; then implement the behavior from scratch.
 
 **Locate the source code:**
 

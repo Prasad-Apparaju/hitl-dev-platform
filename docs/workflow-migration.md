@@ -2,7 +2,7 @@
 
 All steps from initialising a migration project through production delivery, following the `/hitl:dev-start-migration` path.
 
-**Key difference from PRD and brownfield paths:** you have two systems — a source (being replaced) and a target (being built). The source codebase is the ground truth for what the target must do. Migration is complete when every behaviour in `docs/00-migration/source-behavioral-inventory.md` is marked `Complete` or `Descoped` in the coverage matrix.
+**Key difference from PRD and brownfield paths:** migration is not brownfield. In brownfield you work *inside* the existing codebase — it is the live product. In migration the source codebase is being *replaced*: it is read-only reference. Only behaviors transfer to the target, never code. The behavioral inventory (`docs/00-migration/source-behavioral-inventory.md`) is the only bridge: each BI-NNN entry describes what the target must do; how it does it is a fresh design decision. Migration is complete when every BI entry is marked `Complete` or `Descoped` in the coverage matrix.
 
 ---
 
