@@ -129,6 +129,31 @@ Report: "IaC applied. `<summary>`. Ready to deploy with `/hitl:ops-deploy`."
 
 ---
 
+## Step 6 — Update the deployment view
+
+Check whether `docs/02-design/technical/hld/deployment-view.md` exists.
+
+**If it does not exist:** say "No deployment view found — run `/hitl:architect-review-existing` to generate one from your IaC files." and stop.
+
+**If it exists**, compare what was just applied (from Step 3's plan summary) against the current document:
+
+| What changed in the apply | What to update in deployment-view.md |
+|---|---|
+| New or removed service / container | Services and Containers table + Infrastructure Diagram |
+| New or removed external dependency | External Dependencies table |
+| Environment added, removed, or endpoint changed | Environments table |
+| CI/CD workflow changed | CI/CD Pipeline diagram |
+| Cloud provider, orchestration layer, or IaC tool changed | Summary paragraph + regenerate via Phase 4c |
+| Config tuning, secret rotation, version bump of existing service | No update needed |
+
+If any topology-visible change was applied, update the affected sections in place — do not regenerate the entire document unless the changes are structural enough to warrant it. After editing:
+- Re-validate: `grep -n '<br' docs/02-design/technical/hld/deployment-view.md` must return empty
+- Ask: "Does the updated deployment view look accurate?"
+
+If no topology change occurred, say: "Deployment view unchanged — no update needed." and stop.
+
+---
+
 ## Important Rules
 
 - Never skip the dry-run plan — run it on every apply, even for small changes

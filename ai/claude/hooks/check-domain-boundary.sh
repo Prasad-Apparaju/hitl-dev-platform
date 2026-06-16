@@ -122,4 +122,35 @@ while IFS= read -r file; do
   fi
 done <<< "$AFFECTED_PATHS"
 
+# Check for IaC file edits — warn if the deployment view may be stale
+DEPLOYMENT_VIEW="docs/02-design/technical/hld/deployment-view.md"
+if [[ -f "$DEPLOYMENT_VIEW" ]]; then
+  IAC_EDITED=false
+  IAC_FILE=""
+  while IFS= read -r file; do
+    case "$file" in
+      *Dockerfile*|*docker-compose*.yml|*docker-compose*.yaml|\
+      */k8s/*.yaml|*/k8s/*.yml|\
+      */helm/*.yaml|*/helm/*.yml|\
+      */terraform/*.tf|\
+      serverless.yml|serverless.yaml|\
+      */.github/workflows/*.yml|*/.github/workflows/*.yaml|\
+      */infra/*.tf|*/infra/*.yaml|*/infra/*.yml)
+        IAC_EDITED=true
+        IAC_FILE="$file"
+        break
+        ;;
+    esac
+  done <<< "$AFFECTED_PATHS"
+
+  if [[ "$IAC_EDITED" == "true" ]]; then
+    echo "HITL DEPLOYMENT VIEW MAY BE STALE:" >&2
+    echo "  IaC file edited: $IAC_FILE" >&2
+    echo "  If this changes the deployment topology (new service, new dependency," >&2
+    echo "  new environment, or CI/CD change), update:" >&2
+    echo "  $DEPLOYMENT_VIEW" >&2
+    echo "  To regenerate from current IaC: /hitl:architect-review-existing (Phase 4c)" >&2
+  fi
+fi
+
 exit 0
