@@ -4,6 +4,23 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.22] — 2026-06-16
+
+### Added
+
+**Deployment view HLD generated during brownfield architect review.**
+`/hitl:architect-review-existing` Phase 4c now reads the infrastructure files already surveyed in Phase 1b (Dockerfile, docker-compose.yml, k8s/, terraform/, serverless.yml, CI/CD configs) and generates `docs/02-design/technical/hld/deployment-view.md`. The document covers environments, a Mermaid infrastructure diagram, services/containers table, external dependencies, and CI/CD pipeline. If no IaC files are found, the step is skipped and flagged as a Phase 5 concern. Phase 6 handoff now reports whether the deployment view was generated.
+
+### Upgrade guide — 1.0.21 → 1.0.22
+
+```bash
+/hitl:dev-update
+```
+
+For existing brownfield projects: re-run `/hitl:architect-review-existing`. Phase 4c will generate the deployment view from your existing IaC files.
+
+---
+
 ## [1.0.21] — 2026-06-16
 
 ### Fixed
