@@ -339,7 +339,7 @@ Output this exactly (fill in the blanks):
 **Before your first Tier 2 change:**
 [List any 🔴 concerns that need resolution — e.g., "Complete ADR-0003 (test strategy) — the coverage gate cannot be enforced until the test framework is chosen"]
 
-**Ready for:** Step 5 of `/hitl:dev-start-brownfield` — identifying priority components for incremental documentation.
+**Ready for:** Step 6 of `/hitl:dev-start-brownfield` — identifying priority components for incremental documentation.
 
 ---
 

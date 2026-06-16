@@ -190,7 +190,14 @@ After `/hitl:architect-design-system` completes:
    Then commit: `git add graphify-out/ && git commit -m "chore: add graphify knowledge graph"` (add `graphify-out/manifest.json` and `graphify-out/cost.json` to `.gitignore` first).
    If Graphify is not yet installed, install it now (`uv tool install graphifyy && graphify claude install`) or skip — HITL skills work without it but perform better with it. See `shared/graphify-setup.md`.
 
-2. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it.
-3. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
+2. **Set up the build and deployment pipeline** before any code is written:
+   - The deployment view in the architect's HLD is the spec — use it to provision CI/CD (GitHub Actions, Jenkins, GitLab CI, etc.) with build, test, and deploy-to-staging jobs at minimum
+   - Provision at least one target environment (staging) — the 32-step workflow gates every PR on a passing staging deploy
+   - Verify: a commit triggers the pipeline and produces a deployable artifact
+   - Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
+   - Do not include a production deploy job without an explicit manual approval gate
+
+3. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it.
+4. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
 
 ---

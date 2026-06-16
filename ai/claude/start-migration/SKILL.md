@@ -430,7 +430,16 @@ The architect runs this to produce two documents:
 
 No design work (HLD/LLD) begins until both documents are approved. The migration brief is the required input for the architect design skills — it replaces `docs/01-product/prd.md` in the standard workflow.
 
-After the review, the architect runs `/hitl:architect-design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice). Each resulting slice is handed to developers via the standard 32-step workflow, and must declare which BI IDs it covers.
+After the review, the architect runs `/hitl:architect-design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice).
+
+**Before the first development slice begins — set up the target build and deployment pipeline:**
+- The deployment view in the architect's HLD is the spec — use it to provision CI/CD for the target repo (build, test, deploy-to-staging jobs at minimum)
+- Provision at least one target environment (staging) — the 32-step workflow gates every PR on a passing staging deploy
+- Verify: a commit to the target repo triggers the pipeline and produces a deployable artifact
+- Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
+- Do not include a production cutover step without an explicit manual approval gate and a rollback path
+
+Each resulting slice is then handed to developers via the standard 32-step workflow, and must declare which BI IDs it covers.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 
