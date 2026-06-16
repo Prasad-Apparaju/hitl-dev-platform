@@ -439,6 +439,11 @@ After the review, the architect runs `/hitl:architect-design-system docs/00-migr
 - Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
 - Do not include a production cutover step without an explicit manual approval gate and a rollback path
 
+Before the first slice is deployed to production, set up observability infrastructure for the target system:
+- Application observability: structured logging, metrics, dashboards, and alerting with on-call routing — record the chosen stack in `docs/02-design/technical/adrs/adr-0005-observability-strategy.md`
+- Agentic observability: copy `shared/templates/token-cost-registry-template.yaml` to `docs/04-operations/token-cost-registry.yaml`; session logs are written automatically by the HITL hooks
+- `/hitl:ops-setup-observability` gates each slice's production deploy — it requires the tools provisioned here to already exist
+
 Each resulting slice is then handed to developers via the standard 32-step workflow, and must declare which BI IDs it covers.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).

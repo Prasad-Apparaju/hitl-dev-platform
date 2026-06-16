@@ -96,6 +96,8 @@ For each category below, read the relevant code and identify the concrete decisi
 
 8. **Non-obvious patterns** — any patterns that deviate from the obvious approach for this stack (event sourcing, CQRS, strangler fig, saga, etc.)?
 
+9. **Observability as-built** — what structured logging library is in use and what format (JSON, plain text)? Are metrics emitted (Prometheus, Datadog, CloudWatch)? Is there distributed tracing (OpenTelemetry, Datadog APM, Jaeger)? Error tracking (Sentry, Rollbar)? Are dashboards and alert rules defined in the repo? Is there a documented on-call routing structure?
+
 Present findings as a numbered decision list:
 
 ```
@@ -148,6 +150,7 @@ ls docs/02-design/technical/adrs/adr-000*.md 2>/dev/null
 | `adr-0002-documentation-first.md` | Pre-filled | Confirm it applies as-is |
 | `adr-0003-test-strategy.md` | **Stub — needs architect input** | Fill in the test framework, coverage threshold, and any exceptions for this project |
 | `adr-0004-change-tier-policy.md` | **Stub — needs architect input** | Confirm or adjust the default tier thresholds for this project's risk profile |
+| `adr-0005-observability-strategy.md` | **Stub — needs architect input** | Fill in the observability stack found in Phase 1b and Decision 9: logging, metrics, tracing, error tracking, alerting, on-call routing, token cost registry |
 
 If any of these files are missing, copy them now from the plugin:
 ```bash
@@ -175,7 +178,7 @@ for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
 done
 ```
 
-Ask the architect to fill in ADR-0003 and ADR-0004 now. These gate the first Tier 2 change — do not proceed to Phase 5 without them.
+Ask the architect to fill in ADR-0003, ADR-0004, and ADR-0005 now. ADR-0003 and ADR-0004 gate the first Tier 2 change. ADR-0005 gates the first Tier 2 production deploy (required by `/hitl:ops-setup-observability`). Do not proceed to Phase 5 without all three accepted.
 
 ### 4b — Create ADRs for decisions from Phase 3
 
@@ -339,7 +342,7 @@ Output this exactly (fill in the blanks):
 **Before your first Tier 2 change:**
 [List any 🔴 concerns that need resolution — e.g., "Complete ADR-0003 (test strategy) — the coverage gate cannot be enforced until the test framework is chosen"]
 
-**Ready for:** Step 6 of `/hitl:dev-start-brownfield` — identifying priority components for incremental documentation.
+**Ready for:** Step 7 of `/hitl:dev-start-brownfield` — identifying priority components for incremental documentation.
 
 ---
 

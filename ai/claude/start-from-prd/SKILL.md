@@ -197,7 +197,12 @@ After `/hitl:architect-design-system` completes:
    - Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
    - Do not include a production deploy job without an explicit manual approval gate
 
-3. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it.
+3. **Set up observability infrastructure** before the first feature is deployed:
+   - Application observability: provision structured logging, metrics collection, a primary dashboard, and alerting with on-call routing — the stack chosen here is the spec for ADR-0005 in your docs
+   - Agentic observability: the token cost registry is at `docs/04-operations/token-cost-registry.yaml` (copy from `shared/templates/token-cost-registry-template.yaml`); session logs are written automatically by the HITL hooks
+   - `/hitl:ops-setup-observability` runs per change before deploy — it requires the tools provisioned here to already exist
+
+4. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it.
 4. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
 
 ---
