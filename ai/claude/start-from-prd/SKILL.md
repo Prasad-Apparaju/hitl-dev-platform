@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Setting up a new greenfield project for HITL AI-Driven Development. Work through these steps in order — pause after each and wait for confirmation before proceeding.
 
-**Quick sanity check:** If this codebase already has substantial source code, you likely want `/hitl:start-brownfield` instead. If you are migrating from one system to another, use `/hitl:start-migration`. Say so if either applies.
+**Quick sanity check:** If this codebase already has substantial source code, you likely want `/hitl:dev-start-brownfield` instead. If you are migrating from one system to another, use `/hitl:dev-start-migration`. Say so if either applies.
 
 ---
 

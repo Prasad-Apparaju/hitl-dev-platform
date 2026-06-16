@@ -10,7 +10,7 @@ Before step 1, ensure these artifacts exist:
 
 | Artifact | New project | Brownfield |
 |---|---|---|
-| `docs/system-manifest.yaml` | Run `/hitl:architect-design-system` from your PRD | Run `/hitl:start-brownfield` → baseline sprint (`/hitl:dev-generate-docs reverse-engineer`) |
+| `docs/system-manifest.yaml` | Run `/hitl:architect-design-system` from your PRD | Run `/hitl:dev-start-brownfield` (maps codebase, generates manifest, runs architect review) |
 | HLDs + LLDs | Produced by `/hitl:architect-design-system` | Produced by brownfield baseline sprint |
 | `docs/03-engineering/testing/test-registry.yaml` | Created empty by `/hitl:architect-design-system`; populated as changes land | Populate during baseline sprint from existing test catalog |
 | `docs/04-operations/incident-registry.yaml` | Starts empty; populated after each production incident | Seed during baseline sprint: "what broke in the last 6 months?" |

@@ -216,7 +216,7 @@ The 32-step workflow queries these two registries at multiple points. They must 
 **Incident registry** (`docs/04-operations/incident-registry.yaml`):
 - Ask: "What broke in production in the last 6 months? Describe each incident in one sentence."
 - For each answer, add one entry with `description`, `domain` (best guess), and `date`.
-- If they have nothing: create an empty stub and say: "You can add entries later — after each production incident, run `/hitl:ops-log-incident`."
+- If they have nothing: create an empty stub and say: "You can add entries later — after each production incident, run `/hitl:ops-incident`."
 
 ---
 
