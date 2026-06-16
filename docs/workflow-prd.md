@@ -4,34 +4,40 @@ All steps from project creation to production, following the `/hitl:dev-start-fr
 
 ---
 
-## 1. Project Setup — `/hitl:dev-start-from-prd`
+## 1. Project Setup
+
+Setup ends when `/hitl:architect-design-system` produces approved HLDs, LLDs, and a delivery plan. No per-change work begins before that point.
 
 ```mermaid
 graph TB
-  entry["/hitl:dev-start-from-prd"]
-  s0["Step 0 - Wire 7 hooks + settings.json + ADR stubs"]
-  s1["Step 1 - Customize CLAUDE.md"]
-  s2["Step 2 - Initialize system manifest"]
-  s3["Step 3 - Create first GitHub issue"]
-  s4["Step 4 - Confirm ready"]
-  design["/hitl:architect-design-system"]
-  graph_build["graphify . + graphify hook install (if Graphify is installed)"]
-  loop["Per-change delivery loop - see Section 2 and 3"]
+  subgraph SETUP["Project Setup — run once per project"]
+    entry["/hitl:dev-start-from-prd"]
+    s0["Step 0 - Wire 7 hooks + settings.json + 4 ADR stubs"]
+    s1["Step 1 - Customize CLAUDE.md"]
+    s2["Step 2 - Initialize system manifest"]
+    s3["Step 3 - Create first GitHub issue"]
+    s4["Step 4 - Confirm ready"]
+    design["/hitl:architect-design-system - HLDs + LLDs + delivery plan"]
+    graphify["graphify . + graphify hook install (if installed)"]
+    entry --> s0 --> s1 --> s2 --> s3 --> s4 --> design --> graphify
+  end
 
-  entry --> s0 --> s1 --> s2 --> s3 --> s4 --> design --> graph_build --> loop
+  loop["Per-change delivery loop - GitHub issue + /hitl:dev-practices"]
+
+  graphify --> loop
 ```
 
-### What each setup step does
+### What each step produces
 
-| Step | What happens | Output |
-|---|---|---|
-| 0 | Creates `.hitl/hooks/` with 7 wrappers, `.claude/settings.json` with hooks + statusLine, seeds 4 default ADR stubs | `.hitl/hooks/`, `.claude/settings.json`, `docs/02-design/technical/adrs/adr-000{1-4}.md` |
-| 1 | Fills in coding conventions, test framework, naming rules in CLAUDE.md | `CLAUDE.md` customized |
-| 2 | Drafts initial domain list from PRD → `docs/system-manifest.yaml` | `docs/system-manifest.yaml` (provisional) |
-| 3 | Creates the first tracked work item on GitHub | GitHub issue URL |
-| 4 | Confirms setup complete; hands off to architect | — |
-| Design | Full system design from PRD — domains, HLDs, LLDs, delivery plan | `docs/01-product/`, `docs/02-design/hld/`, `docs/02-design/lld/`, `docs/decisions/` |
-| Graphify | Builds knowledge graph from generated docs (optional — if Graphify is installed) | `graphify-out/graph.json` |
+| Step | Command | Output | Required before |
+|---|---|---|---|
+| 0 | _(wires hooks automatically)_ | `.hitl/hooks/`, `.claude/settings.json`, 4 ADR stubs | Everything else |
+| 1 | _(fills CLAUDE.md)_ | Conventions and test framework locked in | Code generation |
+| 2 | _(drafts manifest)_ | `docs/system-manifest.yaml` (provisional) | Architect design |
+| 3 | `gh issue create` | First GitHub issue | Delivery plan |
+| 4 | _(confirms ready)_ | — | — |
+| Design | `/hitl:architect-design-system` | HLDs, LLDs, `docs/decisions/issue-N.yaml` per slice | Per-change loop |
+| Graphify | `graphify . && graphify hook install` | `graphify-out/graph.json` (optional) | First `/hitl:dev-practices` run |
 
 ---
 
