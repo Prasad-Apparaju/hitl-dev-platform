@@ -12,14 +12,13 @@ graph TB
   s0["Step 0 - Wire 7 hooks + settings.json + ADR stubs"]
   s1["Step 1 - Customize CLAUDE.md"]
   s2["Step 2 - Initialize system manifest"]
-  s3["Step 3 - Install Graphify"]
-  s4["Step 4 - Create first GitHub issue"]
-  s5["Step 5 - Confirm ready"]
+  s3["Step 3 - Create first GitHub issue"]
+  s4["Step 4 - Confirm ready"]
   design["/hitl:architect-design-system"]
-  graph_build["graphify . + graphify hook install"]
+  graph_build["graphify . + graphify hook install (if Graphify is installed)"]
   loop["Per-change delivery loop - see Section 2 and 3"]
 
-  entry --> s0 --> s1 --> s2 --> s3 --> s4 --> s5 --> design --> graph_build --> loop
+  entry --> s0 --> s1 --> s2 --> s3 --> s4 --> design --> graph_build --> loop
 ```
 
 ### What each setup step does
@@ -29,10 +28,10 @@ graph TB
 | 0 | Creates `.hitl/hooks/` with 7 wrappers, `.claude/settings.json` with hooks + statusLine, seeds 4 default ADR stubs | `.hitl/hooks/`, `.claude/settings.json`, `docs/02-design/technical/adrs/adr-000{1-4}.md` |
 | 1 | Fills in coding conventions, test framework, naming rules in CLAUDE.md | `CLAUDE.md` customized |
 | 2 | Drafts initial domain list from PRD → `docs/system-manifest.yaml` | `docs/system-manifest.yaml` (provisional) |
-| 3 | Installs Graphify knowledge graph tool | `graphify` CLI available |
-| 4 | Creates the first tracked work item on GitHub | GitHub issue URL |
-| 5 | Confirms setup complete; hands off to architect | — |
+| 3 | Creates the first tracked work item on GitHub | GitHub issue URL |
+| 4 | Confirms setup complete; hands off to architect | — |
 | Design | Full system design from PRD — domains, HLDs, LLDs, delivery plan | `docs/01-product/`, `docs/02-design/hld/`, `docs/02-design/lld/`, `docs/decisions/` |
+| Graphify | Builds knowledge graph from generated docs (optional — if Graphify is installed) | `graphify-out/graph.json` |
 
 ---
 

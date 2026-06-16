@@ -174,18 +174,19 @@ The 32-step workflow queries these two registries at multiple points. They must 
 
 ---
 
-## Step 7 — Install Graphify
+## Step 7 — Build Graphify knowledge graph (optional)
 
 Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window.
 
+Run `graphify --version` to check if it is installed.
+
+**If installed:** run the per-project commands now:
 ```bash
-uv tool install graphifyy        # install once per machine (or: pipx install graphifyy)
-graphify claude install          # register /graphify skill with Claude Code
-graphify .                       # build the graph from existing code and docs
-graphify hook install            # auto-rebuild on every git commit
+graphify .              # build the graph from existing code and docs
+graphify hook install   # auto-rebuild on every git commit
 ```
 
-Then commit the graph so teammates get it immediately:
+Then commit so teammates get it immediately:
 ```bash
 echo "graphify-out/manifest.json" >> .gitignore
 echo "graphify-out/cost.json" >> .gitignore
@@ -193,11 +194,7 @@ git add graphify-out/ .gitignore
 git commit -m "chore: add graphify knowledge graph"
 ```
 
-Ask: "Is Graphify installed? (`graphify --version`)"
-- If yes: run the commands above and continue.
-- If no: show the install command and wait for confirmation.
-
-Full setup reference: `shared/graphify-setup.md`
+**If not installed:** say "Graphify not found — skipping. Install it when convenient with `uv tool install graphifyy && graphify claude install`, then run `graphify .` in this repo. HITL skills fall back gracefully without it. See `shared/graphify-setup.md`." and continue to Step 8.
 
 ---
 
