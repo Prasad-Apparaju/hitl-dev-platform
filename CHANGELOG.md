@@ -4,6 +4,24 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.27] — 2026-06-16
+
+### Changed
+
+**`/hitl:architect-review-existing` Phase 4a: architect now chooses which baseline ADRs to fill in.**
+
+Previously Phase 4a decided for the architect which stubs to complete and blocked progression until specific ones were accepted. The new approach presents all 8 baseline ADRs in a single table with their gating requirements, then asks the architect which to complete now. For each selected ADR, Claude pre-fills every field derivable from the Phase 1 and Phase 2 findings and asks only for the fields that cannot be inferred from code (RTO/RPO targets, compliance scope, reviewer names, PR size policy, etc.). Deferred stubs are listed at the end with their gates so the team knows what to follow up on.
+
+ADR numbering for new project-specific decisions (Phase 4b) corrected to start from ADR-0009.
+
+### Upgrade guide — 1.0.26 → 1.0.27
+
+```bash
+/hitl:dev-update
+```
+
+---
+
 ## [1.0.26] — 2026-06-16
 
 ### Added
