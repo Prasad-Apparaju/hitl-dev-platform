@@ -104,6 +104,17 @@ If not:
 
 ## Step 1 — Map the codebase
 
+**Write `.hitl/current-change.yaml` now** (enables breadcrumbs immediately):
+```yaml
+change_id: brownfield-setup
+tier: 0
+status: planning
+current_step:
+  number: 1
+  name: "Map codebase"
+  phase: "Brownfield Setup"
+```
+
 List the top-level directories and identify source code locations.
 - Ask: "Are these the right source directories? Anything to exclude?"
 - Confirm the language and framework.
@@ -111,6 +122,13 @@ List the top-level directories and identify source code locations.
 ---
 
 ## Step 2 — Customize CLAUDE.md
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 2
+  name: "Customize CLAUDE.md"
+  phase: "Brownfield Setup"
+```
 
 If `CLAUDE.md` has template placeholders (`{{coding_standards}}`, `{{#conventions}}`):
 - Ask: "What are this project's naming conventions, test framework, and any standards AI should follow?"
@@ -124,6 +142,13 @@ If `CLAUDE.md` already has real content, say: "`CLAUDE.md` looks customized — 
 
 ## Step 3 — Generate the system manifest baseline
 
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 3
+  name: "Generate manifest"
+  phase: "Brownfield Setup"
+```
+
 If `docs/system-manifest.yaml` is missing or template-only:
 - Run: `python tools/generate-manifest/generator.py --source [confirmed source dirs] --output docs/system-manifest.yaml`
 - If the generator is unavailable, say so and ask: "Describe your main services and domains — I'll create the manifest manually."
@@ -135,6 +160,13 @@ If a real manifest already exists, read it, summarize the domains, and ask: "Is 
 ---
 
 ## Step 4 — Review existing architecture
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 4
+  name: "Arch review"
+  phase: "Brownfield Setup"
+```
 
 Run `/hitl:architect-review-existing` to reconstruct the architectural decisions already in the codebase, interview the architect to confirm rationale and constraints, and document them as real ADRs before any incremental work begins.
 
@@ -149,6 +181,13 @@ Do not proceed to Step 5 until the architect has confirmed the ADRs are accurate
 
 ## Step 5 — Identify priority components for documentation
 
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 5
+  name: "Priority docs"
+  phase: "Brownfield Setup"
+```
+
 Ask: "Which components are most critical and most likely to change in the near term? List up to three."
 
 For each component:
@@ -159,6 +198,13 @@ For each component:
 ---
 
 ## Step 6 — Seed the registries
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 6
+  name: "Seed registries"
+  phase: "Brownfield Setup"
+```
 
 The 32-step workflow queries these two registries at multiple points. They must exist before `/hitl:dev-practices` is run for the first time.
 
@@ -175,6 +221,13 @@ The 32-step workflow queries these two registries at multiple points. They must 
 ---
 
 ## Step 7 — Build Graphify knowledge graph (optional)
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 7
+  name: "Graphify"
+  phase: "Brownfield Setup"
+```
 
 Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window.
 
@@ -200,6 +253,13 @@ git commit -m "chore: add graphify knowledge graph"
 
 ## Step 8 — Create your first change issue
 
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 8
+  name: "Create issue"
+  phase: "Brownfield Setup"
+```
+
 Ask: "What's the first change you want to make now that this project is onboarded?"
 - Run: `gh issue create --title "[change description]" --body "First tracked change after HITL brownfield onboarding."`
 - Show the issue URL.
@@ -207,6 +267,13 @@ Ask: "What's the first change you want to make now that this project is onboarde
 ---
 
 ## Step 9 — Confirm ready
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 9
+  name: "Confirm ready"
+  phase: "Brownfield Setup"
+```
 
 Output this exactly:
 

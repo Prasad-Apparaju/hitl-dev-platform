@@ -59,9 +59,21 @@ if [ -f "$YAML_FILE" ]; then
     total=0
 
     case "$phase" in
+      "PRD Setup")
+        NAMES=("" "CLAUDE.md" "Manifest" "Issue" "Handoff")
+        total=4
+        ;;
+      "Brownfield Setup")
+        NAMES=("" "MapCode" "CLAUDE.md" "Manifest" "ArchRvw" "Docs" "Registries" "Graphify" "Issue" "Handoff")
+        total=9
+        ;;
       "Migration Setup")
         NAMES=("" "Context" "CLAUDE.md" "Manifest" "DirSetup" "SrcAnal" "ExtDocs" "Registries" "Issue" "Handoff")
         total=9
+        ;;
+      "Migration Review")
+        NAMES=("" "Context" "Evaluate" "MigReview" "Brief" "Handoff")
+        total=5
         ;;
       "Development")
         NAMES=("" "Issue" "Figma" "Impact" "ROI" "Docs" "IaC" "Tests" "Train" "Packet"

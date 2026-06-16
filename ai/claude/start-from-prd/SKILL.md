@@ -104,6 +104,17 @@ If not:
 
 ## Step 1 — Customize CLAUDE.md
 
+**Write `.hitl/current-change.yaml` now** (enables breadcrumbs immediately):
+```yaml
+change_id: prd-setup
+tier: 0
+status: planning
+current_step:
+  number: 1
+  name: "Customize CLAUDE.md"
+  phase: "PRD Setup"
+```
+
 If `CLAUDE.md` has template placeholders (`{{coding_standards}}`, `{{#conventions}}`):
 - Ask: "What language and framework is this project? What test framework do you use? Any specific naming or formatting conventions?"
 - Fill in the placeholders based on their answers.
@@ -116,6 +127,13 @@ If `CLAUDE.md` already has real content, say: "`CLAUDE.md` looks customized — 
 
 ## Step 2 — Initialize the system manifest
 
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 2
+  name: "Initialize manifest"
+  phase: "PRD Setup"
+```
+
 If `docs/system-manifest.yaml` is missing or has template content:
 - Ask: "What are the main domains or services in this project? For each, give a one-line description."
 - Create `docs/system-manifest.yaml` with their answer. Map each domain to a plausible source path and mark as provisional.
@@ -127,6 +145,13 @@ If a real manifest already exists, say: "Manifest found — skipping." and move 
 
 ## Step 3 — Create your first GitHub issue
 
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 3
+  name: "Create GitHub issue"
+  phase: "PRD Setup"
+```
+
 - Ask: "What's the first feature you want to build?"
 - Run: `gh issue create --title "[feature name]" --body "Initial feature for [project name]. Created via HITL onboarding."`
 - Show the issue URL.
@@ -134,6 +159,13 @@ If a real manifest already exists, say: "Manifest found — skipping." and move 
 ---
 
 ## Step 4 — Confirm ready
+
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 4
+  name: "Confirm ready"
+  phase: "PRD Setup"
+```
 
 Output this exactly:
 
