@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.19] — 2026-06-16
+
+### Fixed
+
+**Plugin update cache-bust (`/hitl:dev-update`).**
+`claude plugin marketplace update` can silently skip an update when `plugin-catalog-cache.json` holds a stale `marketplace_sha`. The update skill now detects a no-op (version unchanged after update) and automatically deletes the catalog cache file, then retries. If the version still doesn't change after the cache bust, the user is genuinely on the latest.
+
+**`reinstall.sh` busts catalog cache and removes stale local marketplace entries.**
+Added two pre-install steps: delete `plugin-catalog-cache.json` (forces fresh fetch) and remove any `known_marketplaces.json` entries for hitl marketplaces pointing at local/tmp paths (left over from dev installs). These stale entries prevented the GitHub-based marketplace from being the authoritative source.
+
+### Upgrade guide — 1.0.18 → 1.0.19
+
+```bash
+/hitl:dev-update
+```
+
+If the update appears to be a no-op, the skill now handles it automatically. No manual steps needed.
+
+---
+
 ## [1.0.18] — 2026-06-16
 
 ### Added
