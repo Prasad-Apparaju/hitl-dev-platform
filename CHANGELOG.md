@@ -4,6 +4,27 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.21] — 2026-06-16
+
+### Fixed
+
+**Baseline ADR stubs not delivered in brownfield onboarding (`/hitl:dev-start-brownfield`).**
+Two bugs allowed the architect to reach `/hitl:architect-review-existing` without the 4 baseline ADR stubs:
+
+1. **Step 0 all-or-nothing skip.** When `.hitl/hooks/` already existed (interrupted setup, re-run, manual wiring), the entire Step 0 was skipped including the ADR stub copy. Restructured: hook wiring (sub-steps 1–3) is still skipped when hooks exist, but gitignore and ADR stub sub-steps (4–5) always run.
+
+2. **`architect-review-existing` never mentioned the stubs.** Added Phase 4a before any new ADRs are created: lists the 4 expected baseline stubs, copies any that are missing, and explicitly asks the architect to fill in ADR-0003 (test strategy) and ADR-0004 (change tier policy) before proceeding to ADR-0005+. These two stubs are pre-created but need architect input — they gate the first Tier 2 change.
+
+### Upgrade guide — 1.0.20 → 1.0.21
+
+```bash
+/hitl:dev-update
+```
+
+For existing brownfield projects missing the stubs: re-run `/hitl:architect-review-existing`. Phase 4a will detect and copy the missing files.
+
+---
+
 ## [1.0.20] — 2026-06-16
 
 ### Added
