@@ -4,6 +4,28 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.24] — 2026-06-16
+
+### Added
+
+**Build and deployment pipeline verification added to all three setup flows.**
+
+- **Brownfield** (`/hitl:dev-start-brownfield`) — new Step 5 verifies the existing pipeline: identifies the CI system (GitHub Actions, Jenkins, GitLab CI, CircleCI, Buildkite), runs a build check, confirms a staging deploy job exists. Offers to scaffold a starter pipeline if missing or broken. Old Steps 5–9 shift to Steps 6–10.
+
+- **PRD** (`/hitl:dev-start-from-prd`) — Step 4 handoff now includes a pipeline setup item: after architect design is approved, provision CI/CD from the deployment view HLD and verify a commit reaches staging before any code is written.
+
+- **Migration** (`/hitl:dev-start-migration`) — Step 9 handoff now includes an explicit pipeline gate between architect design approval and the first development slice: provision CI/CD for the target repo with build, test, and deploy-to-staging jobs; no production cutover step without a manual approval gate.
+
+### Upgrade guide — 1.0.23 → 1.0.24
+
+```bash
+/hitl:dev-update
+```
+
+Existing brownfield projects: Step 5 is now the pipeline verification step. If you have already completed brownfield setup, run the Step 5 pipeline check as a standalone verification before your next change.
+
+---
+
 ## [1.0.23] — 2026-06-16
 
 ### Added
