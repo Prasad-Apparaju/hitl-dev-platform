@@ -151,6 +151,9 @@ ls docs/02-design/technical/adrs/adr-000*.md 2>/dev/null
 | `adr-0003-test-strategy.md` | **Stub — needs architect input** | Fill in the test framework, coverage threshold, and any exceptions for this project |
 | `adr-0004-change-tier-policy.md` | **Stub — needs architect input** | Confirm or adjust the default tier thresholds for this project's risk profile |
 | `adr-0005-observability-strategy.md` | **Stub — needs architect input** | Fill in the observability stack found in Phase 1b and Decision 9: logging, metrics, tracing, error tracking, alerting, on-call routing, token cost registry |
+| `adr-0006-branching-and-pr-strategy.md` | **Stub — needs architect input** | Fill in the branching model, branch naming convention, PR size expectation, required reviewers by tier, and merge strategy |
+| `adr-0007-security-baseline.md` | **Stub — needs architect input** | Fill in secret management approach, dependency scanning tool, SAST config, security review gates (when `/hitl:review-security` and `/hitl:ops-pentest` are mandatory), and compliance scope |
+| `adr-0008-data-backup-and-recovery.md` | **Stub — needs architect input** | Fill in RTO/RPO targets, backup approach per data store, restore procedure, verification cadence, and pre-deploy backup gate |
 
 If any of these files are missing, copy them now from the plugin:
 ```bash
@@ -178,7 +181,19 @@ for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
 done
 ```
 
-Ask the architect to fill in ADR-0003, ADR-0004, and ADR-0005 now. ADR-0003 and ADR-0004 gate the first Tier 2 change. ADR-0005 gates the first Tier 2 production deploy (required by `/hitl:ops-setup-observability`). Do not proceed to Phase 5 without all three accepted.
+Ask the architect to work through the stubs that need input. Present them grouped by when they gate something:
+
+**Before the first Tier 2 change:**
+- ADR-0003 (test strategy) — coverage gate cannot be enforced without it
+- ADR-0004 (change tier policy) — tier classification has no agreed thresholds
+- ADR-0006 (branching and PR strategy) — review gates and PR conventions are undefined
+
+**Before the first Tier 2 production deploy:**
+- ADR-0005 (observability) — `/hitl:ops-setup-observability` requires the tooling stack to be defined
+- ADR-0007 (security baseline) — `/hitl:review-security` enforces standards defined here
+- ADR-0008 (data backup and recovery) — `/hitl:ops-backup-database` requires RTO/RPO and restore procedure
+
+Do not proceed to Phase 5 until at minimum ADR-0003, ADR-0004, and ADR-0006 are accepted.
 
 ### 4b — Create ADRs for decisions from Phase 3
 
