@@ -133,18 +133,21 @@ hitl_intake_directive() {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ⛔ HITL — NO ACTIVE CHANGE FOR THIS BRANCH
 
-  This is a HITL-enabled project. Before doing anything else you MUST take the
-  user through change intake — do NOT write code, edit files, or pursue an
-  unrelated request until a change is active:
+  This is a HITL-enabled project. Before any real work (writing code, editing
+  files) you MUST take the user through change intake. Intake itself is a normal
+  conversation — talking through the work and creating an issue is expected and
+  encouraged, not blocked:
 
-    1. Help the user choose a GitHub issue to work on (or create one).
+    1. If the user has no issue yet, chat to shape the work, then create one
+       (gh issue create, /hitl:pm-add-feature, or /hitl:pm-report-bug). If they
+       already have an issue, help them choose it.
     2. Determine the right HITL workflow for it (development / brownfield /
        migration / prd) by reading the issue and confirming with the user.
     3. Show the full ordered step plan for that workflow.
     4. Write + commit + push .hitl/current-change.yaml, then follow the breadcrumb.
 
-  Run  /hitl:dev-start-change  to do all of this. If the user asks for something
-  else first, complete change intake before acting on it.
+  Run  /hitl:dev-start-change  to do all of this. You may freely discuss and create
+  the issue first — just don't start editing files until a change is active.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DIRECTIVE
 }
