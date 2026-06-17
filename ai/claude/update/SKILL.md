@@ -138,8 +138,11 @@ This is what keeps the breadcrumb correct after the workflow's steps change betw
 (e.g. the brownfield workflow growing from 8 → 11 steps). It is HITL: it shows a diff and
 **requires confirmation** before writing.
 
-Requires `python3` with PyYAML. The generator below remaps by each step's stable `key`, so
-completion status survives renumbering. It writes a proposed file to
+Requires `python3` with PyYAML. The generator remaps by each step's stable `key`, so completion
+status survives renumbering. It is **surgical**: it only replaces the `workflow:` block (writing
+steps as single-line flow maps — the format the breadcrumb parser reads) and upserts the version
+stamps. Every other line, **including all inline comments**, is left byte-for-byte intact — the
+file is never round-tripped through a YAML dumper. It writes a proposed
 `.hitl/current-change.yaml.migrated` and prints a diff — it does **not** overwrite anything yet.
 
 ```bash
@@ -148,14 +151,15 @@ CATALOG="${CLAUDE_PLUGIN_ROOT:-.}/shared/workflows.yaml"
 NEW_VER=$(python3 -c "import json; print(json.load(open('${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json'))['version'])" 2>/dev/null || echo "0.0.0")
 
 python3 - "$CATALOG" "$NEW_VER" << 'PY'
-import sys, yaml, os
+import sys, re, yaml
 catalog_path, new_ver = sys.argv[1], sys.argv[2]
 F = ".hitl/current-change.yaml"
-doc = yaml.safe_load(open(F)) or {}
+text = open(F).read()                       # raw text — preserved verbatim except the bits we splice
+doc = yaml.safe_load(text) or {}            # parse is READ-ONLY; we never dump the doc back
 catalog = yaml.safe_load(open(catalog_path))["workflows"]
 
 # Determine the workflow id.
-wf = doc.get("workflow", {})
+wf = doc.get("workflow", {}) or {}
 wf_id = wf.get("id")
 if not wf_id:
     phase = (doc.get("current_step") or {}).get("phase", "")
@@ -171,10 +175,8 @@ new_steps, diff = [], []
 for s in cat["steps"]:
     key = s["key"]
     if key in old_steps:
-        status = old_steps[key].get("status", "open")
-        tag = "  keep"
+        status = old_steps[key].get("status", "open"); tag = "  keep"
     else:
-        # New step. Mark done if it sits before the current pointer, else open.
         status = "open"
         if isinstance(old_cur_n, int) and str(s["n"]).rstrip("a").isdigit() and int(str(s["n"]).rstrip("a")) < old_cur_n:
             status = "done"
@@ -187,25 +189,37 @@ if not any(s["status"]=="current" for s in new_steps):
     target = next((s for s in new_steps if s["key"]==old_cur_key), None) \
           or next((s for s in new_steps if s["status"]!="done"), new_steps[0])
     target["status"] = "current"
-removed = [k for k in old_steps if k not in {s["key"] for s in new_steps}]
-for k in removed:
+for k in (k for k in old_steps if k not in {s["key"] for s in new_steps}):
     diff.append(f"  - removed {'':>3} {k}")
 
-doc["schema_version"] = "2.0"
-doc["hitl_version"] = new_ver
-doc["workflow"] = {"id": wf_id, "version": new_ver, "total": cat["total"], "steps": new_steps}
-cur = next(s for s in new_steps if s["status"]=="current")
-n = str(cur["n"]); doc.setdefault("current_step", {})
-doc["current_step"]["number"] = int(n.rstrip("a")) if n.rstrip("a").isdigit() else n
-if n.endswith("a"): doc["current_step"]["substep"] = "a"
+# Build the new workflow block as TEXT — single-line flow maps (the only format _steps.sh parses).
+wb = ["workflow:", f"  id: {wf_id}", f'  version: "{new_ver}"', f"  total: {cat['total']}", "  steps:"]
+for s in new_steps:
+    wb.append(f'    - {{ n: {s["n"]}, key: {s["key"]}, label: "{s["label"]}", status: {s["status"]} }}')
+wb = "\n".join(wb) + "\n"
 
-with open(F + ".migrated", "w") as f:
-    yaml.safe_dump(doc, f, sort_keys=False, default_flow_style=False)
+# Splice: replace the existing top-level `workflow:` block, or insert it if absent (pre-v2 file).
+pat = re.compile(r"(?ms)^workflow:.*?(?=^\S|\Z)")
+if pat.search(text):
+    out = pat.sub(lambda m: wb, text, count=1)
+elif re.search(r"(?m)^current_step:", text):
+    out = re.sub(r"(?m)^current_step:", wb + "current_step:", text, count=1)
+elif re.search(r"(?m)^source_artifacts:", text):
+    out = re.sub(r"(?m)^source_artifacts:", wb + "source_artifacts:", text, count=1)
+else:
+    out = text.rstrip("\n") + "\n" + wb
 
+# Upsert the scalar version stamps (replace the line in place, or prepend if missing).
+def upsert(text, key, val):
+    line = f'{key}: "{val}"'
+    return re.sub(rf"(?m)^{key}:.*$", lambda m: line, text, count=1) if re.search(rf"(?m)^{key}:", text) else line + "\n" + text
+out = upsert(out, "schema_version", "2.0")
+out = upsert(out, "hitl_version", new_ver)
+
+open(F + ".migrated", "w").write(out)
 print(f"Workflow: {wf_id}  →  {cat['total']} steps (was {wf.get('total','?')})")
-print("Step migration (remapped by key):")
-print("\n".join(diff))
-print(f"\nProposed file written to {F}.migrated — review the diff above.")
+print("Step migration (remapped by key):"); print("\n".join(diff))
+print(f"\nProposed file written to {F}.migrated (comments + other fields preserved) — review above.")
 PY
 ```
 

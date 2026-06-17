@@ -4,6 +4,23 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.29] — 2026-06-17
+
+### Fixed
+
+**`/hitl:dev-update` change-file migration no longer mangles `current-change.yaml`.** The 1.0.28
+migration (Step 4.5) round-tripped the whole file through `yaml.safe_dump`, which (1) **stripped
+every inline comment** — destroying hand-written annotations like `# CORRECTED` / `# MISSED in
+first draft` on the impact analysis — and (2) wrote the steps as multi-line **block** maps, which
+the breadcrumb parser (`hooks/_steps.sh`) can't read, producing a "step trail unavailable" error.
+
+The migration is now **surgical**: it replaces only the `workflow:` block (as single-line flow
+maps) and upserts the version stamps, leaving every other line — and all comments — byte-for-byte
+intact. The file is never round-tripped through a YAML dumper. Reported by a user upgrading the
+Cerrtus consolidation to 1.0.28.
+
+---
+
 ## [1.0.28] — 2026-06-16
 
 ### Added
