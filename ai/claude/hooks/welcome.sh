@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # UserPromptSubmit hook: HITL status banner.
-# When a change is in progress with a known current_step: shows breadcrumbs every prompt.
-# Otherwise: shows the static startup menu once per session.
+# - No active change for this branch → inject the mandatory intake directive (forces change
+#   selection before any work; see hitl-gate.sh for the SessionStart counterpart).
+# - Active change → show the breadcrumb (header + windowed step trail) on every prompt,
+#   driven entirely by the self-describing `workflow` block in current-change.yaml.
+# - Branch ↔ change mismatch (issue #12) → append a warning marker.
+#
+# The step model is NEVER hardcoded here — it is read from the change file via _steps.sh, so
+# this banner and the persistent status line (statusline-hitl.sh) can never drift.
 
 [[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
 
@@ -10,114 +16,57 @@ if [[ -f ".env" ]]; then
   set -a; source ".env"; set +a
 fi
 
+# Shared parser/rendering library (lives beside this script in both source and plugin layouts).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_steps.sh"
+
 HITL_FILE=".hitl/current-change.yaml"
 SEP="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Abbreviated step names (indices 1–32; 19a handled as substep of 19)
-NAMES=("" "Issue" "Figma" "Impact" "ROI" "Docs" "IaC" "Tests" "Train" "Packet"
-       "RED" "TstRvw" "Dsn+" "VfyRED" "GREEN" "VfyGRN" "Refact"
-       "Conv" "Rvw1" "Rvw2" "Rerun" "Recncl" "QAVfy" "ImpBrf"
-       "Rollout" "VfyPR" "IntVfy" "Figma2" "Deploy" "Promote" "Pentest" "30dROI" "90dROI")
-
-show_breadcrumbs() {
-  # Parse current_step block from the YAML (controlled schema, no full parser needed)
-  local cs_block
-  cs_block=$(awk '/^current_step:/{f=1;next} f && /^[^ ]/{exit} f{print}' "$HITL_FILE")
-
-  local step_num step_name phase change_id tier substep
-  step_num=$(echo "$cs_block"  | awk '/number:/{print $2}')
-  step_name=$(echo "$cs_block" | awk -F'"' '/name:/{print $2}')
-  phase=$(echo "$cs_block"     | awk -F'"' '/phase:/{print $2}')
-  substep=$(echo "$cs_block"   | awk -F'"' '/substep:/{print $2}')
-  change_id=$(awk '/^change_id:/{print $2}' "$HITL_FILE")
-  tier=$(awk '/^tier:/{print $2}' "$HITL_FILE")
-
-  # Validate — fall through to static menu if step_num is missing
-  [[ -z "$step_num" || ! "$step_num" =~ ^[0-9]+$ ]] && return 1
-
-  # Compute display step (e.g. "19a" when substep is set)
-  local display_step="${step_num}"
-  [[ -n "$substep" ]] && display_step="${step_num}${substep}"
-
-  # Build trail: show a window of 7 steps centred on current step (3 back + current + 3 ahead)
-  local win_start=$(( step_num - 3 )); (( win_start < 1  )) && win_start=1
-  local win_end=$(( step_num + 3 ));   (( win_end  > 32 )) && win_end=32
-
-  local trail=""
-  (( win_start > 1 )) && trail="… "
-  for (( i=win_start; i<=win_end; i++ )); do
-    local name="${NAMES[$i]}"
-    if [[ -n "$substep" && "$i" -eq "$step_num" ]]; then
-      # Parent step is done; substep is current
-      trail+="✓${i}.${name} ▶${display_step}.ArchRvw "
-    elif (( i <  step_num )); then trail+="✓${i}.${name} "
-    elif (( i == step_num )); then trail+="▶${i}.${name} "
-    else                           trail+="·${i}.${name} "
-    fi
-  done
-  (( win_end < 32 )) && trail+="…"
-
-  echo "$SEP"
-  printf "  HITL — %s  •  Step %s / 32: %s\n" "$phase" "$display_step" "$step_name"
-  printf "  change: %s  •  tier: %s\n"         "$change_id" "$tier"
-  echo  ""
-  printf "  %s\n" "$trail"
-  echo "$SEP"
-  return 0
-}
-
-# Branch / change_id mismatch check — inject warning into model context on every prompt.
-# This surfaces the stale-context problem even when check-hitl-context doesn't fire
-# (e.g. the user asks a question rather than triggering an Edit/Write).
 CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
-BRANCH_ISSUE=$(echo "$CURRENT_BRANCH" | sed -n 's|issue/\([0-9]*\)-.*|\1|p')
-if [[ -f "$HITL_FILE" && -n "$BRANCH_ISSUE" ]]; then
-  YAML_CHANGE_ID=$(grep "^change_id:" "$HITL_FILE" | awk '{print $2}' | tr -d '"' || echo "")
-  YAML_ISSUE=$(echo "$YAML_CHANGE_ID" | sed -n 's|GH-\([0-9]*\)|\1|p')
-  if [[ -n "$YAML_ISSUE" && "$BRANCH_ISSUE" != "$YAML_ISSUE" ]]; then
-    echo "$SEP"
-    echo "  ⚠️  HITL CONTEXT MISMATCH"
-    echo ""
-    echo "  Git branch : $CURRENT_BRANCH  (issue #$BRANCH_ISSUE)"
-    echo "  YAML       : $YAML_CHANGE_ID  (issue #$YAML_ISSUE)"
-    echo ""
-    echo "  The branch and HITL context are out of sync."
-    echo "  Source edits are blocked. Claude's context may contain stale data"
-    echo "  from the previous issue — do not rely on any prior analysis."
-    echo ""
-    echo "  To fix:"
-    echo "    /hitl:dev-switch-context         reload context for issue #$BRANCH_ISSUE"
-    echo "    git checkout issue/$YAML_ISSUE-... return to the issue #$YAML_ISSUE branch"
-    echo "    New session (recommended)         start a fresh Claude Code session"
-    echo "$SEP"
-    exit 0
-  fi
+
+# ── No active change → force intake (the "you must pick an issue + workflow" gate) ─────────────
+if ! hitl_change_active "$HITL_FILE"; then
+  hitl_intake_directive
+  exit 0
 fi
 
-# When a change is in progress, show breadcrumbs on every prompt
-if [[ -f "$HITL_FILE" ]] && grep -q "^current_step:" "$HITL_FILE" 2>/dev/null; then
-  show_breadcrumbs && exit 0
+# ── Active change → render the breadcrumb from the embedded workflow block ─────────────────────
+# Header fields. change_id/tier are top-level; the human-readable step name + phase come from
+# the current_step compat pointer; the step number/total/trail come from the embedded block.
+change_id=$(hitl_scalar "$HITL_FILE" change_id)
+tier=$(hitl_scalar "$HITL_FILE" tier)
+cs_block=$(awk '/^current_step:/{f=1;next} f && /^[^ ]/{exit} f{print}' "$HITL_FILE")
+step_name=$(echo "$cs_block" | awk -F'"' '/name:/{print $2}')
+phase=$(echo "$cs_block"     | awk -F'"' '/phase:/{print $2}')
+
+# Branch reconciliation marker (issue #12).
+warn=""
+case "$(hitl_branch_reconcile "$HITL_FILE" "$CURRENT_BRANCH")" in
+  mismatch)     warn="   ⚠ branch=${CURRENT_BRANCH} ≠ ${change_id} — context may be stale; run /hitl:dev-switch-context" ;;
+  unverifiable) warn="   ⚠ branch=${CURRENT_BRANCH} (can't verify against ${change_id})" ;;
+esac
+
+echo "$SEP"
+if hitl_has_workflow "$HITL_FILE"; then
+  wf=$(hitl_workflow_field "$HITL_FILE" id)
+  cur=$(hitl_current_n "$HITL_FILE")
+  total=$(hitl_total "$HITL_FILE")
+  [[ -z "$step_name" ]] && step_name=$(hitl_current_label "$HITL_FILE")
+  printf "  HITL — %s  •  Step %s / %s: %s\n" "${phase:-$wf}" "${cur:-?}" "${total:-?}" "$step_name"
+  printf "  change: %s  •  tier: %s  •  workflow: %s\n" "$change_id" "${tier:-?}" "$wf"
+  [[ -n "$warn" ]] && echo "$warn"
+  echo ""
+  printf "  %s\n" "$(hitl_render_trail "$HITL_FILE")"
+else
+  # Back-compat: pre-v2 file with a bare current_step and no embedded workflow block.
+  num=$(echo "$cs_block" | awk '/number:/{print $2}')
+  printf "  HITL — %s  •  Step %s: %s\n" "${phase:-change}" "${num:-?}" "$step_name"
+  printf "  change: %s  •  tier: %s\n" "$change_id" "${tier:-?}"
+  [[ -n "$warn" ]] && echo "$warn"
+  echo ""
+  echo "  (step trail unavailable — run /hitl:dev-update to migrate this change to the"
+  echo "   self-describing workflow format)"
 fi
-
-# No active change — show static startup menu once per session
-SESSION_MARKER="${TMPDIR:-${TMP:-/tmp}}/hitl-welcomed-${PPID}"
-[[ -f "$SESSION_MARKER" ]] && exit 0
-touch "$SESSION_MARKER"
-
-cat << 'BANNER'
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  HITL AI-Driven Development — platform active
-
-  Start a project:
-    /hitl:dev-start-from-prd    new project from a PRD
-    /hitl:dev-start-brownfield  onboard an existing codebase
-    /hitl:dev-start-migration   migrate from one system to another
-
-  Run a change:
-    /hitl:dev-practices      begin a new change (full 32-step workflow)
-
-  Roles: /pm  /architect  /qa  /ops
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-BANNER
-
+echo "$SEP"
 exit 0

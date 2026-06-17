@@ -1,0 +1,129 @@
+# HITL Workflow Catalog — canonical, machine-readable step models for every workflow.
+#
+# This file is the SINGLE SOURCE OF TRUTH for workflow step plans. It is consumed by:
+#   - /hitl:dev-start-change  — to print the step plan and seed `workflow.steps[]` in
+#                               .hitl/current-change.yaml when a change starts
+#   - the dev-start-* skills   — same, for their setup workflows
+#   - /hitl:dev-update         — to migrate an existing change file's embedded workflow
+#                               block to the current definition (remap by stable `key`)
+#
+# Breadcrumb RENDERERS (hooks/welcome.sh, hooks/statusline-hitl.sh) do NOT read this file
+# directly — they read the SELF-DESCRIBING `workflow` block copied into the change file, so
+# the breadcrumb is portable and renderable without the installed plugin. This file is the
+# master those copies are made from. Keeping one master here makes the four-way drift that
+# previously existed (welcome.sh / statusline-hitl.sh / workflow-steps.md / schema) impossible.
+#
+# Step fields:
+#   n      — step identifier. Integer for normal steps; string for substeps (e.g. "19a").
+#   key    — STABLE identifier. Survives renumbering. dev-update remaps completion status by key.
+#   label  — short breadcrumb label (≤8 chars preferred) shown in the windowed trail.
+#   phase  — workflow phase this step belongs to (drives current_step.phase).
+#
+# `total` is the DENOMINATOR shown in the breadcrumb ("Step n / total") = the highest integer
+# step number. Substeps (19a) are part of their parent and do NOT increment the denominator.
+
+schema_version: "2.0"
+
+workflows:
+
+  # ── Development: the 31-step change workflow (+ 19a architect-review substep) ──────────────
+  # Canonical source: ai/claude/dev-practices/workflow-steps.md. There is NO standalone
+  # "Pentest" step — penetration testing lives inside the ops deploy sequence (step 28).
+  development:
+    id: development
+    title: "Development — deliver a change"
+    total: 31
+    steps:
+      - { n: 1,   key: issue,              label: "Issue",    phase: "Requirements" }
+      - { n: 2,   key: figma,              label: "Figma",    phase: "Requirements" }
+      - { n: 3,   key: impact,             label: "Impact",   phase: "Design" }
+      - { n: 4,   key: roi,                label: "ROI",      phase: "Design" }
+      - { n: 5,   key: docs,               label: "Docs",     phase: "Design" }
+      - { n: 6,   key: iac,                label: "IaC",      phase: "Design" }
+      - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design" }
+      - { n: 8,   key: training,           label: "Train",    phase: "Design" }
+      - { n: 9,   key: packet,             label: "Packet",   phase: "Design" }
+      - { n: 10,  key: red,                label: "RED",      phase: "Build" }
+      - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build" }
+      - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build" }
+      - { n: 13,  key: verify_red,         label: "VfyRED",   phase: "Build" }
+      - { n: 14,  key: green,              label: "GREEN",    phase: "Build" }
+      - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build" }
+      - { n: 16,  key: refactor,           label: "Refact",   phase: "Build" }
+      - { n: 17,  key: conventions,        label: "Conv",     phase: "Build" }
+      - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify" }
+      - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify" }
+      - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify" }
+      - { n: 20,  key: rerun,              label: "Rerun",    phase: "Verify" }
+      - { n: 21,  key: reconcile,          label: "Recncl",   phase: "Verify" }
+      - { n: 22,  key: qa_verify,          label: "QAVfy",    phase: "Verify" }
+      - { n: 23,  key: impact_brief,       label: "ImpBrf",   phase: "Assess" }
+      - { n: 24,  key: rollout,            label: "Rollout",  phase: "Assess" }
+      - { n: 25,  key: verify_pr,          label: "VfyPR",    phase: "Ship" }
+      - { n: 26,  key: integration_verify, label: "IntVfy",   phase: "Ship" }
+      - { n: 27,  key: figma_compare,      label: "Figma2",   phase: "Ship" }
+      - { n: 28,  key: deploy,             label: "Deploy",   phase: "Ship" }
+      - { n: 29,  key: promote,            label: "Promote",  phase: "Ship" }
+      - { n: 30,  key: roi_30,             label: "30dROI",   phase: "Post-Ship" }
+      - { n: 31,  key: roi_90,             label: "90dROI",   phase: "Post-Ship" }
+
+  # ── Brownfield setup: onboard an existing codebase (11 steps) ──────────────────────────────
+  # Canonical source: ai/claude/start-brownfield/SKILL.md
+  brownfield:
+    id: brownfield
+    title: "Brownfield — onboard an existing codebase"
+    total: 11
+    steps:
+      - { n: 1,  key: map_code,         label: "MapCode",   phase: "Brownfield Setup" }
+      - { n: 2,  key: claude_md,        label: "CLAUDE.md", phase: "Brownfield Setup" }
+      - { n: 3,  key: manifest,         label: "Manifest",  phase: "Brownfield Setup" }
+      - { n: 4,  key: arch_review,      label: "ArchRvw",   phase: "Brownfield Setup" }
+      - { n: 5,  key: verify_pipeline,  label: "Pipeline",  phase: "Brownfield Setup" }
+      - { n: 6,  key: observability,    label: "Observ",    phase: "Brownfield Setup" }
+      - { n: 7,  key: priority_docs,    label: "Docs",      phase: "Brownfield Setup" }
+      - { n: 8,  key: seed_registries,  label: "Registries",phase: "Brownfield Setup" }
+      - { n: 9,  key: graphify,         label: "Graphify",  phase: "Brownfield Setup" }
+      - { n: 10, key: create_issue,     label: "Issue",     phase: "Brownfield Setup" }
+      - { n: 11, key: confirm_ready,    label: "Ready",     phase: "Brownfield Setup" }
+
+  # ── Migration setup: stand up a target for a system migration (9 steps) ─────────────────────
+  # Canonical source: ai/claude/start-migration/SKILL.md
+  migration:
+    id: migration
+    title: "Migration — set up a target for a system migration"
+    total: 9
+    steps:
+      - { n: 1, key: collect_context,  label: "Context",    phase: "Migration Setup" }
+      - { n: 2, key: claude_md,        label: "CLAUDE.md",  phase: "Migration Setup" }
+      - { n: 3, key: manifest,         label: "Manifest",   phase: "Migration Setup" }
+      - { n: 4, key: dir_setup,        label: "DirSetup",   phase: "Migration Setup" }
+      - { n: 5, key: source_analysis,  label: "SrcAnal",    phase: "Migration Setup" }
+      - { n: 6, key: ext_docs,         label: "ExtDocs",    phase: "Migration Setup" }
+      - { n: 7, key: seed_registries,  label: "Registries", phase: "Migration Setup" }
+      - { n: 8, key: create_issue,     label: "Issue",      phase: "Migration Setup" }
+      - { n: 9, key: confirm_ready,    label: "Ready",      phase: "Migration Setup" }
+
+  # ── Migration review: critically evaluate external migration docs (5 steps) ─────────────────
+  # Canonical source: ai/claude/migrate/review-external-docs/SKILL.md
+  migration_review:
+    id: migration_review
+    title: "Migration Review — evaluate external migration docs"
+    total: 5
+    steps:
+      - { n: 1, key: read_context,  label: "Context",  phase: "Migration Review" }
+      - { n: 2, key: evaluate,      label: "Evaluate", phase: "Migration Review" }
+      - { n: 3, key: write_review,  label: "MigRvw",   phase: "Migration Review" }
+      - { n: 4, key: write_brief,   label: "Brief",    phase: "Migration Review" }
+      - { n: 5, key: handoff,       label: "Handoff",  phase: "Migration Review" }
+
+  # ── PRD setup: stand up a greenfield project from a PRD (4 steps) ────────────────────────────
+  # Canonical source: ai/claude/start-from-prd/SKILL.md
+  prd:
+    id: prd
+    title: "PRD — stand up a greenfield project from a PRD"
+    total: 4
+    steps:
+      - { n: 1, key: claude_md,     label: "CLAUDE.md", phase: "PRD Setup" }
+      - { n: 2, key: manifest,      label: "Manifest",  phase: "PRD Setup" }
+      - { n: 3, key: create_issue,  label: "Issue",     phase: "PRD Setup" }
+      - { n: 4, key: confirm_ready, label: "Ready",     phase: "PRD Setup" }

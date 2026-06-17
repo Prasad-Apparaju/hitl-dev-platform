@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
-# PreToolUse hook: verify HITL context file exists before source code edits.
+# PreToolUse hook: enforce HITL change intake before edits.
 # Handles Claude Code input (tool_name: Edit/Write, tool_input.file_path)
 # and Codex input (tool_name: apply_patch, tool_input.command with patch text).
 # Exits 2 to block the tool call; exits 0 to allow.
+#
+# Gate layers (least → most permissive):
+#   1. No active change for this branch → block ALL edits (except .hitl/ and .claude/ bootstrap
+#      paths) until the user picks an issue + workflow via /hitl:dev-start-change. This is the
+#      hard wall behind the per-turn intake directive — chatting can't bypass it into doing work.
+#   2. Branch ↔ change mismatch → block ALL edits until realigned (issue #12).
+#   3. Source-code edits additionally require an approved design status (unchanged) — docs and
+#      design artifacts stay writable during the design phase.
 
 [[ -d ".hitl" ]] || exit 0  # not a HITL project — skip silently
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_steps.sh"
 
 INPUT=$(cat)
 
@@ -46,75 +58,84 @@ if [[ -z "$AFFECTED_PATHS" ]]; then
   exit 0
 fi
 
-# Check if any affected path is a source file
-SOURCE_FILE_FOUND=false
+# Bootstrap exemption: edits under .hitl/ and .claude/ are always allowed so that the change
+# file, hooks, and settings can be written to *create* a change (otherwise intake itself, and
+# onboarding, would be blocked — chicken-and-egg). Classify the affected paths.
+GUARDED_FOUND=false       # any path that is NOT a bootstrap path
+SOURCE_FILE_FOUND=false   # any guarded path that is source code
 while IFS= read -r file; do
-  case "$file" in
+  [[ -z "$file" ]] && continue
+  # Normalize a leading ./
+  rel="${file#./}"
+  case "$rel" in
+    .hitl/*|.claude/*) continue ;;   # bootstrap path — exempt
+  esac
+  GUARDED_FOUND=true
+  case "$rel" in
     *.py|*.ts|*.js|*.tsx|*.jsx|*.go|*.java|*.rb|*.rs|*.cpp|*.c|*.h)
       SOURCE_FILE_FOUND=true
-      break
       ;;
   esac
 done <<< "$AFFECTED_PATHS"
 
-if [[ "$SOURCE_FILE_FOUND" == "false" ]]; then
+# Only bootstrap paths touched → always allow.
+if [[ "$GUARDED_FOUND" == "false" ]]; then
   exit 0
 fi
 
-# Check for HITL context file
 CONTEXT_FILE=".hitl/current-change.yaml"
-if [[ ! -f "$CONTEXT_FILE" ]]; then
-  echo "HITL CONTEXT MISSING: No .hitl/current-change.yaml found." >&2
-  echo "Before editing source code, initialize the change context:" >&2
-  echo "  Codex: run the Change Initialization workflow in AGENTS.md" >&2
-  echo "  Claude Code: /hitl:apply-change [issue-number] [description]" >&2
-  echo "This creates the required context file and verifies source artifacts exist." >&2
+
+# ── Layer 1: no active change → block all guarded edits ───────────────────────────────────────
+if ! hitl_change_active "$CONTEXT_FILE"; then
+  echo "HITL BLOCKED: no active change for this project/branch." >&2
+  echo "You must select an issue and workflow before editing files." >&2
+  echo "  Claude Code: run /hitl:dev-start-change" >&2
+  echo "  Codex:       run the Change Initialization workflow in AGENTS.md" >&2
+  echo "(Edits under .hitl/ and .claude/ are exempt so intake can write the change file.)" >&2
   exit 2
 fi
 
-# Verify required fields are present
-REQUIRED_FIELDS=("change_id" "tier" "status" "manifest")
+# Verify required fields are present (file is active but may be malformed/partial).
+REQUIRED_FIELDS=("change_id" "tier" "status")
 for field in "${REQUIRED_FIELDS[@]}"; do
   if ! grep -q "^${field}:" "$CONTEXT_FILE" 2>/dev/null; then
     echo "HITL CONTEXT INCOMPLETE: .hitl/current-change.yaml is missing required field: ${field}" >&2
-    echo "Re-run the Change Initialization workflow to regenerate the context file." >&2
+    echo "Re-run the change initialization / start workflow to regenerate the context file." >&2
     exit 2
   fi
 done
 
-# Block source code edits unless the design has been approved.
-# Only these statuses permit writing source files:
-STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
-ALLOWED_STATUSES=("implementation-approved" "conformance-review-pending" "qa-review-pending" "pr-ready" "merged")
-
-ALLOWED=false
-for s in "${ALLOWED_STATUSES[@]}"; do
-  if [[ "$STATUS" == "$s" ]]; then
-    ALLOWED=true
-    break
-  fi
-done
-
-if [[ "$ALLOWED" == "false" ]]; then
-  echo "HITL BLOCKED: status '${STATUS}' does not permit source code edits." >&2
-  echo "Design approval is required before writing implementation code." >&2
-  echo "  • If design is in progress: wait for the architect to reach the next gate." >&2
-  echo "  • If a gate is awaiting review: run /hitl:ta-approve to advance it." >&2
-  echo "  • If status is 'blocked': resolve the finding in .hitl/current-change.yaml first." >&2
+# ── Layer 2: branch ↔ change mismatch → block all guarded edits (issue #12) ───────────────────
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
+if [[ "$(hitl_branch_reconcile "$CONTEXT_FILE" "$CURRENT_BRANCH")" == "mismatch" ]]; then
+  CHANGE_ID=$(hitl_scalar "$CONTEXT_FILE" change_id)
+  echo "HITL CONTEXT MISMATCH: branch '${CURRENT_BRANCH}' does not match active change ${CHANGE_ID}." >&2
+  echo "All edits are blocked until the context is realigned." >&2
+  echo "  • Run /hitl:dev-switch-context to reload context for this branch." >&2
+  echo "  • Or run /hitl:dev-start-change to select the correct change." >&2
   exit 2
 fi
 
-# Branch / change_id consistency check — catches context switches within a session.
-CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
-BRANCH_ISSUE=$(echo "$CURRENT_BRANCH" | sed -n 's|issue/\([0-9]*\)-.*|\1|p')
-if [[ -n "$BRANCH_ISSUE" ]]; then
-  YAML_CHANGE_ID=$(grep "^change_id:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "")
-  YAML_ISSUE=$(echo "$YAML_CHANGE_ID" | sed -n 's|GH-\([0-9]*\)|\1|p')
-  if [[ -n "$YAML_ISSUE" && "$BRANCH_ISSUE" != "$YAML_ISSUE" ]]; then
-    echo "HITL CONTEXT MISMATCH: branch is 'issue/${BRANCH_ISSUE}-...' but current-change.yaml is for ${YAML_CHANGE_ID}." >&2
-    echo "All source edits are blocked until the context is realigned." >&2
-    echo "  • Run /hitl:dev-switch-context to reload context for issue #${BRANCH_ISSUE}." >&2
-    echo "  • Or start a new Claude Code session (recommended for clean context)." >&2
+# ── Layer 3: source-code edits require an approved design status (unchanged) ───────────────────
+# Docs and design artifacts remain writable during design; only source code is gated on approval.
+if [[ "$SOURCE_FILE_FOUND" == "true" ]]; then
+  STATUS=$(grep "^status:" "$CONTEXT_FILE" | awk '{print $2}' | tr -d '"' || echo "unknown")
+  ALLOWED_STATUSES=("implementation-approved" "conformance-review-pending" "qa-review-pending" "pr-ready" "merged")
+
+  ALLOWED=false
+  for s in "${ALLOWED_STATUSES[@]}"; do
+    if [[ "$STATUS" == "$s" ]]; then
+      ALLOWED=true
+      break
+    fi
+  done
+
+  if [[ "$ALLOWED" == "false" ]]; then
+    echo "HITL BLOCKED: status '${STATUS}' does not permit source code edits." >&2
+    echo "Design approval is required before writing implementation code." >&2
+    echo "  • If design is in progress: wait for the architect to reach the next gate." >&2
+    echo "  • If a gate is awaiting review: run /hitl:ta-approve to advance it." >&2
+    echo "  • If status is 'blocked': resolve the finding in .hitl/current-change.yaml first." >&2
     exit 2
   fi
 fi

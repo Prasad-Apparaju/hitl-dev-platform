@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # HITL status line for Claude Code
-# Reads the active HITL context and emits a persistent status bar line showing
-# the current change, phase, step, and a windowed step trail.
+# Reads the active HITL context and emits a persistent status bar line showing the current
+# change, phase, step, and a windowed step trail — driven by the self-describing `workflow`
+# block in current-change.yaml via the shared _steps.sh parser (no hardcoded step model, so it
+# can never drift from the welcome banner).
 #
 # Claude Code pipes a JSON object to stdin containing: cwd, model, context_window.
 # Wire up in .claude/settings.json:
@@ -9,6 +11,11 @@
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 YAML_FILE="$ROOT/.hitl/current-change.yaml"
+
+# Shared parser/rendering library (lives beside this script).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/_steps.sh"
 
 input=$(cat)
 
@@ -21,6 +28,7 @@ COLOR_GREEN='\033[32m'
 COLOR_YELLOW='\033[33m'
 COLOR_RED='\033[31m'
 COLOR_CYAN='\033[36m'
+COLOR_MAGENTA='\033[35m'
 COLOR_RESET='\033[0m'
 
 # Context window progress bar
@@ -45,64 +53,33 @@ branch_segment=""
 
 # ── HITL step + trail ───────────────────────────────────────────────────────
 hitl_segment=""
-if [ -f "$YAML_FILE" ]; then
+if hitl_change_active "$YAML_FILE"; then
+  change_id=$(hitl_scalar "$YAML_FILE" change_id)
+  tier=$(hitl_scalar "$YAML_FILE" tier)
   cs_block=$(awk '/^current_step:/{f=1;next} f && /^[^ ]/{exit} f{print}' "$YAML_FILE")
-  step_num=$(echo "$cs_block"  | awk '/number:/{print $2}')
   step_name=$(echo "$cs_block" | awk -F'"' '/name:/{print $2}')
   phase=$(echo "$cs_block"     | awk -F'"' '/phase:/{print $2}')
-  change_id=$(awk '/^change_id:/{print $2}' "$YAML_FILE")
-  tier=$(awk '/^tier:/{print $2}' "$YAML_FILE")
 
-  if [ -n "$phase" ] && [ -n "$step_num" ]; then
+  # Branch reconciliation marker (issue #12).
+  warn=""
+  case "$(hitl_branch_reconcile "$YAML_FILE" "$branch")" in
+    mismatch)     warn=" ${COLOR_RED}⚠ branch≠${change_id}${COLOR_RESET}" ;;
+    unverifiable) warn=" ${COLOR_YELLOW}⚠ branch?${COLOR_RESET}" ;;
+  esac
 
-    declare -a NAMES=()
-    total=0
-
-    case "$phase" in
-      "PRD Setup")
-        NAMES=("" "CLAUDE.md" "Manifest" "Issue" "Handoff")
-        total=4
-        ;;
-      "Brownfield Setup")
-        NAMES=("" "MapCode" "CLAUDE.md" "Manifest" "ArchRvw" "Docs" "Registries" "Graphify" "Issue" "Handoff")
-        total=9
-        ;;
-      "Migration Setup")
-        NAMES=("" "Context" "CLAUDE.md" "Manifest" "DirSetup" "SrcAnal" "ExtDocs" "Registries" "Issue" "Handoff")
-        total=9
-        ;;
-      "Migration Review")
-        NAMES=("" "Context" "Evaluate" "MigReview" "Brief" "Handoff")
-        total=5
-        ;;
-      "Development")
-        NAMES=("" "Issue" "Figma" "Impact" "ROI" "Docs" "IaC" "Tests" "Train" "Packet"
-               "RED" "TstRvw" "Dsn+" "VfyRED" "GREEN" "VfyGRN" "Refact"
-               "Conv" "Rvw1" "Rvw2" "Rerun" "Recncl" "QAVfy" "ImpBrf"
-               "Rollout" "PR" "IntVfy" "Figma2" "Deploy" "Promote" "30dROI" "90dROI")
-        total=31
-        ;;
-    esac
-
-    # Windowed trail: 3 back + current + 3 ahead
-    trail=""
-    if [ ${#NAMES[@]} -gt 0 ]; then
-      win_start=$(( step_num - 3 )); (( win_start < 1    )) && win_start=1
-      win_end=$(( step_num + 3 ));   (( win_end  > total )) && win_end=$total
-
-      (( win_start > 1 ))   && trail="… "
-      for (( i=win_start; i<=win_end; i++ )); do
-        name="${NAMES[$i]}"
-        if   (( i <  step_num )); then trail+="✓${i}.${name} "
-        elif (( i == step_num )); then trail+="\033[32m▶${i}.${name}\033[0m "
-        else                          trail+="·${i}.${name} "
-        fi
-      done
-      (( win_end < total )) && trail+="…"
-    fi
-
-    hitl_segment="  \033[35m|\033[0m  HITL: ${phase} · Step ${step_num}/${total}: ${step_name} [${change_id} · T${tier}]\n     ${trail}"
+  if hitl_has_workflow "$YAML_FILE"; then
+    wf=$(hitl_workflow_field "$YAML_FILE" id)
+    cur=$(hitl_current_n "$YAML_FILE")
+    total=$(hitl_total "$YAML_FILE")
+    [ -z "$step_name" ] && step_name=$(hitl_current_label "$YAML_FILE")
+    trail=$(hitl_render_trail "$YAML_FILE" color)
+    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-$wf} · Step ${cur}/${total}: ${step_name} [${change_id} · T${tier}]${warn}\n     ${trail}"
+  else
+    num=$(echo "$cs_block" | awk '/number:/{print $2}')
+    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-change} · Step ${num} [${change_id} · T${tier}]${warn}  (run /hitl:dev-update for the step trail)"
   fi
+else
+  hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  ${COLOR_YELLOW}HITL: no active change — run /hitl:dev-start-change${COLOR_RESET}"
 fi
 
 printf "%s  %s%b%b" "$cwd" "$model" "$ctx_segment" "$branch_segment"
