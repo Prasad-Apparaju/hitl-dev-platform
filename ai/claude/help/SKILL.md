@@ -22,6 +22,7 @@ Output this exactly:
 
 | Command | When to use |
 |---|---|
+| `/hitl:dev-start-change` | **Start work on an issue** — pick the issue, choose the workflow, seed the change. The front door for every change. |
 | `/hitl:dev-start-from-prd` | New greenfield project — no code exists yet |
 | `/hitl:dev-start-brownfield` | Existing codebase you want to bring into HITL |
 | `/hitl:dev-start-migration` | Migrating from one system to another |
@@ -32,7 +33,7 @@ Output this exactly:
 
 | Command | When to use |
 |---|---|
-| `/hitl:dev-practices` | Start any Tier 1+ change — the full 32-step workflow entry point |
+| `/hitl:dev-practices` | Reference for the full 31-step delivery workflow (after a change is started) |
 | `/hitl:dev-apply-change` | Analyze and plan a specific change before writing code |
 | `/hitl:dev-tdd` | Run the TDD Red→Green→Refactor cycle (after LLD is approved) |
 | `/hitl:dev-check-conventions` | Run semgrep, secrets scan, manifest drift, Mermaid lint |
