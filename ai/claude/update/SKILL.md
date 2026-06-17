@@ -114,19 +114,109 @@ grep "installed_plugins.json" .hitl/hooks/welcome.sh
 
 If the wrappers do NOT contain `installed_plugins.json`, they are stale — using `HITL_PLATFORM_ROOT` (very old), a hardcoded path, or the old `settings.json["plugins"]` discovery from v1.0.5–1.0.8. All break on current Claude Code which stores plugin records in `~/.claude/plugins/installed_plugins.json`.
 
-Delete `.hitl/hooks/` and re-create all seven wrappers (including `statusline-hitl`) using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
+Delete `.hitl/hooks/` and re-create all **eight** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
 
-Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix and the `statusLine` entry:
+Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook:
 ```bash
 grep "CLAUDE_PROJECT_DIR" .claude/settings.json
 grep "statusLine" .claude/settings.json
+grep "hitl-gate" .claude/settings.json
 ```
 
-If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent, the persistent HITL breadcrumb is missing. In either case, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
+If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent, the persistent HITL breadcrumb is missing. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
 
 Say:
 
-"Hook wrappers and settings.json re-created with current patterns. Wrappers now check `~/.claude/plugins/installed_plugins.json` first (current Claude Code) with fallback to legacy `settings.json`. Hook commands now use `$CLAUDE_PROJECT_DIR` for reliable path resolution. `statusLine` added for persistent HITL breadcrumb."
+"Hook wrappers and settings.json re-created with current patterns. Wrappers now check `~/.claude/plugins/installed_plugins.json` first (current Claude Code) with fallback to legacy `settings.json`. Hook commands now use `$CLAUDE_PROJECT_DIR` for reliable path resolution. `statusLine` and the `SessionStart` change-intake gate are wired."
+
+---
+
+## Step 4.5 — Migrate the change file to the current workflow schema
+
+If `.hitl/current-change.yaml` exists, migrate its content to the current workflow definition.
+This is what keeps the breadcrumb correct after the workflow's steps change between versions
+(e.g. the brownfield workflow growing from 8 → 11 steps). It is HITL: it shows a diff and
+**requires confirmation** before writing.
+
+Requires `python3` with PyYAML. The generator below remaps by each step's stable `key`, so
+completion status survives renumbering. It writes a proposed file to
+`.hitl/current-change.yaml.migrated` and prints a diff — it does **not** overwrite anything yet.
+
+```bash
+CATALOG="${CLAUDE_PLUGIN_ROOT:-.}/shared/workflows.yaml"
+[[ -f "$CATALOG" ]] || CATALOG="ai/shared/workflows.yaml"
+NEW_VER=$(python3 -c "import json; print(json.load(open('${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json'))['version'])" 2>/dev/null || echo "0.0.0")
+
+python3 - "$CATALOG" "$NEW_VER" << 'PY'
+import sys, yaml, os
+catalog_path, new_ver = sys.argv[1], sys.argv[2]
+F = ".hitl/current-change.yaml"
+doc = yaml.safe_load(open(F)) or {}
+catalog = yaml.safe_load(open(catalog_path))["workflows"]
+
+# Determine the workflow id.
+wf = doc.get("workflow", {})
+wf_id = wf.get("id")
+if not wf_id:
+    phase = (doc.get("current_step") or {}).get("phase", "")
+    wf_id = {"PRD Setup":"prd","Brownfield Setup":"brownfield","Migration Setup":"migration",
+             "Migration Review":"migration_review"}.get(phase, "development")
+
+cat = catalog[wf_id]
+old_steps = {str(s.get("key")): s for s in wf.get("steps", [])}
+old_cur_n = (doc.get("current_step") or {}).get("number")
+old_cur_key = next((str(s["key"]) for s in wf.get("steps", []) if s.get("status")=="current"), None)
+
+new_steps, diff = [], []
+for s in cat["steps"]:
+    key = s["key"]
+    if key in old_steps:
+        status = old_steps[key].get("status", "open")
+        tag = "  keep"
+    else:
+        # New step. Mark done if it sits before the current pointer, else open.
+        status = "open"
+        if isinstance(old_cur_n, int) and str(s["n"]).rstrip("a").isdigit() and int(str(s["n"]).rstrip("a")) < old_cur_n:
+            status = "done"
+        tag = "+ added"
+    new_steps.append({"n": s["n"], "key": key, "label": s["label"], "status": status})
+    diff.append(f"  {tag:7} {str(s['n']):>3} {key:<18} {status}")
+
+# Ensure exactly one 'current': prefer the old current key; else the first non-done step.
+if not any(s["status"]=="current" for s in new_steps):
+    target = next((s for s in new_steps if s["key"]==old_cur_key), None) \
+          or next((s for s in new_steps if s["status"]!="done"), new_steps[0])
+    target["status"] = "current"
+removed = [k for k in old_steps if k not in {s["key"] for s in new_steps}]
+for k in removed:
+    diff.append(f"  - removed {'':>3} {k}")
+
+doc["schema_version"] = "2.0"
+doc["hitl_version"] = new_ver
+doc["workflow"] = {"id": wf_id, "version": new_ver, "total": cat["total"], "steps": new_steps}
+cur = next(s for s in new_steps if s["status"]=="current")
+n = str(cur["n"]); doc.setdefault("current_step", {})
+doc["current_step"]["number"] = int(n.rstrip("a")) if n.rstrip("a").isdigit() else n
+if n.endswith("a"): doc["current_step"]["substep"] = "a"
+
+with open(F + ".migrated", "w") as f:
+    yaml.safe_dump(doc, f, sort_keys=False, default_flow_style=False)
+
+print(f"Workflow: {wf_id}  →  {cat['total']} steps (was {wf.get('total','?')})")
+print("Step migration (remapped by key):")
+print("\n".join(diff))
+print(f"\nProposed file written to {F}.migrated — review the diff above.")
+PY
+```
+
+Show the diff to the user. If they confirm, apply it:
+```bash
+mv .hitl/current-change.yaml.migrated .hitl/current-change.yaml
+git add .hitl/current-change.yaml && git commit -m "chore(hitl): migrate change file to workflow schema v$NEW_VER"
+```
+If they decline, delete `.hitl/current-change.yaml.migrated` and leave the original untouched.
+If the file already has `schema_version: "2.0"` and `workflow.version` equals the current plugin
+version, skip this step and say "Change file already on the current workflow schema."
 
 ---
 
