@@ -4,6 +4,46 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.28] — 2026-06-16
+
+### Added
+
+**`/hitl:dev-start-change` — the enforced front door for starting a change.** Pick a GitHub
+issue, have HITL classify the right workflow (development / brownfield / migration / prd) from
+the issue, see the full step plan, and get a seeded-and-pushed `.hitl/current-change.yaml` — then
+it routes into the matching workflow. A new `SessionStart` gate (`hitl-gate.sh`) plus a per-prompt
+directive insist on this before any work happens, and `check-hitl-context.sh` now hard-blocks all
+edits (not just source) until a change is active for the branch — so you can't drift into a
+session without choosing a workflow. (`.hitl/` and `.claude/` paths stay writable so intake and
+onboarding can bootstrap.)
+
+**Self-describing, workflow-aware `current-change.yaml` (schema v2).** The change file now carries
+its own workflow definition — an embedded `workflow` block with each step's stable `key`, label,
+and status. The breadcrumb renderers read this block via a single shared parser
+(`hooks/_steps.sh`), so the welcome banner and the status line can never again disagree on step
+count or labels.
+
+**Branch ↔ change mismatch warnings (issue #12).** A new `expected_branch` field plus a soft
+"unverifiable"/hard "mismatch" marker in the breadcrumb and a hard edit-block when a committed
+`current-change.yaml` has been inherited onto the wrong branch.
+
+### Fixed
+
+**Empty / drifting step trail (issue #10).** The status line previously matched the workflow phase
+with a hardcoded `case` that real changes (`phase: "Design"`/`"Build"`) never hit, leaving an empty
+trail; the banner used a separate hardcoded 32-step list. Both hardcoded models are gone — there is
+now one canonical catalog (`ai/shared/workflows.yaml`: development 31 steps + 19a, brownfield 11,
+migration 9, prd 4) that drives everything.
+
+### Changed
+
+**`/hitl:dev-update` migrates the change file.** On upgrade it remaps the embedded workflow by
+stable `key` (preserving done/current across renumbering — e.g. the brownfield 8→11 growth),
+shows a diff, and requires confirmation. The start-skills and `dev-apply-change` now seed the v2
+block; `dev-apply-change`'s phase inconsistency was corrected.
+
+---
+
 ## [1.0.27] — 2026-06-16
 
 ### Changed

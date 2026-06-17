@@ -85,8 +85,10 @@ Wait for confirmation (or correction) before Step 4.
 
 ## Step 4 — Show the full step plan
 
-Read the chosen workflow's steps from `ai/shared/workflows.yaml` and print the complete ordered
-plan so the user sees the whole journey up front, e.g.:
+Read the chosen workflow's steps from the bundled workflow catalog — `workflows.yaml`, resolved
+as `$CLAUDE_PLUGIN_ROOT/shared/workflows.yaml` in the installed plugin (or `ai/shared/workflows.yaml`
+when running from source) — and print the complete ordered plan so the user sees the whole journey
+up front, e.g.:
 
 ```
 development workflow — 31 steps (+ 19a):
@@ -197,5 +199,6 @@ As each step completes, update the matching step's `status` to `done` and the ne
 ## Important Rules
 
 - A change must trace to a GitHub issue — never proceed without one.
-- Never hand-write the `workflow.steps` block; always seed it from `ai/shared/workflows.yaml`.
+- Never hand-write the `workflow.steps` block; always seed it from the bundled `workflows.yaml`
+  catalog (`$CLAUDE_PLUGIN_ROOT/shared/workflows.yaml`) via the Step 6 generator.
 - One active change per branch. Don't clobber an existing active change — switch context instead.
