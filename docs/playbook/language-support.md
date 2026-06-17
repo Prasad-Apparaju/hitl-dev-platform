@@ -2,7 +2,7 @@
 
 ## What is language-agnostic
 
-The core HITL process — the 32-step workflow, TDD cycle, impact analysis, decision packets, ROI estimation, downstream impact briefs — makes no assumption about the language or framework used. These steps operate on docs, YAML files, and the AI model's ability to read and write code in any language the model supports.
+The core HITL process — the 31-step workflow, TDD cycle, impact analysis, decision packets, ROI estimation, downstream impact briefs — makes no assumption about the language or framework used. These steps operate on docs, YAML files, and the AI model's ability to read and write code in any language the model supports.
 
 Everything in the process layer runs in any stack:
 
@@ -66,7 +66,7 @@ If your project uses multiple languages (e.g., Go backend + TypeScript frontend)
 
 | Layer | Python-only | Language-agnostic |
 |-------|:-----------:|:-----------------:|
-| 32-step workflow | | ✓ |
+| 31-step workflow | | ✓ |
 | TDD cycle (`/hitl:tdd`) | | ✓ |
 | Impact analysis, decision packets | | ✓ |
 | Hooks (domain boundary, HITL context) | | ✓ |

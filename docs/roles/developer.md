@@ -107,7 +107,7 @@ graphify .
 
 ## Further Reading
 
-- [Full 32-step workflow](../playbook/workflow-reference.md)
+- [Full 31-step workflow](../playbook/workflow-reference.md)
 - [TDD as design](../../ai/claude/dev-practices/tdd-design.md)
 - [Downstream impact](../../ai/claude/dev-practices/downstream-impact.md)
 - [Developer playbook template](../playbook/developer-playbook.md)

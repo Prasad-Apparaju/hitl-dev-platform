@@ -193,7 +193,7 @@ Generate the design docs for your system before writing any code:
 /hitl:architect-design-system
 ```
 
-This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 32-step workflow reads these docs at nearly every step — they must exist before feature work starts.
+This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
 After `/hitl:architect-design-system` completes:
 
@@ -207,7 +207,7 @@ After `/hitl:architect-design-system` completes:
 
 2. **Set up the build and deployment pipeline** before any code is written:
    - The deployment view in the architect's HLD is the spec — use it to provision CI/CD (GitHub Actions, Jenkins, GitLab CI, etc.) with build, test, and deploy-to-staging jobs at minimum
-   - Provision at least one target environment (staging) — the 32-step workflow gates every PR on a passing staging deploy
+   - Provision at least one target environment (staging) — the 31-step workflow gates every PR on a passing staging deploy
    - Verify: a commit triggers the pipeline and produces a deployable artifact
    - Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
    - Do not include a production deploy job without an explicit manual approval gate
@@ -217,7 +217,7 @@ After `/hitl:architect-design-system` completes:
    - Agentic observability: the token cost registry is at `docs/04-operations/token-cost-registry.yaml` (copy from `shared/templates/token-cost-registry-template.yaml`); session logs are written automatically by the HITL hooks
    - `/hitl:ops-setup-observability` runs per change before deploy — it requires the tools provisioned here to already exist
 
-4. Assign decision packets to developers — each developer picks up one packet and runs the 32-step workflow from it.
+4. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it.
 4. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
 
 ---

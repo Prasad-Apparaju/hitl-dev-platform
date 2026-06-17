@@ -16,7 +16,7 @@ graph LR
 
   pm["PM phase"]
   arch["Architect phase"]
-  dev["Dev phase — 32 steps"]
+  dev["Dev phase — 31 steps"]
   qa["QA phase"]
   ops["Ops phase"]
 
@@ -219,7 +219,7 @@ graph TB
 
 | Command | Step(s) | When |
 |---|---|---|
-| `/hitl:dev-practices` | 1 | Entry point for the 32-step workflow |
+| `/hitl:dev-practices` | 1 | Entry point for the 31-step workflow |
 | `/hitl:dev-apply-change` | 3 | Change planning and impact analysis |
 | `/hitl:dev-generate-docs` | 5–6 | HLD/LLD for a component |
 | `/hitl:dev-tdd` | 10–16 | Red→Green→Refactor cycle |

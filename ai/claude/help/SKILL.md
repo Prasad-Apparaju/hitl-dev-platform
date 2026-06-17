@@ -51,7 +51,7 @@ Output this exactly:
 |---|---|
 | `/hitl:architect-design-system` | Design a new system from scratch (produces HLD, LLD, delivery plan) |
 | `/hitl:architect-design-feature` | Design a feature — impact analysis, HLD, LLD, decision packet |
-| `/hitl:architect-review-code` | Human architect code review (step 19a in the 32-step workflow) |
+| `/hitl:architect-review-code` | Human architect code review (step 19a in the 31-step workflow) |
 
 ### QA
 

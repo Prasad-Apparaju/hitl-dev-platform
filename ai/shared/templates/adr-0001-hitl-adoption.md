@@ -25,7 +25,7 @@ Adopt the **HITL AI-Driven Development** process for all Tier 1+ changes:
 
 - **Document-first**: HLD and LLD are written and architect-approved before any code is generated
 - **TDD-as-design**: tests are written from the LLD before implementation, not after
-- **32-step workflow**: structured delivery from issue → design → tests → code → review → ship → monitor
+- **31-step workflow**: structured delivery from issue → design → tests → code → review → ship → monitor
 - **Human approval gates**: architect, QA, and TA review at defined checkpoints; AI does not self-approve
 - **Change tiers**: scope of process scales with risk (see ADR-0004)
 
@@ -53,7 +53,7 @@ Full AI autonomy, AI reviews its own output. Rejected because: current models re
 ### Negative
 - Initial ramp is slower: requires HLD/LLD before code
 - Team must maintain design documents as the system evolves
-- Learning curve for the 32-step workflow (~2–4 weeks)
+- Learning curve for the 31-step workflow (~2–4 weeks)
 
 ### Neutral
 - Velocity shifts from "fast first, fix later" to "slower start, fewer fixes later"

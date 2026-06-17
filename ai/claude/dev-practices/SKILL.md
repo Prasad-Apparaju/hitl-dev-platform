@@ -110,7 +110,7 @@ Detailed procedures are in supporting files — load only what you need:
 
 | File | Contains |
 |------|---------|
-| `workflow-steps.md` | Full step-by-step detail for each of the 32 steps |
+| `workflow-steps.md` | Full step-by-step detail for each of the 31 steps |
 | `tdd-design.md` | TDD-as-design three-phase loop, contract tests, worked examples |
 | `roi-estimation.md` | ROI template, value dimensions, verification cadence |
 | `downstream-impact.md` | Impact brief 5 sections, risk-rated rollout plan table |

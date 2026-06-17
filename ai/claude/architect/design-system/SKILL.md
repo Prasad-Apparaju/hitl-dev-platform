@@ -377,7 +377,7 @@ Follow the instructions in Phase R5 of the `generate-docs` skill exactly. This s
 
 ## Phase 8 — Initial Delivery Plan
 
-The design is complete. Now translate it into an ordered set of work packets — one per slice — that developers can pick up and execute independently using the 32-step workflow.
+The design is complete. Now translate it into an ordered set of work packets — one per slice — that developers can pick up and execute independently using the 31-step workflow.
 
 ### 8a. Decompose each domain into initial slices
 
@@ -520,7 +520,7 @@ Present a completion summary:
 │  1. Fill in DRAFT fields in manifest and ADRs       │
 │  2. Assign decision packets to developers           │
 │     — each developer receives one packet and runs   │
-│       the standard 32-step workflow from it         │
+│       the standard 31-step workflow from it         │
 │  3. Run /hitl:dev-generate-docs reverse-engineer after the   │
 │     first sprint to reconcile design vs. built      │
 └─────────────────────────────────────────────────────┘

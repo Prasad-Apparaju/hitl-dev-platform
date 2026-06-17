@@ -151,7 +151,7 @@ Produces two documents requiring architect approval:
 | Full-system | `/hitl:architect-design-system docs/00-migration/migration-brief.md` | Design all slices upfront |
 | Slice-by-slice | `/hitl:architect-design-feature` (per slice) | Design each slice just before its development sprint |
 
-**After design, each slice follows the 32-step workflow:** [Enhancement](#4-enhancement)
+**After design, each slice follows the 31-step workflow:** [Enhancement](#4-enhancement)
 
 **Migration is complete when** every BI entry in the coverage matrix is `Complete` or `Descoped`. `Descoped` requires an explicit architect decision.
 
@@ -183,9 +183,9 @@ These produce a structured GitHub issue with acceptance criteria.
 /hitl:dev-practices
 ```
 
-This is the 32-step workflow entry point. Paste the GitHub issue number when prompted.
+This is the 31-step workflow entry point. Paste the GitHub issue number when prompted.
 
-**The 32 steps at a glance:**
+**The 31 steps at a glance:**
 
 | Phase | Steps | Key commands |
 |---|---|---|
@@ -197,7 +197,7 @@ This is the 32-step workflow entry point. Paste the GitHub issue number when pro
 | Assess | 23–24 | `/hitl:dev-impact-brief`; rollout plan |
 | TA gate ✅ | — | `/hitl:ta-approve` — architect approves code before merge |
 | Ship | 25–29 | PR verification; integration verify; ops commands; deploy |
-| Post-ship | 30–32 | Pentest (if applicable); 30-day ROI; 90-day ROI + ADR update |
+| Post-ship | 30–31 | 30-day ROI; 90-day ROI + ADR update (pentest, if applicable, runs in Ship via `/hitl:ops-pentest`) |
 
 **Human gates (what you approve, in order):**
 
@@ -210,7 +210,7 @@ This is the 32-step workflow entry point. Paste the GitHub issue number when pro
 7. TA code gate — architect approves implementation for merge (TA gate 2)
 8. PR merge — tech lead or architect merges
 
-**Statusline shows your position** in the 32 steps on every prompt. If you get lost:
+**Statusline shows your position** in the 31 steps on every prompt. If you get lost:
 ```
 /hitl:dev-validate
 ```
@@ -269,7 +269,7 @@ If the bug is related to a past production incident, `/hitl:pm-report-bug` flags
    - Create or update the LLD for the affected component
    - Add incident to `docs/04-operations/incident-registry.yaml` with `regression_test_ref`
    - Write a regression test covering the failure mode
-   - File a GitHub issue for any structural fix needed (and run the full 32-step workflow for it)
+   - File a GitHub issue for any structural fix needed (and run the full 31-step workflow for it)
 
 **What you skip during P0:** TA design gate, full TDD cycle. These are replaced by the post-incident doc requirement.
 

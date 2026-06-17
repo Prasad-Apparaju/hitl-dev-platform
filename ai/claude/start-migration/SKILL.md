@@ -453,7 +453,7 @@ After the review, the architect runs `/hitl:architect-design-system docs/00-migr
 
 **Before the first development slice begins — set up the target build and deployment pipeline:**
 - The deployment view in the architect's HLD is the spec — use it to provision CI/CD for the target repo (build, test, deploy-to-staging jobs at minimum)
-- Provision at least one target environment (staging) — the 32-step workflow gates every PR on a passing staging deploy
+- Provision at least one target environment (staging) — the 31-step workflow gates every PR on a passing staging deploy
 - Verify: a commit to the target repo triggers the pipeline and produces a deployable artifact
 - Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
 - Do not include a production cutover step without an explicit manual approval gate and a rollback path
@@ -463,7 +463,7 @@ Before the first slice is deployed to production, set up observability infrastru
 - Agentic observability: copy `shared/templates/token-cost-registry-template.yaml` to `docs/04-operations/token-cost-registry.yaml`; session logs are written automatically by the HITL hooks
 - `/hitl:ops-setup-observability` gates each slice's production deploy — it requires the tools provisioned here to already exist
 
-Each resulting slice is then handed to developers via the standard 32-step workflow, and must declare which BI IDs it covers.
+Each resulting slice is then handed to developers via the standard 31-step workflow, and must declare which BI IDs it covers.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 

@@ -46,7 +46,7 @@ Update cadence: [fill in — e.g., weekly automated PRs for patch updates; manua
 
 | Trigger | Required action |
 |---|---|
-| Any Tier 2+ change | `/hitl:review-security` at Step 20 of the 32-step workflow — mandatory, not advisory |
+| Any Tier 2+ change | `/hitl:review-security` at Step 20 of the 31-step workflow — mandatory, not advisory |
 | Any change touching auth, payments, or PII | Additional architect security sign-off before PR merge |
 | Tier 3+ production deploy | `/hitl:ops-pentest` before deploy — targeted scan of changed surface |
 | Annual or post-incident | Full penetration test by [fill in: internal team / external vendor] |

@@ -120,7 +120,7 @@ Documenting "we don't understand this" is MORE valuable than a wrong LLD.
 |---------|---------|-----------------|
 | P0 (system down) | Fix first | Use `/hitl:generate-docs` to produce LLD for affected area within 48 hours |
 | P1 (significant) | Abbreviated: issue → minimal analysis → code → test → PR | Use `/hitl:generate-docs` to produce LLD during PR review |
-| P2+ (everything else) | Full 32-step process | Standard docs-before-code |
+| P2+ (everything else) | Full 31-step process | Standard docs-before-code |
 
 ## Staying Operational — Week 2 and Beyond
 

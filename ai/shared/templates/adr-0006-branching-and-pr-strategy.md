@@ -12,7 +12,7 @@
 
 ## 1. Context
 
-The HITL 32-step workflow creates a GitHub issue per change, works in a named branch, and opens a PR that passes through defined review gates before merge. Without a documented branching and PR strategy, developers make inconsistent decisions about branch naming, PR size, required reviewers, and merge approach — which undermines HITL's traceability and review gates.
+The HITL 31-step workflow creates a GitHub issue per change, works in a named branch, and opens a PR that passes through defined review gates before merge. Without a documented branching and PR strategy, developers make inconsistent decisions about branch naming, PR size, required reviewers, and merge approach — which undermines HITL's traceability and review gates.
 
 ## 2. Decision
 

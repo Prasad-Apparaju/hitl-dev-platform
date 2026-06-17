@@ -1,6 +1,6 @@
-# Process Overview — The 32-Step HITL AI-Driven Workflow
+# Process Overview — The 31-Step HITL AI-Driven Workflow
 
-**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 32 steps.
+**The steps below describe the full Tier 3 workflow** — cross-domain changes, new integrations, migrations, and any change where the cost of getting it wrong is high. Most routine work is Tier 1 or Tier 2 and follows an abbreviated path. See [Process Tiers](common-pitfalls.md#61-process-tiers-by-change-type) before assuming every change needs all 31 steps.
 
 The process relocates human judgment to higher-leverage checkpoints — reviewing AI-generated specs before code exists, approving test plans before implementation, verifying traceability before merge — rather than eliminating it. AI does the production work. Humans hold the gates that matter.
 
@@ -38,11 +38,11 @@ graph LR
     PKT3 --> B3
 ```
 
-## The 32 Steps
+## The 31 Steps
 
 ### Step Ownership at a Glance
 
-**AI handles 21 of 32 steps** — executing or co-piloting. You gate 11 times.
+**Across the 31 steps (plus the 19a architect review), AI handles 21** — executing or co-piloting. You gate 11 times.
 
 | Phase | Steps | 🤖 AI executes | 👤🤖 AI + human | 👤 Human gate |
 |-------|:-----:|:--------------:|:---------------:|:-------------:|
@@ -101,10 +101,11 @@ graph LR
 28. 👤🤖 **Build, apply IaC, and deploy** — ops verifies branch state and triggers the build using `/hitl:ops-build`; ops runs `/hitl:ops-detect-drift` before deploying to detect any infrastructure drift; if step 6 identified IaC changes, ops runs `/hitl:ops-apply-iac` (dry-run then apply with explicit approval); lead then triggers merge and deploys per the approved rollout plan from step 24 using `/hitl:ops-deploy`; remaining slices rebase against main and rerun steps 17–19a before their own merge → `/hitl:ops-detect-drift` · `/hitl:ops-build` · `/hitl:ops-apply-iac` (conditional) · `/hitl:ops-deploy` · `/hitl:ops-monitor-canary`
 29. 👤 **Promote or rollback** — at each canary step, verify all go/no-go criteria from the approved plan (step 24); if all met: promote to next tier; if any fail: pause and investigate before deciding; lead makes the final call
 
-### Post-ship (steps 30-32)
-30. 👤 **Penetration test** (conditional — optional for Tier 2+, required for Tier 3+ features involving auth, payments, or data) — run an external or internal pentest against the deployed feature; findings must be triaged and any critical/high issues resolved before the feature is promoted to full production
-31. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `ai/claude/dev-practices/roi-estimation.md`
-32. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 31; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `ai/claude/dev-practices/roi-estimation.md`
+### Post-ship (steps 30-31)
+30. 👤 **30-day ROI check** (if step 4 was done) — reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`; developer + lead assess whether the metric is moving in the right direction; follow `ai/claude/dev-practices/roi-estimation.md`
+31. 👤 **90-day ROI check** (if step 4 was done) — reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30; lead + PM compare actual vs estimated ROI; update ADR at `docs/02-design/technical/adrs/` with Actual Outcome section; follow `ai/claude/dev-practices/roi-estimation.md`
+
+> **Penetration test** is a conditional security activity (optional for Tier 2+, required for Tier 3+ features involving auth, payments, or data), not a separate numbered step — run it during Ship via `/hitl:ops-pentest` against the deployed feature. Findings must be triaged and any critical/high issues resolved before the feature is promoted to full production.
 
 ## Key Concepts
 

@@ -261,9 +261,9 @@ Design decisions are captured in version-controlled documents — HLDs, LLDs, AD
 4. **Verify**: Two-round AI code review → architect code review on GitHub PR → reconcile docs against implementation
 5. **Assess + Ship**: Downstream impact brief → risk-rated rollout plan → verify PR completeness → lead integration verification → canary deploy
 
-Of 32 steps: 10 AI-driven, 11 AI-assisted, 12 human-only. Not every change uses all 32 — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
+Of the 31 steps (plus the 19a architect substep): 10 AI-driven, 11 AI-assisted, 11 human-only. Not every change uses all of them — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
 
-→ [Full 32-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
+→ [Full 31-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
 
 ---
 
@@ -279,7 +279,7 @@ Of 32 steps: 10 AI-driven, 11 AI-assisted, 12 human-only. Not every change uses 
 | **4. System manifest + domain facades** | Manifest with domains, files, facades, conventions. Manifest drift checker. | AI stays scoped. Cross-domain drift detected. New team members onboard from the manifest. | 1 week |
 | **5. Full workflow** | Incident registry, test registry, rollout planning, ROI checks, deployment gates. | Past mistakes don't repeat. Deployments are risk-rated. Investments are measured. | 1-2 weeks |
 
-Levels 1–3 are the minimum viable adoption — shared conventions, docs-first design, and basic traceability, without the full 32-step workflow.
+Levels 1–3 are the minimum viable adoption — shared conventions, docs-first design, and basic traceability, without the full 31-step workflow.
 
 ---
 
@@ -290,7 +290,7 @@ Levels 1–3 are the minimum viable adoption — shared conventions, docs-first 
 | Why this process exists + the problem it solves | [Core concepts](docs/playbook/core-concepts.md) |
 | Role definitions and responsibilities | [Roles](docs/playbook/roles.md) |
 | System manifest and AI context management | [System manifest](docs/playbook/system-manifest.md) |
-| Full 32-step workflow + design room | [Workflow reference](docs/playbook/workflow-reference.md) |
+| Full 31-step workflow + design room | [Workflow reference](docs/playbook/workflow-reference.md) |
 | Process tiers, pitfalls, architect scaling | [Common pitfalls](docs/playbook/common-pitfalls.md) |
 | Adoption checklist | [Adoption checklist](docs/playbook/adoption-checklist.md) |
 | Brownfield adoption baseline sprint | [Adoption guide](docs/playbook/adoption-guide.md) |

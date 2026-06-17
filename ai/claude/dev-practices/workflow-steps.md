@@ -1,6 +1,6 @@
 # Workflow Steps — Full Detail
 
-Step-by-step reference for the 32-step HITL change workflow. The SKILL.md entrypoint has the summary; this file has the detail.
+Step-by-step reference for the 31-step HITL change workflow. The SKILL.md entrypoint has the summary; this file has the detail.
 
 ---
 

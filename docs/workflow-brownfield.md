@@ -66,14 +66,14 @@ Architect must confirm ADRs are accurate before Step 5 begins.
 
 ## 2. First-Change Consideration — Docs on First Touch
 
-This is the brownfield-specific friction that does not exist in the PRD path. Not every component has an LLD after setup — only the priority components from Step 5 do. The first time any other component is changed, its LLD must be created before the 32-step loop can proceed.
+This is the brownfield-specific friction that does not exist in the PRD path. Not every component has an LLD after setup — only the priority components from Step 5 do. The first time any other component is changed, its LLD must be created before the 31-step loop can proceed.
 
 ```mermaid
 graph TB
   issue["GitHub issue created"]
   check{"Does component\nhave an LLD?"}
   gendocs["/hitl:dev-generate-docs for this component"]
-  practices["/hitl:dev-practices - 32-step workflow"]
+  practices["/hitl:dev-practices - 31-step workflow"]
 
   issue --> check
   check -->|"yes"| practices

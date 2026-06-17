@@ -1,4 +1,4 @@
-# Workflow Reference — The Full 32-Step Process
+# Workflow Reference — The Full 31-Step Process
 
 ## 4. Collaborative Development: The Design Room
 
@@ -50,7 +50,7 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 > | **Incremental** (default) | `/hitl:dev-start-brownfield` only | Faster to first commit; AI output for undocumented components is less reliable until docs are corrected through use |
 > | **Full baseline sprint** (optional) | `/hitl:dev-start-brownfield` → then `/hitl:generate-docs reverse-engineer` | Cleaner start; generates manifest, HLDs, LLDs, and registries for the full codebase before change work starts; higher upfront investment |
 >
-> **Once onboarded, the 32-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
+> **Once onboarded, the 31-step execution workflow, PM skills, and all commands are identical to a greenfield project.** The brownfield distinction ends at onboarding.
 
 For truly small changes (a one-line config fix), this workflow is too heavy — see "Common Pitfalls" (Section 6) for when to abbreviate.
 
@@ -147,11 +147,11 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 | **Verify** | Code review R1 🤖 🔁 → Code review R2 🤖 🔁 → Architect code review 👤 🔁 → Rerun tests 🤖 → Reconcile docs 👤🤖 🔁 → QA verification 👤 |
 | **Assess** | Impact brief 👤🤖 🔁 → Rollout plan 👤 |
 | **Ship** | Verify PR completeness 👤🤖 → Integration verify 👤 → Figma comparison 👤 (if exists) → Merge + canary deploy 👤🤖 → Promote or rollback 👤 |
-| **Post-ship** | Penetration test 👤 (conditional) → 30-day ROI check 👤 → 90-day ROI check 👤 |
+| **Post-ship** | 30-day ROI check 👤 → 90-day ROI check 👤 |
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of 32 steps: **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **12 human-only** 👤.
+Of the 31 steps (plus the 19a architect substep): **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **11 human-only** 👤. (Penetration testing is a conditional ops activity run via `/hitl:ops-pentest` during Ship, not a numbered step.)
 
 ### 5.3 Code Review: AI Rounds and Architect Review
 

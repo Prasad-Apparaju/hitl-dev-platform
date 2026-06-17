@@ -80,7 +80,7 @@ Maximum flexibility. Rejected because: under deadline pressure, developers consi
 
 ## 5. Implementation Notes
 
-The tier is recorded in `.hitl/current-change.yaml` at step 3 (`/hitl:dev-apply-change`). The 32-step workflow branches on this value — skipping or adding gates accordingly.
+The tier is recorded in `.hitl/current-change.yaml` at step 3 (`/hitl:dev-apply-change`). The 31-step workflow branches on this value — skipping or adding gates accordingly.
 
 Review this ADR whenever a new high-risk domain is added to `docs/system-manifest.yaml`.
 
