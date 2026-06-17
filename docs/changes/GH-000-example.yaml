@@ -1,10 +1,60 @@
-# Example HITL change context file
+# Example HITL change context file (schema v2 — self-describing workflow)
 # Copy to .hitl/current-change.yaml at the start of each change.
-# The /hitl:dev-apply-change skill generates this automatically.
+# /hitl:dev-start-change seeds the `workflow` block; the dev skills update step `status`
+# as the change advances. The breadcrumb is rendered entirely from `workflow` below.
+
+schema_version: "2.0"
+hitl_version: "1.0.28"
 
 change_id: GH-000
 tier: 2
 status: implementation-approved
+expected_branch: "issue/000-refund-flow"
+
+# Self-describing workflow model — drives the breadcrumb (welcome.sh / statusline-hitl.sh).
+# Seeded from ai/shared/workflows.yaml; here the change has reached step 24 (Rollout).
+workflow:
+  id: development
+  version: "1.0.28"
+  total: 31
+  steps:
+    - { n: 1,   key: issue,              label: "Issue",    status: done }
+    - { n: 2,   key: figma,              label: "Figma",    status: done }
+    - { n: 3,   key: impact,             label: "Impact",   status: done }
+    - { n: 4,   key: roi,                label: "ROI",      status: done }
+    - { n: 5,   key: docs,               label: "Docs",     status: done }
+    - { n: 6,   key: iac,                label: "IaC",      status: done }
+    - { n: 7,   key: test_plan,          label: "Tests",    status: done }
+    - { n: 8,   key: training,           label: "Train",    status: done }
+    - { n: 9,   key: packet,             label: "Packet",   status: done }
+    - { n: 10,  key: red,                label: "RED",      status: done }
+    - { n: 11,  key: test_review,        label: "TstRvw",   status: done }
+    - { n: 12,  key: design_plus,        label: "Dsn+",     status: done }
+    - { n: 13,  key: verify_red,         label: "VfyRED",   status: done }
+    - { n: 14,  key: green,              label: "GREEN",    status: done }
+    - { n: 15,  key: verify_green,       label: "VfyGRN",   status: done }
+    - { n: 16,  key: refactor,           label: "Refact",   status: done }
+    - { n: 17,  key: conventions,        label: "Conv",     status: done }
+    - { n: 18,  key: review1,            label: "Rvw1",     status: done }
+    - { n: 19,  key: review2,            label: "Rvw2",     status: done }
+    - { n: 19a, key: arch_review,        label: "ArchRvw",  status: done }
+    - { n: 20,  key: rerun,              label: "Rerun",    status: done }
+    - { n: 21,  key: reconcile,          label: "Recncl",   status: done }
+    - { n: 22,  key: qa_verify,          label: "QAVfy",    status: done }
+    - { n: 23,  key: impact_brief,       label: "ImpBrf",   status: done }
+    - { n: 24,  key: rollout,            label: "Rollout",  status: current }
+    - { n: 25,  key: verify_pr,          label: "VfyPR",    status: open }
+    - { n: 26,  key: integration_verify, label: "IntVfy",   status: open }
+    - { n: 27,  key: figma_compare,      label: "Figma2",   status: open }
+    - { n: 28,  key: deploy,             label: "Deploy",   status: open }
+    - { n: 29,  key: promote,            label: "Promote",  status: open }
+    - { n: 30,  key: roi_30,             label: "30dROI",   status: open }
+    - { n: 31,  key: roi_90,             label: "90dROI",   status: open }
+
+current_step:
+  number: 24
+  name: "Risk-Rated Rollout Plan"
+  phase: "Assess"
 
 source_artifacts:
   issue: https://github.com/org/repo/issues/000
