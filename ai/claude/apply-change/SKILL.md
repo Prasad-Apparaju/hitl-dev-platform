@@ -75,17 +75,35 @@ CURRENT=$(git branch --show-current)
 - If branch exists but not checked out: `git checkout "$BRANCH"` and say "Switched to existing branch `$BRANCH`."
 - If branch does not exist: `git checkout -b "$BRANCH"` and say "Created branch `$BRANCH`."
 
-After switching, write an initial `.hitl/current-change.yaml` stub and commit it immediately so the file is branch-tracked from the start:
+After switching, write `.hitl/current-change.yaml` and commit it immediately so the file is
+branch-tracked from the start. If `/hitl:dev-start-change` already seeded a `development`
+workflow block, just advance it (steps 1–2 `done`, step 3 `current`). Otherwise write the full
+v2 block, seeded from the catalog at `ai/shared/workflows.yaml` (workflow `development`):
 
 ```yaml
+schema_version: "2.0"
 change_id: GH-<N>
 tier: <from Step 1>
 status: planning
+expected_branch: "<this branch>"
+workflow:
+  id: development
+  total: 31
+  steps:
+    - { n: 1,   key: issue,  label: "Issue",  status: done }
+    - { n: 2,   key: figma,  label: "Figma",  status: done }
+    - { n: 3,   key: impact, label: "Impact", status: current }
+    - { n: 4,   key: roi,    label: "ROI",    status: open }
+    # … remaining steps from ai/shared/workflows.yaml, all status: open
 current_step:
   number: 3
   name: "Impact analysis"
-  phase: "Development"
+  phase: "Design"
 ```
+
+Seed the full `steps` list from the catalog rather than hand-typing it. As each step below
+completes, set its `status: done` and the next step's `status: current`, and update
+`current_step` to match, so the breadcrumb advances.
 
 ```bash
 git add .hitl/current-change.yaml

@@ -43,7 +43,7 @@ If not:
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these seven hooks: `welcome`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
+2. Create `.hitl/hooks/` and write a wrapper for each of these eight hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
    ```bash
    #!/usr/bin/env bash
    PLUGIN_ROOT=$(python3 -c "
@@ -73,6 +73,7 @@ If not:
    {
      "statusLine": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"",
      "hooks": {
+       "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/hitl-gate.sh\"" }] }],
        "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/welcome.sh\"" }] }],
        "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" }] }],
        "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [
@@ -109,14 +110,32 @@ If not:
 **Write `.hitl/current-change.yaml` now** (before asking questions — this enables breadcrumbs immediately):
 
 ```yaml
+schema_version: "2.0"
 change_id: migration-setup
 tier: 3
 status: planning
+workflow:
+  id: migration
+  total: 9
+  steps:
+    - { n: 1, key: collect_context, label: "Context",    status: current }
+    - { n: 2, key: claude_md,       label: "CLAUDE.md",  status: open }
+    - { n: 3, key: manifest,        label: "Manifest",   status: open }
+    - { n: 4, key: dir_setup,       label: "DirSetup",   status: open }
+    - { n: 5, key: source_analysis, label: "SrcAnal",    status: open }
+    - { n: 6, key: ext_docs,        label: "ExtDocs",    status: open }
+    - { n: 7, key: seed_registries, label: "Registries", status: open }
+    - { n: 8, key: create_issue,    label: "Issue",      status: open }
+    - { n: 9, key: confirm_ready,   label: "Ready",      status: open }
 current_step:
   number: 1
   name: "Collect migration context"
   phase: "Migration Setup"
 ```
+
+> **Breadcrumb advancement:** at the start of each step below, edit `.hitl/current-change.yaml`
+> to set the previous step's `status: done` and the current step's `status: current`, and update
+> `current_step` to match.
 
 Ask the following questions and record the answers. Do not proceed until all four are answered:
 
