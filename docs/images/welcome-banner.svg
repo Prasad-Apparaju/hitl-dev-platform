@@ -32,11 +32,11 @@
   <!-- /hitl:dev-start-migration -->
   <text x="16" y="176" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-start-migration</tspan>    migrate from one system to another</text>
 
-  <!-- Run a change label -->
-  <text x="16" y="208" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Run a change:</text>
+  <!-- Start a change label -->
+  <text x="16" y="208" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Start a change:</text>
 
-  <!-- /hitl:dev-practices -->
-  <text x="16" y="228" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-practices</tspan>      begin a new change (full 32-step workflow)</text>
+  <!-- /hitl:dev-start-change -->
+  <text x="16" y="228" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#cdd6f4" xml:space="preserve">    <tspan fill="#89b4fa">/hitl:dev-start-change</tspan>   pick an issue, get the right workflow</text>
 
   <!-- Roles -->
   <text x="16" y="262" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="13" fill="#6c7086" xml:space="preserve">  Roles: <tspan fill="#cba6f7">/hitl:pm</tspan>  <tspan fill="#cba6f7">/hitl:architect</tspan>  <tspan fill="#cba6f7">/hitl:qa</tspan>  <tspan fill="#cba6f7">/hitl:ops</tspan></text>
