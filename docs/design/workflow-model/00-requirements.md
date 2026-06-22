@@ -49,6 +49,14 @@ invariants:
 | G5 | **Right initiator per workflow.** PM initiates functional change; engineering initiates technical change; ops initiates incidents. |
 | G6 | **Define once, derive everything.** One catalog is the single source; the overview, breadcrumb, and (later) command-map and role guides are generated from it. |
 | G7 | **Specializability.** Adding a phase, step, substep, or whole workflow is a small, local catalog edit — numbering and cross-references take care of themselves. |
+| G8 | **Granularity is earned, not assumed.** A distinct *workflow* must justify itself by **materially different gates or steps**. Intent that only changes a label (and shares the same steps/gates) is a **change-kind tag** on the change, not a new workflow. Cheap-to-*define* (data-driven profiles) is not cheap-to-*use* — every named workflow is cognitive load for stakeholders and a branch the classifier can get wrong. |
+
+> **Scope note.** This initiative began as a narrow fix ("docs go stale when steps are renumbered";
+> minimal fix = cite steps by name). It has deliberately **evolved** into a broader model redesign
+> (numberless catalog, phase-ribbon breadcrumb, named taxonomy, generated views). That evolution is
+> accepted — but it raises **opportunity cost** against a plugin that is still stabilizing
+> (recent Windows / YAML-parsing fixes). The mitigations are: strict **phasing** (each phase ships
+> independently; see [02-rollout.md](02-rollout.md)) and **executability-first** (C5 below).
 
 ## 4. Constraints
 
@@ -60,6 +68,11 @@ invariants:
 - **C3 — Back-compatible with existing v2 change files** in live projects.
 - **C4 — No regression in enforcement.** The gate/hook behavior (intake, edit-block, status
   gating) must keep working.
+- **C5 — Executability precedes presentation.** A workflow is not "done" until **every step
+  resolves to an executor** (a skill, `manual`, or a deliberate `guided`). Polishing the breadcrumb
+  or catalog must **not** precede closing the executor gaps — three referenced skills currently do
+  not exist, and two proposed steps have none (see [02-rollout.md §7](02-rollout.md)). Build the
+  plumbing before the façade.
 
 ## 5. Non-goals (for this initiative / deferred to later phases)
 

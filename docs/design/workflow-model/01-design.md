@@ -121,6 +121,19 @@ Maintenance                                     [STANDALONE short list]
 
 **3 establishment + 11 delivery/maintenance = 14 named workflows**, each one stakeholder-legible.
 
+> **⚠ Open tension — taxonomy granularity (decision pending).** 14 workflows is the current draft,
+> arrived at by splitting "Engineering Change" into Refactor / Performance / Security / Upgrade /
+> Chore. Per **G8 (granularity is earned)**, the split is only justified where the **gates actually
+> differ** — strongly true for **Security** (review + pentest) and arguably **Upgrade** (dependency
+> audit + regression), but thin for Refactor vs Chore vs Performance, whose distinction is largely an
+> *intent label*. The risk of 14: stakeholder cognitive load, fuzzy boundaries (Feature vs
+> Enhancement; "a perf fix that changes an API"), and a `dev-start-change` classifier that
+> mis-routes. **Recommended alternative:** collapse to a smaller set — *Feature · Fix · Tech Change ·
+> Incident* (+ functional *Enhancement*) — and carry the finer intents as a **change-kind tag**,
+> promoting to a first-class workflow only those whose gates genuinely diverge (Security, maybe
+> Upgrade). **Status:** the tree below retains the 14 pending this decision (see
+> [02-rollout.md §5](02-rollout.md)).
+
 ### What a "profile" declares
 A spine-profile workflow is a few lines: which steps are **included**, which gates are **required**
 (vs conditional), the **initiator**, and the functional/technical/operational class. The spine is
@@ -130,9 +143,15 @@ profiles).
 
 ### The full tree
 
-The establishment phasing below is the **Q1 proposal** (Brownfield/Migration phased; Greenfield
-single-phase). The **delivery spine** is shown once — the 8 spine-profile workflows select from it
-(see the profile table after the tree); **Incident** and **Chore** are standalone.
+The **delivery spine** is shown once — the 8 spine-profile workflows select from it (see the profile
+table after the tree); **Incident** and **Chore** are standalone.
+
+> **⚠ Unvalidated proposals — not yet confirmed with the team.** Several parts of this tree are my
+> drafts, not established process, and will calcify if implemented as-is: the **establishment
+> phasing** (Discover/Baseline/Kickoff etc. — Q1, and itself low-value; see
+> [02-rollout.md §5](02-rollout.md)), the **Incident** and **Chore** step lists (no canonical
+> source), and the **conditional spine additions** (Baseline Measurement, Dependency+CVE Audit) plus
+> the per-profile **gate sets**. Treat them as starting points to validate, not decisions.
 
 ```
 greenfield   (ESTABLISHMENT · new system from a PRD)            1 phase · 4 steps
