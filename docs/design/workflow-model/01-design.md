@@ -128,6 +128,129 @@ the *superset* of steps any delivery workflow can use (so e.g. *Performance*'s b
 step and *Upgrade*'s dependency-audit step live in the spine, conditional, switched on by those
 profiles).
 
+### The full tree
+
+The establishment phasing below is the **Q1 proposal** (Brownfield/Migration phased; Greenfield
+single-phase). The **delivery spine** is shown once — the 8 spine-profile workflows select from it
+(see the profile table after the tree); **Incident** and **Chore** are standalone.
+
+```
+greenfield   (ESTABLISHMENT · new system from a PRD)            1 phase · 4 steps
+└─ Setup
+   ├─ Customize CLAUDE.md
+   ├─ Initialize manifest
+   ├─ Create GitHub issue
+   └─ Confirm ready
+
+brownfield   (ESTABLISHMENT · onboard an existing codebase)     3 phases · 11 steps
+├─ Discover
+│  ├─ Map the codebase
+│  ├─ Customize CLAUDE.md
+│  ├─ Generate system manifest
+│  └─ Review existing architecture
+├─ Baseline
+│  ├─ Verify build + deployment pipeline
+│  ├─ Set up observability
+│  ├─ Priority component docs
+│  ├─ Seed registries
+│  └─ Graphify (optional)
+└─ Kickoff
+   ├─ Create first change issue
+   └─ Confirm ready
+
+migration    (ESTABLISHMENT · stand up a target to replace a source)   3 phases · 9 steps
+├─ Setup
+│  ├─ Collect migration context
+│  ├─ Customize CLAUDE.md
+│  ├─ Initialize system manifest
+│  └─ Set up directory structure
+├─ Analyze
+│  ├─ Analyze source codebase
+│  └─ Ingest external docs (optional)
+└─ Kickoff
+   ├─ Seed registries
+   ├─ Create tracking issue
+   └─ Confirm and hand off
+
+DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 34 step-slots · 1 substep
+├─ Requirements
+│  ├─ GitHub Issue
+│  └─ Figma Review (cond)
+├─ Design
+│  ├─ Impact Analysis
+│  ├─ ROI Estimate (cond)
+│  ├─ Update Docs — HLD/LLD
+│  ├─ Update IaC + Verify Scripts (cond)
+│  ├─ Test Case Planning
+│  ├─ Training Plan Stub (cond)
+│  ├─ Decision Packet
+│  ├─ Baseline Measurement (cond · Performance)
+│  └─ Dependency + CVE Audit (cond · Upgrade)
+├─ Build
+│  ├─ Generate Tests (RED)
+│  ├─ Human Reviews Tests
+│  ├─ Tests Improve Design
+│  ├─ Verify RED
+│  ├─ Generate Code (GREEN)
+│  ├─ Verify GREEN
+│  ├─ Refactor
+│  └─ Convention Checks
+├─ Verify
+│  ├─ Code Review Round 1
+│  ├─ Code Review Round 2
+│  │  └─ Architect Code Review   (substep)
+│  ├─ Rerun Tests
+│  ├─ Reconcile Docs
+│  └─ QA Post-Handoff Verification
+├─ Assess
+│  ├─ Downstream Impact Brief
+│  └─ Risk-Rated Rollout Plan
+├─ Ship
+│  ├─ Verify PR Completeness
+│  ├─ Integration Verification
+│  ├─ Figma Comparison (cond)
+│  ├─ Build, Migrate, Apply IaC, Deploy
+│  ├─ Penetration Test (cond · Security)
+│  └─ Promote or Rollback
+└─ Post-Ship
+   ├─ 30-day ROI Check (cond)
+   └─ 90-day ROI Check (cond)
+
+incident     (DELIVERY · operational — P0, fix-first, docs ≤48h)   2 phases · 7 steps   [standalone]
+├─ Respond
+│  ├─ Triage + assess blast radius
+│  ├─ Mitigate — stop the bleeding
+│  └─ Verify recovery
+└─ Document (≤48h)
+   ├─ Root-cause / post-mortem
+   ├─ Add regression test
+   ├─ Reconcile docs + ADR
+   └─ Update incident registry
+
+chore        (MAINTENANCE · trivial technical change)              1 phase · 3 steps    [standalone]
+└─ Chore
+   ├─ Make the change
+   ├─ Convention Checks
+   └─ PR + merge
+```
+
+> The spine is a **superset of 34 step-slots**; most are conditional. A baseline **Feature** runs
+> ~31 of them; the conditional slots (Baseline Measurement, Dependency+CVE Audit, Penetration Test,
+> ROI, Figma, IaC, Training) switch on per profile.
+
+### Delivery profiles over the spine
+
+| Workflow | Class | Initiator | Distinctive profile (vs. a plain Feature) |
+|---|---|---|---|
+| **Feature** | functional | PM | the baseline spine |
+| **Enhancement** | functional | PM | starts from the existing LLD · **back-compat gate** |
+| **Fix** | functional | PM / QA | lighter — skip ROI/training · defect → regression test |
+| **Refactor** | technical | Dev / Arch | skip Figma/training · characterization tests first · **full regression unchanged** |
+| **Performance** | technical | Dev / Arch / Ops | **+ Baseline Measurement** · perf budget on issue · before/after verify |
+| **Security** | technical | Arch / Sec / Ops | **dev-review-security design + code required · Penetration Test required** |
+| **Upgrade** | technical | Dev / Ops | **+ Dependency + CVE Audit · full regression required · staged rollout** |
+| **Migration Slice** | migration | Arch / Lead | requirement = migration brief · **BI-IDs + coverage matrix + observable-slice gate** |
+
 ## 5. Step → command / role — structure vs. execution
 
 Each step carries the metadata that lets the **process** stay separate from the **work**:
