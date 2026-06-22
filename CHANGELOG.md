@@ -4,6 +4,27 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.0.30] — 2026-06-21
+
+### Fixed
+
+**Breadcrumb now renders block-style YAML steps (issue #15).** `hooks/_steps.sh` only parsed
+single-line flow maps (`- { n: 1, … }`); a change file written with block-style `workflow.steps`
+(equally valid YAML, and easily produced by anything that edits the file) parsed to zero steps,
+so the breadcrumb showed `Step ? / N` with no trail. The parser now handles **both** styles.
+Also: the renderers tolerate **unquoted** `name:`/`phase:`; a workflow block that yields no steps
+now shows the "run `/hitl:dev-update`" hint instead of a silent `?`; and the `unverifiable` branch
+marker is no longer shown (it was permanent noise on long-lived non-`issue/*` branches).
+
+**Hooks no longer silently no-op on Windows (issue #14).** The hook wrappers and several hooks
+hard-coded `python3`, which on Windows is the Microsoft Store stub (on PATH but runs nothing) —
+so plugin discovery returned empty and **every gate silently did nothing**. All Python callers
+(wrapper template, the hooks, and the `dev-start-change` / `dev-update` generators) now probe
+`python3 → python → py` with an `import sys` smoke test that rejects the stub, and force UTF-8
+stdout (`PYTHONUTF8=1`) so breadcrumb glyphs don't crash on Windows' cp1252 default.
+
+---
+
 ## [1.0.29] — 2026-06-17
 
 ### Fixed

@@ -8,11 +8,16 @@
 
 set -euo pipefail
 
+# Resolve a working Python interpreter (Windows-safe; see issue #14). $HITL_PY is set by the hook
+# wrapper; otherwise probe. No usable Python → skip (this hook is advisory and fails open).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; source "$SCRIPT_DIR/_steps.sh"
+PY=$(hitl_python) || exit 0
+
 INPUT=$(cat)
 
 # Extract affected file paths from hook input — supports both input shapes.
 # JSON is passed via env var so the heredoc can provide the Python script via stdin.
-AFFECTED_PATHS=$(export _HITL_HOOK_INPUT="$INPUT"; python3 << 'PYEOF' 2>/dev/null
+AFFECTED_PATHS=$(export _HITL_HOOK_INPUT="$INPUT"; "$PY" << 'PYEOF' 2>/dev/null
 import sys, json, re, os
 
 try:
@@ -50,7 +55,7 @@ if [[ ! -f "$CONTEXT_FILE" ]]; then
 fi
 
 # Extract allowed_paths from context file
-ALLOWED_PATHS=$(python3 - << 'PYEOF'
+ALLOWED_PATHS=$("$PY" - << 'PYEOF'
 import sys, re
 
 try:

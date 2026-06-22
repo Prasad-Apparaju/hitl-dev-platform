@@ -36,31 +36,35 @@ fi
 # the current_step compat pointer; the step number/total/trail come from the embedded block.
 change_id=$(hitl_scalar "$HITL_FILE" change_id)
 tier=$(hitl_scalar "$HITL_FILE" tier)
-cs_block=$(awk '/^current_step:/{f=1;next} f && /^[^ ]/{exit} f{print}' "$HITL_FILE")
-step_name=$(echo "$cs_block" | awk -F'"' '/name:/{print $2}')
-phase=$(echo "$cs_block"     | awk -F'"' '/phase:/{print $2}')
+step_name=$(hitl_cs_field "$HITL_FILE" name)    # tolerant of quoted/unquoted, block/flow
+phase=$(hitl_cs_field "$HITL_FILE" phase)
 
-# Branch reconciliation marker (issue #12).
+# Branch reconciliation marker (issue #12). Only the hard mismatch is shown — `unverifiable`
+# (a non-issue/* branch with no expected_branch) is silently tolerated, not flagged every prompt
+# (issue #15: it was permanent noise on long-lived integration branches).
 warn=""
-case "$(hitl_branch_reconcile "$HITL_FILE" "$CURRENT_BRANCH")" in
-  mismatch)     warn="   ⚠ branch=${CURRENT_BRANCH} ≠ ${change_id} — context may be stale; run /hitl:dev-switch-context" ;;
-  unverifiable) warn="   ⚠ branch=${CURRENT_BRANCH} (can't verify against ${change_id})" ;;
-esac
+if [[ "$(hitl_branch_reconcile "$HITL_FILE" "$CURRENT_BRANCH")" == "mismatch" ]]; then
+  warn="   ⚠ branch=${CURRENT_BRANCH} ≠ ${change_id} — context may be stale; run /hitl:dev-switch-context"
+fi
 
+# Render the trail only when the workflow block actually yields a current step. A workflow block
+# that parses to zero steps (malformed/legacy) would otherwise print "Step ? / N" silently —
+# instead fall through to the migrate hint (issue #15).
+cur=$(hitl_current_n "$HITL_FILE")
 echo "$SEP"
-if hitl_has_workflow "$HITL_FILE"; then
+if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then
   wf=$(hitl_workflow_field "$HITL_FILE" id)
-  cur=$(hitl_current_n "$HITL_FILE")
   total=$(hitl_total "$HITL_FILE")
   [[ -z "$step_name" ]] && step_name=$(hitl_current_label "$HITL_FILE")
-  printf "  HITL — %s  •  Step %s / %s: %s\n" "${phase:-$wf}" "${cur:-?}" "${total:-?}" "$step_name"
+  printf "  HITL — %s  •  Step %s / %s: %s\n" "${phase:-$wf}" "${cur}" "${total:-?}" "$step_name"
   printf "  change: %s  •  tier: %s  •  workflow: %s\n" "$change_id" "${tier:-?}" "$wf"
   [[ -n "$warn" ]] && echo "$warn"
   echo ""
   printf "  %s\n" "$(hitl_render_trail "$HITL_FILE")"
 else
-  # Back-compat: pre-v2 file with a bare current_step and no embedded workflow block.
-  num=$(echo "$cs_block" | awk '/number:/{print $2}')
+  # Back-compat: pre-v2 file (bare current_step, no workflow block) OR a workflow block that
+  # couldn't be parsed into steps — either way, point the user at the migration.
+  num=$(hitl_cs_field "$HITL_FILE" number)
   printf "  HITL — %s  •  Step %s: %s\n" "${phase:-change}" "${num:-?}" "$step_name"
   printf "  change: %s  •  tier: %s\n" "$change_id" "${tier:-?}"
   [[ -n "$warn" ]] && echo "$warn"

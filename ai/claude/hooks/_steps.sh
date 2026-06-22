@@ -20,6 +20,19 @@
 #
 # Status values: done (✓) · current (▶) · open (·).
 
+# hitl_python → echo the first working Python interpreter, or return 1 if none (issue #14).
+# On Windows, `python3` is usually the Microsoft Store stub: it's on PATH but exits non-zero and
+# runs nothing, so a hard-coded `python3` makes every hook silently no-op. The `import sys` smoke
+# test rejects the stub. Prefers $HITL_PY (set by the wrapper) to avoid re-probing per call.
+hitl_python() {
+  if [[ -n "${HITL_PY:-}" ]] && command -v "$HITL_PY" >/dev/null 2>&1; then echo "$HITL_PY"; return 0; fi
+  local c
+  for c in python3 python py; do
+    if command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1; then echo "$c"; return 0; fi
+  done
+  return 1
+}
+
 # hitl_has_workflow <yaml> → exit 0 if the file has an embedded `workflow:` block with steps.
 hitl_has_workflow() {
   local f="$1"
@@ -52,19 +65,46 @@ hitl_workflow_field() {
 # Order is preserved. Substeps (e.g. 19a) come through as their literal n.
 hitl_steps() {
   local f="$1"
+  # Handles BOTH single-line flow maps ("- { n: 1, key: …, status: done }") and
+  # multi-line block style ("- n: 1\n  key: …\n  status: done"). Both are valid YAML; the
+  # writer emits flow style, but anything that hand-edits the file (incl. an agent flipping
+  # statuses) may emit block style — the breadcrumb must render either (issue #15).
   awk '
+    function field(t, key,   v) {        # extract `key:`-value from a block line, unquoted
+      v=t; sub("^[ ]*" key ":[ ]*","",v); sub(/[ ]+#.*/,"",v); sub(/[ ]*$/,"",v)
+      gsub(/^"|"$/,"",v); gsub(/^'"'"'|'"'"'$/,"",v); return v
+    }
+    function flush() { if (have) { if (st=="") st="open"; print n "|" lbl "|" st } have=0; n=""; lbl=""; st="" }
     /^workflow:/        { w=1; next }
     w && /^[ ]+steps:/  { s=1; next }
-    s && /^[ ]+- *\{/ {
+    s {
       line=$0
-      n=line;     sub(/.*[{,][ ]*n:[ ]*/,    "", n);     sub(/[ ]*[,}].*/, "", n);     gsub(/["{} ]/,"",n)
-      lbl=line;   sub(/.*[,{][ ]*label:[ ]*/, "", lbl);  sub(/[ ]*[,}].*/, "", lbl);   gsub(/^"|"$/,"",lbl)
-      st=line;    sub(/.*[,{][ ]*status:[ ]*/, "", st);  sub(/[ ]*[,}].*/, "", st);    gsub(/["{} ]/,"",st)
-      if (st=="") st="open"
-      print n "|" lbl "|" st
-      next
+      if (line ~ /^[^ ]/)            { flush(); exit }          # next top-level key ends steps
+      if (line ~ /^[ ]+- *\{/) {                                 # ── flow style (self-contained)
+        flush()
+        n=line;   sub(/.*[{,][ ]*n:[ ]*/,    "", n);   sub(/[ ]*[,}].*/, "", n);   gsub(/["{} ]/,"",n)
+        lbl=line; sub(/.*[,{][ ]*label:[ ]*/, "", lbl); sub(/[ ]*[,}].*/, "", lbl); gsub(/^"|"$/,"",lbl)
+        st=line;  sub(/.*[,{][ ]*status:[ ]*/, "", st); sub(/[ ]*[,}].*/, "", st); gsub(/["{} ]/,"",st)
+        if (st=="") st="open"
+        print n "|" lbl "|" st; have=0; next
+      }
+      if (line ~ /^[ ]+-[ ]/) {                                  # ── block style: new list item
+        flush(); have=1
+        rest=line; sub(/^[ ]+-[ ]*/,"",rest)                     # may carry an inline field, e.g. "- n: 1"
+        if (rest ~ /^n:/)      n=field(rest,"n")
+        else if (rest ~ /^key:/) {}                              # key unused for rendering
+        else if (rest ~ /^label:/)  lbl=field(rest,"label")
+        else if (rest ~ /^status:/) st=field(rest,"status")
+        next
+      }
+      if (have && line ~ /^[ ]+[A-Za-z_]+:/) {                   # ── block style: continuation field
+        if (line ~ /^[ ]+n:/)        n=field(line,"n")
+        else if (line ~ /^[ ]+label:/)  lbl=field(line,"label")
+        else if (line ~ /^[ ]+status:/) st=field(line,"status")
+        next
+      }
     }
-    s && /^[^ -]/  { exit }     # a new top-level key ends the steps list
+    END { flush() }
   ' "$f"
 }
 
@@ -84,6 +124,27 @@ hitl_current_n() {
 # hitl_current_label <yaml> → the label of the current step.
 hitl_current_label() {
   hitl_steps "$1" | awk -F'|' '$3=="current"{print $2; exit}'
+}
+
+# hitl_cs_field <yaml> <name|phase|number> → read a field from the current_step block.
+# Tolerant of block style ("current_step:\n  name: …") AND flow style
+# ("current_step: { name: …, phase: … }"), and of quoted OR unquoted values (issue #15).
+hitl_cs_field() {
+  awk -v key="$2" '
+    /^current_step:/ {
+      if ($0 ~ /^current_step:[ ]*\{/) {                     # flow style on one line
+        line=$0
+        if (match(line, key ":[ ]*\"[^\"]*\"")) { v=substr(line,RSTART,RLENGTH); sub(key ":[ ]*\"","",v); sub(/"$/,"",v); print v; exit }
+        if (match(line, key ":[ ]*[^,}]+"))     { v=substr(line,RSTART,RLENGTH); sub(key ":[ ]*","",v); sub(/[ ]+$/,"",v); gsub(/^"|"$/,"",v); print v; exit }
+        exit
+      }
+      f=1; next                                              # block style follows
+    }
+    f && /^[^ ]/ { exit }                                    # left the current_step block
+    f && $0 ~ "^[ ]+" key ":" {
+      v=$0; sub("^[ ]+" key ":[ ]*","",v); sub(/[ ]+#.*/,"",v); sub(/[ ]*$/,"",v); gsub(/^"|"$/,"",v); print v; exit
+    }
+  ' "$1"
 }
 
 # ── Change-activation + branch reconciliation (issue #12) ─────────────────────────────────────

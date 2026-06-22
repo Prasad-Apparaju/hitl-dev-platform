@@ -8,12 +8,17 @@
 
 set -uo pipefail
 
+# Resolve a working Python interpreter (Windows-safe; see issue #14). $HITL_PY is set by the hook
+# wrapper; otherwise probe. No usable Python → skip (this hook is advisory/non-blocking).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; source "$SCRIPT_DIR/_steps.sh"
+PY=$(hitl_python) || exit 0
+
 HITL_FILE=".hitl/current-change.yaml"
 
 INPUT=$(cat)
 
 # Extract the written file path from the tool input JSON
-FILE_PATH=$(export _INPUT="$INPUT"; python3 -c "
+FILE_PATH=$(export _INPUT="$INPUT"; "$PY" -c "
 import json, os, sys
 try:
     d = json.loads(os.environ.get('_INPUT', '{}'))

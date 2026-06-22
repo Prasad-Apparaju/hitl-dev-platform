@@ -56,27 +56,24 @@ hitl_segment=""
 if hitl_change_active "$YAML_FILE"; then
   change_id=$(hitl_scalar "$YAML_FILE" change_id)
   tier=$(hitl_scalar "$YAML_FILE" tier)
-  cs_block=$(awk '/^current_step:/{f=1;next} f && /^[^ ]/{exit} f{print}' "$YAML_FILE")
-  step_name=$(echo "$cs_block" | awk -F'"' '/name:/{print $2}')
-  phase=$(echo "$cs_block"     | awk -F'"' '/phase:/{print $2}')
+  step_name=$(hitl_cs_field "$YAML_FILE" name)    # tolerant of quoted/unquoted, block/flow
+  phase=$(hitl_cs_field "$YAML_FILE" phase)
 
-  # Branch reconciliation marker (issue #12).
+  # Branch reconciliation marker (issue #12). Only the hard mismatch is shown; `unverifiable`
+  # is tolerated silently (issue #15 — it was permanent noise on long-lived branches).
   warn=""
-  case "$(hitl_branch_reconcile "$YAML_FILE" "$branch")" in
-    mismatch)     warn=" ${COLOR_RED}⚠ branch≠${change_id}${COLOR_RESET}" ;;
-    unverifiable) warn=" ${COLOR_YELLOW}⚠ branch?${COLOR_RESET}" ;;
-  esac
+  [ "$(hitl_branch_reconcile "$YAML_FILE" "$branch")" = "mismatch" ] && warn=" ${COLOR_RED}⚠ branch≠${change_id}${COLOR_RESET}"
 
-  if hitl_has_workflow "$YAML_FILE"; then
+  cur=$(hitl_current_n "$YAML_FILE")
+  if hitl_has_workflow "$YAML_FILE" && [ -n "$cur" ]; then
     wf=$(hitl_workflow_field "$YAML_FILE" id)
-    cur=$(hitl_current_n "$YAML_FILE")
     total=$(hitl_total "$YAML_FILE")
     [ -z "$step_name" ] && step_name=$(hitl_current_label "$YAML_FILE")
     trail=$(hitl_render_trail "$YAML_FILE" color)
     hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-$wf} · Step ${cur}/${total}: ${step_name} [${change_id} · T${tier}]${warn}\n     ${trail}"
   else
-    num=$(echo "$cs_block" | awk '/number:/{print $2}')
-    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-change} · Step ${num} [${change_id} · T${tier}]${warn}  (run /hitl:dev-update for the step trail)"
+    num=$(hitl_cs_field "$YAML_FILE" number)
+    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-change} · Step ${num:-?} [${change_id} · T${tier}]${warn}  (run /hitl:dev-update for the step trail)"
   fi
 else
   hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  ${COLOR_YELLOW}HITL: no active change — run /hitl:dev-start-change${COLOR_RESET}"

@@ -6,6 +6,11 @@
 
 set -euo pipefail
 
+# Resolve a working Python interpreter (Windows-safe; see issue #14). $HITL_PY is set by the hook
+# wrapper; otherwise probe. No usable Python → skip (summary is best-effort).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; source "$SCRIPT_DIR/_steps.sh"
+PY=$(hitl_python) || exit 0
+
 CONTEXT_FILE=".hitl/current-change.yaml"
 if [[ ! -f "$CONTEXT_FILE" ]]; then
   exit 0  # no active change — nothing to summarize
@@ -21,7 +26,7 @@ STAGED_FILES=$(git diff --name-only --cached 2>/dev/null || echo "")
 ALL_CHANGED=$(printf '%s\n%s\n' "$CHANGED_FILES" "$STAGED_FILES" | sort -u | grep -v '^$' || echo "")
 
 # Get required evidence from context file
-REQUIRED_EVIDENCE=$(python3 - << 'PYEOF'
+REQUIRED_EVIDENCE=$("$PY" - << 'PYEOF'
 import yaml
 try:
     with open(".hitl/current-change.yaml") as f:

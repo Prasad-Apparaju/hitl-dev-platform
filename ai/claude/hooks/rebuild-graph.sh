@@ -7,9 +7,14 @@
 
 set -euo pipefail
 
+# Resolve a working Python interpreter (Windows-safe; see issue #14). $HITL_PY is set by the hook
+# wrapper; otherwise probe. No usable Python → skip (graph rebuild is best-effort).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; source "$SCRIPT_DIR/_steps.sh"
+PY=$(hitl_python) || exit 0
+
 INPUT=$(cat)
 
-FILE_PATH=$(export _HITL_HOOK_INPUT="$INPUT"; python3 << 'PYEOF' 2>/dev/null
+FILE_PATH=$(export _HITL_HOOK_INPUT="$INPUT"; "$PY" << 'PYEOF' 2>/dev/null
 import json, os, sys, re
 
 try:

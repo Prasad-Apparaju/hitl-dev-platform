@@ -122,10 +122,13 @@ first step `current` and the rest `open`, and stamps the versions:
 WF=<development|brownfield|migration|migration_review|prd>
 CHANGE_ID="GH-<N>"
 BRANCH=$(git branch --show-current)
+# Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.
+PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
+[[ -n "$PY" ]] || { echo "No usable Python found (need python3, python, or py on PATH)."; exit 1; }
 HITL_VERSION=$(cat "${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json" 2>/dev/null \
-  | python3 -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
+  | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 
-python3 - "$WF" "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" << 'PY' > .hitl/current-change.yaml
+"$PY" - "$WF" "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" << 'PY' > .hitl/current-change.yaml
 import sys, yaml
 wf_id, change_id, branch, ver = sys.argv[1:5]
 # Catalog: prefer the plugin copy, fall back to the source path.

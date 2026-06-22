@@ -148,9 +148,12 @@ file is never round-tripped through a YAML dumper. It writes a proposed
 ```bash
 CATALOG="${CLAUDE_PLUGIN_ROOT:-.}/shared/workflows.yaml"
 [[ -f "$CATALOG" ]] || CATALOG="ai/shared/workflows.yaml"
-NEW_VER=$(python3 -c "import json; print(json.load(open('${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json'))['version'])" 2>/dev/null || echo "0.0.0")
+# Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.
+PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
+[[ -n "$PY" ]] || { echo "No usable Python found (need python3, python, or py on PATH)."; exit 1; }
+NEW_VER=$("$PY" -c "import json; print(json.load(open('${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json'))['version'])" 2>/dev/null || echo "0.0.0")
 
-python3 - "$CATALOG" "$NEW_VER" << 'PY'
+"$PY" - "$CATALOG" "$NEW_VER" << 'PY'
 import sys, re, yaml
 catalog_path, new_ver = sys.argv[1], sys.argv[2]
 F = ".hitl/current-change.yaml"
