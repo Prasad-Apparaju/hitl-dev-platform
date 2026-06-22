@@ -272,6 +272,28 @@ Relationships are **many-to-many** and the catalog states each once:
 This makes `command-map.md` and the role guides **generated views** (later phase), not
 hand-maintained documents.
 
+### `command` is a **required** field — coverage must be explicit
+
+Every step declares one of: a **skill** (`command: dev-tdd`), **`manual`** (human/run-the-suite,
+no command needed), or **`guided`** (driven by a reference doc, no skill yet). Making it required
+means a missing executor can't hide in prose — today `workflow-steps.md` references three skills
+that **don't exist** (`ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`).
+
+Audit of the delivery spine against the real `ai/claude/` skills:
+
+| Bucket | Count | Examples |
+|---|---|---|
+| ✅ **skill** (dedicated, exists) | ~20 | Impact Analysis → `dev-apply-change`; RED/Design+/GREEN → `dev-tdd`; reviews → `dev-review-lld-adherence`; QA → `qa-verify-quality`; Ship → the ops suite; gates → `ta-approve` |
+| ✋ **manual** (by design) | ~7 | Figma Review, Verify RED, Verify GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison |
+| 📄 **guided** (ref doc, no skill) | ~3 | ROI Estimate, Training Plan Stub, 30/90-day ROI Check |
+| ❌ **gap — referenced skill missing** | 3 | Rollout Plan → `ops-review-release`; Integration Verification → `architect-verify-traceability`; Canary monitoring → `ops-monitor-canary` |
+| 🆕 **gap — new step, no executor** | 2 | Baseline Measurement (Performance); Dependency + CVE Audit (Upgrade) |
+
+The ❌ and 🆕 rows are real work (tracked in [02-rollout.md §7](02-rollout.md)). The point of the
+required field is that this table is **generated from the catalog** and stays honest — the model is
+only "executable end-to-end" once every step resolves to a skill, `manual`, or a deliberate
+`guided`.
+
 ## 6. The breadcrumb — no global counter
 
 Position is shown by **phase + name + a derived, drift-resistant signal** — never a global

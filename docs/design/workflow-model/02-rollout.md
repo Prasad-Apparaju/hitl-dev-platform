@@ -79,3 +79,39 @@ Each phase is independently shippable and reversible. Phase 1 carries the bulk o
   projects keep working.
 - Overview, breadcrumb, and (Phase 3) command-map/role guides are **generated** from the one
   catalog.
+- **Every step resolves to an executor** — a skill, `manual`, or a deliberate `guided` (§7).
+
+---
+
+## 7. Command-coverage work items
+
+Surfaced by auditing the spine against the real `ai/claude/` skills (see
+[01-design.md §5](01-design.md)). Until these resolve, the model is not executable end-to-end.
+Making `command` a **required catalog field** (Phase 1) makes the gap explicit per step; closing the
+gaps is its own track (parallel to Phase 3).
+
+### W1 — Missing referenced skills (build, rewire, or mark manual)
+`workflow-steps.md` references three skills that **do not exist**:
+
+| Step | Referenced | Decision needed |
+|---|---|---|
+| Risk-Rated Rollout Plan | `ops-review-release` | build the skill, or fold rollout review into `dev-impact-brief` §5 + a TA/ops gate |
+| Integration Verification | `architect-verify-traceability` | build it, or assign to `architect-review-existing` / a manual lead check |
+| Canary monitoring (in Deploy) | `ops-monitor-canary` | build it, or fold into `ops-deploy` / `ops-post-deploy-monitor` |
+
+### W2 — New steps needing an executor
+| Step | Workflow | Decision needed |
+|---|---|---|
+| Baseline Measurement | Performance | new thin skill vs. capture in the issue/manual |
+| Dependency + CVE Audit | Upgrade | new skill vs. fold into Impact Analysis (`dev-apply-change`) |
+
+### W3 — Guided steps (no skill today)
+ROI Estimate, Training Plan Stub, 30/90-day ROI Check — keep `guided` (reference docs), or give each
+a thin command. *Default: keep guided unless a command adds real value.*
+
+### W4 — Manual steps
+Figma Review, Verify RED/GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison —
+confirm they stay `manual` (run-the-suite / human judgment). *Default: yes.*
+
+W1 and W2 are the only true blockers to "executable end-to-end"; W3/W4 are deliberate `guided`/
+`manual` classifications.
