@@ -133,6 +133,10 @@ Maintenance                                     [STANDALONE short list]
 > promoting to a first-class workflow only those whose gates genuinely diverge (Security, maybe
 > Upgrade). **Status:** the tree below retains the 14 pending this decision (see
 > [02-rollout.md §5](02-rollout.md)).
+>
+> **Note:** per [03-execution-model.md](03-execution-model.md), the taxonomy is the *proposer +
+> vocabulary*, not the correctness guarantee (that's the enforced required-evidence + the floor) — so
+> this decision is about **legibility**, and is *less load-bearing* than it first appeared.
 
 ### What a "profile" declares
 A spine-profile workflow is a few lines: which steps are **included**, which gates are **required**

@@ -135,5 +135,26 @@ a thin command. *Default: keep guided unless a command adds real value.*
 Figma Review, Verify RED/GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison —
 confirm they stay `manual` (run-the-suite / human judgment). *Default: yes.*
 
+### W5 — Execution model (the floor + informed-skip + enforcement) — see [03-execution-model.md](03-execution-model.md)
+The biggest substance, not yet built. Spans Phase 1 (metadata) and a new enforcement work-stream:
+- **Per-step metadata** (Phase 1, data): `floor` (+ condition `code|prod|docs`), `skip_authority`
+  (`never|architect|dev`), `rationale`/`skip_warning`.
+- **Extend `required_evidence`** (schema, additive): add `docs_reconciled`; impact analysis writes the
+  per-change required set; gates enforce it.
+- **Informed-skip flow** in the planning skill (`dev-apply-change`/`dev-start-change`): state the cost
+  from `rationale`, require a substantive reason, write a structured **waiver**
+  (`{step, decided_by, role, when, reason}`) to the **issue comment** + `current-change.yaml`
+  (`status: skipped`). Reject floor/unauthorised skips.
+- **Hook enforcement**: `check-hitl-context` (or a new gate) blocks closing a change with a missing
+  required-evidence item *unless* a valid waiver exists; the floor is never waivable.
+- **Docs-reconciled closing gate** (drift): non-skippable for changes touching documented behaviour.
+- **Deferred-regression tracking**: a deferred regression becomes a linked ticket that blocks
+  "change complete" (not merge), surfaced as `regression: deferred → #ticket`. *(Pending confirm.)*
+- **Skip telemetry**: surface skips in PR/breadcrumb + a skip log; track patterns.
+
+> **Taxonomy is now demoted** (§5.1): per the execution model, correctness is the floor +
+> enforced required-evidence, not the workflow name. Settle granularity for *legibility*; it no longer
+> blocks the rest.
+
 W1 and W2 are the only true blockers to "executable end-to-end"; W3/W4 are deliberate `guided`/
 `manual` classifications.
