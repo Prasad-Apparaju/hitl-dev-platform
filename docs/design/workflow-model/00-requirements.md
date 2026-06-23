@@ -7,7 +7,11 @@
 
 ## 1. Problem
 
-HITL's process is real and good, but the way it is *encoded* has two structural flaws:
+HITL exists to **let each role leverage AI to do their work and communicate everything the next
+step needs to the harness — without dropping the best practices along the way.** The process isn't a
+set of instructions telling people how to do their jobs; it's the scaffolding that lets an owner lean
+on the harness for the legwork and the rigor, and spend their own attention on judgment. The process
+is real and good — but the way it is *encoded* today undercuts that purpose with two structural flaws:
 
 1. **Numbered steps go stale on every change.** Steps are identified by their global position
    (`Step 19a`, "rerun steps 18–20", "Steps 10–32", "after Step 9"). A number is a *position*
@@ -29,7 +33,9 @@ A **workflow** is a repeatable abstraction for *one whole change*. Every workflo
 invariants:
 
 - It decomposes into **phases → steps → substeps**, in order.
-- Each step is **owned by a role**, and the harness has a **skill/command** to do it the right way.
+- Each step is **owned by a role**, and the harness gives that role a **skill/command** that does the
+  heavy lifting with AI — carrying the best practices and the context the step needs, so the owner can
+  focus on judgment and hand off complete, well-formed work rather than remembering every checklist.
 - Each step **consumes the previous step's outputs** — nothing starts from nothing.
 - **Handoffs are GitHub issues backed by updated documentation** — the docs are the source of
   truth; the issue is the baton.
@@ -55,6 +61,13 @@ required-evidence (G9), and the **floor** (G10) is enforced regardless of tier. 
 enforcement model in [03-execution-model.md](03-execution-model.md).
 
 ## 3. Goals
+
+> **Guiding principle — the harness is a force-multiplier, not a rulebook.** Every goal below serves
+> one purpose: let each role *leverage AI to do their work* and *communicate everything the next step
+> needs* to the harness, with the best practices carried automatically — never to dictate how someone
+> does their job. Separating structure from execution (G2), deriving everything from one catalog (G6),
+> and determining the plan from impact analysis (G9) all exist so the owner supplies judgment while the
+> harness supplies the legwork, context, and rigor.
 
 | # | Goal |
 |---|------|
