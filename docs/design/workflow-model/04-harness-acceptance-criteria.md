@@ -33,11 +33,20 @@ and event lists churn between releases):
 ## 1. Frontmatter validation (HARD GATES, reject on failure)
 
 ### `name`
-- [ ] **MUST** be present and non-empty
-- [ ] **MUST** be ≤ 64 characters
-- [ ] **MUST** match `^[a-z0-9-]+$` (lowercase letters, numbers, hyphens only)
-- [ ] **MUST NOT** contain XML tags
-- [ ] **MUST NOT** contain the reserved substrings `anthropic` or `claude`
+> **Plugin-skill nuance (verified 2026-06-23 against code.claude.com/docs/en/plugins-reference).**
+> `name` is **required for Agent Skills (SDK/API)** but **optional for Claude Code plugin skills** in a
+> `skills/<dir>/` layout: Claude Code falls back to the stable directory basename. HITL is the latter,
+> so for HITL skills `name` is a **SHOULD** (add for explicitness), not a MUST. Adding it is not a blind
+> sweep, basename collisions exist (e.g. `pm/design-feature` vs `architect/design-feature`), so an
+> explicit `name` must be disambiguated and must not change a skill's current invocation name. The
+> linter treats a missing `name` as a note by default, and as a hard failure only under
+> `--skills-require-name` (the SDK/API rule).
+
+- [ ] **SHOULD** (plugin skill) / **MUST** (Agent Skill SDK) be present and non-empty
+- [ ] If present: **MUST** be ≤ 64 characters
+- [ ] If present: **MUST** match `^[a-z0-9-]+$` (lowercase letters, numbers, hyphens only)
+- [ ] If present: **MUST NOT** contain XML tags
+- [ ] If present: **MUST NOT** contain the reserved substrings `anthropic` or `claude`
 
 ### `description`
 - [ ] **MUST** be present and non-empty
@@ -48,7 +57,8 @@ and event lists churn between releases):
 
 ### Structure
 - [ ] **MUST** be valid YAML at the top of the file, delimited by `---` fences
-- [ ] **MUST** include both `name` and `description` (the only two required fields)
+- [ ] **MUST** include `description` (required for all skills); `name` per the nuance above
+- [ ] Claude Code plugin skills may also carry `argument-hint` and `disable-model-invocation` (valid plugin fields, not Agent Skill fields)
 
 ## 2. Body structure (enforce as gates where measurable)
 - [ ] **MUST** keep the `SKILL.md` body under 500 lines (target < ~150 for most; push deep content into reference files)

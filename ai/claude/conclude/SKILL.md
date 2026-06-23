@@ -36,7 +36,7 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 
 ## Step 1 — Read the thread
 
-1. **Find the thread** — use `slack_read_thread` if a URL or timestamp is provided, or `slack_search_public_and_private` to find the thread by topic
+1. **Find the thread** — use `Slack:slack_read_thread` if a URL or timestamp is provided, or `Slack:slack_search_public_and_private` to find the thread by topic
 2. **Extract from the conversation:**
    - **Decision:** What was decided? (Look for explicit markers: "Decision:", "Let's go with", "Agreed:", or the last substantive message before consensus)
    - **Rationale:** Why this option? What constraints drove it?
