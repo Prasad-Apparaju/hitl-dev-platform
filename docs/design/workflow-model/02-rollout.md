@@ -148,7 +148,7 @@ commands+agents, see below); the only genuine executor gap is **W2** (two new pr
 Making `command` a **required catalog field** (Phase 1) makes any future gap explicit per step;
 closing W2 is its own small track (parallel to Phase 3).
 
-### W1: ~~Missing referenced skills~~ — RESOLVED 2026-06-23 (they exist)
+### W1: ~~Missing referenced skills~~, RESOLVED 2026-06-23 (they exist)
 The earlier audit looked for skill **directories** named `ops-review-release` etc. and concluded
 they were missing. They are **not** missing: all three are implemented as **command files that
 delegate to agents**, the executor pattern this codebase actually uses. Verified in source:
