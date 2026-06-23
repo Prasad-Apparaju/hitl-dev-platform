@@ -1,4 +1,4 @@
-# Workflow Model — Design
+# Workflow Model: Design
 
 **Status:** Design (branch `design/workflow-model`).
 **Companion docs:** [00-requirements.md](00-requirements.md) · [02-rollout.md](02-rollout.md)
@@ -8,16 +8,16 @@ separated from execution, stakeholder-legible names.
 
 ---
 
-## 1. The hierarchy — four levels
+## 1. The hierarchy: four levels
 
 ```
 Workflow  →  Phase  →  Step  →  Substep
 ```
 
-- **Workflow** — the whole process for one kind of change (e.g. `feature`, `migration`).
-- **Phase** — an ordered grouping of steps within a workflow (e.g. `Verify`).
-- **Step** — an ordered unit of work within a phase (e.g. *Code Review Round 2*).
-- **Substep** — an optional child of a step, **one level deep** (e.g. *Architect Code Review* under
+- **Workflow**: the whole process for one kind of change (e.g. `feature`, `migration`).
+- **Phase**: an ordered grouping of steps within a workflow (e.g. `Verify`).
+- **Step**: an ordered unit of work within a phase (e.g. *Code Review Round 2*).
+- **Substep**: an optional child of a step, **one level deep** (e.g. *Architect Code Review* under
   *Code Review Round 2*). Most steps have none; substeps never nest further.
 
 Example (excerpt of the delivery spine):
@@ -31,7 +31,7 @@ development spine
 │  └─ …
 ```
 
-## 2. Identity vs. number — the core rule
+## 2. Identity vs. number: the core rule
 
 > **Identity = stable `key` + human `name` + `phase`. The number is derived display, never stored
 > or hand-written.**
@@ -49,11 +49,11 @@ Verify reviews*. Those references survive any insertion or reorder.
 
 `ai/shared/workflows.yaml` becomes numberless. **Phases are first-class**; steps carry a stable
 `key`, a human `name`, a short `label` (for the trail), a `phase`, and an optional `substep` flag.
-No `n`, no `total` — those are derived.
+No `n`, no `total`; those are derived.
 
 ```yaml
 development:
-  title: "Development — deliver a change"
+  title: "Development: deliver a change"
   phases: [Requirements, Design, Build, Verify, Assess, Ship, Post-Ship]
   steps:
     - { key: review1,     name: "Code Review Round 1",   label: "Rvw1",    phase: Verify }
@@ -65,7 +65,7 @@ development:
 ### Derived numbering
 
 A generator computes numbers from position. A substep declares its `parent` by key (not position) and
-attaches under it — substeps don't increment the integer; they append a letter. Both global and
+attaches under it; substeps don't increment the integer; they append a letter. Both global and
 phase-relative forms fall out:
 
 ```
@@ -76,9 +76,9 @@ phase-relative forms fall out:
 ```
 
 Insert one step earlier and everything renumbers automatically; **no `key` changes, no prose
-breaks.** (Prototype verified — see [02-rollout.md](02-rollout.md) §Validation.)
+breaks.** (Prototype verified; see [02-rollout.md](02-rollout.md) §Validation.)
 
-## 4. Three tiers — workflow, profile, tag
+## 4. Three tiers: workflow, profile, tag
 
 > **★ Decision locked (2026-06-23).** Granularity is resolved into **three tiers**, replacing the
 > earlier "14 named workflows" draft. The driving rule (G8): **a thing is only its own *workflow* if
@@ -87,16 +87,16 @@ breaks.** (Prototype verified — see [02-rollout.md](02-rollout.md) §Validatio
 > sprawl (Refactor/Performance/Chore → tags) while keeping the legible ceremonies (Tech Change,
 > Upgrade, Security) as profiles. See [02-rollout.md §5](02-rollout.md) for the rationale.
 >
-> Correctness never depended on this choice — per [03-execution-model.md](03-execution-model.md), the
+> Correctness never depended on this choice. Per [03-execution-model.md](03-execution-model.md), the
 > guarantee is the **floor + enforced required-evidence**, determined by impact analysis. The tier a
 > thing lands in is about **legibility and classifier accuracy**, not rigor. Tier promotion (tag →
-> profile) is a one-line catalog edit; un-naming a learned profile is expensive — so the default is
+> profile) is a one-line catalog edit; un-naming a learned profile is expensive, so the default is
 > *start lean, promote on evidence of standalone use*.
 
 | Tier | What it is | Spine | Menu-visible | Examples |
 |---|---|---|---|---|
 | **Workflow** | Own / reordered / replaced step sequence | its own | yes | Greenfield · Brownfield · Migration (establishment) · **Incident** (reorders: fix-first) · **Migration Slice** (replaces spine: BI-driven) |
-| **Profile** | Named preset over the **shared delivery spine** — selects which conditional steps are on, which gates are *required*, and the initiator | shared | yes | **Feature · Enhancement · Fix · Tech Change · Upgrade · Security** |
+| **Profile** | Named preset over the **shared delivery spine**, selects which conditional steps are on, which gates are *required*, and the initiator | shared | yes | **Feature · Enhancement · Fix · Tech Change · Upgrade · Security** |
 | **Tag** | A label on a change that **tunes required-evidence** within a profile (composable, stackable) | shared | no (shown on breadcrumb) | `refactor` · `perf` · `chore` · `tooling` · `infra` |
 
 **Why each engineering intent lands where it does:**
@@ -110,7 +110,7 @@ breaks.** (Prototype verified — see [02-rollout.md](02-rollout.md) §Validatio
   legibility) and carries distinctive required gates (Dependency+CVE audit, regression-heavy verify,
   staged rollout). It doesn't reorder the spine, so it isn't a workflow.
 - **Security** is a **profile**: it does **not** reorder the spine (the pentest step already lives in
-  Ship, a security-design review fits the existing Design phase) — what distinguishes it is
+  Ship, a security-design review fits the existing Design phase). What distinguishes it is
   **mandatory, never-skippable gates** (`dev-review-security` design+code, Penetration Test) and a
   distinct initiator (Sec/Arch/Ops).
 - **Incident** is a **workflow**: it genuinely *reorders* (fix-first → deploy → docs ≤48h).
@@ -119,10 +119,10 @@ breaks.** (Prototype verified — see [02-rollout.md](02-rollout.md) §Validatio
 
 **Key safety property (the classifier trap):** the tag/profile a human *picks* only **proposes**;
 **impact analysis decides by what the change actually touches.** A "refactor" that turns out to alter
-an API response is re-classified to Fix/Enhancement and the functional steps switch back on — the
+an API response is re-classified to Fix/Enhancement and the functional steps switch back on. The
 label can't suppress the floor. (See [03-execution-model.md §5](03-execution-model.md).)
 
-**Tally: 5 workflows + 6 profiles + 5 tags** — versus 14 flat workflows. Profiles and tags share one
+**Tally: 5 workflows + 6 profiles + 5 tags**, versus 14 flat workflows. Profiles and tags share one
 spine, so the maintenance + classifier surface is the 5 workflows + the spine, not 25 things.
 
 ### What a "profile" declares
@@ -134,13 +134,13 @@ or tag).
 
 ### The full tree
 
-The **delivery spine** is shown once — the **6 profiles** select from it (see the profile table after
+The **delivery spine** is shown once; the **6 profiles** select from it (see the profile table after
 the tree); **Incident** is a standalone reordered workflow. **Chore is no longer a standalone
-workflow** — it's a Tier-0 `chore` tag on Tech Change, floored only at impact-analysis + docs-reconciled.
+workflow**; it's a Tier-0 `chore` tag on Tech Change, floored only at impact-analysis + docs-reconciled.
 
-> **⚠ Unvalidated proposals — not yet confirmed with the team.** Several parts of this tree are my
+> **⚠ Unvalidated proposals, not yet confirmed with the team.** Several parts of this tree are my
 > drafts, not established process, and will calcify if implemented as-is: the **establishment
-> phasing** (Discover/Baseline/Kickoff etc. — Q1, and itself low-value; see
+> phasing** (Discover/Baseline/Kickoff etc., Q1, and itself low-value; see
 > [02-rollout.md §5](02-rollout.md)), the **Incident** step list (no canonical source), and the
 > **conditional spine additions** (Baseline Measurement, Dependency+CVE Audit) plus the per-profile
 > **gate sets**. Treat them as starting points to validate, not decisions.
@@ -190,7 +190,7 @@ DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 35 s
 ├─ Design
 │  ├─ Impact Analysis
 │  ├─ ROI Estimate (cond)
-│  ├─ Update Docs — HLD/LLD
+│  ├─ Update Docs, HLD/LLD
 │  ├─ Update IaC + Verify Scripts (cond)
 │  ├─ Test Case Planning
 │  ├─ Training Plan Stub (cond)
@@ -228,10 +228,10 @@ DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 35 s
    ├─ 30-day ROI Check (cond)
    └─ 90-day ROI Check (cond)
 
-incident     (DELIVERY · operational — P0, fix-first, docs ≤48h)   2 phases · 7 steps   [standalone]
+incident     (DELIVERY · operational, P0, fix-first, docs ≤48h)   2 phases · 7 steps   [standalone]
 ├─ Respond
 │  ├─ Triage + assess blast radius
-│  ├─ Mitigate — stop the bleeding
+│  ├─ Mitigate, stop the bleeding
 │  └─ Verify recovery
 └─ Document (≤48h)
    ├─ Root-cause / post-mortem
@@ -248,14 +248,14 @@ incident     (DELIVERY · operational — P0, fix-first, docs ≤48h)   2 phases
 
 The **6 profiles** below select steps + required gates from the shared spine. **Tags** (`refactor`,
 `perf`, `chore`, `tooling`, `infra`) stack on top of a profile (usually Tech Change) to tune
-required-evidence — they are not rows here. **Migration Slice** is a *workflow* (it replaces the spine
+required-evidence, they are not rows here. **Migration Slice** is a *workflow* (it replaces the spine
 front), listed for completeness.
 
 | Profile | Class | Initiator | Distinctive profile (vs. a plain Feature) |
 |---|---|---|---|
 | **Feature** | functional | PM | the baseline spine |
 | **Enhancement** | functional | PM | starts from the existing LLD · **back-compat gate** |
-| **Fix** | functional | PM / QA | lighter — skip ROI/training · defect → regression test |
+| **Fix** | functional | PM / QA | lighter, skip ROI/training · defect → regression test |
 | **Tech Change** | technical | Dev / Arch | engineering-initiated structural work · skip Figma/ROI/training · tags refine: `refactor` → characterization tests + behavior-unchanged; `perf` → Baseline Measurement + budget; `chore` → Tier-0 |
 | **Upgrade** | technical | Dev / Ops | **+ Dependency + CVE Audit · full regression required · staged rollout** |
 | **Security** | technical | Arch / Sec / Ops | **dev-review-security design + code required (never-skippable) · Penetration Test required** |
@@ -263,18 +263,18 @@ front), listed for completeness.
 
 ### How the three tiers are encoded in the catalog
 
-The shape below documents the **target encoding** — it is **not** the live `ai/shared/workflows.yaml`
-yet. Writing it is **Phase 1** (catalog), which is gated by **Phase 1b executability** (C5) — so this
+The shape below documents the **target encoding**; it is **not** the live `ai/shared/workflows.yaml`
+yet. Writing it is **Phase 1** (catalog), which is gated by **Phase 1b executability** (C5), so this
 subsection is the contract Phase 1 implements, not a change to ship now.
 
-A **workflow** owns its `phases` + `steps` (the establishment trio, Incident, Migration Slice — already
+A **workflow** owns its `phases` + `steps` (the establishment trio, Incident, Migration Slice, already
 how today's catalog is shaped). The **shared delivery spine** is one workflow entry; **profiles** and
 **tags** are declared *against* it:
 
 ```yaml
 # One shared spine (the superset of step-slots; most steps carry a `cond` key).
 delivery_spine:
-  title: "Delivery — one change, requirement → post-deploy"
+  title: "Delivery, one change, requirement → post-deploy"
   phases: [Requirements, Design, Build, Verify, Assess, Ship, Post-Ship]
   steps:
     - { key: impact,    name: "Impact Analysis",      label: "Impact",  phase: Design }
@@ -301,11 +301,11 @@ tags:
 
 The classifier in `dev-start-change` proposes `{workflow | profile, tags[]}`; **impact analysis
 finalises the included steps + `required_evidence`** (the profile/tag values are a *starting set*, not
-the contract — see [03-execution-model.md §5](03-execution-model.md)). `current-change.yaml` records
-the resolved `profile`, `tags`, and `required_evidence` — additively, alongside the existing `workflow`
+the contract, see [03-execution-model.md §5](03-execution-model.md)). `current-change.yaml` records
+the resolved `profile`, `tags`, and `required_evidence`, additively, alongside the existing `workflow`
 block (§7); no parser rewrite.
 
-## 5. Step → command / role — structure vs. execution
+## 5. Step → command / role: structure vs. execution
 
 Each step carries the metadata that lets the **process** stay separate from the **work**:
 
@@ -326,11 +326,11 @@ Relationships are **many-to-many** and the catalog states each once:
 This makes `command-map.md` and the role guides **generated views** (later phase), not
 hand-maintained documents.
 
-### `command` is a **required** field — coverage must be explicit
+### `command` is a **required** field: coverage must be explicit
 
 Every step declares one of: a **skill** (`command: dev-tdd`), **`manual`** (human/run-the-suite,
 no command needed), or **`guided`** (driven by a reference doc, no skill yet). Making it required
-means a missing executor can't hide in prose — today `workflow-steps.md` references three skills
+means a missing executor can't hide in prose, today `workflow-steps.md` references three skills
 that **don't exist** (`ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`).
 
 Audit of the delivery spine against the real `ai/claude/` skills:
@@ -340,44 +340,44 @@ Audit of the delivery spine against the real `ai/claude/` skills:
 | ✅ **skill** (dedicated, exists) | ~20 | Impact Analysis → `dev-apply-change`; RED/Design+/GREEN → `dev-tdd`; reviews → `dev-review-lld-adherence`; QA → `qa-verify-quality`; Ship → the ops suite; gates → `ta-approve` |
 | ✋ **manual** (by design) | ~7 | Figma Review, Verify RED, Verify GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison |
 | 📄 **guided** (ref doc, no skill) | ~3 | ROI Estimate, Training Plan Stub, 30/90-day ROI Check |
-| ❌ **gap — referenced skill missing** | 3 | Rollout Plan → `ops-review-release`; Integration Verification → `architect-verify-traceability`; Canary monitoring → `ops-monitor-canary` |
-| 🆕 **gap — new step, no executor** | 2 | Baseline Measurement (Performance); Dependency + CVE Audit (Upgrade) |
+| ❌ **gap, referenced skill missing** | 3 | Rollout Plan → `ops-review-release`; Integration Verification → `architect-verify-traceability`; Canary monitoring → `ops-monitor-canary` |
+| 🆕 **gap, new step, no executor** | 2 | Baseline Measurement (Performance); Dependency + CVE Audit (Upgrade) |
 
 The ❌ and 🆕 rows are real work (tracked in [02-rollout.md §7](02-rollout.md)). The point of the
-required field is that this table is **generated from the catalog** and stays honest — the model is
+required field is that this table is **generated from the catalog** and stays honest, the model is
 only "executable end-to-end" once every step resolves to a skill, `manual`, or a deliberate
 `guided`.
 
-## 6. The breadcrumb — no global counter
+## 6. The breadcrumb: no global counter
 
-Position is shown by **phase + name + a derived, drift-resistant signal** — never a global
+Position is shown by **phase + name + a derived, drift-resistant signal**, never a global
 `Step N / 31`.
 
-### Banner (full width) — phase ribbon, 2-line
+### Banner (full width): phase ribbon, 2-line
 ```
 HITL development ▸ CERR-12 ▸ Requirements ✓  Design ✓  Build ✓  Verify ◐  Assess ·  Ship ·  Post-Ship ·
    … ✓Conv  ✓Rvw1  ✓Rvw2  ▶ Architect Code Review  ·Rerun  ·Recncl  ·QAVfy …
 ```
 - **Line 1** = `HITL <workflow> ▸ <change-id> ▸ <phase ribbon>`. The ribbon marks every phase
-  `✓` done · `◐` here · `·` not started — it only changes when a **phase** is added.
+  `✓` done · `◐` here · `·` not started, it only changes when a **phase** is added.
 - **Line 2** = the windowed step trail, with the **current step expanded to its full name**
   (`▶ Architect Code Review`) and neighbors as short labels. Order + `▶` carry the position; no
   numbers.
 
-### Status line (width-constrained) — compact
+### Status line (width-constrained): compact
 ```
 HITL ▸ CERR-12 ▸ Verify ▸ Architect Code Review
    … ✓Rvw1 ✓Rvw2 ▶ArchRvw ·Rerun ·Recncl …
 ```
 `<change-id> ▸ <phase> ▸ <step name>` + trail. Still no global counter.
 
-## 7. Change-file impact — additive only
+## 7. Change-file impact: additive only
 
 The breadcrumb no longer *displays* a global number, so the change file needn't *store* one to kill
 the global counter (the counter dies at the display layer). Therefore the change file change is
 **additive and low-risk**:
 
-- **Keep** the existing self-describing block (`steps: [{ n, key, label, status }]`, `total`) — the
+- **Keep** the existing self-describing block (`steps: [{ n, key, label, status }]`, `total`), the
   seed still derives `n` from the now-numberless catalog and writes it, exactly as today. (C2/C3.)
 - **Add** `phase` per step, which the ribbon needs:
   ```yaml
@@ -388,7 +388,7 @@ the global counter (the counter dies at the display layer). Therefore the change
 - Old files without `phase` degrade gracefully (ribbon falls back to the current-phase name only).
 
 The parser keeps reading the file (no rewrite); it gains ribbon rendering from `phase` + `status`.
-Portability (C1) is preserved — `phase` is in the file, so the breadcrumb still renders without the
+Portability (C1) is preserved, `phase` is in the file, so the breadcrumb still renders without the
 catalog.
 
 ## 8. The citation convention (the durable rule)
