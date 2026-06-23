@@ -112,7 +112,7 @@ Update `.hitl/current-change.yaml`: set `current_step: {number: 10, name: "AI ge
 
 Generate three categories of tests. All are written now (RED phase), but they run at different points:
 
-**A. Unit tests** — written and run in this TDD cycle. Target ≥90% line coverage (hard gate at Phase 6).
+**A. Unit tests** — written and run in this TDD cycle. Target ≥90% line coverage (hard gate at Phase 6). 90% is the team standard: high enough to force coverage of error and branch paths, but below 100% so the gate does not reward brittle tests written only to chase the last few unreachable or defensive lines.
    - Happy path for every method in the LLD
    - Error path for every `error_modes` entry in the facade
    - Precondition violation for every `preconditions` entry

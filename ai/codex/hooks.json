@@ -1,4 +1,5 @@
 {
+  "_comment": "Codex runs command hooks with the session cwd as the working directory, NOT a guaranteed project root (Codex may be started from a subdirectory), and provides no project-dir env var for non-plugin hooks (verified against developers.openai.com/codex/hooks, 2026-06-23). Bare relative paths like 'ai/codex/hook-scripts/...' therefore break when the session cwd is a subdir. Per the Codex docs' own recommendation we resolve the script path from the git root via 'git rev-parse --show-toplevel'. This mirrors the $CLAUDE_PROJECT_DIR absolute-path rule for Claude Code hooks (see docs/design/workflow-model/04-harness-acceptance-criteria.md Part B §9).",
   "hooks": {
     "PreToolUse": [
       {
@@ -6,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ai/codex/hook-scripts/check-hitl-context.sh"
+            "command": "bash \"$(git rev-parse --show-toplevel)/ai/codex/hook-scripts/check-hitl-context.sh\""
           }
         ]
       }
@@ -17,11 +18,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ai/codex/hook-scripts/check-domain-boundary.sh"
+            "command": "bash \"$(git rev-parse --show-toplevel)/ai/codex/hook-scripts/check-domain-boundary.sh\""
           },
           {
             "type": "command",
-            "command": "bash ai/codex/hook-scripts/rebuild-graph.sh"
+            "command": "bash \"$(git rev-parse --show-toplevel)/ai/codex/hook-scripts/rebuild-graph.sh\""
           }
         ]
       }
@@ -31,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ai/codex/hook-scripts/write-session-summary.sh"
+            "command": "bash \"$(git rev-parse --show-toplevel)/ai/codex/hook-scripts/write-session-summary.sh\""
           }
         ]
       }

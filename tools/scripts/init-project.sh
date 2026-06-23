@@ -188,10 +188,27 @@ setup_claude() {
   if [[ -f "$SETTINGS" ]]; then
     echo "  .claude/settings.json already exists — skipping"
   else
+    # KNOWN GAP (deferred): the PreToolUse check-hitl-context matcher below is "Edit|Write"
+    # only, so an MCP-based file-writing tool (mcp__<server>__<action>) bypasses the intake
+    # gate. We do NOT blanket-add "mcp__.*" here: hooks/check-hitl-context.sh extracts paths
+    # only for tool_name in {Edit, Write, apply_patch} and has no schema for arbitrary MCP
+    # tool_input. Adding the matcher would (a) fire the gate on read-only MCP tools (Slack
+    # reads, etc.) and (b) still NOT block genuine MCP writes, because the extractor can't
+    # read their file_path — so it would add noise without closing the gap. The correct fix
+    # is to teach check-hitl-context.sh the input shape of each specific MCP write tool, then
+    # add a narrowly scoped matcher per tool. Until then this stays Edit|Write. See
+    # docs/design/workflow-model/04-harness-acceptance-criteria.md Part B §9.
     cat > "$SETTINGS" <<'JSON'
 {
   "statusLine": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/hitl-gate.sh\"" }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
@@ -265,7 +282,7 @@ JSON
   local HOOKS_DIR="$TARGET_DIR/.hitl/hooks"
   if [[ ! -d "$HOOKS_DIR" ]]; then
     mkdir -p "$HOOKS_DIR"
-    for hook in welcome check-hitl-context check-domain-boundary rebuild-graph \
+    for hook in welcome hitl-gate check-hitl-context check-domain-boundary rebuild-graph \
                 write-session-summary sync-step-to-issue statusline-hitl; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash

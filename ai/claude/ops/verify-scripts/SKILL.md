@@ -31,6 +31,17 @@ Validate that all ops artifacts for this change exist, are syntactically valid, 
 
 ---
 
+## Required tools
+
+This skill shells out to external CLIs. Only the tools matching the artifacts present in the change are needed — run a check, and if its CLI is missing, report which one to install rather than failing silently.
+
+- **IaC validation / dry-run:** `terraform`, `pulumi`, `helm`, `kubectl`, `cdk` (whichever the project uses)
+- **DB migrations:** `flyway`, `liquibase`, `alembic`, `python` (Django `manage.py`), `psql` (raw SQL)
+- **Deployment config:** `docker` (compose), `actionlint` or `yamllint`, `bash`, `python3`
+- **Secrets scan (one of):** `gitleaks`, `trufflehog`, or `semgrep`
+
+---
+
 ## Progress Banners
 
 Format: `---` line, `**Verify Ops Scripts — Step N / 4: [Name]**`, trail, `---`.
