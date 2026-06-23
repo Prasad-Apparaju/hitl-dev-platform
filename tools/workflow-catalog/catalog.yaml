@@ -33,6 +33,9 @@ spine:
     - { key: test_plan,          name: "Test Case Planning",           label: "Tests",    phase: "Design" }
     - { key: training,           name: "Training Plan Stub",           label: "Train",    phase: "Design" }
     - { key: packet,             name: "Package Decision Packet",      label: "Packet",   phase: "Design" }
+    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf }
+    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security }
+    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade }
     # ── Build (TDD cycle) ─────────────────────────────────────────
     - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build" }
     - { key: test_review,        name: "Human Reviews Tests",          label: "TstRvw",   phase: "Build" }
@@ -57,15 +60,11 @@ spine:
     - { key: integration_verify, name: "Integration Verification",     label: "IntVfy",   phase: "Ship" }
     - { key: figma_compare,      name: "Figma Comparison",             label: "Figma2",   phase: "Ship" }
     - { key: deploy,             name: "Build, Migrate, Apply, Deploy",label: "Deploy",   phase: "Ship" }
+    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security }
     - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship" }
     # ── Post-Ship ─────────────────────────────────────────────────
     - { key: roi_30,             name: "30-Day ROI Check",             label: "30dROI",   phase: "Post-Ship" }
     - { key: roi_90,             name: "90-Day ROI Check",             label: "90dROI",   phase: "Post-Ship" }
-    # ── Conditional spine slots (filtered out of the base/Feature view) ──
-    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf }
-    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security }
-    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade }
-    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security }
 
 workflows:
 
@@ -122,3 +121,57 @@ workflows:
       - { key: manifest,         name: "Generate Manifest",            label: "Manifest",  phase: "PRD Setup" }
       - { key: create_issue,     name: "Create Issue",                 label: "Issue",     phase: "PRD Setup" }
       - { key: confirm_ready,    name: "Confirm Ready",                label: "Ready",     phase: "PRD Setup" }
+
+# ── Delivery profiles: named presets over the shared spine ──────────────────────────────────
+# A profile selects which conditional spine slots are on (`activates`, by cond activator),
+# drops steps that don't apply (`excludes`, by key), and contributes a `required_evidence` set
+# (impact analysis may extend it per change — see docs/design/workflow-model/03-execution-model.md).
+# `feature` is the base: no conditionals, nothing excluded == the runtime `development` workflow.
+profiles:
+  feature:
+    class: functional
+    initiator: PM
+    activates: []
+    excludes: []
+    required_evidence: [tests_red, tests_green, spec_conformance_review, qa_review, downstream_impact_brief]
+  enhancement:
+    class: functional
+    initiator: PM
+    activates: []
+    excludes: []
+    required_evidence: [tests_red, tests_green, spec_conformance_review, qa_review, downstream_impact_brief, back_compat]
+  fix:
+    class: functional
+    initiator: PM/QA
+    activates: []
+    excludes: [roi, training]
+    required_evidence: [tests_red, tests_green, qa_review, regression_test]
+  tech_change:
+    class: technical
+    initiator: Dev/Arch
+    activates: []
+    excludes: [figma, roi, training, figma_compare]
+    required_evidence: [tests_red, tests_green, spec_conformance_review]
+  upgrade:
+    class: technical
+    initiator: Dev/Ops
+    activates: [upgrade]
+    excludes: [figma, training, figma_compare]
+    required_evidence: [cve_audit, full_regression, spec_conformance_review]
+  security:
+    class: technical
+    initiator: Sec/Arch/Ops
+    activates: [security]
+    excludes: [figma, training, figma_compare]
+    required_evidence: [security_review, pentest, tests_green]
+    skip_authority: { security_review: never, pentest: never }
+
+# ── Change-kind tags: stack on a profile, tune required-evidence ─────────────────────────────
+# A tag may activate a conditional spine slot (e.g. perf -> baseline) and adds evidence. Tags
+# compose: {Fix, perf, upgrade} unions all three evidence sets. `chore` is Tier-0 (floor only).
+tags:
+  refactor: { activates: [],     required_evidence: [characterization_tests, behavior_unchanged] }
+  perf:     { activates: [perf], required_evidence: [perf_budget_met] }
+  chore:    { tier: 0, activates: [], required_evidence: [] }
+  tooling:  { activates: [],     required_evidence: [] }
+  infra:    { activates: [],     required_evidence: [] }

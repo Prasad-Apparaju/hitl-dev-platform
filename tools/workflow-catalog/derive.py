@@ -100,6 +100,49 @@ def workflow_steps(catalog: dict, name: str, active: set[str] | None = None) -> 
     return catalog["workflows"][name]["steps"]
 
 
+# ---------------------------------------------------------------------------
+# Profile / tag resolution (the three-tier model)
+# ---------------------------------------------------------------------------
+
+def _dedup(seq: list[str]) -> list[str]:
+    seen, out = set(), []
+    for x in seq:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+
+def resolve(catalog: dict, profile: str, tags: list[str] | None = None) -> dict:
+    """Resolve a profile + tags into the active conditionals, excluded steps,
+    required-evidence set, and skip authorities. The profile/tag only *propose*;
+    impact analysis finalises this per change (03-execution-model §5)."""
+    tags = tags or []
+    prof = catalog["profiles"][profile]
+    cat_tags = catalog.get("tags", {})
+    active = set(prof.get("activates", []))
+    evidence = list(prof.get("required_evidence", []))
+    for t in tags:
+        td = cat_tags.get(t, {})
+        active |= set(td.get("activates", []))
+        evidence += td.get("required_evidence", [])
+    return {
+        "profile": profile,
+        "tags": tags,
+        "active": active,
+        "excludes": set(prof.get("excludes", [])),
+        "required_evidence": _dedup(evidence),
+        "skip_authority": prof.get("skip_authority", {}),
+    }
+
+
+def profile_steps(catalog: dict, profile: str, tags: list[str] | None = None) -> list[dict]:
+    """The spine steps a profile+tags selects, in order (pre-derivation)."""
+    r = resolve(catalog, profile, tags)
+    steps = active_steps(catalog["spine"]["steps"], r["active"])
+    return [s for s in steps if s["key"] not in r["excludes"]]
+
+
 def all_catalog_names(catalog: dict) -> list[str]:
     return ["spine"] + sorted(catalog.get("workflows", {}))
 
@@ -166,8 +209,9 @@ def overview(catalog: dict) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Derive numbered views from the numberless catalog.")
-    p.add_argument("mode", choices=["verify", "overview", "numbered"])
-    p.add_argument("name", nargs="?", help="workflow name (for `numbered`)")
+    p.add_argument("mode", choices=["verify", "overview", "numbered", "profile"])
+    p.add_argument("name", nargs="?", help="workflow name (numbered) / profile name (profile)")
+    p.add_argument("--tags", default="", help="comma-separated tags for `profile` mode")
     p.add_argument("--catalog", default=str(DEFAULT_CATALOG))
     p.add_argument("--runtime", default=str(DEFAULT_RUNTIME))
     args = p.parse_args(argv)
@@ -196,6 +240,22 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         for d in derive_steps(workflow_steps(catalog, args.name)):
             print(f"{d['n']:>3}  {d['phase_step']:<14} {d['label']:<10} {d['key']}")
+        return 0
+
+    if args.mode == "profile":
+        if not args.name:
+            print("error: `profile` needs a profile name", file=sys.stderr)
+            return 2
+        tags = [t.strip() for t in args.tags.split(",") if t.strip()]
+        r = resolve(catalog, args.name, tags)
+        steps = derive_steps(profile_steps(catalog, args.name, tags))
+        title = f"{args.name}" + (f" + {','.join(tags)}" if tags else "")
+        print(f"profile {title}: {total_of(steps)} steps")
+        for d in steps:
+            print(f"  {d['n']:>3}  {d['phase_step']:<14} {d['label']:<10} {d['key']}")
+        print(f"required_evidence: {', '.join(r['required_evidence'])}")
+        if r["skip_authority"]:
+            print(f"skip_authority: {r['skip_authority']}")
         return 0
 
     return 0
