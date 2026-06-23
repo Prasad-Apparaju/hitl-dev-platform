@@ -36,7 +36,9 @@ invariants:
 - Each step is **owned by a role**, and the harness gives that role a **skill/command** that does the
   heavy lifting with AI — carrying the best practices and the context the step needs, so the owner can
   focus on judgment and hand off complete, well-formed work rather than remembering every checklist.
-- Each step **consumes the previous step's outputs** — nothing starts from nothing.
+- The chain is **seeded by the problem/requirement itself** (the issue); from there each step
+  **consumes the previous step's outputs**. Every step has a defined input — the first the problem
+  statement, the rest the prior step's work — so nothing starts from a blank page.
 - **Handoffs are GitHub issues backed by updated documentation** — the docs are the source of
   truth; the issue is the baton.
 - It all happens **inside one branch**.
