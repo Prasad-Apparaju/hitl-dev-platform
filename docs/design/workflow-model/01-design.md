@@ -58,14 +58,15 @@ development:
   steps:
     - { key: review1,     name: "Code Review Round 1",   label: "Rvw1",    phase: Verify }
     - { key: review2,     name: "Code Review Round 2",   label: "Rvw2",    phase: Verify }
-    - { key: arch_review, name: "Architect Code Review", label: "ArchRvw", phase: Verify, substep: true }
+    - { key: arch_review, name: "Architect Code Review", label: "ArchRvw", phase: Verify, substep: true, parent: review2 }
     - { key: rerun,       name: "Rerun Tests",           label: "Rerun",   phase: Verify }
 ```
 
 ### Derived numbering
 
-A generator computes numbers from position. Substeps don't increment the integer; they append a
-letter. Both global and phase-relative forms fall out:
+A generator computes numbers from position. A substep declares its `parent` by key (not position) and
+attaches under it — substeps don't increment the integer; they append a letter. Both global and
+phase-relative forms fall out:
 
 ```
 | #  | phase.step | Step                  | key         |

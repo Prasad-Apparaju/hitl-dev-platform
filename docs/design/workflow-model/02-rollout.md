@@ -88,16 +88,28 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
    + correctness lives in the floor/required-evidence, not the name, so the choice is about
    legibility/classifier accuracy; promotion (tag → profile) is a cheap catalog edit, un-naming is
    not, so start lean.
-2. **Explicit substep `parent`?** *Recommendation: explicit* (`parent: review2`) — positional
-   attachment contradicts the redesign's own "don't rely on position" thesis, and it's one field.
-3. **Per-profile/tag gate sets.** Confirm the *required* gates for the **Security** profile
-   (`dev-review-security` design+code, pentest), the **Upgrade** profile (dependency/CVE audit,
-   regression-heavy verify), the **`perf`** tag (baseline + budget), and the **`refactor`** tag
-   (characterization + unchanged regression). These are unvalidated drafts (R5).
-4. **Migration Slice specialization.** Confirm it adds exactly: requirement = migration brief ·
-   issue declares BI-IDs · observable-slice gate · update coverage matrix. Anything else?
-5. **Versioning.** Phase 2's schema touch is additive → minor; recommend the whole initiative ship
-   as **`1.1.0`** (Phase 2 is the user-visible headline), not scattered across patches.
+2. **Explicit substep `parent` — LOCKED 2026-06-23: explicit.** Substeps carry `parent: <key>`
+   (e.g. `arch_review` → `parent: review2`), not positional attachment — positional contradicts the
+   redesign's own "don't rely on position" thesis, and it's one field. (Applied in
+   [01-design.md §3](01-design.md).)
+3. **Per-profile/tag gate sets — LOCKED as Phase-1 *defaults*, flagged for pilot validation.** The
+   documented required gates are the starting contract Phase 1 writes: **Security** profile
+   (`dev-review-security` design+code, pentest), **Upgrade** profile (dependency/CVE audit,
+   regression-heavy verify), **`perf`** tag (baseline + budget), **`refactor`** tag (characterization +
+   unchanged regression). *This is the one decision that cannot be closed from design alone* — whether
+   each set is **complete** is a team/pilot judgment (R5). Resolution: ship these as defaults; the
+   **first pilot run of each profile/tag confirms or amends the set** before it's treated as the
+   contract. Do not let "documented" pass for "validated."
+4. **Migration Slice specialization — LOCKED 2026-06-23.** It adds exactly: requirement = migration
+   brief · issue declares BI-IDs · observable-slice gate · update coverage matrix. No other deltas; a
+   pilot may add, but the catalog ships with these four.
+5. **Versioning — LOCKED 2026-06-23: `1.1.0`.** The whole initiative ships as one minor (Phase 2's
+   schema touch is additive; the breadcrumb is the user-visible headline), not scattered across
+   patches.
+6. **Deferred-regression blocks "complete" — LOCKED 2026-06-23: confirmed.** A deferred regression
+   becomes a tracked ticket (owner + due) linked to the change that **blocks "change complete"** (not
+   merge/canary), or an explicit recorded architect risk-acceptance. (Finalised in
+   [03-execution-model.md §6](03-execution-model.md).)
 
 **Dropped** (was open decision): *phase the establishment workflows.* Low value — a setup workflow
 runs **once** and you're never lost in it; the ribbon earns its keep on the repeated delivery flow.
@@ -160,7 +172,7 @@ The biggest substance, not yet built. Spans Phase 1 (metadata) and a new enforce
   required-evidence item *unless* a valid waiver exists; the floor is never waivable.
 - **Docs-reconciled closing gate** (drift): non-skippable for changes touching documented behaviour.
 - **Deferred-regression tracking**: a deferred regression becomes a linked ticket that blocks
-  "change complete" (not merge), surfaced as `regression: deferred → #ticket`. *(Pending confirm.)*
+  "change complete" (not merge), surfaced as `regression: deferred → #ticket`. *(Confirmed 2026-06-23.)*
 - **Skip telemetry**: surface skips in PR/breadcrumb + a skip log; track patterns.
 
 > **Taxonomy is now demoted** (§5.1): per the execution model, correctness is the floor +

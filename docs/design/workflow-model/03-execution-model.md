@@ -114,7 +114,7 @@ enforced required-evidence.)
   **tracked ticket (owner + due) linked to the change**, that **blocks "change complete"** (you may
   canary-deploy with it pending; you may not call the change *done*) — or an explicit, recorded
   architect risk-acceptance. It stays visible as `regression: deferred → #ticket` until it lands.
-  *(Pending final confirmation.)*
+  *(Confirmed 2026-06-23.)*
 
 ## 7. What this does to the taxonomy
 
