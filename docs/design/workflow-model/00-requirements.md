@@ -123,3 +123,9 @@ enforcement model in [03-execution-model.md](03-execution-model.md).
   derived, drift-resistant progress signal.
 - `current-change.yaml`'s schema, the breadcrumb parser, and enforcement are unaffected or only
   additively extended.
+- **Every workflow, profile, and tag is verified to actually run end to end**, and **the breadcrumb
+  shows the correct status for all of them, in every case**: each phase of each workflow, the conditional
+  steps a profile or tag switches on, substeps, skipped steps, deferred items, and branch-mismatch.
+  This is checked by exercising the real artifacts (seed a `current-change.yaml` for each case and run
+  the renderers), not by reading the catalog. A workflow/profile/tag whose breadcrumb is wrong or empty
+  for any state is not done.

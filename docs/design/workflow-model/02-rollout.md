@@ -125,6 +125,11 @@ proposal in [01-design.md](01-design.md) and will likely be removed.)
 - Overview, breadcrumb, and (Phase 3) command-map/role guides are **generated** from the one
   catalog.
 - **Every step resolves to an executor**, a skill, `manual`, or a deliberate `guided` (§7).
+- **Every workflow, profile, and tag is verified to run end to end, and its breadcrumb shows the
+  correct status in every case.** A test matrix seeds a real `current-change.yaml` per case and runs
+  the renderers (`welcome.sh`, `statusline-hitl.sh`): each phase of each workflow, profile/tag
+  conditional steps switched on, substeps, skipped steps, deferred-regression, and branch-mismatch.
+  No case may render a wrong or empty trail. This runs in CI so it can't regress.
 
 ---
 
