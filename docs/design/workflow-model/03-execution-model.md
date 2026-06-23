@@ -42,18 +42,26 @@ down only deliberately and visibly (§4).
 
 | # | Floor item | Applies to |
 |---|---|---|
-| 1 | **Impact analysis** | **every** change, *unconditional anchor*; it determines which of 2–8 apply |
-| 2 | **Docs-reconciled** (no drift) | changes touching documented behaviour |
-| 3 | **Writing test cases** (plan + RED) | code / behaviour changes |
-| 4 | **Unit testing** (exist + pass) | code / behaviour changes |
-| 5 | **Code review** | code changes |
-| 6 | **Security review** | auth / payments / data changes |
-| 7 | **Post-deploy checks** (catch prod breakage) | changes that reach prod |
-| 8 | **Regression** | could-regress changes, *hard-skip; **deferrable** (§6)* |
+| 1 | **Impact analysis** | **every** change, *unconditional anchor*; it determines which of 2–9 apply |
+| 2 | **UX design artifact** (Claude Design, a Figma file, or at minimum a screenshot/mock) | user-facing / UX-involved changes; **PM-owned** |
+| 3 | **Docs-reconciled** (no drift) | changes touching documented behaviour |
+| 4 | **Writing test cases** (plan + RED) | code / behaviour changes |
+| 5 | **Unit testing** (exist + pass) | code / behaviour changes |
+| 6 | **Code review** | code changes |
+| 7 | **Security review** | auth / payments / data changes |
+| 8 | **Post-deploy checks** (catch prod breakage) | changes that reach prod |
+| 9 | **Regression** | could-regress changes, *hard-skip; **deferrable** (§6)* |
 
-Only **#1 is unconditional**; impact analysis decides which of #2–8 are in *this* change's floor. A
-config tweak floors at {impact analysis, docs-reconciled}; a payments-API change floors at all eight.
-**The floor scales with the change, but never to zero.**
+Only **#1 is unconditional**; impact analysis decides which of #2–9 are in *this* change's floor. A
+config tweak floors at {impact analysis, docs-reconciled}; a user-facing payments change floors at the
+full set. **The floor scales with the change, but never to zero.**
+
+> **UX design artifact (#2).** For any change a user can see, the PM owns a concrete UX artifact before
+> build: ideally a Claude Design output or a Figma file, at minimum an annotated screenshot or mock
+> attached to the issue. The *form* is tiered (full design preferred, screenshot the floor); the
+> artifact's *existence* is the gate. It is required-evidence (`ux_artifact`) and is what the Ship-phase
+> Figma/UX comparison checks the built UI against. Whether it is hard-floor or architect-waiverable for
+> trivial UI tweaks is an open sub-decision (see [02-rollout.md §5](02-rollout.md)).
 
 ## 4. Tailoring & the informed-skip mechanism
 
@@ -91,7 +99,8 @@ a silent omission and never a hard wall.
 
 The dependable mechanism already exists: **`required_evidence` in `current-change.yaml`, enforced by
 the gates/hooks** (schema today: `tests_red`, `tests_green`, `spec_conformance_review`, `qa_review`,
-`downstream_impact_brief`, `rollout_plan`, `ops_review`, to be extended, e.g. `docs_reconciled`).
+`downstream_impact_brief`, `rollout_plan`, `ops_review`, to be extended, e.g. `docs_reconciled`,
+`ux_artifact`).
 
 ```
 type/tag    →  PROPOSES a required-evidence set

@@ -110,6 +110,14 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
    becomes a tracked ticket (owner + due) linked to the change that **blocks "change complete"** (not
    merge/canary), or an explicit recorded architect risk-acceptance. (Finalised in
    [03-execution-model.md §6](03-execution-model.md).)
+7. **UX design artifact, floor strictness (open).** A user-facing change requires a PM-owned UX
+   artifact, Claude Design / Figma / at minimum a screenshot (floor item #2,
+   [03-execution-model.md §3](03-execution-model.md)). Open: is it **hard-floor** (never skippable, like
+   security review) or **architect-waiverable** for trivial UI tweaks (copy change, a moved button)?
+   Also open: the trigger test for "user-facing", impact analysis flags it, but the rule (any rendered
+   UI delta? visual-only? text?) needs a one-line definition. *Recommendation: hard-floor on the
+   artifact's existence, with the screenshot tier as the low-effort floor, so "trivial" still costs one
+   screenshot rather than a waiver.*
 
 **Dropped** (was open decision): *phase the establishment workflows.* Low value, a setup workflow
 runs **once** and you're never lost in it; the ribbon earns its keep on the repeated delivery flow.
@@ -160,7 +168,7 @@ ROI Estimate, Training Plan Stub, 30/90-day ROI Check, keep `guided` (reference 
 a thin command. *Default: keep guided unless a command adds real value.*
 
 ### W4: Manual steps
-Figma Review, Verify RED/GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison:
+UX Design Artifact, Verify RED/GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison:
 confirm they stay `manual` (run-the-suite / human judgment). *Default: yes.*
 
 ### W5: Execution model (the floor + informed-skip + enforcement): see [03-execution-model.md](03-execution-model.md)

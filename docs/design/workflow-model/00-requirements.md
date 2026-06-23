@@ -113,6 +113,11 @@ enforcement model in [03-execution-model.md](03-execution-model.md).
   a later phase* (see [02-rollout.md](02-rollout.md)).
 - Changing the internal behavior of any skill/command.
 - Re-phasing the establishment (setup) workflows, optional enrichment, deferred.
+- **Integrating Claude Design / Figma into the harness.** The model *requires* a UX artifact for
+  user-facing changes (floor item #2 in [03-execution-model.md §3](03-execution-model.md)), but for now
+  the artifact is captured **manually**, a Claude Design link, a Figma link, or a screenshot attached
+  to the issue. A real tooling integration (generate or pull the design through the harness) is future
+  work, this is the deliberate scope line: capture the *requirement* now, defer the *tooling*.
 
 ## 6. Success criteria
 

@@ -185,7 +185,7 @@ migration    (ESTABLISHMENT · stand up a target to replace a source)   3 phases
 DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 35 step-slots · 1 substep
 ├─ Requirements
 │  ├─ GitHub Issue
-│  └─ Figma Review (cond)
+│  └─ UX Design Artifact (cond · user-facing; PM-owned: Claude Design / Figma / screenshot)
 ├─ Design
 │  ├─ Impact Analysis
 │  ├─ ROI Estimate (cond)
@@ -319,7 +319,7 @@ Each step carries the metadata that lets the **process** stay separate from the 
 
 Relationships are **many-to-many** and the catalog states each once:
 - one command → many steps (`dev-tdd` → RED, Tests-Improve-Design, GREEN);
-- one step → no command (*Figma Review*, *Refactor* are manual: `command: null`);
+- one step → no command (*UX Design Artifact*, *Refactor* are manual: `command: null`);
 - one command → a whole workflow (`architect-design-system` → Greenfield).
 
 This makes `command-map.md` and the role guides **generated views** (later phase), not
@@ -337,7 +337,7 @@ Audit of the delivery spine against the real `ai/claude/` skills:
 | Bucket | Count | Examples |
 |---|---|---|
 | ✅ **skill** (dedicated, exists) | ~20 | Impact Analysis → `dev-apply-change`; RED/Design+/GREEN → `dev-tdd`; reviews → `dev-review-lld-adherence`; QA → `qa-verify-quality`; Ship → the ops suite; gates → `ta-approve` |
-| ✋ **manual** (by design) | ~7 | Figma Review, Verify RED, Verify GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison |
+| ✋ **manual** (by design) | ~7 | UX Design Artifact, Verify RED, Verify GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison |
 | 📄 **guided** (ref doc, no skill) | ~3 | ROI Estimate, Training Plan Stub, 30/90-day ROI Check |
 | ❌ **gap, referenced skill missing** | 3 | Rollout Plan → `ops-review-release`; Integration Verification → `architect-verify-traceability`; Canary monitoring → `ops-monitor-canary` |
 | 🆕 **gap, new step, no executor** | 2 | Baseline Measurement (Performance); Dependency + CVE Audit (Upgrade) |
