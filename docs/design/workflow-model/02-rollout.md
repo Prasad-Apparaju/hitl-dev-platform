@@ -34,7 +34,7 @@ In a scratch prototype (not yet in-tree), confirmed:
 |---|---|---|---|
 | **0: Capture** | This requirements + design + rollout doc set; the citation convention. | docs only | none |
 | **1: Catalog** | Numberless `workflows.yaml`; first-class `phases:`; the three-tier taxonomy (delivery spine superset + 6 profiles + tags; standalone Incident; establishment trio; `chore` as Tier-0 tag). **`command` is a required field** per step; this makes every executor gap explicit. Overview generator (`tools/`). | catalog + generator + a generated overview doc | low, **data + docs only, no runtime change** |
-| **1b: Executability** ⛓ | Close the gaps Phase 1 surfaced: **W1** (build or rewire `ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`) and **W2** (executors for Baseline Measurement, Dependency+CVE Audit). See §7. | skills (build/rewire) | medium, real skill work |
+| **1b: Executability** ⛓ | Close the genuine executor gap: **W2** (build executors for Baseline Measurement and Dependency+CVE Audit). **W1 is already covered** (the three referenced executors exist as commands+agents, see §7). See §7. | skills (build) | low-medium, two small executors |
 | **2: Breadcrumb** | Phase-ribbon banner + compact status line; add `phase` per step to the change file (additive); seed/migration derive `n`. | `_steps.sh`, `welcome.sh`, `statusline-hitl.sh`, schema (additive), generators | medium, change-file surface, **additively** (no parser rewrite) |
 | **3: Generated views** | Enrich steps with `role`/`ownership`; **generate** `command-map.md` + role guides. | catalog (data) + generators | low |
 | **4: Prose** | Convert remaining number-citations (`workflow-steps.md`, `SKILL.md`, gates/diagrams) to name-citations. | docs | low, tedious |
@@ -143,18 +143,25 @@ proposal in [01-design.md](01-design.md) and will likely be removed.)
 ## 7. Command-coverage work items
 
 Surfaced by auditing the spine against the real `ai/claude/` skills (see
-[01-design.md §5](01-design.md)). Until these resolve, the model is not executable end-to-end.
-Making `command` a **required catalog field** (Phase 1) makes the gap explicit per step; closing the
-gaps is its own track (parallel to Phase 3).
+[01-design.md §5](01-design.md)). **W1 turned out to be already covered** (the executors exist as
+commands+agents, see below); the only genuine executor gap is **W2** (two new proposed steps).
+Making `command` a **required catalog field** (Phase 1) makes any future gap explicit per step;
+closing W2 is its own small track (parallel to Phase 3).
 
-### W1: Missing referenced skills (build, rewire, or mark manual)
-`workflow-steps.md` references three skills that **do not exist**:
+### W1: ~~Missing referenced skills~~ — RESOLVED 2026-06-23 (they exist)
+The earlier audit looked for skill **directories** named `ops-review-release` etc. and concluded
+they were missing. They are **not** missing: all three are implemented as **command files that
+delegate to agents**, the executor pattern this codebase actually uses. Verified in source:
 
-| Step | Referenced | Decision needed |
-|---|---|---|
-| Risk-Rated Rollout Plan | `ops-review-release` | build the skill, or fold rollout review into `dev-impact-brief` §5 + a TA/ops gate |
-| Integration Verification | `architect-verify-traceability` | build it, or assign to `architect-review-existing` / a manual lead check |
-| Canary monitoring (in Deploy) | `ops-monitor-canary` | build it, or fold into `ops-deploy` / `ops-post-deploy-monitor` |
+| Step | Command | Executor | Status |
+|---|---|---|---|
+| Risk-Rated Rollout Plan | `ai/claude/commands/ops/review-release.md` (`/hitl:ops-review-release`) | `ops-release-reviewer` agent | ✅ exists |
+| Integration Verification | `ai/claude/commands/architect/verify-traceability.md` (`/hitl:architect-verify-traceability`) | `spec-conformance-reviewer` agent | ✅ exists |
+| Canary monitoring (in Deploy) | `ai/claude/commands/ops/monitor-canary.md` (`/hitl:ops-monitor-canary`) | inline (reads observability) | ✅ exists |
+
+Lesson: the coverage audit must resolve a step's `command` against **commands + agents**, not just
+`SKILL.md` dirs. The Phase-1 `command` field should record the actual artifact (`command: ops/review-release`),
+so this class of false-negative can't recur.
 
 ### W2: New steps needing an executor
 | Step | Workflow | Decision needed |

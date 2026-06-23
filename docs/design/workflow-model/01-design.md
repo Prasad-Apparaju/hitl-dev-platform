@@ -327,10 +327,13 @@ hand-maintained documents.
 
 ### `command` is a **required** field: coverage must be explicit
 
-Every step declares one of: a **skill** (`command: dev-tdd`), **`manual`** (human/run-the-suite,
-no command needed), or **`guided`** (driven by a reference doc, no skill yet). Making it required
-means a missing executor can't hide in prose, today `workflow-steps.md` references three skills
-that **don't exist** (`ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`).
+Every step declares one of: a **skill/command** (`command: dev-tdd` or `command: ops/review-release`),
+**`manual`** (human/run-the-suite, no command needed), or **`guided`** (driven by a reference doc, no
+skill yet). Making it required means a missing executor can't hide in prose. The field must resolve
+against **commands + agents**, not just `SKILL.md` dirs, an earlier audit wrongly flagged three steps
+as having no executor (`ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`)
+because it only looked for skill dirs; all three exist as command files delegating to agents (see
+[02-rollout.md §7](02-rollout.md)).
 
 Audit of the delivery spine against the real `ai/claude/` skills:
 

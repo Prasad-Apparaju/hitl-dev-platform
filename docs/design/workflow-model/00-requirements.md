@@ -102,10 +102,11 @@ enforcement model in [03-execution-model.md](03-execution-model.md).
 - **C4: No regression in enforcement.** The gate/hook behavior (intake, edit-block, status
   gating) must keep working.
 - **C5: Executability precedes presentation.** A workflow is not "done" until **every step
-  resolves to an executor** (a skill, `manual`, or a deliberate `guided`). Polishing the breadcrumb
-  or catalog must **not** precede closing the executor gaps, three referenced skills currently do
-  not exist, and two proposed steps have none (see [02-rollout.md §7](02-rollout.md)). Build the
-  plumbing before the façade.
+  resolves to an executor** (a skill/command, `manual`, or a deliberate `guided`). Polishing the
+  breadcrumb or catalog must **not** precede closing the executor gaps. The remaining gap is small:
+  two proposed steps (Baseline Measurement, Dependency+CVE Audit) need executors. The three commands
+  an earlier audit flagged as missing actually exist as command+agent pairs (see
+  [02-rollout.md §7](02-rollout.md)). Build the plumbing before the façade.
 
 ## 5. Non-goals (for this initiative / deferred to later phases)
 
