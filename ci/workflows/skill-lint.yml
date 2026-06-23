@@ -1,0 +1,25 @@
+name: Skill Lint
+
+# Lints every SKILL.md against the Agent Skills schema (Part A acceptance criteria,
+# docs/design/workflow-model/04-harness-acceptance-criteria.md). Hard gates only;
+# judgment checks are warnings and do not fail the build.
+
+on:
+  pull_request:
+    paths:
+      - 'ai/claude/**/SKILL.md'
+      - 'ci/skill-lint/**'
+
+jobs:
+  skill-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyyaml
+      - name: Lint SKILL.md files
+        run: python ci/skill-lint/check_skills.py --root ai/claude
+      - name: Linter self-tests
+        run: pip install pytest && pytest ci/skill-lint/test_check_skills.py -q
