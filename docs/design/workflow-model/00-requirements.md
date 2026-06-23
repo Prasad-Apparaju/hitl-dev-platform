@@ -135,3 +135,9 @@ enforcement model in [03-execution-model.md](03-execution-model.md).
   This is checked by exercising the real artifacts (seed a `current-change.yaml` for each case and run
   the renderers), not by reading the catalog. A workflow/profile/tag whose breadcrumb is wrong or empty
   for any state is not done.
+- **The harness meets Anthropic's standards** for the Claude Code features HITL ships, the full bar is
+  [04-harness-acceptance-criteria.md](04-harness-acceptance-criteria.md). The criteria that directly
+  bind this initiative: every `SKILL.md` passes the Part A schema gates; hook commands use absolute or
+  `$CLAUDE_PROJECT_DIR` paths, never repo-relative; a step's `command` resolves against commands +
+  agents + skills (not just `SKILL.md` dirs); `settings.json` stays valid JSON; and HITL hooks no-op
+  cleanly in a project with no `.hitl/`.

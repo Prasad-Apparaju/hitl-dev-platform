@@ -137,6 +137,10 @@ proposal in [01-design.md](01-design.md) and will likely be removed.)
   the renderers (`welcome.sh`, `statusline-hitl.sh`): each phase of each workflow, profile/tag
   conditional steps switched on, substeps, skipped steps, deferred-regression, and branch-mismatch.
   No case may render a wrong or empty trail. This runs in CI so it can't regress.
+- **The harness acceptance criteria pass** ([04-harness-acceptance-criteria.md](04-harness-acceptance-criteria.md)):
+  Part A schema gates over every `SKILL.md` (CI extension of `scripts/build.sh`), and Part B verified
+  against the installed plugin (absolute-path hooks, valid-JSON `settings.json`, graceful no-`.hitl/`
+  no-op), regression-tested alongside the breadcrumb matrix.
 
 ---
 
