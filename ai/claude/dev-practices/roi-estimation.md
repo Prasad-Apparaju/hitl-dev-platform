@@ -1,6 +1,6 @@
 # ROI Estimation Reference
 
-## When it fires (Step 4 — conditional)
+## When it fires (ROI Estimate step — conditional)
 
 ROI estimation is required for any change costing more than ~1 day of effort. For smaller changes, state "ROI estimate not required — change is <1 day" explicitly so the skip is auditable.
 
@@ -72,7 +72,7 @@ Token cost is not visible in Langfuse. Langfuse traces production LLM calls — 
 
 ```yaml
 token_tracking:
-  estimated:                      # Populated by /hitl:dev-apply-change at step 3
+  estimated:                      # Populated by /hitl:dev-apply-change at the Impact Analysis step
     total_cost_usd: 0.85
     by_phase: {design: 0.15, build: 0.45, verify: 0.20, assess: 0.05}
   actual:                         # Filled in as sessions complete
@@ -87,9 +87,9 @@ After each Claude Code session, record the session cost and which steps were cov
 
 ### Cross-change registry
 
-At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/03-engineering/costs/token-cost-registry.yaml` (template at `ai/shared/templates/token-cost-registry-template.yaml`). After 5+ entries, the registry surfaces optimization signals — see the template for what patterns to look for.
+At the Verify PR Completeness step, copy the completed `token_tracking.actual` into `docs/03-engineering/costs/token-cost-registry.yaml` (template at `ai/shared/templates/token-cost-registry-template.yaml`). After 5+ entries, the registry surfaces optimization signals — see the template for what patterns to look for.
 
-### Estimation method (step 3)
+### Estimation method (Impact Analysis step)
 
 `/hitl:dev-apply-change` estimates cost from artifact file sizes:
 
@@ -102,7 +102,7 @@ At step 24 (PR creation), copy the completed `token_tracking.actual` into `docs/
 
 Estimates are intentionally rough. The registry calibrates them over time — if actual consistently exceeds estimated by >50%, adjust the ratio for that phase.
 
-## Training Plan (Step 8 — conditional)
+## Training Plan (Training Plan Stub step — conditional)
 
 Training plan required when the change introduces:
 - A new architectural pattern

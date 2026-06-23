@@ -42,7 +42,7 @@ graph TB
 | 3 | `python tools/generate-manifest/generator.py` | `docs/system-manifest.yaml` (from real code) | Architecture review |
 | 4 | `/hitl:architect-review-existing` | Tech stack summary, ADR-0005+ for existing decisions, concern list | Per-change work |
 | 5 | `/hitl:dev-generate-docs` (per component) | HLD + LLD for each priority component | First change to those components |
-| 6 | _(scans test files + interviews team)_ | `test-registry.yaml`, `incident-registry.yaml` | `/hitl:dev-practices` step 7 |
+| 6 | _(scans test files + interviews team)_ | `test-registry.yaml`, `incident-registry.yaml` | `/hitl:dev-practices` Test Case Planning |
 | 7 | `graphify . && graphify hook install` | `graphify-out/graph.json` (optional) | First `/hitl:dev-practices` run |
 | 8 | `gh issue create` | First tracked change issue | Per-change loop |
 | 9 | _(confirms baseline)_ | — | — |
@@ -188,11 +188,11 @@ graph TB
 | Gate | Position | Command | Who approves |
 |---|---|---|---|
 | Architecture review | Step 4 of setup | _(architect reviews ADR drafts in session)_ | Architect |
-| Design gate | After Step 9 | `/hitl:ta-approve` | Tech Architect |
-| QA test review | Step 11 | `/hitl:qa-review-tests` | QA |
-| Architect code review | Step 19a | `/hitl:architect-review-code` | Architect reviews PR on GitHub |
-| QA verify | Step 22 | `/hitl:qa-verify-quality` | QA |
-| Code gate | After Step 24 | `/hitl:ta-approve` | Tech Architect |
+| Design gate | After Package Decision Packet | `/hitl:ta-approve` | Tech Architect |
+| QA test review | Human Reviews Tests | `/hitl:qa-review-tests` | QA |
+| Architect code review | Architect Code Review | `/hitl:architect-review-code` | Architect reviews PR on GitHub |
+| QA verify | QA Post-Handoff Verification | `/hitl:qa-verify-quality` | QA |
+| Code gate | After Risk-Rated Rollout Plan | `/hitl:ta-approve` | Tech Architect |
 
 ---
 

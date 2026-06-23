@@ -6,7 +6,7 @@ Step-by-step reference for the 31-step HITL change workflow. The SKILL.md entryp
 
 ## Prerequisites
 
-Before step 1, ensure these artifacts exist:
+Before the GitHub Issue step, ensure these artifacts exist:
 
 | Artifact | New project | Brownfield |
 |---|---|---|
@@ -17,7 +17,7 @@ Before step 1, ensure these artifacts exist:
 
 If you have not done this yet, run `/hitl:dev-start-from-prd`, `/hitl:dev-start-brownfield`, or `/hitl:dev-start-migration` — choose the one that fits your situation.
 
-**Brownfield accuracy note:** The manifest and LLDs produced by the baseline sprint start at 55–75% accuracy and improve as changes correct each area. For the first several changes on a brownfield project, treat AI output from steps 5, 10, and 14 as drafts requiring closer human review than on a well-established codebase.
+**Brownfield accuracy note:** The manifest and LLDs produced by the baseline sprint start at 55–75% accuracy and improve as changes correct each area. For the first several changes on a brownfield project, treat AI output from the Update Docs, AI Generates Tests (RED), and Generate Code (GREEN) steps as drafts requiring closer human review than on a well-established codebase.
 
 ---
 
@@ -39,22 +39,22 @@ If a Figma design exists, the PM or developer reads the Figma file directly and 
 Reads `system-manifest.yaml`, test registry (`docs/03-engineering/testing/test-registry.yaml`), and incident registry (`docs/04-operations/incident-registry.yaml`) to identify affected components, APIs, configs, and dependencies. Produces an effort estimate. Outputs `.hitl/current-change.yaml` with change ID, tier, affected domains, source artifact paths, and `token_tracking.estimated` — a phase-level token cost estimate based on artifact file sizes. See `roi-estimation.md` for the estimation method.
 
 **4. ROI Estimate (conditional)**
-If the step 3 effort estimate exceeds 1 day, record the ROI section in `.hitl/current-change.yaml` under `roi_estimate`: expected outcome (specific and falsifiable), baseline metric (measured now, not estimated), measurement plan, 30/90-day checkpoints, and `token_tracking.estimated.total_cost_usd` as the "AI dev tokens" cost line item. See `roi-estimation.md` for the template. Post a pointer comment on the GitHub issue: `gh issue comment <issue-number> --body "ROI estimate filed — see decision packet at \`docs/decisions/issue-<N>.yaml\`"`.
+If the Impact Analysis effort estimate exceeds 1 day, record the ROI section in `.hitl/current-change.yaml` under `roi_estimate`: expected outcome (specific and falsifiable), baseline metric (measured now, not estimated), measurement plan, 30/90-day checkpoints, and `token_tracking.estimated.total_cost_usd` as the "AI dev tokens" cost line item. See `roi-estimation.md` for the template. Post a pointer comment on the GitHub issue: `gh issue comment <issue-number> --body "ROI estimate filed — see decision packet at \`docs/decisions/issue-<N>.yaml\`"`.
 
 **5. Update Docs** — use `/hitl:dev-generate-docs`
-Using the affected component list from `.hitl/current-change.yaml` (step 3) and Figma specs from step 2 (if available): create or update HLD at `docs/02-design/technical/hld/<feature>.md` and LLD at `docs/02-design/technical/lld/<component>.md`. Update ADRs for any new design decisions. Architect must approve the HLD before LLD generation begins. LLD must be approved before implementation starts.
+Using the affected component list from `.hitl/current-change.yaml` (Impact Analysis) and Figma specs from Figma Review (if available): create or update HLD at `docs/02-design/technical/hld/<feature>.md` and LLD at `docs/02-design/technical/lld/<component>.md`. Update ADRs for any new design decisions. Architect must approve the HLD before LLD generation begins. LLD must be approved before implementation starts.
 
 > **Brownfield:** If the LLD being updated was produced by the baseline sprint rather than a previous change, verify it against the actual code before using it as a code-generation source. Baseline-sprint LLDs are drafts — they may not yet reflect the true behavior of the component.
 
 **6. Update IaC and Verify Ops Scripts**
-Using the IaC section of `.hitl/current-change.yaml` (step 3) and the LLD at `docs/02-design/technical/lld/<component>.md` (step 5): write Terraform/Kubernetes manifests, database migration scripts, rollback migrations, and deployment configs. Only if step 3 identified IaC changes.
+Using the IaC section of `.hitl/current-change.yaml` (Impact Analysis) and the LLD at `docs/02-design/technical/lld/<component>.md` (Update Docs): write Terraform/Kubernetes manifests, database migration scripts, rollback migrations, and deployment configs. Only if Impact Analysis identified IaC changes.
 
-**Exit criterion — run `/hitl:ops-verify-scripts <change-ID> --level syntax` before moving to step 7.** This checks that every expected artifact exists on disk, passes syntax validation, and passes a dev dry-run. Do not start TDD (step 10) with ops scripts that have never been validated — a broken migration discovered at step 28 costs significantly more to fix than one caught here.
+**Exit criterion — run `/hitl:ops-verify-scripts <change-ID> --level syntax` before moving to Test Case Planning.** This checks that every expected artifact exists on disk, passes syntax validation, and passes a dev dry-run. Do not start TDD (AI Generates Tests (RED)) with ops scripts that have never been validated — a broken migration discovered at the Build/Migrate/Apply/Deploy step costs significantly more to fix than one caught here.
 
 For database migrations, also run the migration against the dev database and revert it to confirm the schema roundtrip works. Record `ops_scripts.verified_at` in `.hitl/current-change.yaml` before proceeding.
 
 **7. Test Case Planning** — use `/hitl:qa-plan-tests`
-Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), incident registry, and test registry: QA queries incident history with `/hitl:qa-plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in `.hitl/current-change.yaml` under `tests.plan`. The issue is not the home for the test plan — it lives in the context file and decision packet.
+Using the LLD at `docs/02-design/technical/lld/<component>.md` (Update Docs), incident registry, and test registry: QA queries incident history with `/hitl:qa-plan-tests` and contributes regression-required scenarios before the TDD cycle starts. The developer produces the full list of new tests, updated tests, removed tests, and regression tests. Each QA-contributed scenario must be acknowledged before the TDD cycle begins. Record the test plan in `.hitl/current-change.yaml` under `tests.plan`. The issue is not the home for the test plan — it lives in the context file and decision packet.
 
 > **Empty incident registry (new project or no incidents logged yet):** Skip the incident history query. Record the test plan from the LLD alone and note "incident registry empty" in `.hitl/current-change.yaml`. The registry will accumulate entries as production incidents occur.
 
@@ -62,7 +62,7 @@ Using the LLD at `docs/02-design/technical/lld/<component>.md` (step 5), inciden
 If the change introduces a new architectural pattern, external system, framework, ML/AI technique, or significant mental-model-changing refactor: draft a stub at `docs/03-engineering/training/<capability>.md`. Triggers: new architectural pattern, new external system, new framework, new ML/AI technique, or a significant mental-model-changing refactor. New endpoints, bug fixes, and preserving-the-model refactors do not require a training plan.
 
 **9. Package Decision Packet** — use `/hitl:architect-design-feature`
-Architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `ai/shared/templates/decision-packet-template.yaml`. Fields: issue number, affected domain from `system-manifest.yaml`, LLD path from step 5, IaC plan from step 6, test plan from step 7, training stub path from step 8 if applicable. Constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain, they are sequential, not parallel. Architect reviews each packet, sets `approvals.architecture: approved` in `.hitl/current-change.yaml`, then hands one packet per slice to each assigned developer. `/architect/design-feature` runs steps 3–9 as a single guided session including slice decomposition and packet generation.
+Architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `ai/shared/templates/decision-packet-template.yaml`. Fields: issue number, affected domain from `system-manifest.yaml`, LLD path from Update Docs, IaC plan from Update IaC, test plan from Test Case Planning, training stub path from Training Plan Stub if applicable. Constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain, they are sequential, not parallel. Architect reviews each packet, sets `approvals.architecture: approved` in `.hitl/current-change.yaml`, then hands one packet per slice to each assigned developer. `/architect/design-feature` runs the Impact Analysis through Package Decision Packet steps as a single guided session including slice decomposition and packet generation.
 
 ---
 
@@ -87,13 +87,13 @@ Do this before closing the session — the summary is not persisted anywhere els
 
 ## Steps 10–17: Build (TDD Cycle)
 
-> Use the `/hitl:dev-tdd` skill for steps 10, 12, and 14. See `tdd-design.md` for the conceptual background.
+> Use the `/hitl:dev-tdd` skill for the AI Generates Tests (RED), Tests Improve the Design, and Generate Code (GREEN) steps. See `tdd-design.md` for the conceptual background.
 
 **10. AI Generates Tests (RED)** — use `/hitl:dev-tdd`
-Developer passes the LLD path from the decision packet to `/hitl:dev-tdd`. The skill reads `docs/02-design/technical/lld/<component>.md` (step 5) and `system-manifest.yaml` directly — it does not read the decision packet file itself. Generates maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance from manifest facade APIs. Writes test files to `tests/`. Registers each test in `docs/03-engineering/testing/test-registry.yaml`. No implementation code exists at this point.
+Developer passes the LLD path from the decision packet to `/hitl:dev-tdd`. The skill reads `docs/02-design/technical/lld/<component>.md` (Update Docs) and `system-manifest.yaml` directly — it does not read the decision packet file itself. Generates maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance from manifest facade APIs. Writes test files to `tests/`. Registers each test in `docs/03-engineering/testing/test-registry.yaml`. No implementation code exists at this point.
 
 **11. Human Reviews Tests** — use `/hitl:qa-review-tests`
-QA (or developer on small teams) reads the same LLD (`docs/02-design/technical/lld/<component>.md`, step 5) and queries the incident registry to identify gaps in the generated tests. Adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial or wrong tests. Updates `docs/03-engineering/testing/test-registry.yaml` for every test added or removed. If QA ran `/hitl:qa-plan-tests` at design time, verify those scenarios are present before approving.
+QA (or developer on small teams) reads the same LLD (`docs/02-design/technical/lld/<component>.md`, Update Docs) and queries the incident registry to identify gaps in the generated tests. Adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial or wrong tests. Updates `docs/03-engineering/testing/test-registry.yaml` for every test added or removed. If QA ran `/hitl:qa-plan-tests` at design time, verify those scenarios are present before approving.
 
 > **Empty incident registry:** Skip the incident registry query. Add edge cases from domain knowledge and LLD review alone.
 
@@ -104,10 +104,10 @@ QA (or developer on small teams) reads the same LLD (`docs/02-design/technical/l
 Run the full test suite. All new tests must fail (no implementation exists). If any new test passes: either fix the test (it is wrong) or remove it (LLD already describes existing behavior). Resolve all ambiguities before proceeding — a passing test before implementation means the spec is unclear or redundant.
 
 **14. Generate Code (GREEN)** — use `/hitl:dev-tdd`
-`/hitl:dev-tdd` reads the failing test files in `tests/`, the updated LLD at `docs/02-design/technical/lld/<component>.md` (step 12), `system-manifest.yaml`, and `CLAUDE.md`. Generates the simplest implementation that makes all failing tests pass. Does not anticipate future requirements.
+`/hitl:dev-tdd` reads the failing test files in `tests/`, the updated LLD at `docs/02-design/technical/lld/<component>.md` (Tests Improve the Design), `system-manifest.yaml`, and `CLAUDE.md`. Generates the simplest implementation that makes all failing tests pass. Does not anticipate future requirements.
 
 **15. Verify GREEN**
-Run the full test suite (new + existing). All must pass. If existing tests fail: regression — fix the regression and re-run step 14 before proceeding. Do not proceed with a broken existing test suite.
+Run the full test suite (new + existing). All must pass. If existing tests fail: regression — fix the regression and re-run Generate Code (GREEN) before proceeding. Do not proceed with a broken existing test suite.
 
 **16. Refactor**
 Simplify passing code. Remove duplication, improve naming. Rerun tests after each change. Done when no further simplification is possible without breaking a test. Do not introduce new behavior during refactor.
@@ -120,17 +120,17 @@ Run `semgrep scan --config .semgrep/ --error` and manifest drift check against `
 ## Steps 18–22: Verify
 
 **18. Code Review Round 1** — use `/hitl:dev-review-lld-adherence`
-Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the LLD at `docs/02-design/technical/lld/<component>.md` (step 12) and `system-manifest.yaml`. Reviews: structure, security, LLD adherence, naming conventions. Fix all CRITICAL and HIGH findings before proceeding. MEDIUM findings are documented for Round 2.
+Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the LLD at `docs/02-design/technical/lld/<component>.md` (Tests Improve the Design) and `system-manifest.yaml`. Reviews: structure, security, LLD adherence, naming conventions. Fix all CRITICAL and HIGH findings before proceeding. MEDIUM findings are documented for Round 2.
 
 **19. Code Review Round 2** — use `/hitl:dev-review-lld-adherence`
-Uses the `spec-conformance-reviewer` agent. Reads implementation files, test files in `tests/`, and the test plan from `.hitl/current-change.yaml` (step 7). Reviews: edge cases, regressions, test quality, and completeness against the test plan. Fix all findings. Rerun full test suite after fixes.
+Uses the `spec-conformance-reviewer` agent. Reads implementation files, test files in `tests/`, and the test plan from `.hitl/current-change.yaml` (Test Case Planning). Reviews: edge cases, regressions, test quality, and completeness against the test plan. Fix all findings. Rerun full test suite after fixes.
 
 **19a. Architect Code Review** — use `/hitl:architect-review-code`
 Creates the GitHub PR and requests the architect's review. The PR description includes: issue link, LLD path, decision packet path, AI findings carried forward from rounds 1 and 2, and a 7-item judgment checklist for the architect to complete on GitHub. The architect reviews on GitHub using line comments and the review UI — not in the Claude session.
 
 The checklist covers: (1) business logic — does the code solve the right problem, not just satisfy the spec? (2) architectural consistency — is this consistent with how similar problems are solved elsewhere? (3) domain boundary integrity — no code reaches into another domain's internals? (4) hidden coupling — shared mutable state, implicit ordering, timing assumptions not in the LLD? (5) complexity — could this be simpler? (6) naming — do names communicate intent to a future reader? (7) error handling — failures diagnosable from logs; errors surfaced correctly?
 
-The architect approves or requests changes on GitHub. Revisions are classified by severity: Minor (naming, simplification) → return to Step 16; Significant (logic, structure, domain violation) → return to Step 14; Design change (fundamental approach wrong) → return to Step 12. The outcome is recorded in `.hitl/current-change.yaml` under `approvals.architect_code_review` and posted as a GitHub issue comment. **The PR is not merged here — merging happens at Step 28.**
+The architect approves or requests changes on GitHub. Revisions are classified by severity: Minor (naming, simplification) → return to Refactor; Significant (logic, structure, domain violation) → return to Generate Code (GREEN); Design change (fundamental approach wrong) → return to Tests Improve the Design. The outcome is recorded in `.hitl/current-change.yaml` under `approvals.architect_code_review` and posted as a GitHub issue comment. **The PR is not merged here — merging happens at Build/Migrate/Apply/Deploy.**
 
 **20. Rerun Tests**
 Confirm no regressions from review fixes. All tests must pass.
@@ -138,11 +138,11 @@ Confirm no regressions from review fixes. All tests must pass.
 **21. Reconcile Docs**
 Compare implementation against the LLD at `docs/02-design/technical/lld/<component>.md`. If they diverge, make the decision explicit:
 - **Implementation reveals a better design** → update the LLD using `/hitl:dev-generate-docs`, have architect confirm, document decision in PR description or ADR
-- **Implementation drifted from the intended design** → fix the code, rerun steps 18–20
+- **Implementation drifted from the intended design** → fix the code, rerun the Code Review Round 1 through Rerun Tests steps
 Never silently normalize drift.
 
 **22. QA Post-Handoff Verification** — use `/hitl:qa-verify-quality`
-Developer has delivered a stable build with all tests passing and docs reconciled (step 21). QA runs independent verification against the running build: verify each acceptance criterion, run exploratory tests beyond the happy path, and probe failure modes from the incident registry. If any AC fails or a blocking defect is found, QA runs `/hitl:qa-report-defect` and sets `approvals.qa: blocked` in `.hitl/current-change.yaml`. Promotion to Assess is blocked until QA lifts the block.
+Developer has delivered a stable build with all tests passing and docs reconciled (Reconcile Docs). QA runs independent verification against the running build: verify each acceptance criterion, run exploratory tests beyond the happy path, and probe failure modes from the incident registry. If any AC fails or a blocking defect is found, QA runs `/hitl:qa-report-defect` and sets `approvals.qa: blocked` in `.hitl/current-change.yaml`. Promotion to Assess is blocked until QA lifts the block.
 
 > **Empty incident registry:** Skip the failure-mode probe from incident history. Run exploratory tests based on the acceptance criteria and LLD edge cases instead.
 
@@ -156,7 +156,7 @@ Developer has delivered a stable build with all tests passing and docs reconcile
 > **Empty incident registry:** `/hitl:dev-impact-brief` will produce section 5 without historical failure context. The rollout strategy draft will be based on the change's risk tier alone — ops should add manual go/no-go criteria to compensate for the missing incident signal.
 
 **24. Risk-Rated Rollout Plan** — use `/hitl:ops-review-release`
-Ops reads the rollout strategy from step 23's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist; it will be added to the open PR description at Step 25 (Verify PR completeness).
+Ops reads the rollout strategy from the Downstream Impact Brief's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist; it will be added to the open PR description at the Verify PR Completeness step.
 
 > **Empty incident registry:** Base the canary criteria on the change's risk tier and known failure modes from the LLD rather than historical incidents. Flag this in the rollout plan: "No incident history available — criteria are forward-looking only."
 >
@@ -167,13 +167,13 @@ Ops reads the rollout strategy from step 23's section 5 and the incident registr
 ## Steps 25–30: Ship
 
 **25. Verify PR completeness**
-The PR was created at Step 19a. This step confirms it contains all required artifacts before proceeding to integration verification. Check that the PR description includes: issue link, HLD/LLD paths (`docs/02-design/technical/`), IaC from step 6, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, step 9), impact brief (step 23), and the approved rollout plan (step 24). If any are missing, add them to the PR description now. Also copy `token_tracking.actual` from `.hitl/current-change.yaml` into `docs/03-engineering/costs/token-cost-registry.yaml` and recompute the aggregate block.
+The PR was created at the Architect Code Review step. This step confirms it contains all required artifacts before proceeding to integration verification. Check that the PR description includes: issue link, HLD/LLD paths (`docs/02-design/technical/`), IaC from Update IaC, implementation code, test files from `tests/`, decision packet (`docs/decisions/issue-<N>.yaml`, Package Decision Packet), impact brief (Downstream Impact Brief), and the approved rollout plan (Risk-Rated Rollout Plan). If any are missing, add them to the PR description now. Also copy `token_tracking.actual` from `.hitl/current-change.yaml` into `docs/03-engineering/costs/token-cost-registry.yaml` and recompute the aggregate block.
 
 **26. Integration Verification** — use `/hitl:architect-verify-traceability`
 Lead runs each slice E2E and verifies cross-slice composition: do the slices integrate correctly when all are deployed together? Also verifies the traceability chain for each slice: GitHub issue → design PR merged → implementation matches LLD → test files cover the spec → impact brief complete → rollout plan approved. Signs off or sends back with findings.
 
 **27. Figma Comparison (conditional)**
-If Figma design exists, lead compares running implementation to the Figma spec from step 2 screen by screen. Lists and resolves all differences. Exit criterion: zero unresolved differences before merge.
+If Figma design exists, lead compares running implementation to the Figma spec from Figma Review screen by screen. Lists and resolves all differences. Exit criterion: zero unresolved differences before merge.
 
 **28. Build, Migrate, Apply IaC, Configure Observability, and Deploy**
 Ops executes this sequence — each step gates the next:
@@ -186,27 +186,27 @@ Ops executes this sequence — each step gates the next:
 6. **Deploy** (`/hitl:ops-deploy`) — reads artifact and rollout plan, confirms deployment configuration with operator, executes deployment, runs post-deployment verification. Checks all gates are complete (backup, migrations, IaC, observability) before proceeding.
 7. **Canary monitoring** (`/hitl:ops-monitor-canary`) — at each promotion step, reads observability data and produces a go/no-go recommendation; human makes the final call
 
-Remaining slices that have not yet merged must rebase against main and rerun steps 17–19 before their own merge.
+Remaining slices that have not yet merged must rebase against main and rerun the Convention Checks through Code Review Round 2 steps before their own merge.
 
-> **First release:** Follow the direct-deploy plan approved at step 24. Skip `/hitl:ops-monitor-canary` — run the smoke suite manually. Observability setup is still required even on first release.
+> **First release:** Follow the direct-deploy plan approved at the Risk-Rated Rollout Plan step. Skip `/hitl:ops-monitor-canary` — run the smoke suite manually. Observability setup is still required even on first release.
 
 **29. Promote or Rollback**
-At each canary step, verify all go/no-go criteria from the approved plan (step 24). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
+At each canary step, verify all go/no-go criteria from the approved plan (Risk-Rated Rollout Plan). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.
 
 - **To promote:** continue deployment per the rollout plan steps
 - **To roll back:** run `/hitl:ops-rollback` — assesses side effects (including data written since deployment), presents rollback plan, requires `ROLLBACK` confirmation. If a database migration ran and has no rollback migration, it delegates to `/hitl:ops-backup-database restore` to restore from the pre-migration snapshot.
 - **After final promotion — required for all Tier 2+ changes:** run `/hitl:ops-post-deploy-monitor <change-ID>`. Soak duration is risk-scaled: Low 1h (check every 30m), Medium 4h (every 1h), High 12h (every 2h), Critical 24h (every 4h). The change is **not complete** until this produces a STABLE verdict. A WATCH verdict requires a follow-up check. A ROLLBACK verdict triggers `/hitl:ops-rollback`.
 
-If rollback was performed: re-open the issue, investigate root cause, and re-run from step 25.
+If rollback was performed: re-open the issue, investigate root cause, and re-run from the Verify PR Completeness step.
 
-> **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect — open a GitHub issue, fix it, and re-run from step 25.
+> **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect — open a GitHub issue, fix it, and re-run from the Verify PR Completeness step.
 
 ---
 
 ## Steps 30–31: Post-Ship
 
 **30. 30-Day ROI Check (conditional)**
-Only if step 4 was done. Reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`. Developer + lead assess whether the metric is moving in the right direction. Also check whether `token_tracking.actual.total_cost_usd` was within 50% of estimated — if not, add a note to the cost registry entry explaining the variance. See `roi-estimation.md` for the review template.
+Only if the ROI Estimate step was done. Reads expected outcome and baseline metric from `.hitl/current-change.yaml` under `roi_estimate`. Developer + lead assess whether the metric is moving in the right direction. Also check whether `token_tracking.actual.total_cost_usd` was within 50% of estimated — if not, add a note to the cost registry entry explaining the variance. See `roi-estimation.md` for the review template.
 
 **31. 90-Day ROI Check (conditional)**
-Only if step 4 was done. Reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from step 30. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.
+Only if the ROI Estimate step was done. Reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from the 30-Day ROI Check. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.

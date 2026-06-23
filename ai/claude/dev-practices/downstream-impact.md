@@ -2,11 +2,11 @@
 
 > Use the `/hitl:dev-impact-brief` skill to produce these artifacts. This file is the reference.
 
-## When it fires (Steps 14–15)
+## When it fires (Downstream Impact Brief and Risk-Rated Rollout Plan steps)
 
 After all code + tests + docs are ready and before creating the PR.
 
-## Downstream Impact Brief (Step 14)
+## Downstream Impact Brief
 
 Five sections, each aimed at a different stakeholder:
 
@@ -20,7 +20,7 @@ Five sections, each aimed at a different stakeholder:
 
 **Section 4 is the one teams most often skip and most often regret.** "Approve now queues for scheduled delivery instead of publishing immediately" takes 30 seconds and prevents weeks of downstream confusion.
 
-## Risk-Rated Rollout Plan (Step 15)
+## Risk-Rated Rollout Plan
 
 | Risk level | Example | Rollout |
 |-----------|---------|---------|
@@ -35,7 +35,7 @@ Each promotion step checks explicit go/no-go criteria:
 - Business metric within tolerance of baseline
 - No increase in failure-mode scores
 
-The developer proposes the criteria; the lead reviews them at integration verification (step 16).
+The developer proposes the criteria; the lead reviews them at the Integration Verification step.
 
 ## Inputs Required
 

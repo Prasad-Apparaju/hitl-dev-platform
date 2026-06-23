@@ -411,7 +411,7 @@ Feature work proceeds when blockers are zero.
 |------|--------|-------------|
 | `/hitl:dev-practices` | [ai/claude/dev-practices/SKILL.md](../ai/claude/dev-practices/SKILL.md) | Full workflow |
 | `/hitl:architect-design-system` | [ai/claude/architect/design-system/SKILL.md](../ai/claude/architect/design-system/SKILL.md) | Greenfield system design from PRD — domain decomposition, manifest, HLDs, ADRs, LLDs, initial delivery plan (demoable slices + one decision packet per slice, ready to assign to developers) |
-| `/hitl:architect-design-feature` | [ai/claude/architect/design-feature/SKILL.md](../ai/claude/architect/design-feature/SKILL.md) | Architect design journey — steps 3–9: impact analysis, HLD, LLD, slice decomposition, decision packets |
+| `/hitl:architect-design-feature` | [ai/claude/architect/design-feature/SKILL.md](../ai/claude/architect/design-feature/SKILL.md) | Architect design journey — Impact Analysis through Package Decision Packet: impact analysis, HLD, LLD, slice decomposition, decision packets |
 | `/hitl:architect-review-design` | [ai/claude/commands/architect/review-design.md](../ai/claude/commands/architect/review-design.md) | Review HLD/LLD/ADR before approving implementation |
 | `/hitl:architect-verify-traceability` | [ai/claude/commands/architect/verify-traceability.md](../ai/claude/commands/architect/verify-traceability.md) | Verify issue→design→code→tests chain before merge |
 | `/hitl:qa-plan-tests` | [ai/claude/qa/plan-tests/SKILL.md](../ai/claude/qa/plan-tests/SKILL.md) | Design time — contribute test scenarios from incident history before TDD starts |
@@ -423,7 +423,7 @@ Feature work proceeds when blockers are zero.
 | `/hitl:ops-deploy` | [ai/claude/ops/deploy/SKILL.md](../ai/claude/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
 | `/hitl:ops-review-release` | [ai/claude/commands/ops/review-release.md](../ai/claude/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
 | `/hitl:ops-monitor-canary` | [ai/claude/commands/ops/monitor-canary.md](../ai/claude/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
-| `/hitl:apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (developer-facing step 3) |
+| `/hitl:apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (the developer-facing Impact Analysis step) |
 | `/hitl:generate-docs` | [ai/claude/generate-docs/SKILL.md](../ai/claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
 | `/hitl:tdd` | [ai/claude/tdd/SKILL.md](../ai/claude/tdd/SKILL.md) | TDD-as-design loop |
 | `/hitl:impact-brief` | [ai/claude/impact-brief/SKILL.md](../ai/claude/impact-brief/SKILL.md) | 5-section downstream impact brief |

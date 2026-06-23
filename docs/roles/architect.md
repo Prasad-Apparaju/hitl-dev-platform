@@ -11,7 +11,7 @@ You hold the design and integration gates. You review designs before implementat
 /hitl:architect-design-system docs/01-product/prd.md
 ```
 
-**`/hitl:architect-design-feature`** — Run at the start of every Tier 2+ change. Walks through steps 3–9: impact analysis, HLD/LLD generation with TA approval gates, ADR capture, slice decomposition, test planning, and decision packet assembly.
+**`/hitl:architect-design-feature`** — Run at the start of every Tier 2+ change. Walks through Impact Analysis to Package Decision Packet: impact analysis, HLD/LLD generation with TA approval gates, ADR capture, slice decomposition, test planning, and decision packet assembly.
 ```
 /hitl:architect-design-feature 42
 
@@ -28,7 +28,7 @@ Confirm method signatures are precise enough for test generation, all
 error modes are enumerated, and the manifest is updated.
 ```
 
-**`/hitl:architect-review-code`** — Step 19a. After AI review rounds complete, creates the GitHub PR with the AI findings summary and a 7-item judgment checklist. You review on GitHub using line comments and approve or request changes.
+**`/hitl:architect-review-code`** — the Architect Code Review step. After AI review rounds complete, creates the GitHub PR with the AI findings summary and a 7-item judgment checklist. You review on GitHub using line comments and approve or request changes.
 ```
 /hitl:architect-review-code 42
 

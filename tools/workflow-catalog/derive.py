@@ -13,6 +13,7 @@ clean verify proves the eventual cutover (Phase 2) is lossless.
 Usage:
   python3 tools/workflow-catalog/derive.py verify [--catalog ...] [--runtime ...]
   python3 tools/workflow-catalog/derive.py overview            # markdown overview to stdout
+  python3 tools/workflow-catalog/derive.py command-map         # markdown command-map (spine) to stdout
   python3 tools/workflow-catalog/derive.py numbered <name>     # derived numbered steps
 
 Dependencies: Python 3.10+, PyYAML.
@@ -50,6 +51,9 @@ def derive_steps(steps: list[dict]) -> list[dict]:
 
     A normal step increments the integer counter. A substep keeps the parent's
     integer and appends a letter (a, b, ...). Substeps never increment `total`.
+
+    The additive `name`, `command`, and `role` fields (if present) pass through
+    untouched; they feed the command-map view and never affect numbering.
     """
     out: list[dict] = []
     n = 0
@@ -73,9 +77,12 @@ def derive_steps(steps: list[dict]) -> list[dict]:
         out.append({
             "n": num,
             "key": s["key"],
+            "name": s.get("name", ""),
             "label": s.get("label", ""),
             "phase": phase,
             "phase_step": pstep,
+            "command": s.get("command", ""),
+            "role": s.get("role", ""),
         })
     return out
 
@@ -204,12 +211,47 @@ def overview(catalog: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Command map (the generated executor view of the delivery spine)
+# ---------------------------------------------------------------------------
+
+def command_map(catalog: dict) -> str:
+    """Emit a markdown command-map for the development/spine workflow.
+
+    Columns: # (derived) · Step (name) · Phase · Command · Role. The Command and
+    Role columns come straight from the additive catalog fields. Steps are
+    expected to populate both; a blank surfaces as `—` so a gap can't hide.
+    """
+    derived = derive_steps(workflow_steps(catalog, "spine"))
+    lines = [
+        "# HITL Command Map (generated)",
+        "",
+        "Generated from `tools/workflow-catalog/catalog.yaml` by "
+        "`tools/workflow-catalog/derive.py command-map`. **Do not edit by hand.**",
+        "",
+        "Each row is one step of the development delivery spine, with the command "
+        "that executes it (a skill/command name, or the literal `manual` / `guided`) "
+        "and the owning role.",
+        "",
+        f"## Development — deliver a change ({total_of(derived)} steps)",
+        "",
+        "| # | Step | Phase | Command | Role |",
+        "|---|---|---|---|---|",
+    ]
+    for d in derived:
+        cmd = d["command"] or "—"
+        role = d["role"] or "—"
+        lines.append(f"| {d['n']} | {d['name']} | {d['phase']} | {cmd} | {role} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Derive numbered views from the numberless catalog.")
-    p.add_argument("mode", choices=["verify", "overview", "numbered", "profile"])
+    p.add_argument("mode", choices=["verify", "overview", "command-map", "numbered", "profile"])
     p.add_argument("name", nargs="?", help="workflow name (numbered) / profile name (profile)")
     p.add_argument("--tags", default="", help="comma-separated tags for `profile` mode")
     p.add_argument("--catalog", default=str(DEFAULT_CATALOG))
@@ -232,6 +274,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.mode == "overview":
         print(overview(catalog))
+        return 0
+
+    if args.mode == "command-map":
+        print(command_map(catalog))
         return 0
 
     if args.mode == "numbered":

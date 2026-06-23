@@ -134,7 +134,7 @@ The baseline sprint produces the starting state. Keeping the process working ove
 | `docs/02-design/technical/lld/` | Domain lead (developer) | Same PR as the code change — docs and code move together |
 | `docs/03-engineering/testing/test-registry.yaml` | Developer + QA | Every test added, removed, or renamed |
 | `docs/04-operations/incident-registry.yaml` | Ops + Lead | After every production incident |
-| `docs/decisions/issue-<N>.yaml` | Architect | Created at step 9; updated only if scope changes before merge |
+| `docs/decisions/issue-<N>.yaml` | Architect | Created at the Package Decision Packet step; updated only if scope changes before merge |
 | `.hitl/current-change.yaml` | Developer | Created by `/hitl:apply-change`; updated at each phase gate; deleted after merge |
 
 ### Hard requirements vs. optional
@@ -148,7 +148,7 @@ The baseline sprint produces the starting state. Keeping the process working ove
 **Optional — adds value but the process works without them:**
 - Graphify (skills fall back to direct reads)
 - Token-cost tracking (valuable for ROI calibration; skip until the workflow is running smoothly)
-- 30/90-day ROI checks (only triggered when step 4 ROI estimate was done)
+- 30/90-day ROI checks (only triggered when the ROI Estimate step was done)
 - Training plan stubs (only triggered by new architectural patterns)
 
 ### Signals that the process is drifting
@@ -166,7 +166,7 @@ The manifest delta re-run (weekly, ~15 min) and convention checker (every PR) ar
 | Objection | Response |
 |-----------|----------|
 | "No time for docs" | AI drafts them; you review and correct. For Tier 2 changes the overhead is real but front-loaded — it prevents larger rework later. For Tier 0-1, the process is lightweight by design. |
-| "Code changes too fast" | Docs change WITH the code in the same PR (step 14). |
+| "Code changes too fast" | Docs change WITH the code in the same PR (Reconcile Docs step). |
 | "AI won't understand legacy code" | It doesn't need to understand all of it. Just the manifest + the area being changed. |
 | "Nobody will read the docs" | The AI reads them. Docs are input to code generation, not shelf decoration. |
 | "We tried this before" | Did you start with the whole system or one change? Start with one. |

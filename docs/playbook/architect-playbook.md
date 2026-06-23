@@ -81,7 +81,7 @@ To delegate a slice to a team member, point them at the LLD and the workflow:
 Implement the payments refund flow from
 docs/02-design/technical/lld/payments/refund-flow.md.
 Follow the developer playbook. The gates are: tests reviewed, code
-review Rounds 1 and 2, architect code review (step 19a).
+review Rounds 1 and 2, Architect Code Review.
 Do not proceed past a gate without my approval.
 ```
 
@@ -120,7 +120,7 @@ requirement: Done / Partial / Not started. Focus on the payments domain.
 - **IaC / Ops** — infrastructure manifests, deployment configs, migrations, monitoring setup
 - **Integration** — slices work together, not just in isolation
 - **A deployable system at all times** — after every slice ships, the system must work on the target environment
-- **Architect code review (step 19a)** — after AI rounds complete, review the implementation on GitHub using the approve/request-changes UI; the developer runs `/hitl:architect-review-code` to create the GitHub PR with the AI review summary and a 7-item judgment checklist; assess business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, and error handling; approve or request changes; the PR is not merged at this step — merging happens at step 28
+- **Architect Code Review** — after AI rounds complete, review the implementation on GitHub using the approve/request-changes UI; the developer runs `/hitl:architect-review-code` to create the GitHub PR with the AI review summary and a 7-item judgment checklist; assess business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, complexity, naming, and error handling; approve or request changes; the PR is not merged at this step — merging happens at the Build/Migrate/Apply/Deploy step
 
 ---
 

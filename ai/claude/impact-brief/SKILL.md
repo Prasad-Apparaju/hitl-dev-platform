@@ -1,5 +1,5 @@
 ---
-description: Generate a structured downstream impact brief and risk-rated rollout plan for a change. Use after code and tests are complete (after step 22); the brief is added to the open PR at step 25 (Verify PR completeness). Requires the HITL context file (.hitl/current-change.yaml) and an active GitHub issue.
+description: Generate a structured downstream impact brief and risk-rated rollout plan for a change. Use after code and tests are complete (after QA Post-Handoff Verification); the brief is added to the open PR at the Verify PR Completeness step. Requires the HITL context file (.hitl/current-change.yaml) and an active GitHub issue.
 argument-hint: "[PR number, branch name, or change description]"
 disable-model-invocation: true
 ---
@@ -131,7 +131,7 @@ Once approved:
 2. Post a pointer comment on the GitHub issue — the full brief belongs in the PR description, not the issue:
    ```bash
    gh issue comment <issue-number> \
-     --body "## 📋 Impact Brief Complete\n\nRollout risk: <level>. Full brief will be added to the open PR at step 25 (Verify PR completeness)."
+     --body "## 📋 Impact Brief Complete\n\nRollout risk: <level>. Full brief will be added to the open PR at the Verify PR Completeness step."
    ```
 
 ---
