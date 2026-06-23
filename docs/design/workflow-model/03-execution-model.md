@@ -118,11 +118,14 @@ enforced required-evidence.)
 
 ## 7. What this does to the taxonomy
 
-It **demotes it.** The named workflows (Feature / Fix / Tech Change / Security / Incident / Migration
-Slice — or 14, per the open decision) are the **proposer + stakeholder vocabulary**, not the thing
-that guarantees correctness. So the 6-vs-14 question is **less load-bearing than it seemed** — the
-rigor lives in impact-analysis → required-evidence → enforcement + the floor. Settle the taxonomy for
-*legibility*, not because correctness depends on it.
+It **demotes it.** The named tiers — **5 workflows + 6 profiles + 5 tags** (locked 2026-06-23; see
+[01-design.md §4](01-design.md)) — are the **proposer + stakeholder vocabulary**, not the thing that
+guarantees correctness. Because rigor lives in impact-analysis → required-evidence → enforcement + the
+floor, the *only* reason a thing is a workflow vs a profile vs a tag is **legibility and classifier
+accuracy**: a **workflow** has a different step *sequence*, a **profile** is a recognizable preset over
+the shared spine, a **tag** only tunes required-evidence. This is exactly why the "Security: workflow
+or tag?" debate dissolved into "Security is a *profile*" — the security gates land in the enforced
+required-evidence either way.
 
 ## 8. New catalog metadata this implies
 

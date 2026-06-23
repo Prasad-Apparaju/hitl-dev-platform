@@ -77,85 +77,72 @@ letter. Both global and phase-relative forms fall out:
 Insert one step earlier and everything renumbers automatically; **no `key` changes, no prose
 breaks.** (Prototype verified — see [02-rollout.md](02-rollout.md) §Validation.)
 
-## 4. Two families of workflow
+## 4. Three tiers — workflow, profile, tag
 
-A cross-check against the catalog showed **not all workflows share one spine** — establishment
-workflows are single-phase setup sequences, structurally different from delivery. So:
-
-### Family A — Establishment (run once to stand up the project)
-Standalone ordered step lists (their own phases). Not profiles over the delivery spine.
-
-| Workflow | What to expect | Initiator |
-|---|---|---|
-| **Greenfield** | New system from a PRD | PM + Architect |
-| **Brownfield** | Adopt an existing codebase into HITL | Architect / Lead |
-| **Migration** | Stand up a target to replace a source (inventory + brief) | Architect / Lead |
-
-### Family B — Delivery (repeatable; requirement → post-deploy; one change each)
-Most are **profiles over a shared spine** (the 7-phase development sequence): each profile selects
-which steps apply and which gates are *required* vs *conditional*. Two exceptions —
-**Incident** (reorders: fix-first) and **Chore** (tiny) — are **standalone short lists**, not spine
-subsets.
-
-```
-Delivery — functional (PM-initiated)            [spine profiles]
-├─ Feature       — new capability
-├─ Enhancement   — extend/change an existing capability (back-compat gate)
-└─ Fix           — correct a defect (lighter spine)
-
-Delivery — technical (engineering-initiated)    [spine profiles]
-├─ Refactor      — restructure / tech-debt, behavior identical
-├─ Performance   — optimize, measured against a budget
-├─ Security      — hardening / remediation (review + pentest gates required)
-└─ Upgrade       — dependency / framework / version (dependency audit + regression-heavy)
-
-Delivery — migration                            [spine profile + overlay]
-└─ Migration Slice — deliver one behavior from the inventory (BI-IDs + coverage matrix + observable-slice gate)
-
-Delivery — operational                          [STANDALONE list, reordered]
-└─ Incident      — production P0, fix-first, full docs within 48h
-
-Maintenance                                     [STANDALONE short list]
-└─ Chore         — trivial technical change (config value, CI tweak, routine bump): PR + conventions only
-```
-
-**3 establishment + 11 delivery/maintenance = 14 named workflows**, each one stakeholder-legible.
-
-> **⚠ Open tension — taxonomy granularity (decision pending).** 14 workflows is the current draft,
-> arrived at by splitting "Engineering Change" into Refactor / Performance / Security / Upgrade /
-> Chore. Per **G8 (granularity is earned)**, the split is only justified where the **gates actually
-> differ** — strongly true for **Security** (review + pentest) and arguably **Upgrade** (dependency
-> audit + regression), but thin for Refactor vs Chore vs Performance, whose distinction is largely an
-> *intent label*. The risk of 14: stakeholder cognitive load, fuzzy boundaries (Feature vs
-> Enhancement; "a perf fix that changes an API"), and a `dev-start-change` classifier that
-> mis-routes. **Recommended alternative:** collapse to a smaller set — *Feature · Fix · Tech Change ·
-> Incident* (+ functional *Enhancement*) — and carry the finer intents as a **change-kind tag**,
-> promoting to a first-class workflow only those whose gates genuinely diverge (Security, maybe
-> Upgrade). **Status:** the tree below retains the 14 pending this decision (see
-> [02-rollout.md §5](02-rollout.md)).
+> **★ Decision locked (2026-06-23).** Granularity is resolved into **three tiers**, replacing the
+> earlier "14 named workflows" draft. The driving rule (G8): **a thing is only its own *workflow* if
+> its step *sequence/structure* differs; a named *profile* if it's a recognizable preset over the
+> shared spine; otherwise a *tag* that tunes required-evidence.** This collapses the engineering-change
+> sprawl (Refactor/Performance/Chore → tags) while keeping the legible ceremonies (Tech Change,
+> Upgrade, Security) as profiles. See [02-rollout.md §5](02-rollout.md) for the rationale.
 >
-> **Note:** per [03-execution-model.md](03-execution-model.md), the taxonomy is the *proposer +
-> vocabulary*, not the correctness guarantee (that's the enforced required-evidence + the floor) — so
-> this decision is about **legibility**, and is *less load-bearing* than it first appeared.
+> Correctness never depended on this choice — per [03-execution-model.md](03-execution-model.md), the
+> guarantee is the **floor + enforced required-evidence**, determined by impact analysis. The tier a
+> thing lands in is about **legibility and classifier accuracy**, not rigor. Tier promotion (tag →
+> profile) is a one-line catalog edit; un-naming a learned profile is expensive — so the default is
+> *start lean, promote on evidence of standalone use*.
+
+| Tier | What it is | Spine | Menu-visible | Examples |
+|---|---|---|---|---|
+| **Workflow** | Own / reordered / replaced step sequence | its own | yes | Greenfield · Brownfield · Migration (establishment) · **Incident** (reorders: fix-first) · **Migration Slice** (replaces spine: BI-driven) |
+| **Profile** | Named preset over the **shared delivery spine** — selects which conditional steps are on, which gates are *required*, and the initiator | shared | yes | **Feature · Enhancement · Fix · Tech Change · Upgrade · Security** |
+| **Tag** | A label on a change that **tunes required-evidence** within a profile (composable, stackable) | shared | no (shown on breadcrumb) | `refactor` · `perf` · `chore` · `tooling` · `infra` |
+
+**Why each engineering intent lands where it does:**
+
+- **Tech Change** is the single home for engineering-initiated structural work. Refactor, perf, dead-code
+  cleanup, config, CI, observability all run *its* spine; they differ only in *which evidence is
+  required*, so they're **tags**, not separate profiles. (`refactor` → characterization tests +
+  behavior-unchanged; `perf` → baseline + budget; `chore` → Tier-0, floors only at impact-analysis +
+  docs-reconciled.)
+- **Upgrade** is a **profile** (not a tag): a dependency/framework bump is *initiated as a unit* (G3
+  legibility) and carries distinctive required gates (Dependency+CVE audit, regression-heavy verify,
+  staged rollout). It doesn't reorder the spine, so it isn't a workflow.
+- **Security** is a **profile**: it does **not** reorder the spine (the pentest step already lives in
+  Ship, a security-design review fits the existing Design phase) — what distinguishes it is
+  **mandatory, never-skippable gates** (`dev-review-security` design+code, Penetration Test) and a
+  distinct initiator (Sec/Arch/Ops).
+- **Incident** is a **workflow**: it genuinely *reorders* (fix-first → deploy → docs ≤48h).
+- **Migration Slice** is a **workflow**: it *replaces* the spine's front with a migration brief +
+  BI-IDs + observable-slice gate + coverage matrix.
+
+**Key safety property (the classifier trap):** the tag/profile a human *picks* only **proposes**;
+**impact analysis decides by what the change actually touches.** A "refactor" that turns out to alter
+an API response is re-classified to Fix/Enhancement and the functional steps switch back on — the
+label can't suppress the floor. (See [03-execution-model.md §5](03-execution-model.md).)
+
+**Tally: 5 workflows + 6 profiles + 5 tags** — versus 14 flat workflows. Profiles and tags share one
+spine, so the maintenance + classifier surface is the 5 workflows + the spine, not 25 things.
 
 ### What a "profile" declares
-A spine-profile workflow is a few lines: which steps are **included**, which gates are **required**
-(vs conditional), the **initiator**, and the functional/technical/operational class. The spine is
-the *superset* of steps any delivery workflow can use (so e.g. *Performance*'s baseline-measurement
-step and *Upgrade*'s dependency-audit step live in the spine, conditional, switched on by those
-profiles).
+A spine-profile is a few lines: which steps are **included**, which gates are **required** (vs
+conditional), the **initiator**, the functional/technical class, and any **always-on tags**. The spine
+is the *superset* of steps any delivery profile can use (so *Upgrade*'s Dependency+CVE Audit step and
+the `perf`-tag's Baseline Measurement step live in the spine, conditional, switched on by the profile
+or tag).
 
 ### The full tree
 
-The **delivery spine** is shown once — the 8 spine-profile workflows select from it (see the profile
-table after the tree); **Incident** and **Chore** are standalone.
+The **delivery spine** is shown once — the **6 profiles** select from it (see the profile table after
+the tree); **Incident** is a standalone reordered workflow. **Chore is no longer a standalone
+workflow** — it's a Tier-0 `chore` tag on Tech Change, floored only at impact-analysis + docs-reconciled.
 
 > **⚠ Unvalidated proposals — not yet confirmed with the team.** Several parts of this tree are my
 > drafts, not established process, and will calcify if implemented as-is: the **establishment
 > phasing** (Discover/Baseline/Kickoff etc. — Q1, and itself low-value; see
-> [02-rollout.md §5](02-rollout.md)), the **Incident** and **Chore** step lists (no canonical
-> source), and the **conditional spine additions** (Baseline Measurement, Dependency+CVE Audit) plus
-> the per-profile **gate sets**. Treat them as starting points to validate, not decisions.
+> [02-rollout.md §5](02-rollout.md)), the **Incident** step list (no canonical source), and the
+> **conditional spine additions** (Baseline Measurement, Dependency+CVE Audit) plus the per-profile
+> **gate sets**. Treat them as starting points to validate, not decisions.
 
 ```
 greenfield   (ESTABLISHMENT · new system from a PRD)            1 phase · 4 steps
@@ -195,7 +182,7 @@ migration    (ESTABLISHMENT · stand up a target to replace a source)   3 phases
    ├─ Create tracking issue
    └─ Confirm and hand off
 
-DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 34 step-slots · 1 substep
+DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 35 step-slots · 1 substep
 ├─ Requirements
 │  ├─ GitHub Issue
 │  └─ Figma Review (cond)
@@ -207,7 +194,8 @@ DELIVERY SPINE   (profiles select steps + required gates)       7 phases · 34 s
 │  ├─ Test Case Planning
 │  ├─ Training Plan Stub (cond)
 │  ├─ Decision Packet
-│  ├─ Baseline Measurement (cond · Performance)
+│  ├─ Baseline Measurement (cond · `perf` tag)
+│  ├─ Security Design Review (cond · Security)
 │  └─ Dependency + CVE Audit (cond · Upgrade)
 ├─ Build
 │  ├─ Generate Tests (RED)
@@ -249,30 +237,72 @@ incident     (DELIVERY · operational — P0, fix-first, docs ≤48h)   2 phases
    ├─ Add regression test
    ├─ Reconcile docs + ADR
    └─ Update incident registry
-
-chore        (MAINTENANCE · trivial technical change)              1 phase · 3 steps    [standalone]
-└─ Chore
-   ├─ Make the change
-   ├─ Convention Checks
-   └─ PR + merge
 ```
 
-> The spine is a **superset of 34 step-slots**; most are conditional. A baseline **Feature** runs
-> ~31 of them; the conditional slots (Baseline Measurement, Dependency+CVE Audit, Penetration Test,
-> ROI, Figma, IaC, Training) switch on per profile.
+> The spine is a **superset of 35 step-slots**; most are conditional. A baseline **Feature** runs
+> ~31 of them; the conditional slots (Baseline Measurement, Security Design Review, Dependency+CVE
+> Audit, Penetration Test, ROI, Figma, IaC, Training) switch on per profile **or tag**.
 
 ### Delivery profiles over the spine
 
-| Workflow | Class | Initiator | Distinctive profile (vs. a plain Feature) |
+The **6 profiles** below select steps + required gates from the shared spine. **Tags** (`refactor`,
+`perf`, `chore`, `tooling`, `infra`) stack on top of a profile (usually Tech Change) to tune
+required-evidence — they are not rows here. **Migration Slice** is a *workflow* (it replaces the spine
+front), listed for completeness.
+
+| Profile | Class | Initiator | Distinctive profile (vs. a plain Feature) |
 |---|---|---|---|
 | **Feature** | functional | PM | the baseline spine |
 | **Enhancement** | functional | PM | starts from the existing LLD · **back-compat gate** |
 | **Fix** | functional | PM / QA | lighter — skip ROI/training · defect → regression test |
-| **Refactor** | technical | Dev / Arch | skip Figma/training · characterization tests first · **full regression unchanged** |
-| **Performance** | technical | Dev / Arch / Ops | **+ Baseline Measurement** · perf budget on issue · before/after verify |
-| **Security** | technical | Arch / Sec / Ops | **dev-review-security design + code required · Penetration Test required** |
+| **Tech Change** | technical | Dev / Arch | engineering-initiated structural work · skip Figma/ROI/training · tags refine: `refactor` → characterization tests + behavior-unchanged; `perf` → Baseline Measurement + budget; `chore` → Tier-0 |
 | **Upgrade** | technical | Dev / Ops | **+ Dependency + CVE Audit · full regression required · staged rollout** |
-| **Migration Slice** | migration | Arch / Lead | requirement = migration brief · **BI-IDs + coverage matrix + observable-slice gate** |
+| **Security** | technical | Arch / Sec / Ops | **dev-review-security design + code required (never-skippable) · Penetration Test required** |
+| *Migration Slice* (workflow) | migration | Arch / Lead | requirement = migration brief · **BI-IDs + coverage matrix + observable-slice gate** |
+
+### How the three tiers are encoded in the catalog
+
+The shape below documents the **target encoding** — it is **not** the live `ai/shared/workflows.yaml`
+yet. Writing it is **Phase 1** (catalog), which is gated by **Phase 1b executability** (C5) — so this
+subsection is the contract Phase 1 implements, not a change to ship now.
+
+A **workflow** owns its `phases` + `steps` (the establishment trio, Incident, Migration Slice — already
+how today's catalog is shaped). The **shared delivery spine** is one workflow entry; **profiles** and
+**tags** are declared *against* it:
+
+```yaml
+# One shared spine (the superset of step-slots; most steps carry a `cond` key).
+delivery_spine:
+  title: "Delivery — one change, requirement → post-deploy"
+  phases: [Requirements, Design, Build, Verify, Assess, Ship, Post-Ship]
+  steps:
+    - { key: impact,    name: "Impact Analysis",      label: "Impact",  phase: Design }
+    - { key: baseline,  name: "Baseline Measurement",  label: "Basln",  phase: Design,  cond: true }
+    - { key: sec_design,name: "Security Design Review", label: "SecDsn", phase: Design,  cond: true }
+    - { key: cve_audit, name: "Dependency + CVE Audit", label: "CVE",    phase: Design,  cond: true }
+    - { key: pentest,   name: "Penetration Test",       label: "Pentest",phase: Ship,    cond: true }
+    # … the rest of the 35 slots …
+
+# Profiles: a named preset over the spine. A few lines each.
+profiles:
+  feature:      { class: functional, initiator: PM }    # the baseline spine selection
+  tech_change:  { class: technical,  initiator: Dev, exclude: [figma, roi, training] }
+  upgrade:      { class: technical,  initiator: Dev, on: [cve_audit], required_evidence: [cve_audit, full_regression] }
+  security:     { class: technical,  initiator: Sec, on: [sec_design, pentest],
+                  required_evidence: [security_review, pentest], skip_authority: { security_review: never } }
+
+# Tags: stack on a profile, tune required-evidence only (no own steps/phases).
+tags:
+  refactor: { on: [characterization], required_evidence: [behavior_unchanged] }
+  perf:     { on: [baseline],          required_evidence: [perf_budget_met] }
+  chore:    { tier: 0 }   # floors only at impact-analysis + docs-reconciled
+```
+
+The classifier in `dev-start-change` proposes `{workflow | profile, tags[]}`; **impact analysis
+finalises the included steps + `required_evidence`** (the profile/tag values are a *starting set*, not
+the contract — see [03-execution-model.md §5](03-execution-model.md)). `current-change.yaml` records
+the resolved `profile`, `tags`, and `required_evidence` — additively, alongside the existing `workflow`
+block (§7); no parser rewrite.
 
 ## 5. Step → command / role — structure vs. execution
 

@@ -38,6 +38,22 @@ invariants:
 - It can **pause at any step** for human input or approval (a feature, not a stall).
 - One workflow = **one whole change**, start to finish.
 
+### Three tiers of identity (locked 2026-06-23)
+
+Not every distinct kind of change needs its own workflow. The model has **three tiers**, so
+granularity is earned (G8) rather than assumed:
+
+| Tier | Definition | When to use it |
+|---|---|---|
+| **Workflow** | Owns its step sequence (its own/reordered/replaced spine). | The *structure or order* of steps genuinely differs — establishment setup, Incident (fix-first), Migration Slice (BI-driven). |
+| **Profile** | A named, menu-visible **preset over the shared delivery spine**: selects conditional steps, required gates, initiator. | A recognizable change someone *initiates as a unit* (Feature, Fix, Tech Change, Upgrade, Security) — same spine, different selection. |
+| **Tag** | A composable label that **tunes required-evidence** within a profile; no steps of its own. | An intent that only changes *which evidence is required* (`refactor`, `perf`, `chore`, `tooling`, `infra`). |
+
+The profile/tag a human picks only **proposes**; **impact analysis decides** the actual steps +
+required-evidence (G9), and the **floor** (G10) is enforced regardless of tier. So the tier is a
+*legibility* choice, not a correctness one. Full taxonomy in [01-design.md §4](01-design.md); the
+enforcement model in [03-execution-model.md](03-execution-model.md).
+
 ## 3. Goals
 
 | # | Goal |

@@ -12,10 +12,10 @@ Four things were found and resolved into the design.
 
 | # | Finding (grounded) | Resolution (in the design) |
 |---|---|---|
-| **F1** | `ai/shared/workflows.yaml`: `development` has 7 phases; **every establishment workflow is single-phase** (`Brownfield Setup`, …). "One shared spine for all" is false. | Model **two families** — establishment (standalone) vs delivery (spine profiles). [01-design §4] |
-| **F2** | **Incident reorders** the spine (fix-first → deploy → docs-after); **Chore** is trivially short. Neither is a subset-in-order of the spine. | Incident and Chore are **standalone short lists**, not spine profiles. [01-design §4] |
+| **F1** | `ai/shared/workflows.yaml`: `development` has 7 phases; **every establishment workflow is single-phase** (`Brownfield Setup`, …). "One shared spine for all" is false. | Establishment workflows own their step sequence (Workflow tier); delivery is the shared spine with profiles/tags over it (three-tier model). [01-design §4] |
+| **F2** | **Incident reorders** the spine (fix-first → deploy → docs-after); **Chore** is trivially short. Neither is a subset-in-order of the spine. | Incident is a **standalone reordered workflow**; **Chore** is now a **Tier-0 `chore` tag** on Tech Change (floors at impact-analysis + docs-reconciled), not a standalone workflow. [01-design §4] |
 | **F3** | The parser (`hooks/_steps.sh`) reads stored `n` throughout (`hitl_steps`, `hitl_total`, `hitl_current_n`); the seed and `dev-update` migration both copy `s["n"]`. Dropping `n` = rewrite parser + schema + seed + migration + back-compat — re-opening the surface fixed in v1.0.29/30. | **Don't drop `n`.** The ribbon doesn't display a global number, so the counter dies at the *display* layer. Change file change is **additive** (add `phase`, keep `n`). [01-design §7] — this is the key de-risk. |
-| **F4** | The full vision (catalog + 14 workflows + ribbon + step enrichment + generated command-map/role-guides + prose conversion) is multi-release. | **Phase it** (below). Each phase ships independently. |
+| **F4** | The full vision (catalog + three-tier taxonomy + ribbon + step enrichment + generated command-map/role-guides + prose conversion) is multi-release. | **Phase it** (below). Each phase ships independently. |
 
 ## 2. Validation already done (prototype)
 
@@ -33,7 +33,7 @@ In a scratch prototype (not yet in-tree), confirmed:
 | Phase | Scope | Touches | Risk |
 |---|---|---|---|
 | **0 — Capture** | This requirements + design + rollout doc set; the citation convention. | docs only | none |
-| **1 — Catalog** | Numberless `workflows.yaml`; first-class `phases:`; the taxonomy (delivery spine superset + profiles; standalone Incident/Chore; establishment). **`command` is a required field** per step — this makes every executor gap explicit. Overview generator (`tools/`). | catalog + generator + a generated overview doc | low — **data + docs only, no runtime change** |
+| **1 — Catalog** | Numberless `workflows.yaml`; first-class `phases:`; the three-tier taxonomy (delivery spine superset + 6 profiles + tags; standalone Incident; establishment trio; `chore` as Tier-0 tag). **`command` is a required field** per step — this makes every executor gap explicit. Overview generator (`tools/`). | catalog + generator + a generated overview doc | low — **data + docs only, no runtime change** |
 | **1b — Executability** ⛓ | Close the gaps Phase 1 surfaced: **W1** (build or rewire `ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`) and **W2** (executors for Baseline Measurement, Dependency+CVE Audit). See §7. | skills (build/rewire) | medium — real skill work |
 | **2 — Breadcrumb** | Phase-ribbon banner + compact status line; add `phase` per step to the change file (additive); seed/migration derive `n`. | `_steps.sh`, `welcome.sh`, `statusline-hitl.sh`, schema (additive), generators | medium — change-file surface, **additively** (C2) |
 | **3 — Generated views** | Enrich steps with `role`/`ownership`; **generate** `command-map.md` + role guides. | catalog (data) + generators | low |
@@ -52,15 +52,17 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
   classifier (and the human) mis-route a change — a direct cost of taxonomy granularity (§5.1).
   *Mitigation:* settle granularity per G8 (fewer workflows + change-kind tags); classification is
   data-driven off the catalog; tabulate intent → workflow once.
-- **R3 — Spine-superset bloat.** Conditional steps for Performance/Upgrade/Security live in the
-  spine. *Mitigation:* they're profile-gated (off by default); the overview shows them as
-  conditional.
+- **R3 — Spine-superset bloat.** Conditional steps for the `perf` tag / Upgrade / Security live in
+  the spine (it carries 35 step-slots, most conditional). *Mitigation:* they're profile/tag-gated
+  (off by default); the overview shows them as conditional. This is the deliberate trade of the
+  three-tier model — one rich conditional spine instead of many lean named pipelines.
 - **R4 — Two unmerged doc branches.** `docs/update-workflow-docs-1.0.30` (the 31-step
   reconciliation) is still unpublished; this branch is off `main`. *Mitigation:* keep them
   independent; reconcile/merge order decided at ship time.
 - **R5 — Codifying unvalidated process.** Parts of the model are first-drafts, not established
-  practice — the **Incident/Chore step lists**, the **establishment phasing**, the **conditional
-  spine additions** (Baseline Measurement, Dependency+CVE Audit), and the **per-profile gate sets**.
+  practice — the **Incident step list**, the **establishment phasing**, the **conditional
+  spine additions** (Baseline Measurement, Security Design Review, Dependency+CVE Audit), and the
+  **per-profile/tag gate sets**.
   Codified design defaults get implemented as if considered. *Mitigation:* mark them "proposed" in
   the design (done), and **validate each with the team / a pilot run before Phase 1 writes them into
   the catalog** — don't let a draft become the contract by inertia.
@@ -71,18 +73,27 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
 
 ## 5. Open decisions (to settle before/within the relevant phase)
 
-1. **★ Taxonomy granularity (14 workflows vs. collapse + tag).** Per **G8**, split only where gates
-   differ. *Recommendation:* collapse to *Feature · Enhancement · Fix · Tech Change · Incident*, carry
-   the finer technical intents (refactor/perf/upgrade/chore) as a **change-kind tag**, and promote
-   to a first-class workflow only where gates genuinely diverge — **Security** (review + pentest),
-   possibly **Upgrade**. This reverses the earlier "split into 14" call, so it needs explicit
-   confirmation before Phase 1 writes the catalog. See [01-design.md §4 tension](01-design.md).
+1. **★ Taxonomy granularity — LOCKED 2026-06-23: three-tier model.** Resolved into
+   **Workflow / Profile / Tag** (see [01-design.md §4](01-design.md)):
+   - **5 workflows** (own/reordered/replaced spine): Greenfield · Brownfield · Migration · Incident
+     (reorders) · Migration Slice (replaces).
+   - **6 profiles** (presets over the shared delivery spine): Feature · Enhancement · Fix · Tech
+     Change · Upgrade · Security. *(Upgrade is a profile — initiated as a unit with distinct gates;
+     Security is a profile — mandatory never-skippable gates, but it does **not** reorder the spine,
+     correcting the earlier "Security reorders" claim.)*
+   - **5 tags** (tune required-evidence within a profile): `refactor` · `perf` · `chore` · `tooling` ·
+     `infra`.
+   This reverses the earlier "split into 14" and folds engineering-change sprawl
+   (Refactor/Performance/Chore) into tags on **Tech Change**. Rationale: G8 (granularity is earned)
+   + correctness lives in the floor/required-evidence, not the name, so the choice is about
+   legibility/classifier accuracy; promotion (tag → profile) is a cheap catalog edit, un-naming is
+   not, so start lean.
 2. **Explicit substep `parent`?** *Recommendation: explicit* (`parent: review2`) — positional
    attachment contradicts the redesign's own "don't rely on position" thesis, and it's one field.
-3. **Per-profile gate sets.** Confirm the *required* gates for Security (`dev-review-security`
-   design+code, pentest), Upgrade (dependency/CVE audit, regression-heavy verify), Performance
-   (baseline + budget), Refactor (characterization + unchanged regression). These are unvalidated
-   drafts (R5).
+3. **Per-profile/tag gate sets.** Confirm the *required* gates for the **Security** profile
+   (`dev-review-security` design+code, pentest), the **Upgrade** profile (dependency/CVE audit,
+   regression-heavy verify), the **`perf`** tag (baseline + budget), and the **`refactor`** tag
+   (characterization + unchanged regression). These are unvalidated drafts (R5).
 4. **Migration Slice specialization.** Confirm it adds exactly: requirement = migration brief ·
    issue declares BI-IDs · observable-slice gate · update coverage matrix. Anything else?
 5. **Versioning.** Phase 2's schema touch is additive → minor; recommend the whole initiative ship
@@ -124,7 +135,7 @@ gaps is its own track (parallel to Phase 3).
 ### W2 — New steps needing an executor
 | Step | Workflow | Decision needed |
 |---|---|---|
-| Baseline Measurement | Performance | new thin skill vs. capture in the issue/manual |
+| Baseline Measurement | `perf` tag | new thin skill vs. capture in the issue/manual |
 | Dependency + CVE Audit | Upgrade | new skill vs. fold into Impact Analysis (`dev-apply-change`) |
 
 ### W3 — Guided steps (no skill today)
