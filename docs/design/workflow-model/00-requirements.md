@@ -49,7 +49,7 @@ invariants:
 ### Three tiers of identity (locked 2026-06-23)
 
 Not every distinct kind of change needs its own workflow. The model has **three tiers**, so
-granularity is earned (G8) rather than assumed:
+granularity is earned rather than assumed:
 
 | Tier | Definition | When to use it |
 |---|---|---|
@@ -58,7 +58,7 @@ granularity is earned (G8) rather than assumed:
 | **Tag** | A composable label that **tunes required-evidence** within a profile; no steps of its own. | An intent that only changes *which evidence is required* (`refactor`, `perf`, `chore`, `tooling`, `infra`). |
 
 The profile/tag a human picks only **proposes**; **impact analysis decides** the actual steps +
-required-evidence (G9), and the **floor** (G10) is enforced regardless of tier. So the tier is a
+required-evidence, and the **floor** (the steps that can never be skipped) is enforced regardless of tier. So the tier is a
 *legibility* choice, not a correctness one. Full taxonomy in [01-design.md §4](01-design.md); the
 enforcement model in [03-execution-model.md](03-execution-model.md).
 
@@ -67,8 +67,8 @@ enforcement model in [03-execution-model.md](03-execution-model.md).
 > **Guiding principle: the harness is a force-multiplier, not a rulebook.** Every goal below serves
 > one purpose: let each role *leverage AI to do their work* and *communicate everything the next step
 > needs* to the harness, with the best practices carried automatically, never to dictate how someone
-> does their job. Separating structure from execution (G2), deriving everything from one catalog (G6),
-> and determining the plan from impact analysis (G9) all exist so the owner supplies judgment while the
+> does their job. Separating structure from execution, deriving everything from one catalog,
+> and determining the plan from impact analysis all exist so the owner supplies judgment while the
 > harness supplies the legwork, context, and rigor.
 
 | # | Goal |
@@ -89,7 +89,7 @@ enforcement model in [03-execution-model.md](03-execution-model.md).
 > (numberless catalog, phase-ribbon breadcrumb, named taxonomy, generated views). That evolution is
 > accepted, but it raises **opportunity cost** against a plugin that is still stabilizing
 > (recent Windows / YAML-parsing fixes). The mitigations are: strict **phasing** (each phase ships
-> independently; see [02-rollout.md](02-rollout.md)) and **executability-first** (C5 below).
+> independently; see [02-rollout.md](02-rollout.md)) and **executability-first**: every step must resolve to a real executor before any breadcrumb or catalog polish (see Constraints).
 
 ## 4. Constraints
 

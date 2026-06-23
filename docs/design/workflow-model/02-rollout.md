@@ -35,22 +35,22 @@ In a scratch prototype (not yet in-tree), confirmed:
 | **0: Capture** | This requirements + design + rollout doc set; the citation convention. | docs only | none |
 | **1: Catalog** | Numberless `workflows.yaml`; first-class `phases:`; the three-tier taxonomy (delivery spine superset + 6 profiles + tags; standalone Incident; establishment trio; `chore` as Tier-0 tag). **`command` is a required field** per step; this makes every executor gap explicit. Overview generator (`tools/`). | catalog + generator + a generated overview doc | low, **data + docs only, no runtime change** |
 | **1b: Executability** ⛓ | Close the gaps Phase 1 surfaced: **W1** (build or rewire `ops-review-release`, `architect-verify-traceability`, `ops-monitor-canary`) and **W2** (executors for Baseline Measurement, Dependency+CVE Audit). See §7. | skills (build/rewire) | medium, real skill work |
-| **2: Breadcrumb** | Phase-ribbon banner + compact status line; add `phase` per step to the change file (additive); seed/migration derive `n`. | `_steps.sh`, `welcome.sh`, `statusline-hitl.sh`, schema (additive), generators | medium, change-file surface, **additively** (C2) |
+| **2: Breadcrumb** | Phase-ribbon banner + compact status line; add `phase` per step to the change file (additive); seed/migration derive `n`. | `_steps.sh`, `welcome.sh`, `statusline-hitl.sh`, schema (additive), generators | medium, change-file surface, **additively** (no parser rewrite) |
 | **3: Generated views** | Enrich steps with `role`/`ownership`; **generate** `command-map.md` + role guides. | catalog (data) + generators | low |
 | **4: Prose** | Convert remaining number-citations (`workflow-steps.md`, `SKILL.md`, gates/diagrams) to name-citations. | docs | low, tedious |
 
-**Executability-first (C5):** Phase **1b gates everything after it**: the breadcrumb/generated-views
+**Executability-first:** Phase **1b gates everything after it**: the breadcrumb/generated-views
 polish must **not** ship while steps still point at non-existent skills. Phase 1 is the bulk of the
 value (eliminates renumber churn) at zero runtime risk; **1b is the real "can we run this" work** and
 must not be skipped because it's less fun than the breadcrumb. Each phase is independently shippable.
 
 ## 4. Risks & mitigations
 
-- **R1: Re-destabilizing the change file** (C2). *Mitigation:* additive-only (add `phase`, keep
+- **R1: Re-destabilizing the change file.** *Mitigation:* additive-only (add `phase`, keep
   `n`); back-compat path for files lacking `phase`; the parser is extended, not rewritten.
 - **R2: Classifier accuracy in `dev-start-change`.** The more named workflows, the more often the
   classifier (and the human) mis-route a change, a direct cost of taxonomy granularity (§5.1).
-  *Mitigation:* settle granularity per G8 (fewer workflows + change-kind tags); classification is
+  *Mitigation:* settle granularity the earned way (fewer workflows + change-kind tags); classification is
   data-driven off the catalog; tabulate intent → workflow once.
 - **R3: Spine-superset bloat.** Conditional steps for the `perf` tag / Upgrade / Security live in
   the spine (it carries 35 step-slots, most conditional). *Mitigation:* they're profile/tag-gated
@@ -68,7 +68,7 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
   the catalog**; don't let a draft become the contract by inertia.
 - **R6: Priority inversion (process lesson).** This thread polished the breadcrumb and taxonomy
   (presentation) before auditing whether steps can run (substance); the audit then found missing
-  executors. *Mitigation:* C5 / Phase 1b; and as a standing habit, audit executability before
+  executors. *Mitigation:* executability-first / Phase 1b; and as a standing habit, audit executability before
   presentation.
 
 ## 5. Open decisions (to settle before/within the relevant phase)
@@ -84,7 +84,7 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
    - **5 tags** (tune required-evidence within a profile): `refactor` · `perf` · `chore` · `tooling` ·
      `infra`.
    This reverses the earlier "split into 14" and folds engineering-change sprawl
-   (Refactor/Performance/Chore) into tags on **Tech Change**. Rationale: G8 (granularity is earned)
+   (Refactor/Performance/Chore) into tags on **Tech Change**. Rationale: granularity is earned, not assumed
    + correctness lives in the floor/required-evidence, not the name, so the choice is about
    legibility/classifier accuracy; promotion (tag → profile) is a cheap catalog edit, un-naming is
    not, so start lean.

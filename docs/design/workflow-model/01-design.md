@@ -81,7 +81,7 @@ breaks.** (Prototype verified; see [02-rollout.md](02-rollout.md) §Validation.)
 ## 4. Three tiers: workflow, profile, tag
 
 > **★ Decision locked (2026-06-23).** Granularity is resolved into **three tiers**, replacing the
-> earlier "14 named workflows" draft. The driving rule (G8): **a thing is only its own *workflow* if
+> earlier "14 named workflows" draft. The driving rule, granularity is earned not assumed: **a thing is only its own *workflow* if
 > its step *sequence/structure* differs; a named *profile* if it's a recognizable preset over the
 > shared spine; otherwise a *tag* that tunes required-evidence.** This collapses the engineering-change
 > sprawl (Refactor/Performance/Chore → tags) while keeping the legible ceremonies (Tech Change,
@@ -106,8 +106,7 @@ breaks.** (Prototype verified; see [02-rollout.md](02-rollout.md) §Validation.)
   required*, so they're **tags**, not separate profiles. (`refactor` → characterization tests +
   behavior-unchanged; `perf` → baseline + budget; `chore` → Tier-0, floors only at impact-analysis +
   docs-reconciled.)
-- **Upgrade** is a **profile** (not a tag): a dependency/framework bump is *initiated as a unit* (G3
-  legibility) and carries distinctive required gates (Dependency+CVE audit, regression-heavy verify,
+- **Upgrade** is a **profile** (not a tag): a dependency/framework bump is *initiated as a unit* (a legible, stakeholder-facing ceremony) and carries distinctive required gates (Dependency+CVE audit, regression-heavy verify,
   staged rollout). It doesn't reorder the spine, so it isn't a workflow.
 - **Security** is a **profile**: it does **not** reorder the spine (the pentest step already lives in
   Ship, a security-design review fits the existing Design phase). What distinguishes it is
@@ -264,7 +263,7 @@ front), listed for completeness.
 ### How the three tiers are encoded in the catalog
 
 The shape below documents the **target encoding**; it is **not** the live `ai/shared/workflows.yaml`
-yet. Writing it is **Phase 1** (catalog), which is gated by **Phase 1b executability** (C5), so this
+yet. Writing it is **Phase 1** (catalog), which is gated by **Phase 1b executability** (build the plumbing before the façade), so this
 subsection is the contract Phase 1 implements, not a change to ship now.
 
 A **workflow** owns its `phases` + `steps` (the establishment trio, Incident, Migration Slice, already
@@ -378,7 +377,7 @@ the global counter (the counter dies at the display layer). Therefore the change
 **additive and low-risk**:
 
 - **Keep** the existing self-describing block (`steps: [{ n, key, label, status }]`, `total`), the
-  seed still derives `n` from the now-numberless catalog and writes it, exactly as today. (C2/C3.)
+  seed still derives `n` from the now-numberless catalog and writes it, exactly as today. This keeps the change-file and parser surface stable and stays back-compatible with existing v2 files.
 - **Add** `phase` per step, which the ribbon needs:
   ```yaml
   steps:
@@ -388,7 +387,7 @@ the global counter (the counter dies at the display layer). Therefore the change
 - Old files without `phase` degrade gracefully (ribbon falls back to the current-phase name only).
 
 The parser keeps reading the file (no rewrite); it gains ribbon rendering from `phase` + `status`.
-Portability (C1) is preserved, `phase` is in the file, so the breadcrumb still renders without the
+Portability is preserved: `phase` is in the file, so the breadcrumb still renders without the
 catalog.
 
 ## 8. The citation convention (the durable rule)
