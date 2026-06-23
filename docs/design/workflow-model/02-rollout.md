@@ -110,14 +110,13 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
    becomes a tracked ticket (owner + due) linked to the change that **blocks "change complete"** (not
    merge/canary), or an explicit recorded architect risk-acceptance. (Finalised in
    [03-execution-model.md §6](03-execution-model.md).)
-7. **UX design artifact, floor strictness (open).** A user-facing change requires a PM-owned UX
-   artifact, Claude Design / Figma / at minimum a screenshot (floor item #2,
-   [03-execution-model.md §3](03-execution-model.md)). Open: is it **hard-floor** (never skippable, like
-   security review) or **architect-waiverable** for trivial UI tweaks (copy change, a moved button)?
-   Also open: the trigger test for "user-facing", impact analysis flags it, but the rule (any rendered
-   UI delta? visual-only? text?) needs a one-line definition. *Recommendation: hard-floor on the
-   artifact's existence, with the screenshot tier as the low-effort floor, so "trivial" still costs one
-   screenshot rather than a waiver.*
+7. **UX design artifact, LOCKED 2026-06-23.** A user-facing change requires a PM-owned UX artifact,
+   Claude Design / Figma / at minimum a screenshot (floor item #2,
+   [03-execution-model.md §3](03-execution-model.md)). **Strictness: hard-floor on existence, never
+   waiverable**, the screenshot tier is already the cheapest floor, so a trivial tweak costs one
+   screenshot rather than a waiver conversation. **"User-facing" trigger: a rendered UI delta a user can
+   perceive** (layout, component, styling, visible copy, interaction/flow); purely internal changes with
+   no rendered delta don't trigger it. Impact analysis sets the flag and asks the PM when unsure.
 
 **Dropped** (was open decision): *phase the establishment workflows.* Low value, a setup workflow
 runs **once** and you're never lost in it; the ribbon earns its keep on the repeated delivery flow.

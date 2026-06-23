@@ -60,8 +60,19 @@ full set. **The floor scales with the change, but never to zero.**
 > build: ideally a Claude Design output or a Figma file, at minimum an annotated screenshot or mock
 > attached to the issue. The *form* is tiered (full design preferred, screenshot the floor); the
 > artifact's *existence* is the gate. It is required-evidence (`ux_artifact`) and is what the Ship-phase
-> Figma/UX comparison checks the built UI against. Whether it is hard-floor or architect-waiverable for
-> trivial UI tweaks is an open sub-decision (see [02-rollout.md §5](02-rollout.md)).
+> Figma/UX comparison checks the built UI against.
+>
+> **Strictness (locked 2026-06-23): hard-floor on existence, never waiverable.** A user-facing change
+> cannot be marked complete without *some* artifact. There is no architect waiver, because the floor is
+> already the cheapest tier: a trivial tweak (copy edit, a moved button) costs **one screenshot**, not a
+> waiver conversation. Tiering the form, not allowing a skip, is what keeps this from becoming
+> skip-fatigue.
+>
+> **"User-facing" trigger (locked 2026-06-23):** the change produces a **rendered UI delta a user can
+> perceive**, any change to layout, a component, styling, user-visible copy, or an interaction/flow.
+> Purely internal changes with no rendered delta (backend, refactor, infra, config without UI effect)
+> do **not** trigger it. Impact analysis sets the flag; when unsure, it asks the PM rather than
+> assuming no.
 
 ## 4. Tailoring & the informed-skip mechanism
 
