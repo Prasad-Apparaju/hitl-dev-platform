@@ -1,0 +1,124 @@
+# Numberless workflow catalog — Phase-1 source of truth.
+#
+# Stable `key`s, first-class `phases`, no stored `n`/`total`. The generator
+# (tools/workflow-catalog/derive.py) derives positional numbers (n, total,
+# phase.step) for the runtime view. Numbers live only at the display layer.
+#
+# Step fields:
+#   key     — STABLE identifier. Survives renumbering.
+#   name    — readable human name (not reproduction-critical).
+#   label   — short breadcrumb label (matches runtime exactly).
+#   phase   — workflow phase this step belongs to (matches runtime exactly).
+#   substep — true for a sub-step that shares its parent's integer (e.g. 19a).
+#   parent  — for a substep, the `key` of the step it hangs off.
+#   cond    — conditional spine slot; included only when its activator is active.
+#
+# `verify` proves this numberless catalog reproduces the runtime workflows.yaml
+# on n/key/label/phase/total. Do not strip or reorder the spine steps.
+
+schema_version: "3.0-numberless"
+
+spine:
+  title: "Development — deliver a change"
+  phases: [Requirements, Design, Build, Verify, Assess, Ship, Post-Ship]
+  steps:
+    # ── Requirements ──────────────────────────────────────────────
+    - { key: issue,              name: "GitHub Issue",                 label: "Issue",    phase: "Requirements" }
+    - { key: figma,              name: "Figma Review",                 label: "Figma",    phase: "Requirements" }
+    # ── Design ────────────────────────────────────────────────────
+    - { key: impact,             name: "Impact Analysis",              label: "Impact",   phase: "Design" }
+    - { key: roi,                name: "ROI Estimate",                 label: "ROI",      phase: "Design" }
+    - { key: docs,               name: "Update Docs",                  label: "Docs",     phase: "Design" }
+    - { key: iac,                name: "Update IaC",                   label: "IaC",      phase: "Design" }
+    - { key: test_plan,          name: "Test Case Planning",           label: "Tests",    phase: "Design" }
+    - { key: training,           name: "Training Plan Stub",           label: "Train",    phase: "Design" }
+    - { key: packet,             name: "Package Decision Packet",      label: "Packet",   phase: "Design" }
+    # ── Build (TDD cycle) ─────────────────────────────────────────
+    - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build" }
+    - { key: test_review,        name: "Human Reviews Tests",          label: "TstRvw",   phase: "Build" }
+    - { key: design_plus,        name: "Tests Improve the Design",     label: "Dsn+",     phase: "Build" }
+    - { key: verify_red,         name: "Verify RED",                   label: "VfyRED",   phase: "Build" }
+    - { key: green,              name: "Generate Code (GREEN)",        label: "GREEN",    phase: "Build" }
+    - { key: verify_green,       name: "Verify GREEN",                 label: "VfyGRN",   phase: "Build" }
+    - { key: refactor,           name: "Refactor",                     label: "Refact",   phase: "Build" }
+    - { key: conventions,        name: "Convention Checks",            label: "Conv",     phase: "Build" }
+    # ── Verify ────────────────────────────────────────────────────
+    - { key: review1,            name: "Code Review Round 1",          label: "Rvw1",     phase: "Verify" }
+    - { key: review2,            name: "Code Review Round 2",          label: "Rvw2",     phase: "Verify" }
+    - { key: arch_review,        name: "Architect Code Review",        label: "ArchRvw",  phase: "Verify", substep: true, parent: review2 }
+    - { key: rerun,              name: "Rerun Tests",                  label: "Rerun",    phase: "Verify" }
+    - { key: reconcile,          name: "Reconcile Docs",               label: "Recncl",   phase: "Verify" }
+    - { key: qa_verify,          name: "QA Post-Handoff Verification", label: "QAVfy",    phase: "Verify" }
+    # ── Assess ────────────────────────────────────────────────────
+    - { key: impact_brief,       name: "Downstream Impact Brief",      label: "ImpBrf",   phase: "Assess" }
+    - { key: rollout,            name: "Risk-Rated Rollout Plan",      label: "Rollout",  phase: "Assess" }
+    # ── Ship ──────────────────────────────────────────────────────
+    - { key: verify_pr,          name: "Verify PR Completeness",       label: "VfyPR",    phase: "Ship" }
+    - { key: integration_verify, name: "Integration Verification",     label: "IntVfy",   phase: "Ship" }
+    - { key: figma_compare,      name: "Figma Comparison",             label: "Figma2",   phase: "Ship" }
+    - { key: deploy,             name: "Build, Migrate, Apply, Deploy",label: "Deploy",   phase: "Ship" }
+    - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship" }
+    # ── Post-Ship ─────────────────────────────────────────────────
+    - { key: roi_30,             name: "30-Day ROI Check",             label: "30dROI",   phase: "Post-Ship" }
+    - { key: roi_90,             name: "90-Day ROI Check",             label: "90dROI",   phase: "Post-Ship" }
+    # ── Conditional spine slots (filtered out of the base/Feature view) ──
+    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf }
+    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security }
+    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade }
+    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security }
+
+workflows:
+
+  # ── Brownfield setup: onboard an existing codebase ──────────────
+  brownfield:
+    title: "Brownfield — onboard an existing codebase"
+    phases: [Brownfield Setup]
+    steps:
+      - { key: map_code,         name: "Map Codebase",                 label: "MapCode",    phase: "Brownfield Setup" }
+      - { key: claude_md,        name: "Generate CLAUDE.md",           label: "CLAUDE.md",  phase: "Brownfield Setup" }
+      - { key: manifest,         name: "Generate Manifest",            label: "Manifest",   phase: "Brownfield Setup" }
+      - { key: arch_review,      name: "Architect Review",             label: "ArchRvw",    phase: "Brownfield Setup" }
+      - { key: verify_pipeline,  name: "Verify Pipeline",              label: "Pipeline",   phase: "Brownfield Setup" }
+      - { key: observability,    name: "Observability Setup",          label: "Observ",     phase: "Brownfield Setup" }
+      - { key: priority_docs,    name: "Priority Docs",                label: "Docs",       phase: "Brownfield Setup" }
+      - { key: seed_registries,  name: "Seed Registries",              label: "Registries", phase: "Brownfield Setup" }
+      - { key: graphify,         name: "Graphify",                     label: "Graphify",   phase: "Brownfield Setup" }
+      - { key: create_issue,     name: "Create Issue",                 label: "Issue",      phase: "Brownfield Setup" }
+      - { key: confirm_ready,    name: "Confirm Ready",                label: "Ready",      phase: "Brownfield Setup" }
+
+  # ── Migration setup: stand up a target for a system migration ────
+  migration:
+    title: "Migration — set up a target for a system migration"
+    phases: [Migration Setup]
+    steps:
+      - { key: collect_context,  name: "Collect Context",              label: "Context",    phase: "Migration Setup" }
+      - { key: claude_md,        name: "Generate CLAUDE.md",           label: "CLAUDE.md",  phase: "Migration Setup" }
+      - { key: manifest,         name: "Generate Manifest",            label: "Manifest",   phase: "Migration Setup" }
+      - { key: dir_setup,        name: "Directory Setup",              label: "DirSetup",   phase: "Migration Setup" }
+      - { key: source_analysis,  name: "Source Analysis",              label: "SrcAnal",    phase: "Migration Setup" }
+      - { key: ext_docs,         name: "External Docs",                label: "ExtDocs",    phase: "Migration Setup" }
+      - { key: seed_registries,  name: "Seed Registries",              label: "Registries", phase: "Migration Setup" }
+      - { key: create_issue,     name: "Create Issue",                 label: "Issue",      phase: "Migration Setup" }
+      - { key: confirm_ready,    name: "Confirm Ready",                label: "Ready",      phase: "Migration Setup" }
+
+  # ── Migration review: critically evaluate external migration docs ─
+  migration_review:
+    title: "Migration Review — evaluate external migration docs"
+    phases: [Migration Review]
+    steps:
+      - { key: read_context,     name: "Read Context",                 label: "Context",  phase: "Migration Review" }
+      - { key: evaluate,         name: "Evaluate Docs",                label: "Evaluate", phase: "Migration Review" }
+      - { key: write_review,     name: "Write Migration Review",       label: "MigRvw",   phase: "Migration Review" }
+      - { key: write_brief,      name: "Write Brief",                  label: "Brief",    phase: "Migration Review" }
+      - { key: handoff,          name: "Handoff",                      label: "Handoff",  phase: "Migration Review" }
+
+  # ── Greenfield setup: stand up a greenfield project from a PRD ───
+  # Runtime id: prd
+  greenfield:
+    title: "PRD — stand up a greenfield project from a PRD"
+    phases: [PRD Setup]
+    steps:
+      - { key: claude_md,        name: "Generate CLAUDE.md",           label: "CLAUDE.md", phase: "PRD Setup" }
+      - { key: manifest,         name: "Generate Manifest",            label: "Manifest",  phase: "PRD Setup" }
+      - { key: create_issue,     name: "Create Issue",                 label: "Issue",     phase: "PRD Setup" }
+      - { key: confirm_ready,    name: "Confirm Ready",                label: "Ready",     phase: "PRD Setup" }
