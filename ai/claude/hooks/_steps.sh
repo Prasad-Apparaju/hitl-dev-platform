@@ -74,7 +74,7 @@ hitl_steps() {
       v=t; sub("^[ ]*" key ":[ ]*","",v); sub(/[ ]+#.*/,"",v); sub(/[ ]*$/,"",v)
       gsub(/^"|"$/,"",v); gsub(/^'"'"'|'"'"'$/,"",v); return v
     }
-    function flush() { if (have) { if (st=="") st="open"; print n "|" lbl "|" st } have=0; n=""; lbl=""; st="" }
+    function flush() { if (have) { if (st=="") st="open"; print n "|" lbl "|" st "|" ph } have=0; n=""; lbl=""; st=""; ph="" }
     /^workflow:/        { w=1; next }
     w && /^[ ]+steps:/  { s=1; next }
     s {
@@ -85,8 +85,10 @@ hitl_steps() {
         n=line;   sub(/.*[{,][ ]*n:[ ]*/,    "", n);   sub(/[ ]*[,}].*/, "", n);   gsub(/["{} ]/,"",n)
         lbl=line; sub(/.*[,{][ ]*label:[ ]*/, "", lbl); sub(/[ ]*[,}].*/, "", lbl); gsub(/^"|"$/,"",lbl)
         st=line;  sub(/.*[,{][ ]*status:[ ]*/, "", st); sub(/[ ]*[,}].*/, "", st); gsub(/["{} ]/,"",st)
+        ph=""                                                     # phase is optional (additive)
+        if (match(line, /[,{][ ]*phase:[ ]*[^,}]*/)) { ph=substr(line,RSTART,RLENGTH); sub(/.*phase:[ ]*/,"",ph); sub(/[ ]+$/,"",ph); gsub(/^"|"$/,"",ph) }
         if (st=="") st="open"
-        print n "|" lbl "|" st; have=0; next
+        print n "|" lbl "|" st "|" ph; have=0; next
       }
       if (line ~ /^[ ]+-[ ]/) {                                  # ── block style: new list item
         flush(); have=1
@@ -95,12 +97,14 @@ hitl_steps() {
         else if (rest ~ /^key:/) {}                              # key unused for rendering
         else if (rest ~ /^label:/)  lbl=field(rest,"label")
         else if (rest ~ /^status:/) st=field(rest,"status")
+        else if (rest ~ /^phase:/)  ph=field(rest,"phase")
         next
       }
       if (have && line ~ /^[ ]+[A-Za-z_]+:/) {                   # ── block style: continuation field
         if (line ~ /^[ ]+n:/)        n=field(line,"n")
         else if (line ~ /^[ ]+label:/)  lbl=field(line,"label")
         else if (line ~ /^[ ]+status:/) st=field(line,"status")
+        else if (line ~ /^[ ]+phase:/)  ph=field(line,"phase")
         next
       }
     }
@@ -213,14 +217,16 @@ hitl_intake_directive() {
 DIRECTIVE
 }
 
-# hitl_render_trail <yaml> [color]
-#   Render the windowed step trail (3 back + current + 3 ahead), e.g.:
-#     … ✓2.Figma ▶3.Impact ·4.ROI ·5.Docs ·6.IaC …
-#   Pass "color" as the 2nd arg to wrap the current step in green ANSI (for the status line).
-#   Glyphs come from each step's status: done ✓ · current ▶ · open ·
+# hitl_render_trail <yaml> [color] [current_name]
+#   Render the windowed step trail (3 back + current + 3 ahead), numberless, e.g.:
+#     … ✓Conv ✓Rvw1 ✓Rvw2 ▶ Architect Code Review ·Rerun ·Recncl ·QAVfy …
+#   Position is carried by order + the ▶ glyph — no global step numbers (Phase 2).
+#   The current step is expanded to its full name when `current_name` (3rd arg) is given;
+#   neighbours stay as short labels. Pass "color" (2nd arg) to wrap the current step green.
+#   Glyphs: done ✓ · current ▶ · everything else (open/skipped/…) ·
 hitl_render_trail() {
-  local f="$1" color="${2:-}"
-  hitl_steps "$f" | awk -F'|' -v color="$color" '
+  local f="$1" color="${2:-}" cur_name="${3:-}"
+  hitl_steps "$f" | awk -F'|' -v color="$color" -v curname="$cur_name" '
     BEGIN { GRN="\033[32m"; RST="\033[0m" }
     { n[NR]=$1; lbl[NR]=$2; st[NR]=$3; if ($3=="current") cur=NR }
     END {
@@ -234,7 +240,10 @@ hitl_render_trail() {
         glyph="·"
         if (st[i]=="done") glyph="✓"
         else if (st[i]=="current") glyph="▶"
-        seg=glyph n[i] "." lbl[i]
+        if (st[i]=="current") {
+          disp=(curname!="") ? curname : lbl[i]
+          seg=glyph " " disp                    # current: glyph + space + full name
+        } else seg=glyph lbl[i]                  # neighbour: glyph + short label, no number
         if (st[i]=="current" && color=="color") seg=GRN seg RST
         out=out seg " "
       }
@@ -242,4 +251,40 @@ hitl_render_trail() {
       printf "%s", out
     }
   '
+}
+
+# hitl_render_ribbon <yaml> → the phase ribbon (Phase 2), e.g.:
+#     Requirements ✓  Design ✓  Build ◐  Verify ·  Assess ·  Ship ·  Post-Ship ·
+#   Computed from the steps' per-step `phase` + `status`: a phase is ✓ when all its steps are
+#   done, ◐ when it holds the current step (or is partly done), · when untouched. The ribbon
+#   only changes when a *phase* is added/removed — never on a step renumber.
+#   Back-compat: a change file whose steps carry no `phase` falls back to the lone
+#   current_step.phase ("<phase> ◐"), so old files still render something sensible.
+hitl_render_ribbon() {
+  local f="$1" out
+  out=$(hitl_steps "$f" | awk -F'|' '
+    {
+      ph=$4; if (ph=="") next
+      st=$3
+      if (!(ph in seen)) { seen[ph]=1; order[++np]=ph }
+      cnt[ph]++
+      if (st=="done") ndone[ph]++
+      if (st=="current") cur[ph]=1
+    }
+    END {
+      if (np==0) exit 0
+      sep=""
+      for (i=1;i<=np;i++) {
+        p=order[i]
+        if (cur[p])                 g="◐"
+        else if (ndone[p]==cnt[p])  g="✓"
+        else if (ndone[p]>0)        g="◐"
+        else                        g="·"
+        printf "%s%s %s", sep, p, g; sep="  "
+      }
+    }
+  ')
+  if [[ -n "$out" ]]; then printf "%s" "$out"; return; fi
+  local cp; cp=$(hitl_cs_field "$f" phase)
+  [[ -n "$cp" ]] && printf "%s ◐" "$cp"
 }

@@ -9,10 +9,12 @@
 #
 # What it does, per case:
 #   1. builds an isolated temp dir with its own .hitl/ and (where branch matters) its own git repo
-#   2. seeds .hitl/current-change.yaml from ai/shared/workflows.yaml for the chosen workflow + state
+#   2. seeds .hitl/current-change.yaml from ai/shared/workflows.yaml for the chosen workflow + state,
+#      copying each step's phase (additive) and populating current_step.name with the FULL step name
 #   3. runs the real renderers (welcome.sh banner + statusline-hitl.sh) AND the _steps.sh library
-#   4. asserts the rendered trail concretely — non-empty where expected, the current step is
-#      highlighted (▶ + label), the denominator/total is right, the right markers appear, and no
+#   4. asserts the rendered Phase-2 breadcrumb concretely — non-empty where expected, the current
+#      step is highlighted (▶ + FULL name), the phase ribbon shows the right glyph per phase
+#      (✓ done / ◐ current / · untouched), NO global "Step N / total" counter leaks, and no
 #      error text leaks. Exits non-zero if ANY case fails.
 #
 # It seeds step lists FROM the catalog (not hand-copied), so the matrix tracks the catalog and
@@ -33,6 +35,7 @@ STEPS_LIB="$HOOKS/_steps.sh"
 WELCOME="$HOOKS/welcome.sh"
 STATUSLINE="$HOOKS/statusline-hitl.sh"
 WORKFLOWS="$REPO_ROOT/ai/shared/workflows.yaml"
+STEPDOC="$REPO_ROOT/ai/claude/dev-practices/workflow-steps.md"   # full step names (development)
 
 VERBOSE=0
 [[ "${1:-}" == "-v" ]] && VERBOSE=1
@@ -60,7 +63,7 @@ declare -a FAILED_CASES
 #   the <current_n> step current, the rest open, and (if given) <skip_n> as skipped. Emits a full
 #   schema-v2 change file (flow-map style) on stdout. <current_n> may be a substep like "19a".
 emit_change_yaml() {
-  WF="$1" CUR="$2" SKIP="${3:-}" EB="${4:-}" "$PY" - "$WORKFLOWS" <<'PY'
+  WF="$1" CUR="$2" SKIP="${3:-}" EB="${4:-}" STEPDOC="$STEPDOC" "$PY" - "$WORKFLOWS" <<'PY'
 import sys, re, os
 wf_file = sys.argv[1]
 wf_id  = os.environ["WF"]
@@ -68,6 +71,20 @@ cur    = os.environ["CUR"]
 skip   = os.environ.get("SKIP","")
 eb     = os.environ.get("EB","")
 style  = os.environ.get("STYLE","flow")   # "flow" (single-line maps) or "block" (multi-line)
+nophase= os.environ.get("NOPHASE","")     # "1" → omit per-step phase (back-compat fixture)
+stepdoc= os.environ.get("STEPDOC","")     # workflow-steps.md, for FULL step names (development)
+
+# Full step names live in workflow-steps.md as "**<n>. <Full Name>** …" headings. That doc covers
+# ONLY the development workflow, so it is consulted ONLY for development; every other workflow falls
+# back to its short catalog label. current_step.name is the FULL name (the Phase-2 trail expands it).
+fullnames = {}
+if wf_id == "development" and stepdoc and os.path.exists(stepdoc):
+    for ln in open(stepdoc).read().splitlines():
+        m = re.match(r'^\*\*(\d+[a-z]?)\.\s+(.+?)\*\*', ln)
+        if m:
+            nm = m.group(2)
+            nm = re.sub(r'\s*\(conditional\)\s*$', '', nm).strip()
+            fullnames[m.group(1)] = nm
 
 # Minimal dependency-free parse of ai/shared/workflows.yaml (flow-map step entries).
 import io
@@ -92,7 +109,7 @@ for ln in lines:
             mm = re.search(k + r':\s*("([^"]*)"|[^,}]+)', body)
             if not mm: return ""
             return (mm.group(2) if mm.group(2) is not None else mm.group(1)).strip().strip('"')
-        steps.append({"n": field("n"), "key": field("key"), "label": field("label")})
+        steps.append({"n": field("n"), "key": field("key"), "label": field("label"), "phase": field("phase")})
 
 if not steps:
     sys.stderr.write("could not parse steps for workflow %r\n" % wf_id)
@@ -120,12 +137,13 @@ if total is not None:
     out.append('  total: %d' % total)
 out.append('  steps:')
 cur_label = None
+cur_phase = None
 cur_int = None
 cur_sub = ""
 for s in steps:
     n = s["n"]
     if n == cur:
-        st = "current"; cur_label = s["label"]
+        st = "current"; cur_label = s["label"]; cur_phase = s["phase"]
         mm = re.match(r'^(\d+)([a-z]*)$', n)
         cur_int = mm.group(1); cur_sub = mm.group(2)
     elif skip and n == skip:
@@ -134,18 +152,28 @@ for s in steps:
         st = "done"
     else:
         st = "open"
+    ph = s["phase"]
     if style == "block":
         out.append('    - n: %s' % n)
         out.append('      key: %s' % s["key"])
         out.append('      label: "%s"' % s["label"])
         out.append('      status: %s' % st)
+        if ph and not nophase:
+            out.append('      phase: "%s"' % ph)
     else:
-        out.append('    - { n: %s, key: %s, label: "%s", status: %s }' % (n, s["key"], s["label"], st))
+        if ph and not nophase:
+            out.append('    - { n: %s, key: %s, label: "%s", status: %s, phase: "%s" }' % (n, s["key"], s["label"], st, ph))
+        else:
+            out.append('    - { n: %s, key: %s, label: "%s", status: %s }' % (n, s["key"], s["label"], st))
+# current_step.name is the FULL step name (the Phase-2 trail expands it); fall back to short label.
+cur_name = fullnames.get(cur, cur_label or "")
 out.append('current_step:')
 out.append('  number: %s' % (cur_int or "1"))
 if cur_sub:
     out.append('  substep: "%s"' % cur_sub)
-out.append('  name: "%s"' % (cur_label or ""))
+out.append('  name: "%s"' % cur_name)
+if cur_phase:
+    out.append('  phase: "%s"' % cur_phase)
 print("\n".join(out))
 PY
 }
@@ -190,6 +218,17 @@ assert_not_contains() { # <label> <haystack> <needle>
   if printf '%s' "$2" | grep -qF -- "$3"; then
     _bad "$1 — UNEXPECTEDLY contains '$3'"; else _ok "$1 — free of '$3'"; fi
 }
+assert_not_matches() { # <label> <haystack> <ERE>
+  if printf '%s' "$2" | grep -qE -- "$3"; then
+    _bad "$1 — UNEXPECTEDLY matches /$3/"; [[ $VERBOSE -eq 1 ]] && printf '        got: %q\n' "$2"
+  else _ok "$1 — free of /$3/"; fi
+}
+# no global "Step N / total" counter may leak anywhere in Phase 2 (the trail is numberless and
+# the denominator was replaced by the phase ribbon).
+assert_no_global_counter() { # <label> <combined output>
+  assert_not_matches "$1: no 'Step N / ' counter"  "$2" 'Step [0-9]+ / '
+  assert_not_matches "$1: no 'Step N/M' counter"   "$2" 'Step [0-9]+/[0-9]'
+}
 assert_nonempty() { # <label> <value>
   if [[ -n "${2//[[:space:]]/}" ]]; then _ok "$1 — non-empty"; else _bad "$1 — EMPTY"; fi
 }
@@ -203,12 +242,13 @@ assert_no_error_leak() { # <label> <combined output>
 # ── matrix definition ───────────────────────────────────────────────────────────────────────────
 # For each workflow we need: id, the first step n, a middle step n, the last step n. Derive from
 # the catalog so we don't hardcode them.
-catalog_field() { # <wf_id> <first|middle|last|label_of:N>
-  WF="$1" Q="$2" "$PY" - "$WORKFLOWS" <<'PY'
+catalog_field() { # <wf_id> <first|middle|last|label_of:N|phase_of:N|name_of:N>
+  WF="$1" Q="$2" STEPDOC="$STEPDOC" "$PY" - "$WORKFLOWS" <<'PY'
 import sys, re, os
 wf_file=sys.argv[1]; wf_id=os.environ["WF"]; q=os.environ["Q"]
+stepdoc=os.environ.get("STEPDOC","")
 lines=open(wf_file).read().splitlines()
-in_w=False; cur=None; ns=[]; labels={}
+in_w=False; cur=None; ns=[]; labels={}; phases={}
 for ln in lines:
     if re.match(r'^workflows:\s*$', ln): in_w=True; continue
     if not in_w: continue
@@ -222,11 +262,24 @@ for ln in lines:
         ns.append(nn)
         lm=re.search(r'label:\s*"([^"]*)"', body)
         labels[nn]=lm.group(1) if lm else ""
+        pm=re.search(r'phase:\s*"([^"]*)"', body)
+        phases[nn]=pm.group(1) if pm else ""
+# full step names from workflow-steps.md — development ONLY; others fall back to the short label
+fullnames={}
+if wf_id == "development" and stepdoc and os.path.exists(stepdoc):
+    for ln in open(stepdoc).read().splitlines():
+        mm=re.match(r'^\*\*(\d+[a-z]?)\.\s+(.+?)\*\*', ln)
+        if mm:
+            nm=re.sub(r'\s*\(conditional\)\s*$','',mm.group(2)).strip()
+            fullnames[mm.group(1)]=nm
 ints=[n for n in ns if re.match(r'^\d+$', n)]
 if q=="first": print(ints[0])
 elif q=="last": print(ints[-1])
 elif q=="middle": print(ints[len(ints)//2])
 elif q.startswith("label_of:"): print(labels.get(q.split(":",1)[1], ""))
+elif q.startswith("phase_of:"): print(phases.get(q.split(":",1)[1], ""))
+elif q.startswith("name_of:"):
+    k=q.split(":",1)[1]; print(fullnames.get(k, labels.get(k, "")))
 PY
 }
 
@@ -241,25 +294,38 @@ echo "================================================================"
 
 # helper to run one standard position case (first/middle/last)
 run_position_case() {
-  local wf="$1" pos="$2" n label dir banner status combined
+  local wf="$1" pos="$2" n full phase first_phase dir banner status combined
   n="$(catalog_field "$wf" "$pos")"
-  label="$(catalog_field "$wf" "label_of:$n")"
   [[ -z "$n" ]] && { _bad "$wf/$pos — could not derive step n from catalog"; return; }
+  full="$(catalog_field "$wf" "name_of:$n")"        # FULL current step name (trail expands it)
+  phase="$(catalog_field "$wf" "phase_of:$n")"      # current step's phase (ribbon shows it ◐)
+  first_phase="$(catalog_field "$wf" "phase_of:$(catalog_field "$wf" first)")"
   dir="$(new_case_dir "${wf}_${pos}" "issue/000-x")"
   emit_change_yaml "$wf" "$n" "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
   banner="$(run_welcome "$dir")"
   status="$(run_statusline "$dir")"
   combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
-  [[ $VERBOSE -eq 1 ]] && { echo "    --- $wf/$pos (step $n=$label) ---"; echo "$banner" | sed 's/^/    /'; }
+  [[ $VERBOSE -eq 1 ]] && { echo "    --- $wf/$pos (step $n='$full', phase '$phase') ---"; echo "$banner" | sed 's/^/    /'; }
 
-  local lib_trail; lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml)"
+  local lib_trail lib_ribbon
+  lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "$full")"
+  lib_ribbon="$(cd "$dir" && hitl_render_ribbon .hitl/current-change.yaml)"
+  # ── trail: current step is "▶ <FULL name>" (numberless, no "▶<n>.<label>") ──
   assert_nonempty   "$wf/$pos: library trail"            "$lib_trail"
-  assert_contains   "$wf/$pos: library trail current ▶"  "$lib_trail" "▶${n}.${label}"
+  assert_contains   "$wf/$pos: library trail current ▶"  "$lib_trail" "▶ ${full}"
   assert_nonempty   "$wf/$pos: banner"                   "$banner"
-  assert_contains   "$wf/$pos: banner shows current ▶"   "$banner" "▶${n}.${label}"
-  assert_contains   "$wf/$pos: banner denominator"       "$banner" "/ $(catalog_field "$wf" last):"
-  assert_contains   "$wf/$pos: statusline shows current" "$status" "▶${n}.${label}"
-  assert_no_error_leak "$wf/$pos"                        "$combined"
+  assert_contains   "$wf/$pos: banner shows current ▶"   "$banner" "▶ ${full}"
+  assert_contains   "$wf/$pos: statusline shows current" "$status" "▶ ${full}"
+  # ── phase ribbon: current step's phase shows ◐ ──
+  assert_contains   "$wf/$pos: library ribbon current phase ◐" "$lib_ribbon" "${phase} ◐"
+  assert_contains   "$wf/$pos: banner shows phase ribbon"      "$banner" "${phase} ◐"
+  # ── for middle/last the first phase is fully behind us → it shows ✓ ──
+  if [[ "$pos" != "first" && "$first_phase" != "$phase" ]]; then
+    assert_contains "$wf/$pos: earlier phase ✓"           "$banner" "${first_phase} ✓"
+  fi
+  # ── no global "Step N / total" counter survives Phase 2, anywhere ──
+  assert_no_global_counter "$wf/$pos"                    "$combined"
+  assert_no_error_leak     "$wf/$pos"                    "$combined"
 }
 
 # ── 1. FIRST / MIDDLE / LAST for every workflow ─────────────────────────────────────────────────
@@ -277,13 +343,17 @@ emit_change_yaml development 19a "" "issue/000-x" > "$dir/.hitl/current-change.y
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
-lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml)"
+lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Architect Code Review")"
 cur_n="$(cd "$dir" && hitl_current_n .hitl/current-change.yaml)"
 assert_contains   "dev/19a: current_n is the substep" "$cur_n" "19a"
-assert_contains   "dev/19a: library trail shows ▶19a.ArchRvw" "$lib_trail" "▶19a.ArchRvw"
-assert_contains   "dev/19a: banner shows ▶19a.ArchRvw"        "$banner" "▶19a.ArchRvw"
-assert_contains   "dev/19a: statusline shows ▶19a.ArchRvw"    "$status" "▶19a.ArchRvw"
-assert_no_error_leak "dev/19a"                                "$combined"
+# Phase 2: the current step is shown by its FULL name, numberless — "▶ Architect Code Review".
+assert_contains   "dev/19a: library trail shows ▶ Architect Code Review" "$lib_trail" "▶ Architect Code Review"
+assert_contains   "dev/19a: banner shows ▶ Architect Code Review"        "$banner" "▶ Architect Code Review"
+assert_contains   "dev/19a: statusline shows ▶ Architect Code Review"    "$status" "▶ Architect Code Review"
+# 19a lives in the Verify phase → ribbon shows "Verify ◐"
+assert_contains   "dev/19a: ribbon shows Verify ◐"                       "$banner" "Verify ◐"
+assert_no_global_counter "dev/19a"                                       "$combined"
+assert_no_error_leak     "dev/19a"                                       "$combined"
 
 # ── 3. SKIPPED step present in the trail (in the visible window) ─────────────────────────────────
 echo "── case: skipped step in trail ───────────────────────────────"
@@ -294,15 +364,18 @@ banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
 lib_steps="$(cd "$dir" && hitl_steps .hitl/current-change.yaml)"
-lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml)"
-assert_contains   "dev/skip: steps parse keeps skipped status" "$lib_steps" "3|Impact|skipped"
+lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Update Docs")"
+# hitl_steps now emits n|label|status|phase — skipped status is preserved (phase appended).
+assert_contains   "dev/skip: steps parse keeps skipped status" "$lib_steps" "3|Impact|skipped|Design"
 assert_nonempty   "dev/skip: trail non-empty"                  "$lib_trail"
-assert_contains   "dev/skip: current still highlighted ▶5.Docs" "$lib_trail" "▶5.Docs"
+# current step is shown numberless by its FULL name.
+assert_contains   "dev/skip: current still highlighted ▶ Update Docs" "$lib_trail" "▶ Update Docs"
 # a skipped step renders with the open glyph "·" (renderer maps only done/current specially),
-# and crucially is NOT shown as done (✓) — assert it appears as ·3.Impact.
-assert_contains   "dev/skip: skipped step shown as ·3.Impact"  "$lib_trail" "·3.Impact"
-assert_not_contains "dev/skip: skipped step not marked done"   "$lib_trail" "✓3.Impact"
-assert_no_error_leak "dev/skip"                                "$combined"
+# and crucially is NOT shown as done (✓) — assert it appears as ·Impact (numberless), never ✓Impact.
+assert_contains   "dev/skip: skipped step shown as ·Impact"    "$lib_trail" "·Impact"
+assert_not_contains "dev/skip: skipped step not marked done"   "$lib_trail" "✓Impact"
+assert_no_global_counter "dev/skip"                            "$combined"
+assert_no_error_leak     "dev/skip"                            "$combined"
 
 # ── 4. BRANCH MISMATCH soft-warning marker (must warn, must not crash) ───────────────────────────
 echo "── case: branch mismatch warning ─────────────────────────────"
@@ -316,9 +389,10 @@ assert_contains   "dev/mismatch: reconcile = mismatch"   "$recon" "mismatch"
 assert_contains   "dev/mismatch: banner warning marker ⚠" "$banner" "⚠"
 assert_contains   "dev/mismatch: banner names the branch" "$banner" "totally-wrong-branch"
 assert_contains   "dev/mismatch: statusline warning ⚠"    "$status" "⚠"
-# even with a mismatch, the trail must still render (warn, not crash)
-assert_contains   "dev/mismatch: trail still rendered"    "$banner" "▶10."
-assert_no_error_leak "dev/mismatch"                       "$combined"
+# even with a mismatch, the trail must still render (warn, not crash) — step 10's FULL name.
+assert_contains   "dev/mismatch: trail still rendered"    "$banner" "▶ AI Generates Tests (RED)"
+assert_no_global_counter "dev/mismatch"                   "$combined"
+assert_no_error_leak     "dev/mismatch"                   "$combined"
 
 # ── 5. BLOCK-style YAML must parse identically to flow-style (issue #15) ─────────────────────────
 echo "── case: block-style YAML parse (issue #15) ──────────────────"
@@ -327,19 +401,54 @@ emit_block_style development 14 > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
-block_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml)"
-# compare against the flow-style equivalent
+block_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Generate Code (GREEN)")"
+block_ribbon="$(cd "$dir" && hitl_render_ribbon .hitl/current-change.yaml)"
+# compare against the flow-style equivalent (rendered the same way)
 dir2="$(new_case_dir "dev_flow_ref" "issue/000-x")"
 emit_change_yaml development 14 "" "issue/000-x" > "$dir2/.hitl/current-change.yaml"
-flow_trail="$(cd "$dir2" && hitl_render_trail .hitl/current-change.yaml)"
+flow_trail="$(cd "$dir2" && hitl_render_trail .hitl/current-change.yaml "" "Generate Code (GREEN)")"
+flow_ribbon="$(cd "$dir2" && hitl_render_ribbon .hitl/current-change.yaml)"
 assert_nonempty   "dev/block: block trail non-empty"            "$block_trail"
-assert_contains   "dev/block: block trail current ▶14.GREEN"    "$block_trail" "▶14.GREEN"
-assert_contains   "dev/block: banner renders from block YAML"   "$banner" "▶14.GREEN"
+# current shown numberless by FULL name; step 14 is in the Build phase → ribbon "Build ◐".
+assert_contains   "dev/block: block trail current ▶ Generate Code (GREEN)" "$block_trail" "▶ Generate Code (GREEN)"
+assert_contains   "dev/block: block ribbon Build ◐"            "$block_ribbon" "Build ◐"
+assert_contains   "dev/block: banner renders from block YAML"  "$banner" "▶ Generate Code (GREEN)"
 if [[ "$block_trail" == "$flow_trail" ]]; then _ok "dev/block: block trail == flow trail"; else
   _bad "dev/block: block trail DIFFERS from flow trail"
   [[ $VERBOSE -eq 1 ]] && { echo "        block: $block_trail"; echo "        flow:  $flow_trail"; }
 fi
-assert_no_error_leak "dev/block"                               "$combined"
+if [[ "$block_ribbon" == "$flow_ribbon" ]]; then _ok "dev/block: block ribbon == flow ribbon"; else
+  _bad "dev/block: block ribbon DIFFERS from flow ribbon"
+  [[ $VERBOSE -eq 1 ]] && { echo "        block: $block_ribbon"; echo "        flow:  $flow_ribbon"; }
+fi
+assert_no_global_counter "dev/block"                          "$combined"
+assert_no_error_leak     "dev/block"                          "$combined"
+
+# ── 5b. BACK-COMPAT: steps carry NO per-step phase → ribbon falls back to current_step.phase ─────
+# A change file written before per-step `phase` existed has a workflow block + steps, but none of
+# the steps carry a `phase`. hitl_render_ribbon must then fall back to the lone current_step.phase
+# ("<phase> ◐"), and the banner must still render the full trail without crashing.
+echo "── case: back-compat — steps without per-step phase ──────────"
+dir="$(new_case_dir "dev_nophase" "issue/000-x")"
+NOPHASE=1 emit_change_yaml development 14 "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
+banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
+combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
+[[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
+np_steps="$(cd "$dir" && hitl_steps .hitl/current-change.yaml)"
+np_ribbon="$(cd "$dir" && hitl_render_ribbon .hitl/current-change.yaml)"
+np_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Generate Code (GREEN)")"
+# precondition: the seeded steps really have an EMPTY phase column (n|label|status|<empty>).
+assert_contains    "dev/nophase: steps carry no per-step phase" "$np_steps" "14|GREEN|current|"
+assert_not_contains "dev/nophase: no per-step Build phase"      "$np_steps" "14|GREEN|current|Build"
+# fallback: ribbon collapses to the single current_step.phase glyph "Build ◐" (not a full ribbon).
+assert_contains    "dev/nophase: ribbon falls back to Build ◐"  "$np_ribbon" "Build ◐"
+assert_not_contains "dev/nophase: ribbon is NOT the full ribbon" "$np_ribbon" "Requirements ✓"
+# the banner still renders the full named trail, no crash.
+assert_nonempty    "dev/nophase: banner still renders"          "$banner"
+assert_contains    "dev/nophase: banner shows Build ◐ fallback" "$banner" "Build ◐"
+assert_contains    "dev/nophase: trail current ▶ Generate Code (GREEN)" "$np_trail" "▶ Generate Code (GREEN)"
+assert_no_global_counter "dev/nophase"                          "$combined"
+assert_no_error_leak     "dev/nophase"                          "$combined"
 
 # ── 6. ZERO-STEPS / MISSING-WORKFLOW must degrade, not crash ─────────────────────────────────────
 echo "── case: missing-workflow (pre-v2 file) degrades ─────────────"
