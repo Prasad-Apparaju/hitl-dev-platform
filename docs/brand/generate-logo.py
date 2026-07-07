@@ -2,7 +2,7 @@
 
 Bottom: the team, evenly spaced, seated on the floor, each with their AI spark.
 Middle: the doc repo, slightly elevated; everyone reads AND writes it (double
-arrows). Top: the system, standing high above, built FROM the docs; a spark
+arrows). Top: the system as a standard app window (title bar + code), built FROM the docs; a spark
 rides the docs-to-system link (AI carries the docs into the build). Handoff chevrons between people show the work moving role to role (via the
 docs). The LOOP is drawn where HITL defines it: two opposing curved arrows between
 each human and their AI spark, the per-artifact convergence cycle. No agent
@@ -88,25 +88,21 @@ def icon(c, bg=None, size=512, name=True):
     parts = [f'<rect width="512" height="512" fill="{bg}"/>' if bg else '']
     cxm = 256
 
-    # ── the system, high above: wireframe cube with emerald core + code ──
-    parts.append(f'''<g transform="translate({cxm},128)">
-      <g fill="none" stroke="{c['ink']}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-        <polygon points="0,-80 38,-61 0,-42 -38,-61"/>
-        <line x1="-38" y1="-61" x2="-38" y2="-25"/>
-        <line x1="38"  y1="-61" x2="38"  y2="-25"/>
-        <line x1="0"   y1="-42" x2="0"   y2="-6"/>
-        <polyline points="-38,-25 0,-6 38,-25"/>
-      </g>
-      <polygon points="0,-59 15,-51 0,-43 -15,-51" fill="{c['spark']}"/>
-      <polygon points="-15,-51 0,-43 0,-28 -15,-36" fill="{c['lines']}"/>
-      <polygon points="15,-51 0,-43 0,-28 15,-36" fill="{c['core_r']}"/>
-      <text x="0" y="-12" text-anchor="middle" font-family="Menlo, Consolas, monospace"
-            font-weight="bold" font-size="14" fill="{c['code']}">&lt;/&gt;</text>
+    # ── the system, high above: a standard app window with code inside ──
+    parts.append(f'''<g transform="translate({cxm},92)">
+      <rect x="-52" y="-38" width="104" height="76" rx="9" fill="{c['paper']}"
+            stroke="{c['ink']}" stroke-width="5"/>
+      <line x1="-52" y1="-16" x2="52" y2="-16" stroke="{c['ink']}" stroke-width="3.5"/>
+      <circle cx="-40" cy="-27" r="3.6" fill="{c['roles'][0]}"/>
+      <circle cx="-28" cy="-27" r="3.6" fill="{c['roles'][2]}"/>
+      <circle cx="-16" cy="-27" r="3.6" fill="{c['spark']}"/>
+      <text x="0" y="20" text-anchor="middle" font-family="Menlo, Consolas, monospace"
+            font-weight="bold" font-size="26" fill="{c['code']}">&lt;/&gt;</text>
     </g>''')
 
     # ── docs -> system link, with the AI spark riding it ──
-    parts.append(f'<line x1="{cxm}" y1="{172}" x2="{cxm}" y2="{140}" stroke="{c["ring"]}" stroke-width="9" stroke-linecap="round"/>')
-    parts.append(f'<polygon points="12,0 -8,10 -8,-10" fill="{c["ring"]}" transform="translate({cxm},134) rotate(-90)"/>')
+    parts.append(f'<line x1="{cxm}" y1="{172}" x2="{cxm}" y2="{146}" stroke="{c["ring"]}" stroke-width="9" stroke-linecap="round"/>')
+    parts.append(f'<polygon points="12,0 -8,10 -8,-10" fill="{c["ring"]}" transform="translate({cxm},140) rotate(-90)"/>')
 
     # ── the doc repo, slightly elevated: a two-page stack ──
     parts.append(f'''<g transform="translate({cxm},228)">

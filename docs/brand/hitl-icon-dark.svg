@@ -1,17 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#211F29"/><g transform="translate(256,128)">
-      <g fill="none" stroke="#F5F2EA" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-        <polygon points="0,-80 38,-61 0,-42 -38,-61"/>
-        <line x1="-38" y1="-61" x2="-38" y2="-25"/>
-        <line x1="38"  y1="-61" x2="38"  y2="-25"/>
-        <line x1="0"   y1="-42" x2="0"   y2="-6"/>
-        <polyline points="-38,-25 0,-6 38,-25"/>
-      </g>
-      <polygon points="0,-59 15,-51 0,-43 -15,-51" fill="#2FBF94"/>
-      <polygon points="-15,-51 0,-43 0,-28 -15,-36" fill="#1E8E6E"/>
-      <polygon points="15,-51 0,-43 0,-28 15,-36" fill="#1E8E6E"/>
-      <text x="0" y="-12" text-anchor="middle" font-family="Menlo, Consolas, monospace"
-            font-weight="bold" font-size="14" fill="#3FBF94">&lt;/&gt;</text>
-    </g><line x1="256" y1="172" x2="256" y2="140" stroke="#2FBF94" stroke-width="9" stroke-linecap="round"/><polygon points="12,0 -8,10 -8,-10" fill="#2FBF94" transform="translate(256,134) rotate(-90)"/><g transform="translate(256,228)">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#211F29"/><g transform="translate(256,92)">
+      <rect x="-52" y="-38" width="104" height="76" rx="9" fill="#FAF7F0"
+            stroke="#F5F2EA" stroke-width="5"/>
+      <line x1="-52" y1="-16" x2="52" y2="-16" stroke="#F5F2EA" stroke-width="3.5"/>
+      <circle cx="-40" cy="-27" r="3.6" fill="#E0764F"/>
+      <circle cx="-28" cy="-27" r="3.6" fill="#E0B04A"/>
+      <circle cx="-16" cy="-27" r="3.6" fill="#2FBF94"/>
+      <text x="0" y="20" text-anchor="middle" font-family="Menlo, Consolas, monospace"
+            font-weight="bold" font-size="26" fill="#3FBF94">&lt;/&gt;</text>
+    </g><line x1="256" y1="172" x2="256" y2="146" stroke="#2FBF94" stroke-width="9" stroke-linecap="round"/><polygon points="12,0 -8,10 -8,-10" fill="#2FBF94" transform="translate(256,140) rotate(-90)"/><g transform="translate(256,228)">
       <g transform="translate(10,-8) scale(1.02)" opacity="0.5">
         <path d="M -30 -38 L 14 -38 L 30 -22 L 30 38 L -30 38 Z" fill="#FAF7F0" stroke="#F5F2EA" stroke-width="4" stroke-linejoin="round"/>
       </g>
