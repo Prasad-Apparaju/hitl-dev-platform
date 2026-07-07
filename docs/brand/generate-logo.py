@@ -4,7 +4,8 @@ Bottom: the team, evenly spaced, seated on the floor, each with their AI spark.
 Middle: the doc repo, slightly elevated; everyone reads AND writes it (double
 arrows). Top: the system, standing high above, built FROM the docs; a spark
 rides the docs-to-system link (AI carries the docs into the build). Handoff chevrons between people show the work moving role to role (via the
-docs). A dotted +1 person shows the team is extensible.
+docs). A return arc from the system back to the team closes the LOOP: ship,
+learn, go again. A dotted +1 person shows the team is extensible.
 
 Regenerate SVGs:   python3 docs/brand/generate-logo.py
 Rasterize PNGs:    see docs/brand/README.md
@@ -113,6 +114,12 @@ def icon(c, bg=None, size=512, name=True):
     # floor line
     parts.append(f'<line x1="40" y1="424" x2="472" y2="424" stroke="{c["ink"]}" stroke-width="3" '
                  f'stroke-linecap="round" opacity="0.35"/>')
+
+    # the LOOP: the system feeds back to the team (ship, learn, go again)
+    parts.append(f'<path d="M 214 88 C 80 52, 18 170, 40 338" fill="none" '
+                 f'stroke="{c["ring"]}" stroke-width="5" stroke-linecap="round" opacity="0.65"/>')
+    parts.append(f'<polygon points="14,0 -9,10 -9,-10" fill="{c["ring"]}" opacity="0.85" '
+                 f'transform="translate(41,346) rotate(80)"/>')
 
     if name:
         parts.append(f'<text x="256" y="486" text-anchor="middle" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
