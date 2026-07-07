@@ -4,8 +4,8 @@ Bottom: the team, evenly spaced, seated on the floor, each with their AI spark.
 Middle: the doc repo, slightly elevated; everyone reads AND writes it (double
 arrows). Top: the system, standing high above, built FROM the docs; a spark
 rides the docs-to-system link (AI carries the docs into the build). Handoff chevrons between people show the work moving role to role (via the
-docs). A return arc from the system back to the team closes the LOOP: ship,
-learn, go again. A dotted +1 person shows the team is extensible.
+docs). The LOOP is drawn where HITL defines it: each spark orbits its human,
+the per-artifact human-AI convergence cycle. A dotted +1 person shows the team is extensible.
 
 Regenerate SVGs:   python3 docs/brand/generate-logo.py
 Rasterize PNGs:    see docs/brand/README.md
@@ -95,13 +95,18 @@ def icon(c, bg=None, size=512, name=True):
         tx = cxm + (x - cxm) * 0.16
         if is_ghost:
             parts.append(darrow(x, 340, tx, doc_bottom_y, c['ghost'], w=4, head=7, dashed=True))
+            parts.append(f'<circle cx="{x}" cy="377" r="23" fill="none" stroke="{c["ghost"]}" '
+                         f'stroke-width="2" stroke-dasharray="4 5" opacity="0.8"/>')
             parts.append(person(x, 392, 1.1, c['ghost'], dotted=True))
             parts.append(f'<text x="{x+20}" y="{368}" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
                          f'font-weight="700" font-size="24" fill="{c["ghost"]}">+</text>')
         else:
             parts.append(darrow(x, 340, tx, doc_bottom_y, c['ring'], w=5, head=8))
+            # the convergence LOOP: each human and their AI, orbiting
+            parts.append(f'<circle cx="{x}" cy="377" r="23" fill="none" '
+                         f'stroke="{c["ring"]}" stroke-width="2.5" opacity="0.75"/>')
             parts.append(person(x, 392, 1.1, col))
-            parts.append(spark(x+19, 356, 1.0, c['spark']))
+            parts.append(spark(x+17, 361, 1.0, c['spark']))
     # handoff chevrons: the work moves person to person, via the docs above
     for i in range(len(xs)-1):
         mx = (xs[i] + xs[i+1]) / 2
@@ -114,12 +119,6 @@ def icon(c, bg=None, size=512, name=True):
     # floor line
     parts.append(f'<line x1="40" y1="424" x2="472" y2="424" stroke="{c["ink"]}" stroke-width="3" '
                  f'stroke-linecap="round" opacity="0.35"/>')
-
-    # the LOOP: the system feeds back to the team (ship, learn, go again)
-    parts.append(f'<path d="M 214 88 C 80 52, 18 170, 40 338" fill="none" '
-                 f'stroke="{c["ring"]}" stroke-width="5" stroke-linecap="round" opacity="0.65"/>')
-    parts.append(f'<polygon points="14,0 -9,10 -9,-10" fill="{c["ring"]}" opacity="0.85" '
-                 f'transform="translate(41,346) rotate(80)"/>')
 
     if name:
         parts.append(f'<text x="256" y="486" text-anchor="middle" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
