@@ -3,8 +3,8 @@
 Bottom: the team, evenly spaced, seated on the floor, each with their AI spark.
 Middle: the doc repo, slightly elevated; everyone reads AND writes it (double
 arrows). Top: the system, standing high above, built FROM the docs; a spark
-rides the docs-to-system link (AI carries the docs into the build). A dotted
-+1 person shows the team is extensible.
+rides the docs-to-system link (AI carries the docs into the build). Handoff chevrons between people show the work moving role to role (via the
+docs). A dotted +1 person shows the team is extensible.
 
 Regenerate SVGs:   python3 docs/brand/generate-logo.py
 Rasterize PNGs:    see docs/brand/README.md
@@ -101,6 +101,15 @@ def icon(c, bg=None, size=512, name=True):
             parts.append(darrow(x, 340, tx, doc_bottom_y, c['ring'], w=5, head=8))
             parts.append(person(x, 392, 1.1, col))
             parts.append(spark(x+19, 356, 1.0, c['spark']))
+    # handoff chevrons: the work moves person to person, via the docs above
+    for i in range(len(xs)-1):
+        mx = (xs[i] + xs[i+1]) / 2
+        last = (i == len(xs)-2)
+        col = c['ghost'] if last else c['ring']
+        dash = ' stroke-dasharray="3 5"' if last else ''
+        parts.append(f'<polyline points="{mx-6:.0f},396 {mx+6:.0f},404 {mx-6:.0f},412" fill="none" '
+                     f'stroke="{col}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"'
+                     f'{dash} opacity="0.8"/>')
     # floor line
     parts.append(f'<line x1="40" y1="424" x2="472" y2="424" stroke="{c["ink"]}" stroke-width="3" '
                  f'stroke-linecap="round" opacity="0.35"/>')
