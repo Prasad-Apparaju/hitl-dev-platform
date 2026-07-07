@@ -11,7 +11,7 @@
       <polygon points="15,-51 0,-43 0,-28 15,-36" fill="#17715B"/>
       <text x="0" y="-12" text-anchor="middle" font-family="Menlo, Consolas, monospace"
             font-weight="bold" font-size="14" fill="#3FBF94">&lt;/&gt;</text>
-    </g><line x1="256" y1="172" x2="256" y2="140" stroke="#1E8E6E" stroke-width="7" stroke-linecap="round"/><polygon points="12,0 -8,10 -8,-10" fill="#1E8E6E" transform="translate(256,134) rotate(-90)"/><path transform="translate(280,154) scale(1.15)" fill="#1E8E6E" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><g transform="translate(256,228)">
+    </g><line x1="256" y1="172" x2="256" y2="140" stroke="#1E8E6E" stroke-width="7" stroke-linecap="round"/><polygon points="12,0 -8,10 -8,-10" fill="#1E8E6E" transform="translate(256,134) rotate(-90)"/><g transform="translate(256,228)">
       <g transform="translate(10,-8) scale(1.02)" opacity="0.5">
         <path d="M -30 -38 L 14 -38 L 30 -22 L 30 38 L -30 38 Z" fill="#FAF7F0" stroke="#26242E" stroke-width="4" stroke-linejoin="round"/>
       </g>

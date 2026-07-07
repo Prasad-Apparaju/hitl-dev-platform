@@ -5,7 +5,9 @@ Middle: the doc repo, slightly elevated; everyone reads AND writes it (double
 arrows). Top: the system, standing high above, built FROM the docs; a spark
 rides the docs-to-system link (AI carries the docs into the build). Handoff chevrons between people show the work moving role to role (via the
 docs). The LOOP is drawn where HITL defines it: two opposing curved arrows between
-each human and their AI spark, the per-artifact convergence cycle. A dotted +1 person shows the team is extensible.
+each human and their AI spark, the per-artifact convergence cycle. No agent
+sits between docs and system: the same harnesses people drive do the building,
+so the docs-to-system link is pure artifact flow. A dotted +1 person shows the team is extensible.
 
 Regenerate SVGs:   python3 docs/brand/generate-logo.py
 Rasterize PNGs:    see docs/brand/README.md
@@ -104,7 +106,6 @@ def icon(c, bg=None, size=512, name=True):
     # ── docs -> system link, with the AI spark riding it ──
     parts.append(f'<line x1="{cxm}" y1="{172}" x2="{cxm}" y2="{140}" stroke="{c["ring"]}" stroke-width="7" stroke-linecap="round"/>')
     parts.append(f'<polygon points="12,0 -8,10 -8,-10" fill="{c["ring"]}" transform="translate({cxm},134) rotate(-90)"/>')
-    parts.append(spark(cxm+24, 154, 1.15, c['spark']))
 
     # ── the doc repo, slightly elevated: a two-page stack ──
     parts.append(f'''<g transform="translate({cxm},228)">
