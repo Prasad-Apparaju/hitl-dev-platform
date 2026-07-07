@@ -7,7 +7,8 @@ rides the docs-to-system link (AI carries the docs into the build). Handoff chev
 docs). The LOOP is drawn where HITL defines it: two opposing curved arrows between
 each human and their AI spark, the per-artifact convergence cycle. No agent
 sits between docs and system: the same harnesses people drive do the building,
-so the docs-to-system link is pure artifact flow. A dotted +1 person shows the team is extensible.
+so the flow runs sparks -> THROUGH the docs -> system as one pipeline; a
+direct spark-to-system arrow would draw the exact bypass HITL prevents. A dotted +1 person shows the team is extensible.
 
 Regenerate SVGs:   python3 docs/brand/generate-logo.py
 Rasterize PNGs:    see docs/brand/README.md
@@ -104,7 +105,7 @@ def icon(c, bg=None, size=512, name=True):
     </g>''')
 
     # ── docs -> system link, with the AI spark riding it ──
-    parts.append(f'<line x1="{cxm}" y1="{172}" x2="{cxm}" y2="{140}" stroke="{c["ring"]}" stroke-width="7" stroke-linecap="round"/>')
+    parts.append(f'<line x1="{cxm}" y1="{172}" x2="{cxm}" y2="{140}" stroke="{c["ring"]}" stroke-width="9" stroke-linecap="round"/>')
     parts.append(f'<polygon points="12,0 -8,10 -8,-10" fill="{c["ring"]}" transform="translate({cxm},134) rotate(-90)"/>')
 
     # ── the doc repo, slightly elevated: a two-page stack ──
@@ -137,11 +138,13 @@ def icon(c, bg=None, size=512, name=True):
             parts.append(f'<text x="{x+8}" y="{318}" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
                          f'font-weight="700" font-size="24" fill="{c["ghost"]}">+</text>')
         else:
+            # continuous flow: the harness's work streams THROUGH the docs (no terminus)
             ang = math.degrees(math.atan2(doc_bottom_y-303, tx-(x+15)))
-            parts.append(f'<line x1="{x+15}" y1="303" x2="{tx:.0f}" y2="{doc_bottom_y}" '
+            parts.append(f'<line x1="{x+15}" y1="303" x2="{tx:.0f}" y2="{doc_bottom_y+2}" '
                          f'stroke="{c["ring"]}" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>')
-            parts.append(f'<polygon points="8,0 -6,6 -6,-6" fill="{c["ring"]}" '
-                         f'transform="translate({tx:.0f},{doc_bottom_y}) rotate({ang:.0f})"/>')
+            mx = (x+15) + (tx-(x+15))*0.55; my = 303 + (doc_bottom_y+2-303)*0.55
+            parts.append(f'<polygon points="7,0 -5,5 -5,-5" fill="{c["ring"]}" '
+                         f'transform="translate({mx:.0f},{my:.0f}) rotate({ang:.0f})"/>')
             parts.append(person(x, 392, 1.1, col))
             # the convergence LOOP: two opposing arrows between human and AI
             parts.append(cycle(x+7, 340, c['ring'], rx=20, ry=11, tilt=-72))
