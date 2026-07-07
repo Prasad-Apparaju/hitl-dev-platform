@@ -1,59 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1180" height="360" viewBox="0 0 1180 360">
 <rect width="1180" height="360" fill="#211F29"/>
-<g transform="translate(30,35) scale(0.72) translate(0,-30)"><line x1="256" y1="88" x2="256" y2="130" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(256,130) rotate(90)"/><line x1="125" y1="183" x2="165" y2="196" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(165,196) rotate(18)"/><line x1="175" y1="338" x2="200" y2="304" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(200,304) rotate(-54)"/><line x1="337" y1="338" x2="312" y2="304" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(312,304) rotate(-126)"/><line x1="387" y1="183" x2="347" y2="196" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(347,196) rotate(162)"/><g transform="translate(256,220) scale(0.9)">
-      <!-- outlined system cube, resting on the doc's top edge -->
+<g transform="translate(30,10) scale(0.78) translate(0,-30)"><g transform="translate(256,128)">
       <g fill="none" stroke="#F5F2EA" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-        <polygon points="0,-84 40,-64 0,-44 -40,-64"/>
-        <line x1="-40" y1="-64" x2="-40" y2="-26"/>
-        <line x1="40"  y1="-64" x2="40"  y2="-26"/>
-        <line x1="0"   y1="-44" x2="0"   y2="-6"/>
-        <polyline points="-40,-26 0,-6 40,-26"/>
+        <polygon points="0,-80 38,-61 0,-42 -38,-61"/>
+        <line x1="-38" y1="-61" x2="-38" y2="-25"/>
+        <line x1="38"  y1="-61" x2="38"  y2="-25"/>
+        <line x1="0"   y1="-42" x2="0"   y2="-6"/>
+        <polyline points="-38,-25 0,-6 38,-25"/>
       </g>
-      <!-- detail inside: solid emerald core -->
-      <g>
-        <polygon points="0,-62 16,-54 0,-46 -16,-54" fill="#2FBF94"/>
-        <polygon points="-16,-54 0,-46 0,-30 -16,-38" fill="#1E8E6E"/>
-        <polygon points="16,-54 0,-46 0,-30 16,-38" fill="#1E8E6E"/>
+      <polygon points="0,-59 15,-51 0,-43 -15,-51" fill="#2FBF94"/>
+      <polygon points="-15,-51 0,-43 0,-28 -15,-36" fill="#1E8E6E"/>
+      <polygon points="15,-51 0,-43 0,-28 15,-36" fill="#1E8E6E"/>
+      <text x="0" y="-12" text-anchor="middle" font-family="Menlo, Consolas, monospace"
+            font-weight="bold" font-size="14" fill="#3FBF94">&lt;/&gt;</text>
+    </g><line x1="256" y1="198" x2="256" y2="140" stroke="#2FBF94" stroke-width="7" stroke-linecap="round"/><polygon points="12,0 -8,10 -8,-10" fill="#2FBF94" transform="translate(256,134) rotate(-90)"/><path transform="translate(280,166) scale(1.15)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><g transform="translate(256,246)">
+      <g transform="translate(10,-8) scale(1.02)" opacity="0.5">
+        <path d="M -30 -38 L 14 -38 L 30 -22 L 30 38 L -30 38 Z" fill="#FAF7F0" stroke="#F5F2EA" stroke-width="4" stroke-linejoin="round"/>
       </g>
-      <!-- flat classic doc: the base -->
-      <g transform="translate(0,43) scale(1.28)">
+      <g transform="scale(1.06)">
         <path d="M -30 -38 L 14 -38 L 30 -22 L 30 38 L -30 38 Z" fill="#FAF7F0" stroke="#F5F2EA" stroke-width="5" stroke-linejoin="round"/>
         <path d="M 14 -38 L 14 -22 L 30 -22 Z" fill="#1E8E6E"/>
         <rect x="-18" y="-10" width="36" height="6" rx="3" fill="#1E8E6E"/>
         <rect x="-18" y="5"  width="36" height="6" rx="3" fill="#1E8E6E"/>
         <rect x="-18" y="20" width="23" height="6" rx="3" fill="#1E8E6E" opacity="0.55"/>
       </g>
-      <!-- code flowing in -->
-      <g font-family="Menlo, Consolas, monospace" font-weight="bold" fill="#3FBF94">
-        <text x="58" y="-78" font-size="17" opacity="0.85">&lt;/&gt;</text>
-        <text x="40" y="-54" font-size="13" opacity="0.55">&lt;/&gt;</text>
-      </g>
-    </g><g transform="translate(256.0,62.0) scale(1.14)">
-      <g fill="#E0764F" transform="translate(-4,0)">
-        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
-      </g>
-      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
-    </g><g transform="translate(96.22250526241422,178.08514494500884) scale(1.14)">
-      <g fill="#9B79C4" transform="translate(-4,0)">
-        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
-      </g>
-      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
-    </g><g transform="translate(157.2520776148645,365.91485505499116) scale(1.14)">
-      <g fill="#E0B04A" transform="translate(-4,0)">
-        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
-      </g>
-      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
-    </g><g transform="translate(354.74792238513544,365.9148550549912) scale(1.14)">
-      <g fill="#D66A85" transform="translate(-4,0)">
-        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
-      </g>
-      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
-    </g><g transform="translate(415.7774947375858,178.0851449450089) scale(1.14)">
-      <g fill="#6FA3C7" transform="translate(-4,0)">
-        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
-      </g>
-      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
-    </g></g>
-<text x="420" y="252" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="800"
+    </g><line x1="74" y1="338" x2="218" y2="294" stroke="#2FBF94" stroke-width="5" stroke-linecap="round"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(226,292) rotate(-17)"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(66,340) rotate(163)"/><g transform="translate(66,392) scale(1.1)" fill="#E0764F"><circle cx="0" cy="-14" r="13"/><rect x="-20" y="4" width="40" height="24" rx="12"/></g><path transform="translate(85,356) scale(1.0)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><line x1="149" y1="336" x2="231" y2="296" stroke="#2FBF94" stroke-width="5" stroke-linecap="round"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(238,292) rotate(-27)"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(142,340) rotate(153)"/><g transform="translate(142,392) scale(1.1)" fill="#9B79C4"><circle cx="0" cy="-14" r="13"/><rect x="-20" y="4" width="40" height="24" rx="12"/></g><path transform="translate(161,356) scale(1.0)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><line x1="222" y1="333" x2="245" y2="299" stroke="#2FBF94" stroke-width="5" stroke-linecap="round"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(250,292) rotate(-56)"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(218,340) rotate(124)"/><g transform="translate(218,392) scale(1.1)" fill="#E0B04A"><circle cx="0" cy="-14" r="13"/><rect x="-20" y="4" width="40" height="24" rx="12"/></g><path transform="translate(237,356) scale(1.0)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><line x1="290" y1="333" x2="267" y2="299" stroke="#2FBF94" stroke-width="5" stroke-linecap="round"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(262,292) rotate(-124)"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(294,340) rotate(56)"/><g transform="translate(294,392) scale(1.1)" fill="#D66A85"><circle cx="0" cy="-14" r="13"/><rect x="-20" y="4" width="40" height="24" rx="12"/></g><path transform="translate(313,356) scale(1.0)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><line x1="363" y1="336" x2="281" y2="296" stroke="#2FBF94" stroke-width="5" stroke-linecap="round"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(274,292) rotate(-153)"/><polygon points="12,0 -6,8 -6,-8" fill="#2FBF94" transform="translate(370,340) rotate(27)"/><g transform="translate(370,392) scale(1.1)" fill="#6FA3C7"><circle cx="0" cy="-14" r="13"/><rect x="-20" y="4" width="40" height="24" rx="12"/></g><path transform="translate(389,356) scale(1.0)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/><line x1="439" y1="338" x2="293" y2="294" stroke="#6E7787" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 11"/><polygon points="11,0 -6,7 -6,-7" fill="none" stroke="#6E7787" stroke-width="2.5" transform="translate(286,292) rotate(-163)"/><polygon points="11,0 -6,7 -6,-7" fill="none" stroke="#6E7787" stroke-width="2.5" transform="translate(446,340) rotate(17)"/><g transform="translate(446,392) scale(1.1)" fill="none" stroke="#6E7787" stroke-width="3" stroke-dasharray="4 4"><circle cx="0" cy="-14" r="13"/><rect x="-20" y="4" width="40" height="24" rx="12"/></g><text x="466" y="368" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="700" font-size="24" fill="#6E7787">+</text><line x1="40" y1="424" x2="472" y2="424" stroke="#F5F2EA" stroke-width="3" stroke-linecap="round" opacity="0.35"/></g>
+<text x="450" y="250" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="800"
       font-size="190" letter-spacing="8" fill="#F5F2EA">HITL</text>
 </svg>
