@@ -4,8 +4,8 @@ Bottom: the team, evenly spaced, seated on the floor, each with their AI spark.
 Middle: the doc repo, slightly elevated; everyone reads AND writes it (double
 arrows). Top: the system, standing high above, built FROM the docs; a spark
 rides the docs-to-system link (AI carries the docs into the build). Handoff chevrons between people show the work moving role to role (via the
-docs). The LOOP is drawn where HITL defines it: each spark orbits its human,
-the per-artifact human-AI convergence cycle. A dotted +1 person shows the team is extensible.
+docs). The LOOP is drawn where HITL defines it: two opposing curved arrows between
+each human and their AI spark, the per-artifact convergence cycle. A dotted +1 person shows the team is extensible.
 
 Regenerate SVGs:   python3 docs/brand/generate-logo.py
 Rasterize PNGs:    see docs/brand/README.md
@@ -22,6 +22,20 @@ D = dict(ink="#F5F2EA", ring="#2FBF94", paper="#FAF7F0", lines="#1E8E6E", spark=
 def spark(cx, cy, s, col):
     return (f'<path transform="translate({cx},{cy}) scale({s})" fill="{col}" '
             f'd="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>')
+
+
+def cycle(cx, cy, r, col, dashed=False):
+    """Two opposing curved arrows: the human-AI convergence loop."""
+    dash = ' stroke-dasharray="3 4"' if dashed else ''
+    x1, y1 = cx - r*0.94, cy - r*0.34
+    x2, y2 = cx + r*0.94, cy - r*0.34
+    x3, y3 = cx + r*0.94, cy + r*0.34
+    x4, y4 = cx - r*0.94, cy + r*0.34
+    g  = f'<path d="M {x1:.1f} {y1:.1f} A {r} {r} 0 0 1 {x2:.1f} {y2:.1f}" fill="none" stroke="{col}" stroke-width="2.6" stroke-linecap="round"{dash}/>'
+    g += f'<polygon points="5,0 -4,4 -4,-4" fill="{col}" transform="translate({x2:.1f},{y2:.1f}) rotate(115)"/>'
+    g += f'<path d="M {x3:.1f} {y3:.1f} A {r} {r} 0 0 1 {x4:.1f} {y4:.1f}" fill="none" stroke="{col}" stroke-width="2.6" stroke-linecap="round"{dash}/>'
+    g += f'<polygon points="5,0 -4,4 -4,-4" fill="{col}" transform="translate({x4:.1f},{y4:.1f}) rotate(-65)"/>'
+    return g
 
 def person(cx, cy, s, col, dotted=False, c=None):
     if dotted:
@@ -95,18 +109,16 @@ def icon(c, bg=None, size=512, name=True):
         tx = cxm + (x - cxm) * 0.16
         if is_ghost:
             parts.append(darrow(x, 340, tx, doc_bottom_y, c['ghost'], w=4, head=7, dashed=True))
-            parts.append(f'<circle cx="{x}" cy="377" r="23" fill="none" stroke="{c["ghost"]}" '
-                         f'stroke-width="2" stroke-dasharray="4 5" opacity="0.8"/>')
             parts.append(person(x, 392, 1.1, c['ghost'], dotted=True))
-            parts.append(f'<text x="{x+20}" y="{368}" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
+            parts.append(cycle(x+16, 358, 9, c['ghost'], dashed=True))
+            parts.append(f'<text x="{x+22}" y="{352}" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
                          f'font-weight="700" font-size="24" fill="{c["ghost"]}">+</text>')
         else:
             parts.append(darrow(x, 340, tx, doc_bottom_y, c['ring'], w=5, head=8))
-            # the convergence LOOP: each human and their AI, orbiting
-            parts.append(f'<circle cx="{x}" cy="377" r="23" fill="none" '
-                         f'stroke="{c["ring"]}" stroke-width="2.5" opacity="0.75"/>')
             parts.append(person(x, 392, 1.1, col))
-            parts.append(spark(x+17, 361, 1.0, c['spark']))
+            # the convergence LOOP: two opposing arrows between human and AI
+            parts.append(cycle(x+16, 358, 9, c['ring']))
+            parts.append(spark(x+28, 344, 0.95, c['spark']))
     # handoff chevrons: the work moves person to person, via the docs above
     for i in range(len(xs)-1):
         mx = (xs[i] + xs[i+1]) / 2
