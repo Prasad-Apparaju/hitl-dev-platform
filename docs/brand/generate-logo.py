@@ -24,18 +24,39 @@ def spark(cx, cy, s, col):
             f'd="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>')
 
 
-def cycle(cx, cy, r, col, dashed=False):
-    """Two opposing curved arrows: the human-AI convergence loop."""
-    dash = ' stroke-dasharray="3 4"' if dashed else ''
-    x1, y1 = cx - r*0.94, cy - r*0.34
-    x2, y2 = cx + r*0.94, cy - r*0.34
-    x3, y3 = cx + r*0.94, cy + r*0.34
-    x4, y4 = cx - r*0.94, cy + r*0.34
-    g  = f'<path d="M {x1:.1f} {y1:.1f} A {r} {r} 0 0 1 {x2:.1f} {y2:.1f}" fill="none" stroke="{col}" stroke-width="2.6" stroke-linecap="round"{dash}/>'
-    g += f'<polygon points="5,0 -4,4 -4,-4" fill="{col}" transform="translate({x2:.1f},{y2:.1f}) rotate(115)"/>'
-    g += f'<path d="M {x3:.1f} {y3:.1f} A {r} {r} 0 0 1 {x4:.1f} {y4:.1f}" fill="none" stroke="{col}" stroke-width="2.6" stroke-linecap="round"{dash}/>'
-    g += f'<polygon points="5,0 -4,4 -4,-4" fill="{col}" transform="translate({x4:.1f},{y4:.1f}) rotate(-65)"/>'
-    return g
+def cycle(cx, cy, col, dashed=False, rx=21, ry=12, tilt=-35, wmax=3.4):
+    """Two large tapered crescent arcs, one each direction: the human-AI loop.
+    Drawn as filled tapering shapes (thick mid, pointed tails) with arrowheads,
+    on a tilted ellipse whose long axis runs person -> spark."""
+    t = math.radians(tilt)
+    ux, uy = math.cos(t), math.sin(t)          # long axis (toward the spark)
+    vx, vy = -math.sin(t), math.cos(t)         # short axis
+    def pt(phi, off=0.0):
+        ca, sa = math.cos(phi), math.sin(phi)
+        # ellipse point + normal offset (approx normal via gradient)
+        px = cx + rx*ca*ux + ry*sa*vx
+        py = cy + rx*ca*uy + ry*sa*vy
+        nx = ca/rx*ux + sa/ry*vx; ny = ca/rx*uy + sa/ry*vy
+        nl = math.hypot(nx, ny)
+        return px + off*nx/nl, py + off*ny/nl
+    op = ' opacity="0.55"' if dashed else ''
+    out = ''
+    for a1, a2 in ((150, 30), (-30, -150)):    # top arc arrows to the spark, bottom arc back to the person
+        phis = [math.radians(a1 + (a2-a1)*k/22) for k in range(23)]
+        outer, inner = [], []
+        for k, phi in enumerate(phis):
+            w = wmax * math.sin(math.pi * k/22)**0.75
+            outer.append(pt(phi,  w)); inner.append(pt(phi, -w))
+        pts = outer + inner[::-1]
+        d = ' '.join(f'{x:.1f},{y:.1f}' for x, y in pts)
+        out += f'<polygon points="{d}" fill="{col}"{op}/>'
+        # arrowhead at the a2 end, tangent to the sweep direction
+        ex, ey = pt(math.radians(a2))
+        e2x, e2y = pt(math.radians(a2 + (1 if a2 < a1 else -1) * -6))
+        ang = math.degrees(math.atan2(ey-e2y, ex-e2x))
+        out += (f'<polygon points="7,0 -5,5 -5,-5" fill="{col}"{op} '
+                f'transform="translate({ex:.1f},{ey:.1f}) rotate({ang:.0f})"/>')
+    return out
 
 def person(cx, cy, s, col, dotted=False, c=None):
     if dotted:
@@ -81,12 +102,12 @@ def icon(c, bg=None, size=512, name=True):
     </g>''')
 
     # ── docs -> system link, with the AI spark riding it ──
-    parts.append(f'<line x1="{cxm}" y1="{198}" x2="{cxm}" y2="{140}" stroke="{c["ring"]}" stroke-width="7" stroke-linecap="round"/>')
+    parts.append(f'<line x1="{cxm}" y1="{172}" x2="{cxm}" y2="{140}" stroke="{c["ring"]}" stroke-width="7" stroke-linecap="round"/>')
     parts.append(f'<polygon points="12,0 -8,10 -8,-10" fill="{c["ring"]}" transform="translate({cxm},134) rotate(-90)"/>')
-    parts.append(spark(cxm+24, 166, 1.15, c['spark']))
+    parts.append(spark(cxm+24, 154, 1.15, c['spark']))
 
     # ── the doc repo, slightly elevated: a two-page stack ──
-    parts.append(f'''<g transform="translate({cxm},246)">
+    parts.append(f'''<g transform="translate({cxm},228)">
       <g transform="translate(10,-8) scale(1.02)" opacity="0.5">
         <path d="M -30 -38 L 14 -38 L 30 -22 L 30 38 L -30 38 Z" fill="{c['paper']}" stroke="{c['ink']}" stroke-width="4" stroke-linejoin="round"/>
       </g>
@@ -101,24 +122,29 @@ def icon(c, bg=None, size=512, name=True):
 
     # ── the team on the floor: 5 seated people + dotted +1, evenly spaced ──
     xs = [66, 142, 218, 294, 370, 446]
-    doc_bottom_y = 292
+    doc_bottom_y = 281
     for i, x in enumerate(xs):
         is_ghost = (i == len(xs)-1)
         col = c['ghost'] if is_ghost else c['roles'][i]
         # read/write connection: from just above the spark to the doc repo underside
         tx = cxm + (x - cxm) * 0.16
         if is_ghost:
-            parts.append(darrow(x, 340, tx, doc_bottom_y, c['ghost'], w=4, head=7, dashed=True))
+            parts.append(f'<line x1="{x+15}" y1="303" x2="{tx:.0f}" y2="{doc_bottom_y}" '
+                         f'stroke="{c["ghost"]}" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>')
             parts.append(person(x, 392, 1.1, c['ghost'], dotted=True))
-            parts.append(cycle(x+16, 358, 9, c['ghost'], dashed=True))
-            parts.append(f'<text x="{x+22}" y="{352}" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
+            parts.append(cycle(x+7, 340, c['ghost'], dashed=True, rx=20, ry=11, tilt=-72))
+            parts.append(f'<text x="{x+8}" y="{318}" font-family="\'Helvetica Neue\', Helvetica, Arial, sans-serif" '
                          f'font-weight="700" font-size="24" fill="{c["ghost"]}">+</text>')
         else:
-            parts.append(darrow(x, 340, tx, doc_bottom_y, c['ring'], w=5, head=8))
+            ang = math.degrees(math.atan2(doc_bottom_y-303, tx-(x+15)))
+            parts.append(f'<line x1="{x+15}" y1="303" x2="{tx:.0f}" y2="{doc_bottom_y}" '
+                         f'stroke="{c["ring"]}" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>')
+            parts.append(f'<polygon points="8,0 -6,6 -6,-6" fill="{c["ring"]}" '
+                         f'transform="translate({tx:.0f},{doc_bottom_y}) rotate({ang:.0f})"/>')
             parts.append(person(x, 392, 1.1, col))
             # the convergence LOOP: two opposing arrows between human and AI
-            parts.append(cycle(x+16, 358, 9, c['ring']))
-            parts.append(spark(x+28, 344, 0.95, c['spark']))
+            parts.append(cycle(x+7, 340, c['ring'], rx=20, ry=11, tilt=-72))
+            parts.append(spark(x+14, 314, 1.0, c['spark']))
     # handoff chevrons: the work moves person to person, via the docs above
     for i in range(len(xs)-1):
         mx = (xs[i] + xs[i+1]) / 2
