@@ -10,29 +10,42 @@ Rasterize PNGs:    see docs/brand/README.md
 import math, pathlib
 
 P = dict(ink="#26242E", ring="#1E8E6E", paper="#FAF7F0", lines="#1E8E6E", spark="#1E8E6E",
-         cube_top="#4A4656", cube_l="#2E2B38", cube_r="#1B1922", code="#3FBF94",
+         core_r="#17715B", code="#3FBF94",
          roles=["#C75B39", "#7D5BA6", "#C99A2C", "#B54A66", "#4E7DA0"])
 D = dict(ink="#F5F2EA", ring="#2FBF94", paper="#FAF7F0", lines="#1E8E6E", spark="#2FBF94",
-         cube_top="#5A5568", cube_l="#3B3748", cube_r="#2A2735", code="#3FBF94",
+         core_r="#1E8E6E", code="#3FBF94",
          roles=["#E0764F", "#9B79C4", "#E0B04A", "#D66A85", "#6FA3C7"], bg="#211F29")
 
 def center_art(cx, cy, s, c):
+    """Flat classic doc as the BASE; outlined 3D system cube standing on it,
+    with a solid mini-cube (the system's core) visible inside the wireframe."""
     return f'''<g transform="translate({cx},{cy}) scale({s})">
-      <g transform="translate(-34,-78) scale(0.92)">
-        <polygon points="0,-34 40,-14 0,6 -40,-14" fill="{c['cube_top']}"/>
-        <polygon points="-40,-14 0,6 0,54 -40,34" fill="{c['cube_l']}"/>
-        <polygon points="40,-14 0,6 0,54 40,34" fill="{c['cube_r']}"/>
+      <!-- outlined system cube, resting on the doc's top edge -->
+      <g fill="none" stroke="{c['ink']}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+        <polygon points="0,-84 40,-64 0,-44 -40,-64"/>
+        <line x1="-40" y1="-64" x2="-40" y2="-26"/>
+        <line x1="40"  y1="-64" x2="40"  y2="-26"/>
+        <line x1="0"   y1="-44" x2="0"   y2="-6"/>
+        <polyline points="-40,-26 0,-6 40,-26"/>
       </g>
-      <g transform="translate(0,-8) scale(1.28)">
-        <path d="M -30 -40 L 14 -40 L 30 -24 L 30 38 L -30 38 Z" fill="{c['paper']}" stroke="{c['ink']}" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M 14 -40 L 14 -24 L 30 -24 Z" fill="{c['lines']}"/>
-        <rect x="-18" y="-12" width="36" height="6" rx="3" fill="{c['lines']}"/>
-        <rect x="-18" y="3"  width="36" height="6" rx="3" fill="{c['lines']}"/>
-        <rect x="-18" y="18" width="23" height="6" rx="3" fill="{c['lines']}" opacity="0.55"/>
+      <!-- detail inside: solid emerald core -->
+      <g>
+        <polygon points="0,-62 16,-54 0,-46 -16,-54" fill="{c['spark']}"/>
+        <polygon points="-16,-54 0,-46 0,-30 -16,-38" fill="{c['lines']}"/>
+        <polygon points="16,-54 0,-46 0,-30 16,-38" fill="{c['core_r']}"/>
       </g>
+      <!-- flat classic doc: the base -->
+      <g transform="translate(0,43) scale(1.28)">
+        <path d="M -30 -38 L 14 -38 L 30 -22 L 30 38 L -30 38 Z" fill="{c['paper']}" stroke="{c['ink']}" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M 14 -38 L 14 -22 L 30 -22 Z" fill="{c['lines']}"/>
+        <rect x="-18" y="-10" width="36" height="6" rx="3" fill="{c['lines']}"/>
+        <rect x="-18" y="5"  width="36" height="6" rx="3" fill="{c['lines']}"/>
+        <rect x="-18" y="20" width="23" height="6" rx="3" fill="{c['lines']}" opacity="0.55"/>
+      </g>
+      <!-- code flowing in -->
       <g font-family="Menlo, Consolas, monospace" font-weight="bold" fill="{c['code']}">
-        <text x="64" y="-88" font-size="17" opacity="0.85">&lt;/&gt;</text>
-        <text x="44" y="-64" font-size="13" opacity="0.55">&lt;/&gt;</text>
+        <text x="58" y="-78" font-size="17" opacity="0.85">&lt;/&gt;</text>
+        <text x="40" y="-54" font-size="13" opacity="0.55">&lt;/&gt;</text>
       </g>
     </g>'''
 
@@ -62,7 +75,7 @@ def icon(c, bg=None, size=512, name=True):
         ang = math.degrees(math.atan2(-uy, -ux))            # arrowhead at the END, into the hub
         parts.append(f'<polygon points="20,0 -9,14 -9,-14" fill="{c["ring"]}" '
                      f'transform="translate({ix:.0f},{iy:.0f}) rotate({ang:.0f})"/>')
-    parts.append(center_art(cx, cy-8, 0.92, c))
+    parts.append(center_art(cx, cy-6, 0.90, c))
     for i, col in enumerate(c['roles']):
         t = math.radians(90 + i*72)
         nx = cx + R_pair*math.cos(t); ny = cy - R_pair*math.sin(t)

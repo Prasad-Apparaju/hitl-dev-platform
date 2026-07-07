@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+<style>.cap { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-weight:600; fill:#8a93a0; font-size:26px; }</style>
+<rect width="1600" height="1050" fill="#ffffff"/>
+<text class="cap" x="70" y="70">Lockup: light + dark</text>
+<image href="hitl-logo.png" x="70" y="95" width="700" height="214"/>
+<rect x="820" y="95" width="700" height="214" rx="16" fill="#211F29"/>
+<image href="hitl-logo-dark.png" x="820" y="95" width="700" height="214"/>
+<text class="cap" x="70" y="400">Icon: light, dark, 64 px, 32 px</text>
+<image href="hitl-icon-512.png" x="70"  y="430" width="420" height="420"/>
+<image href="hitl-icon-dark-512.png" x="560" y="430" width="420" height="420"/>
+<image href="hitl-icon-64.png"  x="1060" y="600" width="64"  height="64"/>
+<image href="hitl-icon-32.png"  x="1180" y="615" width="32"  height="32"/>
+<text class="cap" x="1060" y="720">64 / 32 px</text>
+</svg>
