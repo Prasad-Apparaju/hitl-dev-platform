@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="360" viewBox="0 0 1180 360">
+<rect width="1180" height="360" fill="#211F29"/>
+<g transform="translate(30,35) scale(0.72) translate(0,-30)"><line x1="256" y1="88" x2="256" y2="130" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(256,130) rotate(90)"/><line x1="125" y1="183" x2="165" y2="196" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(165,196) rotate(18)"/><line x1="175" y1="338" x2="200" y2="304" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(200,304) rotate(-54)"/><line x1="337" y1="338" x2="312" y2="304" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(312,304) rotate(-126)"/><line x1="387" y1="183" x2="347" y2="196" stroke="#2FBF94" stroke-width="13" stroke-linecap="round"/><polygon points="20,0 -9,14 -9,-14" fill="#2FBF94" transform="translate(347,196) rotate(162)"/><g transform="translate(256,218) scale(0.92)">
+      <g transform="translate(-34,-78) scale(0.92)">
+        <polygon points="0,-34 40,-14 0,6 -40,-14" fill="#5A5568"/>
+        <polygon points="-40,-14 0,6 0,54 -40,34" fill="#3B3748"/>
+        <polygon points="40,-14 0,6 0,54 40,34" fill="#2A2735"/>
+      </g>
+      <g transform="translate(0,-8) scale(1.28)">
+        <path d="M -30 -40 L 14 -40 L 30 -24 L 30 38 L -30 38 Z" fill="#FAF7F0" stroke="#F5F2EA" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M 14 -40 L 14 -24 L 30 -24 Z" fill="#1E8E6E"/>
+        <rect x="-18" y="-12" width="36" height="6" rx="3" fill="#1E8E6E"/>
+        <rect x="-18" y="3"  width="36" height="6" rx="3" fill="#1E8E6E"/>
+        <rect x="-18" y="18" width="23" height="6" rx="3" fill="#1E8E6E" opacity="0.55"/>
+      </g>
+      <g font-family="Menlo, Consolas, monospace" font-weight="bold" fill="#3FBF94">
+        <text x="64" y="-88" font-size="17" opacity="0.85">&lt;/&gt;</text>
+        <text x="44" y="-64" font-size="13" opacity="0.55">&lt;/&gt;</text>
+      </g>
+    </g><g transform="translate(256.0,62.0) scale(1.14)">
+      <g fill="#E0764F" transform="translate(-4,0)">
+        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
+      </g>
+      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
+    </g><g transform="translate(96.22250526241422,178.08514494500884) scale(1.14)">
+      <g fill="#9B79C4" transform="translate(-4,0)">
+        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
+      </g>
+      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
+    </g><g transform="translate(157.2520776148645,365.91485505499116) scale(1.14)">
+      <g fill="#E0B04A" transform="translate(-4,0)">
+        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
+      </g>
+      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
+    </g><g transform="translate(354.74792238513544,365.9148550549912) scale(1.14)">
+      <g fill="#D66A85" transform="translate(-4,0)">
+        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
+      </g>
+      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
+    </g><g transform="translate(415.7774947375858,178.0851449450089) scale(1.14)">
+      <g fill="#6FA3C7" transform="translate(-4,0)">
+        <circle cx="0" cy="-12" r="14"/><rect x="-21" y="6" width="42" height="24" rx="12"/>
+      </g>
+      <path transform="translate(20,-16) scale(1.05)" fill="#2FBF94" d="M0,-11 L3,-3 L11,0 L3,3 L0,11 L-3,3 L-11,0 L-3,-3 Z"/>
+    </g></g>
+<text x="420" y="252" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="800"
+      font-size="190" letter-spacing="8" fill="#F5F2EA">HITL</text>
+</svg>
