@@ -158,7 +158,7 @@ lines = [
 ]
 for s in steps:
     st = "current" if s is first else "open"
-    lines.append(f'    - {{ n: {s["n"]}, key: {s["key"]}, label: "{s["label"]}", status: {st} }}')
+    lines.append(f'    - {{ n: {s["n"]}, key: {s["key"]}, label: "{s["label"]}", phase: "{s["phase"]}", status: {st} }}')
 lines += [
     'current_step:',
     f'  number: {first["n"] if str(first["n"]).isdigit() else str(first["n"])[:-1]}',

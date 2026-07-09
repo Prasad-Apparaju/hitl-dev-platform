@@ -155,14 +155,14 @@ Of the 31 steps (plus the 19a architect substep): **10 AI-driven** 🤖, **11 AI
 
 ### 5.3 Code Review: AI Rounds and Architect Review
 
-| | Round 1 (Step 18) | Round 2 (Step 19) | Step 19a (Architect) |
+| | Code Review Round 1 | Code Review Round 2 | Architect Code Review |
 |---|---|---|---|
 | **Focus** | Structure, security, spec adherence | Edge cases, regressions, completeness | Business logic, architectural consistency, domain integrity, hidden coupling, naming |
 | **What it catches** | Design-level problems | Behavior-level problems | Judgment-call problems AI cannot assess |
 | **When it saves time** | Before test investment | After tests reveal unexpected behavior | Before QA and Assess begin |
 | **Who** | AI reviewer | AI reviewer | Human architect (GitHub PR review) |
 
-Finding structural problems after tests pass means the tests are now wrong too. Round 1 catches those early. After the AI rounds resolve mechanical issues, the architect reviews on GitHub for judgment calls — and also creates the GitHub PR at step 19a.
+Finding structural problems after tests pass means the tests are now wrong too. Round 1 catches those early. After the AI rounds resolve mechanical issues, the architect reviews on GitHub for judgment calls — and also creates the GitHub PR at the Architect Code Review step.
 
 ### 5.4 Design Spec: Input at the Start, Verification at the End
 
@@ -234,11 +234,11 @@ graph TD
 
 **Who writes it**: the developer, with AI assistance. AI can draft the flows/components section from the diff and the risk section from the test plan. The mental model section requires human judgment — you need to know what assumptions the PM holds.
 
-**When it is reviewed**: by the team lead during integration verification (step 24). The lead checks: "Is this brief complete? Would the PM understand what changed from reading this? Would ops know how to deploy it safely?"
+**When it is reviewed**: by the team lead during Integration Verification. The lead checks: "Is this brief complete? Would the PM understand what changed from reading this? Would ops know how to deploy it safely?"
 
 ### 5.7 Canary Deployment Strategy
 
-The rollout plan at step 22 is risk-rated — not every change gets the full canary treatment:
+The rollout plan from the Risk-Rated Rollout Plan step is risk-rated — not every change gets the full canary treatment:
 
 | Risk level | Example | Rollout |
 |-----------|---------|---------|

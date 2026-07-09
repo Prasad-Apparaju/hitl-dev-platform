@@ -51,7 +51,7 @@ graph TB
 | 4 | _(creates directory structure)_ | `docs/00-migration/` with stubs for all migration docs | Steps 5–6 |
 | 5 | _(reads source code)_ | `docs/00-migration/source-behavioral-inventory.md` (BI-NNN entries) | Migration brief |
 | 6 | _(copies or links external docs)_ | `docs/00-migration/external-reference/` | Review phase |
-| 7 | _(scans source tests + interviews team)_ | `test-registry.yaml`, `incident-registry.yaml` (incidents flagged `migration_regression: true`) | `/hitl:dev-practices` step 7 |
+| 7 | _(scans source tests + interviews team)_ | `test-registry.yaml`, `incident-registry.yaml` (incidents flagged `migration_regression: true`) | `/hitl:dev-practices` Test Case Planning |
 | 8 | `gh issue create` | Migration tracking issue | Per-slice loop |
 | 9 | _(confirms ready)_ | — | — |
 | Review | `/hitl:dev-review-external-docs` | `migration-review.md` + `migration-brief.md` with coverage matrix | Architect design |
@@ -143,7 +143,7 @@ graph TB
   gate1 --> coverage
 ```
 
-**Migration-specific rule for Step 1:** the GitHub issue body must list which BI IDs from the behavioral inventory this slice covers. This is how the coverage matrix is kept up to date.
+**Migration-specific rule for the GitHub Issue step:** the GitHub issue body must list which BI IDs from the behavioral inventory this slice covers. This is how the coverage matrix is kept up to date.
 
 ---
 
@@ -225,11 +225,11 @@ graph TB
 |---|---|---|---|
 | Migration review | After Phase 3 of `dev-review-external-docs` | _(architect reviews draft in session)_ | Architect |
 | Migration brief | After Phase 4 of `dev-review-external-docs` | _(architect approves in session)_ | Architect |
-| Design gate | After Step 9 of each slice | `/hitl:ta-approve` | Tech Architect |
-| QA test review | Step 11 | `/hitl:qa-review-tests` | QA |
-| Architect code review | Step 19a | `/hitl:architect-review-code` | Architect reviews PR on GitHub |
-| QA verify | Step 22 | `/hitl:qa-verify-quality` | QA |
-| Code gate | After Step 24 | `/hitl:ta-approve` | Tech Architect |
+| Design gate | After Package Decision Packet of each slice | `/hitl:ta-approve` | Tech Architect |
+| QA test review | Human Reviews Tests | `/hitl:qa-review-tests` | QA |
+| Architect code review | Architect Code Review | `/hitl:architect-review-code` | Architect reviews PR on GitHub |
+| QA verify | QA Post-Handoff Verification | `/hitl:qa-verify-quality` | QA |
+| Code gate | After Risk-Rated Rollout Plan | `/hitl:ta-approve` | Tech Architect |
 
 ---
 

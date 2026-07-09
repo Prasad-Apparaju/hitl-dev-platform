@@ -25,7 +25,7 @@ This skill defines the HITL change workflow. Apply it based on the change tier:
 | Tier | Change type | Process |
 |------|-------------|---------|
 | 0 — Trivial | Typo, config value, log message | Standard PR only |
-| 1 — Bug fix | Regression fix, minor behavioral correction | Steps 1–2 + code/test steps; skip training plan |
+| 1 — Bug fix | Regression fix, minor behavioral correction | GitHub Issue and Figma Review + code/test steps; skip training plan |
 | 2 — Normal feature | Bounded, well-understood change within one domain | Full workflow |
 | 3 — Non-trivial / cross-domain | Migrations, cross-domain, AI systems, security, data model | Full workflow + HLD review gate |
 | 4 — Incident / P0 | Active production problem | Fix first, full docs within 48 hours |
@@ -73,35 +73,35 @@ Build (TDD)
 11. Human Reviews Tests    → /hitl:qa-review-tests — verifies unit, integration, E2E stubs (one per AC), smoke journey, incident regressions, ≥90% coverage gate; blocks implementation if gaps
 12. Tests Improve Design   → /hitl:dev-tdd — updates LLD at same path if gaps found; architect re-reviews if significant
 13. Verify RED             → unit/integration tests must fail; E2E stubs skipped; smoke suite runs (existing journeys only)
-14. Generate Code (GREEN)  → /hitl:dev-tdd — reads tests/, LLD (step 12), system-manifest.yaml, CLAUDE.md
+14. Generate Code (GREEN)  → /hitl:dev-tdd — reads tests/, LLD (Tests Improve the Design), system-manifest.yaml, CLAUDE.md
 15. Verify GREEN           → unit + integration pass; coverage ≥90% enforced (AI generates gap tests if needed); smoke runs
 16. Refactor               → rerun tests after each change; done when no further simplification possible
 16a. Security Review (Code) → /hitl:dev-review-security --phase code — SAST (semgrep OWASP, Bandit, ESLint-security, Gosec) + code-level OWASP checklist; required Tier 3+, recommended Tier 2+; Critical/High block PR (conditional)
 17. Convention Checks      → /hitl:dev-check-conventions — zero violations required before proceeding
 
 Verify
-18. Code Review Round 1    → /hitl:dev-review-lld-adherence — reads implementation + LLD (step 12) + system-manifest.yaml
+18. Code Review Round 1    → /hitl:dev-review-lld-adherence — reads implementation + LLD (Tests Improve the Design) + system-manifest.yaml
 19. Code Review Round 2    → /hitl:dev-review-lld-adherence — reads implementation + tests/ + test plan from .hitl/current-change.yaml
-19a. Architect Code Review → /hitl:architect-review-code — creates GitHub PR with checklist; architect reviews on GitHub (line comments + approve/request changes); revisions return to step 14 or 16; PR is NOT merged here
+19a. Architect Code Review → /hitl:architect-review-code — creates GitHub PR with checklist; architect reviews on GitHub (line comments + approve/request changes); revisions return to Generate Code (GREEN) or Refactor; PR is NOT merged here
 20. Rerun Tests            → confirm no regressions from review fixes
 21. Reconcile Docs         → update LLD (/hitl:dev-generate-docs) or fix code; document decision; if fix code, rerun 18–20
 22. QA Post-Handoff Verify → /hitl:qa-verify-quality — unskips + runs E2E Playwright (desktop + iPhone 15 + Pixel 7); runs smoke suite; blocks if any fail; /hitl:qa-report-defect for each blocking issue
 
 Assess
 23. Downstream Impact Brief → /hitl:dev-impact-brief — reads .hitl/current-change.yaml, diff, manifest, registries
-24. Rollout Plan            → /hitl:ops-review-release — ops reviews section 5 of step 23; plan is added to the open PR at step 25
+24. Rollout Plan            → /hitl:ops-review-release — ops reviews section 5 of the Downstream Impact Brief; plan is added to the open PR at Verify PR Completeness
 
 Ship
-25. Verify PR completeness → confirm PR (created at step 19a) has: issue link, HLD/LLD, IaC, code, tests, decision packet, impact brief, rollout plan; copy token costs to registry
+25. Verify PR completeness → confirm PR (created at Architect Code Review) has: issue link, HLD/LLD, IaC, code, tests, decision packet, impact brief, rollout plan; copy token costs to registry
 26. Integration Verify     → /hitl:architect-verify-traceability — traceability chain + E2E evidence check + smoke suite re-run + cross-slice composition
-27. Figma Comparison       → lead compares to Figma from step 2; zero unresolved differences (conditional)
+27. Figma Comparison       → lead compares to Figma from Figma Review; zero unresolved differences (conditional)
 28. Build + Backup + Migrate + IaC + Observability + Drift Check + Deploy → /hitl:ops-backup-database (before migrations) → /hitl:ops-migrate-database (if migrations) → /hitl:ops-apply-iac (if IaC) → /hitl:ops-setup-observability (required) → /hitl:ops-build → /hitl:ops-detect-drift (Tier 2+, blocks on `blocked` result) → /hitl:ops-deploy → /hitl:ops-monitor-canary
 29. Promote or Rollback + Monitor → /hitl:ops-rollback if rollback (includes /hitl:ops-backup-database restore); /hitl:ops-post-deploy-monitor required after final promotion (soak: Low 1h, Med 4h, High 12h, Crit 24h)
 
 Post-Ship
 30. Penetration Test       → /hitl:ops-pentest — OWASP Top 10 automated scan + manual checklist; optional for Tier 2+ after STABLE; required for Tier 3+ auth/payments/data changes; `blocked` result requires remediation + retest before change is closed (conditional)
 31. 30-day ROI Check       → reads roi_estimate from .hitl/current-change.yaml; see roi-estimation.md (conditional)
-32. 90-day ROI Check       → reads roi_estimate + step 31 findings; update ADR Actual Outcome; see roi-estimation.md (conditional)
+32. 90-day ROI Check       → reads roi_estimate + 30-Day ROI Check findings; update ADR Actual Outcome; see roi-estimation.md (conditional)
 ```
 
 ## Reference Files

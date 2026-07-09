@@ -67,10 +67,10 @@ if hitl_change_active "$YAML_FILE"; then
   cur=$(hitl_current_n "$YAML_FILE")
   if hitl_has_workflow "$YAML_FILE" && [ -n "$cur" ]; then
     wf=$(hitl_workflow_field "$YAML_FILE" id)
-    total=$(hitl_total "$YAML_FILE")
     [ -z "$step_name" ] && step_name=$(hitl_current_label "$YAML_FILE")
-    trail=$(hitl_render_trail "$YAML_FILE" color)
-    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-$wf} · Step ${cur}/${total}: ${step_name} [${change_id} · T${tier}]${warn}\n     ${trail}"
+    trail=$(hitl_render_trail "$YAML_FILE" color "$step_name")
+    # Phase 2: compact "change ▸ phase ▸ step name" + numberless trail. No global counter.
+    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL ▸ ${change_id} ▸ ${phase:-$wf} ▸ ${step_name} [T${tier}]${warn}\n     ${trail}"
   else
     num=$(hitl_cs_field "$YAML_FILE" number)
     hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-change} · Step ${num:-?} [${change_id} · T${tier}]${warn}  (run /hitl:dev-update for the step trail)"

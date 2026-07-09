@@ -16,7 +16,7 @@ prioritised list of test scenarios the developer must cover, with any
 regression-required cases from past incidents flagged clearly.
 ```
 
-**`/hitl:qa-review-tests`** — After RED test generation (step 10), formal review before implementation begins. Verify ACs, LLD edge cases, and incident registry regressions are all covered.
+**`/hitl:qa-review-tests`** — After RED test generation (AI Generates Tests (RED)), formal review before implementation begins. Verify ACs, LLD edge cases, and incident registry regressions are all covered.
 ```
 /hitl:qa-review-tests
 
@@ -47,7 +47,7 @@ with amount: 9999 on a $10 order. Severity: high — blocks issue #42.
 
 **At design time (non-blocking):** Run `/hitl:qa-plan-tests` when the LLD is shared. Query the incident registry for the domain, identify edge cases and failure modes the developer may miss, and produce a prioritized list of test scenarios. Regression-required scenarios (from past incidents) must be in the test plan before the TDD cycle starts. This is input, not a gate — but the developer must acknowledge each scenario.
 
-**After RED test generation (gate):** Run `/hitl:qa-review-tests` after step 10 generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
+**After RED test generation (gate):** Run `/hitl:qa-review-tests` after AI Generates Tests (RED) generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
 
 **After handoff (gate):** Run `/hitl:qa-verify-quality`. The developer has delivered a stable build. You run independent verification — verify each AC against the running build, run exploratory testing beyond the happy path, and probe failure modes from the incident registry. If anything fails, run `/hitl:qa-report-defect` and block promotion.
 

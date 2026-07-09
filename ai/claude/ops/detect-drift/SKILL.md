@@ -1,5 +1,5 @@
 ---
-description: Compare the live environment against the IaC definition to detect configuration drift — manual changes, out-of-band deploys, or config values that have diverged from what IaC and the vault define. Run before every deployment as a pre-flight check and on a schedule to catch drift between releases. Reports a drift inventory and classifies each item by risk.
+description: Compare the live environment against the IaC definition to detect configuration drift — any divergence from IaC, whether a manual change, an out-of-band deploy, or a config value set directly on a server. Run before every deployment as a pre-flight check and on a schedule to catch drift between releases. Reports a drift inventory and classifies each item by risk.
 argument-hint: "[environment: staging|production] [change ID or 'scheduled']"
 disable-model-invocation: true
 ---
@@ -20,7 +20,9 @@ To get started, run one of these commands in your project directory:
 
 # Detect Configuration Drift
 
-Compare the live environment to the IaC definition and vault state. Drift means someone (or something) changed the running environment without going through IaC — a manual console change, an out-of-band deploy, or a config value set directly on the server. Undetected drift causes deployments to behave differently than expected and makes rollback unreliable.
+Compare the live environment to the IaC definition and vault state. Drift means the running environment diverged from what IaC defines, because someone (or something) changed it without going through IaC. Manual console edits, out-of-band deploys, and config values set directly on a server are all examples of drift. Undetected drift causes deployments to behave differently than expected and makes rollback unreliable.
+
+This skill uses four terms consistently. **Drift** is the umbrella concept — any divergence of the live environment from IaC. Each drift item falls into one named category: an **unauthorized change** (a live resource that IaC did not change), a **deleted resource** (defined in IaC but no longer live), or an **extra resource** (live but absent from IaC). Use these category names exactly; do not substitute informal synonyms like "rogue change" or "orphan resource" in reports.
 
 **Input:** $ARGUMENTS (environment name and either a change ID for pre-deploy checks or `scheduled` for periodic runs)
 
@@ -61,7 +63,7 @@ Classify each detected change:
 | **Deleted resource** | IaC defines it; it no longer exists | A K8s ConfigMap was manually deleted |
 | **Extra resource** | Exists in live; not in IaC | A manually-created security group |
 
-Only **Unauthorized changes** and **Deleted/Extra resources** are drift. Pending IaC changes are expected — note them but do not flag as drift.
+Unauthorized changes, deleted resources, and extra resources are all drift. Pending IaC changes are expected — note them but do not flag as drift.
 
 Present a structured inventory:
 

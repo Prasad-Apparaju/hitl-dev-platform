@@ -54,13 +54,14 @@ cur=$(hitl_current_n "$HITL_FILE")
 echo "$SEP"
 if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then
   wf=$(hitl_workflow_field "$HITL_FILE" id)
-  total=$(hitl_total "$HITL_FILE")
   [[ -z "$step_name" ]] && step_name=$(hitl_current_label "$HITL_FILE")
-  printf "  HITL — %s  •  Step %s / %s: %s\n" "${phase:-$wf}" "${cur}" "${total:-?}" "$step_name"
-  printf "  change: %s  •  tier: %s  •  workflow: %s\n" "$change_id" "${tier:-?}" "$wf"
+  ribbon=$(hitl_render_ribbon "$HITL_FILE")
+  # Phase 2: phase ribbon + named, numberless trail. No global "Step N / total" counter.
+  printf "  HITL %s ▸ %s ▸ %s\n" "$wf" "$change_id" "${ribbon:-${phase:-$wf}}"
+  printf "  ▸ %s: %s   ·   tier %s\n" "${phase:-$wf}" "$step_name" "${tier:-?}"
   [[ -n "$warn" ]] && echo "$warn"
   echo ""
-  printf "  %s\n" "$(hitl_render_trail "$HITL_FILE")"
+  printf "  %s\n" "$(hitl_render_trail "$HITL_FILE" "" "$step_name")"
 else
   # Back-compat: pre-v2 file (bare current_step, no workflow block) OR a workflow block that
   # couldn't be parsed into steps — either way, point the user at the migration.

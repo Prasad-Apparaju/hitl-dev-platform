@@ -11,3 +11,4 @@ Copy `workflows/*.yml` to `.github/workflows/` in your product repo. The enforce
 | `workflows/deploy-with-gates.yml.example` | Example canary deployment workflow — rename and adapt |
 | `preflight/check_change.py` | Called by `traceability-check.yml` — validates decision packets |
 | `manifest-drift/` | Called by `convention-check.yml` — detects files drifting outside declared domains |
+| `skill-lint/check_skills.py` | Lints every `SKILL.md` against the Agent Skills schema (Part A acceptance criteria); run on PRs touching `ai/claude/**` |

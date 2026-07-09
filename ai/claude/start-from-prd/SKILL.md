@@ -126,10 +126,10 @@ workflow:
   id: prd
   total: 4
   steps:
-    - { n: 1, key: claude_md,     label: "CLAUDE.md", status: current }
-    - { n: 2, key: manifest,      label: "Manifest",  status: open }
-    - { n: 3, key: create_issue,  label: "Issue",     status: open }
-    - { n: 4, key: confirm_ready, label: "Ready",     status: open }
+    - { n: 1, key: claude_md,     label: "CLAUDE.md", phase: "PRD Setup", status: current }
+    - { n: 2, key: manifest,      label: "Manifest",  phase: "PRD Setup", status: open }
+    - { n: 3, key: create_issue,  label: "Issue",     phase: "PRD Setup", status: open }
+    - { n: 4, key: confirm_ready, label: "Ready",     phase: "PRD Setup", status: open }
 current_step:
   number: 1
   name: "Customize CLAUDE.md"

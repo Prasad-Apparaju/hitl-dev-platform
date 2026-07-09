@@ -141,17 +141,17 @@ workflow:
   id: brownfield
   total: 11
   steps:
-    - { n: 1,  key: map_code,        label: "MapCode",    status: current }
-    - { n: 2,  key: claude_md,       label: "CLAUDE.md",  status: open }
-    - { n: 3,  key: manifest,        label: "Manifest",   status: open }
-    - { n: 4,  key: arch_review,     label: "ArchRvw",    status: open }
-    - { n: 5,  key: verify_pipeline, label: "Pipeline",   status: open }
-    - { n: 6,  key: observability,   label: "Observ",     status: open }
-    - { n: 7,  key: priority_docs,   label: "Docs",       status: open }
-    - { n: 8,  key: seed_registries, label: "Registries", status: open }
-    - { n: 9,  key: graphify,        label: "Graphify",   status: open }
-    - { n: 10, key: create_issue,    label: "Issue",      status: open }
-    - { n: 11, key: confirm_ready,   label: "Ready",      status: open }
+    - { n: 1,  key: map_code,        label: "MapCode",    phase: "Brownfield Setup", status: current }
+    - { n: 2,  key: claude_md,       label: "CLAUDE.md",  phase: "Brownfield Setup", status: open }
+    - { n: 3,  key: manifest,        label: "Manifest",   phase: "Brownfield Setup", status: open }
+    - { n: 4,  key: arch_review,     label: "ArchRvw",    phase: "Brownfield Setup", status: open }
+    - { n: 5,  key: verify_pipeline, label: "Pipeline",   phase: "Brownfield Setup", status: open }
+    - { n: 6,  key: observability,   label: "Observ",     phase: "Brownfield Setup", status: open }
+    - { n: 7,  key: priority_docs,   label: "Docs",       phase: "Brownfield Setup", status: open }
+    - { n: 8,  key: seed_registries, label: "Registries", phase: "Brownfield Setup", status: open }
+    - { n: 9,  key: graphify,        label: "Graphify",   phase: "Brownfield Setup", status: open }
+    - { n: 10, key: create_issue,    label: "Issue",      phase: "Brownfield Setup", status: open }
+    - { n: 11, key: confirm_ready,   label: "Ready",      phase: "Brownfield Setup", status: open }
 current_step:
   number: 1
   name: "Map codebase"

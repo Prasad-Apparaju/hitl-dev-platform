@@ -1,49 +1,4 @@
 {
-  "env": {
-    "LLD_HOOK_MODE": "warn"
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ai/claude/hooks/check-hitl-context.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ai/claude/hooks/check-domain-boundary.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash ai/claude/hooks/rebuild-graph.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash ai/claude/hooks/sync-step-to-issue.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ai/claude/hooks/write-session-summary.sh"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(git log *)",

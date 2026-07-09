@@ -118,15 +118,15 @@ workflow:
   id: migration
   total: 9
   steps:
-    - { n: 1, key: collect_context, label: "Context",    status: current }
-    - { n: 2, key: claude_md,       label: "CLAUDE.md",  status: open }
-    - { n: 3, key: manifest,        label: "Manifest",   status: open }
-    - { n: 4, key: dir_setup,       label: "DirSetup",   status: open }
-    - { n: 5, key: source_analysis, label: "SrcAnal",    status: open }
-    - { n: 6, key: ext_docs,        label: "ExtDocs",    status: open }
-    - { n: 7, key: seed_registries, label: "Registries", status: open }
-    - { n: 8, key: create_issue,    label: "Issue",      status: open }
-    - { n: 9, key: confirm_ready,   label: "Ready",      status: open }
+    - { n: 1, key: collect_context, label: "Context",    phase: "Migration Setup", status: current }
+    - { n: 2, key: claude_md,       label: "CLAUDE.md",  phase: "Migration Setup", status: open }
+    - { n: 3, key: manifest,        label: "Manifest",   phase: "Migration Setup", status: open }
+    - { n: 4, key: dir_setup,       label: "DirSetup",   phase: "Migration Setup", status: open }
+    - { n: 5, key: source_analysis, label: "SrcAnal",    phase: "Migration Setup", status: open }
+    - { n: 6, key: ext_docs,        label: "ExtDocs",    phase: "Migration Setup", status: open }
+    - { n: 7, key: seed_registries, label: "Registries", phase: "Migration Setup", status: open }
+    - { n: 8, key: create_issue,    label: "Issue",      phase: "Migration Setup", status: open }
+    - { n: 9, key: confirm_ready,   label: "Ready",      phase: "Migration Setup", status: open }
 current_step:
   number: 1
   name: "Collect migration context"

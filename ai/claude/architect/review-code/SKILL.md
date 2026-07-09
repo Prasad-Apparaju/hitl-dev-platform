@@ -1,5 +1,5 @@
 ---
-description: "Human architect code review — step 19a. After AI rounds 1 and 2 have resolved mechanical issues (LLD conformance, conventions, test coverage), the architect reviews for judgment calls that AI cannot assess: business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, and naming clarity. Blocks progression to step 20 until the architect explicitly approves."
+description: "Human architect code review — the Architect Code Review step. After AI rounds 1 and 2 have resolved mechanical issues (LLD conformance, conventions, test coverage), the architect reviews for judgment calls that AI cannot assess: business logic correctness, architectural consistency, domain boundary integrity, hidden coupling, and naming clarity. Blocks progression to the Rerun Tests step until the architect explicitly approves."
 argument-hint: "[change ID or issue number]"
 disable-model-invocation: true
 ---
@@ -157,7 +157,7 @@ The architect receives a GitHub review request notification and reviews the PR o
 **GitHub review outcome:**
 - **Approve** the PR → proceed to recording approval below
 - **Request changes** → developer addresses, pushes commits, re-requests review
-- Do not merge the PR here — merging happens at Step 28
+- Do not merge the PR here — merging happens at the Build/Migrate/Apply/Deploy step
 
 ---
 
@@ -183,10 +183,10 @@ Architect approved PR <PR URL> at <ISO timestamp>.
 **Domain:** <domain>
 **LLD:** <lld-path>
 
-Proceed to Step 20 (Rerun Tests)."
+Proceed to the Rerun Tests step."
 ```
 
-Report: "Architect code review approved. Proceed to Step 20 — Rerun Tests."
+Report: "Architect code review approved. Proceed to Rerun Tests."
 
 ---
 
@@ -196,9 +196,9 @@ Classify each revision request from the GitHub review:
 
 | Severity | Criteria | Return to |
 |---|---|---|
-| **Minor** | Naming, simplification, comment clarity, small refactor | Step 16 — Refactor |
-| **Significant** | Logic error, wrong abstraction, domain boundary violation, hidden coupling | Step 14 — Generate Code (GREEN) |
-| **Design change** | Fundamental approach is wrong; LLD must be revised | Step 12 — Tests Improve Design (LLD update + architect re-review) |
+| **Minor** | Naming, simplification, comment clarity, small refactor | Refactor |
+| **Significant** | Logic error, wrong abstraction, domain boundary violation, hidden coupling | Generate Code (GREEN) |
+| **Design change** | Fundamental approach is wrong; LLD must be revised | Tests Improve the Design (LLD update + architect re-review) |
 
 Update `.hitl/current-change.yaml`:
 ```yaml
@@ -216,8 +216,8 @@ Present the revision list with step targets:
 ```
 Architect revision requests — <change-ID>
 ──────────────────────────────────────────
-  [Minor → Step 16]     <description>
-  [Significant → Step 14] <description>
+  [Minor → Refactor]            <description>
+  [Significant → Generate Code (GREEN)] <description>
 
 Next action: address revisions on the existing PR branch, then re-request architect review.
 ```
@@ -226,8 +226,8 @@ Next action: address revisions on the existing PR branch, then re-request archit
 
 ## Important Rules
 
-- The PR is created once at this step and is not recreated at Step 25 — Step 25 verifies PR completeness
+- The PR is created once at this step and is not recreated at the Verify PR Completeness step — that step verifies PR completeness
 - Do not answer the checklist on behalf of the architect — the checklist lives in the PR description and the architect fills it in via GitHub review
-- A SIGNIFICANT revision means the developer returns to Step 14, re-generates the code, and re-runs AI rounds 1 and 2 before re-requesting architect review on the same PR
-- Architect approval recorded here is distinct from `approvals.architecture` (design approval at Step 9) — both must be set before merge
-- Do not merge the PR at this step — merging is part of Step 28
+- A SIGNIFICANT revision means the developer returns to Generate Code (GREEN), re-generates the code, and re-runs AI rounds 1 and 2 before re-requesting architect review on the same PR
+- Architect approval recorded here is distinct from `approvals.architecture` (design approval at the Package Decision Packet step) — both must be set before merge
+- Do not merge the PR at this step — merging is part of the Build/Migrate/Apply/Deploy step

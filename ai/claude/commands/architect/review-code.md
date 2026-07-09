@@ -1,5 +1,5 @@
 ---
-description: Architect human code review — step 19a. Creates the GitHub PR with the review checklist, notifies the architect, and records their approve/revisions decision. Requires AI rounds 1 and 2 to be complete first.
+description: Architect human code review — the Architect Code Review step. Creates the GitHub PR with the review checklist, notifies the architect, and records their approve/revisions decision. Requires AI rounds 1 and 2 to be complete first.
 argument-hint: "[change ID or issue number]"
 ---
 

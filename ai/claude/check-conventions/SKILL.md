@@ -26,6 +26,16 @@ Run convention checks against the current codebase and report violations in-chat
 
 ---
 
+## Required tools
+
+This skill shells out to external CLIs. If a check's tool is not installed, report the install command for it rather than failing silently — the secrets check has a built-in `grep` fallback.
+
+- **Semgrep check:** `semgrep` (`pip install semgrep` or `brew install semgrep`)
+- **Secrets scan (one of):** `gitleaks`, `trufflehog`, `detect-secrets`, or `semgrep`; falls back to `grep` if none is installed
+- **Manifest drift + Mermaid checks:** `python` / `python3` (runs the bundled `ci/` and `scripts/` checkers)
+
+---
+
 ## Step 1 — Run the checks
 
 Run all four checks (or a subset if `--only` is specified):

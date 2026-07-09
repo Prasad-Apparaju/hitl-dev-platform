@@ -90,19 +90,20 @@ workflow:
   id: development
   total: 31
   steps:
-    - { n: 1,   key: issue,  label: "Issue",  status: done }
-    - { n: 2,   key: figma,  label: "Figma",  status: done }
-    - { n: 3,   key: impact, label: "Impact", status: current }
-    - { n: 4,   key: roi,    label: "ROI",    status: open }
-    # … remaining steps from ai/shared/workflows.yaml, all status: open
+    - { n: 1,   key: issue,  label: "Issue",  phase: "Requirements", status: done }
+    - { n: 2,   key: figma,  label: "Figma",  phase: "Requirements", status: done }
+    - { n: 3,   key: impact, label: "Impact", phase: "Design",       status: current }
+    - { n: 4,   key: roi,    label: "ROI",    phase: "Design",       status: open }
+    # … remaining steps from ai/shared/workflows.yaml (carry each step's `phase` verbatim), all status: open
 current_step:
   number: 3
   name: "Impact analysis"
   phase: "Design"
 ```
 
-Seed the full `steps` list from the catalog rather than hand-typing it. As each step below
-completes, set its `status: done` and the next step's `status: current`, and update
+Seed the full `steps` list from the catalog rather than hand-typing it — copy each step's `phase`
+verbatim from `ai/shared/workflows.yaml` so the phase-ribbon breadcrumb has data. As each step
+below completes, set its `status: done` and the next step's `status: current`, and update
 `current_step` to match, so the breadcrumb advances.
 
 ```bash

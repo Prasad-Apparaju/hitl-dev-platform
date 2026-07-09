@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/check-lld-exists.sh \"$CLAUDE_TOOL_INPUT_PATH\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-lld-exists.sh\" \"$CLAUDE_TOOL_INPUT_PATH\""
           }
         ]
       }
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/log-bash-output.sh \"$CLAUDE_TOOL_OUTPUT\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-bash-output.sh\" \"$CLAUDE_TOOL_OUTPUT\""
           }
         ]
       }
@@ -33,12 +33,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/write-session-log.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/write-session-log.sh\""
           }
         ]
       }
     ]
   },
+
+  "_hook_path_note": "Hook commands use \"$CLAUDE_PROJECT_DIR\" so they resolve regardless of the hook's working directory. Never use bare repo-relative paths like 'bash .claude/hooks/X.sh' — they throw 'No such file or directory' when the hook cwd is not the project root.",
 
   "permissions": {
     "allow": [
@@ -53,6 +55,12 @@
       "Bash(black *)",
       "Bash(find docs/*)",
       "Bash(cat docs/*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./secrets/**)"
     ]
   },
 

@@ -1,4 +1,6 @@
 
+<img src="docs/brand/hitl-logo.svg" alt="HITL" width="340">
+
 # HITL AI-Driven Development
 
 ![HITL platform overview — Human-AI convergence loop, shared team memory, and AI executing from docs](docs/images/hitl-dev-platform-infographic.svg)

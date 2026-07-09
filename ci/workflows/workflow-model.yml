@@ -1,0 +1,35 @@
+name: Workflow Model
+
+# Guards the Phase-1 workflow-model artifacts:
+#  - the numberless catalog stays in sync with the runtime workflows.yaml (lossless)
+#  - the deriver logic stays correct
+#  - the breadcrumb renderers keep rendering every workflow x state correctly
+
+on:
+  pull_request:
+    paths:
+      - 'tools/workflow-catalog/**'
+      - 'ai/shared/workflows.yaml'
+      - 'ai/claude/hooks/**'
+      - 'ci/breadcrumb/**'
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyyaml pytest
+      - name: Catalog reproduces runtime (lossless)
+        run: python tools/workflow-catalog/derive.py verify
+      - name: Deriver tests
+        run: pytest tools/workflow-catalog/test_derive.py -q
+
+  breadcrumb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Breadcrumb render matrix
+        run: bash ci/breadcrumb/run_matrix.sh

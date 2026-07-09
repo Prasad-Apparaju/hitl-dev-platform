@@ -20,12 +20,12 @@ A catalog of test cases with metadata — not the test code itself (that stays i
 | `file` | Path to the actual test file + function |
 
 ### When it grows
-- Step 6–8 (TDD cycle): every test added by developer or QA gets registered
+- During the TDD cycle: every test added by developer or QA gets registered
 - Post-incident: regression test registered with `origin: incident-regression` and `incident_ref: INC-NNN`
 
 ### How it's consumed
-- Step 2 (Impact analysis): "which tests cover the affected domain? are there coverage gaps?"
-- Step 6 (AI generates tests): AI reads relevant entries — especially incident-regression tests that must not be accidentally removed
+- Impact Analysis: "which tests cover the affected domain? are there coverage gaps?"
+- AI Generates Tests: AI reads relevant entries — especially incident-regression tests that must not be accidentally removed
 - QA review: "is the regression test for INC-X in the plan?"
 
 See `ai/shared/templates/test-registry-template.yaml` for the full format with examples.
@@ -54,8 +54,8 @@ A catalog of production incidents with root cause, affected domain, fix, regress
 - When canary criteria are updated, `canary_criteria_added` field is linked
 
 ### How it's consumed
-- Step 2 (Impact analysis): "what has gone wrong in this domain before?"
-- Step 15 (Rollout plan): past incidents shape the canary go/no-go criteria
+- Impact Analysis: "what has gone wrong in this domain before?"
+- Risk-Rated Rollout Plan: past incidents shape the canary go/no-go criteria
 - Onboarding: new team members learn what broke and why, grounded in real incidents
 
 See `ai/shared/templates/incident-registry-template.yaml` for the full format with examples.

@@ -240,10 +240,18 @@ workflow:
         type: string
         enum: [done, current, open]
         description: "Completion state. Renders as ✓ (done) · ▶ (current) · · (open)."
+      phase:
+        type: string
+        description: |
+          Phase this step belongs to (e.g. "Design", "Verify", "Post-Ship"). ADDITIVE (Phase 2):
+          drives the phase ribbon in the breadcrumb. Optional for back-compat — a file whose steps
+          omit `phase` still renders (the ribbon falls back to current_step.phase). Copy it verbatim
+          from ai/shared/workflows.yaml when seeding.
+        example: "Design"
     example:
-      - { n: 1,  key: issue,     label: "Issue",  status: done }
-      - { n: 3,  key: impact,    label: "Impact", status: current }
-      - { n: 4,  key: roi,       label: "ROI",    status: open }
+      - { n: 1,  key: issue,     label: "Issue",  status: done,    phase: "Requirements" }
+      - { n: 3,  key: impact,    label: "Impact", status: current, phase: "Design" }
+      - { n: 4,  key: roi,       label: "ROI",    status: open,    phase: "Design" }
 
 # --- Workflow breadcrumb pointer (derived, kept for compatibility) ---
 

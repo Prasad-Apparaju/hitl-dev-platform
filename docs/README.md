@@ -4,6 +4,7 @@
 
 | Folder / File | What it contains |
 |--------------|-----------------|
+| `01-product/` | HITL's own PRD (`prd.md`) — the product baseline, reverse-engineered from the shipped surface; new requirements append here |
 | `playbook/` | Process guides: workflow reference, adoption guide, common pitfalls, migration guide, AI governance, evidence taxonomy |
 | `roles/` | Per-role guides: what each role does, which commands they use, and how they interact with other roles |
 | `reference/` | Context model rationale — how Claude Code and Codex load context, and how HITL was designed around it |

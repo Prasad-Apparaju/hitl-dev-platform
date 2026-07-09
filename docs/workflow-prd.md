@@ -143,11 +143,11 @@ These are points where work stops until a human explicitly approves before proce
 
 | Gate | Position | Command | Who approves |
 |---|---|---|---|
-| Design gate | After Step 9 (decision packet) | `/hitl:ta-approve` | Tech Architect |
-| QA test review | Step 11 | `/hitl:qa-review-tests` | QA |
-| Architect code review | Step 19a | `/hitl:architect-review-code` | Architect reviews PR on GitHub |
-| QA verify | Step 22 | `/hitl:qa-verify-quality` | QA |
-| Code gate | After Step 24 (rollout plan) | `/hitl:ta-approve` | Tech Architect |
+| Design gate | After Package Decision Packet | `/hitl:ta-approve` | Tech Architect |
+| QA test review | Human Reviews Tests | `/hitl:qa-review-tests` | QA |
+| Architect code review | Architect Code Review | `/hitl:architect-review-code` | Architect reviews PR on GitHub |
+| QA verify | QA Post-Handoff Verification | `/hitl:qa-verify-quality` | QA |
+| Code gate | After Risk-Rated Rollout Plan | `/hitl:ta-approve` | Tech Architect |
 
 ---
 

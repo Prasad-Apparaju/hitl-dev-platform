@@ -178,14 +178,14 @@ These problems exist in traditional development too, but AI amplifies them becau
 | Goal | How the process achieves it | Where in the workflow |
 |------|----------------------------|----------------------|
 | **Coherent implementation** | System manifest defines domain boundaries and conventions. CLAUDE.md inlines the rules into every AI session. Convention checker enforces in CI. | Manifest (pre-work), CLAUDE.md (every session), CI (every PR) |
-| **Critical review of requirements** | Design PR must merge before code starts. Team reviews HLD/LLD in PR comments. No code generation until design is locked. | Steps 3-5 (design phase), Design PR gate |
-| **Decisions thought through** | HLD captures architecture. LLD captures component design. ADRs capture trade-offs and alternatives. TDD tests reveal spec gaps before code exists. | Update docs (step 5), Test case planning through Verify RED (steps 7, 9-12) |
-| **Traceability** | Issue → design PR → impl PR → traceability check. Lead verifies the chain is unbroken at integration verification. | GitHub issue (step 1), Integration verification (step 24) |
-| **Team communication** | Downstream impact brief tells PM, QA, and ops what changed. PM mental model update section ensures product team stays current. | Downstream impact brief (step 21) |
-| **Institutional memory** | Test registry catalogs every test by domain, risk, and origin. Incident registry connects past failures to regression tests and canary criteria. Both are queryable during impact analysis so the team doesn't repeat past mistakes. | Impact analysis (step 3), Test case planning (step 7), Risk-rated rollout plan (step 22), post-incident |
-| **QA + Ops without bottlenecks** | QA and Ops contribute to specs (design time) and monitoring (canary time), not to gates (merge time). Their past inputs live in the registries — available even when the individuals are not. | Design PR review, Test case planning (step 7), Risk-rated rollout plan (step 22), canary monitoring |
-| **Everything documented** | Docs written before code (steps 3-5). If implementation diverged, the team explicitly decides whether to update docs or fix the code (reconcile docs, step 20). Updated in every PR. | Steps 3-5 (before), Reconcile docs step 20 (after), every PR |
-| **AI conforms to agreements** | Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | TDD phase (steps 9-12), Code review rounds (steps 17-18), CI |
+| **Critical review of requirements** | Design PR must merge before code starts. Team reviews HLD/LLD in PR comments. No code generation until design is locked. | Impact Analysis through Update Docs (design phase), Design PR gate |
+| **Decisions thought through** | HLD captures architecture. LLD captures component design. ADRs capture trade-offs and alternatives. TDD tests reveal spec gaps before code exists. | Update Docs, Test Case Planning through Verify RED |
+| **Traceability** | Issue → design PR → impl PR → traceability check. Lead verifies the chain is unbroken at integration verification. | GitHub Issue, Integration Verification |
+| **Team communication** | Downstream impact brief tells PM, QA, and ops what changed. PM mental model update section ensures product team stays current. | Downstream Impact Brief |
+| **Institutional memory** | Test registry catalogs every test by domain, risk, and origin. Incident registry connects past failures to regression tests and canary criteria. Both are queryable during impact analysis so the team doesn't repeat past mistakes. | Impact Analysis, Test Case Planning, Risk-Rated Rollout Plan, post-incident |
+| **QA + Ops without bottlenecks** | QA and Ops contribute to specs (design time) and monitoring (canary time), not to gates (merge time). Their past inputs live in the registries — available even when the individuals are not. | Design PR review, Test Case Planning, Risk-Rated Rollout Plan, canary monitoring |
+| **Everything documented** | Docs written before code (Impact Analysis through Update Docs). If implementation diverged, the team explicitly decides whether to update docs or fix the code (Reconcile Docs). Updated in every PR. | Impact Analysis through Update Docs (before), Reconcile Docs (after), every PR |
+| **AI conforms to agreements** | Tests written first define expected behavior. Convention checker verifies compliance. Two-round code review checks LLD adherence. | TDD phase (AI Generates Tests (RED) through Tests Improve the Design), Code Review Round 1 and Round 2, CI |
 
 ### 1.2 Why documentation first
 
@@ -235,7 +235,7 @@ Institutional knowledge accumulates in the registries and ADRs in parallel with 
 | ADRs with verified outcomes | After the first few non-trivial changes | Architectural debates reference past decisions with known real results, not speculation. |
 | Developer turnover resilience | After the doc set covers the system | New developers and new AI sessions onboard from docs, not from "ask the person who was here." |
 
-**Primary risk: LLD drift.** Changes that skip the LLD update step leave docs stale silently. The process degrades from "AI implements from spec" to "AI infers from code and may guess wrong" — with no loud failure signal. The reconcile-docs step (step 20) is the safeguard; it requires sustained discipline.
+**Primary risk: LLD drift.** Changes that skip the LLD update step leave docs stale silently. The process degrades from "AI implements from spec" to "AI infers from code and may guess wrong" — with no loud failure signal. The Reconcile Docs step is the safeguard; it requires sustained discipline.
 
 **Secondary risk: process fatigue.** Under deadline pressure, teams skip steps. The steps most often skipped — incident registry queries, ROI checks — are the ones with the most long-term value. Use the process tiers consciously rather than silently skipping.
 

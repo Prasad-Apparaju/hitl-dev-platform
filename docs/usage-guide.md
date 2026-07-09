@@ -205,7 +205,7 @@ This is the 31-step workflow entry point. Paste the GitHub issue number when pro
 2. Figma review — PM/developer confirms UI requirements (if applicable)
 3. Decision packet — architect approves design and test plan (TA gate 1)
 4. QA test review — QA approves test coverage before code is written
-5. Architect code review — architect reviews PR on GitHub (step 19a)
+5. Architect code review — architect reviews PR on GitHub (Architect Code Review)
 6. QA verify — QA confirms acceptance criteria met
 7. TA code gate — architect approves implementation for merge (TA gate 2)
 8. PR merge — tech lead or architect merges
@@ -236,15 +236,15 @@ Produces a structured GitHub issue with: reproduction steps, expected vs actual 
 ```
 
 Bug fixes are typically **Tier 1** (abbreviated workflow):
-- Steps 1–2: issue and optional Figma review
-- Steps 3, 5, 7, 9: impact analysis, LLD update if behavior changed, test planning, decision packet
+- GitHub Issue and optional Figma Review
+- Impact Analysis, Update Docs (LLD update if behavior changed), Test Case Planning, Package Decision Packet
 - TA gate (if Tier 2+ — cross-domain or security-related)
-- Steps 10–13: write regression test first (RED), verify it fails
-- Steps 14–15: write fix (GREEN), verify tests pass
-- Steps 17–22: convention check, two code reviews, QA verify
-- Steps 25–29: PR and deploy
+- AI Generates Tests (RED) through Verify RED: write regression test first, verify it fails
+- Generate Code (GREEN) and Verify GREEN: write fix, verify tests pass
+- Convention Checks through QA Post-Handoff Verification: convention check, two code reviews, QA verify
+- Verify PR Completeness through Promote or Rollback: PR and deploy
 
-**Key rule:** the regression test is written **before** the fix. Step 13 must fail before step 14.
+**Key rule:** the regression test is written **before** the fix. Verify RED must fail before Generate Code (GREEN).
 
 If the bug is related to a past production incident, `/hitl:pm-report-bug` flags it for the incident registry automatically.
 
@@ -305,7 +305,7 @@ Each role has dedicated commands. All can be used in the same Claude Code sessio
 | `/hitl:architect-design-system` | Design a new system from a PRD or migration brief |
 | `/hitl:architect-design-feature` | Design a feature: impact analysis, HLD, LLD, decision packet |
 | `/hitl:architect-review-existing` | Reconstruct ADRs from an existing codebase via architect interview |
-| `/hitl:architect-review-code` | Code review step 19a — creates GitHub PR with checklist |
+| `/hitl:architect-review-code` | Architect Code Review — creates GitHub PR with checklist |
 | `/hitl:ta-approve` | TA gate: advance design or code phase from awaiting to approved |
 | `/hitl:dev-review-external-docs` | Architect deep review of migration docs (migration path only) |
 
