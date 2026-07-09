@@ -103,9 +103,12 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
 4. **Migration Slice specialization, LOCKED 2026-06-23.** It adds exactly: requirement = migration
    brief · issue declares BI-IDs · observable-slice gate · update coverage matrix. No other deltas; a
    pilot may add, but the catalog ships with these four.
-5. **Versioning, LOCKED 2026-06-23: `1.1.0`.** The whole initiative ships as one minor (Phase 2's
-   schema touch is additive; the breadcrumb is the user-visible headline), not scattered across
-   patches.
+5. **Versioning, LOCKED 2026-06-23: `1.1.0`. AMENDED 2026-07-09: ships as `2.0.0`.** The original
+   lock reasoned from compatibility (Phase 2's schema touch is additive, so a minor suffices). The
+   amendment reasons from legibility: the numberless catalog, profiles/tags, and phase ribbon are a
+   different mental model of the workflow, and customers on 1.x deserve a major-version signal before
+   adopting it. Compatibility engineering is unchanged (additive schema, back-compat breadcrumb).
+   1.x is maintained in parallel on `release/1.x` (both repos) for critical fixes until deprecation.
 6. **Deferred-regression blocks "complete", LOCKED 2026-06-23: confirmed.** A deferred regression
    becomes a tracked ticket (owner + due) linked to the change that **blocks "change complete"** (not
    merge/canary), or an explicit recorded architect risk-acceptance. (Finalised in
