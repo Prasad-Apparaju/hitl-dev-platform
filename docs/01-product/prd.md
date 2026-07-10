@@ -27,7 +27,7 @@ Four related pains, felt by teams using AI coding tools at scale:
 1. **Review cannot keep up with generation.** AI writes code faster than humans review it, and presents wrong code as confidently as right code. Unreviewed AI code reaches production, or review becomes a rubber stamp.
 2. **Siloed AI sessions drift.** Each AI session invents its own patterns. Without a shared source of truth, a codebase accumulates inconsistent conventions until a rewrite is cheaper than a fix.
 3. **Process exists but is not enforced.** Teams write down their process, then bypass it under deadline pressure. Nobody can tell, from the outside, whether the process was actually followed for any given change.
-4. **Leadership cannot prove control.** When an auditor, regulator, or customer security review asks "prove your AI-assisted changes were reviewed and traceable," most teams have nothing to show but git blame and good intentions. (This is the buyer trigger identified in `docs/business/go-to-market-framing.md`.)
+4. **Leadership cannot prove control.** When an auditor, regulator, or customer security review asks "prove your AI-assisted changes were reviewed and traceable," most teams have nothing to show but git blame and good intentions.
 
 Who feels it: engineering teams in regulated or high-audit environments, platform teams setting org standards, and any team doing migrations or cross-domain work with AI. If unsolved: drift compounds, audit exposure grows with AI code volume, and the trust gap between leadership and AI-assisted teams widens.
 
@@ -196,13 +196,12 @@ The product surface delivering this: 51 role skills, 32 commands, 7 subagent rol
 | Process integrity in CI | Green on this repo | Green on every adopting repo | skill-lint + catalog-drift + breadcrumb matrix + manifest-drift gates |
 | Traceability at merge | Not yet measured | 100% of Tier 2+ changes pass verify-traceability | `/hitl:architect-verify-traceability` outcomes |
 | Gate friction | Not yet measured | Gates cleared same-day median | Issue timestamps between gate request and approval |
-| Commercial validation (GTM gate) | 0 of target | 3+ leaders describe the same governance product, name budget + trigger; 2 paid pilots | Validation interviews per `docs/business/customer-validation-script.md` |
 
 ---
 
 ## 9. Out of Scope
 
-- **Paid governance layer** (cross-team dashboard, managed policy hooks, audit/compliance export, SSO/RBAC): separate product bet, gated on validation interviews. See `docs/business/go-to-market-framing.md`.
+- **Paid governance layer** (cross-team dashboard, managed policy hooks, audit/compliance export, SSO/RBAC): a separate product bet, out of scope for this open-source framework PRD.
 - **Design-tool and tracker integrations** (Figma sync, Jira automation): explicitly fenced as a non-goal in the workflow-model design; the UX-artifact floor requires an artifact to exist, not a specific tool.
 - **Non-Python automated enforcement checks**: process supports any language; automated checks are Python-first for now (NFR-6).
 - **MCP write-tool gating**: known gap; MCP-mediated writes are not yet intercepted by `check-hitl-context` (tracked as an open question below).
