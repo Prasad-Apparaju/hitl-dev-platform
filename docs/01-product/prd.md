@@ -72,7 +72,7 @@ The product surface delivering this: 51 role skills, 32 commands, 7 subagent rol
 | FR-1 | The process is defined once in a numberless catalog (steps identified by stable key + name + phase, never by global position) | Must Have | Inserting or reordering a catalog step requires zero edits to other docs; `tools/workflow-catalog/` derivation reproduces the runtime `workflows.yaml` losslessly, verified in CI |
 | FR-2 | Profiles and tags resolve to a concrete step plan via impact analysis, with the floor enforced regardless of what the human selected | Must Have | Resolution engine tests pass; a change tagged `chore` still hits impact-analysis and docs-reconciled floors |
 | FR-3 | Each catalog step declares its executing command and accountable role; the human-readable command map is generated, not hand-maintained | Must Have | `docs/command-map.generated.md` regenerates without drift in CI |
-| FR-4 | Every session shows a phase-ribbon breadcrumb of where the change stands (phases + named steps, no global numbering) | Must Have | Breadcrumb matrix (`ci/breadcrumb/`, 204 assertions across 22 cases) passes, including the no-phase fallback |
+| FR-4 | Every session shows a phase-ribbon breadcrumb of where the change stands (phases + named steps, no global numbering) | Must Have | Breadcrumb matrix (`ci/breadcrumb/`, 238 assertions across 24 cases) passes, including the no-phase fallback |
 
 ### 5.2 Role Skills and Commands
 
@@ -128,7 +128,7 @@ The product surface delivering this: 51 role skills, 32 commands, 7 subagent rol
 | NFR-1 | Portability | Hard dependencies limited to bash, python3, PyYAML, git | Hooks run on macOS and Linux with stock tooling; optional deps (`gh`, `graphify`) degrade silently |
 | NFR-2 | Compatibility | Runtime schema changes are additive only | The `phase` field was added without breaking the v1.0.29/30 change-file surface; `n` retained |
 | NFR-3 | Correctness | Catalog derivation is lossless | CI proves derived `workflows.yaml` is byte-equivalent to the runtime file |
-| NFR-4 | Regression safety | Breadcrumb rendering is matrix-locked | 204 assertions across 22 cases must pass before any hook change merges |
+| NFR-4 | Regression safety | Breadcrumb rendering is matrix-locked | 238 assertions across 24 cases must pass before any hook change merges |
 | NFR-5 | Tool independence | Process and docs are tool-agnostic; only enforcement hooks are tool-specific | Claude Code primary, Codex CLI surface maintained in parallel |
 | NFR-6 | Language scope | Process is language-agnostic; automated enforcement checks are Python-first | Non-Python repos get the full process, docs, and gates minus language-specific checks |
 | NFR-7 | Overhead | Setup cost is bounded and stated honestly | New project: 1-2 hours; existing project: about 1 day (per README) |

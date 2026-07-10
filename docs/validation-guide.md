@@ -12,6 +12,14 @@ Part 1 answers "is the source correct?"; Part 2 answers "does the build match th
 
 ---
 
+## 0. Prerequisites (read before running Part 1)
+
+The Python checks in §1 need a `python3` that has **PyYAML** and **pytest** installed — the same dependencies the CI workflows install (`ci/workflows/*.yml` all run `pip install pyyaml [pytest]`). Use a virtualenv or conda Python that has them, or run `pip install pyyaml pytest` first.
+
+The bare macOS system Python (`/Library/Developer/CommandLineTools/usr/bin/python3`) ships **neither** and will fail with `ModuleNotFoundError: No module named 'yaml'` / `No module named pytest`. That is an environment gap, **not** a release defect — verify the interpreter before concluding a check failed. `python3 -c "import yaml, pytest"` should exit cleanly before you start.
+
+---
+
 ## 1. Run these checks first (machine-verifiable, must all pass) — Part 1, source
 
 | # | Command | Pass criterion |
@@ -41,7 +49,7 @@ Verify the chain is intact: each capability has a requirement, a design, and som
 | **Docs-only workflow (#19)** | Plugin issue #19; PRD §4 | `docs/design/workflow-model/01-design.md` §4 (Docs bullet); catalog `docs:` block; `ai/claude/start-change/SKILL.md` classifier | Check 1 (`docs->docs` lossless) + Check 4 (docs position cases) |
 | **Stale-change-file gate (#19)** | Plugin issue #19 | `ai/claude/hooks/_steps.sh` (`hitl_change_active` treats `status: merged` as inactive) | Check 4 (the `merged/inactive` case in `run_matrix.sh`) |
 | **Brownfield PRD init (#18)** | Plugin issue #18; PRD FR-18 | `ai/claude/start-brownfield/SKILL.md` Step 8; `ai/claude/pm/add-feature`, `pm/design-feature`; 10 read-only PM/QA skills | **Review-only** (prose skills, no automated test) — see §3 |
-| **Traceability chain at merge** | PRD FR-13 | `ai/claude/architect/verify-traceability` | CI template `ci/workflows/traceability-check.yml` |
+| **Traceability chain at merge** | PRD FR-13 | `ai/claude/commands/architect/verify-traceability.md` | CI template `ci/workflows/traceability-check.yml` (runs `ci/preflight/check_change.py`) |
 
 ---
 
@@ -120,12 +128,19 @@ Confirm each capability's shipped surface actually made it into the plugin:
 
 ### 6.3 Source ↔ build parity spot-check
 
-`diff` a couple of shipped files against their source to confirm no build-time corruption:
+Confirm shipped files are faithful transforms of source. **`build.sh` deliberately rewrites source-tree paths in comments** (`ai/claude/...` → `${CLAUDE_PLUGIN_ROOT}/skills/...`), so a raw `diff` on a file that contains such a comment is *expected* to differ on those lines only — that is not corruption. Two checks:
+
 ```bash
+# a) A file with no path references must match source exactly:
 diff hooks/_steps.sh ../hitl-dev-platform/ai/claude/hooks/_steps.sh && echo "hooks/_steps.sh matches source"
-diff shared/workflows.yaml ../hitl-dev-platform/ai/shared/workflows.yaml && echo "workflows.yaml matches source"
+
+# b) For a file that carries path comments, the ONLY differences must be those rewrites.
+#    Strip the rewritten comment lines, then the remainder must match:
+diff <(grep -v 'Canonical source:' shared/workflows.yaml) \
+     <(grep -v 'Canonical source:' ../hitl-dev-platform/ai/shared/workflows.yaml) \
+  && echo "workflows.yaml matches source (apart from expected path rewrites)"
 ```
-Both should print the "matches source" line with no diff output.
+Both should print their "matches source" line. If (b) shows any diff *other* than a `Canonical source:` comment, that is a real build defect.
 
 ### 6.4 What Part 2 does *not* need
 

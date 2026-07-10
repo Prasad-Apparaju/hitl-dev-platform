@@ -88,7 +88,7 @@ Total: **238 assertions across 24 cases** (the position cases now cover the `doc
 
 ## Findings
 
-Running the matrix against the **current** (Phase-2) renderers: **204/204 pass, 0 renderer bugs
+Running the matrix against the **current** (Phase-2) renderers: **238/238 pass, 0 renderer bugs
 surfaced.** The renderers correctly handle every workflow, the 19a substep (full name, numberless),
 skipped steps, branch mismatch, both YAML styles (trail **and** ribbon), the phase ribbon glyphs,
 the no-per-step-phase back-compat fallback, and the zero-steps/missing-file degrade paths.
