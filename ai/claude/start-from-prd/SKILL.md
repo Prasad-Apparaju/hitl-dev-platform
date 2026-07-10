@@ -166,6 +166,29 @@ If `docs/system-manifest.yaml` is missing or has template content:
 
 If a real manifest already exists, say: "Manifest found — skipping." and move on.
 
+**Install the manifest drift checker** so `/hitl:dev-check-conventions` and the copied `ci/workflows/*.yml` templates (which reference it by repo path) can keep the manifest honest as code lands:
+
+```bash
+mkdir -p ci/manifest-drift
+PLUGIN_ROOT=$(python3 -c "
+import json,os,sys
+try:
+  d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+  for inst in d.get('plugins',{}).get('hitl@hitl',[]):
+    p=inst.get('installPath','')
+    if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
+      print(p);sys.exit(0)
+except:pass
+" 2>/dev/null)
+if [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/ci/manifest-drift/check_manifest_drift.py" ]]; then
+  [[ ! -f ci/manifest-drift/check_manifest_drift.py ]] && \
+    cp "$PLUGIN_ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/
+  echo "Manifest drift checker installed at ci/manifest-drift/."
+else
+  echo "Drift checker not found in the plugin — skip; /hitl:dev-check-conventions will note it is absent."
+fi
+```
+
 ---
 
 ## Step 3 — Create your first GitHub issue

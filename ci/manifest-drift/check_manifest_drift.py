@@ -19,6 +19,9 @@ Usage:
     python ci/manifest-drift/check_manifest_drift.py
     python ci/manifest-drift/check_manifest_drift.py --manifest docs/system-manifest.yaml
     python ci/manifest-drift/check_manifest_drift.py --source-dirs app/ src/ lib/
+
+By default the scan roots are derived from the manifest's listed files, so no
+--source-dirs is needed for a project with any layout.
 """
 
 from __future__ import annotations
@@ -52,6 +55,22 @@ def _build_file_to_domain(manifest: dict[str, Any]) -> dict[str, str]:
         for f in data.get("files", []):
             mapping[f] = domain
     return mapping
+
+
+def _derive_source_dirs(manifest: dict[str, Any]) -> list[str]:
+    """Infer scan roots from the manifest's listed files.
+
+    Uses the distinct top-level path segment of every ``domains.*.files`` entry
+    (e.g. ``app/controllers/auth.py`` -> ``app/``), so the checker adapts to a
+    project's actual layout instead of assuming ``app/`` or ``src/``.
+    """
+    roots: set[str] = set()
+    for _domain, data in manifest.get("domains", {}).items():
+        for f in data.get("files", []):
+            head = f.strip().split("/", 1)[0]
+            if head and not head.startswith("."):
+                roots.add(head + "/")
+    return sorted(roots)
 
 
 def _collect_source_files(root: Path, source_dirs: list[str]) -> list[Path]:
@@ -222,8 +241,9 @@ def main() -> None:
     parser.add_argument(
         "--source-dirs",
         nargs="+",
-        default=["app/", "src/"],
-        help="Directories to scan for unlisted source files (default: app/ src/)",
+        default=None,
+        help="Directories to scan for unlisted source files "
+        "(default: derived from the manifest's listed files)",
     )
     parser.add_argument(
         "--python-only",
@@ -269,6 +289,8 @@ def main() -> None:
 
     manifest = _load_manifest(manifest_path)
 
+    source_dirs = args.source_dirs or _derive_source_dirs(manifest)
+
     # -- Run all checks --
     errors: list[tuple[str, str]] = []
     warnings: list[tuple[str, str]] = []
@@ -278,7 +300,7 @@ def main() -> None:
         errors.append(("DELETED FILE", item))
 
     # 2. Unlisted files (ERROR in --strict mode, WARNING otherwise)
-    for item in check_unlisted_files(root, manifest, args.source_dirs):
+    for item in check_unlisted_files(root, manifest, source_dirs):
         if args.strict:
             errors.append(("UNLISTED FILE", item))
         else:

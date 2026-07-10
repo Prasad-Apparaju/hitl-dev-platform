@@ -204,6 +204,31 @@ If `docs/system-manifest.yaml` is missing or template-only:
 
 If a real manifest already exists, read it, summarize the domains, and ask: "Is this manifest still accurate? Anything outdated?"
 
+**Install the manifest drift checker.** The manifest is only load-bearing if something keeps it honest. Copy the checker into the repo so `/hitl:dev-check-conventions` and the `ci/workflows/*.yml` templates (which reference it by repo path) can run it:
+
+```bash
+mkdir -p ci/manifest-drift
+PLUGIN_ROOT=$(python3 -c "
+import json,os,sys
+try:
+  d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
+  for inst in d.get('plugins',{}).get('hitl@hitl',[]):
+    p=inst.get('installPath','')
+    if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
+      print(p);sys.exit(0)
+except:pass
+" 2>/dev/null)
+if [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/ci/manifest-drift/check_manifest_drift.py" ]]; then
+  [[ ! -f ci/manifest-drift/check_manifest_drift.py ]] && \
+    cp "$PLUGIN_ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/
+  echo "Manifest drift checker installed at ci/manifest-drift/."
+else
+  echo "Drift checker not found in the plugin — skip; /hitl:dev-check-conventions will note it is absent."
+fi
+```
+
+The checker derives its scan roots from the manifest's listed files, so it needs no per-project configuration.
+
 ---
 
 ## Step 4 — Review existing architecture
