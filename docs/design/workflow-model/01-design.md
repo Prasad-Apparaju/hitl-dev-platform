@@ -345,16 +345,17 @@ Audit of the delivery spine against the real `ai/claude/` skills:
 
 | Bucket | Count | Examples |
 |---|---|---|
-| ✅ **skill** (dedicated, exists) | ~20 | Impact Analysis → `dev-apply-change`; RED/Design+/GREEN → `dev-tdd`; reviews → `dev-review-lld-adherence`; QA → `qa-verify-quality`; Ship → the ops suite; gates → `ta-approve` |
+| ✅ **skill / command** (exists) | ~25 | Impact Analysis → `dev-apply-change`; RED/Design+/GREEN → `dev-tdd`; reviews → `dev-review-lld-adherence`; QA → `qa-verify-quality`; Ship → the ops suite; gates → `ta-approve`; Rollout Plan → `ops/review-release`; Integration Verification → `architect/verify-traceability`; Canary monitoring → `ops/monitor-canary`; Baseline Measurement → `ops/measure-baseline`; Dependency + CVE Audit → `ops/audit-dependencies` |
 | ✋ **manual** (by design) | ~7 | UX Design Artifact, Verify RED, Verify GREEN, Refactor, Rerun Tests, Verify PR Completeness, Figma Comparison |
 | 📄 **guided** (ref doc, no skill) | ~3 | ROI Estimate, Training Plan Stub, 30/90-day ROI Check |
-| ❌ **gap, referenced skill missing** | 3 | Rollout Plan → `ops-review-release`; Integration Verification → `architect-verify-traceability`; Canary monitoring → `ops-monitor-canary` |
-| 🆕 **gap, new step, no executor** | 2 | Baseline Measurement (Performance); Dependency + CVE Audit (Upgrade) |
 
-The ❌ and 🆕 rows are real work (tracked in [02-rollout.md §7](02-rollout.md)). The point of the
-required field is that this table is **generated from the catalog** and stays honest, the model is
-only "executable end-to-end" once every step resolves to a skill, `manual`, or a deliberate
-`guided`.
+**Executability is now complete: every step resolves to a skill/command, `manual`, or a deliberate
+`guided`, with zero gaps.** The two originally-flagged buckets are both closed: the three "missing
+skill" items were a false negative (they exist as command files delegating to agents, W1 resolved
+2026-06-23), and the two new steps got executors built in Phase 1b (`ops/measure-baseline`,
+`ops/audit-dependencies`). See [02-rollout.md §7](02-rollout.md). Because this table is **generated
+from the catalog**, the required `command` field keeps it honest: any future step without an executor
+would show up here immediately.
 
 ## 6. The breadcrumb: no global counter
 

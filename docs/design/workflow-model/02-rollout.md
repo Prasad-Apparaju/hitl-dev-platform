@@ -34,7 +34,7 @@ In a scratch prototype (not yet in-tree), confirmed:
 |---|---|---|---|
 | **0: Capture** | This requirements + design + rollout doc set; the citation convention. | docs only | none |
 | **1: Catalog** | Numberless `workflows.yaml`; first-class `phases:`; the three-tier taxonomy (delivery spine superset + 6 profiles + tags; standalone Incident; establishment trio; `chore` as Tier-0 tag). **`command` is a required field** per step; this makes every executor gap explicit. Overview generator (`tools/`). | catalog + generator + a generated overview doc | low, **data + docs only, no runtime change** |
-| **1b: Executability** ⛓ | Close the genuine executor gap: **W2** (build executors for Baseline Measurement and Dependency+CVE Audit). **W1 is already covered** (the three referenced executors exist as commands+agents, see §7). See §7. | skills (build) | low-medium, two small executors |
+| **1b: Executability** ⛓ **(done)** | Closed the executor gap: **W2** executors built (Baseline Measurement → `ops/measure-baseline`, Dependency+CVE Audit → `ops/audit-dependencies`). **W1 was already covered** (the three referenced executors exist as commands+agents, see §7). See §7. | skills (build) | low-medium, two small executors |
 | **2: Breadcrumb** | Phase-ribbon banner + compact status line; add `phase` per step to the change file (additive); seed/migration derive `n`. | `_steps.sh`, `welcome.sh`, `statusline-hitl.sh`, schema (additive), generators | medium, change-file surface, **additively** (no parser rewrite) |
 | **3: Generated views** | Enrich steps with `role`/`ownership`; **generate** `command-map.md` + role guides. | catalog (data) + generators | low |
 | **4: Prose** | Convert remaining number-citations (`workflow-steps.md`, `SKILL.md`, gates/diagrams) to name-citations. | docs | low, tedious |
@@ -150,10 +150,11 @@ proposal in [01-design.md](01-design.md) and will likely be removed.)
 ## 7. Command-coverage work items
 
 Surfaced by auditing the spine against the real `ai/claude/` skills (see
-[01-design.md §5](01-design.md)). **W1 turned out to be already covered** (the executors exist as
-commands+agents, see below); the only genuine executor gap is **W2** (two new proposed steps).
-Making `command` a **required catalog field** (Phase 1) makes any future gap explicit per step;
-closing W2 is its own small track (parallel to Phase 3).
+[01-design.md §5](01-design.md)). **Both work items are now closed:** W1 turned out to be already
+covered (the executors exist as commands+agents), and W2's two new steps got executors built in
+Phase 1b. Every spine step now resolves to a skill/command, `manual`, or `guided`. Making `command`
+a **required catalog field** (Phase 1) keeps this honest, any future step without an executor shows
+up in the coverage table immediately.
 
 ### W1: ~~Missing referenced skills~~, RESOLVED 2026-06-23 (they exist)
 The earlier audit looked for skill **directories** named `ops-review-release` etc. and concluded
@@ -170,11 +171,13 @@ Lesson: the coverage audit must resolve a step's `command` against **commands + 
 `SKILL.md` dirs. The Phase-1 `command` field should record the actual artifact (`command: ops/review-release`),
 so this class of false-negative can't recur.
 
-### W2: New steps needing an executor
-| Step | Workflow | Decision needed |
-|---|---|---|
-| Baseline Measurement | `perf` tag | new thin skill vs. capture in the issue/manual |
-| Dependency + CVE Audit | Upgrade | new skill vs. fold into Impact Analysis (`dev-apply-change`) |
+### W2: ~~New steps needing an executor~~, RESOLVED (Phase 1b, executors built)
+Both got dedicated skills in Phase 1b, so there is no remaining decision. Verified in source:
+
+| Step | Workflow | Executor | Status |
+|---|---|---|---|
+| Baseline Measurement | `perf` tag | `ai/claude/ops/measure-baseline/SKILL.md` (`command: ops/measure-baseline`) | ✅ exists |
+| Dependency + CVE Audit | Upgrade | `ai/claude/ops/audit-dependencies/SKILL.md` (`command: ops/audit-dependencies`) | ✅ exists |
 
 ### W3: Guided steps (no skill today)
 ROI Estimate, Training Plan Stub, 30/90-day ROI Check, keep `guided` (reference docs), or give each
