@@ -4,11 +4,15 @@
 
 **Scope of 2.0:** the workflow-model redesign (numberless catalog, profiles/tags, phase-ribbon breadcrumb, generated command-map, name citations) plus three enhancement fixes: manifest drift checker (#16 gap 1), brownfield PRD initialization (#18), and the docs-only workflow + stale-change-file gate (#19).
 
-**Run everything from the repo root:** `/Users/Prasad_1/Projects/hitl-dev-platform` (paths below are repo-relative).
+**Validation splits into two parts, validated independently:**
+- **Part 1 (§1–5): the main HITL source** (`hitl-dev-platform`) — proves the requirements, design, and tests are correct. Run from the repo root `/Users/Prasad_1/Projects/hitl-dev-platform`.
+- **Part 2 (§6): the built plugin** (`hitl-claude-plugin`) — proves `build.sh` faithfully carries the validated source into the shipped artifact. Run from the plugin repo root `/Users/Prasad_1/Projects/hitl-claude-plugin`.
+
+Part 1 answers "is the source correct?"; Part 2 answers "does the build match the source?". The plugin does not carry the dev-platform test suite (deriver, matrix, pytest all live in `hitl-dev-platform`), so Part 2 checks **build fidelity and structural validity**, not unit tests.
 
 ---
 
-## 1. Run these checks first (machine-verifiable, must all pass)
+## 1. Run these checks first (machine-verifiable, must all pass) — Part 1, source
 
 | # | Command | Pass criterion |
 |---|---------|----------------|
@@ -84,3 +88,45 @@ grep -A6 'hitl_change_active()' ai/claude/hooks/_steps.sh
 - Report any check that fails, any traceability row where the design or test is missing, and any skill guard that is absent or contradicts its design.
 
 **Known non-blocking items** (do not report as failures): 8 advisory skill-lint warnings; skipped steps render with the same `·` glyph as open steps (matrix-locked, deliberate); MCP write-tool gating is a documented gap. The `.github/workflows/` gates are shipped as templates in `ci/workflows/`, not yet installed on GitHub — the checks in §1 are the source of truth.
+
+---
+
+## 6. Part 2 — Validating the built plugin (`hitl-claude-plugin`)
+
+The plugin is **generated** from `hitl-dev-platform` by `scripts/build.sh` (skill-dir remapping, `${CLAUDE_PLUGIN_ROOT}` path rewrites, `hooks.json` rewrites, asset copying). Part 1 proved the source; Part 2 proves the build carries it faithfully and is structurally valid. **Run these from the plugin repo root** (`/Users/Prasad_1/Projects/hitl-claude-plugin`), which sits beside `hitl-dev-platform`.
+
+### 6.1 Build fidelity and structural validity (must pass)
+
+| # | Command | Pass criterion |
+|---|---------|----------------|
+| 1 | `./scripts/build.sh` | Ends with `plugin validation passed` and `Build complete`. This regenerates from source and runs `claude plugin validate`. |
+| 2 | `git status --porcelain \| sort > /tmp/a; ./scripts/build.sh >/dev/null; git status --porcelain \| sort > /tmp/b; diff /tmp/a /tmp/b && echo idempotent` | Prints `idempotent` — a second consecutive build changes the same file set, none new. The build is a stable, faithful transform of source. |
+| 3 | `grep -rl 'ai/claude/hooks/' hooks/ \| wc -l` | `0` — no built hook script leaks a source-tree path (the plugin has no `hooks.json`; hooks are wired per-project at install time). |
+| 4 | `python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])"` | `2.0.0`. |
+
+### 6.2 2.0 assets present in the built artifact (must all exist)
+
+Confirm each capability's shipped surface actually made it into the plugin:
+
+| Capability | Check (from plugin root) | Expect |
+|---|---|---|
+| #19 docs workflow | `grep '^  docs:' shared/workflows.yaml` | present |
+| #19 stale-file gate | `grep 'A merged change is done' hooks/_steps.sh` | present (the `status: merged` guard) |
+| #16 drift checker shipped | `test -f shared/ci/manifest-drift/check_manifest_drift.py` | exists |
+| #18 PRD template shipped | `test -f shared/templates/prd-template.md` | exists |
+| #18 first-run establishment | `grep -l 'First-run establishment' skills/pm-add-feature/SKILL.md skills/pm-design-feature/SKILL.md` | both |
+| #18 read-only guards | `grep -rl 'No product requirements exist yet' skills/ \| wc -l` | `10` |
+| numberless catalog | `grep -c 'phase:' shared/workflows.yaml` | non-zero (per-step phases shipped) |
+
+### 6.3 Source ↔ build parity spot-check
+
+`diff` a couple of shipped files against their source to confirm no build-time corruption:
+```bash
+diff hooks/_steps.sh ../hitl-dev-platform/ai/claude/hooks/_steps.sh && echo "hooks/_steps.sh matches source"
+diff shared/workflows.yaml ../hitl-dev-platform/ai/shared/workflows.yaml && echo "workflows.yaml matches source"
+```
+Both should print the "matches source" line with no diff output.
+
+### 6.4 What Part 2 does *not* need
+
+The dev-platform test suite (derive verify, `run_matrix.sh`, pytest) validates the **source** and is not shipped in the plugin — do not look for it there. Part 2 is satisfied when 6.1–6.3 pass. This build is **not published to the marketplace**: the marketplace pin stays at the 1.0.30 build, so validating this build has zero effect on installed customers.
