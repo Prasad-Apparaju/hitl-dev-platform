@@ -204,30 +204,17 @@ If `docs/system-manifest.yaml` is missing or template-only:
 
 If a real manifest already exists, read it, summarize the domains, and ask: "Is this manifest still accurate? Anything outdated?"
 
-**Install the manifest drift checker.** The manifest is only load-bearing if something keeps it honest. Copy the checker into the repo so `/hitl:dev-check-conventions` and the `ci/workflows/*.yml` templates (which reference it by repo path) can run it:
+**Install the manifest drift checker.** The manifest is only load-bearing if something keeps it honest. Resolve the plugin root once (reused in later steps), then copy the checker into the repo so `/hitl:dev-check-conventions` and the `ci/workflows/*.yml` templates (which reference it by repo path) can run it:
 
 ```bash
-mkdir -p ci/manifest-drift
-PLUGIN_ROOT=$(python3 -c "
-import json,os,sys
-try:
-  d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
-  for inst in d.get('plugins',{}).get('hitl@hitl',[]):
-    p=inst.get('installPath','')
-    if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
-      print(p);sys.exit(0)
-except:pass
-" 2>/dev/null)
+PLUGIN_ROOT=$(python3 -c "import json,os,sys;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) or sys.exit(0) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null)
 if [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/ci/manifest-drift/check_manifest_drift.py" ]]; then
-  [[ ! -f ci/manifest-drift/check_manifest_drift.py ]] && \
-    cp "$PLUGIN_ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/
-  echo "Manifest drift checker installed at ci/manifest-drift/."
-else
-  echo "Drift checker not found in the plugin — skip; /hitl:dev-check-conventions will note it is absent."
+  mkdir -p ci/manifest-drift
+  [[ ! -f ci/manifest-drift/check_manifest_drift.py ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/
 fi
 ```
 
-The checker derives its scan roots from the manifest's listed files, so it needs no per-project configuration.
+The checker derives its scan roots from the manifest's listed files, so it needs no per-project configuration. If `$PLUGIN_ROOT` is empty, skip; `/hitl:dev-check-conventions` reports the checker as absent rather than passing.
 
 ---
 
@@ -424,6 +411,8 @@ The 31-step workflow queries these two registries at multiple points. They must 
 - Ask: "What broke in production in the last 6 months? Describe each incident in one sentence."
 - For each answer, add one entry with `description`, `domain` (best guess), and `date`.
 - If they have nothing: create an empty stub and say: "You can add entries later — after each production incident, run `/hitl:ops-incident`."
+
+**Product baseline** (`docs/01-product/prd.md`): the PM and QA skills read the PRD for personas and requirements, so a brownfield project with no PRD leaves them nowhere to land. Initialize the PRD *shell*, not a retroactive spec of existing behaviour (that lives in the reverse-engineered technical docs), only personas and format so the next requirement has a home. If `docs/01-product/prd.md` is missing and `$PLUGIN_ROOT` (Step 3) is set, run `mkdir -p docs/01-product && cp "$PLUGIN_ROOT/shared/templates/prd-template.md" docs/01-product/prd.md`. Then ask "Who are the primary users of this system, and what does each need?" and fill §3 (Target Users and Personas); leave §5 (Functional Requirements) empty, noted "No requirements yet — added via `/hitl:pm-add-feature`." Say: "Product baseline initialized; PM and QA skills are now active."
 
 ---
 

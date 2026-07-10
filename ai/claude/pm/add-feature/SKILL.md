@@ -141,6 +141,8 @@ Note the issue number — it will be updated with the PRD reference at Step 5.
 
 7. **On approval**, update `docs/01-product/prd.md` with the new requirement (and use case if applicable).
 
+   **First-run establishment (brownfield / PRD not yet created):** if `docs/01-product/prd.md` does not exist or has no §3 personas, create it before writing the requirement: copy `prd-template.md` from the plugin's `shared/templates/` into `docs/01-product/prd.md`, and fill §3 (Target Users and Personas) by asking "Who are the primary users of this system, and what does each need from it?" Then add this requirement as FR-1. This is the same shell `/hitl:dev-start-brownfield` seeds; the skill handles it inline when onboarding skipped it. Do not back-fill requirements for existing behaviour; only capture this new one.
+
 8. **Update the GitHub issue** created in Step 1 — update the title only, then add the PRD reference as a comment. Do NOT overwrite the body: the problem statement captured at Step 1 is the permanent audit trail.
    ```bash
    gh issue edit <issue-number-from-step-1> --title "feat: <short description>"

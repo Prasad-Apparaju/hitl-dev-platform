@@ -275,6 +275,8 @@ Present the analysis including any concerns. Do not soften the effort estimate o
 
 Only after ALL phases are approved:
 
+**First-run establishment (brownfield / PRD not yet created):** if `docs/01-product/prd.md` does not exist or has no §3 personas, create it before drafting: copy `prd-template.md` from the plugin's `shared/templates/` into `docs/01-product/prd.md`, and fill §3 (Target Users and Personas) from the persona work already done in Phase 1. This is the same shell `/hitl:dev-start-brownfield` seeds; handle it inline when onboarding skipped it. Do not back-fill requirements for existing behaviour.
+
 1. **Draft the requirement** in `docs/01-product/prd.md` following the existing format:
    - FR ID (next available)
    - Description

@@ -15,6 +15,16 @@ To get started, run one of these commands in your project directory:
   /hitl:dev-start-migration     migrate a system
 ```
 
+**If there are no product requirements yet:** if `docs/01-product/prd.md` is absent or lists no functional requirements (no `FR-` entries in §5), stop and output this, do not proceed:
+
+```
+No product requirements exist yet, so there is nothing here to work from.
+Create the first requirement, then re-run this command:
+
+  /hitl:pm-add-feature      capture a new requirement
+  /hitl:pm-design-feature   design a user-facing feature
+```
+
 ---
 
 # Answer Open Questions in the PRD
