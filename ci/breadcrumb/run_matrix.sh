@@ -283,7 +283,7 @@ elif q.startswith("name_of:"):
 PY
 }
 
-WORKFLOWS_LIST=(development brownfield migration migration_review prd)
+WORKFLOWS_LIST=(development brownfield migration migration_review prd docs)
 
 echo "================================================================"
 echo " HITL breadcrumb test matrix"
@@ -483,6 +483,20 @@ assert_contains    "degrade/nofile: banner exits cleanly"        "$rc_banner" "0
 assert_contains    "degrade/nofile: banner shows intake gate"    "$banner" "NO ACTIVE CHANGE"
 assert_contains    "degrade/nofile: statusline no-active-change" "$status" "no active change"
 assert_no_error_leak "degrade/nofile"                            "$combined"
+
+echo "── case: a merged change is inactive (issue #19 stale-file gate) ──"
+# A valid workflow block that has been marked merged must NOT keep satisfying the
+# session gate — the next change has to go through intake, not inherit the old one.
+dir="$(new_case_dir "merged_inactive" "issue/000-x")"
+# conclude sets the top-level status to merged (replacing the working status)
+emit_change_yaml development 14 "" "issue/000-x" | sed 's/^status: .*/status: merged/' > "$dir/.hitl/current-change.yaml"
+banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
+combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
+[[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
+assert_contains    "merged/inactive: banner forces intake"       "$banner" "NO ACTIVE CHANGE"
+assert_contains    "merged/inactive: statusline no-active-change" "$status" "no active change"
+assert_not_contains "merged/inactive: no stale trail"            "$banner" "▶ Generate Code"
+assert_no_error_leak "merged/inactive"                           "$combined"
 
 # ── summary ─────────────────────────────────────────────────────────────────────────────────────
 echo "================================================================"

@@ -75,8 +75,8 @@ must not be skipped because it's less fun than the breadcrumb. Each phase is ind
 
 1. **★ Taxonomy granularity, LOCKED 2026-06-23: three-tier model.** Resolved into
    **Workflow / Profile / Tag** (see [01-design.md §4](01-design.md)):
-   - **5 workflows** (own/reordered/replaced spine): Greenfield · Brownfield · Migration · Incident
-     (reorders) · Migration Slice (replaces).
+   - **6 workflows** (own/reordered/replaced spine): Greenfield · Brownfield · Migration · Incident
+     (reorders) · Migration Slice (replaces) · Docs (own short spine, added 2.0 per plugin issue #19).
    - **6 profiles** (presets over the shared delivery spine): Feature · Enhancement · Fix · Tech
      Change · Upgrade · Security. *(Upgrade is a profile, initiated as a unit with distinct gates;
      Security is a profile, mandatory never-skippable gates, but it does **not** reorder the spine,

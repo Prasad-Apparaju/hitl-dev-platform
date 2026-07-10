@@ -95,7 +95,7 @@ breaks.** (Prototype verified; see [02-rollout.md](02-rollout.md) §Validation.)
 
 | Tier | What it is | Spine | Menu-visible | Examples |
 |---|---|---|---|---|
-| **Workflow** | Own / reordered / replaced step sequence | its own | yes | Greenfield · Brownfield · Migration (establishment) · **Incident** (reorders: fix-first) · **Migration Slice** (replaces spine: BI-driven) |
+| **Workflow** | Own / reordered / replaced step sequence | its own | yes | Greenfield · Brownfield · Migration (establishment) · **Incident** (reorders: fix-first) · **Migration Slice** (replaces spine: BI-driven) · **Docs** (own short spine: documentation-only) |
 | **Profile** | Named preset over the **shared delivery spine**, selects which conditional steps are on, which gates are *required*, and the initiator | shared | yes | **Feature · Enhancement · Fix · Tech Change · Upgrade · Security** |
 | **Tag** | A label on a change that **tunes required-evidence** within a profile (composable, stackable) | shared | no (shown on breadcrumb) | `refactor` · `perf` · `chore` · `tooling` · `infra` |
 
@@ -115,14 +115,20 @@ breaks.** (Prototype verified; see [02-rollout.md](02-rollout.md) §Validation.)
 - **Incident** is a **workflow**: it genuinely *reorders* (fix-first → deploy → docs ≤48h).
 - **Migration Slice** is a **workflow**: it *replaces* the spine's front with a migration brief +
   BI-IDs + observable-slice gate + coverage matrix.
+- **Docs** is a **workflow** (added 2.0, plugin issue #19): a documentation-only change has its own
+  short 6-step spine (issue → scope → draft → domain-routed review → reconcile cross-refs → merge),
+  no code or TDD. Chosen only when a change touches nothing but docs; a mixed docs+code change stays
+  on the delivery spine, which already reconciles docs. This closes the gap where docs changes either
+  owed the full delivery trail or bypassed HITL entirely.
 
 **Key safety property (the classifier trap):** the tag/profile a human *picks* only **proposes**;
 **impact analysis decides by what the change actually touches.** A "refactor" that turns out to alter
 an API response is re-classified to Fix/Enhancement and the functional steps switch back on. The
 label can't suppress the floor. (See [03-execution-model.md §5](03-execution-model.md).)
 
-**Tally: 5 workflows + 6 profiles + 5 tags**, versus 14 flat workflows. Profiles and tags share one
-spine, so the maintenance + classifier surface is the 5 workflows + the spine, not 25 things.
+**Tally: 6 workflows + 6 profiles + 5 tags** (Docs added in 2.0), versus 14 flat workflows. Profiles
+and tags share one spine, so the maintenance + classifier surface is the workflows + the spine, not
+25 things.
 
 ### What a "profile" declares
 A spine-profile is a few lines: which steps are **included**, which gates are **required** (vs

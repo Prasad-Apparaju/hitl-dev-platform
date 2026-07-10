@@ -157,6 +157,10 @@ hitl_cs_field() {
 hitl_change_active() {
   local f="$1"
   [[ -f "$f" ]] || return 1
+  # A merged change is done, not active — a stale merged file left on the branch
+  # (e.g. inherited on main) must not keep satisfying the session gate. Force
+  # re-intake so the next change goes through the front door (issue #19).
+  [[ "$(hitl_scalar "$f" status)" == "merged" ]] && return 1
   grep -q "^current_step:" "$f" 2>/dev/null || hitl_has_workflow "$f"
 }
 

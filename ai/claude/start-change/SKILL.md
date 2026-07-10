@@ -73,10 +73,13 @@ before writing anything:
 | `brownfield` | Existing codebase not yet onboarded to HITL (no manifest / registries) | `/hitl:dev-start-brownfield` |
 | `migration`  | Porting or consolidating a system from a source codebase into this target | `/hitl:dev-start-migration` |
 | `development`| **Most issues** — a feature, bug fix, or refactor in an already-documented component | `/hitl:dev-apply-change` |
+| `docs`       | The change touches **nothing but documentation** — no source, tests, or IaC | `/hitl:dev-generate-docs` |
 
-Heuristics from the issue: labels (`bug`/`enhancement` → development), wording ("migrate",
+Heuristics from the issue: labels (`bug`/`enhancement` → development; `documentation`/`docs` → docs), wording ("migrate",
 "port", "consolidate" → migration; "onboard", "adopt HITL", "no docs yet" → brownfield), and
 whether `docs/system-manifest.yaml` exists (absent on a real project → prd/brownfield).
+
+**The `docs` workflow is only for changes that touch nothing but docs.** If a change edits docs *and* code, it is a `development` change (the delivery spine already reconciles docs). This keeps the docs workflow from becoming a way to skip the gates on real code. Its own reviewer gate (`doc_review`) is domain-routed: route the review to the role that owns the touched area (Architect for design docs, PM for product docs, Ops for runbooks). At its final `merge` step, set the top-level `status: merged` in `.hitl/current-change.yaml` so the change file does not linger and satisfy the gate for the next change.
 
 State: "This looks like a **<workflow>** change because …. Proceed with the <workflow> workflow?"
 Wait for confirmation (or correction) before Step 4.

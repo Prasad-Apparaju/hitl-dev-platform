@@ -127,6 +127,21 @@ workflows:
       - { key: create_issue,     name: "Create Issue",                 label: "Issue",     phase: "PRD Setup" }
       - { key: confirm_ready,    name: "Confirm Ready",                label: "Ready",     phase: "PRD Setup" }
 
+  # ── Docs change: a documentation-only change ────────────────────
+  # Its own short spine (no code, no TDD) with a domain-routed reviewer gate.
+  # Chosen only when a change touches nothing but docs; mixed changes use the
+  # delivery spine. See docs/design/workflow-model/01-design.md §4.
+  docs:
+    title: "Docs — a documentation-only change"
+    phases: [Docs Change]
+    steps:
+      - { key: issue,            name: "GitHub Issue",                 label: "Issue",     phase: "Docs Change" }
+      - { key: scope,            name: "Scope Docs Impact",            label: "Scope",     phase: "Docs Change" }
+      - { key: draft,            name: "Write / Update Docs",          label: "Draft",     phase: "Docs Change" }
+      - { key: doc_review,       name: "Docs Review",                  label: "Review",    phase: "Docs Change" }
+      - { key: reconcile,        name: "Reconcile Cross-Refs",         label: "Reconcile", phase: "Docs Change" }
+      - { key: merge,            name: "Merge",                        label: "Merge",     phase: "Docs Change" }
+
 # ── Delivery profiles: named presets over the shared spine ──────────────────────────────────
 # A profile selects which conditional spine slots are on (`activates`, by cond activator),
 # drops steps that don't apply (`excludes`, by key), and contributes a `required_evidence` set

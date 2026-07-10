@@ -116,6 +116,20 @@ workflows:
       - { n: 4, key: write_brief,   label: "Brief",    phase: "Migration Review" }
       - { n: 5, key: handoff,       label: "Handoff",  phase: "Migration Review" }
 
+  # ── Docs change: a documentation-only change (6 steps) ──────────────────────────────────────
+  # Canonical source: ai/claude/start-change/SKILL.md (classifier routes docs-only changes here)
+  docs:
+    id: docs
+    title: "Docs — a documentation-only change"
+    total: 6
+    steps:
+      - { n: 1, key: issue,      label: "Issue",     phase: "Docs Change" }
+      - { n: 2, key: scope,      label: "Scope",     phase: "Docs Change" }
+      - { n: 3, key: draft,      label: "Draft",     phase: "Docs Change" }
+      - { n: 4, key: doc_review, label: "Review",    phase: "Docs Change" }
+      - { n: 5, key: reconcile,  label: "Reconcile", phase: "Docs Change" }
+      - { n: 6, key: merge,      label: "Merge",     phase: "Docs Change" }
+
   # ── PRD setup: stand up a greenfield project from a PRD (4 steps) ────────────────────────────
   # Canonical source: ai/claude/start-from-prd/SKILL.md
   prd:

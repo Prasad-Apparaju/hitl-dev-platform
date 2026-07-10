@@ -138,7 +138,7 @@ enforced required-evidence.)
 
 ## 7. What this does to the taxonomy
 
-It **demotes it.** The named tiers, **5 workflows + 6 profiles + 5 tags** (locked 2026-06-23; see
+It **demotes it.** The named tiers, **6 workflows + 6 profiles + 5 tags** (locked 2026-06-23, Docs workflow added 2.0; see
 [01-design.md §4](01-design.md)), are the **proposer + stakeholder vocabulary**, not the thing that
 guarantees correctness. Because rigor lives in impact-analysis → required-evidence → enforcement + the
 floor, the *only* reason a thing is a workflow vs a profile vs a tag is **legibility and classifier

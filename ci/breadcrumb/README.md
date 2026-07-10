@@ -58,13 +58,14 @@ Plus the cross-cutting cases:
 | **back-compat: steps with no per-step `phase`** | a workflow block whose steps carry no `phase` → ribbon falls back to the lone `current_step.phase` (`<phase> ◐`, not the full ribbon); banner still renders the full trail without crashing |
 | **pre-v2 / missing-workflow file** | banner degrades to the "step trail unavailable — run /hitl:dev-update" hint; exits 0; no error leak |
 | **completely missing change file** | banner shows the intake gate; statusline shows "no active change"; exits 0 |
+| **merged change is inactive** (issue #19) | a valid workflow block marked `status: merged` no longer satisfies the gate — banner forces intake, statusline shows "no active change", no stale trail renders |
 
 The position cases, the substep, skip, mismatch, block, and back-compat cases also assert **no global
 `Step N / total` counter leaks** (the Phase-2 trail is numberless and the denominator was replaced by
 the phase ribbon). Every case also asserts **no renderer error text leaks** (no awk/jq/python stack
 noise, `syntax error`, `command not found`, etc.).
 
-Total: **204 assertions across 22 cases.**
+Total: **238 assertions across 24 cases** (the position cases now cover the `docs` workflow too).
 
 ## Notes on renderer behaviour observed
 

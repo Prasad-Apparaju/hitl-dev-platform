@@ -185,6 +185,7 @@ Ops executes this sequence — each step gates the next:
 5. **Build** (`/hitl:ops-build`) — verifies CI passed, confirms artifact digest, runs health/smoke checks.
 6. **Deploy** (`/hitl:ops-deploy`) — reads artifact and rollout plan, confirms deployment configuration with operator, executes deployment, runs post-deployment verification. Checks all gates are complete (backup, migrations, IaC, observability) before proceeding.
 7. **Canary monitoring** (`/hitl:ops-monitor-canary`) — at each promotion step, reads observability data and produces a go/no-go recommendation; human makes the final call
+8. **Close the change** — once the PR is merged and the deploy is verified, set the top-level `status: merged` in `.hitl/current-change.yaml`. This is the terminal state: the session gate treats a merged change as inactive, so the next change on the branch goes through intake instead of inheriting this one. Leaving the status un-set is how a stale change file lingers on `main`.
 
 Remaining slices that have not yet merged must rebase against main and rerun the Convention Checks through Code Review Round 2 steps before their own merge.
 

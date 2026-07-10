@@ -53,7 +53,7 @@ HITL encodes one contract: a **workflow** is a repeatable abstraction for one wh
 
 Identity has three tiers, so granularity is earned rather than assumed (locked 2026-06-23, see `docs/design/workflow-model/01-design.md` §4):
 
-- **5 workflows** own their step sequence: Greenfield, Brownfield, Migration (establishment), Incident (fix-first), Migration Slice.
+- **6 workflows** own their step sequence: Greenfield, Brownfield, Migration (establishment), Incident (fix-first), Migration Slice, Docs (documentation-only, its own short spine).
 - **6 profiles** are named presets over the shared delivery spine: Feature, Enhancement, Fix, Tech Change, Upgrade, Security.
 - **5 tags** tune required evidence within a profile: `refactor`, `perf`, `chore`, `tooling`, `infra`.
 
