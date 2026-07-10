@@ -46,7 +46,7 @@
   <rect x="17" y="296" width="746" height="36" fill="transparent"/>
   <text x="28" y="317" fill="#cba6f7" font-size="13">/hitl:architect-design-feature</text>
   <text x="310" y="317" fill="#6c7086" font-size="12">  ·</text>
-  <text x="323" y="317" fill="#a6adc8" font-size="12">Steps 3–9: impact analysis, HLD, LLD, slice decomp, decision packets</text>
+  <text x="323" y="317" fill="#a6adc8" font-size="12">Design phase: impact analysis, HLD, LLD, slice decomp, decision packets</text>
 
   <!-- Row 3: review-design -->
   <rect x="17" y="332" width="746" height="36" fill="transparent"/>
@@ -58,7 +58,7 @@
   <rect x="17" y="368" width="746" height="36" fill="transparent"/>
   <text x="28" y="389" fill="#cba6f7" font-size="13">/hitl:architect-review-code</text>
   <text x="310" y="389" fill="#6c7086" font-size="12">  ·</text>
-  <text x="323" y="389" fill="#a6adc8" font-size="12">Step 19a — create PR with AI summary + judgment checklist, record decision</text>
+  <text x="323" y="389" fill="#a6adc8" font-size="12">Architect Code Review — create PR with AI summary + judgment checklist</text>
 
   <!-- Row 5: verify-traceability -->
   <rect x="17" y="404" width="746" height="36" fill="transparent"/>

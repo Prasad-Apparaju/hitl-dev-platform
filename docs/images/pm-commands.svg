@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 646" width="780" height="646" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
-  <rect width="780" height="646" rx="10" fill="#1e1e2e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 682" width="780" height="682" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <rect width="780" height="682" rx="10" fill="#1e1e2e"/>
   <rect width="780" height="38" rx="10" fill="#313244"/>
   <rect y="28" width="780" height="10" fill="#313244"/>
   <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
@@ -19,10 +19,10 @@
   <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /hitl:pm-</text>
   <rect x="110" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
-  <rect x="16" y="212" width="748" height="388" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="424" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (9)</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (10)</text>
 
   <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
   <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:pm-add-feature</text>
@@ -35,46 +35,51 @@
   <text x="273" y="297" fill="#a6adc8" font-size="12">Design a feature from a rough idea into structured requirements</text>
 
   <rect x="17" y="312" width="746" height="36" fill="transparent"/>
-  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:pm-update-requirement</text>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:pm-enhance-feature</text>
   <text x="260" y="333" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="333" fill="#a6adc8" font-size="12">Update an existing PRD requirement with new criteria or scope</text>
+  <text x="273" y="333" fill="#a6adc8" font-size="12">Enhance an existing feature — extend or refine a shipped requirement</text>
 
   <rect x="17" y="348" width="746" height="36" fill="transparent"/>
-  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:pm-review-scope-change</text>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:pm-update-requirement</text>
   <text x="260" y="369" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="369" fill="#a6adc8" font-size="12">Analyze a requested scope change and its downstream impact</text>
+  <text x="273" y="369" fill="#a6adc8" font-size="12">Update an existing PRD requirement with new criteria or scope</text>
 
   <rect x="17" y="384" width="746" height="36" fill="transparent"/>
-  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:pm-prioritize</text>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:pm-review-scope-change</text>
   <text x="260" y="405" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="405" fill="#a6adc8" font-size="12">Prioritize features using value, effort, risk, and strategic alignment</text>
+  <text x="273" y="405" fill="#a6adc8" font-size="12">Analyze a requested scope change and its downstream impact</text>
 
   <rect x="17" y="420" width="746" height="36" fill="transparent"/>
-  <text x="28" y="441" fill="#cba6f7" font-size="13">/hitl:pm-review-progress</text>
+  <text x="28" y="441" fill="#cba6f7" font-size="13">/hitl:pm-prioritize</text>
   <text x="260" y="441" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="441" fill="#a6adc8" font-size="12">Review sprint or milestone progress against PRD goals</text>
+  <text x="273" y="441" fill="#a6adc8" font-size="12">Prioritize features using value, effort, risk, and strategic alignment</text>
 
   <rect x="17" y="456" width="746" height="36" fill="transparent"/>
-  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:pm-report-bug</text>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:pm-review-progress</text>
   <text x="260" y="477" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="477" fill="#a6adc8" font-size="12">Document a bug report as a structured GitHub issue</text>
+  <text x="273" y="477" fill="#a6adc8" font-size="12">Review sprint or milestone progress against PRD goals</text>
 
   <rect x="17" y="492" width="746" height="36" fill="transparent"/>
-  <text x="28" y="513" fill="#cba6f7" font-size="13">/hitl:pm-prep-demo</text>
+  <text x="28" y="513" fill="#cba6f7" font-size="13">/hitl:pm-report-bug</text>
   <text x="260" y="513" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="513" fill="#a6adc8" font-size="12">Prepare a demo script or talking points for a feature</text>
+  <text x="273" y="513" fill="#a6adc8" font-size="12">Document a bug report as a structured GitHub issue</text>
 
   <rect x="17" y="528" width="746" height="36" fill="transparent"/>
-  <text x="28" y="549" fill="#cba6f7" font-size="13">/hitl:pm-answer-questions</text>
+  <text x="28" y="549" fill="#cba6f7" font-size="13">/hitl:pm-prep-demo</text>
   <text x="260" y="549" fill="#6c7086" font-size="12">  ·</text>
-  <text x="273" y="549" fill="#a6adc8" font-size="12">Answer product or business questions using existing docs</text>
+  <text x="273" y="549" fill="#a6adc8" font-size="12">Prepare a demo script or talking points for a feature</text>
 
-  <line x1="16" y1="566" x2="764" y2="566" stroke="#45475a" stroke-width="1" opacity="0.5"/>
-  <text x="28" y="580" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
-  <text x="600" y="580" fill="#45475a" font-size="11">from .claude/commands/pm/</text>
+  <rect x="17" y="564" width="746" height="36" fill="transparent"/>
+  <text x="28" y="585" fill="#cba6f7" font-size="13">/hitl:pm-answer-questions</text>
+  <text x="260" y="585" fill="#6c7086" font-size="12">  ·</text>
+  <text x="273" y="585" fill="#a6adc8" font-size="12">Answer product or business questions using existing docs</text>
 
-  <rect x="0" y="592" width="780" height="18" fill="#313244" opacity="0.5"/>
-  <text x="16" y="605" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  9 pm commands loaded  ·  convention checks: active</text>
+  <line x1="16" y1="602" x2="764" y2="602" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="616" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="616" fill="#45475a" font-size="11">from .claude/commands/pm/</text>
 
-  <rect x="0" y="628" width="780" height="18" rx="0" fill="#181825"/>
+  <rect x="0" y="628" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="641" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  10 pm commands loaded  ·  convention checks: active</text>
+
+  <rect x="0" y="664" width="780" height="18" rx="0" fill="#181825"/>
 </svg>

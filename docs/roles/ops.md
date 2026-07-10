@@ -50,6 +50,22 @@ p99 latency dashboards. Compare against the go/no-go criteria in the
 approved rollout plan and tell me whether to promote or hold.
 ```
 
+**`/hitl:ops-measure-baseline`** — On a `perf`-tagged change, capture the performance baseline during Design (after impact analysis, before code) so the post-change measurement can be compared and the perf budget enforced.
+```
+/hitl:ops-measure-baseline GH-42 --scenario checkout-p99
+
+Capture the current p99 latency and throughput for the checkout flow
+as the baseline for issue #42, and record the measurement plan.
+```
+
+**`/hitl:ops-audit-dependencies`** — On an Upgrade, audit dependencies for known CVEs and breaking changes during Design and produce a go/no-go. The CVE report and verdict are the required evidence the merge gate checks.
+```
+/hitl:ops-audit-dependencies GH-42 --package django@5.0
+
+Audit the dependency and framework changes in issue #42 for known
+CVEs and breaking changes, and give me a go/no-go with the report.
+```
+
 ## Your Role in the Workflow
 
 **At design time (non-blocking):** When the developer shares the impact brief draft, contribute canary criteria from the incident registry. Your past incident knowledge shapes what thresholds are tight enough for this domain.

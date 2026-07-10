@@ -263,7 +263,7 @@ Design decisions are captured in version-controlled documents — HLDs, LLDs, AD
 4. **Verify**: Two-round AI code review → architect code review on GitHub PR → reconcile docs against implementation
 5. **Assess + Ship**: Downstream impact brief → risk-rated rollout plan → verify PR completeness → lead integration verification → canary deploy
 
-Of the 31 steps (plus the 19a architect substep): 10 AI-driven, 11 AI-assisted, 11 human-only. Not every change uses all of them — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
+Of the 31 steps (plus the architect code-review substep): 10 AI-driven, 11 AI-assisted, 11 human-only. Not every change uses all of them — see the [process tiers](docs/playbook/common-pitfalls.md#61-process-tiers-by-change-type) for which steps to abbreviate.
 
 → [Full 31-step workflow reference](docs/playbook/workflow-reference.md) | [Process overview](docs/playbook/process-overview.md)
 

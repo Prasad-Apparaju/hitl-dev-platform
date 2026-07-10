@@ -241,8 +241,8 @@ Uses [semgrep](https://semgrep.dev/) for code rules and standalone scripts for m
 # Run all semgrep rules
 semgrep scan --config .semgrep/ --error
 
-# Check manifest drift
-python ci/manifest-drift/check_manifest_drift.py --source-dirs app/ src/
+# Check manifest drift (scan roots are derived from the manifest's listed files)
+python ci/manifest-drift/check_manifest_drift.py
 
 # Check Mermaid br tags
 find docs/ -name "*.md" -exec python tools/scripts/fix_mermaid_br_tags.py --check {} +
@@ -423,6 +423,8 @@ Feature work proceeds when blockers are zero.
 | `/hitl:ops-deploy` | [ai/claude/ops/deploy/SKILL.md](../ai/claude/ops/deploy/SKILL.md) | Deploy per approved rollout plan — pre-checks, canary, post-deploy verification |
 | `/hitl:ops-review-release` | [ai/claude/commands/ops/review-release.md](../ai/claude/commands/ops/review-release.md) | Assess rollout plan, canary criteria, observability, and rollback before release |
 | `/hitl:ops-monitor-canary` | [ai/claude/commands/ops/monitor-canary.md](../ai/claude/commands/ops/monitor-canary.md) | Read dashboards for active canary — produce go/no-go recommendation |
+| `/hitl:ops-measure-baseline` | [ai/claude/ops/measure-baseline/SKILL.md](../ai/claude/ops/measure-baseline/SKILL.md) | Capture a performance baseline before a `perf`-tagged change lands — the value `perf_budget_met` is later checked against |
+| `/hitl:ops-audit-dependencies` | [ai/claude/ops/audit-dependencies/SKILL.md](../ai/claude/ops/audit-dependencies/SKILL.md) | Audit dependencies for CVEs and breaking changes before an Upgrade — produces the `cve_audit` evidence + a go/no-go |
 | `/hitl:apply-change` | [ai/claude/apply-change/SKILL.md](../ai/claude/apply-change/SKILL.md) | Impact analysis (the developer-facing Impact Analysis step) |
 | `/hitl:generate-docs` | [ai/claude/generate-docs/SKILL.md](../ai/claude/generate-docs/SKILL.md) | HLD/LLD/ADR generation + reverse-engineer mode |
 | `/hitl:tdd` | [ai/claude/tdd/SKILL.md](../ai/claude/tdd/SKILL.md) | TDD-as-design loop |

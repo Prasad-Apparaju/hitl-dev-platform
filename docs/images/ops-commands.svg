@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 466" width="780" height="466" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
-  <rect width="780" height="466" rx="10" fill="#1e1e2e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 538" width="780" height="538" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <rect width="780" height="538" rx="10" fill="#1e1e2e"/>
   <rect width="780" height="38" rx="10" fill="#313244"/>
   <rect y="28" width="780" height="10" fill="#313244"/>
   <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
@@ -19,10 +19,10 @@
   <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /hitl:ops-</text>
   <rect x="112" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
 
-  <rect x="16" y="212" width="748" height="208" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="280" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
   <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
   <rect x="16" y="228" width="748" height="12" fill="#313244"/>
-  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (5)</text>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (7)</text>
 
   <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
   <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:ops-review-release</text>
@@ -49,10 +49,20 @@
   <text x="250" y="405" fill="#6c7086" font-size="12">  ·</text>
   <text x="263" y="405" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation per step</text>
 
-  <line x1="16" y1="422" x2="764" y2="422" stroke="#45475a" stroke-width="1" opacity="0.5"/>
-  <text x="28" y="436" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
-  <text x="600" y="436" fill="#45475a" font-size="11">from .claude/commands/</text>
+  <rect x="17" y="420" width="746" height="36" fill="transparent"/>
+  <text x="28" y="441" fill="#cba6f7" font-size="13">/hitl:ops-measure-baseline</text>
+  <text x="250" y="441" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="441" fill="#a6adc8" font-size="12">Capture a performance baseline before a perf change lands — for budget checks</text>
 
-  <rect x="0" y="448" width="780" height="18" fill="#313244" opacity="0.5"/>
-  <text x="16" y="461" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  5 ops commands loaded  ·  convention checks: active</text>
+  <rect x="17" y="456" width="746" height="36" fill="transparent"/>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:ops-audit-dependencies</text>
+  <text x="250" y="477" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="477" fill="#a6adc8" font-size="12">Audit dependencies for CVEs and breaking changes before an upgrade — go/no-go</text>
+
+  <line x1="16" y1="494" x2="764" y2="494" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="508" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="508" fill="#45475a" font-size="11">from .claude/commands/</text>
+
+  <rect x="0" y="520" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="533" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  7 ops commands loaded  ·  convention checks: active</text>
 </svg>

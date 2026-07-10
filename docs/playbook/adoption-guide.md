@@ -135,7 +135,7 @@ The baseline sprint produces the starting state. Keeping the process working ove
 | `docs/03-engineering/testing/test-registry.yaml` | Developer + QA | Every test added, removed, or renamed |
 | `docs/04-operations/incident-registry.yaml` | Ops + Lead | After every production incident |
 | `docs/decisions/issue-<N>.yaml` | Architect | Created at the Package Decision Packet step; updated only if scope changes before merge |
-| `.hitl/current-change.yaml` | Developer | Created by `/hitl:apply-change`; updated at each phase gate; deleted after merge |
+| `.hitl/current-change.yaml` | Developer | Created by `/hitl:apply-change`; updated at each phase gate; marked `status: merged` on completion (the session gate then treats it as inactive, so the next change starts fresh) |
 
 ### Hard requirements vs. optional
 

@@ -151,7 +151,7 @@ Most steps are AI-driven. Human work is review and judgment, not production.
 
 The 🔁 steps loop until the human is satisfied — AI revises, human re-reviews, repeat. Non-🔁 steps run once.
 
-Of the 31 steps (plus the 19a architect substep): **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **11 human-only** 👤. (Penetration testing is a conditional ops activity run via `/hitl:ops-pentest` during Ship, not a numbered step.)
+Of the 31 steps (plus the architect code-review substep): **10 AI-driven** 🤖, **11 AI-assisted** 👤🤖, **11 human-only** 👤. (Penetration testing is a conditional ops activity run via `/hitl:ops-pentest` during Ship, not a numbered step.)
 
 ### 5.3 Code Review: AI Rounds and Architect Review
 

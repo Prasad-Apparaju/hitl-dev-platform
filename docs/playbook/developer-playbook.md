@@ -82,7 +82,7 @@ Claude reads the packet, loads the LLD, and confirms what you're building before
 
 ## Step 4 — Start a change (every time)
 
-For every change — feature, fix, or refactor — start with:
+For every change — feature, fix, refactor, or docs-only — start with:
 
 ```
 /hitl:dev-practices
