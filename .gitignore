@@ -4,3 +4,7 @@ __pycache__/
 docs/session-logs/
 .hitl/
 **/~$*
+
+# Internal / confidential — never publish to the public repo
+docs/business/
+docs/validation-reports/
