@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.0.0] — 2026-07-10
+
+Major version: the workflow model is a different mental model. Existing 1.x projects keep working (the change-file schema change is additive), but the identity, breadcrumb, and taxonomy are new, so it ships as a major. 1.x continues on `release/1.x` for critical fixes.
+
+### Changed
+
+**Numberless workflow model.** Steps are identified by a stable `key` + name + phase, never by global position. The runtime `workflows.yaml` is derived from a single numberless catalog (`tools/workflow-catalog/`), and the breadcrumb is a phase ribbon with no global `Step N / total` counter. Taxonomy is three tiers: 6 workflows, 6 profiles, 5 tags.
+
+### Added
+
+**Docs-only workflow (#19).** A documentation-only change gets its own 6-step spine (issue → scope → draft → domain-routed review → reconcile → merge) instead of owing the full delivery trail or bypassing HITL. Mixed docs+code changes stay on the delivery spine.
+
+**Stale-change-file gate (#19).** A change marked `status: merged` is treated as inactive, so a concluded change file no longer satisfies the session gate for the next change.
+
+**Manifest drift checker shipped (#16).** `ci/manifest-drift/check_manifest_drift.py` is now shipped under `shared/ci/`, copied into product repos at onboarding, and derives its scan roots from the manifest (no hardcoded `app/ src/`).
+
+**Brownfield PRD initialization (#18).** Brownfield onboarding initializes the PRD shell (personas + format), the entry PM skills establish it on first run, and read-only PM/QA skills report "no requirements yet" instead of failing when the PRD is empty.
+
+---
+
 ## [1.0.30] — 2026-06-21
 
 ### Fixed
