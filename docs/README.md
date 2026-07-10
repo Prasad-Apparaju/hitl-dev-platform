@@ -11,6 +11,7 @@
 | `patterns/` | Reusable design patterns: failure mode taxonomy, idempotency keys |
 | `changes/` | Schema definitions: `change-context.schema.yaml` (the `.hitl/current-change.yaml` contract) |
 | `images/` | SVG and PNG assets used by the docs |
+| `validation-guide.md` | Independent-reviewer / Codex guide to verifying a release: requirement→design→test map plus the exact checks to run |
 | `quick-start.md` | Step-by-step setup for new and existing projects |
 | `customization-guide.md` | Full command-to-file map — where to edit every skill, agent, hook, and template |
 | `reference.md` | Quick reference card for commands and workflow steps |
