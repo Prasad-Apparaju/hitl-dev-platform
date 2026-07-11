@@ -8,5 +8,6 @@ docs/session-logs/
 # Internal / confidential — never publish to the public repo
 docs/business/
 docs/validation-reports/
-docs/presentations/hitl-pitch-leadership.pptx
+docs/presentations/
+docs/infographic/
 .playwright-mcp/
