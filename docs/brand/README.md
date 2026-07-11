@@ -14,7 +14,6 @@ Palette ("evergreen"): ink #26242E · emerald #1E8E6E · paper #FAF7F0 · roles:
 | `hitl-logo-dark.svg` / `.png` | Lockup for dark backgrounds (ink bg baked) |
 | `hitl-icon.svg` + `hitl-icon-{512,256,64,32}.png` | Badge (name below mark): avatars, favicon |
 | `hitl-icon-dark.svg` / `-512.png` | Badge on dark |
-| `logo-final-preview.png` | One-glance sheet of everything |
 | `generate-logo.py` | The parameterized source. Edit palette/geometry here, never the SVGs. |
 
 Regenerate:
