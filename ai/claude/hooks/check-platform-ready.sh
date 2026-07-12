@@ -81,9 +81,12 @@ tier = int(os.environ["_HITL_TIER"])
 today = os.environ["_HITL_TODAY"]
 
 # The gate validates SCHEMA, not just structure: anything it cannot positively validate
-# is a blocker (2026-07-11 Codex round 2 — unknown statuses and incomplete waivers must
-# not fail open the way structural gaps did in round 1).
+# is a blocker (2026-07-11 Codex rounds 2-3 — unknown statuses, incomplete waivers,
+# duplicate/missing item ids, and unenforced migration layers must not fail open the way
+# structural gaps did in round 1).
 VALID_STATUSES = ("verified", "gap", "accepted_gap", "na")
+VALID_KINDS = ("brownfield", "greenfield", "migration")
+MIGRATION_ONLY_LAYERS = ("parity", "cutover")
 
 
 def block(*lines):
@@ -143,20 +146,48 @@ try:
 
     blockers = []
     total_items = 0
+
+    # project_kind is a load-bearing field: it decides whether the migration-only layers
+    # (parity, cutover) are enforceable. A register without a valid kind was never
+    # properly derived and cannot be positively validated.
+    kind = data.get("project_kind")
+    if kind not in VALID_KINDS:
+        blockers.append(f"register: project_kind {kind!r} is not valid (must be one of "
+                        f"{', '.join(VALID_KINDS)}) — run /hitl:ops-plan-platform derive")
+
+    seen_ids = {}
     for layer, spec in (data.get("layers") or {}).items():
         for it in (spec or {}).get("items") or []:
             total_items += 1
             if not isinstance(it, dict):
                 blockers.append(f"? ({layer}): item is not a mapping")
                 continue
-            iid = str(it.get("id", "?"))
-            status = it.get("status")
+            raw_id = it.get("id")
             name = it.get("name", "")
+            # Item identity is the waiver join key: it must exist and be unique. A
+            # missing id is a schema violation, never a waivable "?" placeholder.
+            if not isinstance(raw_id, str) or not raw_id.strip():
+                blockers.append(f"? ({layer}): {name} — item has no id (ids are required "
+                                "and are the waiver join key)")
+                continue
+            iid = raw_id.strip()
+            if iid in seen_ids:
+                blockers.append(f"{iid} ({layer}): duplicate item id (also in "
+                                f"{seen_ids[iid]}) — waiver coverage would be ambiguous")
+                continue
+            seen_ids[iid] = layer
+            status = it.get("status")
             if status not in VALID_STATUSES:
                 blockers.append(f"{iid} ({layer}): {name} — invalid status {status!r} "
                                 f"(must be one of {', '.join(VALID_STATUSES)})")
                 continue
             if status == "na":
+                # The migration-only layers are APPLICABLE on a migration: leaving them
+                # na would release a target whose parity/cutover was never proven.
+                if kind == "migration" and layer in MIGRATION_ONLY_LAYERS:
+                    blockers.append(f"{iid} ({layer}): {name} — na is not allowed on a "
+                                    "migration register; derive real statuses for the "
+                                    "Parity and Cutover layers")
                 continue
             if status == "verified":
                 evidence = it.get("evidence")
@@ -167,8 +198,8 @@ try:
             # status is gap or accepted_gap: an adequate waiver is the only release.
             w = waivers.get(iid)
             if w is None:
-                kind = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"
-                blockers.append(f"{iid} ({layer}): {name} — {kind}")
+                kind_msg = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"
+                blockers.append(f"{iid} ({layer}): {name} — {kind_msg}")
                 continue
             problem = waiver_problem(w, tier)
             if problem:

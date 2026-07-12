@@ -160,6 +160,9 @@ Reusing existing gate patterns, tier-scaled:
    depth): unknown/null item statuses block, `verified` requires non-empty evidence, and a
    waiver releases only when complete (owner + valid unlapsed ISO revisit + integer
    tier_limit covering the tier + reason); any unexpected evaluation error also blocks.
+   Round 3 (identity + activation): item ids are required and unique (they are the waiver
+   join key; a missing id is never a waivable "?"), `project_kind` must be valid, and a
+   migration register may not leave Parity/Cutover items `na`.
    The only deliberate allowance that remains is the missing-register exemption for
    pre-register projects.
 2. **Advisory at change intake**: `dev-start-change` warns (does not block) when starting a
