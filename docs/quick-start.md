@@ -86,6 +86,15 @@ cp ~/tools/hitl-dev-platform/ai/shared/templates/pull-request-template.md \
 
 Every developer who clones the product repo now gets the same process.
 
+**Step 7: Generate the platform roadmap (after `/hitl:architect-design-system`)**
+
+Governance can now gate changes, but nothing exists yet to verify, deliver, or operate
+them. `/hitl:ops-plan-platform derive` builds the platform readiness register from your
+PRD's NFRs and the HLD deployment view; `roadmap` turns the gaps (pipeline, staging
+environment, E2E, observability, canary, security posture) into GitHub issues — each an
+ordinary HITL change. Tier 2+ production deploys stay blocked until the register is
+delivery-ready; staging never blocks.
+
 ---
 
 ## Quick Start — Existing Project (Brownfield)
