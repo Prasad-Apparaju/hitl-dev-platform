@@ -88,6 +88,13 @@ VALID_STATUSES = ("verified", "gap", "accepted_gap", "na")
 VALID_KINDS = ("brownfield", "greenfield", "migration")
 MIGRATION_ONLY_LAYERS = ("parity", "cutover")
 
+# The canonical item set from platform-readiness-template.yaml (schema 1.0). The gate and
+# the template ship together; a register missing canonical items is truncated or badly
+# derived and cannot be positively validated (2026-07-11 Codex round 4). Teams may ADD
+# items and layers freely; they may not lose these.
+CORE_IDS = ("D1", "D2", "D3", "E1", "E2", "E3", "F1", "F2", "F3")
+MIGRATION_IDS = ("P1", "P2", "C1", "C2", "C3")
+
 
 def block(*lines):
     for line in lines:
@@ -155,6 +162,11 @@ try:
         blockers.append(f"register: project_kind {kind!r} is not valid (must be one of "
                         f"{', '.join(VALID_KINDS)}) — run /hitl:ops-plan-platform derive")
 
+    schema = data.get("schema_version")
+    if schema != "1.0":
+        blockers.append(f"register: schema_version {schema!r} is not a version this gate "
+                        "can validate (expected \"1.0\")")
+
     seen_ids = {}
     for layer, spec in (data.get("layers") or {}).items():
         for it in (spec or {}).get("items") or []:
@@ -182,9 +194,17 @@ try:
                                 f"(must be one of {', '.join(VALID_STATUSES)})")
                 continue
             if status == "na":
-                # The migration-only layers are APPLICABLE on a migration: leaving them
+                # The canonical D/E/F items are the four readiness pillars: they are
+                # applicable by definition on every project kind. If one genuinely does
+                # not apply in a given context, that is a recorded human decision — an
+                # accepted_gap with a waiver — never a status flip to na.
+                if iid in CORE_IDS:
+                    blockers.append(f"{iid} ({layer}): {name} — na is not allowed for a "
+                                    "canonical readiness item; record an accepted_gap "
+                                    "with a waiver if it genuinely does not apply")
+                # The migration-only items are APPLICABLE on a migration: leaving them
                 # na would release a target whose parity/cutover was never proven.
-                if kind == "migration" and layer in MIGRATION_ONLY_LAYERS:
+                elif kind == "migration" and (iid in MIGRATION_IDS or layer in MIGRATION_ONLY_LAYERS):
                     blockers.append(f"{iid} ({layer}): {name} — na is not allowed on a "
                                     "migration register; derive real statuses for the "
                                     "Parity and Cutover layers")
@@ -211,6 +231,15 @@ try:
         block(f"HITL DEPLOY BLOCKED: platform readiness register has no items and "
               f"delivery_ready is not true (Tier {tier} production deploy).",
               "  Run /hitl:ops-plan-platform derive to populate it.")
+
+    # Canonical completeness: a register missing canonical items is truncated or badly
+    # derived — a plausible accident (partial write, merge mistake, wrong layer key) that
+    # must not release production for lack of the very items that would have blocked it.
+    required = list(CORE_IDS) + (list(MIGRATION_IDS) if kind == "migration" else [])
+    missing = [rid for rid in required if rid not in seen_ids]
+    if missing:
+        blockers.append(f"register: canonical item(s) {', '.join(missing)} missing — the "
+                        "register is incomplete; re-run /hitl:ops-plan-platform derive")
 
     if not blockers:
         sys.exit(0)

@@ -6,14 +6,25 @@
 #
 # Rules (enforced by /hitl:ops-plan-platform and the ops-deploy pre-flight):
 #   - `evidence` is REQUIRED to set an item to `verified` (what proved it, with a date).
-#   - `accepted_gap` REQUIRES a waiver entry below (owner + revisit date + tier_limit).
+#   - `accepted_gap` REQUIRES a waiver entry below (owner + revisit date + tier_limit +
+#     reason, all non-empty; revisit is an ISO date and must not have passed).
+#   - The canonical items below (D1-D3, E1-E3, F1-F3; plus P1-P2 and C1-C3 on a
+#     migration) are REQUIRED: the deploy gate blocks a register missing any of them
+#     (a truncated or badly derived register is not trustworthy). Add items and layers
+#     freely; never remove the canonical ones.
+#   - `na` is NOT valid for canonical D/E/F items (they are the readiness pillars), nor
+#     for Parity/Cutover items on a migration. If an item genuinely does not apply in
+#     your context, record an `accepted_gap` with a waiver — a recorded human decision.
+#     `na` on the Parity/Cutover items is correct only for non-migration projects.
+#   - Item `id`s are required and must be unique: they are the waiver join key.
 #   - `delivery_ready` is DERIVED: true only when every non-na item in every applicable
 #     layer is verified or accepted_gap. Never hand-set it.
 #   - Re-running /hitl:ops-plan-platform refreshes gaps but never downgrades a `verified`
 #     item back to `gap` without showing the evidence being discarded.
 #   - Tier 2+ PRODUCTION deploys are blocked while delivery_ready is false, unless every
-#     open item is an accepted_gap whose tier_limit covers the change's tier. Staging
-#     deploys are never blocked (platform work itself needs them).
+#     open item is an accepted_gap whose waiver tier_limit covers the change's tier.
+#     Staging deploys are never blocked (platform work itself needs them). The gate
+#     FAILS CLOSED on anything it cannot positively validate.
 
 schema_version: "1.0"
 project_kind: null            # brownfield | greenfield | migration — set at derivation

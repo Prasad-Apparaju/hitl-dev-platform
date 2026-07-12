@@ -162,7 +162,10 @@ Reusing existing gate patterns, tier-scaled:
    tier_limit covering the tier + reason); any unexpected evaluation error also blocks.
    Round 3 (identity + activation): item ids are required and unique (they are the waiver
    join key; a missing id is never a waivable "?"), `project_kind` must be valid, and a
-   migration register may not leave Parity/Cutover items `na`.
+   migration register may not leave Parity/Cutover items `na`. Round 4 (completeness):
+   the canonical item set (D1-F3; P1-C3 on migrations) is required — a truncated register
+   blocks — and `na` is never valid for applicable canonical items; a genuine
+   "does not apply here" is a recorded waiver, not a status flip.
    The only deliberate allowance that remains is the missing-register exemption for
    pre-register projects.
 2. **Advisory at change intake**: `dev-start-change` warns (does not block) when starting a
