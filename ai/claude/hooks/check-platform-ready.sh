@@ -72,6 +72,7 @@ fi
 TODAY=$(date +%F)
 export _HITL_REGISTER="$REGISTER" _HITL_TIER="$TIER" _HITL_TODAY="$TODAY"
 "$PY" << 'PYEOF'
+import datetime
 import os, sys
 import yaml
 
@@ -79,64 +80,121 @@ path = os.environ["_HITL_REGISTER"]
 tier = int(os.environ["_HITL_TIER"])
 today = os.environ["_HITL_TODAY"]
 
+# The gate validates SCHEMA, not just structure: anything it cannot positively validate
+# is a blocker (2026-07-11 Codex round 2 — unknown statuses and incomplete waivers must
+# not fail open the way structural gaps did in round 1).
+VALID_STATUSES = ("verified", "gap", "accepted_gap", "na")
+
+
+def block(*lines):
+    for line in lines:
+        print(line, file=sys.stderr)
+    sys.exit(2)
+
+
+def waiver_problem(w, tier):
+    """Return why this waiver cannot release a Tier `tier` deploy, or None if adequate.
+    The register contract (template header) requires owner + revisit + tier_limit + reason."""
+    limit = w.get("tier_limit")
+    if isinstance(limit, bool) or not isinstance(limit, int):
+        return f"waiver tier_limit={limit!r} is not an integer"
+    if limit < tier:
+        return f"waiver tier_limit={limit} does not cover Tier {tier}"
+    owner = w.get("owner")
+    if not isinstance(owner, str) or not owner.strip():
+        return "waiver has no owner"
+    revisit = w.get("revisit")
+    if isinstance(revisit, datetime.date):
+        revisit = revisit.isoformat()
+    if not isinstance(revisit, str) or not revisit.strip():
+        return "waiver has no revisit date"
+    try:
+        datetime.date.fromisoformat(revisit)
+    except ValueError:
+        return f"waiver revisit {revisit!r} is not a valid YYYY-MM-DD date"
+    if revisit < today:
+        return f"waiver lapsed (revisit {revisit})"
+    reason = w.get("reason")
+    if not isinstance(reason, str) or not reason.strip():
+        return "waiver has no reason"
+    return None
+
+
 try:
-    data = yaml.safe_load(open(path)) or {}
-    if not isinstance(data, dict):
-        raise ValueError("register is not a mapping")
-except Exception:
-    # FAIL CLOSED: an unparseable register never releases a production deploy, whatever
-    # text it happens to contain.
-    print("HITL DEPLOY BLOCKED: platform readiness register is not parseable.", file=sys.stderr)
-    print(f"  Fix {path} or re-run /hitl:ops-plan-platform derive.", file=sys.stderr)
+    try:
+        data = yaml.safe_load(open(path)) or {}
+        if not isinstance(data, dict):
+            raise ValueError("register is not a mapping")
+    except Exception:
+        # FAIL CLOSED: an unparseable register never releases a production deploy,
+        # whatever text it happens to contain.
+        block("HITL DEPLOY BLOCKED: platform readiness register is not parseable.",
+              f"  Fix {path} or re-run /hitl:ops-plan-platform derive.")
+
+    if data.get("delivery_ready") is True:
+        sys.exit(0)
+
+    waivers = {}
+    for w in data.get("waivers") or []:
+        if isinstance(w, dict):
+            item = str(w.get("item", ""))
+            if item:
+                waivers[item] = w
+
+    blockers = []
+    total_items = 0
+    for layer, spec in (data.get("layers") or {}).items():
+        for it in (spec or {}).get("items") or []:
+            total_items += 1
+            if not isinstance(it, dict):
+                blockers.append(f"? ({layer}): item is not a mapping")
+                continue
+            iid = str(it.get("id", "?"))
+            status = it.get("status")
+            name = it.get("name", "")
+            if status not in VALID_STATUSES:
+                blockers.append(f"{iid} ({layer}): {name} — invalid status {status!r} "
+                                f"(must be one of {', '.join(VALID_STATUSES)})")
+                continue
+            if status == "na":
+                continue
+            if status == "verified":
+                evidence = it.get("evidence")
+                if not isinstance(evidence, str) or not evidence.strip():
+                    blockers.append(f"{iid} ({layer}): {name} — verified without evidence "
+                                    "(the register contract requires evidence to verify)")
+                continue
+            # status is gap or accepted_gap: an adequate waiver is the only release.
+            w = waivers.get(iid)
+            if w is None:
+                kind = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"
+                blockers.append(f"{iid} ({layer}): {name} — {kind}")
+                continue
+            problem = waiver_problem(w, tier)
+            if problem:
+                blockers.append(f"{iid} ({layer}): {problem}")
+
+    # FAIL CLOSED on a structurally empty register: no items + not delivery-ready means
+    # the register was never derived (or was truncated). There is nothing to trust.
+    if total_items == 0:
+        block(f"HITL DEPLOY BLOCKED: platform readiness register has no items and "
+              f"delivery_ready is not true (Tier {tier} production deploy).",
+              "  Run /hitl:ops-plan-platform derive to populate it.")
+
+    if not blockers:
+        sys.exit(0)
+
+    print(f"HITL DEPLOY BLOCKED: platform is not delivery-ready (Tier {tier} production deploy).",
+          file=sys.stderr)
+    for b in blockers:
+        print(f"  • {b}", file=sys.stderr)
+    print("  Run /hitl:ops-plan-platform status for the full picture, or record complete "
+          "waivers (owner + revisit + tier_limit + reason) in the register.", file=sys.stderr)
     sys.exit(2)
-
-if data.get("delivery_ready") is True:
-    sys.exit(0)
-
-waivers = {}
-for w in data.get("waivers") or []:
-    item = str(w.get("item", ""))
-    if item:
-        waivers[item] = w
-
-blockers = []
-total_items = 0
-for layer, spec in (data.get("layers") or {}).items():
-    for it in (spec or {}).get("items") or []:
-        total_items += 1
-        status = it.get("status")
-        if status not in ("gap", "accepted_gap"):
-            continue
-        iid = str(it.get("id", "?"))
-        w = waivers.get(iid)
-        if w is None:
-            kind = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"
-            blockers.append(f"{iid} ({layer}): {it.get('name','')} — {kind}")
-            continue
-        limit = w.get("tier_limit")
-        if not isinstance(limit, int) or limit < tier:
-            blockers.append(f"{iid} ({layer}): waiver tier_limit={limit} does not cover Tier {tier}")
-            continue
-        revisit = str(w.get("revisit", ""))
-        if revisit and revisit < today:
-            blockers.append(f"{iid} ({layer}): waiver lapsed (revisit {revisit})")
-
-# FAIL CLOSED on a structurally empty register: no items + not delivery-ready means the
-# register was never derived (or was truncated). There is nothing to trust.
-if total_items == 0:
-    print(f"HITL DEPLOY BLOCKED: platform readiness register has no items and delivery_ready "
-          f"is not true (Tier {tier} production deploy).", file=sys.stderr)
-    print("  Run /hitl:ops-plan-platform derive to populate it.", file=sys.stderr)
-    sys.exit(2)
-
-if not blockers:
-    sys.exit(0)
-
-print(f"HITL DEPLOY BLOCKED: platform is not delivery-ready (Tier {tier} production deploy).",
-      file=sys.stderr)
-for b in blockers:
-    print(f"  • {b}", file=sys.stderr)
-print("  Run /hitl:ops-plan-platform status for the full picture, or record waivers "
-      "(owner + revisit + tier_limit) in the register.", file=sys.stderr)
-sys.exit(2)
+except SystemExit:
+    raise
+except Exception as exc:  # FAIL CLOSED on anything unexpected — never crash into a deploy
+    block("HITL DEPLOY BLOCKED: platform readiness register could not be evaluated "
+          f"({type(exc).__name__}).",
+          f"  Fix {path} or re-run /hitl:ops-plan-platform derive.")
 PYEOF

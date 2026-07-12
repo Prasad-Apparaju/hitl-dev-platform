@@ -27,10 +27,12 @@ absent for migration's back half):
   `/hitl:ops-deploy` pre-flight): Tier 2+ production deploys blocked while not
   delivery-ready unless every open item (`gap` or `accepted_gap`) carries an adequate,
   unlapsed waiver. Staging and canary are never gated. The gate **fails closed** when it
-  cannot evaluate the register: no PyYAML-capable interpreter, unparseable YAML, or a
-  register with zero items (hardened after independent validation found fail-open paths).
-  Environment strings are whitespace-trimmed before matching. Regression suite:
-  `ci/hooks/test_check_platform_ready.py`.
+  cannot positively validate the register: no PyYAML-capable interpreter, unparseable
+  YAML, a register with zero items, an item with an unknown status, a `verified` item
+  without evidence, an incomplete waiver (owner + valid ISO revisit + integer tier_limit
+  + reason are all required), or any unexpected error (hardened across two independent
+  validation rounds that found fail-open paths). Environment strings are
+  whitespace-trimmed before matching. Regression suite: `ci/hooks/test_check_platform_ready.py`.
 - **Statusline platform chip** while not delivery-ready; disappears once ready.
 - **Entry-point wiring**: brownfield steps 5-6 persist their pipeline/observability
   verdicts to the register; `start-from-prd` gains tracked step 5 (generate platform
