@@ -50,6 +50,14 @@ p99 latency dashboards. Compare against the go/no-go criteria in the
 approved rollout plan and tell me whether to promote or hold.
 ```
 
+**`/hitl:ops-plan-platform`** — After onboarding (and any time platform work lands), maintain the platform readiness register and its generated roadmap: what stands between "changes can be made" and "changes can be delivered to customers". `derive` builds/refreshes the register, `roadmap` turns gaps into phased GitHub issues, `status` renders the ribbon, `verify-ready` checks the Definition of Ready. Tier 2+ **production** deploys are hard-blocked until the register says `delivery_ready: true` (or every open gap carries a recorded waiver); staging is never blocked.
+```
+/hitl:ops-plan-platform status
+
+Show me the platform readiness ribbon, the open gaps by layer,
+and any waivers that are about to lapse.
+```
+
 ## Your Role in the Workflow
 
 **At design time (non-blocking):** When the developer shares the impact brief draft, contribute canary criteria from the incident registry. Your past incident knowledge shapes what thresholds are tight enough for this domain.

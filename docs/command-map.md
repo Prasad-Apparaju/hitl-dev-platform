@@ -242,6 +242,7 @@ graph TB
 |---|---|
 | `/hitl:ops-build` | Validate and run build pipeline |
 | `/hitl:ops-deploy` | Full deployment workflow |
+| `/hitl:ops-plan-platform` | Platform readiness register + roadmap (onboarded → delivery-ready) |
 | `/hitl:ops-apply-iac` | Infrastructure-as-code changes |
 | `/hitl:ops-migrate-database` | Database migration before deploy |
 | `/hitl:ops-backup-database` | Pre-deploy or scheduled backup |

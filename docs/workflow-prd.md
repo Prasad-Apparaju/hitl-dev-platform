@@ -6,7 +6,7 @@ All steps from project creation to production, following the `/hitl:dev-start-fr
 
 ## 1. Project Setup
 
-Setup ends when `/hitl:architect-design-system` produces approved HLDs, LLDs, and a delivery plan. No per-change work begins before that point.
+Setup ends when `/hitl:architect-design-system` has produced approved HLDs, LLDs, and a delivery plan, and step 5 has generated the platform roadmap. No per-change work begins before that point.
 
 ```mermaid
 graph TB
@@ -19,12 +19,13 @@ graph TB
     s4["Step 4 - Confirm ready"]
     design["/hitl:architect-design-system - HLDs + LLDs + delivery plan"]
     graphify["graphify . + graphify hook install (if installed)"]
-    entry --> s0 --> s1 --> s2 --> s3 --> s4 --> design --> graphify
+    s5["Step 5 - Generate platform roadmap - /hitl:ops-plan-platform"]
+    entry --> s0 --> s1 --> s2 --> s3 --> s4 --> design --> graphify --> s5
   end
 
   loop["Per-change delivery loop - GitHub issue + /hitl:dev-practices"]
 
-  graphify --> loop
+  s5 --> loop
 ```
 
 ### What each step produces
@@ -38,6 +39,7 @@ graph TB
 | 4 | _(confirms ready)_ | — | — |
 | Design | `/hitl:architect-design-system` | HLDs, LLDs, `docs/decisions/issue-N.yaml` per slice | Per-change loop |
 | Graphify | `graphify . && graphify hook install` | `graphify-out/graph.json` (optional) | First `/hitl:dev-practices` run |
+| 5 | `/hitl:ops-plan-platform` | `docs/04-operations/platform-readiness.yaml` + roadmap issues (pipeline, staging env, observability) | First Tier 2+ production deploy (hard gate) |
 
 ---
 

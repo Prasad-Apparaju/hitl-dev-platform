@@ -29,15 +29,17 @@ graph TB
     design_full["/hitl:architect-design-system migration-brief.md"]
     design_slice["/hitl:architect-design-feature (per slice)"]
     graphify["graphify . + graphify hook install (if installed)"]
+    platform["/hitl:ops-plan-platform - readiness register (project_kind: migration) + roadmap"]
     entry --> s0 --> s1 --> s2 --> s3 --> s4 --> s5 --> s6 --> s7 --> s8 --> s9
     s9 --> review --> design_choice
     design_choice --> design_full --> graphify
     design_choice --> design_slice --> graphify
+    graphify --> platform
   end
 
   loop["Per-slice delivery loop - GitHub issue + /hitl:dev-practices + update coverage matrix"]
 
-  graphify --> loop
+  platform --> loop
 ```
 
 ### What each setup step produces
@@ -57,6 +59,7 @@ graph TB
 | Review | `/hitl:dev-review-external-docs` | `migration-review.md` + `migration-brief.md` with coverage matrix | Architect design |
 | Design | `/hitl:architect-design-system` or `/hitl:architect-design-feature` | HLDs, LLDs, `docs/decisions/` per slice | Per-slice loop |
 | Graphify | `graphify . && graphify hook install` | `graphify-out/graph.json` (optional) | First `/hitl:dev-practices` run |
+| Platform | `/hitl:ops-plan-platform` | `docs/04-operations/platform-readiness.yaml` with `project_kind: migration` (activates the migration-only **Parity** and **Cutover** layers: golden-dataset harness, shadow-run, cutover plan with rollback-to-legacy, dual-run window, legacy sunset) + roadmap issues | First Tier 2+ production deploy of the target (hard gate); migration completion requires Parity + Cutover green |
 
 ---
 
