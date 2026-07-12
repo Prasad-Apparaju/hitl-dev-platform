@@ -43,7 +43,9 @@ The PoC phase is explicitly **not** held to the full workflow. Its purpose is to
 | **An issue with unknowns** | PoC phase first → findings doc → then enter the execution workflow with the unknowns resolved. |
 | **An issue (known, ready to build)** | Enter the execution workflow directly. |
 
-> **Brownfield (existing codebase not yet in HITL):** Run `/hitl:dev-start-brownfield` to onboard. It walks through the incremental setup: CLAUDE.md, system manifest, priority component docs, and registry stubs. Start change work immediately after — each undocumented component gets its LLD generated the first time you change it.
+> **Brownfield (existing codebase not yet in HITL):** Run `/hitl:dev-start-brownfield` to onboard. It walks through the incremental setup: CLAUDE.md, system manifest, priority component docs, and registry stubs — and persists its pipeline/observability verdicts to the platform readiness register (`docs/04-operations/platform-readiness.yaml`). Start change work immediately after — each undocumented component gets its LLD generated the first time you change it.
+>
+> **After any onboarding path, stand up the platform:** changes can be *made* once governance exists, but *delivered to customers* only once the platform readiness register is green. Run `/hitl:ops-plan-platform` to derive the register and generate the roadmap (pipeline, staging environment, E2E, observability, canary, security posture — each item an ordinary HITL change). Tier 2+ **production** deploys are hard-blocked until the register says `delivery_ready: true` or every open item carries a recorded waiver; staging is never blocked. See [Deployment Gates](deployment-gates.md).
 >
 > | Approach | Steps | Tradeoff |
 > |---|---|---|

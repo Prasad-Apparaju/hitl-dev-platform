@@ -4,6 +4,20 @@ How to enforce risk-based gates before code reaches production. Complements the 
 
 ---
 
+## Platform Readiness Gate (before everything below)
+
+The per-change gates in this doc assume the platform itself can deliver. That assumption is
+enforced: `/hitl:ops-deploy` runs a pre-flight (`hooks/check-platform-ready.sh`) that
+**blocks every Tier 2+ production deploy** while the platform readiness register
+(`docs/04-operations/platform-readiness.yaml`) is not `delivery_ready` — unless every open
+item carries a complete, unlapsed waiver (owner + revisit date + tier limit + reason).
+Staging and canary deploys are never blocked. The gate fails closed on anything it cannot
+positively validate (unparseable or truncated register, unknown statuses, incomplete
+waivers). Manage the register with `/hitl:ops-plan-platform` (derive / roadmap / status /
+verify-ready). Projects with no register yet are not blocked; onboarding creates it.
+
+---
+
 ## Gates by Risk Level
 
 | Risk | PR Gate | Deploy Gate | Approval |

@@ -106,6 +106,8 @@ python ~/tools/hitl-dev-platform/tools/generate-manifest/generator.py \
 
 An architect working with AI can produce the full documentation baseline in a sprint — typically one to two weeks for a medium-sized system. See [docs/playbook/adoption-guide.md](playbook/adoption-guide.md) for scope expectations by system size.
 
+Once onboarded, generate the **platform roadmap**: `/hitl:ops-plan-platform derive` builds the platform readiness register (`docs/04-operations/platform-readiness.yaml`) from what onboarding found, and `roadmap` turns the gaps (pipeline, staging environment, E2E, observability, canary, security posture) into GitHub issues — each an ordinary HITL change. Tier 2+ production deploys are blocked until the register is delivery-ready or gaps carry recorded waivers; staging never blocks.
+
 ---
 
 ## Additional products on the same machine
