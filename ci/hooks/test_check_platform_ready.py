@@ -41,12 +41,37 @@ def write_register(project_dir, body):
     (reg_dir / "platform-readiness.yaml").write_text(textwrap.dedent(body))
 
 
+# Canonical-complete register (schema 1.0 requires all D/E/F items present; the gate
+# blocks truncated registers). Exactly ONE gap (E3) — several tests string-replace on the
+# single "status: gap" occurrence and the chip test asserts "1 gap".
 REGISTER_WITH_GAP = """\
     schema_version: "1.0"
     project_kind: brownfield
     layers:
+      verification:
+        items:
+          - id: D1
+            name: "Tier test suites exist"
+            status: verified
+            evidence: "pytest suite in CI, run 812"
+          - id: D2
+            name: "E2E against staging"
+            status: verified
+            evidence: "playwright nightly, run 44"
+          - id: D3
+            name: "Traceability matrix"
+            status: verified
+            evidence: "matrix seeded 2026-07-11"
       delivery:
         items:
+          - id: E1
+            name: "Reproducible build"
+            status: verified
+            evidence: "clean-checkout build, run 812"
+          - id: E2
+            name: "Deploy playbook"
+            status: verified
+            evidence: "playbook v3 reviewed"
           - id: E3
             name: "Deploy to staging executes from CI"
             status: gap
@@ -57,6 +82,14 @@ REGISTER_WITH_GAP = """\
             name: "Observability established"
             status: verified
             evidence: "grafana dashboard 'main', pager rotation, 2026-07-11"
+          - id: F2
+            name: "Canary exercised"
+            status: verified
+            evidence: "canary run 2026-07-10"
+          - id: F3
+            name: "Security posture"
+            status: verified
+            evidence: "secret scan + dep audit in CI"
     delivery_ready: false
     waivers: []
 """
@@ -367,37 +400,45 @@ class TestItemIdentity:
 class TestProjectKind:
     """Codex round-3 blocker 3 (+ the adjacent gap): project_kind is load-bearing."""
 
-    MIGRATION_BASE = (
-        'schema_version: "1.0"\nproject_kind: migration\nlayers:\n'
-        '  delivery:\n    items:\n'
-        '      - id: E1\n        name: "build"\n        status: verified\n'
-        '        evidence: "build pass 2026-07-11"\n'
-        '  parity:\n    items:\n'
-        '      - id: P1\n        name: "golden dataset"\n        status: {parity}\n'
-        '        {parity_extra}\n'
-        '  cutover:\n    items:\n'
-        '      - id: C1\n        name: "cutover plan"\n        status: {cutover}\n'
-        '        {cutover_extra}\n'
-        'delivery_ready: false\nwaivers: []\n')
+    @staticmethod
+    def _core_layers_yaml():
+        """All 9 canonical D/E/F items verified with evidence, template layer names."""
+        layers = {"verification": ("D1", "D2", "D3"), "delivery": ("E1", "E2", "E3"),
+                  "operation": ("F1", "F2", "F3")}
+        out = []
+        for layer, ids in layers.items():
+            out.append(f"  {layer}:\n    items:\n")
+            for iid in ids:
+                out.append(f'      - id: {iid}\n        name: "{iid} item"\n'
+                           f'        status: verified\n        evidence: "proof {iid}"\n')
+        return "".join(out)
+
+    def migration_register(self, parity_status, extra=""):
+        mig = []
+        for layer, ids in (("parity", ("P1", "P2")), ("cutover", ("C1", "C2", "C3"))):
+            mig.append(f"  {layer}:\n    items:\n")
+            for iid in ids:
+                mig.append(f'      - id: {iid}\n        name: "{iid} item"\n'
+                           f"        status: {parity_status}\n{extra}"
+                           if parity_status != "verified" else
+                           f'      - id: {iid}\n        name: "{iid} item"\n'
+                           f'        status: verified\n        evidence: "proof {iid}"\n')
+        return ('schema_version: "1.0"\nproject_kind: migration\nlayers:\n'
+                + self._core_layers_yaml() + "".join(mig)
+                + 'delivery_ready: false\nwaivers: []\n')
 
     def test_migration_parity_na_blocks(self, project):
-        write_register(project, self.MIGRATION_BASE.format(
-            parity="na", parity_extra="severity: red",
-            cutover="na", cutover_extra="severity: red"))
+        write_register(project, self.migration_register("na"))
         code, err = run_gate(project, "production", 2)
         assert code == 2
         assert "na is not allowed on a migration register" in err
 
     def test_migration_with_real_statuses_passes(self, project):
-        write_register(project, self.MIGRATION_BASE.format(
-            parity="verified", parity_extra='evidence: "shadow run clean 2026-07-11"',
-            cutover="verified", cutover_extra='evidence: "cutover executed 2026-07-11"'))
+        write_register(project, self.migration_register("verified"))
         assert run_gate(project, "production", 2)[0] == 0
 
     def test_non_migration_parity_na_passes(self, project):
-        reg = self.MIGRATION_BASE.format(
-            parity="na", parity_extra="severity: red",
-            cutover="na", cutover_extra="severity: red").replace(
+        reg = self.migration_register("na").replace(
             "project_kind: migration", "project_kind: brownfield")
         write_register(project, reg)
         assert run_gate(project, "production", 2)[0] == 0
@@ -418,6 +459,67 @@ class TestProjectKind:
             '      - id: E1\n        name: "build"\n        status: verified\n'
             '        evidence: "build pass"\n'
             'delivery_ready: false\nwaivers: []\n'))
+        assert run_gate(project, "production", 2)[0] == 2
+
+
+class TestCanonicalCompleteness:
+    """Codex round-4 blockers: truncated registers and na on canonical D/E/F items."""
+
+    def test_truncated_register_blocks(self, project):
+        # One verified item is not a readiness register (round-4 repro 1).
+        write_register(project, (
+            'schema_version: "1.0"\nproject_kind: brownfield\nlayers:\n'
+            '  delivery:\n    items:\n'
+            '      - id: E1\n        name: "build"\n        status: verified\n'
+            '        evidence: "build pass"\n'
+            'delivery_ready: false\nwaivers: []\n'))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "canonical item(s)" in err and "D1" in err and "F3" in err
+
+    def test_unknown_layer_only_blocks(self, project):
+        # Wrong layer keys mean the canonical set is missing (round-4 repro 3).
+        write_register(project, (
+            'schema_version: "1.0"\nproject_kind: brownfield\nlayers:\n'
+            '  something_else:\n    items:\n'
+            '      - id: X1\n        name: "custom"\n        status: verified\n'
+            '        evidence: "ok"\n'
+            'delivery_ready: false\nwaivers: []\n'))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "canonical item(s)" in err
+
+    def test_core_item_na_blocks(self, project):
+        # Round-4 repro 2: D/E/F may never be na — waivers are the escape hatch.
+        write_register(project, REGISTER_WITH_GAP.replace(
+            "            status: gap\n            severity: red\n",
+            "            status: na\n            severity: red\n"))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "na is not allowed for a canonical readiness item" in err
+
+    def test_custom_extra_item_na_passes(self, project):
+        # Teams may ADD items; a custom item may be na when the canonical set is green.
+        reg = REGISTER_WITH_GAP.replace(
+            "            status: gap\n            severity: red\n",
+            '            status: verified\n            evidence: "ci deploy job green"\n'
+        ).replace(
+            "    delivery_ready: false\n",
+            '      custom:\n        items:\n          - id: X9\n'
+            '            name: "optional extra"\n            status: na\n'
+            "    delivery_ready: false\n")
+        write_register(project, reg)
+        assert run_gate(project, "production", 2)[0] == 0
+
+    def test_missing_schema_version_blocks(self, project):
+        write_register(project, REGISTER_WITH_GAP.replace('    schema_version: "1.0"\n', ""))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "schema_version" in err
+
+    def test_unknown_schema_version_blocks(self, project):
+        write_register(project, REGISTER_WITH_GAP.replace(
+            'schema_version: "1.0"', 'schema_version: "9.9"'))
         assert run_gate(project, "production", 2)[0] == 2
 
 
