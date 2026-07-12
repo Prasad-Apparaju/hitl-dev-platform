@@ -54,7 +54,27 @@ elif tool == "apply_patch":
         if p:
             paths.append(p)
 
-print("\n".join(paths))
+# Normalize to project-relative paths (issue #20). Claude Code sends file_path ABSOLUTE, so
+# without this the .hitl/.claude bootstrap exemption never matches and files outside the
+# project (scratchpads, user-level config) get gated as if they were project source.
+# realpath on both sides resolves symlinks (e.g. macOS /tmp -> /private/tmp) so containment
+# checks compare like with like. Paths that resolve outside the project are dropped: HITL
+# governs this project's files only.
+root = os.path.realpath(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
+resolved = []
+for p in paths:
+    if os.path.isabs(p):
+        try:
+            rel = os.path.relpath(os.path.realpath(p), root)
+        except ValueError:
+            continue  # different drive (Windows) — outside the project
+    else:
+        rel = os.path.normpath(p)
+    if rel == ".." or rel.startswith(".." + os.sep):
+        continue  # outside the project
+    resolved.append(rel.replace(os.sep, "/"))
+
+print("\n".join(resolved))
 PYEOF
 )
 
