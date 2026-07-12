@@ -4,7 +4,7 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [1.1.0] — Unreleased
+## [1.1.0] — 2026-07-12
 
 ### Added
 
