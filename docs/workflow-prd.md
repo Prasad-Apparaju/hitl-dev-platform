@@ -12,7 +12,7 @@ Setup ends when `/hitl:architect-design-system` has produced approved HLDs, LLDs
 graph TB
   subgraph SETUP["Project Setup — run once per project"]
     entry["/hitl:dev-start-from-prd"]
-    s0["Step 0 - Wire 7 hooks + settings.json + 4 ADR stubs"]
+    s0["Step 0 - Wire 8 hooks + settings.json + 4 ADR stubs"]
     s1["Step 1 - Customize CLAUDE.md"]
     s2["Step 2 - Initialize system manifest"]
     s3["Step 3 - Create first GitHub issue"]
