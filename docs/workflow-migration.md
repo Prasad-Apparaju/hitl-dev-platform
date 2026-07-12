@@ -14,7 +14,7 @@ Setup ends when the migration brief is approved and architect design begins. No 
 graph TB
   subgraph SETUP["Project Setup — run once per migration project"]
     entry["/hitl:dev-start-migration"]
-    s0["Step 0 - Wire 7 hooks + settings.json + 4 ADR stubs"]
+    s0["Step 0 - Wire 8 hooks + settings.json + 4 ADR stubs"]
     s1["Step 1 - Collect migration context - source, target, trigger, external docs"]
     s2["Step 2 - Customize CLAUDE.md for TARGET system conventions"]
     s3["Step 3 - Initialize TARGET system manifest (provisional)"]

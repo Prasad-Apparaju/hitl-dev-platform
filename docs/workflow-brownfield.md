@@ -14,7 +14,7 @@ Setup ends when the system manifest, architecture ADRs, priority component LLDs,
 graph TB
   subgraph SETUP["Project Setup — run once per project"]
     entry["/hitl:dev-start-brownfield"]
-    s0["Step 0 - Wire 7 hooks + settings.json + 4 ADR stubs"]
+    s0["Step 0 - Wire 8 hooks + settings.json + 4 ADR stubs"]
     s1["Step 1 - Map the codebase"]
     s2["Step 2 - Customize CLAUDE.md"]
     s3["Step 3 - Generate system manifest from existing code"]
