@@ -4,6 +4,42 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [1.1.0] — Unreleased
+
+### Added
+
+**Platform-bootstrap workflow (issue #21) — full 1.x support.** HITL now codifies the
+bridge from "onboarded" to "ready for customer delivery" on the 1.x line as well
+(previously untracked prose on greenfield, display-only survey verdicts on brownfield,
+absent for migration's back half):
+
+- **`platform` workflow** in the catalog (Survey → Verify → Deliver → Operate → Ready,
+  17 steps; Parity and Cutover phases apply only when the readiness register says
+  `project_kind: migration`). Long-lived and per-project: progress lives in the readiness
+  register, never in `.hitl/current-change.yaml` — roadmap items are ordinary HITL changes.
+- **Platform readiness register** (`docs/04-operations/platform-readiness.yaml`, template
+  shipped): layer D/E/F items with required evidence, recorded waivers (owner + revisit +
+  tier_limit), and a derived `delivery_ready` flag.
+- **`/hitl:ops-plan-platform`** (new skill): derives the register from entry artifacts,
+  generates the roadmap as GitHub issues, renders status, verifies the four-pillar
+  Definition of Ready.
+- **Hard production-deploy gate** (`hooks/check-platform-ready.sh`, run by
+  `/hitl:ops-deploy` pre-flight): Tier 2+ production deploys blocked while not
+  delivery-ready unless every open gap carries an adequate, unlapsed waiver. Staging and
+  canary are never gated. Regression suite: `ci/hooks/test_check_platform_ready.py`.
+- **Statusline platform chip** while not delivery-ready; disappears once ready.
+- **Entry-point wiring**: brownfield steps 5-6 persist their pipeline/observability
+  verdicts to the register; `start-from-prd` gains tracked step 5 (generate platform
+  roadmap), replacing its untracked closing prose checklist (`prd` workflow is now 5 steps;
+  `/hitl:dev-update` migrates by key as usual); migration seeds Parity/Cutover and its
+  completion criterion now includes legacy sunset.
+
+Ported from the 2.x line (2.1.0). Design package: `docs/design/platform-bootstrap/` on
+`main` (decisions D1-D6 locked 2026-07-11). Note: with this release the 1.x line carries
+this feature in addition to critical fixes.
+
+---
+
 ## [1.0.31] — 2026-07-11
 
 ### Fixed

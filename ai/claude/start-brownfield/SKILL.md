@@ -283,6 +283,13 @@ If no CI/CD config exists, or the build fails and cannot be quickly fixed, say:
 
 If they want a scaffold, generate a minimal CI/CD config (build → test → deploy-to-staging) using the tech stack from Step 2 and the deployment target from the deployment view. Do not include a production deploy job without an explicit approval gate.
 
+**Persist the verdicts (required):** copy `"$PLUGIN_ROOT/shared/templates/platform-readiness-template.yaml"`
+to `docs/04-operations/platform-readiness.yaml` if missing, set `project_kind: brownfield`,
+and record this step's verdicts there: `E1` (build reproducible), `E3` (staging deploy from
+CI), `D1` (suites run in CI and can fail) — evidence rules are in the template header. The
+register feeds `/hitl:ops-plan-platform` (Step 11) and the production-deploy gate; a verdict
+not written here does not exist.
+
 ---
 
 ## Step 6 — Set up observability
@@ -358,6 +365,10 @@ except:pass
 | No error tracking | 🟢 | Recommended — Sentry free tier covers most projects |
 | No distributed tracing | 🟢 | Optional for monoliths; required for microservices with cross-service calls |
 | Token cost registry missing | 🟡 | Created above — update at Step 31 of every change |
+
+**5. Persist the survey (required):** record `F1` in the readiness register (from Step 5):
+`verified` with instrument names as evidence, or `gap` at the worst open row's severity with
+the open rows listed. An unrecorded gap is invisible to the roadmap and the deploy gate.
 
 ---
 
@@ -473,5 +484,10 @@ For every change going forward:
 2. Run `/hitl:dev-practices` — the 31-step workflow starts here
 3. Update HLD/LLD if the design changes
 4. Code → tests → PR
+
+**Next: the platform roadmap.** Steps 5-6 wrote the readiness register; changes can be
+*made* now but *delivered to customers* only once it is green. Run
+`/hitl:ops-plan-platform roadmap` to turn the recorded gaps into phased GitHub issues (each
+an ordinary HITL change). Tier 2+ **production** deploys stay blocked until delivery-ready.
 
 ---

@@ -121,9 +121,39 @@ workflows:
   prd:
     id: prd
     title: "PRD — stand up a greenfield project from a PRD"
-    total: 4
+    total: 5
     steps:
-      - { n: 1, key: claude_md,     label: "CLAUDE.md", phase: "PRD Setup" }
-      - { n: 2, key: manifest,      label: "Manifest",  phase: "PRD Setup" }
-      - { n: 3, key: create_issue,  label: "Issue",     phase: "PRD Setup" }
-      - { n: 4, key: confirm_ready, label: "Ready",     phase: "PRD Setup" }
+      - { n: 1, key: claude_md,        label: "CLAUDE.md", phase: "PRD Setup" }
+      - { n: 2, key: manifest,         label: "Manifest",  phase: "PRD Setup" }
+      - { n: 3, key: create_issue,     label: "Issue",     phase: "PRD Setup" }
+      - { n: 4, key: confirm_ready,    label: "Ready",     phase: "PRD Setup" }
+      - { n: 5, key: platform_roadmap, label: "Platform",  phase: "PRD Setup" }
+
+  # ── Platform bootstrap: onboarded → delivery-ready (17 steps; 12 without migration) ──────────
+  # Canonical source: ai/claude/ops/plan-platform/SKILL.md.
+  # Long-lived and per-project: progress lives in docs/04-operations/platform-readiness.yaml,
+  # NOT in .hitl/current-change.yaml — roadmap items are ordinary changes and need the change
+  # file. `cond: migration` steps apply only when the register says project_kind: migration
+  # (ops-plan-platform resolves this at roadmap generation; renderers never read this entry).
+  platform:
+    id: platform
+    title: "Platform Bootstrap — onboarded to delivery-ready"
+    total: 17
+    steps:
+      - { n: 1,  key: derive_register,  label: "Register", phase: "Survey" }
+      - { n: 2,  key: roadmap,          label: "Roadmap",  phase: "Survey" }
+      - { n: 3,  key: test_suites,      label: "Suites",   phase: "Verify" }
+      - { n: 4,  key: e2e_env,          label: "E2E",      phase: "Verify" }
+      - { n: 5,  key: traceability,     label: "Trace",    phase: "Verify" }
+      - { n: 6,  key: build_repro,      label: "Build",    phase: "Deliver" }
+      - { n: 7,  key: deploy_playbook,  label: "Playbook", phase: "Deliver" }
+      - { n: 8,  key: cd_from_ci,       label: "CD",       phase: "Deliver" }
+      - { n: 9,  key: obs_established,  label: "Observ",   phase: "Operate" }
+      - { n: 10, key: canary_exercised, label: "Canary",   phase: "Operate" }
+      - { n: 11, key: sec_posture,      label: "SecPos",   phase: "Operate" }
+      - { n: 12, key: golden_dataset,   label: "Golden",   phase: "Parity",  cond: migration }
+      - { n: 13, key: shadow_run,       label: "Shadow",   phase: "Parity",  cond: migration }
+      - { n: 14, key: cutover_plan,     label: "CutPlan",  phase: "Cutover", cond: migration }
+      - { n: 15, key: dual_run,         label: "DualRun",  phase: "Cutover", cond: migration }
+      - { n: 16, key: decommission,     label: "Sunset",   phase: "Cutover", cond: migration }
+      - { n: 17, key: delivery_ready,   label: "Ready",    phase: "Ready" }
