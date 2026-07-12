@@ -4,16 +4,20 @@
 #
 # Exit 0 = deploy may proceed; exit 2 = blocked (reasons on stderr).
 #
-# Rules (decision D2, locked 2026-07-11 — hard block with waivers):
+# Rules (decision D2, locked 2026-07-11 — hard block with waivers; hardened per the
+# 2026-07-11 Codex validation, which found fail-open paths):
 #   - Only PRODUCTION deploys are ever gated. Staging/canary/dev: always allowed
 #     (the platform work itself needs them).
 #   - Only Tier 2+ changes are gated. Tier comes from arg 2, else .hitl/current-change.yaml.
 #   - No register file → allowed (projects predating the register are not retro-blocked;
 #     onboarding creates it going forward).
-#   - delivery_ready: true → allowed.
-#   - Otherwise: allowed only if EVERY open item (status: gap) is covered by a waiver whose
-#     tier_limit >= the change tier and whose revisit date has not passed. A lapsed waiver
-#     counts as an open gap.
+#   - delivery_ready: true (in a PARSEABLE register) → allowed.
+#   - Otherwise: allowed only if the register has at least one item and EVERY open item
+#     (status gap OR accepted_gap) is covered by a waiver whose tier_limit >= the change
+#     tier and whose revisit date has not passed. A lapsed waiver counts as an open gap.
+#   - FAIL CLOSED when the gate cannot evaluate: no PyYAML-capable python, unparseable
+#     register, or a register with zero items. A hard gate that cannot read its input
+#     blocks; it never guesses.
 
 set -euo pipefail
 
@@ -26,8 +30,10 @@ TIER_ARG="${2:-}"
 REGISTER="docs/04-operations/platform-readiness.yaml"
 CONTEXT_FILE=".hitl/current-change.yaml"
 
-# Non-production targets are never gated.
-case "$(printf '%s' "$ENVIRONMENT" | tr '[:upper:]' '[:lower:]')" in
+# Non-production targets are never gated. Trim whitespace before matching so a
+# user-entered "Production " cannot slip past the gate.
+ENV_NORM="$(printf '%s' "$ENVIRONMENT" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+case "$ENV_NORM" in
   prod|production) ;;
   *) exit 0 ;;
 esac
@@ -45,29 +51,43 @@ if (( TIER < 2 )); then
   exit 0
 fi
 
-PY=$(hitl_python) || exit 0  # no usable python — fail open, consistent with the other hooks
+# Find a python that can actually parse the register (import yaml, not just import sys —
+# hitl_python's probe is too weak for this gate). $HITL_PY is honored first. No capable
+# interpreter → FAIL CLOSED: this is a hard gate; it does not guess.
+PY=""
+for cand in "${HITL_PY:-}" python3 python py; do
+  [[ -n "$cand" ]] || continue
+  if command -v "$cand" >/dev/null 2>&1 && "$cand" -c "import yaml" >/dev/null 2>&1; then
+    PY="$cand"
+    break
+  fi
+done
+if [[ -z "$PY" ]]; then
+  echo "HITL DEPLOY BLOCKED: no Python with PyYAML found, so the platform readiness register cannot be verified." >&2
+  echo "  Install PyYAML (pip install pyyaml) or set HITL_PY to a capable interpreter, then retry." >&2
+  echo "  A Tier ${TIER} production deploy is not allowed on an unverifiable register." >&2
+  exit 2
+fi
 
 TODAY=$(date +%F)
 export _HITL_REGISTER="$REGISTER" _HITL_TIER="$TIER" _HITL_TODAY="$TODAY"
 "$PY" << 'PYEOF'
 import os, sys
-import re
+import yaml
 
 path = os.environ["_HITL_REGISTER"]
 tier = int(os.environ["_HITL_TIER"])
 today = os.environ["_HITL_TODAY"]
 
 try:
-    import yaml
     data = yaml.safe_load(open(path)) or {}
+    if not isinstance(data, dict):
+        raise ValueError("register is not a mapping")
 except Exception:
-    # Register unreadable as YAML: fall back to a conservative grep-style check.
-    text = open(path, errors="replace").read()
-    if re.search(r"^delivery_ready:\s*true\b", text, re.M):
-        sys.exit(0)
-    print("HITL DEPLOY BLOCKED: platform readiness register is not parseable and "
-          "delivery_ready is not true.", file=sys.stderr)
-    print(f"  Fix {path} or run /hitl:ops-plan-platform derive.", file=sys.stderr)
+    # FAIL CLOSED: an unparseable register never releases a production deploy, whatever
+    # text it happens to contain.
+    print("HITL DEPLOY BLOCKED: platform readiness register is not parseable.", file=sys.stderr)
+    print(f"  Fix {path} or re-run /hitl:ops-plan-platform derive.", file=sys.stderr)
     sys.exit(2)
 
 if data.get("delivery_ready") is True:
@@ -80,14 +100,18 @@ for w in data.get("waivers") or []:
         waivers[item] = w
 
 blockers = []
+total_items = 0
 for layer, spec in (data.get("layers") or {}).items():
     for it in (spec or {}).get("items") or []:
-        if it.get("status") != "gap":
+        total_items += 1
+        status = it.get("status")
+        if status not in ("gap", "accepted_gap"):
             continue
         iid = str(it.get("id", "?"))
         w = waivers.get(iid)
         if w is None:
-            blockers.append(f"{iid} ({layer}): {it.get('name','')} — open gap, no waiver")
+            kind = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"
+            blockers.append(f"{iid} ({layer}): {it.get('name','')} — {kind}")
             continue
         limit = w.get("tier_limit")
         if not isinstance(limit, int) or limit < tier:
@@ -96,6 +120,14 @@ for layer, spec in (data.get("layers") or {}).items():
         revisit = str(w.get("revisit", ""))
         if revisit and revisit < today:
             blockers.append(f"{iid} ({layer}): waiver lapsed (revisit {revisit})")
+
+# FAIL CLOSED on a structurally empty register: no items + not delivery-ready means the
+# register was never derived (or was truncated). There is nothing to trust.
+if total_items == 0:
+    print(f"HITL DEPLOY BLOCKED: platform readiness register has no items and delivery_ready "
+          f"is not true (Tier {tier} production deploy).", file=sys.stderr)
+    print("  Run /hitl:ops-plan-platform derive to populate it.", file=sys.stderr)
+    sys.exit(2)
 
 if not blockers:
     sys.exit(0)

@@ -25,7 +25,7 @@ The bare macOS system Python (`/Library/Developer/CommandLineTools/usr/bin/pytho
 | # | Command | Pass criterion |
 |---|---------|----------------|
 | 1 | `python3 tools/workflow-catalog/derive.py verify` | Prints `VERIFY OK: ... spine->development, brownfield->brownfield, docs->docs, greenfield->prd, migration->migration, migration_review->migration_review, platform->platform`. Proves the numberless catalog reproduces the runtime `ai/shared/workflows.yaml` losslessly. |
-| 2 | `python3 -m pytest tools/workflow-catalog/test_derive.py ci/skill-lint/test_check_skills.py ci/manifest-drift/test_check_manifest_drift.py ci/hooks -q` | `55 passed`. Deriver (12), skill-lint (8), drift-checker (4), enforcement hooks (31: intake gate #20 = 14, platform deploy gate + statusline chip #21 = 17). |
+| 2 | `python3 -m pytest tools/workflow-catalog/test_derive.py ci/skill-lint/test_check_skills.py ci/manifest-drift/test_check_manifest_drift.py ci/hooks -q` | `65 passed`. Deriver (12), skill-lint (8), drift-checker (4), enforcement hooks (41: intake gate #20 = 14, platform deploy gate + statusline chip #21 = 27 incl. the fail-closed cases from the 2026-07-11 validation). |
 | 3 | `python3 ci/skill-lint/check_skills.py --root ai/claude` | Exit 0; `52/52 files pass all hard gates` (8 advisory warnings are acceptable). |
 | 4 | `bash ci/breadcrumb/run_matrix.sh` | `RESULT: 270 passed, 0 failed (of 270 assertions)`. |
 | 5 | `python3 tools/workflow-catalog/derive.py command-map \| diff - docs/command-map.generated.md` | No output (the checked-in command-map is not stale). |

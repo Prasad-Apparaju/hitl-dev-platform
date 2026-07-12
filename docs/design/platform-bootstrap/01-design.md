@@ -150,9 +150,14 @@ changes that need the change file (R4).
 Reusing existing gate patterns, tier-scaled:
 
 1. **Production-deploy gate**: `ops-deploy` pre-flight refuses a Tier 2+ **production**
-   deploy while `delivery_ready: false`, unless every open item is an `accepted_gap` whose
-   `tier_limit` covers the change's tier. Staging deploys are never blocked (the platform
-   work itself needs them). This is the single hard gate (R6).
+   deploy while `delivery_ready: false`, unless every open item (`gap` OR `accepted_gap`)
+   carries a waiver whose `tier_limit` covers the change's tier and whose revisit date has
+   not passed. Staging deploys are never blocked (the platform work itself needs them).
+   This is the single hard gate (R6). **Hardened 2026-07-11 after independent validation
+   found fail-open paths: the gate fails CLOSED whenever it cannot evaluate the register**
+   (no PyYAML-capable interpreter, unparseable YAML regardless of its text, or a register
+   with zero items while not delivery-ready). The only deliberate allowance that remains is
+   the missing-register exemption for pre-register projects.
 2. **Advisory at change intake**: `dev-start-change` warns (does not block) when starting a
    Feature/Enhancement change while red items remain in layers D/E: "you can build this, but
    you cannot deliver it yet; N platform items open."
