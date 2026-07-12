@@ -153,11 +153,15 @@ Reusing existing gate patterns, tier-scaled:
    deploy while `delivery_ready: false`, unless every open item (`gap` OR `accepted_gap`)
    carries a waiver whose `tier_limit` covers the change's tier and whose revisit date has
    not passed. Staging deploys are never blocked (the platform work itself needs them).
-   This is the single hard gate (R6). **Hardened 2026-07-11 after independent validation
-   found fail-open paths: the gate fails CLOSED whenever it cannot evaluate the register**
-   (no PyYAML-capable interpreter, unparseable YAML regardless of its text, or a register
-   with zero items while not delivery-ready). The only deliberate allowance that remains is
-   the missing-register exemption for pre-register projects.
+   This is the single hard gate (R6). **Hardened 2026-07-11 across two independent
+   validation rounds that found fail-open paths: the gate fails CLOSED whenever it cannot
+   positively validate the register.** Round 1: no PyYAML-capable interpreter, unparseable
+   YAML regardless of its text, zero items while not delivery-ready. Round 2 (schema
+   depth): unknown/null item statuses block, `verified` requires non-empty evidence, and a
+   waiver releases only when complete (owner + valid unlapsed ISO revisit + integer
+   tier_limit covering the tier + reason); any unexpected evaluation error also blocks.
+   The only deliberate allowance that remains is the missing-register exemption for
+   pre-register projects.
 2. **Advisory at change intake**: `dev-start-change` warns (does not block) when starting a
    Feature/Enhancement change while red items remain in layers D/E: "you can build this, but
    you cannot deliver it yet; N platform items open."

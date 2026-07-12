@@ -104,8 +104,11 @@ class TestRegisterStates:
         assert run_gate(project, "production", 3)[0] == 0
 
     def test_verified_items_do_not_block(self, project):
-        write_register(project, REGISTER_WITH_GAP.replace("status: gap", "status: verified"))
-        # No open gaps left; delivery_ready is still false but nothing blocks.
+        # Verified WITH evidence; delivery_ready still false but nothing blocks.
+        write_register(project, REGISTER_WITH_GAP.replace(
+            "            status: gap\n            severity: red\n",
+            '            status: verified\n            severity: red\n'
+            '            evidence: "CI run 812, staging deploy job green, 2026-07-11"\n'))
         assert run_gate(project, "production", 2)[0] == 0
 
     def test_unparseable_register_blocks(self, project):
@@ -225,6 +228,104 @@ class TestAcceptedGap:
         code, err = run_gate(project, "production", 2)
         assert code == 2
         assert "lapsed" in err
+
+
+class TestItemSchemaValidation:
+    """Codex round-2 blocker 1: unknown/malformed item statuses must block, not pass."""
+
+    def _with_status(self, status_line):
+        return REGISTER_WITH_GAP.replace("status: gap", status_line)
+
+    def test_unknown_status_blocks(self, project):
+        write_register(project, self._with_status("status: blocked"))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "invalid status" in err
+
+    def test_typo_status_blocks(self, project):
+        write_register(project, self._with_status("status: gaps"))
+        assert run_gate(project, "production", 2)[0] == 2
+
+    def test_null_status_blocks(self, project):
+        write_register(project, self._with_status("status:"))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "invalid status" in err
+
+    def test_verified_without_evidence_blocks(self, project):
+        # An unverifiable "verified" claim never releases production.
+        write_register(project, REGISTER_WITH_GAP.replace("status: gap", "status: verified"))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "verified without evidence" in err
+
+    def test_non_mapping_item_blocks(self, project):
+        write_register(
+            project,
+            'schema_version: "1.0"\nlayers:\n  delivery:\n    items:\n      - "just a string"\n'
+            'delivery_ready: false\nwaivers: []\n')
+        assert run_gate(project, "production", 2)[0] == 2
+
+
+class TestWaiverSchemaValidation:
+    """Codex round-2 blocker 2: a waiver missing owner/revisit/reason must not release."""
+
+    def _register_with_waiver_lines(self, waiver_lines):
+        block = "    waivers:\n      - item: E3\n" + "".join(
+            f"        {line}\n" for line in waiver_lines)
+        return REGISTER_WITH_GAP.replace("    waivers: []\n", block)
+
+    FULL = ['tier_limit: 3', 'owner: "TA"', 'revisit: "2099-01-01"', 'reason: "pilot"']
+
+    def _run_without(self, project, drop=None, replace=None):
+        lines = [l for l in self.FULL if not (drop and l.startswith(drop))]
+        if replace:
+            lines = [replace.get(l.split(":")[0], l) if l.split(":")[0] in replace else l
+                     for l in lines]
+        write_register(project, self._register_with_waiver_lines(lines))
+        return run_gate(project, "production", 2)
+
+    def test_complete_waiver_passes(self, project):
+        code, _ = self._run_without(project)
+        assert code == 0
+
+    def test_missing_revisit_blocks(self, project):
+        code, err = self._run_without(project, drop="revisit")
+        assert code == 2
+        assert "no revisit" in err
+
+    def test_empty_revisit_blocks(self, project):
+        code, _ = self._run_without(project, replace={"revisit": 'revisit: ""'})
+        assert code == 2
+
+    def test_invalid_revisit_blocks(self, project):
+        code, err = self._run_without(project, replace={"revisit": 'revisit: "not-a-date"'})
+        assert code == 2
+        assert "not a valid" in err
+
+    def test_unquoted_date_revisit_passes(self, project):
+        # YAML parses an unquoted date to datetime.date; the gate must accept it.
+        code, _ = self._run_without(project, replace={"revisit": "revisit: 2099-01-01"})
+        assert code == 0
+
+    def test_missing_owner_blocks(self, project):
+        code, err = self._run_without(project, drop="owner")
+        assert code == 2
+        assert "no owner" in err
+
+    def test_empty_owner_blocks(self, project):
+        code, _ = self._run_without(project, replace={"owner": 'owner: ""'})
+        assert code == 2
+
+    def test_missing_reason_blocks(self, project):
+        code, err = self._run_without(project, drop="reason")
+        assert code == 2
+        assert "no reason" in err
+
+    def test_boolean_tier_limit_blocks(self, project):
+        code, err = self._run_without(project, replace={"tier_limit": "tier_limit: true"})
+        assert code == 2
+        assert "not an integer" in err
 
 
 class TestNoCapablePython:

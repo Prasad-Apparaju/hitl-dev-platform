@@ -27,10 +27,12 @@ survey verdicts (brownfield), and simply absent (migration's back half). New pie
   `/hitl:ops-deploy` pre-flight): Tier 2+ production deploys are blocked while the project
   is not delivery-ready, unless every open item (`gap` or `accepted_gap`) carries an
   adequate, unlapsed waiver. Staging and canary are never gated. The gate **fails closed**
-  when it cannot evaluate the register: no PyYAML-capable interpreter, unparseable YAML,
-  or a register with zero items (hardened after independent validation found fail-open
-  paths). Environment strings are whitespace-trimmed before matching. Regression suite:
-  `ci/hooks/test_check_platform_ready.py`.
+  when it cannot positively validate the register: no PyYAML-capable interpreter,
+  unparseable YAML, a register with zero items, an item with an unknown status, a
+  `verified` item without evidence, an incomplete waiver (owner + valid ISO revisit +
+  integer tier_limit + reason are all required), or any unexpected error (hardened across
+  two independent validation rounds that found fail-open paths). Environment strings are
+  whitespace-trimmed before matching. Regression suite: `ci/hooks/test_check_platform_ready.py`.
 - **Statusline platform chip**: shows open-gap count while the project is not
   delivery-ready; disappears permanently once it is.
 - **Entry-point wiring**: brownfield steps 5-6 now persist their pipeline/observability
