@@ -328,6 +328,99 @@ class TestWaiverSchemaValidation:
         assert "not an integer" in err
 
 
+WAIVER_E3 = ('waivers:\n  - item: E3\n    tier_limit: 3\n    owner: "TA"\n'
+             '    revisit: "2099-01-01"\n    reason: "pilot"\n')
+
+
+class TestItemIdentity:
+    """Codex round-3 blockers 1-2: ids are the waiver join key — required and unique."""
+
+    def test_duplicate_ids_block_even_with_waiver(self, project):
+        write_register(project, (
+            'schema_version: "1.0"\nproject_kind: brownfield\nlayers:\n  delivery:\n    items:\n'
+            '      - id: E3\n        name: "one"\n        status: gap\n'
+            '      - id: E3\n        name: "another"\n        status: gap\n'
+            'delivery_ready: false\n' + WAIVER_E3))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "duplicate item id" in err
+
+    def test_missing_id_blocks_and_is_not_waivable(self, project):
+        write_register(project, (
+            'schema_version: "1.0"\nproject_kind: brownfield\nlayers:\n  delivery:\n    items:\n'
+            '      - name: "missing id gap"\n        status: gap\n'
+            'delivery_ready: false\n'
+            'waivers:\n  - item: "?"\n    tier_limit: 3\n    owner: "TA"\n'
+            '    revisit: "2099-01-01"\n    reason: "pilot"\n'))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "item has no id" in err
+
+    def test_empty_id_blocks(self, project):
+        write_register(project, (
+            'schema_version: "1.0"\nproject_kind: brownfield\nlayers:\n  delivery:\n    items:\n'
+            '      - id: ""\n        name: "empty id"\n        status: gap\n'
+            'delivery_ready: false\nwaivers: []\n'))
+        assert run_gate(project, "production", 2)[0] == 2
+
+
+class TestProjectKind:
+    """Codex round-3 blocker 3 (+ the adjacent gap): project_kind is load-bearing."""
+
+    MIGRATION_BASE = (
+        'schema_version: "1.0"\nproject_kind: migration\nlayers:\n'
+        '  delivery:\n    items:\n'
+        '      - id: E1\n        name: "build"\n        status: verified\n'
+        '        evidence: "build pass 2026-07-11"\n'
+        '  parity:\n    items:\n'
+        '      - id: P1\n        name: "golden dataset"\n        status: {parity}\n'
+        '        {parity_extra}\n'
+        '  cutover:\n    items:\n'
+        '      - id: C1\n        name: "cutover plan"\n        status: {cutover}\n'
+        '        {cutover_extra}\n'
+        'delivery_ready: false\nwaivers: []\n')
+
+    def test_migration_parity_na_blocks(self, project):
+        write_register(project, self.MIGRATION_BASE.format(
+            parity="na", parity_extra="severity: red",
+            cutover="na", cutover_extra="severity: red"))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "na is not allowed on a migration register" in err
+
+    def test_migration_with_real_statuses_passes(self, project):
+        write_register(project, self.MIGRATION_BASE.format(
+            parity="verified", parity_extra='evidence: "shadow run clean 2026-07-11"',
+            cutover="verified", cutover_extra='evidence: "cutover executed 2026-07-11"'))
+        assert run_gate(project, "production", 2)[0] == 0
+
+    def test_non_migration_parity_na_passes(self, project):
+        reg = self.MIGRATION_BASE.format(
+            parity="na", parity_extra="severity: red",
+            cutover="na", cutover_extra="severity: red").replace(
+            "project_kind: migration", "project_kind: brownfield")
+        write_register(project, reg)
+        assert run_gate(project, "production", 2)[0] == 0
+
+    def test_missing_project_kind_blocks(self, project):
+        write_register(project, (
+            'schema_version: "1.0"\nlayers:\n  delivery:\n    items:\n'
+            '      - id: E1\n        name: "build"\n        status: verified\n'
+            '        evidence: "build pass"\n'
+            'delivery_ready: false\nwaivers: []\n'))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "project_kind" in err
+
+    def test_unknown_project_kind_blocks(self, project):
+        write_register(project, (
+            'schema_version: "1.0"\nproject_kind: weird\nlayers:\n  delivery:\n    items:\n'
+            '      - id: E1\n        name: "build"\n        status: verified\n'
+            '        evidence: "build pass"\n'
+            'delivery_ready: false\nwaivers: []\n'))
+        assert run_gate(project, "production", 2)[0] == 2
+
+
 class TestNoCapablePython:
     """Codex blocker 1 (fail-closed half): no PyYAML-capable python must BLOCK, not guess."""
 

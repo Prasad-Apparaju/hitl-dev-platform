@@ -30,9 +30,11 @@ absent for migration's back half):
   cannot positively validate the register: no PyYAML-capable interpreter, unparseable
   YAML, a register with zero items, an item with an unknown status, a `verified` item
   without evidence, an incomplete waiver (owner + valid ISO revisit + integer tier_limit
-  + reason are all required), or any unexpected error (hardened across two independent
-  validation rounds that found fail-open paths). Environment strings are
-  whitespace-trimmed before matching. Regression suite: `ci/hooks/test_check_platform_ready.py`.
+  + reason are all required), a missing or duplicate item id (ids are the waiver join
+  key), an invalid `project_kind`, a migration register with Parity/Cutover items left
+  `na`, or any unexpected error (hardened across three independent validation rounds that
+  found fail-open paths). Environment strings are whitespace-trimmed before matching.
+  Regression suite: `ci/hooks/test_check_platform_ready.py`.
 - **Statusline platform chip** while not delivery-ready; disappears once ready.
 - **Entry-point wiring**: brownfield steps 5-6 persist their pipeline/observability
   verdicts to the register; `start-from-prd` gains tracked step 5 (generate platform
