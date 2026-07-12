@@ -1,0 +1,609 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Going AI-native on an existing codebase — the HITL brownfield journey</title>
+<style>
+  :root {
+    --ground: #F5F8F6;
+    --panel: #FFFFFF;
+    --ink: #1F2823;
+    --ink-soft: #52645B;
+    --line: #D6E0DA;
+    --pine: #17453B;
+    --leaf: #2E7D64;
+    --leaf-wash: #E8F0EC;
+    --gate: #A66B1F;
+    --gate-wash: #F7EEDD;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.55; font-size: 15px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .brand {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--leaf); margin-bottom: 14px;
+  }
+  header h1 {
+    font-family: var(--display); font-size: 32px; font-weight: 600; margin: 0 0 10px;
+    letter-spacing: -0.01em; text-wrap: balance;
+  }
+  header .thesis {
+    font-family: var(--display); font-size: 17px; color: var(--pine); margin: 0 0 12px;
+  }
+  header .sub { color: var(--ink-soft); margin: 0 0 6px; max-width: 64ch; }
+  .hint { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); margin-bottom: 40px; }
+
+  .phase-label {
+    font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--leaf); margin: 38px 0 4px;
+  }
+  .phase-title { font-family: var(--display); font-size: 21px; font-weight: 600; margin: 0 0 4px; }
+  .phase-note { color: var(--ink-soft); margin: 0 0 18px; max-width: 68ch; }
+
+  .rail { position: relative; padding-left: 40px; }
+  .rail::before {
+    content: ""; position: absolute; left: 13px; top: 6px; bottom: 6px;
+    width: 2px; background: var(--line);
+  }
+  .step { position: relative; margin-bottom: 10px; }
+  .step > .dot {
+    position: absolute; left: -40px; top: 12px; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--panel); border: 2px solid var(--leaf); color: var(--leaf);
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step > .dot.zero { border-color: var(--ink-soft); color: var(--ink-soft); }
+
+  details.card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  }
+  details.card > summary {
+    padding: 13px 16px; cursor: pointer; list-style: none;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary::before {
+    content: "▸"; color: var(--leaf); margin-right: 10px; display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  @media (prefers-reduced-motion: reduce) { details.card > summary::before { transition: none; } }
+  details[open].card > summary::before { transform: rotate(90deg); }
+  details.card > summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; border-radius: 6px; }
+  .sumleft { flex: 1; min-width: 220px; }
+  .name { font-weight: 600; }
+  .cmd {
+    font-family: var(--mono); font-size: 12px; color: var(--pine);
+    background: var(--leaf-wash); border-radius: 4px; padding: 1px 7px; white-space: nowrap;
+  }
+  .oneliner { color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+
+  .blurb {
+    border-top: 1px solid var(--line); padding: 14px 16px 16px; font-size: 13.5px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .blurb p { margin: 0; max-width: 70ch; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 620px) { .split { grid-template-columns: 1fr; } }
+  .who {
+    border: 1px solid var(--line); border-radius: 6px; padding: 10px 13px; font-size: 13px;
+  }
+  .who .wl {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em;
+    margin-bottom: 4px; display: block;
+  }
+  .who.ai .wl { color: var(--leaf); }
+  .who.human .wl { color: var(--gate); }
+  .made {
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  .made code, .blurb code, .phase-note code, .gateband code, .why code { font-family: var(--mono); font-size: 12px; }
+
+  .fork { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 6px 0 0; }
+  @media (max-width: 700px) { .fork { grid-template-columns: 1fr; } }
+  .lane {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px 18px 14px;
+    border-top: 3px solid var(--leaf);
+  }
+  .lane h3 { font-family: var(--display); font-size: 15.5px; margin: 0 0 2px; }
+  .lane .lane-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 12px; }
+  details.mini { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 8px; }
+  details.mini > summary {
+    padding: 9px 12px; cursor: pointer; list-style: none; font-size: 13.5px; font-weight: 600;
+  }
+  details.mini > summary::-webkit-details-marker { display: none; }
+  details.mini > summary::before { content: "▸"; color: var(--leaf); margin-right: 8px; display: inline-block; }
+  details[open].mini > summary::before { content: "▾"; }
+  details.mini > summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  details.mini .blurb { padding: 10px 12px 12px; font-size: 13px; }
+  .lane .cmd { padding: 0 6px; }
+
+  .gateband {
+    margin: 18px 0; border: 1.5px solid var(--gate); background: var(--gate-wash);
+    border-radius: 8px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start;
+  }
+  .gateband .icon {
+    font-family: var(--mono); font-weight: 700; color: var(--gate); font-size: 13px;
+    border: 1.5px solid var(--gate); border-radius: 4px; padding: 2px 8px; white-space: nowrap; margin-top: 1px;
+  }
+  .gateband .txt { font-size: 13.5px; }
+  .gateband .txt b { color: var(--gate); }
+
+  .why {
+    background: var(--leaf-wash); border: 1px solid var(--line); border-radius: 8px;
+    padding: 20px 22px; margin-top: 38px;
+  }
+  .why h2 { font-family: var(--display); font-size: 18px; margin: 0 0 10px; }
+  .why p { font-size: 13.5px; margin: 0 0 10px; max-width: 70ch; }
+  .why p:last-child { margin-bottom: 0; }
+
+
+  .sitenav {
+    display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px;
+  }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+  <header>
+    <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
+    <h1>Going AI-native on an existing codebase</h1>
+    <p class="thesis">AI generates. Humans shape, review, and decide.</p>
+    <p class="sub">AI writes code faster than teams can review it, and it writes confidently even when it is wrong. HITL makes that speed safe: documentation becomes the shared source of truth, every step leaves evidence, and enforcement hooks make the process impossible to skip silently. This page shows everything that happens between "we have an existing codebase" and "our team ships AI-built enhancements to customers".</p>
+    <p class="hint">click any step to see what happens inside it — and who does what</p>
+  </header>
+
+  <!-- PHASE 0 -->
+  <section>
+    <div class="phase-label">Phase 0 · once per project</div>
+    <h2 class="phase-title">Install and wire</h2>
+    <div class="rail">
+      <div class="step"><span class="dot zero">a</span>
+        <details class="card" open>
+          <summary>
+            <span class="sumleft"><span class="name">Install the plugin</span>
+            <div class="oneliner">two commands, nothing touches your code yet</div></span>
+            <span class="cmd">claude plugin install hitl@hitl</span>
+          </summary>
+          <div class="blurb">
+            <p>The HITL plugin installs into Claude Code from a public marketplace: 50 skills, 6 reviewer agents, enforcement hooks, and document templates. At this point it is inert. Nothing reads or changes your repository until you start onboarding.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>nothing yet — the tooling arrives, the judgment stays with you</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>which repository to onboard, and when</div>
+            </div>
+            <div class="made">Produced: the <code>/hitl:*</code> command set inside Claude Code</div>
+          </div>
+        </details>
+      </div>
+      <div class="step"><span class="dot zero">b</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Wire the enforcement hooks</span>
+            <div class="oneliner">the part that makes the process real, not aspirational</div></span>
+            <span class="cmd">/hitl:dev-start-brownfield</span>
+          </summary>
+          <div class="blurb">
+            <p>Step 0 of onboarding writes 8 small hook scripts into your repo and registers them with Claude Code. From now on, every session starts with a gate: no edits happen without an active, tracked change; every step you take shows up in a breadcrumb trail; session summaries are written automatically. This is what separates a governed AI process from a set of good intentions.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>writes the hook wrappers, settings, and 8 baseline architecture-decision stubs</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>restart Claude Code and confirm the gates are live</div>
+            </div>
+            <div class="made">Produced: <code>.hitl/hooks/</code> · <code>.claude/settings.json</code> · ADR stubs</div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section>
+    <div class="phase-label">Phase 1 · typically 1–2 weeks for a medium system</div>
+    <h2 class="phase-title">Onboarding: teach the AI your system</h2>
+    <p class="phase-note">Eleven tracked steps. The goal is not paperwork; it is building the shared memory that every future AI session will load, so the hundredth change is as grounded as the first.</p>
+    <div class="rail">
+
+      <div class="step"><span class="dot">1</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Map the codebase</span>
+            <div class="oneliner">establish what actually exists before anything is generated</div></span>
+            <span class="cmd">DEV</span>
+          </summary>
+          <div class="blurb">
+            <p>The AI reads your directory tree and proposes what it sees: source roots, the technology stack, test locations, build tooling. You correct it. Everything downstream is anchored to this confirmed picture instead of assumptions.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>scans the tree, proposes source roots and stack</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>confirm or correct what the system actually is</div>
+            </div>
+            <div class="made">Produced: confirmed source roots and tech stack</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">2</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Write the conventions contract</span>
+            <div class="oneliner">the rules every future AI session will obey, automatically</div></span>
+            <span class="cmd">CLAUDE.md</span>
+          </summary>
+          <div class="blurb">
+            <p>The AI drafts your coding conventions by reading your existing code: naming, error handling, test style, forbidden patterns. You edit until it says what you actually want. This file loads into every future session without anyone remembering to paste it, so the AI stops reinventing style per session.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>infers conventions from observed patterns and drafts the contract</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>which conventions are real rules and which are accidents of history</div>
+            </div>
+            <div class="made">Produced: <code>CLAUDE.md</code> — the always-loaded team contract</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">3</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Generate the system manifest</span>
+            <div class="oneliner">the coherence map that keeps AI inside the lines</div></span>
+            <span class="cmd">generator.py</span>
+          </summary>
+          <div class="blurb">
+            <p>A generator scans the real code and produces the system manifest: which domains exist, which files belong to each, where the boundaries are, which APIs cross them. Later, when the AI works on a change, hooks check its edits against this map — a change scoped to one domain cannot quietly leak into another.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>derives domains, file ownership, and boundaries from the code</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>whether the domain boundaries match how the team thinks about the system</div>
+            </div>
+            <div class="made">Produced: <code>docs/system-manifest.yaml</code></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">4</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Recover the architecture decisions</span>
+            <div class="oneliner">the why behind your system, written down at last</div></span>
+            <span class="cmd">/hitl:architect-review-existing</span>
+          </summary>
+          <div class="blurb">
+            <p>The AI reads the codebase and identifies the decisions someone once made: service architecture, data storage, auth, API style, deployment shape. Then it interviews your architect: was this deliberate or inherited? What constraints held? What would you change? Real answers become Architecture Decision Records; the AI never invents a rationale nobody gave. It closes with a triaged concern list: what blocks the process, what to fix in early changes, what is just worth knowing.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>reconstructs candidate decisions and drafts the records</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>the architect supplies the actual rationale and confirms every record</div>
+            </div>
+            <div class="made">Produced: ADRs + a red/yellow/green concern list</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">5</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Verify the pipeline</span>
+            <div class="oneliner">can this system actually build and reach an environment?</div></span>
+            <span class="cmd">OPS</span>
+          </summary>
+          <div class="blurb">
+            <p>The AI finds your CI configuration, runs the build, and checks whether a staging deploy exists and runs from CI rather than someone's laptop. The verdicts are not just discussed; they are written into the platform readiness register, the file that later gates production deploys. If there is no pipeline at all, the AI offers to scaffold a starter one for your hosting target.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>locates CI, runs the build, records verdicts, offers a scaffold</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>accept the scaffold, fix it yourself, or accept the gap knowingly</div>
+            </div>
+            <div class="made">Produced: pipeline verdicts in <code>platform-readiness.yaml</code></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">6</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Survey observability</span>
+            <div class="oneliner">will you see it when something breaks in production?</div></span>
+            <span class="cmd">OPS</span>
+          </summary>
+          <div class="blurb">
+            <p>Dashboards, alerting, on-call routing: the AI surveys what exists and records an honest verdict in the readiness register. It also sets up something new: agentic observability. A token cost registry tracks what each AI-assisted change costs, so the investment in AI development is measured, not guessed.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>surveys the observability stack and records the verdict</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>who owns on-call, and which gaps are acceptable for now</div>
+            </div>
+            <div class="made">Produced: observability verdict + token cost registry</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">7</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Document the priority components</span>
+            <div class="oneliner">deep docs where they matter most, incrementally everywhere else</div></span>
+            <span class="cmd">/hitl:dev-generate-docs</span>
+          </summary>
+          <div class="blurb">
+            <p>You name up to three components that are most critical and most likely to change. The AI generates high-level and low-level design docs for those, and you correct them. Everything else gets documented the first time it is touched, so the documentation debt pays itself down through real work instead of a big-bang effort nobody finishes.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>drafts the HLD and LLD for each chosen component</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>which three components, and whether the docs match reality</div>
+            </div>
+            <div class="made">Produced: HLD + LLD for the components that matter most</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">8</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Seed the institutional memory</span>
+            <div class="oneliner">what is tested, and what has burned you before</div></span>
+            <span class="cmd">QA / OPS</span>
+          </summary>
+          <div class="blurb">
+            <p>Two registries get seeded. The test registry: the AI scans your test files and records what covers what. The incident registry: you recount what broke in production in the last six months, and each incident becomes a record. Future changes query these automatically — a change touching a domain with past incidents gets stricter canary criteria, because the process remembers even when people rotate.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>scans tests into the registry, structures the incident records</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>the incident history only the team knows</div>
+            </div>
+            <div class="made">Produced: <code>test-registry.yaml</code> · <code>incident-registry.yaml</code></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">9</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Build the knowledge graph</span>
+            <div class="oneliner">optional accelerator for large codebases</div></span>
+            <span class="cmd">OPTIONAL</span>
+          </summary>
+          <div class="blurb">
+            <p>Graphify builds a queryable graph over your code and docs, so skills can look up context precisely instead of reading whole documents. Everything works without it; on large repos it makes the AI faster and cheaper. It rebuilds automatically on every commit once installed.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>builds and maintains the graph</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>whether your repo is big enough to need it</div>
+            </div>
+            <div class="made">Produced: <code>graphify-out/graph.json</code></div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">10</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Create the first change issue</span>
+            <div class="oneliner">every change starts as a tracked issue, including the first</div></span>
+            <span class="cmd">gh issue create</span>
+          </summary>
+          <div class="blurb">
+            <p>One GitHub issue is one delivery slice, from day one. The issue is the seed of the traceability chain: requirement to design to code to tests to deploy, all linked back to it.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>files the issue in the structured format the workflow expects</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>what the first change should be</div>
+            </div>
+            <div class="made">Produced: the first tracked change</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="step"><span class="dot">11</span>
+        <details class="card">
+          <summary>
+            <span class="sumleft"><span class="name">Confirm ready</span>
+            <div class="oneliner">an honest briefing on what the first weeks feel like</div></span>
+            <span class="cmd">HANDOFF</span>
+          </summary>
+          <div class="blurb">
+            <p>The baseline exists: manifest, decision records, priority docs, registries, and a readiness register with honest verdicts in it. The handoff is candid: the new docs are drafts until real use corrects them, so early changes get extra review scrutiny. From here the journey forks into two parallel lanes.</p>
+            <div class="split">
+              <div class="who ai"><span class="wl">AI DOES</span>summarizes the baseline and the known gaps</div>
+              <div class="who human"><span class="wl">YOU DECIDE</span>you own the pace of both lanes from here</div>
+            </div>
+            <div class="made">Produced: a system the AI can be trusted to work inside</div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section>
+    <div class="phase-label">Phase 2 · two lanes, in parallel</div>
+    <h2 class="phase-title">Make changes now; earn production readiness alongside</h2>
+    <p class="phase-note">Changes can be <em>made</em> the moment onboarding ends. They can be <em>delivered to customers</em> only when the platform readiness register is green. The two lanes run side by side, so nobody waits.</p>
+    <div class="fork">
+      <div class="lane">
+        <h3>Lane A — the change lane</h3>
+        <p class="lane-sub">open immediately</p>
+        <details class="mini">
+          <summary>Shape the change</summary>
+          <div class="blurb"><p>A rough idea becomes a structured requirement with user stories, acceptance criteria, and scope boundaries — with the AI drafting and the product owner deciding. Output: a GitHub issue the workflow can act on.</p></div>
+        </details>
+        <details class="mini">
+          <summary>Start it: <span class="cmd">/hitl:dev-start-change</span></summary>
+          <div class="blurb"><p>The AI reads the issue, classifies which workflow applies, shows the full step plan up front, creates the branch, and seeds the tracked change file. From this moment the enforcement hooks know a change is active; before it, they block edits entirely.</p></div>
+        </details>
+        <details class="mini">
+          <summary>Run the delivery loop</summary>
+          <div class="blurb"><p>The 31-step loop below: design first, tests before code, layered review, evidence at every gate. This is where the enhancement actually gets built.</p></div>
+        </details>
+        <details class="mini">
+          <summary>First touch of an undocumented component</summary>
+          <div class="blurb"><p>If a change touches a component that has no design doc yet, the doc is generated and reviewed first, then work resumes. This friction is by design and fades: each component pays its documentation cost exactly once.</p></div>
+        </details>
+      </div>
+      <div class="lane">
+        <h3>Lane B — the readiness lane</h3>
+        <p class="lane-sub">replaces the hand-written "engineering foundations" epic</p>
+        <details class="mini">
+          <summary>Derive the register: <span class="cmd">derive</span></summary>
+          <div class="blurb"><p>The readiness register is built from what onboarding actually found: nine pillars across verification (test suites, end-to-end tests, traceability), delivery (reproducible build, deploy playbook, deploy-from-CI), and operation (observability, a rehearsed progressive release, security posture). What already works is marked verified, with evidence named.</p></div>
+        </details>
+        <details class="mini">
+          <summary>Generate the roadmap: <span class="cmd">roadmap</span></summary>
+          <div class="blurb"><p>Every remaining gap becomes a GitHub issue with acceptance criteria. This is the roadmap teams used to write by hand after onboarding; now it is derived from recorded verdicts, so nothing gets forgotten between "we onboarded" and "we can ship".</p></div>
+        </details>
+        <details class="mini">
+          <summary>Work the items as ordinary changes</summary>
+          <div class="blurb"><p>Each roadmap issue runs through Lane A's delivery loop like any other change. Platform work is not special; it gets the same design, tests, and review as product work.</p></div>
+        </details>
+        <details class="mini">
+          <summary>Verify readiness: <span class="cmd">verify-ready</span></summary>
+          <div class="blurb"><p>Four pillars checked with evidence stated out loud: docs reviewed and stable, tests including end-to-end passing, observability verified, CI/CD stable with one exercised progressive release. Only then does the register flip to delivery-ready, and only through this check — never by hand.</p></div>
+        </details>
+      </div>
+    </div>
+
+    <div class="gateband">
+      <span class="icon">GATE</span>
+      <div class="txt"><b>The production gate is enforced, not promised.</b> Until the register says <code>delivery_ready: true</code>, every significant production deploy is blocked by a script that fails closed — a register it cannot read, a truncated file, an incomplete waiver all block. Exceptions are recorded waivers with an owner, a revisit date, and a reason. Staging is never blocked; the readiness lane needs it. One line of status shows the open-gap count until the day it disappears for good.</div>
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section>
+    <div class="phase-label">Phase 3 · steady state</div>
+    <h2 class="phase-title">The enhancement loop</h2>
+    <p class="phase-note">Every enhancement is one issue through the same governed loop. Click each phase to see the work inside it.</p>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary><span class="sumleft"><span class="name">Design before code</span>
+      <div class="oneliner">impact analysis, updated docs, a test plan, and an approval gate</div></span><span class="cmd">Design</span></summary>
+      <div class="blurb">
+        <p>The AI analyzes the change's impact against the manifest: which domains, which files, what risk tier. Design docs are updated before any code exists. QA plans the test cases. The architect assembles a decision packet — the complete, reviewable description of what will be built — and a human technical advisor approves it at a hard gate. AI proposes; the design that gets built is one humans signed.</p>
+        <div class="split">
+          <div class="who ai"><span class="wl">AI DOES</span>impact analysis, doc drafts, test case proposals, packet assembly</div>
+          <div class="who human"><span class="wl">YOU DECIDE</span>the architect and advisor approve the design, or send it back</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary><span class="sumleft"><span class="name">Build, tests first</span>
+      <div class="oneliner">the tests are written and human-reviewed before the code exists</div></span><span class="cmd">Build</span></summary>
+      <div class="blurb">
+        <p>The AI writes the tests first, from the design — and QA reviews those tests before a line of implementation exists. Then the AI writes code until the tests pass, refactors, and runs the convention checks. Because the tests came from the design rather than from the code, they are an independent contract: AI output that merely looks right does not pass them.</p>
+        <div class="split">
+          <div class="who ai"><span class="wl">AI DOES</span>writes tests, then code, then refactors</div>
+          <div class="who human"><span class="wl">YOU DECIDE</span>QA approves the tests; the developer verifies red-then-green honestly</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary><span class="sumleft"><span class="name">Verify in layers</span>
+      <div class="oneliner">two review rounds, an architect pass, and independent QA</div></span><span class="cmd">Verify</span></summary>
+      <div class="blurb">
+        <p>The code is reviewed against the approved design (did it build what was agreed?), then for security. The architect reviews the pull request. Docs are reconciled against what was actually built — drift is fixed in one direction or the other, never silently accepted. Finally QA verifies the running build against the acceptance criteria, independently of the people who built it.</p>
+        <div class="split">
+          <div class="who ai"><span class="wl">AI DOES</span>conformance checks, security scan, doc reconciliation drafts</div>
+          <div class="who human"><span class="wl">YOU DECIDE</span>architect and QA each hold a real gate</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="card" style="margin-bottom:10px;">
+      <summary><span class="sumleft"><span class="name">Assess and approve</span>
+      <div class="oneliner">downstream impact and a risk-rated rollout plan, then a second human gate</div></span><span class="cmd">Assess</span></summary>
+      <div class="blurb">
+        <p>An impact brief tells the rest of the team, in product language, what changed. A rollout plan is written with canary percentages and go/no-go numbers drawn from the incident registry — domains that broke before get tighter criteria. The technical advisor approves before anything ships.</p>
+        <div class="split">
+          <div class="who ai"><span class="wl">AI DOES</span>drafts the brief and the risk-rated rollout plan</div>
+          <div class="who human"><span class="wl">YOU DECIDE</span>ops sharpens the criteria; the advisor holds the gate</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary><span class="sumleft"><span class="name">Ship and watch</span>
+      <div class="oneliner">verified build, gated deploy, canary, monitored soak, measured ROI</div></span><span class="cmd">Ship</span></summary>
+      <div class="blurb">
+        <p>The build is verified against CI, the platform readiness gate runs, and the deploy follows the approved plan — canary first where the risk rating calls for it. The AI reads the dashboards against the go/no-go criteria and recommends promote or hold; a human makes the call. After full traffic, a monitored soak, and later, 30- and 90-day checks on whether the change earned its cost.</p>
+        <div class="split">
+          <div class="who ai"><span class="wl">AI DOES</span>pre-flight checks, dashboard reads, promote/hold recommendations</div>
+          <div class="who human"><span class="wl">YOU DECIDE</span>ops makes every promote, hold, and rollback call</div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <div class="phase-label">Before you ask</div>
+    <h2 class="phase-title">The questions every team asks first</h2>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+
+      <details class="card">
+        <summary><span class="sumleft"><span class="name">Do we have to replace our CI/CD or IaC?</span>
+        <div class="oneliner">no — HITL has no infrastructure format of its own</div></span></summary>
+        <div class="blurb">
+          <p>Your Terraform, Kubernetes, GitHub Actions, or Jenkins stay exactly as they are. HITL verifies your existing pipeline works (and records the verdict), states outcome requirements that any tooling can satisfy — reproducible build, a deploy playbook, staging deploys that run from CI — and adds its governance checks alongside your existing workflows, not instead of them. When a change touches infrastructure, the AI wraps <em>your</em> tool with a dry-run, a human approval of every add, update, and delete, and a post-apply verification. HITL only scaffolds a new pipeline if you have none at all, and even then only if you say yes.</p>
+        </div>
+      </details>
+
+      <details class="card">
+        <summary><span class="sumleft"><span class="name">Do we stop shipping while we onboard?</span>
+        <div class="oneliner">no — that is what the two lanes are for</div></span></summary>
+        <div class="blurb">
+          <p>Changes can be made the moment the eleven onboarding steps finish, typically one to two weeks in. The platform readiness work runs in a parallel lane, and its items are ordinary changes your team ships like any other. The only thing that waits for readiness is significant <em>production</em> deploys — staging is never blocked, precisely so the readiness work itself can proceed.</p>
+        </div>
+      </details>
+
+      <details class="card">
+        <summary><span class="sumleft"><span class="name">What if a rule genuinely doesn't apply to us?</span>
+        <div class="oneliner">a recorded waiver, never a silent skip</div></span></summary>
+        <div class="blurb">
+          <p>Every requirement has one escape hatch: an accepted gap with a named owner, a revisit date, a risk ceiling, and a reason. The gate honors it; the status line shows it; the revisit date makes it temporary by default. What does not exist is a way to skip a requirement quietly — a lapsed waiver counts as an open gap again.</p>
+        </div>
+      </details>
+
+      <details class="card">
+        <summary><span class="sumleft"><span class="name">Can the AI ship something on its own?</span>
+        <div class="oneliner">no — every consequential action has a human in front of it</div></span></summary>
+        <div class="blurb">
+          <p>Designs are approved by your architect and technical advisor before code exists. Tests are reviewed by QA before implementation starts. Deploy commands are shown to the operator before they run, and every promote, hold, and rollback is a human call. Underneath the process sit hooks the AI cannot bypass: no edits without an active tracked change, and a production gate that fails closed on anything it cannot verify.</p>
+        </div>
+      </details>
+
+      <details class="card">
+        <summary><span class="sumleft"><span class="name">What does this cost us in speed?</span>
+        <div class="oneliner">some raw velocity, spent deliberately — and scaled to risk</div></span></summary>
+        <div class="blurb">
+          <p>Honest answer: review, evidence, and gates take time the raw AI output would not. The spend is proportionate — changes carry a risk tier, and the heaviest ceremony (release review, canary, the production gate) applies to the changes that can actually hurt customers. What you buy is the thing most AI adoptions lose: a codebase that stays coherent at change one hundred, and a provable answer to "was this reviewed?" For teams shipping to real customers, that trade is the difference between AI as a demo and AI as an engineering practice.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <div class="why">
+    <h2>Why it looks like this</h2>
+    <p>Most teams that adopt AI development discover the same three failures: AI produces code faster than humans can review it, each session reinvents conventions the last one already learned, and nobody can prove afterwards what was reviewed. Speed goes up; trust and coherence go down.</p>
+    <p>Everything on this page is aimed at those three failures. The onboarding phase builds a durable, shared memory so no session starts from zero. The gates make review structural instead of heroic. The registers and evidence trail mean "was this reviewed?" has a checkable answer, not a shrug.</p>
+    <p>The trade is explicit: some raw velocity is spent buying coherence, trust, and proof. For teams shipping to real customers, that is the difference between AI as a demo and AI as an engineering practice.</p>
+  </div>
+
+  <footer>HITL v1.1.0 · the workflow, gates, and registers on this page are shipped and enforced, not roadmap</footer>
+</div>

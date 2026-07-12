@@ -1,0 +1,152 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HITL — human-in-the-loop AI development</title>
+<style>
+  :root {
+    --ground: #F5F8F6;
+    --panel: #FFFFFF;
+    --ink: #1F2823;
+    --ink-soft: #52645B;
+    --line: #D6E0DA;
+    --pine: #17453B;
+    --leaf: #2E7D64;
+    --leaf-wash: #E8F0EC;
+    --gate: #A66B1F;
+    --gate-wash: #F7EEDD;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.55; font-size: 15px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .brand {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--leaf); margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--display); font-size: 34px; font-weight: 600; margin: 0 0 12px;
+    letter-spacing: -0.01em; text-wrap: balance; max-width: 22ch;
+  }
+  .thesis { font-family: var(--display); font-size: 18px; color: var(--pine); margin: 0 0 14px; }
+  .sub { color: var(--ink-soft); margin: 0 0 44px; max-width: 62ch; }
+
+  .group-label {
+    font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--leaf); margin: 34px 0 12px;
+  }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 660px) { .cards { grid-template-columns: 1fr; } }
+  a.pagecard {
+    display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px 16px; text-decoration: none; color: var(--ink);
+    border-top: 3px solid var(--leaf);
+  }
+  a.pagecard:hover { border-color: var(--leaf); }
+  a.pagecard:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  a.pagecard.feature { grid-column: 1 / -1; border-top-color: var(--pine); }
+  .pagecard h2 {
+    font-family: var(--display); font-size: 18px; font-weight: 600; margin: 0 0 6px;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .pagecard p { margin: 0; font-size: 13.5px; color: var(--ink-soft); max-width: 70ch; }
+  .pagecard .go {
+    display: inline-block; margin-top: 12px; font-family: var(--mono); font-size: 12px;
+    color: var(--leaf); font-weight: 700;
+  }
+  .pill {
+    font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    border-radius: 3px; padding: 1px 7px; white-space: nowrap;
+  }
+  .pill.live { color: var(--leaf); border: 1px solid var(--leaf); }
+  .pill.next { color: var(--gate); border: 1px solid var(--gate); }
+  .pill.aud { color: var(--ink-soft); border: 1px solid var(--line); }
+
+  .principles {
+    background: var(--leaf-wash); border: 1px solid var(--line); border-radius: 8px;
+    padding: 20px 22px; margin-top: 40px;
+  }
+  .principles h2 { font-family: var(--display); font-size: 17px; margin: 0 0 12px; }
+  .principles ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+  .principles li::marker { color: var(--leaf); }
+
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
+    <h1>AI speed, made safe for real customers</h1>
+    <p class="thesis">AI generates. Humans shape, review, and decide.</p>
+    <p class="sub">HITL is a delivery framework for teams that use AI heavily in non-trivial software work. These pages show what that actually looks like in practice: every step, every gate, and exactly where the humans stay in charge.</p>
+  </header>
+
+  <div class="group-label">Start here</div>
+  <div class="cards">
+    <a class="pagecard feature" href="going-ai-native.html">
+      <h2>Going AI-native on an existing codebase <span class="pill aud">FOR YOUR WHOLE TEAM</span></h2>
+      <p>The complete brownfield walkthrough with every step expandable: what happens inside it, what the AI does, what you decide, and what artifact comes out. From "we have a codebase" to "we ship AI-built enhancements to customers" — including the production gate that makes readiness enforced rather than promised.</p>
+      <span class="go">open the walkthrough →</span>
+    </a>
+  </div>
+
+  <div class="group-label">Reference maps</div>
+  <div class="cards">
+    <a class="pagecard" href="journey-1x.html">
+      <h2>1.x step map <span class="pill live">RUNNING TODAY</span></h2>
+      <p>The compact map of the same journey on HITL 1.x, the version teams run today: the 11 onboarding steps, the two parallel lanes, and the numbered 31-step delivery loop.</p>
+      <span class="go">open the 1.x map →</span>
+    </a>
+    <a class="pagecard" href="journey-2x.html">
+      <h2>2.x step map <span class="pill next">NEXT</span></h2>
+      <p>The journey on the redesigned 2.x workflow model: steps with stable identities instead of numbers, plans derived per change from profiles and tags, phase-ribbon progress, and a dedicated route for docs-only changes.</p>
+      <span class="go">open the 2.x map →</span>
+    </a>
+    <a class="pagecard" href="architecture.html">
+      <h2>The architecture <span class="pill aud">HOW IT WORKS</span></h2>
+      <p>The five pillars — catalog, skills, hooks, agents, templates — plus the durable memory they read and write, and the one repeating composition that turns them into every workflow step on this site.</p>
+      <span class="go">open the architecture &rarr;</span>
+    </a>
+    <a class="pagecard" href="catalog.html">
+      <h2>The full catalog <span class="pill aud">EVERY STEP</span></h2>
+      <p>All 6 workflows, their phases, 78 steps and the substep, in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
+      <span class="go">open the catalog &rarr;</span>
+    </a>
+    <a class="pagecard feature" href="compare.html">
+      <h2>1.x vs 2.x, side by side</h2>
+      <p>What is identical on both lines (most of it), the eight things the 2.x model changes, and why upgrading is safe: additive schema, in-flight changes keep their progress, and the readiness register carries over untouched.</p>
+      <span class="go">open the comparison →</span>
+    </a>
+  </div>
+
+  <div class="principles">
+    <h2>The three commitments behind every page here</h2>
+    <ul>
+      <li><b>Documentation is the shared memory.</b> Every AI session loads the same conventions, boundaries, and decisions — the hundredth change is as grounded as the first.</li>
+      <li><b>Gates are structural, not heroic.</b> Enforcement hooks block ungoverned edits, tests are reviewed before code exists, and production deploys are gated on verified readiness — by scripts that fail closed, not by discipline.</li>
+      <li><b>Every claim leaves evidence.</b> Decision records, test and incident registries, a readiness register, and a traceability chain from requirement to deploy: "was this reviewed?" has a checkable answer.</li>
+    </ul>
+  </div>
+
+  <footer>HITL v1.1.0 · everything shown is shipped and enforced, not roadmap</footer>
+</div>

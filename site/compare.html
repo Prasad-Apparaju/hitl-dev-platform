@@ -1,0 +1,197 @@
+<meta charset="utf-8">
+<title>Brownfield with HITL — 1.x vs 2.x</title>
+<style>
+  :root {
+    --ground: #F5F8F6;
+    --panel: #FFFFFF;
+    --ink: #1F2823;
+    --ink-soft: #52645B;
+    --line: #D6E0DA;
+    --pine: #17453B;
+    --leaf: #2E7D64;
+    --leaf-wash: #E8F0EC;
+    --gate: #A66B1F;
+    --gate-wash: #F7EEDD;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.5; font-size: 15px;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  header h1 {
+    font-family: var(--display); font-size: 30px; font-weight: 600; margin: 0 0 6px;
+    letter-spacing: -0.01em; text-wrap: balance;
+  }
+  header .sub { color: var(--ink-soft); margin: 0 0 40px; max-width: 66ch; }
+
+  .band-label {
+    font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--leaf); margin: 34px 0 10px;
+  }
+
+  /* shared band */
+  .shared {
+    background: var(--leaf-wash); border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .shared h2 { font-family: var(--display); font-size: 17px; margin: 0 0 10px; }
+  .shared ul { margin: 0; padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; font-size: 13.5px; }
+  @media (max-width: 700px) { .shared ul { grid-template-columns: 1fr; } }
+  .shared li::marker { color: var(--leaf); }
+  .shared code { font-family: var(--mono); font-size: 12px; }
+
+  /* diff table */
+  .diffwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 11px 16px; vertical-align: top; border-top: 1px solid var(--line); }
+  thead th { border-top: none; background: var(--panel); font-family: var(--display); font-size: 13px; }
+  thead th.v1 { color: var(--ink-soft); }
+  thead th.v2 { color: var(--leaf); }
+  td.dim { color: var(--ink-soft); font-weight: 600; white-space: nowrap; font-size: 12.5px; }
+  td code, .gateband code { font-family: var(--mono); font-size: 12px; }
+  tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--leaf-wash) 35%, transparent); }
+
+  .status { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 10px; }
+  @media (max-width: 700px) { .status { grid-template-columns: 1fr; } }
+  .statcard { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; }
+  .statcard h3 { font-family: var(--display); font-size: 15px; margin: 0 0 4px; }
+  .statcard .pill {
+    display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.08em; border-radius: 3px; padding: 1px 7px; margin-left: 8px; vertical-align: 1px;
+  }
+  .pill.live { color: var(--leaf); border: 1px solid var(--leaf); }
+  .pill.staged { color: var(--gate); border: 1px solid var(--gate); }
+  .statcard p { font-size: 13.5px; color: var(--ink-soft); margin: 6px 0 0; }
+  .statcard code { font-family: var(--mono); font-size: 12px; color: var(--ink); }
+
+  .gateband {
+    margin: 26px 0 0; border: 1.5px solid var(--gate); background: var(--gate-wash);
+    border-radius: 8px; padding: 14px 18px; font-size: 13.5px;
+  }
+  .gateband b { color: var(--gate); }
+
+
+  .sitenav {
+    display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px;
+  }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html" class="here">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+  <header>
+    <h1>Brownfield with HITL: 1.x vs 2.x</h1>
+    <p class="sub">The journey is the same shape on both lines — install, 11-step onboarding, parallel platform standup, gated delivery. What differs is the workflow model underneath the enhancement loop.</p>
+  </header>
+
+  <div class="band-label">Where they stand today</div>
+  <div class="status">
+    <div class="statcard">
+      <h3>1.x — v1.1.0 <span class="pill live">LIVE TO CUSTOMERS</span></h3>
+      <p>Marketplace pin serves <code>481ac0f</code>. Numbered 31-step workflow + the full platform-bootstrap feature (register, roadmap, hard production gate), validated across six adversarial review rounds.</p>
+    </div>
+    <div class="statcard">
+      <h3>2.x — 2.1.0 <span class="pill staged">BUILT, NOT PUBLISHED</span></h3>
+      <p>Everything 1.1.0 has, on the redesigned workflow model. Publishing is one pin flip after a first 2.1.0 build — the existing 2.0.x build predates the platform feature and the build-pipeline fix.</p>
+    </div>
+  </div>
+
+  <div class="band-label">Identical on both lines</div>
+  <div class="shared">
+    <h2>The bones don't change</h2>
+    <ul>
+      <li>Install + hook wiring (8 hooks, settings, ADR stubs)</li>
+      <li>The 11-step brownfield onboarding skeleton</li>
+      <li>Steps 5–6 persist pipeline/observability verdicts to the readiness register</li>
+      <li>The two-lane fork: enhancements start immediately; platform standup runs in parallel</li>
+      <li><code>/hitl:ops-plan-platform</code> — derive / roadmap / status / verify-ready</li>
+      <li>The production deploy gate — byte-identical <code>check-platform-ready.sh</code>, fails closed</li>
+      <li>Registries, decision packets, TA gates, TDD-first build discipline</li>
+      <li>Docs-on-first-touch for undocumented components</li>
+    </ul>
+  </div>
+
+  <div class="band-label">What the 2.x model changes</div>
+  <div class="diffwrap">
+    <table>
+      <thead>
+        <tr><th></th><th class="v1">1.x (running today)</th><th class="v2">2.x (next)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dim">Step identity</td>
+          <td>Global numbers — "Step 14 of 31"; renumbering breaks references</td>
+          <td>Stable key + name + phase; numbers are display-only, derived from one catalog</td>
+        </tr>
+        <tr>
+          <td class="dim">Step plan</td>
+          <td>One fixed 31-step sequence for every change</td>
+          <td>Plan is an <em>output of impact analysis</em>: 6 profiles (Feature, Enhancement, Fix, Tech Change, Upgrade, Security) + 5 tags propose the conditional steps and required evidence, over a non-skippable floor</td>
+        </tr>
+        <tr>
+          <td class="dim">Breadcrumb</td>
+          <td>Windowed step trail with a global counter</td>
+          <td>Phase ribbon — <code>Requirements ✓ · Design ✓ · Build ◐ · …</code> — names where you are, no counter</td>
+        </tr>
+        <tr>
+          <td class="dim">Onboarding step 8</td>
+          <td>Seeds test + incident registries</td>
+          <td>Also initializes the <b>PRD shell</b> (personas + format) — the PM and QA skill families work from day one instead of failing on a missing PRD</td>
+        </tr>
+        <tr>
+          <td class="dim">Docs-only changes</td>
+          <td>No special route — full workflow or nothing</td>
+          <td>Own 6-step <code>docs</code> workflow (issue → scope → draft → domain-routed review → reconcile → merge); mixed docs+code stays on the spine</td>
+        </tr>
+        <tr>
+          <td class="dim">Stale change files</td>
+          <td>A concluded change file can linger and satisfy the session gate</td>
+          <td><code>status: merged</code> counts as inactive — a finished change never gates the next one</td>
+        </tr>
+        <tr>
+          <td class="dim">Manifest drift</td>
+          <td>Checker exists in the platform repo only</td>
+          <td>Ships with the plugin, copied into the product repo at onboarding; scan roots derived from the manifest itself</td>
+        </tr>
+        <tr>
+          <td class="dim">Taxonomy</td>
+          <td>6 workflows (development, brownfield, migration, migration review, prd, platform); one fixed step sequence each</td>
+          <td>7 workflows (adds the docs route) / 6 profiles / 5 tags — one shared spine underneath</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="gateband">
+    <b>What upgrading means for a live project:</b> the change-file schema is additive and <code>/hitl:dev-update</code> remaps the embedded workflow by stable key — in-flight changes keep their done/current step status across the model change. The platform readiness register carries over untouched (<code>schema_version 1.0</code> on both lines). 2.x ships as a major version because the mental model is different, not because anything breaks.
+  </div>
+
+  <footer>sources: workflow catalog (main vs release/1.x) · CHANGELOG 2.0.0–2.1.0 · docs/design/workflow-model · docs/design/platform-bootstrap</footer>
+</div>

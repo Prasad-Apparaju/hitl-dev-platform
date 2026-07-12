@@ -1,0 +1,66 @@
+# Deploy the HITL portal (site/) to GitHub Pages.
+#
+# The catalog page is REGENERATED from tools/workflow-catalog/catalog.yaml on every
+# deploy, so the live portal can never drift from the shipped workflow definition —
+# even if the checked-in site/catalog.html is stale.
+#
+# One-time setup: repo Settings → Pages → Source: "GitHub Actions".
+name: Deploy portal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "tools/workflow-catalog/**"
+      - "tools/scripts/generate-catalog-page.py"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyyaml
+      - name: Regenerate the catalog page from the workflow catalog
+        run: python tools/scripts/generate-catalog-page.py
+      - name: Sanity-check the site
+        run: |
+          python - <<'EOF'
+          import os, re, sys
+          ok = True
+          for f in sorted(os.listdir("site")):
+              t = open(f"site/{f}").read()
+              if t.count("<details") != t.count("</details>"):
+                  print(f"{f}: unbalanced <details>"); ok = False
+              for h in re.findall(r'href="([^"#]+)"', t):
+                  if not h.startswith("http") and not os.path.exists(f"site/{h}"):
+                      print(f"{f}: dead link {h}"); ok = False
+          sys.exit(0 if ok else 1)
+          EOF
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

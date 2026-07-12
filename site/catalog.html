@@ -1,0 +1,253 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The complete HITL workflow catalog — every phase, step, and substep</title>
+<style>
+  :root {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115; }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.5; font-size: 15px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  .sitenav { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px; }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+  header h1 { font-family: var(--display); font-size: 30px; font-weight: 600;
+    margin: 0 0 10px; letter-spacing: -0.01em; text-wrap: balance; }
+  header .sub { color: var(--ink-soft); margin: 0 0 8px; max-width: 66ch; }
+  .legend { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); margin-bottom: 14px; }
+  .legend b { color: var(--leaf); }
+  .controls { display: flex; gap: 10px; margin-bottom: 24px; }
+  .controls button {
+    font-family: var(--mono); font-size: 11.5px; color: var(--pine); background: var(--leaf-wash);
+    border: 1px solid var(--line); border-radius: 5px; padding: 5px 12px; cursor: pointer;
+  }
+  .controls button:hover { border-color: var(--leaf); }
+  .controls button:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+  details.wf { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    margin-bottom: 12px; border-top: 3px solid var(--leaf); }
+  details.wf > summary { padding: 15px 18px; cursor: pointer; list-style: none;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  details.wf > summary::-webkit-details-marker { display: none; }
+  details.wf > summary::before { content: "▸"; color: var(--leaf); margin-right: 10px; }
+  details[open].wf > summary::before { content: "▾"; }
+  details.wf > summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; border-radius: 8px; }
+  .sumleft { flex: 1; min-width: 240px; }
+  .wfname { font-family: var(--display); font-size: 17px; font-weight: 600; }
+  .oneliner { color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+  .wfmeta { font-family: var(--mono); font-size: 11px; color: var(--leaf); font-weight: 700; white-space: nowrap; }
+  .wfbody { border-top: 1px solid var(--line); padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  details.phase { border: 1px solid var(--line); border-radius: 6px; background: var(--ground); }
+  details.phase > summary { padding: 9px 13px; cursor: pointer; list-style: none;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  details.phase > summary::-webkit-details-marker { display: none; }
+  .phname { font-family: var(--display); font-size: 13.5px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--pine); }
+  .phname::before { content: "▸ "; color: var(--leaf); }
+  details[open].phase .phname::before { content: "▾ "; }
+  details.phase > summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  .phcount { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); }
+
+  details.steprow { border-top: 1px solid var(--line); background: var(--panel); }
+  details.steprow:last-child { border-radius: 0 0 6px 6px; }
+  details.steprow > summary { padding: 8px 13px; cursor: pointer; list-style: none;
+    display: flex; align-items: baseline; gap: 10px; }
+  details.steprow > summary::-webkit-details-marker { display: none; }
+  details.steprow > summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: -2px; }
+  details.steprow.sub > summary { padding-left: 34px; }
+  details.steprow.sub .num { border-style: dashed; }
+  .num { font-family: var(--mono); font-size: 10.5px; font-weight: 700; color: var(--leaf);
+    border: 1.5px solid var(--leaf); border-radius: 10px; padding: 0 7px; min-width: 30px;
+    text-align: center; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .sname { font-size: 13.5px; flex: 1; }
+  .srole { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); letter-spacing: 0.06em; }
+  .mig { font-family: var(--mono); font-size: 9.5px; font-weight: 700; color: var(--gate);
+    border: 1px solid var(--gate); border-radius: 3px; padding: 0 5px; letter-spacing: 0.05em; }
+  .smeta { padding: 4px 13px 10px 53px; display: flex; flex-wrap: wrap; gap: 4px 14px;
+    font-size: 12px; color: var(--ink-soft); }
+  details.steprow.sub .smeta { padding-left: 74px; }
+  .smeta code { font-family: var(--mono); font-size: 11.5px; color: var(--pine); }
+  .mk { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--ink-soft); align-self: baseline; }
+
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
+
+  <header>
+    <h1>The complete workflow catalog</h1>
+    <p class="sub">Every workflow, phase, step, and substep that ships in HITL — generated from the same catalog file the running system executes, so this page cannot drift from reality. Expand a workflow to see its phases, a phase to see its steps, and a step to see its stable key, executor, and owner.</p>
+    <p class="legend"><b>6 workflows</b> · 78 steps + 1 substep · executor is a <b>/hitl:*</b> skill, <b>manual</b> (a person), or <b>guided</b> (Claude follows a reference doc)</p>
+  </header>
+
+  <div class="controls">
+    <button type="button" onclick="document.querySelectorAll('details').forEach(d=>d.open=true)">expand everything</button>
+    <button type="button" onclick="document.querySelectorAll('details').forEach(d=>d.open=false)">collapse everything</button>
+  </div>
+
+<!-- generated from tools/workflow-catalog/catalog.yaml · 6 workflows · 79 step rows -->
+<details class="wf"><summary><span class="sumleft"><span class="wfname">Development — deliver a change</span><div class="oneliner">the delivery spine every enhancement runs on</div></span><span class="wfmeta">31 steps + 1 substep · 7 phases</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">Requirements</span><span class="phcount">2 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">GitHub Issue</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>issue</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Requirements.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Figma Review</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>figma</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Requirements.2</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Design</span><span class="phcount">7 steps</span></summary>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Impact Analysis</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>impact</code><span class="mk">executed by</span><code>/hitl:dev-apply-change</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Design.1</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">ROI Estimate</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>roi</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Design.2</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Update Docs</span><span class="srole">Architect</span></summary><div class="smeta"><span class="mk">key</span><code>docs</code><span class="mk">executed by</span><code>/hitl:dev-generate-docs</code><span class="mk">owner</span><code>Architect</code><span class="mk">position</span><code>Design.3</code></div></details>
+<details class="steprow"><summary><span class="num">6</span><span class="sname">Update IaC</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>iac</code><span class="mk">executed by</span><code>/hitl:ops-apply-iac</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Design.4</code></div></details>
+<details class="steprow"><summary><span class="num">7</span><span class="sname">Test Case Planning</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>test_plan</code><span class="mk">executed by</span><code>/hitl:qa-plan-tests</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Design.5</code></div></details>
+<details class="steprow"><summary><span class="num">8</span><span class="sname">Training Plan Stub</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>training</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Design.6</code></div></details>
+<details class="steprow"><summary><span class="num">9</span><span class="sname">Package Decision Packet</span><span class="srole">Architect</span></summary><div class="smeta"><span class="mk">key</span><code>packet</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Architect</code><span class="mk">position</span><code>Design.7</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Build</span><span class="phcount">8 steps</span></summary>
+<details class="steprow"><summary><span class="num">10</span><span class="sname">AI Generates Tests (RED)</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>red</code><span class="mk">executed by</span><code>/hitl:dev-tdd</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.1</code></div></details>
+<details class="steprow"><summary><span class="num">11</span><span class="sname">Human Reviews Tests</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>test_review</code><span class="mk">executed by</span><code>/hitl:qa-review-tests</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Build.2</code></div></details>
+<details class="steprow"><summary><span class="num">12</span><span class="sname">Tests Improve the Design</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>design_plus</code><span class="mk">executed by</span><code>/hitl:dev-tdd</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.3</code></div></details>
+<details class="steprow"><summary><span class="num">13</span><span class="sname">Verify RED</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>verify_red</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.4</code></div></details>
+<details class="steprow"><summary><span class="num">14</span><span class="sname">Generate Code (GREEN)</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>green</code><span class="mk">executed by</span><code>/hitl:dev-tdd</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.5</code></div></details>
+<details class="steprow"><summary><span class="num">15</span><span class="sname">Verify GREEN</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>verify_green</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.6</code></div></details>
+<details class="steprow"><summary><span class="num">16</span><span class="sname">Refactor</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>refactor</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.7</code></div></details>
+<details class="steprow"><summary><span class="num">17</span><span class="sname">Convention Checks</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>conventions</code><span class="mk">executed by</span><code>/hitl:dev-check-conventions</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Build.8</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Verify</span><span class="phcount">5 steps</span></summary>
+<details class="steprow"><summary><span class="num">18</span><span class="sname">Code Review Round 1</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>review1</code><span class="mk">executed by</span><code>/hitl:dev-review-lld-adherence</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Verify.1</code></div></details>
+<details class="steprow"><summary><span class="num">19</span><span class="sname">Code Review Round 2</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>review2</code><span class="mk">executed by</span><code>/hitl:dev-review-security</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Verify.2</code></div></details>
+<details class="steprow sub"><summary><span class="num">19a</span><span class="sname">Architect Code Review</span><span class="srole">Architect</span></summary><div class="smeta"><span class="mk">key</span><code>arch_review</code><span class="mk">executed by</span><code>/hitl:architect-review-code</code><span class="mk">owner</span><code>Architect</code><span class="mk">position</span><code>Verify.2a</code></div></details>
+<details class="steprow"><summary><span class="num">20</span><span class="sname">Rerun Tests</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>rerun</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Verify.3</code></div></details>
+<details class="steprow"><summary><span class="num">21</span><span class="sname">Reconcile Docs</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>reconcile</code><span class="mk">executed by</span><code>/hitl:dev-generate-docs</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Verify.4</code></div></details>
+<details class="steprow"><summary><span class="num">22</span><span class="sname">QA Post-Handoff Verification</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>qa_verify</code><span class="mk">executed by</span><code>/hitl:qa-verify-quality</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Verify.5</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Assess</span><span class="phcount">2 steps</span></summary>
+<details class="steprow"><summary><span class="num">23</span><span class="sname">Downstream Impact Brief</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>impact_brief</code><span class="mk">executed by</span><code>/hitl:dev-impact-brief</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Assess.1</code></div></details>
+<details class="steprow"><summary><span class="num">24</span><span class="sname">Risk-Rated Rollout Plan</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>rollout</code><span class="mk">executed by</span><code>/hitl:ops-review-release</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Assess.2</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Ship</span><span class="phcount">5 steps</span></summary>
+<details class="steprow"><summary><span class="num">25</span><span class="sname">Verify PR Completeness</span><span class="srole">Dev</span></summary><div class="smeta"><span class="mk">key</span><code>verify_pr</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Dev</code><span class="mk">position</span><code>Ship.1</code></div></details>
+<details class="steprow"><summary><span class="num">26</span><span class="sname">Integration Verification</span><span class="srole">Architect</span></summary><div class="smeta"><span class="mk">key</span><code>integration_verify</code><span class="mk">executed by</span><code>/hitl:architect-verify-traceability</code><span class="mk">owner</span><code>Architect</code><span class="mk">position</span><code>Ship.2</code></div></details>
+<details class="steprow"><summary><span class="num">27</span><span class="sname">Figma Comparison</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>figma_compare</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Ship.3</code></div></details>
+<details class="steprow"><summary><span class="num">28</span><span class="sname">Build, Migrate, Apply, Deploy</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>deploy</code><span class="mk">executed by</span><code>/hitl:ops-deploy</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Ship.4</code></div></details>
+<details class="steprow"><summary><span class="num">29</span><span class="sname">Promote or Rollback</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>promote</code><span class="mk">executed by</span><code>/hitl:ops-post-deploy-monitor</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Ship.5</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Post-Ship</span><span class="phcount">2 steps</span></summary>
+<details class="steprow"><summary><span class="num">30</span><span class="sname">30-Day ROI Check</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>roi_30</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Post-Ship.1</code></div></details>
+<details class="steprow"><summary><span class="num">31</span><span class="sname">90-Day ROI Check</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>roi_90</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Post-Ship.2</code></div></details>
+</details>
+</div></details>
+<details class="wf"><summary><span class="sumleft"><span class="wfname">Brownfield — onboard an existing codebase</span><div class="oneliner">run once per existing project</div></span><span class="wfmeta">11 steps · 1 phase</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">Brownfield Setup</span><span class="phcount">11 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">Map Codebase</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>map_code</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Generate CLAUDE.md</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>claude_md</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.2</code></div></details>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Generate Manifest</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>manifest</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.3</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">Architect Review</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>arch_review</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.4</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Verify Pipeline</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>verify_pipeline</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.5</code></div></details>
+<details class="steprow"><summary><span class="num">6</span><span class="sname">Observability Setup</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>observability</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.6</code></div></details>
+<details class="steprow"><summary><span class="num">7</span><span class="sname">Priority Docs</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>priority_docs</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.7</code></div></details>
+<details class="steprow"><summary><span class="num">8</span><span class="sname">Seed Registries</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>seed_registries</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.8</code></div></details>
+<details class="steprow"><summary><span class="num">9</span><span class="sname">Graphify</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>graphify</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.9</code></div></details>
+<details class="steprow"><summary><span class="num">10</span><span class="sname">Create Issue</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>create_issue</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.10</code></div></details>
+<details class="steprow"><summary><span class="num">11</span><span class="sname">Confirm Ready</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>confirm_ready</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Brownfield Setup.11</code></div></details>
+</details>
+</div></details>
+<details class="wf"><summary><span class="sumleft"><span class="wfname">PRD — stand up a greenfield project</span><div class="oneliner">run once per new project</div></span><span class="wfmeta">5 steps · 1 phase</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">PRD Setup</span><span class="phcount">5 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">Generate CLAUDE.md</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>claude_md</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>PRD Setup.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Generate Manifest</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>manifest</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>PRD Setup.2</code></div></details>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Create Issue</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>create_issue</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>PRD Setup.3</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">Confirm Ready</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>confirm_ready</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>PRD Setup.4</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Generate Platform Roadmap</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>platform_roadmap</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>PRD Setup.5</code></div></details>
+</details>
+</div></details>
+<details class="wf"><summary><span class="sumleft"><span class="wfname">Migration — set up a target system</span><div class="oneliner">run once per migration</div></span><span class="wfmeta">9 steps · 1 phase</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">Migration Setup</span><span class="phcount">9 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">Collect Context</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>collect_context</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Generate CLAUDE.md</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>claude_md</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.2</code></div></details>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Generate Manifest</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>manifest</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.3</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">Directory Setup</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>dir_setup</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.4</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Source Analysis</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>source_analysis</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.5</code></div></details>
+<details class="steprow"><summary><span class="num">6</span><span class="sname">External Docs</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>ext_docs</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.6</code></div></details>
+<details class="steprow"><summary><span class="num">7</span><span class="sname">Seed Registries</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>seed_registries</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.7</code></div></details>
+<details class="steprow"><summary><span class="num">8</span><span class="sname">Create Issue</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>create_issue</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.8</code></div></details>
+<details class="steprow"><summary><span class="num">9</span><span class="sname">Confirm Ready</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>confirm_ready</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Setup.9</code></div></details>
+</details>
+</div></details>
+<details class="wf"><summary><span class="sumleft"><span class="wfname">Migration Review — vet external docs</span><div class="oneliner">architect gate before migration design</div></span><span class="wfmeta">5 steps · 1 phase</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">Migration Review</span><span class="phcount">5 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">Read Context</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>read_context</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Review.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Evaluate Docs</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>evaluate</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Review.2</code></div></details>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Write Migration Review</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>write_review</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Review.3</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">Write Brief</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>write_brief</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Review.4</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Handoff</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>handoff</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Migration Review.5</code></div></details>
+</details>
+</div></details>
+<details class="wf"><summary><span class="sumleft"><span class="wfname">Platform Bootstrap — onboarded to delivery-ready</span><div class="oneliner">long-lived, per project; drives the readiness register</div></span><span class="wfmeta">17 steps · 7 phases</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">Survey</span><span class="phcount">2 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">Derive Readiness Register</span><span class="srole">TA</span></summary><div class="smeta"><span class="mk">key</span><code>derive_register</code><span class="mk">executed by</span><code>/hitl:ops-plan-platform</code><span class="mk">owner</span><code>TA</code><span class="mk">position</span><code>Survey.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Generate Roadmap</span><span class="srole">TA</span></summary><div class="smeta"><span class="mk">key</span><code>roadmap</code><span class="mk">executed by</span><code>/hitl:ops-plan-platform</code><span class="mk">owner</span><code>TA</code><span class="mk">position</span><code>Survey.2</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Verify</span><span class="phcount">3 steps</span></summary>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Tier Test Suites Stand</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>test_suites</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Verify.1</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">E2E Against Real Environment</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>e2e_env</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Verify.2</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Test-to-Requirement Matrix</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>traceability</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Verify.3</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Deliver</span><span class="phcount">3 steps</span></summary>
+<details class="steprow"><summary><span class="num">6</span><span class="sname">Reproducible Build</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>build_repro</code><span class="mk">executed by</span><code>/hitl:ops-build</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Deliver.1</code></div></details>
+<details class="steprow"><summary><span class="num">7</span><span class="sname">Full-System Deploy Playbook</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>deploy_playbook</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Deliver.2</code></div></details>
+<details class="steprow"><summary><span class="num">8</span><span class="sname">Deploy Executed From CI</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>cd_from_ci</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Deliver.3</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Operate</span><span class="phcount">3 steps</span></summary>
+<details class="steprow"><summary><span class="num">9</span><span class="sname">Observability Established</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>obs_established</code><span class="mk">executed by</span><code>/hitl:ops-setup-observability</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Operate.1</code></div></details>
+<details class="steprow"><summary><span class="num">10</span><span class="sname">Progressive Release Exercised</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>canary_exercised</code><span class="mk">executed by</span><code>/hitl:ops-deploy</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Operate.2</code></div></details>
+<details class="steprow"><summary><span class="num">11</span><span class="sname">Security Posture Settled</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>sec_posture</code><span class="mk">executed by</span><code>/hitl:ops-pentest</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Operate.3</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Parity</span><span class="phcount">2 steps</span></summary>
+<details class="steprow"><summary><span class="num">12</span><span class="sname">Golden Dataset Harness</span><span class="mig">migration only</span><span class="srole">QA</span></summary><div class="smeta"><span class="mk">key</span><code>golden_dataset</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>QA</code><span class="mk">position</span><code>Parity.1</code></div></details>
+<details class="steprow"><summary><span class="num">13</span><span class="sname">Shadow/Dual-Run Comparison</span><span class="mig">migration only</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>shadow_run</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Parity.2</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Cutover</span><span class="phcount">3 steps</span></summary>
+<details class="steprow"><summary><span class="num">14</span><span class="sname">Cutover + Rollback-to-Legacy Plan</span><span class="mig">migration only</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>cutover_plan</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Cutover.1</code></div></details>
+<details class="steprow"><summary><span class="num">15</span><span class="sname">Dual-Run Window</span><span class="mig">migration only</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>dual_run</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Cutover.2</code></div></details>
+<details class="steprow"><summary><span class="num">16</span><span class="sname">Legacy Sunset + Archival</span><span class="mig">migration only</span><span class="srole">Ops</span></summary><div class="smeta"><span class="mk">key</span><code>decommission</code><span class="mk">executed by</span><code>manual</code><span class="mk">owner</span><code>Ops</code><span class="mk">position</span><code>Cutover.3</code></div></details>
+</details>
+<details class="phase" open><summary><span class="phname">Ready</span><span class="phcount">1 step</span></summary>
+<details class="steprow"><summary><span class="num">17</span><span class="sname">Definition of Ready Verified</span><span class="srole">TA</span></summary><div class="smeta"><span class="mk">key</span><code>delivery_ready</code><span class="mk">executed by</span><code>/hitl:ops-plan-platform</code><span class="mk">owner</span><code>TA</code><span class="mk">position</span><code>Ready.1</code></div></details>
+</details>
+</div></details>
+
+  <footer>HITL v1.1.0 · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
+</div>

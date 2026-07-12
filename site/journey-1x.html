@@ -1,0 +1,285 @@
+<meta charset="utf-8">
+<title>Brownfield with HITL — onboarding to enhancements</title>
+<style>
+  :root {
+    --ground: #F5F8F6;
+    --panel: #FFFFFF;
+    --ink: #1F2823;
+    --ink-soft: #52645B;
+    --line: #D6E0DA;
+    --pine: #17453B;
+    --leaf: #2E7D64;
+    --leaf-wash: #E8F0EC;
+    --gate: #A66B1F;
+    --gate-wash: #F7EEDD;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.5; font-size: 15px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header h1 {
+    font-family: var(--display); font-size: 30px; font-weight: 600; margin: 0 0 6px;
+    letter-spacing: -0.01em; text-wrap: balance; color: var(--ink);
+  }
+  header .sub { color: var(--ink-soft); margin: 0 0 8px; max-width: 62ch; }
+  .metaline { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); margin-bottom: 40px; }
+  .metaline b { color: var(--leaf); font-weight: 600; }
+
+  .phase { margin-bottom: 8px; }
+  .phase-label {
+    font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--leaf); margin: 34px 0 4px;
+  }
+  .phase-title { font-family: var(--display); font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .phase-note { color: var(--ink-soft); margin: 0 0 18px; max-width: 68ch; }
+
+  /* timeline rail */
+  .rail { position: relative; padding-left: 40px; }
+  .rail::before {
+    content: ""; position: absolute; left: 13px; top: 6px; bottom: 6px;
+    width: 2px; background: var(--line);
+  }
+  .step { position: relative; margin-bottom: 10px; }
+  .step .dot {
+    position: absolute; left: -40px; top: 10px; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--panel); border: 2px solid var(--leaf); color: var(--leaf);
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .step .dot.zero { border-color: var(--ink-soft); color: var(--ink-soft); }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 16px;
+  }
+  .card .name { font-weight: 600; }
+  .card .cmd {
+    font-family: var(--mono); font-size: 12px; color: var(--pine);
+    background: var(--leaf-wash); border-radius: 4px; padding: 1px 7px; white-space: nowrap;
+  }
+  .card .out { color: var(--ink-soft); font-size: 13.5px; margin-top: 3px; }
+  .card .out code, .prose code { font-family: var(--mono); font-size: 12px; }
+  .row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .tag-new {
+    font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    color: var(--gate); border: 1px solid var(--gate); border-radius: 3px; padding: 0 5px;
+    vertical-align: 2px; margin-left: 8px;
+  }
+  .role {
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); letter-spacing: 0.05em;
+  }
+
+  /* fork */
+  .fork { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 6px 0 0; }
+  @media (max-width: 700px) { .fork { grid-template-columns: 1fr; } }
+  .lane {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px 18px 14px;
+    border-top: 3px solid var(--leaf);
+  }
+  .lane h3 { font-family: var(--display); font-size: 15.5px; margin: 0 0 2px; }
+  .lane .lane-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 12px; }
+  .lane ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+  .lane li::marker { color: var(--leaf); font-weight: 600; }
+  .lane .cmd {
+    font-family: var(--mono); font-size: 12px; color: var(--pine);
+    background: var(--leaf-wash); border-radius: 4px; padding: 0 6px;
+  }
+  .lane .muted { color: var(--ink-soft); }
+
+  /* gate band */
+  .gateband {
+    margin: 18px 0; border: 1.5px solid var(--gate); background: var(--gate-wash);
+    border-radius: 8px; padding: 14px 18px; display: flex; gap: 14px; align-items: flex-start;
+  }
+  .gateband .icon {
+    font-family: var(--mono); font-weight: 700; color: var(--gate); font-size: 13px;
+    border: 1.5px solid var(--gate); border-radius: 4px; padding: 2px 8px; white-space: nowrap; margin-top: 1px;
+  }
+  .gateband .txt { font-size: 13.5px; }
+  .gateband .txt b { color: var(--gate); }
+
+  /* steady state loop */
+  .loop {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px;
+  }
+  .spine { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-family: var(--mono); font-size: 12px; margin: 10px 0 6px; }
+  .spine .ph {
+    background: var(--leaf-wash); color: var(--pine); border-radius: 4px; padding: 3px 9px; font-weight: 600;
+  }
+  .spine .arr { color: var(--ink-soft); }
+  .prose { font-size: 13.5px; color: var(--ink); max-width: 72ch; }
+  .prose.dim { color: var(--ink-soft); }
+
+
+  .sitenav {
+    display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px;
+  }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
+</style>
+
+<div class="wrap">
+<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html" class="here">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+  <header>
+    <h1>Brownfield with HITL</h1>
+    <p class="sub">Every step from an existing codebase to a customer shipping governed enhancements — as of v1.1.0 on the 1.x line.</p>
+    <p class="metaline">install &rarr; onboard (11 tracked steps) &rarr; <b>two parallel lanes</b> &rarr; production gate &rarr; enhancement loop</p>
+  </header>
+
+  <!-- PHASE 0 -->
+  <section class="phase">
+    <div class="phase-label">Phase 0 · once per project</div>
+    <h2 class="phase-title">Install and wire</h2>
+    <div class="rail">
+      <div class="step"><span class="dot zero">a</span>
+        <div class="card">
+          <div class="row1"><span class="name">Install the plugin</span><span class="cmd">claude plugin marketplace add pappar/hitl-claude-plugin</span></div>
+          <div class="out">then <code>claude plugin install hitl@hitl</code> — the marketplace pin serves v1.1.0</div>
+        </div>
+      </div>
+      <div class="step"><span class="dot zero">b</span>
+        <div class="card">
+          <div class="row1"><span class="name">Wire the hooks (Step 0 of onboarding)</span><span class="cmd">/hitl:dev-start-brownfield</span></div>
+          <div class="out">8 hook wrappers in <code>.hitl/hooks/</code>, <code>.claude/settings.json</code>, baseline ADR stubs (adr-0001&hellip;0008) &middot; restart Claude Code, re-run the command</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="phase">
+    <div class="phase-label">Phase 1 · ~1 to 2 weeks for a medium system</div>
+    <h2 class="phase-title">Onboarding — 11 tracked steps</h2>
+    <p class="phase-note">Driven by <code>/hitl:dev-start-brownfield</code> with a breadcrumb trail; each step records its output before the next begins.</p>
+    <div class="rail">
+      <div class="step"><span class="dot">1</span>
+        <div class="card"><div class="row1"><span class="name">Map the codebase</span><span class="role">DEV</span></div>
+        <div class="out">confirmed source roots and tech stack</div></div>
+      </div>
+      <div class="step"><span class="dot">2</span>
+        <div class="card"><div class="row1"><span class="name">Customize CLAUDE.md</span><span class="role">DEV</span></div>
+        <div class="out">conventions and test framework locked in, from observed code patterns</div></div>
+      </div>
+      <div class="step"><span class="dot">3</span>
+        <div class="card"><div class="row1"><span class="name">Generate the system manifest</span><span class="cmd">tools/generate-manifest/generator.py</span></div>
+        <div class="out"><code>docs/system-manifest.yaml</code> from real code — domains, files, boundaries</div></div>
+      </div>
+      <div class="step"><span class="dot">4</span>
+        <div class="card"><div class="row1"><span class="name">Architect review of the existing system</span><span class="cmd">/hitl:architect-review-existing</span></div>
+        <div class="out">decisions reconstructed as ADRs (interviewed, never fabricated) + concern list &#128308;&#128993;&#128994;</div></div>
+      </div>
+      <div class="step"><span class="dot">5</span>
+        <div class="card"><div class="row1"><span class="name">Verify the pipeline<span class="tag-new">NEW 1.1.0</span></span><span class="role">OPS</span></div>
+        <div class="out">build runs? staging deploys from CI? &mdash; verdicts <b>persisted</b> to the readiness register (D1, E1, E3); offers to scaffold CI/CD if none exists</div></div>
+      </div>
+      <div class="step"><span class="dot">6</span>
+        <div class="card"><div class="row1"><span class="name">Observability survey<span class="tag-new">NEW 1.1.0</span></span><span class="role">OPS</span></div>
+        <div class="out">dashboards / alerting / on-call &rarr; register item F1; token cost registry created</div></div>
+      </div>
+      <div class="step"><span class="dot">7</span>
+        <div class="card"><div class="row1"><span class="name">Priority component docs</span><span class="cmd">/hitl:dev-generate-docs</span></div>
+        <div class="out">HLD + LLD for up to 3 critical components — the rest are documented on first touch</div></div>
+      </div>
+      <div class="step"><span class="dot">8</span>
+        <div class="card"><div class="row1"><span class="name">Seed the registries</span><span class="role">QA / OPS</span></div>
+        <div class="out"><code>test-registry.yaml</code> from existing tests &middot; <code>incident-registry.yaml</code> from the last 6 months</div></div>
+      </div>
+      <div class="step"><span class="dot">9</span>
+        <div class="card"><div class="row1"><span class="name">Graphify knowledge graph</span><span class="role">OPTIONAL</span></div>
+        <div class="out">skills work without it; perform better with it on large codebases</div></div>
+      </div>
+      <div class="step"><span class="dot">10</span>
+        <div class="card"><div class="row1"><span class="name">Create the first change issue</span><span class="cmd">gh issue create</span></div>
+        <div class="out">first tracked change, ready for the loop</div></div>
+      </div>
+      <div class="step"><span class="dot">11</span>
+        <div class="card"><div class="row1"><span class="name">Confirm ready</span><span class="role">HANDOFF</span></div>
+        <div class="out">baseline established &rarr; forks into the two lanes below</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORK -->
+  <section class="phase">
+    <div class="phase-label">Phase 2 · in parallel</div>
+    <h2 class="phase-title">Two lanes, one register</h2>
+    <p class="phase-note">Changes can be <em>made</em> the moment onboarding ends. They can be <em>delivered to customers</em> only when the platform readiness register is green — the lanes run side by side.</p>
+    <div class="fork">
+      <div class="lane">
+        <h3>Lane A — start making changes now</h3>
+        <p class="lane-sub">available immediately after step 11</p>
+        <ol>
+          <li>Pick the first issue (from step 10, or shape one with <span class="cmd">/hitl:pm-design-feature</span>)</li>
+          <li><span class="cmd">/hitl:dev-start-change</span> — classifies the workflow, seeds the change file, creates the branch</li>
+          <li>Run the 31-step delivery loop (below)</li>
+          <li class="muted">First touch of an undocumented component? <span class="cmd">/hitl:dev-generate-docs</span> for it, then resume — this friction fades as docs accumulate</li>
+        </ol>
+      </div>
+      <div class="lane">
+        <h3>Lane B — stand up the platform <span class="tag-new">NEW 1.1.0</span></h3>
+        <p class="lane-sub">replaces the hand-written roadmap issue</p>
+        <ol>
+          <li><span class="cmd">/hitl:ops-plan-platform derive</span> — register built from steps 5–6 verdicts; mark what already works <em>verified</em>, with evidence</li>
+          <li><span class="cmd">/hitl:ops-plan-platform roadmap</span> — remaining gaps become GitHub issues across the nine pillars: test suites, E2E, traceability, reproducible build, deploy playbook, CD, observability, canary, security posture</li>
+          <li>Each roadmap issue is an <em>ordinary HITL change</em> — it runs through Lane A's loop</li>
+          <li><span class="cmd">/hitl:ops-plan-platform verify-ready</span> — four pillars checked &rarr; <code>delivery_ready: true</code></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="gateband">
+      <span class="icon">GATE</span>
+      <div class="txt"><b>Production deploy gate</b> — until the register says <code>delivery_ready: true</code>, every Tier&nbsp;2+ <b>production</b> deploy is blocked (fails closed), unless each open gap carries a recorded waiver: owner, revisit date, tier limit, reason. Staging and canary deploys are never blocked — Lane B needs them. The statusline shows the open-gap count until the project is delivery-ready.</div>
+    </div>
+  </section>
+
+  <!-- STEADY STATE -->
+  <section class="phase">
+    <div class="phase-label">Phase 3 · steady state</div>
+    <h2 class="phase-title">The enhancement loop</h2>
+    <div class="loop">
+      <p class="prose">Every enhancement is one GitHub issue through <code>/hitl:dev-start-change</code>, which routes it onto the delivery spine:</p>
+      <div class="spine">
+        <span class="ph">Issue</span><span class="arr">&rarr;</span>
+        <span class="ph">Design</span><span class="arr">&rarr;</span>
+        <span class="ph">TA gate</span><span class="arr">&rarr;</span>
+        <span class="ph">Build (TDD)</span><span class="arr">&rarr;</span>
+        <span class="ph">Verify</span><span class="arr">&rarr;</span>
+        <span class="ph">Assess</span><span class="arr">&rarr;</span>
+        <span class="ph">TA gate</span><span class="arr">&rarr;</span>
+        <span class="ph">Ship</span><span class="arr">&rarr;</span>
+        <span class="ph">Post-ship</span>
+      </div>
+      <p class="prose dim">Design: impact analysis, docs, test plan, decision packet &middot; Build: RED &rarr; QA test review &rarr; GREEN &rarr; refactor &rarr; conventions &middot; Verify: two review rounds + architect review + QA verification &middot; Ship: build &rarr; deploy &rarr; canary &rarr; monitor — where the production gate applies until delivery-ready.</p>
+    </div>
+  </section>
+
+  <footer>source: /hitl:dev-start-brownfield &middot; /hitl:ops-plan-platform &middot; shared/workflow-brownfield.md &middot; deployment-gates.md &mdash; HITL v1.1.0 (481ac0f)</footer>
+</div>
