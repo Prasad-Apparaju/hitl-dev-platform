@@ -12,4 +12,4 @@ Copy `workflows/*.yml` to `.github/workflows/` in your product repo. The enforce
 | `preflight/check_change.py` | Called by `traceability-check.yml` — validates decision packets |
 | `manifest-drift/` | Called by `convention-check.yml` — detects files drifting outside declared domains |
 | `skill-lint/check_skills.py` | Lints every `SKILL.md` against the Agent Skills schema (Part A acceptance criteria); run on PRs touching `ai/claude/**` |
-| `hooks/test_check_hitl_context.py` | Regression tests for the intake-gate hook's path handling (issue #20); run on PRs touching `ai/claude/hooks/**` |
+| `hooks/` | Regression tests for the enforcement hooks: intake-gate path handling (#20), platform-readiness deploy gate + statusline chip (#21); run on PRs touching `ai/claude/hooks/**` |

@@ -283,7 +283,7 @@ elif q.startswith("name_of:"):
 PY
 }
 
-WORKFLOWS_LIST=(development brownfield migration migration_review prd docs)
+WORKFLOWS_LIST=(development brownfield migration migration_review prd docs platform)
 
 echo "================================================================"
 echo " HITL breadcrumb test matrix"

@@ -4,6 +4,41 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.1.0] — Unreleased
+
+### Added
+
+**Platform-bootstrap workflow (issue #21).** HITL now codifies the bridge from "onboarded"
+to "ready for customer delivery" — previously untracked prose (greenfield), display-only
+survey verdicts (brownfield), and simply absent (migration's back half). New pieces:
+
+- **`platform` workflow** in the catalog (Survey → Verify → Deliver → Operate → Ready,
+  17 steps; the Parity and Cutover phases apply only to migrations via `cond: migration`).
+  Long-lived and per-project: progress lives in the readiness register, never in
+  `.hitl/current-change.yaml` — roadmap items are ordinary HITL changes.
+- **Platform readiness register** (`docs/04-operations/platform-readiness.yaml`, template
+  shipped): machine-readable layer D/E/F items with required evidence, recorded waivers
+  (owner + revisit + tier_limit), and a derived `delivery_ready` flag.
+- **`/hitl:ops-plan-platform`** (new skill): derives the register from the entry artifacts
+  (brownfield onboarding verdicts / PRD NFRs + HLD deployment view / migration source
+  analysis), generates the roadmap as GitHub issues, renders status, and verifies the
+  four-pillar Definition of Ready.
+- **Hard production-deploy gate** (`hooks/check-platform-ready.sh`, run by
+  `/hitl:ops-deploy` pre-flight): Tier 2+ production deploys are blocked while the project
+  is not delivery-ready, unless every open gap carries an adequate, unlapsed waiver.
+  Staging and canary are never gated. Regression suite: `ci/hooks/test_check_platform_ready.py`.
+- **Statusline platform chip**: shows open-gap count while the project is not
+  delivery-ready; disappears permanently once it is.
+- **Entry-point wiring**: brownfield steps 5-6 now persist their pipeline/observability
+  verdicts to the register (previously conversation-only); `start-from-prd` gains a tracked
+  step 5 (generate platform roadmap) replacing its untracked closing prose checklist;
+  migration seeds the register with the Parity/Cutover layers and its completion criterion
+  now includes legacy sunset — ported code with the legacy still running is not a finished
+  migration.
+
+Design package: `docs/design/platform-bootstrap/` (decisions D1-D6 locked 2026-07-11).
+PRD: FR-25.
+
 ## [2.0.1] — 2026-07-11
 
 ### Fixed

@@ -79,5 +79,16 @@ else
   hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  ${COLOR_YELLOW}HITL: no active change — run /hitl:dev-start-change${COLOR_RESET}"
 fi
 
+# ── Platform chip: shown only while the project is not delivery-ready ──────────────────────
+# Reads the readiness register with grep only (statusline runs per prompt; keep it cheap).
+# Disappears permanently once /hitl:ops-plan-platform verify-ready flips delivery_ready.
+REGISTER="$ROOT/docs/04-operations/platform-readiness.yaml"
+platform_segment=""
+if [ -f "$REGISTER" ] && ! grep -qE '^delivery_ready:[[:space:]]*true' "$REGISTER" 2>/dev/null; then
+  gaps=$(grep -cE '^[[:space:]]*status:[[:space:]]*gap' "$REGISTER" 2>/dev/null || echo 0)
+  platform_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  ${COLOR_YELLOW}platform: ${gaps} gap(s) — not delivery-ready${COLOR_RESET}"
+fi
+
 printf "%s  %s%b%b" "$cwd" "$model" "$ctx_segment" "$branch_segment"
 [ -n "$hitl_segment" ] && printf "\n%b" "$hitl_segment"
+[ -n "$platform_segment" ] && printf "%b" "$platform_segment"

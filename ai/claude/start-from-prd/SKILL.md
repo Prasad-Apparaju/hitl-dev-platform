@@ -124,12 +124,13 @@ tier: 0
 status: planning
 workflow:
   id: prd
-  total: 4
+  total: 5
   steps:
-    - { n: 1, key: claude_md,     label: "CLAUDE.md", phase: "PRD Setup", status: current }
-    - { n: 2, key: manifest,      label: "Manifest",  phase: "PRD Setup", status: open }
-    - { n: 3, key: create_issue,  label: "Issue",     phase: "PRD Setup", status: open }
-    - { n: 4, key: confirm_ready, label: "Ready",     phase: "PRD Setup", status: open }
+    - { n: 1, key: claude_md,        label: "CLAUDE.md", phase: "PRD Setup", status: current }
+    - { n: 2, key: manifest,         label: "Manifest",  phase: "PRD Setup", status: open }
+    - { n: 3, key: create_issue,     label: "Issue",     phase: "PRD Setup", status: open }
+    - { n: 4, key: confirm_ready,    label: "Ready",     phase: "PRD Setup", status: open }
+    - { n: 5, key: platform_roadmap, label: "Platform",  phase: "PRD Setup", status: open }
 current_step:
   number: 1
   name: "Customize CLAUDE.md"
@@ -218,7 +219,7 @@ Update `.hitl/current-change.yaml` — set `current_step`:
 Output this exactly:
 
 ---
-**You're ready.**
+**Governance is up.**
 
 Generate the design docs for your system before writing any code:
 
@@ -228,29 +229,47 @@ Generate the design docs for your system before writing any code:
 
 This produces the system manifest, HLDs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet at `docs/decisions/`. The 31-step workflow reads these docs at nearly every step — they must exist before feature work starts.
 
-After `/hitl:architect-design-system` completes:
+Then **build the Graphify knowledge graph** (if Graphify is installed):
+```bash
+graphify .              # build graph from code + docs
+graphify hook install   # auto-rebuild on every git commit
+```
+Then commit: `git add graphify-out/ && git commit -m "chore: add graphify knowledge graph"` (add `graphify-out/manifest.json` and `graphify-out/cost.json` to `.gitignore` first).
+If Graphify is not yet installed, install it now (`uv tool install graphifyy && graphify claude install`) or skip — HITL skills work without it but perform better with it. See `shared/graphify-setup.md`.
 
-1. **Build the Graphify knowledge graph** (if Graphify is installed):
-   ```bash
-   graphify .              # build graph from code + docs
-   graphify hook install   # auto-rebuild on every git commit
-   ```
-   Then commit: `git add graphify-out/ && git commit -m "chore: add graphify knowledge graph"` (add `graphify-out/manifest.json` and `graphify-out/cost.json` to `.gitignore` first).
-   If Graphify is not yet installed, install it now (`uv tool install graphifyy && graphify claude install`) or skip — HITL skills work without it but perform better with it. See `shared/graphify-setup.md`.
+Come back here when the design docs exist — Step 5 stands up the platform.
 
-2. **Set up the build and deployment pipeline** before any code is written:
-   - The deployment view in the architect's HLD is the spec — use it to provision CI/CD (GitHub Actions, Jenkins, GitLab CI, etc.) with build, test, and deploy-to-staging jobs at minimum
-   - Provision at least one target environment (staging) — the 31-step workflow gates every PR on a passing staging deploy
-   - Verify: a commit triggers the pipeline and produces a deployable artifact
-   - Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
-   - Do not include a production deploy job without an explicit manual approval gate
+---
 
-3. **Set up observability infrastructure** before the first feature is deployed:
-   - Application observability: provision structured logging, metrics collection, a primary dashboard, and alerting with on-call routing — the stack chosen here is the spec for ADR-0005 in your docs
-   - Agentic observability: the token cost registry is at `docs/04-operations/token-cost-registry.yaml` (copy from `shared/templates/token-cost-registry-template.yaml`); session logs are written automatically by the HITL hooks
-   - `/hitl:ops-setup-observability` runs per change before deploy — it requires the tools provisioned here to already exist
+## Step 5 — Generate the platform roadmap
 
-4. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it.
-5. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
+Update `.hitl/current-change.yaml` — set `current_step`:
+```yaml
+  number: 5
+  name: "Generate platform roadmap"
+  phase: "PRD Setup"
+```
+
+Governance can gate changes, but nothing exists yet to verify, deliver, or operate them:
+no pipeline, no environment, no dashboards. That standup work is the **platform workflow**
+(onboarded → delivery-ready), tracked in `docs/04-operations/platform-readiness.yaml`.
+
+Run `/hitl:ops-plan-platform derive` now. It reads the PRD's NFRs and the HLD deployment
+view from Step 4 (SLOs → observability targets; user tiers → environment story; compliance
+→ security items), writes the readiness register, and then generates the roadmap issues
+(`/hitl:ops-plan-platform roadmap`). Each roadmap issue is an ordinary HITL change.
+
+Then output this exactly:
+
+---
+**You're ready.**
+
+- Platform roadmap issues exist — they are ordinary HITL changes; the deploy path comes up
+  as they complete. Tier 2+ **production** deploys stay blocked until the register says
+  `delivery_ready: true` (staging is never blocked).
+- Assign decision packets to developers — each developer picks up one packet and runs the
+  31-step workflow from it.
+- For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
+- Track platform progress any time with `/hitl:ops-plan-platform status`.
 
 ---

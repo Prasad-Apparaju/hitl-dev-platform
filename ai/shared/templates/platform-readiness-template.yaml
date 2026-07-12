@@ -1,0 +1,130 @@
+# Platform Readiness Register — is this project ready to deliver to customers?
+# Place at docs/04-operations/platform-readiness.yaml in your product repo.
+#
+# Written by workflow steps (brownfield steps 5-6, /hitl:ops-plan-platform); reviewed by
+# humans in PRs like any doc. Design: docs/design/platform-bootstrap/ in hitl-dev-platform.
+#
+# Rules (enforced by /hitl:ops-plan-platform and the ops-deploy pre-flight):
+#   - `evidence` is REQUIRED to set an item to `verified` (what proved it, with a date).
+#   - `accepted_gap` REQUIRES a waiver entry below (owner + revisit date + tier_limit).
+#   - `delivery_ready` is DERIVED: true only when every non-na item in every applicable
+#     layer is verified or accepted_gap. Never hand-set it.
+#   - Re-running /hitl:ops-plan-platform refreshes gaps but never downgrades a `verified`
+#     item back to `gap` without showing the evidence being discarded.
+#   - Tier 2+ PRODUCTION deploys are blocked while delivery_ready is false, unless every
+#     open item is an accepted_gap whose tier_limit covers the change's tier. Staging
+#     deploys are never blocked (platform work itself needs them).
+
+schema_version: "1.0"
+project_kind: null            # brownfield | greenfield | migration — set at derivation
+derived_from: []              # entry artifacts read at derivation, with dates
+
+# Layers A-C (understanding, product spine, change governance) are covered by the
+# onboarding workflows and the HITL gates themselves; this register tracks exactly the
+# layers that make a project DELIVERABLE. Item status: verified | gap | accepted_gap | na.
+layers:
+  verification:               # layer D — can failures be caught?
+    items:
+      - id: D1
+        name: "Tier test suites exist, run in CI, and can fail"
+        status: gap
+        severity: red         # red | yellow | green
+        evidence: ""
+        source: ""
+      - id: D2
+        name: "E2E suite runs against a real (staging) environment"
+        status: gap
+        severity: red
+        evidence: ""
+        source: ""
+      - id: D3
+        name: "Test-to-requirement traceability matrix seeded"
+        status: gap
+        severity: yellow
+        evidence: ""
+        source: ""
+  delivery:                   # layer E — can a build reach an environment, repeatably?
+    items:
+      - id: E1
+        name: "Build is reproducible from a clean checkout"
+        status: gap
+        severity: red
+        evidence: ""
+        source: ""
+      - id: E2
+        name: "Full-system deploy playbook per environment (order, dependencies, rollback)"
+        status: gap
+        severity: red
+        evidence: ""
+        source: ""
+      - id: E3
+        name: "Deploy to staging executes from CI (not from a laptop)"
+        status: gap
+        severity: red
+        evidence: ""
+        source: ""
+  operation:                  # layer F — can it be run safely in front of customers?
+    items:
+      - id: F1
+        name: "Application observability established and verified (dashboards, alerts, on-call)"
+        status: gap
+        severity: red
+        evidence: ""
+        source: ""
+      - id: F2
+        name: "Progressive release (canary) exercised end-to-end at least once"
+        status: gap
+        severity: yellow
+        evidence: ""
+        source: ""
+      - id: F3
+        name: "Security posture settled (secret scan in CI, dependency audit baseline, pentest if externally exposed)"
+        status: gap
+        severity: yellow
+        evidence: ""
+        source: ""
+  parity:                     # migration only — new system proven equivalent to legacy
+    items:
+      - id: P1
+        name: "Golden-dataset harness compares new output to legacy output"
+        status: na
+        severity: red
+        evidence: ""
+        source: ""
+      - id: P2
+        name: "Shadow/dual-run comparison executed on production-shaped traffic"
+        status: na
+        severity: red
+        evidence: ""
+        source: ""
+  cutover:                    # migration only — legacy can actually be turned off
+    items:
+      - id: C1
+        name: "Cutover plan incl. rollback-to-legacy (covers data written to target during the window)"
+        status: na
+        severity: red
+        evidence: ""
+        source: ""
+      - id: C2
+        name: "Dual-run window completed with agreed exit criteria"
+        status: na
+        severity: red
+        evidence: ""
+        source: ""
+      - id: C3
+        name: "Legacy sunset: traffic off, data archived, decommission recorded"
+        status: na
+        severity: yellow
+        evidence: ""
+        source: ""
+
+delivery_ready: false         # DERIVED — never hand-set
+
+# Accepted gaps are recorded waivers, not silent skips. tier_limit is the highest change
+# tier that may deploy to production while this gap stays open.
+waivers: []
+#  - item: F2
+#    tier_limit: 1
+#    owner: "TA"
+#    revisit: "2026-09-01"
+#    reason: "single-tenant pilot; canary loop deferred until second tenant"

@@ -26,6 +26,17 @@ Deploy a verified artifact to the specified environment, following the approved 
 
 **Refusal rule:** If `.hitl/current-change.yaml` is missing or `build.status` is not `ready`, stop: "No verified build found. Run `/hitl:ops-build` first."
 
+**Platform readiness pre-flight (hard gate):** Before any production deploy, run:
+```bash
+"$PLUGIN_ROOT/hooks/check-platform-ready.sh" <environment>
+```
+(from source: `ai/claude/hooks/check-platform-ready.sh`). Exit 2 means the platform is not
+delivery-ready for this tier — print the script's output verbatim and **stop; do not
+proceed, do not offer to bypass**. The only paths forward are completing the roadmap items
+or recording waivers (owner + revisit + tier_limit) in
+`docs/04-operations/platform-readiness.yaml`, both via `/hitl:ops-plan-platform`. Staging
+and canary targets are never gated.
+
 **Graphify pre-flight:** Before the first step, run:
 ```bash
 [ -f graphify-out/graph.json ] && echo "Graphify: available" || echo "Graphify: unavailable"

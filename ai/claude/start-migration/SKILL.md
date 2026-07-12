@@ -451,22 +451,33 @@ No design work (HLD/LLD) begins until both documents are approved. The migration
 
 After the review, the architect runs `/hitl:architect-design-system docs/00-migration/migration-brief.md` (full-system migration) or `/hitl:architect-design-feature` (slice-by-slice).
 
-**Before the first development slice begins — set up the target build and deployment pipeline:**
-- The deployment view in the architect's HLD is the spec — use it to provision CI/CD for the target repo (build, test, deploy-to-staging jobs at minimum)
-- Provision at least one target environment (staging) — the 31-step workflow gates every PR on a passing staging deploy
-- Verify: a commit to the target repo triggers the pipeline and produces a deployable artifact
-- Run `/hitl:ops-apply-iac` to apply the IaC that provisions the pipeline and environments
-- Do not include a production cutover step without an explicit manual approval gate and a rollback path
+**Before the first development slice begins — generate the platform roadmap:**
 
-Before the first slice is deployed to production, set up observability infrastructure for the target system:
-- Application observability: structured logging, metrics, dashboards, and alerting with on-call routing — record the chosen stack in `docs/02-design/technical/adrs/adr-0005-observability-strategy.md`
-- Agentic observability: copy `shared/templates/token-cost-registry-template.yaml` to `docs/04-operations/token-cost-registry.yaml`; session logs are written automatically by the HITL hooks
-- `/hitl:ops-setup-observability` gates each slice's production deploy — it requires the tools provisioned here to already exist
+Initialize the platform readiness register:
+`mkdir -p docs/04-operations && cp "$PLUGIN_ROOT/shared/templates/platform-readiness-template.yaml" docs/04-operations/platform-readiness.yaml`,
+set `project_kind: migration` (this activates the migration-only **Parity** and **Cutover**
+layers: golden-dataset harness, shadow-run, cutover plan with rollback-to-legacy, dual-run
+window, legacy sunset — a migration is not done when the code is ported; it is done when
+the legacy system is off).
+
+Then run `/hitl:ops-plan-platform derive` — it reads the source analysis and the external-docs
+review, seeds the parity items with the concrete user-facing contracts to compare, and
+generates the roadmap issues (pipeline, staging environment, observability, parity harness,
+cutover plan). Each roadmap issue is an ordinary HITL change. Tier 2+ **production** deploys
+of the target stay blocked until the register says `delivery_ready: true`.
+
+Observability for the target system is item F1 of the readiness register (dashboards,
+alerting, on-call; record the chosen stack in
+`docs/02-design/technical/adrs/adr-0005-observability-strategy.md`, and copy
+`shared/templates/token-cost-registry-template.yaml` to
+`docs/04-operations/token-cost-registry.yaml` for agentic observability).
+`/hitl:ops-setup-observability` gates each slice's production deploy and requires those
+tools to exist — the roadmap sequences that standup before the first production slice.
 
 Each resulting slice is then handed to developers via the standard 31-step workflow, and must declare which BI IDs it covers.
 
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 
-**Migration is complete when:** every BI entry in `docs/00-migration/source-behavioral-inventory.md` has status `Complete` or `Descoped` in the migration brief's coverage matrix.
+**Migration is complete when:** every BI entry in `docs/00-migration/source-behavioral-inventory.md` has status `Complete` or `Descoped` in the migration brief's coverage matrix, **and** the readiness register's Parity and Cutover layers are green — parity proven against the legacy system, cutover executed, legacy sunset recorded. Ported code with the legacy still running is not a finished migration.
 
 ---

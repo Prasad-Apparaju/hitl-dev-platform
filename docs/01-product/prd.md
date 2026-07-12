@@ -53,7 +53,7 @@ HITL encodes one contract: a **workflow** is a repeatable abstraction for one wh
 
 Identity has three tiers, so granularity is earned rather than assumed (locked 2026-06-23, see `docs/design/workflow-model/01-design.md` §4):
 
-- **6 workflows** own their step sequence: Greenfield, Brownfield, Migration (establishment), Incident (fix-first), Migration Slice, Docs (documentation-only, its own short spine).
+- **7 workflows** own their step sequence: Greenfield, Brownfield, Migration (establishment), Incident (fix-first), Migration Slice, Docs (documentation-only, its own short spine), Platform Bootstrap (onboarded → delivery-ready, long-lived, register-driven; FR-25).
 - **6 profiles** are named presets over the shared delivery spine: Feature, Enhancement, Fix, Tech Change, Upgrade, Security.
 - **5 tags** tune required evidence within a profile: `refactor`, `perf`, `chore`, `tooling`, `infra`.
 
@@ -118,6 +118,7 @@ The product surface delivering this: 51 role skills, 32 commands, 7 subagent rol
 | FR-22 | In-place update via `/hitl:dev-update` | Should Have | Update completes without re-wiring hooks manually |
 | FR-23 | The plugin repo (`hitl-claude-plugin`) is generated from this source-of-truth repo by the plugin repo's `scripts/build.sh`; fixes land in `ai/claude/` here and are rebuilt, never patched downstream | Must Have | Build reproduces the published surface; release flow (version bump, changelog, tag, marketplace pin) documented |
 | FR-24 | A white-label offline distribution (HumAIn-branded zip, no external dependencies) can be generated for companies that cannot install from a public marketplace | Should Have | `tools/scripts/make-release.sh <version>` produces `humain-<version>.zip` from this repo |
+| FR-25 | The onboarding → customer-delivery bridge is codified: a `platform` workflow (Survey → Verify → Deliver → Operate → Ready, plus migration-only Parity and Cutover) driven by a machine-readable readiness register at `docs/04-operations/platform-readiness.yaml`; onboarding persists pipeline/observability verdicts to it; the roadmap is generated from it (`/hitl:ops-plan-platform`); Tier 2+ production deploys are hard-blocked until `delivery_ready` or waived (plugin issue #21; design: `docs/design/platform-bootstrap/`) | Must Have | Gate: `ci/hooks/test_check_platform_ready.py`; catalog verify covers `platform`; brownfield/greenfield/migration all hand off to the roadmap |
 
 ---
 

@@ -126,6 +126,41 @@ workflows:
       - { key: manifest,         name: "Generate Manifest",            label: "Manifest",  phase: "PRD Setup" }
       - { key: create_issue,     name: "Create Issue",                 label: "Issue",     phase: "PRD Setup" }
       - { key: confirm_ready,    name: "Confirm Ready",                label: "Ready",     phase: "PRD Setup" }
+      - { key: platform_roadmap, name: "Generate Platform Roadmap",    label: "Platform",  phase: "PRD Setup" }
+
+  # ── Platform bootstrap: onboarded → delivery-ready (design: docs/design/platform-bootstrap/) ──
+  # Long-lived, per-project. Progress lives in docs/04-operations/platform-readiness.yaml, NOT in
+  # .hitl/current-change.yaml (roadmap items are ordinary changes and need the change file).
+  # `cond: migration` steps are included only when the readiness register says
+  # project_kind: migration (resolved by ops-plan-platform at generation time).
+  platform:
+    title: "Platform Bootstrap — onboarded to delivery-ready"
+    phases: [Survey, Verify, Deliver, Operate, Parity, Cutover, Ready]
+    steps:
+      # ── Survey ────────────────────────────────────────────────────
+      - { key: derive_register,  name: "Derive Readiness Register",     label: "Register", phase: "Survey",  command: ops-plan-platform,          role: TA }
+      - { key: roadmap,          name: "Generate Roadmap",              label: "Roadmap",  phase: "Survey",  command: ops-plan-platform,          role: TA }
+      # ── Verify (layer D) ──────────────────────────────────────────
+      - { key: test_suites,      name: "Tier Test Suites Stand",        label: "Suites",   phase: "Verify",  command: manual,                     role: QA }
+      - { key: e2e_env,          name: "E2E Against Real Environment",  label: "E2E",      phase: "Verify",  command: manual,                     role: QA }
+      - { key: traceability,     name: "Test-to-Requirement Matrix",    label: "Trace",    phase: "Verify",  command: guided,                     role: QA }
+      # ── Deliver (layer E) ─────────────────────────────────────────
+      - { key: build_repro,      name: "Reproducible Build",            label: "Build",    phase: "Deliver", command: ops-build,                  role: Ops }
+      - { key: deploy_playbook,  name: "Full-System Deploy Playbook",   label: "Playbook", phase: "Deliver", command: guided,                     role: Ops }
+      - { key: cd_from_ci,       name: "Deploy Executed From CI",       label: "CD",       phase: "Deliver", command: manual,                     role: Ops }
+      # ── Operate (layer F) ─────────────────────────────────────────
+      - { key: obs_established,  name: "Observability Established",     label: "Observ",   phase: "Operate", command: ops-setup-observability,    role: Ops }
+      - { key: canary_exercised, name: "Progressive Release Exercised", label: "Canary",   phase: "Operate", command: ops-deploy,                 role: Ops }
+      - { key: sec_posture,      name: "Security Posture Settled",      label: "SecPos",   phase: "Operate", command: ops-pentest,                role: Ops }
+      # ── Parity (migration only) ───────────────────────────────────
+      - { key: golden_dataset,   name: "Golden Dataset Harness",        label: "Golden",   phase: "Parity",  cond: migration, command: guided,    role: QA }
+      - { key: shadow_run,       name: "Shadow/Dual-Run Comparison",    label: "Shadow",   phase: "Parity",  cond: migration, command: guided,    role: Ops }
+      # ── Cutover (migration only) ──────────────────────────────────
+      - { key: cutover_plan,     name: "Cutover + Rollback-to-Legacy Plan", label: "CutPlan", phase: "Cutover", cond: migration, command: guided, role: Ops }
+      - { key: dual_run,         name: "Dual-Run Window",               label: "DualRun",  phase: "Cutover", cond: migration, command: manual,    role: Ops }
+      - { key: decommission,     name: "Legacy Sunset + Archival",      label: "Sunset",   phase: "Cutover", cond: migration, command: manual,    role: Ops }
+      # ── Ready ─────────────────────────────────────────────────────
+      - { key: delivery_ready,   name: "Definition of Ready Verified",  label: "Ready",    phase: "Ready",   command: ops-plan-platform,          role: TA }
 
   # ── Docs change: a documentation-only change ────────────────────
   # Its own short spine (no code, no TDD) with a domain-routed reviewer gate.

@@ -1,7 +1,7 @@
 # Platform Bootstrap: Design
 
-> Mechanism proposal for the requirements in `00-requirements.md`. Status: **draft**.
-> Locked-by-evidence recommendations are marked (R1)-(R6); genuinely open decisions are in §8.
+> Mechanism for the requirements in `00-requirements.md`. Status: **decisions locked
+> 2026-07-11** (§8). Design rationale markers (R1)-(R6) preserved for the audit trail.
 
 ## 1. The two artifacts
 
@@ -187,16 +187,16 @@ provisioning skills.
 - Derive-don't-hand-maintain (2.0 command map; durable-core thread) for the roadmap
 - The existing spine for all actual implementation work
 
-## 8. Open decisions (need a call before implementation)
+## 8. Decisions (LOCKED 2026-07-11)
 
-| # | Decision | Options | Recommendation |
-|---|---|---|---|
-| D1 | Workflow name | `platform` / `roadmap` / `bootstrap` | `platform` (the register and skills all read naturally: platform-readiness, plan-platform) |
-| D2 | Production-deploy gate hardness | hard block with waivers / advisory only | Hard block (§5.1). HITL's differentiator is enforcement; an advisory here recreates the untracked-prose failure this design exists to kill |
-| D3 | Rollout slicing | all three entries at once / brownfield-first | Brownfield-first (field-proven demand, and its persistence fix is the smallest slice), then greenfield, then migration parity/cutover with review against a real migration |
-| D4 | Roadmap granularity | one issue per register item / umbrella per layer | Operator chooses at generation time; default umbrella-per-layer under 10 gaps, per-item above |
-| D5 | Where migration phases live | in `platform` via `cond:` / extend the `migration` workflow | In `platform` via `cond:` (§2); the migration workflow stays an intake workflow |
-| D6 | Version target | 2.1.0 (additive minor) | 2.1.0; no schema breaks, new workflow + register are additive |
+| # | Decision | Locked choice |
+|---|---|---|
+| D1 | Workflow name | `platform` (register and skill names read naturally: platform-readiness, plan-platform) |
+| D2 | Production-deploy gate hardness | **Hard block with waivers** (§5.1). HITL's differentiator is enforcement; an advisory here recreates the untracked-prose failure this design exists to kill |
+| D3 | Rollout slicing | **All three entry points in one release.** Known risk, accepted: migration parity/cutover ships without a live migration to validate against; mitigated by those steps being `guided` (ref-doc driven), revisit after first field migration |
+| D4 | Roadmap granularity | Operator chooses at generation time; default umbrella-per-layer under 10 gaps, per-item above |
+| D5 | Where migration phases live | In `platform` via `cond:` (§2); the migration workflow stays an intake workflow |
+| D6 | Version target | 2.1.0; no schema breaks, new workflow + register are additive |
 
 ## 9. Acceptance criteria (implementation gate)
 

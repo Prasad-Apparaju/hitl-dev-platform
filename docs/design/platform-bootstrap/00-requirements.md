@@ -1,8 +1,8 @@
 # Platform Bootstrap: Requirements
 
 > Design package for plugin issue #21 (platform-bootstrap workflow: the onboarding to
-> customer-delivery bridge). Status: **draft, decisions open**. See `01-design.md` for the
-> proposed mechanism and the open decisions list.
+> customer-delivery bridge). Status: **locked 2026-07-11**. See `01-design.md` for the
+> mechanism and the locked decisions D1-D6.
 
 ## 1. Problem
 
