@@ -8,7 +8,7 @@ All steps from onboarding an existing codebase through production delivery, foll
 
 ## 1. Project Setup
 
-Setup ends when the system manifest, architecture ADRs, priority component LLDs, and registries all exist. No per-change work begins before that point.
+Setup ends when the system manifest, architecture ADRs, priority component LLDs, registries, and the platform readiness register all exist. No per-change work begins before that point.
 
 ```mermaid
 graph TB
@@ -18,18 +18,22 @@ graph TB
     s1["Step 1 - Map the codebase"]
     s2["Step 2 - Customize CLAUDE.md"]
     s3["Step 3 - Generate system manifest from existing code"]
-    s4["/hitl:architect-review-existing - reconstruct decisions as ADRs"]
-    s5["Step 5 - Priority components - /hitl:dev-generate-docs for each"]
-    s6["Step 6 - Seed registries from existing tests and incidents"]
-    s7["Step 7 - Graphify (if installed)"]
-    s8["Step 8 - Create first change issue"]
-    s9["Step 9 - Confirm ready"]
-    entry --> s0 --> s1 --> s2 --> s3 --> s4 --> s5 --> s6 --> s7 --> s8 --> s9
+    s4["Step 4 - /hitl:architect-review-existing - reconstruct decisions as ADRs"]
+    s5["Step 5 - Verify pipeline - verdicts persisted to readiness register"]
+    s6["Step 6 - Observability survey - verdicts persisted to readiness register"]
+    s7["Step 7 - Priority components - /hitl:dev-generate-docs for each"]
+    s8["Step 8 - Seed registries from existing tests and incidents"]
+    s9["Step 9 - Graphify (if installed)"]
+    s10["Step 10 - Create first change issue"]
+    s11["Step 11 - Confirm ready + offer /hitl:ops-plan-platform roadmap"]
+    entry --> s0 --> s1 --> s2 --> s3 --> s4 --> s5 --> s6 --> s7 --> s8 --> s9 --> s10 --> s11
   end
 
   loop["Per-change delivery loop - GitHub issue + /hitl:dev-practices"]
+  roadmap["Platform roadmap - gaps become ordinary HITL changes"]
 
-  s9 --> loop
+  s11 --> loop
+  s11 --> roadmap
 ```
 
 ### What each step produces
@@ -41,11 +45,13 @@ graph TB
 | 2 | _(fills CLAUDE.md from observed code patterns)_ | Conventions and test framework locked in | Code generation |
 | 3 | `python tools/generate-manifest/generator.py` | `docs/system-manifest.yaml` (from real code) | Architecture review |
 | 4 | `/hitl:architect-review-existing` | Tech stack summary, ADR-0005+ for existing decisions, concern list | Per-change work |
-| 5 | `/hitl:dev-generate-docs` (per component) | HLD + LLD for each priority component | First change to those components |
-| 6 | _(scans test files + interviews team)_ | `test-registry.yaml`, `incident-registry.yaml` | `/hitl:dev-practices` Test Case Planning |
-| 7 | `graphify . && graphify hook install` | `graphify-out/graph.json` (optional) | First `/hitl:dev-practices` run |
-| 8 | `gh issue create` | First tracked change issue | Per-change loop |
-| 9 | _(confirms baseline)_ | — | — |
+| 5 | _(verifies CI/CD, offers scaffold)_ | Pipeline verdicts (D1/E1/E3) in `docs/04-operations/platform-readiness.yaml` | Build/deploy steps of the 31-step workflow |
+| 6 | _(surveys observability)_ | Observability verdict (F1) in the readiness register; token cost registry | First Tier 2 deploy |
+| 7 | `/hitl:dev-generate-docs` (per component) | HLD + LLD for each priority component | First change to those components |
+| 8 | _(scans test files + interviews team)_ | `test-registry.yaml`, `incident-registry.yaml` | `/hitl:dev-practices` Test Case Planning |
+| 9 | `graphify . && graphify hook install` | `graphify-out/graph.json` (optional) | First `/hitl:dev-practices` run |
+| 10 | `gh issue create` | First tracked change issue | Per-change loop |
+| 11 | _(confirms baseline)_ | Handoff to `/hitl:ops-plan-platform roadmap` — recorded gaps become phased roadmap issues; Tier 2+ **production** deploys stay blocked until the register says `delivery_ready: true` | — |
 
 ### What `/hitl:architect-review-existing` produces (Step 4)
 

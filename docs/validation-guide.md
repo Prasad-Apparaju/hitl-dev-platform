@@ -24,10 +24,10 @@ The bare macOS system Python (`/Library/Developer/CommandLineTools/usr/bin/pytho
 
 | # | Command | Pass criterion |
 |---|---------|----------------|
-| 1 | `python3 tools/workflow-catalog/derive.py verify` | Prints `VERIFY OK: ... spine->development, brownfield->brownfield, docs->docs, greenfield->prd, migration->migration, migration_review->migration_review`. Proves the numberless catalog reproduces the runtime `ai/shared/workflows.yaml` losslessly. |
-| 2 | `python3 -m pytest tools/workflow-catalog/test_derive.py ci/skill-lint/test_check_skills.py ci/manifest-drift/test_check_manifest_drift.py -q` | `24 passed`. Deriver (12), skill-lint (8), drift-checker (4). |
-| 3 | `python3 ci/skill-lint/check_skills.py --root ai/claude` | Exit 0; `51/51 files pass all hard gates` (8 advisory warnings are acceptable). |
-| 4 | `bash ci/breadcrumb/run_matrix.sh` | `RESULT: 238 passed, 0 failed (of 238 assertions)`. |
+| 1 | `python3 tools/workflow-catalog/derive.py verify` | Prints `VERIFY OK: ... spine->development, brownfield->brownfield, docs->docs, greenfield->prd, migration->migration, migration_review->migration_review, platform->platform`. Proves the numberless catalog reproduces the runtime `ai/shared/workflows.yaml` losslessly. |
+| 2 | `python3 -m pytest tools/workflow-catalog/test_derive.py ci/skill-lint/test_check_skills.py ci/manifest-drift/test_check_manifest_drift.py ci/hooks -q` | `55 passed`. Deriver (12), skill-lint (8), drift-checker (4), enforcement hooks (31: intake gate #20 = 14, platform deploy gate + statusline chip #21 = 17). |
+| 3 | `python3 ci/skill-lint/check_skills.py --root ai/claude` | Exit 0; `52/52 files pass all hard gates` (8 advisory warnings are acceptable). |
+| 4 | `bash ci/breadcrumb/run_matrix.sh` | `RESULT: 270 passed, 0 failed (of 270 assertions)`. |
 | 5 | `python3 tools/workflow-catalog/derive.py command-map \| diff - docs/command-map.generated.md` | No output (the checked-in command-map is not stale). |
 
 If any of 1–5 fails, that is a real regression — report it. All five pass on the current `main`.
@@ -42,8 +42,9 @@ Verify the chain is intact: each capability has a requirement, a design, and som
 |---|---|---|---|
 | **Numberless identity** (steps keyed by stable `key`+name+phase, not global position) | `docs/design/workflow-model/00-requirements.md` (G1), `docs/01-product/prd.md` FR-1 | `docs/design/workflow-model/01-design.md` §4; `tools/workflow-catalog/catalog.yaml` | Check 1 (derive verify) + `tools/workflow-catalog/test_derive.py` |
 | **Structure separated from execution** (generated command-map) | 00-requirements G2; PRD FR-3 | `docs/command-map.generated.md` (generated) | Check 5 (no drift) |
-| **Phase-ribbon breadcrumb** (numberless, phase ✓/◐/·) | 00-requirements; PRD FR-4 | `docs/design/workflow-model/02-rollout.md`; `ai/claude/hooks/_steps.sh` | Check 4 (`ci/breadcrumb/run_matrix.sh`, 238 assertions; see `ci/breadcrumb/README.md`) |
-| **Three-tier taxonomy** (6 workflows / 6 profiles / 5 tags) | PRD §4 | `docs/design/workflow-model/01-design.md` §4 | Profiles/tags resolve in `test_derive.py`; workflows in Check 1 |
+| **Phase-ribbon breadcrumb** (numberless, phase ✓/◐/·) | 00-requirements; PRD FR-4 | `docs/design/workflow-model/02-rollout.md`; `ai/claude/hooks/_steps.sh` | Check 4 (`ci/breadcrumb/run_matrix.sh`, 270 assertions; see `ci/breadcrumb/README.md`) |
+| **Three-tier taxonomy** (7 workflows / 6 profiles / 5 tags) | PRD §4 | `docs/design/workflow-model/01-design.md` §4 | Profiles/tags resolve in `test_derive.py`; workflows in Check 1 |
+| **Platform-bootstrap workflow (#21)** (onboarded → delivery-ready: readiness register, generated roadmap, hard production-deploy gate) | Plugin issue #21; PRD FR-25 | `docs/design/platform-bootstrap/` (D1-D6 locked); catalog `platform:` block; `ai/shared/templates/platform-readiness-template.yaml`; `ai/claude/hooks/check-platform-ready.sh` | Check 1 (`platform->platform` lossless) + Check 2 (`ci/hooks/test_check_platform_ready.py`, 17 cases) + Check 4 (platform position cases) |
 | **Skill quality gates** | `docs/design/workflow-model/04-harness-acceptance-criteria.md` Part A | Part A rules | Check 3 (`ci/skill-lint/check_skills.py`) + `test_check_skills.py` |
 | **Manifest drift checker (#16)** | Plugin issue #16 (gap 1) | `ci/manifest-drift/check_manifest_drift.py` (self-derives scan roots from the manifest) | Check 2 (`test_check_manifest_drift.py`); CI template `ci/workflows/convention-check.yml` |
 | **Docs-only workflow (#19)** | Plugin issue #19; PRD §4 | `docs/design/workflow-model/01-design.md` §4 (Docs bullet); catalog `docs:` block; `ai/claude/start-change/SKILL.md` classifier | Check 1 (`docs->docs` lossless) + Check 4 (docs position cases) |
@@ -144,4 +145,4 @@ Both should print their "matches source" line. If (b) shows any diff *other* tha
 
 ### 6.4 What Part 2 does *not* need
 
-The dev-platform test suite (derive verify, `run_matrix.sh`, pytest) validates the **source** and is not shipped in the plugin — do not look for it there. Part 2 is satisfied when 6.1–6.3 pass. This build is **not published to the marketplace**: the marketplace pin stays at the 1.0.30 build, so validating this build has zero effect on installed customers.
+The dev-platform test suite (derive verify, `run_matrix.sh`, pytest) validates the **source** and is not shipped in the plugin — do not look for it there. Part 2 is satisfied when 6.1–6.3 pass. Check the marketplace pin (`.claude-plugin/marketplace.json` `source.commit` on the plugin repo's `main`) to know which build customers actually receive — validating an unpinned build has zero effect on installed customers.

@@ -83,6 +83,7 @@ Output this exactly:
 |---|---|
 | `/hitl:ops-build` | Validate and run the build pipeline |
 | `/hitl:ops-deploy` | Structured deployment workflow |
+| `/hitl:ops-plan-platform` | Platform readiness register + roadmap: onboarded → delivery-ready |
 | `/hitl:ops-apply-iac` | Apply infrastructure-as-code changes |
 | `/hitl:ops-migrate-database` | Run and verify a database migration |
 | `/hitl:ops-backup-database` | Trigger and verify a database backup |
@@ -176,3 +177,5 @@ Read `$ARGUMENTS` as a description of a situation, goal, or question. Match it a
 | drift detection | `ops-detect-drift` |
 | observability / monitoring setup | `ops-setup-observability` |
 | penetration test | `ops-pentest` |
+| platform roadmap / delivery-ready / first pipeline or environment | `ops-plan-platform` |
+| production deploy blocked by platform gate | `ops-plan-platform` (status + waivers) |

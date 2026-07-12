@@ -50,6 +50,7 @@ All skills, agents, and hooks live inside the platform repo. If you followed the
 | `/hitl:ops-apply-iac` | `ai/claude/ops/apply-iac/SKILL.md` |
 | `/hitl:ops-measure-baseline` | `ai/claude/ops/measure-baseline/SKILL.md` |
 | `/hitl:ops-audit-dependencies` | `ai/claude/ops/audit-dependencies/SKILL.md` |
+| `/hitl:ops-plan-platform` | `ai/claude/ops/plan-platform/SKILL.md` |
 | `/hitl:architect-design-system` | `ai/claude/architect/design-system/SKILL.md` |
 | `/hitl:architect-design-feature` | `ai/claude/architect/design-feature/SKILL.md` |
 

@@ -82,7 +82,7 @@ Pick the path that matches where you are:
 | **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code` | [Architect guide](docs/roles/architect.md) |
 | **Technical Advisor** | `/hitl:ta-approve` | Approve/reject design gates (scope, HLD, LLD, decision packet) |
 | **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
-| **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-apply-iac`, `/hitl:ops-rollback`, `/hitl:ops-post-deploy-monitor`, + 7 more | [Ops guide](docs/roles/ops.md) |
+| **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-plan-platform`, `/hitl:ops-apply-iac`, `/hitl:ops-rollback`, + 10 more | [Ops guide](docs/roles/ops.md) |
 
 ---
 
