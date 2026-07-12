@@ -251,6 +251,6 @@ After `/hitl:architect-design-system` completes:
    - `/hitl:ops-setup-observability` runs per change before deploy — it requires the tools provisioned here to already exist
 
 4. Assign decision packets to developers — each developer picks up one packet and runs the 31-step workflow from it.
-4. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
+5. For new features after the initial build, create a GitHub issue and run `/hitl:dev-practices`.
 
 ---

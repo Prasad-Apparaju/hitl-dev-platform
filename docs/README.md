@@ -9,6 +9,7 @@
 | `roles/` | Per-role guides: what each role does, which commands they use, and how they interact with other roles |
 | `reference/` | Context model rationale — how Claude Code and Codex load context, and how HITL was designed around it |
 | `patterns/` | Reusable design patterns: failure mode taxonomy, idempotency keys |
+| `design/` | Design packages for HITL's own evolution: `workflow-model/` (shipped as 2.0), `platform-bootstrap/` (issue #21, draft) |
 | `changes/` | Schema definitions: `change-context.schema.yaml` (the `.hitl/current-change.yaml` contract) |
 | `images/` | SVG and PNG assets used by the docs |
 | `validation-guide.md` | Independent-reviewer / Codex guide to verifying a release: requirement→design→test map plus the exact checks to run |
