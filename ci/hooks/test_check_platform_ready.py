@@ -12,7 +12,9 @@ Also covers the statusline platform chip (shown only while not delivery-ready).
 """
 
 import os
+import stat
 import subprocess
+import sys
 import textwrap
 import pytest
 
@@ -21,9 +23,15 @@ GATE = os.path.abspath(os.path.join(HOOKS, "check-platform-ready.sh"))
 STATUSLINE = os.path.abspath(os.path.join(HOOKS, "statusline-hitl.sh"))
 
 
-def run_gate(project_dir, environment, tier=None):
+def run_gate(project_dir, environment, tier=None, env_extra=None):
+    # Pin HITL_PY to the test interpreter (which has PyYAML) so results do not depend on
+    # whatever bare python3 happens to be first on PATH (2026-07-11 Codex blocker 1).
+    env = os.environ.copy()
+    env["HITL_PY"] = sys.executable
+    if env_extra:
+        env.update(env_extra)
     cmd = ["bash", GATE, environment] + ([str(tier)] if tier is not None else [])
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_dir)
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_dir, env=env)
     return result.returncode, result.stderr
 
 
@@ -79,6 +87,12 @@ class TestEnvironmentScope:
         write_register(project, REGISTER_WITH_GAP)
         assert run_gate(project, "Production", 2)[0] == 2
 
+    def test_production_trailing_whitespace_still_gated(self, project):
+        # Codex major 5: 'Production ' must not slip past the gate.
+        write_register(project, REGISTER_WITH_GAP)
+        assert run_gate(project, "Production ", 2)[0] == 2
+        assert run_gate(project, " prod\t", 2)[0] == 2
+
 
 class TestRegisterStates:
     def test_no_register_passes(self, project):
@@ -99,6 +113,45 @@ class TestRegisterStates:
         code, err = run_gate(project, "production", 2)
         assert code == 2
         assert "not parseable" in err
+
+    def test_unparseable_register_with_ready_line_still_blocks(self, project):
+        # Codex major 6: malformed YAML containing 'delivery_ready: true' must fail
+        # CLOSED — the old grep fallback trusted the line and failed open.
+        write_register(project, "layers: [broken\ndelivery_ready: true\n")
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "not parseable" in err
+
+    def test_non_mapping_register_blocks(self, project):
+        write_register(project, "- just\n- a\n- list\n")
+        assert run_gate(project, "production", 2)[0] == 2
+
+    def test_empty_layers_blocks(self, project):
+        # Codex blocker 4: a structurally empty register (no items, not ready) has
+        # nothing to trust — it must block, not pass for lack of blockers.
+        write_register(project, 'schema_version: "1.0"\nlayers: {}\ndelivery_ready: false\nwaivers: []\n')
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "no items" in err
+
+    def test_missing_layers_blocks(self, project):
+        write_register(project, 'schema_version: "1.0"\ndelivery_ready: false\n')
+        assert run_gate(project, "production", 2)[0] == 2
+
+    def test_gate_blocks_the_actual_shipped_template(self, project):
+        # The template ships with real gap items; blockers must NAME them
+        # (Codex blocker 2: the gate previously reported it as unparseable).
+        template = os.path.join(HOOKS, "..", "..", "shared", "templates",
+                                "platform-readiness-template.yaml")
+        reg_dir = project / "docs" / "04-operations"
+        reg_dir.mkdir(parents=True, exist_ok=True)
+        with open(os.path.abspath(template)) as f:
+            (reg_dir / "platform-readiness.yaml").write_text(f.read())
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "not parseable" not in err
+        for item in ("D1", "E1", "F1"):
+            assert item in err
 
 
 class TestTiers:
@@ -144,6 +197,60 @@ class TestWaivers:
         code, err = run_gate(project, "production", 2)
         assert code == 2
         assert "lapsed" in err
+
+
+class TestAcceptedGap:
+    """Codex blocker 3: accepted_gap must go through the same waiver check as gap."""
+
+    def test_accepted_gap_without_waiver_blocks(self, project):
+        write_register(project, REGISTER_WITH_GAP.replace("status: gap", "status: accepted_gap"))
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "accepted_gap without a waiver" in err
+
+    def test_accepted_gap_with_adequate_waiver_passes(self, project):
+        reg = REGISTER_WITH_GAP.replace("status: gap", "status: accepted_gap").replace(
+            "    waivers: []\n",
+            '    waivers:\n      - item: E3\n        tier_limit: 3\n'
+            '        owner: "TA"\n        revisit: "2099-01-01"\n        reason: "pilot"\n')
+        write_register(project, reg)
+        assert run_gate(project, "production", 2)[0] == 0
+
+    def test_accepted_gap_with_lapsed_waiver_blocks(self, project):
+        reg = REGISTER_WITH_GAP.replace("status: gap", "status: accepted_gap").replace(
+            "    waivers: []\n",
+            '    waivers:\n      - item: E3\n        tier_limit: 3\n'
+            '        owner: "TA"\n        revisit: "2020-01-01"\n        reason: "pilot"\n')
+        write_register(project, reg)
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "lapsed" in err
+
+
+class TestNoCapablePython:
+    """Codex blocker 1 (fail-closed half): no PyYAML-capable python must BLOCK, not guess."""
+
+    def test_no_yaml_python_blocks_production(self, project, tmp_path_factory):
+        shim_dir = tmp_path_factory.mktemp("shim")
+        # A python3 that passes 'import sys' but fails 'import yaml' (bare-machine stand-in).
+        shim = shim_dir / "python3"
+        shim.write_text(
+            "#!/bin/bash\n"
+            'if printf "%s" "$*" | grep -q yaml; then exit 1; fi\n'
+            f'exec {sys.executable} "$@"\n')
+        shim.chmod(shim.stat().st_mode | stat.S_IEXEC)
+        for name in ("python", "py"):
+            (shim_dir / name).symlink_to(shim)
+        write_register(project, REGISTER_WITH_GAP.replace(
+            "delivery_ready: false", "delivery_ready: true"))
+        env = os.environ.copy()
+        env["PATH"] = f"{shim_dir}:/usr/bin:/bin"
+        env.pop("HITL_PY", None)
+        result = subprocess.run(["bash", GATE, "production", "2"], capture_output=True,
+                                text=True, cwd=project, env=env)
+        # Even a delivery_ready register cannot be TRUSTED unverified: fail closed.
+        assert result.returncode == 2
+        assert "PyYAML" in result.stderr
 
 
 class TestStatuslineChip:

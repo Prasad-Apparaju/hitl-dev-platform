@@ -25,8 +25,12 @@ absent for migration's back half):
   Definition of Ready.
 - **Hard production-deploy gate** (`hooks/check-platform-ready.sh`, run by
   `/hitl:ops-deploy` pre-flight): Tier 2+ production deploys blocked while not
-  delivery-ready unless every open gap carries an adequate, unlapsed waiver. Staging and
-  canary are never gated. Regression suite: `ci/hooks/test_check_platform_ready.py`.
+  delivery-ready unless every open item (`gap` or `accepted_gap`) carries an adequate,
+  unlapsed waiver. Staging and canary are never gated. The gate **fails closed** when it
+  cannot evaluate the register: no PyYAML-capable interpreter, unparseable YAML, or a
+  register with zero items (hardened after independent validation found fail-open paths).
+  Environment strings are whitespace-trimmed before matching. Regression suite:
+  `ci/hooks/test_check_platform_ready.py`.
 - **Statusline platform chip** while not delivery-ready; disappears once ready.
 - **Entry-point wiring**: brownfield steps 5-6 persist their pipeline/observability
   verdicts to the register; `start-from-prd` gains tracked step 5 (generate platform
