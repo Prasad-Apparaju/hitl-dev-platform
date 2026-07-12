@@ -522,6 +522,32 @@ class TestCanonicalCompleteness:
             'schema_version: "1.0"', 'schema_version: "9.9"'))
         assert run_gate(project, "production", 2)[0] == 2
 
+    def test_canonical_item_in_wrong_layer_blocks(self, project):
+        # Round-5 minor: D/E/F ids filed under the wrong layer = mis-derived register.
+        # Swap D1 and F1 across their layers via a placeholder.
+        reg = (REGISTER_WITH_GAP
+               .replace("- id: D1", "- id: XSWAP", 1)
+               .replace("- id: F1", "- id: D1", 1)
+               .replace("- id: XSWAP", "- id: F1", 1))
+        write_register(project, reg)
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "wrong layer" in err
+
+    def test_duplicate_waiver_entries_block(self, project):
+        # Round-5 minor: two waiver entries for one item are ambiguous, even if the
+        # last one is complete (last-wins is not a contract).
+        reg = REGISTER_WITH_GAP.replace(
+            "    waivers: []\n",
+            '    waivers:\n'
+            '      - item: E3\n        tier_limit: 1\n'
+            '      - item: E3\n        tier_limit: 3\n        owner: "TA"\n'
+            '        revisit: "2099-01-01"\n        reason: "pilot"\n')
+        write_register(project, reg)
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "multiple waiver entries" in err
+
 
 class TestNoCapablePython:
     """Codex blocker 1 (fail-closed half): no PyYAML-capable python must BLOCK, not guess."""
