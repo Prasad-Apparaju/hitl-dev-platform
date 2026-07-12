@@ -94,8 +94,11 @@ first: a lapsed waiver is treated as an open `gap` by the deploy gate.
 
 Walk every applicable layer (include parity/cutover only for migration):
 
-1. Every item is `verified` (with non-empty evidence), `accepted_gap` (with an unlapsed
-   waiver), or `na`.
+1. Every item is `verified` (with non-empty evidence) or `accepted_gap` (with a complete,
+   unlapsed waiver: owner + revisit + tier_limit + reason). `na` is valid ONLY for the
+   Parity/Cutover items on a non-migration project — never for the canonical D/E/F items,
+   and never on a migration. The canonical item set (D1-F3; plus P1-C3 on migration) must
+   all be present.
 2. The four pillars hold, and you state the evidence for each out loud:
    docs core reviewed and stable · tests including E2E passing · observability established
    and verified · CI/CD stable including one exercised progressive release.
