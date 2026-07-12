@@ -1,5 +1,5 @@
 ---
-description: Update an existing PRD requirement with new acceptance criteria, scope changes, or priority adjustments while maintaining traceability.
+description: Update an existing PRD requirement with new acceptance criteria, scope changes, or priority adjustments while maintaining traceability. Use when requirements shift on an existing feature, before design or build work resumes.
 argument-hint: "[requirement ID and change description]"
 disable-model-invocation: true
 ---

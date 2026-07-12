@@ -1,5 +1,5 @@
 ---
-description: Collaborate with PM to design a feature from a rough idea into a structured requirement with user stories, acceptance criteria, and scope boundaries.
+description: Collaborate with PM to design a feature from a rough idea into a structured requirement with user stories, acceptance criteria, and scope boundaries. Use before creating the GitHub issue, when the idea is not yet requirement-shaped.
 argument-hint: "[rough feature idea]"
 disable-model-invocation: true
 ---

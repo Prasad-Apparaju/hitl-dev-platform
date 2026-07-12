@@ -1,5 +1,5 @@
 ---
-description: Document a bug report as a structured GitHub issue with steps to reproduce, expected vs actual behavior, and severity.
+description: Document a bug report as a structured GitHub issue with steps to reproduce, expected vs actual behavior, and severity. Use whenever a defect is found outside the QA verify step.
 argument-hint: "[bug description]"
 disable-model-invocation: true
 ---

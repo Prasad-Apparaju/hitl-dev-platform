@@ -37,7 +37,7 @@ services:
 
   - name: "[project]-api"
     description: "[What this service does — 1 sentence]"
-    image: "[project]-api:latest
+    image: "[project]-api:latest"
     port: 8000
     required: true
     healthcheck:

@@ -1,5 +1,5 @@
 ---
-description: Design a new system from scratch starting from a PRD. Produces domain decomposition, system manifest, HLDs, ADRs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet ready to hand to a developer. Run once at project inception.
+description: Design a new system from scratch starting from a PRD. Run once at project setup, after greenfield or migration onboarding completes and before any per-change work. Produces domain decomposition, system manifest, HLDs, ADRs, LLDs, and an initial delivery plan — demoable slices sequenced by dependency, each with a decision packet ready to hand to a developer. Run once at project inception.
 argument-hint: "[path to PRD]"
 disable-model-invocation: true
 ---

@@ -1,5 +1,5 @@
 ---
-description: "Analyze a requested scope change: impact on existing requirements, dependencies, effort delta, and recommendation."
+description: "Analyze a requested scope change: impact on existing requirements, dependencies, effort delta, and recommendation. Use when the team or a stakeholder proposes changing an in-flight change's scope, before accepting it."
 argument-hint: "[description of scope change request]"
 disable-model-invocation: true
 ---
