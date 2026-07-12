@@ -4,6 +4,22 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.0.1] — Unreleased
+
+### Fixed
+
+**Intake gate: absolute paths never matched the bootstrap exemption, and out-of-project files
+were wrongly blocked (issue #20).** `check-hitl-context.sh` classified paths after only stripping
+a leading `./`, but Claude Code sends `tool_input.file_path` as an absolute path. Consequences:
+the `.hitl/`/`.claude/` bootstrap exemption never fired (so intake itself could be blocked, the
+exact chicken-and-egg it exists to prevent), and files outside the project (scratchpads under
+`/tmp`, user-level config) were gated as if they were project source. Affected paths are now
+normalized against the project root (`$CLAUDE_PROJECT_DIR`, falling back to the hook's working
+directory): absolute paths inside the project are rewritten relative, symlinks are resolved on
+both sides before the containment check, and paths outside the project are ignored — HITL
+governs this project's files only. Regression suite: `ci/hooks/test_check_hitl_context.py`.
+Also shipped on `release/1.x` as 1.0.31.
+
 ## [2.0.0] — 2026-07-10
 
 Major version: the workflow model is a different mental model. Existing 1.x projects keep working (the change-file schema change is additive), but the identity, breadcrumb, and taxonomy are new, so it ships as a major. 1.x continues on `release/1.x` for critical fixes.
