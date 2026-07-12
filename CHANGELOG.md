@@ -34,8 +34,9 @@ survey verdicts (brownfield), and simply absent (migration's back half). New pie
   the waiver join key), an invalid `project_kind` or `schema_version`, a register missing
   any canonical item (D1-F3, plus P1-C3 on migrations — truncated registers block), `na`
   on a canonical readiness item (waivers are the escape hatch, `na` is not), a migration
-  register with Parity/Cutover items left `na`, or any unexpected error (hardened across
-  four independent validation rounds that found fail-open paths). Environment strings are whitespace-trimmed before
+  register with Parity/Cutover items left `na`, a canonical item filed under the wrong
+  layer, duplicate waiver entries for one item, or any unexpected error (hardened across
+  five independent validation rounds that found fail-open paths). Environment strings are whitespace-trimmed before
   matching. Regression suite: `ci/hooks/test_check_platform_ready.py`.
 - **Statusline platform chip**: shows open-gap count while the project is not
   delivery-ready; disappears permanently once it is.

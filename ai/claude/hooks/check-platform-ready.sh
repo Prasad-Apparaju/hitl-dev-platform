@@ -94,6 +94,10 @@ MIGRATION_ONLY_LAYERS = ("parity", "cutover")
 # items and layers freely; they may not lose these.
 CORE_IDS = ("D1", "D2", "D3", "E1", "E2", "E3", "F1", "F2", "F3")
 MIGRATION_IDS = ("P1", "P2", "C1", "C2", "C3")
+# Canonical ids live in canonical layers (waivers join on id, but a canonical item filed
+# under the wrong layer is a mis-derived register — 2026-07-12 round 5).
+CANONICAL_LAYER = {"D": "verification", "E": "delivery", "F": "operation",
+                   "P": "parity", "C": "cutover"}
 
 
 def block(*lines):
@@ -145,10 +149,13 @@ try:
         sys.exit(0)
 
     waivers = {}
+    duplicate_waivers = set()
     for w in data.get("waivers") or []:
         if isinstance(w, dict):
             item = str(w.get("item", ""))
             if item:
+                if item in waivers:
+                    duplicate_waivers.add(item)
                 waivers[item] = w
 
     blockers = []
@@ -188,6 +195,13 @@ try:
                                 f"{seen_ids[iid]}) — waiver coverage would be ambiguous")
                 continue
             seen_ids[iid] = layer
+            expected_layer = (CANONICAL_LAYER.get(iid[0])
+                              if iid in CORE_IDS + MIGRATION_IDS else None)
+            if expected_layer and layer != expected_layer:
+                blockers.append(f"{iid} ({layer}): canonical item is in the wrong layer "
+                                f"(belongs in {expected_layer}) — the register is "
+                                "mis-derived; re-run /hitl:ops-plan-platform derive")
+                continue
             status = it.get("status")
             if status not in VALID_STATUSES:
                 blockers.append(f"{iid} ({layer}): {name} — invalid status {status!r} "
@@ -216,6 +230,10 @@ try:
                                     "(the register contract requires evidence to verify)")
                 continue
             # status is gap or accepted_gap: an adequate waiver is the only release.
+            if iid in duplicate_waivers:
+                blockers.append(f"{iid} ({layer}): multiple waiver entries for this item "
+                                "— ambiguous; keep exactly one")
+                continue
             w = waivers.get(iid)
             if w is None:
                 kind_msg = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"

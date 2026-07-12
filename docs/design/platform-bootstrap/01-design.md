@@ -165,7 +165,11 @@ Reusing existing gate patterns, tier-scaled:
    migration register may not leave Parity/Cutover items `na`. Round 4 (completeness):
    the canonical item set (D1-F3; P1-C3 on migrations) is required — a truncated register
    blocks — and `na` is never valid for applicable canonical items; a genuine
-   "does not apply here" is a recorded waiver, not a status flip.
+   "does not apply here" is a recorded waiver, not a status flip. Round 5: canonical items
+   must sit in their canonical layers, duplicate waiver entries for one item block
+   (last-wins is not a contract), and the plugin build's path normalizer no longer
+   double-prefixes template paths (the register-creation instructions were broken in the
+   installed layout — the one round-5 blocker, a build bug rather than a gate bug).
    The only deliberate allowance that remains is the missing-register exemption for
    pre-register projects.
 2. **Advisory at change intake**: `dev-start-change` warns (does not block) when starting a
