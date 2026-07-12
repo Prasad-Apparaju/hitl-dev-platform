@@ -1,5 +1,5 @@
 ---
-description: Review current sprint or milestone progress against PRD goals and acceptance criteria. Surfaces gaps and blockers.
+description: Review current sprint or milestone progress against PRD goals and acceptance criteria. Surfaces gaps and blockers. Use at sprint boundaries or whenever the PM needs a status read.
 argument-hint: "[sprint number or milestone name]"
 disable-model-invocation: true
 ---

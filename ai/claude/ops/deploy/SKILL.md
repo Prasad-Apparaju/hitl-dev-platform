@@ -1,5 +1,5 @@
 ---
-description: Deploy a verified build artifact to a target environment following the approved rollout plan. Reads rollout strategy from .hitl/current-change.yaml and executes deployment with canary configuration where applicable.
+description: Deploy a verified build artifact to a target environment following the approved rollout plan. Run at the Ship phase after ops-build and IaC verification, and for canary promotions. Reads rollout strategy from .hitl/current-change.yaml and executes deployment with canary configuration where applicable.
 argument-hint: "[environment: staging|canary|production] [branch or artifact reference]"
 disable-model-invocation: true
 ---

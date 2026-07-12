@@ -88,7 +88,7 @@ schema:
         EventEntry:
           name: { type: string }
           shape: { type: string, description: "Payload shape" }
-          consumed_by: { type: list[string] }
+          consumed_by: { type: "list[string]" }
           note: { type: string, optional: true }
 
       events_consumed:
