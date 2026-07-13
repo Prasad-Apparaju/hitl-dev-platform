@@ -4,6 +4,22 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.1.1] — 2026-07-13
+
+### Fixed
+
+**`delivery_ready` is no longer a deploy-gate bypass** (Codex round-6 non-blocking note,
+now closed). `check-platform-ready.sh` previously honored `delivery_ready: true` before
+any schema or canonical validation, so a hand-flipped flag in an otherwise invalid
+register released a Tier 2+ production deploy. The gate now re-derives readiness from
+the items and waivers themselves: the flag is the recorded outcome, never a release
+mechanism. A register whose flag says true but whose items show open gaps, missing
+canonical items, or schema violations blocks — and the output names the contradiction.
+Honest registers are unaffected (flag true with all items verified/waived still passes).
+Regression suite grown to 60 cases (`ci/hooks/test_check_platform_ready.py`).
+
+---
+
 ## [2.1.0] — 2026-07-13
 
 ### Added

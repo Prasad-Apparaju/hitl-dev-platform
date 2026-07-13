@@ -170,8 +170,11 @@ Reusing existing gate patterns, tier-scaled:
    (last-wins is not a contract), and the plugin build's path normalizer no longer
    double-prefixes template paths (the register-creation instructions were broken in the
    installed layout — the one round-5 blocker, a build bug rather than a gate bug).
-   The only deliberate allowance that remains is the missing-register exemption for
-   pre-register projects.
+   Round-6 note, fixed 2026-07-13 (2.1.1/1.1.1): `delivery_ready: true` is no longer a
+   short-circuit — the gate re-derives readiness from the items and waivers, so a
+   hand-flipped flag over an invalid or gapped register blocks as inconsistent instead
+   of releasing the deploy. The only deliberate allowance that remains is the
+   missing-register exemption for pre-register projects.
 2. **Advisory at change intake**: `dev-start-change` warns (does not block) when starting a
    Feature/Enhancement change while red items remain in layers D/E: "you can build this, but
    you cannot deliver it yet; N platform items open."
