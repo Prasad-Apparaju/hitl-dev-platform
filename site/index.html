@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
 <title>HITL — human-in-the-loop AI development</title>
 <style>
   :root {
@@ -40,6 +41,14 @@
     margin: 0; padding: 48px 20px 80px; line-height: 1.55; font-size: 15px;
   }
   .wrap { max-width: 880px; margin: 0 auto; }
+
+  .sitenav { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px; }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
   .brand {
     font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
     color: var(--leaf); margin-bottom: 18px;
@@ -90,10 +99,23 @@
   .principles ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
   .principles li::marker { color: var(--leaf); }
 
+
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+  figure.shot { margin: 22px 0 6px; }
+  figure.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; }
+  figure.shot.onwhite img { background: #fff; }
+  figure.shot figcaption { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 7px; }
   footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
 </style>
 
 <div class="wrap">
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html" class="here">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
   <header>
     <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
     <h1>AI speed, made safe for real customers</h1>
@@ -138,6 +160,14 @@
       <span class="go">open the comparison →</span>
     </a>
   </div>
+
+
+  <div class="group-label">The system at a glance</div>
+  <figure class="shot">
+    <a href="assets/hitl-dev-platform-infographic.svg"><img src="assets/hitl-dev-platform-infographic.svg"
+      alt="HITL infographic: humans refine intent into shared documents; AI executes from those documents"></a>
+    <figcaption>the core idea on one canvas — click to open full size</figcaption>
+  </figure>
 
   <div class="principles">
     <h2>The three commitments behind every page here</h2>

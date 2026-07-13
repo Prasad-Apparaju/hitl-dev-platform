@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 574" width="780" height="574" font-family="'Menlo','Monaco','Consolas','Courier New',monospace">
+  <rect width="780" height="574" rx="10" fill="#1e1e2e"/>
+  <rect width="780" height="38" rx="10" fill="#313244"/>
+  <rect y="28" width="780" height="10" fill="#313244"/>
+  <circle cx="20" cy="19" r="6" fill="#f38ba8"/>
+  <circle cx="40" cy="19" r="6" fill="#f9e2af"/>
+  <circle cx="60" cy="19" r="6" fill="#a6e3a1"/>
+  <text x="390" y="24" text-anchor="middle" fill="#cdd6f4" font-size="13" opacity="0.7">Claude Code — your-project · Ops Engineer</text>
+
+  <rect x="16" y="52" width="748" height="28" rx="4" fill="#1e3a1e" stroke="#a6e3a1" stroke-width="1" opacity="0.9"/>
+  <text x="28" y="70" fill="#a6e3a1" font-size="12">✓</text>
+  <text x="44" y="70" fill="#a6e3a1" font-size="12">CLAUDE.md loaded — conventions active · role: ops</text>
+
+  <text x="28" y="104" fill="#6c7086" font-size="12">Claude Code v1.x  |  Model: claude-sonnet-4-6  |  Context: your-project/</text>
+  <text x="28" y="132" fill="#89b4fa" font-size="13">╭─────────────────────────────────────────╮</text>
+  <text x="28" y="150" fill="#89b4fa" font-size="13">│  How can I help with your-project today? │</text>
+  <text x="28" y="168" fill="#89b4fa" font-size="13">╰─────────────────────────────────────────╯</text>
+
+  <text x="28" y="200" fill="#cdd6f4" font-size="13">&gt; /hitl:ops-</text>
+  <rect x="112" y="187" width="2" height="16" fill="#cdd6f4" opacity="0.8"/>
+
+  <rect x="16" y="212" width="748" height="316" rx="6" fill="#181825" stroke="#45475a" stroke-width="1"/>
+  <rect x="16" y="212" width="748" height="28" rx="6" fill="#313244"/>
+  <rect x="16" y="228" width="748" height="12" fill="#313244"/>
+  <text x="28" y="230" fill="#6c7086" font-size="11">AVAILABLE COMMANDS  (8)</text>
+
+  <rect x="17" y="240" width="746" height="36" fill="#313244" rx="0"/>
+  <text x="28" y="261" fill="#cba6f7" font-size="13" font-weight="bold">/hitl:ops-review-release</text>
+  <text x="250" y="261" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="261" fill="#a6adc8" font-size="12">Assess rollout plan, canary criteria, observability, and rollback before release</text>
+
+  <rect x="17" y="276" width="746" height="36" fill="transparent"/>
+  <text x="28" y="297" fill="#cba6f7" font-size="13">/hitl:ops-apply-iac</text>
+  <text x="250" y="297" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="297" fill="#a6adc8" font-size="12">Review and apply IaC changes — dry-run plan, approve, apply, verify state</text>
+
+  <rect x="17" y="312" width="746" height="36" fill="transparent"/>
+  <text x="28" y="333" fill="#cba6f7" font-size="13">/hitl:ops-build</text>
+  <text x="250" y="333" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="333" fill="#a6adc8" font-size="12">Build from branch — verify CI run, artifact integrity, and smoke readiness</text>
+
+  <rect x="17" y="348" width="746" height="36" fill="transparent"/>
+  <text x="28" y="369" fill="#cba6f7" font-size="13">/hitl:ops-deploy</text>
+  <text x="250" y="369" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="369" fill="#a6adc8" font-size="12">Deploy a verified artifact to an environment per the approved rollout plan</text>
+
+  <rect x="17" y="384" width="746" height="36" fill="transparent"/>
+  <text x="28" y="405" fill="#cba6f7" font-size="13">/hitl:ops-monitor-canary</text>
+  <text x="250" y="405" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="405" fill="#a6adc8" font-size="12">Read dashboards for active canary — produce go/no-go recommendation per step</text>
+
+  <rect x="17" y="420" width="746" height="36" fill="transparent"/>
+  <text x="28" y="441" fill="#cba6f7" font-size="13">/hitl:ops-measure-baseline</text>
+  <text x="250" y="441" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="441" fill="#a6adc8" font-size="12">Capture a performance baseline before a perf change lands — for budget checks</text>
+
+  <rect x="17" y="456" width="746" height="36" fill="transparent"/>
+  <text x="28" y="477" fill="#cba6f7" font-size="13">/hitl:ops-audit-dependencies</text>
+  <text x="250" y="477" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="477" fill="#a6adc8" font-size="12">Audit dependencies for CVEs and breaking changes before an upgrade — go/no-go</text>
+
+  <rect x="17" y="492" width="746" height="36" fill="transparent"/>
+  <text x="28" y="513" fill="#cba6f7" font-size="13">/hitl:ops-plan-platform</text>
+  <text x="250" y="513" fill="#6c7086" font-size="12">  ·</text>
+  <text x="263" y="513" fill="#a6adc8" font-size="12">Platform readiness register + roadmap — onboarded to delivery-ready</text>
+
+  <line x1="16" y1="530" x2="764" y2="530" stroke="#45475a" stroke-width="1" opacity="0.5"/>
+  <text x="28" y="544" fill="#6c7086" font-size="11">↑↓ navigate   ↵ select   esc dismiss   —   type to filter</text>
+  <text x="600" y="544" fill="#45475a" font-size="11">from .claude/commands/</text>
+
+  <rect x="0" y="556" width="780" height="18" fill="#313244" opacity="0.5"/>
+  <text x="16" y="569" fill="#6c7086" font-size="11">CLAUDE.md  ·  system-manifest.yaml  ·  8 ops commands loaded  ·  convention checks: active</text>
+</svg>

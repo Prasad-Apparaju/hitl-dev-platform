@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
 <title>The complete HITL workflow catalog — every phase, step, and substep</title>
 <style>
   :root {
@@ -97,11 +98,19 @@
   .mk { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
     color: var(--ink-soft); align-self: baseline; }
 
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+
   footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
 
   <header>
     <h1>The complete workflow catalog</h1>

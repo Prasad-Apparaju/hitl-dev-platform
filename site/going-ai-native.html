@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
 <title>Going AI-native on an existing codebase — the HITL brownfield journey</title>
 <style>
   :root {
@@ -168,11 +169,23 @@
   .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
   .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
   .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+  figure.shot { margin: 22px 0 6px; }
+  figure.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; }
+  figure.shot.onwhite img { background: #fff; }
+  figure.shot figcaption { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 7px; }
   footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
   <header>
     <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
     <h1>Going AI-native on an existing codebase</h1>
@@ -217,6 +230,10 @@
               <div class="who human"><span class="wl">YOU DECIDE</span>restart Claude Code and confirm the gates are live</div>
             </div>
             <div class="made">Produced: <code>.hitl/hooks/</code> · <code>.claude/settings.json</code> · ADR stubs</div>
+            <figure class="shot">
+              <img src="assets/welcome-banner.svg" alt="The HITL welcome banner showing the change, tier, and step trail">
+              <figcaption>what every session greets your team with once the hooks are live</figcaption>
+            </figure>
           </div>
         </details>
       </div>
@@ -435,6 +452,10 @@
     <div class="phase-label">Phase 2 · two lanes, in parallel</div>
     <h2 class="phase-title">Make changes now; earn production readiness alongside</h2>
     <p class="phase-note">Changes can be <em>made</em> the moment onboarding ends. They can be <em>delivered to customers</em> only when the platform readiness register is green. The two lanes run side by side, so nobody waits.</p>
+    <figure class="shot onwhite">
+      <img src="assets/team-collaboration.png" alt="Team collaboration: humans discuss in Slack, GitHub is the source of truth, each developer's AI reads and writes GitHub only">
+      <figcaption>the working model underneath both lanes — humans decide in Slack, GitHub holds the truth, AI writes only to GitHub</figcaption>
+    </figure>
     <div class="fork">
       <div class="lane">
         <h3>Lane A — the change lane</h3>
@@ -511,6 +532,10 @@
           <div class="who ai"><span class="wl">AI DOES</span>writes tests, then code, then refactors</div>
           <div class="who human"><span class="wl">YOU DECIDE</span>QA approves the tests; the developer verifies red-then-green honestly</div>
         </div>
+        <figure class="shot">
+          <img src="assets/tdd-flow.svg" alt="The TDD flow breadcrumb: RED, review, GREEN, refactor">
+          <figcaption>the build loop as the developer sees it</figcaption>
+        </figure>
       </div>
     </details>
 
@@ -547,6 +572,10 @@
           <div class="who ai"><span class="wl">AI DOES</span>pre-flight checks, dashboard reads, promote/hold recommendations</div>
           <div class="who human"><span class="wl">YOU DECIDE</span>ops makes every promote, hold, and rollback call</div>
         </div>
+        <figure class="shot">
+          <img src="assets/ops-deploy-flow.svg" alt="The deploy flow breadcrumb with the explicit confirmation gate">
+          <figcaption>the deploy flow — step 2 waits for a human before anything executes</figcaption>
+        </figure>
       </div>
     </details>
   </section>

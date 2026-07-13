@@ -101,11 +101,23 @@
   .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
   .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
   .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+  figure.shot { margin: 22px 0 6px; }
+  figure.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; }
+  figure.shot.onwhite img { background: #fff; }
+  figure.shot figcaption { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 7px; }
   footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html" class="here">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html" class="here">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
   <header>
     <h1>Brownfield with HITL: 1.x vs 2.x</h1>
     <p class="sub">The journey is the same shape on both lines — install, 11-step onboarding, parallel platform standup, gated delivery. What differs is the workflow model underneath the enhancement loop.</p>

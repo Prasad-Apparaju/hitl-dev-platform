@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
 <title>The HITL architecture — pillars that compose into workflows</title>
 <style>
   :root {
@@ -129,11 +130,23 @@
   }
   .closing p { margin: 0; max-width: 72ch; }
 
+
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+  figure.shot { margin: 22px 0 6px; }
+  figure.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; }
+  figure.shot.onwhite img { background: #fff; }
+  figure.shot figcaption { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 7px; }
   footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); }
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand">HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html" class="here">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html" class="here">Architecture</a><a href="catalog.html">Full catalog</a></nav>
 
   <header>
     <h1>What HITL is made of</h1>
@@ -196,6 +209,11 @@
       <span class="eg">CLAUDE.md · system-manifest.yaml · 4 registries</span>
     </div>
   </div>
+
+  <figure class="shot">
+    <img src="assets/ops-commands.svg" alt="The ops command palette in Claude Code listing the /hitl:ops-* skills">
+    <figcaption>the skills pillar as a team member sees it — the ops command palette in Claude Code</figcaption>
+  </figure>
 
   <div class="group-label">How they compose into a workflow step</div>
   <p class="lead">Every step in every workflow executes the same way. This is the whole trick — one repeating composition, not fifty special cases.</p>
