@@ -146,7 +146,7 @@
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html" class="here">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html" class="here">Architecture</a><a href="catalog.html">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
 
   <header>
     <h1>What HITL is made of</h1>
@@ -173,13 +173,13 @@
   <div class="group-label">The five pillars</div>
   <div class="pillars">
     <div class="pillar">
-      <span class="count">1 catalog · 6 workflows</span>
+      <span class="count">1 catalog · 7 workflows</span>
       <h3>The workflow catalog</h3>
       <p>The single machine-readable definition of every workflow: which steps exist, in what order, which command executes each, and which role owns it. Everything else renders or enforces this one file.</p>
       <span class="eg">shared/workflows.yaml</span>
     </div>
     <div class="pillar">
-      <span class="count">50 skills</span>
+      <span class="count">52 skills</span>
       <h3>Skills</h3>
       <p>Step-by-step instruction sets for one job each: onboard a codebase, plan tests, review a release, deploy. Exposed as <code>/hitl:*</code> commands; Claude executes them, humans invoke them and hold their gates.</p>
       <span class="eg">/hitl:dev-tdd · /hitl:ops-plan-platform</span>
@@ -197,7 +197,7 @@
       <span class="eg">architect-reviewer · spec-conformance-reviewer</span>
     </div>
     <div class="pillar">
-      <span class="count">31 templates</span>
+      <span class="count">25 templates + 8 ADR stubs</span>
       <h3>Templates</h3>
       <p>The molds for every artifact the process produces: PRD, decision packet, ADRs, the four registries, the readiness register. A template is a contract — the deploy gate literally validates registers against it.</p>
       <span class="eg">platform-readiness-template.yaml</span>
@@ -261,5 +261,5 @@
     <p><b>The design rule underneath all of it:</b> anything that must never be skipped is a hook, not an instruction. Anything that requires judgment is a skill with a human gate, not automation. Anything worth remembering is written to durable memory, not left in a conversation. That division of labor — deterministic enforcement, instructed intelligence, recorded truth — is what makes an AI-native process trustworthy at scale.</p>
   </div>
 
-  <footer>HITL v1.1.0 · counts reflect the version teams run today</footer>
+  <footer>HITL v2.1.0 (current 2.x line) · counts reflect the shipped release</footer>
 </div>

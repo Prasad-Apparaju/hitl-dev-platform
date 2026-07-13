@@ -110,12 +110,12 @@
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
 
   <header>
     <h1>The complete workflow catalog</h1>
     <p class="sub">Every workflow, phase, step, and substep that ships in HITL — generated from the same catalog file the running system executes, so this page cannot drift from reality. Expand a workflow to see its phases, a phase to see its steps, and a step to see its stable key, executor, and owner.</p>
-    <p class="legend"><b>6 workflows</b> · 78 steps + 1 substep · executor is a <b>/hitl:*</b> skill, <b>manual</b> (a person), or <b>guided</b> (Claude follows a reference doc)</p>
+    <p class="legend"><b>7 workflows</b> · 84 steps + 1 substep · executor is a <b>/hitl:*</b> skill, <b>manual</b> (a person), or <b>guided</b> (Claude follows a reference doc)</p>
   </header>
 
   <div class="controls">
@@ -123,7 +123,7 @@
     <button type="button" onclick="document.querySelectorAll('details').forEach(d=>d.open=false)">collapse everything</button>
   </div>
 
-<!-- generated from tools/workflow-catalog/catalog.yaml · 6 workflows · 79 step rows -->
+<!-- generated from tools/workflow-catalog/catalog.yaml · 7 workflows · 85 step rows -->
 <details class="wf"><summary><span class="sumleft"><span class="wfname">Development — deliver a change</span><div class="oneliner">the delivery spine every enhancement runs on</div></span><span class="wfmeta">31 steps + 1 substep · 7 phases</span></summary>
 <div class="wfbody">
 <details class="phase" open><summary><span class="phname">Requirements</span><span class="phcount">2 steps</span></summary>
@@ -171,6 +171,17 @@
 <details class="phase" open><summary><span class="phname">Post-Ship</span><span class="phcount">2 steps</span></summary>
 <details class="steprow"><summary><span class="num">30</span><span class="sname">30-Day ROI Check</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>roi_30</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Post-Ship.1</code></div></details>
 <details class="steprow"><summary><span class="num">31</span><span class="sname">90-Day ROI Check</span><span class="srole">PM</span></summary><div class="smeta"><span class="mk">key</span><code>roi_90</code><span class="mk">executed by</span><code>guided</code><span class="mk">owner</span><code>PM</code><span class="mk">position</span><code>Post-Ship.2</code></div></details>
+</details>
+</div></details>
+<details class="wf"><summary><span class="sumleft"><span class="wfname">Docs — documentation-only changes</span><div class="oneliner">tracked route for docs PRs, reviewer routed by domain</div></span><span class="wfmeta">6 steps · 1 phase</span></summary>
+<div class="wfbody">
+<details class="phase" open><summary><span class="phname">Docs Change</span><span class="phcount">6 steps</span></summary>
+<details class="steprow"><summary><span class="num">1</span><span class="sname">GitHub Issue</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>issue</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Docs Change.1</code></div></details>
+<details class="steprow"><summary><span class="num">2</span><span class="sname">Scope Docs Impact</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>scope</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Docs Change.2</code></div></details>
+<details class="steprow"><summary><span class="num">3</span><span class="sname">Write / Update Docs</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>draft</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Docs Change.3</code></div></details>
+<details class="steprow"><summary><span class="num">4</span><span class="sname">Docs Review</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>doc_review</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Docs Change.4</code></div></details>
+<details class="steprow"><summary><span class="num">5</span><span class="sname">Reconcile Cross-Refs</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>reconcile</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Docs Change.5</code></div></details>
+<details class="steprow"><summary><span class="num">6</span><span class="sname">Merge</span><span class="srole"></span></summary><div class="smeta"><span class="mk">key</span><code>merge</code><span class="mk">executed by</span><code>—</code><span class="mk">owner</span><code>—</code><span class="mk">position</span><code>Docs Change.6</code></div></details>
 </details>
 </div></details>
 <details class="wf"><summary><span class="sumleft"><span class="wfname">Brownfield — onboard an existing codebase</span><div class="oneliner">run once per existing project</div></span><span class="wfmeta">11 steps · 1 phase</span></summary>
@@ -258,5 +269,5 @@
 </details>
 </div></details>
 
-  <footer>HITL v1.1.0 · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
+  <footer>HITL v2.1.0 (2.x line) · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
 </div>

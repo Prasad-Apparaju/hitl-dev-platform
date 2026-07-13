@@ -185,7 +185,7 @@
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
   <header>
     <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
     <h1>Going AI-native on an existing codebase</h1>
@@ -207,7 +207,7 @@
             <span class="cmd">claude plugin install hitl@hitl</span>
           </summary>
           <div class="blurb">
-            <p>Two commands — <span class="cmd">claude plugin marketplace add pappar/hitl-claude-plugin</span>, then <span class="cmd">claude plugin install hitl@hitl</span> — install the HITL plugin into Claude Code from a public marketplace: 50 skills, 6 reviewer agents, enforcement hooks, and document templates. At this point it is inert. Nothing reads or changes your repository until you start onboarding.</p>
+            <p>Two commands — <span class="cmd">claude plugin marketplace add pappar/hitl-claude-plugin</span>, then <span class="cmd">claude plugin install hitl@hitl</span> — install the HITL plugin into Claude Code from a public marketplace: 52 skills, 6 reviewer agents, enforcement hooks, and document templates. At this point it is inert. Nothing reads or changes your repository until you start onboarding.</p>
             <div class="split">
               <div class="who ai"><span class="wl">AI DOES</span>nothing yet — the tooling arrives, the judgment stays with you</div>
               <div class="who human"><span class="wl">YOU DECIDE</span>which repository to onboard, and when</div>
@@ -381,7 +381,7 @@
             <span class="cmd">QA / OPS</span>
           </summary>
           <div class="blurb">
-            <p>Two registries get seeded. The test registry: the AI scans your test files and records what covers what. The incident registry: you recount what broke in production in the last six months, and each incident becomes a record. Future changes query these automatically — a change touching a domain with past incidents gets stricter canary criteria, because the process remembers even when people rotate.</p>
+            <p>Two registries get seeded. The test registry: the AI scans your test files and records what covers what. The incident registry: you recount what broke in production in the last six months, and each incident becomes a record. Future changes query these automatically — a change touching a domain with past incidents gets stricter canary criteria, because the process remembers even when people rotate. This step also initializes the product baseline: if <code>docs/01-product/prd.md</code> is missing, a PRD shell is seeded — personas from a short interview, requirements left empty — so the PM and QA skills have somewhere to land.</p>
             <div class="split">
               <div class="who ai"><span class="wl">AI DOES</span>scans tests into the registry, structures the incident records</div>
               <div class="who human"><span class="wl">YOU DECIDE</span>the incident history only the team knows</div>
@@ -466,11 +466,11 @@
         </details>
         <details class="mini">
           <summary>Start it: <span class="cmd">/hitl:dev-start-change</span></summary>
-          <div class="blurb"><p>The AI reads the issue, classifies which workflow applies, shows the full step plan up front, creates the branch, and seeds the tracked change file. From this moment the enforcement hooks know a change is active; before it, they block edits entirely.</p></div>
+          <div class="blurb"><p>The AI reads the issue, classifies it into one of six change profiles (Feature, Enhancement, Fix, Tech Change, Upgrade, Security), and derives the step plan from impact analysis — tags add conditional steps and required evidence over a non-skippable floor. It shows that plan up front, creates the branch, and seeds the tracked change file. From this moment the enforcement hooks know a change is active; before it, they block edits entirely.</p></div>
         </details>
         <details class="mini">
           <summary>Run the delivery loop</summary>
-          <div class="blurb"><p>The 31-step loop below: design first, tests before code, layered review, evidence at every gate. This is where the enhancement actually gets built. The full ceremony is for Tier 3 — cross-domain, high-consequence changes. Lower tiers run an abbreviated path: a typo is minutes with a standard PR review, a bug fix is under an hour of process. 31 steps is the map, not 31 meetings.</p></div>
+          <div class="blurb"><p>The delivery loop below: design first, tests before code, layered review, evidence at every gate. This is where the enhancement actually gets built. The plan is scoped to the change — the profile and tags decide which conditional steps apply, and the risk tier decides how heavy the gates are. A typo carries minutes of process with a standard PR review; a cross-domain feature runs the full ceremony. The catalog's 31 steps are the complete map, not 31 meetings.</p></div>
         </details>
         <details class="mini">
           <summary>First touch of an undocumented component</summary>
@@ -634,5 +634,5 @@
     <p>The trade is explicit: some raw velocity is spent buying coherence, trust, and proof. For teams shipping to real customers, that is the difference between AI as a demo and AI as an engineering practice.</p>
   </div>
 
-  <footer>HITL v1.1.0 · the workflow, gates, and registers on this page are shipped and enforced, not roadmap</footer>
+  <footer>HITL v2.1.0 (current 2.x line) · the workflow, gates, and registers on this page are shipped and enforced, not roadmap · legacy 1.x: see the <a href="journey-1x.html">1.x map</a></footer>
 </div>

@@ -24,10 +24,11 @@ sys.path.insert(0, str(ROOT / "tools" / "workflow-catalog"))
 import yaml  # noqa: E402
 from derive import derive_steps, total_of, workflow_steps  # noqa: E402
 
-# Portal presentation order. `docs` (2.x-only) is excluded while the portal documents
-# the 1.x line customers run; add it here when the 2.x line publishes.
+# Portal presentation order. The portal documents the current 2.x line (hitl@hitl),
+# which includes the docs workflow; 1.x (hitl-1x@hitl) is legacy reference.
 ORDER = [
     ("spine", "Development — deliver a change", "the delivery spine every enhancement runs on"),
+    ("docs", "Docs — documentation-only changes", "tracked route for docs PRs, reviewer routed by domain"),
     ("brownfield", "Brownfield — onboard an existing codebase", "run once per existing project"),
     ("greenfield", "PRD — stand up a greenfield project", "run once per new project"),
     ("migration", "Migration — set up a target system", "run once per migration"),
@@ -214,12 +215,12 @@ SHELL = """<meta charset="utf-8">
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
 
   <header>
     <h1>The complete workflow catalog</h1>
     <p class="sub">Every workflow, phase, step, and substep that ships in HITL — generated from the same catalog file the running system executes, so this page cannot drift from reality. Expand a workflow to see its phases, a phase to see its steps, and a step to see its stable key, executor, and owner.</p>
-    <p class="legend"><b>6 workflows</b> · 78 steps + 1 substep · executor is a <b>/hitl:*</b> skill, <b>manual</b> (a person), or <b>guided</b> (Claude follows a reference doc)</p>
+    <p class="legend">__LEGEND_COUNTS__ · executor is a <b>/hitl:*</b> skill, <b>manual</b> (a person), or <b>guided</b> (Claude follows a reference doc)</p>
   </header>
 
   <div class="controls">
@@ -229,7 +230,7 @@ SHELL = """<meta charset="utf-8">
 
 __FRAGMENT__
 
-  <footer>HITL v1.1.0 · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
+  <footer>HITL v2.1.0 (2.x line) · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
 </div>
 """
 
@@ -238,8 +239,14 @@ def main():
     catalog = yaml.safe_load((ROOT / "tools" / "workflow-catalog" / "catalog.yaml").read_text())
     fragment = build_fragment(catalog)
     out_path = ROOT / "site" / "catalog.html"
-    out_path.write_text(SHELL.replace("__FRAGMENT__", fragment))
-    rows = fragment.count('details class="steprow')
+    total_rows = fragment.count('details class="steprow')
+    substeps = fragment.count('details class="steprow sub"')
+    steps = total_rows - substeps
+    legend = f"<b>{len(ORDER)} workflows</b> · {steps} steps"
+    if substeps:
+        legend += f" + {substeps} substep" + ("s" if substeps > 1 else "")
+    out_path.write_text(SHELL.replace("__FRAGMENT__", fragment).replace("__LEGEND_COUNTS__", legend))
+    rows = total_rows
     print(f"wrote {out_path.relative_to(ROOT)} ({rows} step rows)")
     return 0
 

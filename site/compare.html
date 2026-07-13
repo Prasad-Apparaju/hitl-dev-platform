@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
 <title>Brownfield with HITL — 1.x vs 2.x</title>
 <style>
   :root {
@@ -117,21 +118,21 @@
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-1x.html">1.x step map</a><a href="journey-2x.html">2.x step map</a><a href="compare.html" class="here">1.x vs 2.x</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a><a href="compare.html" class="here">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
   <header>
     <h1>Brownfield with HITL: 1.x vs 2.x</h1>
-    <p class="sub">The journey is the same shape on both lines — install, 11-step onboarding, parallel platform standup, gated delivery. What differs is the workflow model underneath the enhancement loop.</p>
+    <p class="sub">The journey is the same shape on both lines — install, 11-step onboarding, parallel platform standup, gated delivery. What differs is the workflow model underneath the enhancement loop. 2.x is the current line; this page is the reference for teams still on 1.x deciding when to move.</p>
   </header>
 
   <div class="band-label">Where they stand today</div>
   <div class="status">
     <div class="statcard">
-      <h3>1.x — v1.1.0 <span class="pill live">LIVE TO CUSTOMERS</span></h3>
-      <p>Marketplace pin serves <code>481ac0f</code>. Numbered 31-step workflow + the full platform-bootstrap feature (register, roadmap, hard production gate), hardened through six rounds of internal adversarial review before release — a validation of the gate's behavior, not customer outcome data.</p>
+      <h3>2.x — v2.1.0 <span class="pill live">CURRENT · hitl@hitl</span></h3>
+      <p>Served from <code>release/2.x</code> since 2026-07-13. Everything 1.1.0 has — including the platform-bootstrap feature (register, roadmap, hard production gate) — on the redesigned workflow model, plus the docs-only workflow and the brownfield PRD shell.</p>
     </div>
     <div class="statcard">
-      <h3>2.x — 2.1.0 <span class="pill staged">BUILT, NOT PUBLISHED</span></h3>
-      <p>Everything 1.1.0 has, on the redesigned workflow model. Publishing is one pin flip after a first 2.1.0 build — the existing 2.0.x build predates the platform feature and the build-pipeline fix.</p>
+      <h3>1.x — v1.1.0 <span class="pill staged">LEGACY · hitl-1x@hitl</span></h3>
+      <p>Served from <code>release/1.x</code> for teams not yet ready to move. Numbered 31-step workflow + the full platform-bootstrap feature, hardened through six rounds of internal adversarial review before release — a validation of the gate's behavior, not customer outcome data. Feature-frozen except critical fixes.</p>
     </div>
   </div>
 
@@ -205,5 +206,5 @@
     <b>What upgrading means for a live project:</b> the change-file schema is additive and <code>/hitl:dev-update</code> remaps the embedded workflow by stable key — in-flight changes keep their done/current step status across the model change. The platform readiness register carries over untouched (<code>schema_version 1.0</code> on both lines). 2.x ships as a major version because the mental model is different, not because anything breaks.
   </div>
 
-  <footer>sources: workflow catalog (main vs release/1.x) · CHANGELOG 2.0.0–2.1.0 · docs/design/workflow-model · docs/design/platform-bootstrap</footer>
+  <footer>sources: workflow catalog (release/2.x vs release/1.x) · CHANGELOG 2.0.0–2.1.0 · docs/design/workflow-model · docs/design/platform-bootstrap</footer>
 </div>
