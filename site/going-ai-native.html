@@ -190,7 +190,7 @@
     <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
     <h1>Going AI-native on an existing codebase</h1>
     <p class="thesis">AI generates. Humans shape, review, and decide.</p>
-    <p class="sub">AI writes code faster than teams can review it, and it writes confidently even when it is wrong. HITL makes that speed safe: documentation becomes the shared source of truth, every step leaves evidence, and enforcement hooks make the process impossible to skip silently. This page shows everything that happens between "we have an existing codebase" and "our team ships AI-built enhancements to customers".</p>
+    <p class="sub">AI writes code faster than teams can review it, and it writes confidently even when it is wrong. HITL makes that speed safe: documentation becomes the shared source of truth, every step leaves evidence, and repo-local enforcement hooks fail closed — a skipped step surfaces instead of slipping through. This page shows everything that happens between "we have an existing codebase" and "our team ships AI-built enhancements to customers".</p>
     <p class="hint">click any step to see what happens inside it — and who does what</p>
   </header>
 
@@ -207,7 +207,7 @@
             <span class="cmd">claude plugin install hitl@hitl</span>
           </summary>
           <div class="blurb">
-            <p>The HITL plugin installs into Claude Code from a public marketplace: 50 skills, 6 reviewer agents, enforcement hooks, and document templates. At this point it is inert. Nothing reads or changes your repository until you start onboarding.</p>
+            <p>Two commands — <span class="cmd">claude plugin marketplace add pappar/hitl-claude-plugin</span>, then <span class="cmd">claude plugin install hitl@hitl</span> — install the HITL plugin into Claude Code from a public marketplace: 50 skills, 6 reviewer agents, enforcement hooks, and document templates. At this point it is inert. Nothing reads or changes your repository until you start onboarding.</p>
             <div class="split">
               <div class="who ai"><span class="wl">AI DOES</span>nothing yet — the tooling arrives, the judgment stays with you</div>
               <div class="who human"><span class="wl">YOU DECIDE</span>which repository to onboard, and when</div>
@@ -242,7 +242,7 @@
 
   <!-- PHASE 1 -->
   <section>
-    <div class="phase-label">Phase 1 · typically 1–2 weeks for a medium system</div>
+    <div class="phase-label">Phase 1 · plan for 1–2 weeks on a medium system — a working estimate, scaling with codebase size and interview availability</div>
     <h2 class="phase-title">Onboarding: teach the AI your system</h2>
     <p class="phase-note">Eleven tracked steps. The goal is not paperwork; it is building the shared memory that every future AI session will load, so the hundredth change is as grounded as the first.</p>
     <div class="rail">
@@ -440,7 +440,7 @@
               <div class="who ai"><span class="wl">AI DOES</span>summarizes the baseline and the known gaps</div>
               <div class="who human"><span class="wl">YOU DECIDE</span>you own the pace of both lanes from here</div>
             </div>
-            <div class="made">Produced: a system the AI can be trusted to work inside</div>
+            <div class="made">Produced: a repo where AI work is checkable — context, gates, and evidence in place</div>
           </div>
         </details>
       </div>
@@ -470,7 +470,7 @@
         </details>
         <details class="mini">
           <summary>Run the delivery loop</summary>
-          <div class="blurb"><p>The 31-step loop below: design first, tests before code, layered review, evidence at every gate. This is where the enhancement actually gets built.</p></div>
+          <div class="blurb"><p>The 31-step loop below: design first, tests before code, layered review, evidence at every gate. This is where the enhancement actually gets built. The full ceremony is for Tier 3 — cross-domain, high-consequence changes. Lower tiers run an abbreviated path: a typo is minutes with a standard PR review, a bug fix is under an hour of process. 31 steps is the map, not 31 meetings.</p></div>
         </details>
         <details class="mini">
           <summary>First touch of an undocumented component</summary>
@@ -501,7 +501,7 @@
 
     <div class="gateband">
       <span class="icon">GATE</span>
-      <div class="txt"><b>The production gate is enforced, not promised.</b> Until the register says <code>delivery_ready: true</code>, every significant production deploy is blocked by a script that fails closed — a register it cannot read, a truncated file, an incomplete waiver all block. Exceptions are recorded waivers with an owner, a revisit date, and a reason. Staging is never blocked; the readiness lane needs it. One line of status shows the open-gap count until the day it disappears for good.</div>
+      <div class="txt"><b>The production gate is enforced, not promised.</b> Until the register says <code>delivery_ready: true</code>, every Tier 2+ production deploy — normal features and up; trivial fixes and Tier 0–1 changes pass — is blocked by a script that fails closed: a register it cannot read, a truncated file, an incomplete waiver all block. The gate is a pre-flight of <code>/hitl:ops-deploy</code>, so it governs deploys made through HITL; it does not reach into pipelines you run outside it. Urgent work ships through recorded waivers with an owner, a revisit date, and a reason. Staging is never blocked; the readiness lane needs it. One line of status shows the open-gap count until the day it disappears for good.</div>
     </div>
   </section>
 
@@ -613,7 +613,7 @@
         <summary><span class="sumleft"><span class="name">Can the AI ship something on its own?</span>
         <div class="oneliner">no — every consequential action has a human in front of it</div></span></summary>
         <div class="blurb">
-          <p>Designs are approved by your architect and technical advisor before code exists. Tests are reviewed by QA before implementation starts. Deploy commands are shown to the operator before they run, and every promote, hold, and rollback is a human call. Underneath the process sit hooks the AI cannot bypass: no edits without an active tracked change, and a production gate that fails closed on anything it cannot verify.</p>
+          <p>Designs are approved by your architect and technical advisor before code exists. Tests are reviewed by QA before implementation starts. Deploy commands are shown to the operator before they run, and every promote, hold, and rollback is a human call. Underneath the process sit repo-local hooks that run outside the AI's control — a human administrator can change or remove them, but the AI working in a session cannot: no edits without an active tracked change, and a production gate that fails closed on anything it cannot verify.</p>
         </div>
       </details>
 
