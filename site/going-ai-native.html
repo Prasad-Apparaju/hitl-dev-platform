@@ -151,6 +151,24 @@
   .gateband .txt { font-size: 13.5px; }
   .gateband .txt b { color: var(--gate); }
 
+  .modelbox {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 18px; margin-bottom: 12px;
+  }
+  .modelbox h3 { font-family: var(--display); font-size: 15px; margin: 0 0 6px; }
+  .modelbox p { font-size: 13.5px; margin: 0; max-width: 72ch; }
+  .modelbox code { font-family: var(--mono); font-size: 12px; }
+  .ribbon {
+    font-family: var(--mono); font-size: 12.5px; background: var(--leaf-wash); color: var(--pine);
+    border-radius: 6px; padding: 8px 12px; margin-top: 10px; overflow-x: auto; white-space: nowrap;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip {
+    font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); color: var(--ink-soft);
+    border-radius: 10px; padding: 1px 9px;
+  }
+  .chip.hl { border-color: var(--leaf); color: var(--leaf); }
+
   .why {
     background: var(--leaf-wash); border: 1px solid var(--line); border-radius: 8px;
     padding: 20px 22px; margin-top: 38px;
@@ -185,7 +203,7 @@
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html" class="here">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
   <header>
     <div class="brand">HITL · HUMAN-IN-THE-LOOP AI DEVELOPMENT</div>
     <h1>Going AI-native on an existing codebase</h1>
@@ -578,6 +596,29 @@
         </figure>
       </div>
     </details>
+  </section>
+
+  <section>
+    <div class="phase-label">Under the hood</div>
+    <h2 class="phase-title">The workflow model that drives all of this</h2>
+    <div class="modelbox">
+      <h3>The plan is an output of impact analysis</h3>
+      <p>Steps have stable identities (key + name + phase), never global numbers. <code>/hitl:dev-start-change</code> classifies the change onto a <b>profile</b>, tags refine the required evidence, and impact analysis finalizes which conditional steps apply — a bug fix and a security-sensitive feature get different plans from the same spine, over a non-skippable floor.</p>
+      <div class="chips">
+        <span class="chip hl">Feature</span><span class="chip hl">Enhancement</span><span class="chip hl">Fix</span>
+        <span class="chip hl">Tech Change</span><span class="chip hl">Upgrade</span><span class="chip hl">Security</span>
+        <span class="chip">refactor</span><span class="chip">perf</span><span class="chip">chore</span><span class="chip">tooling</span><span class="chip">infra</span>
+      </div>
+    </div>
+    <div class="modelbox">
+      <h3>Progress reads as a phase ribbon</h3>
+      <p>No "Step 14/31" counter — the breadcrumb names where you are:</p>
+      <div class="ribbon">Requirements ✓ · Design ✓ · Build ◐ Generate Code (GREEN) · Verify · Assess · Ship · Post-Ship</div>
+    </div>
+    <div class="modelbox">
+      <h3>Docs-only changes get their own route</h3>
+      <p>A change touching nothing but documentation runs a 6-step <code>docs</code> workflow — issue → scope → draft → domain-routed review → reconcile → merge — instead of owing the full delivery trail. Mixed docs+code stays on the spine, so the short route can't be used to skip gates on real code.</p>
+    </div>
   </section>
 
   <section>

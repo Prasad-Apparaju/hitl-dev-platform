@@ -159,10 +159,10 @@
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html" class="here">Legacy 1.x</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a></nav>
   <header>
     <h1>Brownfield with HITL 1.x <span style="font-size:14px; font-family:var(--mono); font-weight:700; color:var(--gate); border:1px solid var(--gate); border-radius:3px; padding:1px 7px; vertical-align:6px; letter-spacing:0.08em;">LEGACY</span></h1>
-    <p class="sub">Every step from an existing codebase to a customer shipping governed enhancements — as of v1.1.1 on the legacy 1.x line, served as <code style="font-family:var(--mono); font-size:13px;">hitl-1x@hitl</code> for teams not yet ready to move to 2.x. The current line's map is the <a href="journey-2x.html" style="color:var(--leaf);">2.x step map</a>.</p>
+    <p class="sub">Every step from an existing codebase to a customer shipping governed enhancements — as of v1.1.1 on the legacy 1.x line, served as <code style="font-family:var(--mono); font-size:13px;">hitl-1x@hitl</code> for teams not yet ready to move to 2.x. The current line is documented in <a href="going-ai-native.html" style="color:var(--leaf);">the walkthrough</a>; when you're deciding whether to move, see <a href="compare.html" style="color:var(--leaf);">what changes in 2.x</a> — upgrading is additive and in-flight changes keep their progress.</p>
     <p class="metaline">install &rarr; onboard (11 tracked steps) &rarr; <b>two parallel lanes</b> &rarr; production gate &rarr; enhancement loop</p>
   </header>
 
@@ -269,7 +269,7 @@
 
     <div class="gateband">
       <span class="icon">GATE</span>
-      <div class="txt"><b>Production deploy gate</b> — until the register says <code>delivery_ready: true</code>, every Tier&nbsp;2+ <b>production</b> deploy is blocked (fails closed), unless each open gap carries a recorded waiver: owner, revisit date, tier limit, reason. Staging and canary deploys are never blocked — Lane B needs them. The statusline shows the open-gap count until the project is delivery-ready.</div>
+      <div class="txt"><b>Production deploy gate</b> — every Tier&nbsp;2+ <b>production</b> deploy is blocked (fails closed) until each readiness item is verified or carries a recorded waiver: owner, revisit date, tier limit, reason. The <code>delivery_ready</code> flag is derived from the items and is never trusted by itself (v1.1.1). Staging and canary deploys are never blocked — Lane B needs them. The statusline shows the open-gap count until the project is delivery-ready.</div>
     </div>
   </section>
 

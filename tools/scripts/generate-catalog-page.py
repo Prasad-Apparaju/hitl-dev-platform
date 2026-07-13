@@ -215,7 +215,7 @@ SHELL = """<meta charset="utf-8">
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="journey-2x.html">Step map</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a><a href="compare.html">1.x vs 2.x</a><a href="journey-1x.html">Legacy 1.x</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
 
   <header>
     <h1>The complete workflow catalog</h1>
