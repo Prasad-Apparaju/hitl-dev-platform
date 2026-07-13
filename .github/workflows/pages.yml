@@ -43,7 +43,7 @@ jobs:
           python - <<'EOF'
           import os, re, sys
           ok = True
-          for f in sorted(os.listdir("site")):
+          for f in sorted(f for f in os.listdir("site") if f.endswith(".html")):
               t = open(f"site/{f}").read()
               if t.count("<details") != t.count("</details>"):
                   print(f"{f}: unbalanced <details>"); ok = False
