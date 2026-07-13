@@ -501,7 +501,7 @@
 
     <div class="gateband">
       <span class="icon">GATE</span>
-      <div class="txt"><b>The production gate is enforced, not promised.</b> Until the register says <code>delivery_ready: true</code>, every Tier 2+ production deploy — normal features and up; trivial fixes and Tier 0–1 changes pass — is blocked by a script that fails closed: a register it cannot read, a truncated file, an incomplete waiver all block. The gate is a pre-flight of <code>/hitl:ops-deploy</code>, so it governs deploys made through HITL; it does not reach into pipelines you run outside it. Urgent work ships through recorded waivers with an owner, a revisit date, and a reason. Staging is never blocked; the readiness lane needs it. One line of status shows the open-gap count until the day it disappears for good.</div>
+      <div class="txt"><b>The production gate is enforced, not promised.</b> Until the register says <code>delivery_ready: true</code>, every Tier 2+ production deploy — normal features and up; trivial fixes and Tier 0–1 changes pass — is blocked by a script that fails closed: a register it cannot read, a truncated file, an incomplete waiver all block. The gate is a pre-flight of <code>/hitl:ops-deploy</code>, so it governs deploys made through HITL; it does not reach into pipelines you run outside it. The <code>delivery_ready</code> flag itself is never trusted: readiness is re-derived from the items and their evidence, so a hand-flipped flag releases nothing. Urgent work ships through recorded waivers with an owner, a revisit date, and a reason. Staging is never blocked; the readiness lane needs it. One line of status shows the open-gap count until the day it disappears for good.</div>
     </div>
   </section>
 
@@ -634,5 +634,5 @@
     <p>The trade is explicit: some raw velocity is spent buying coherence, trust, and proof. For teams shipping to real customers, that is the difference between AI as a demo and AI as an engineering practice.</p>
   </div>
 
-  <footer>HITL v2.1.0 (current 2.x line) · the workflow, gates, and registers on this page are shipped and enforced, not roadmap · legacy 1.x: see the <a href="journey-1x.html">1.x map</a></footer>
+  <footer>HITL v2.1.1 (current 2.x line) · the workflow, gates, and registers on this page are shipped and enforced, not roadmap · legacy 1.x: see the <a href="journey-1x.html">1.x map</a></footer>
 </div>

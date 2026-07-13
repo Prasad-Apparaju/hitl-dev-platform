@@ -230,7 +230,7 @@ SHELL = """<meta charset="utf-8">
 
 __FRAGMENT__
 
-  <footer>HITL v2.1.0 (2.x line) · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
+  <footer>HITL v__VERSION__ (2.x line) · generated from tools/workflow-catalog/catalog.yaml — the file the derive gate verifies against the shipped runtime</footer>
 </div>
 """
 
@@ -245,7 +245,11 @@ def main():
     legend = f"<b>{len(ORDER)} workflows</b> · {steps} steps"
     if substeps:
         legend += f" + {substeps} substep" + ("s" if substeps > 1 else "")
-    out_path.write_text(SHELL.replace("__FRAGMENT__", fragment).replace("__LEGEND_COUNTS__", legend))
+    import json
+    version = json.load(open(ROOT / "ai" / "claude" / "plugin" / "plugin.json"))["version"]
+    out_path.write_text(SHELL.replace("__FRAGMENT__", fragment)
+                        .replace("__LEGEND_COUNTS__", legend)
+                        .replace("__VERSION__", version))
     rows = total_rows
     print(f"wrote {out_path.relative_to(ROOT)} ({rows} step rows)")
     return 0

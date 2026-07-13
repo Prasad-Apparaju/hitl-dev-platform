@@ -96,8 +96,20 @@
     padding: 20px 22px; margin-top: 40px;
   }
   .principles h2 { font-family: var(--display); font-size: 17px; margin: 0 0 12px; }
-  .principles ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
-  .principles li::marker { color: var(--leaf); }
+  .principles > p { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 16px; max-width: 72ch; }
+  .prin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 860px) { .prin-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 580px) { .prin-grid { grid-template-columns: 1fr; } }
+  .prin {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .prin h3 { font-family: var(--display); font-size: 13.5px; margin: 0; }
+  .prin p { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+  .prin .mech {
+    font-family: var(--mono); font-size: 11px; color: var(--pine); margin-top: auto;
+    padding-top: 6px; border-top: 1px dashed var(--line);
+  }
 
 
   .navlogo {
@@ -135,12 +147,12 @@
   <div class="group-label">Reference maps</div>
   <div class="cards">
     <a class="pagecard" href="journey-2x.html">
-      <h2>The step map <span class="pill live">CURRENT · v2.1.0</span></h2>
+      <h2>The step map <span class="pill live">CURRENT · v2.1.1</span></h2>
       <p>The compact map of the journey on the current 2.x workflow model: steps with stable identities instead of numbers, plans derived per change from profiles and tags, phase-ribbon progress, and a dedicated route for docs-only changes.</p>
       <span class="go">open the step map →</span>
     </a>
     <a class="pagecard" href="journey-1x.html">
-      <h2>1.x step map <span class="pill next">LEGACY · v1.1.0</span></h2>
+      <h2>1.x step map <span class="pill next">LEGACY · v1.1.1</span></h2>
       <p>The same journey on the legacy 1.x line (served as <code>hitl-1x@hitl</code> for teams not yet ready to move): the 11 onboarding steps, the two parallel lanes, and the numbered 31-step delivery loop.</p>
       <span class="go">open the 1.x map →</span>
     </a>
@@ -170,13 +182,56 @@
   </figure>
 
   <div class="principles">
-    <h2>The three commitments behind every page here</h2>
-    <ul>
-      <li><b>Documentation is the shared memory.</b> Every AI session loads the same conventions, boundaries, and decisions — the hundredth change is as grounded as the first.</li>
-      <li><b>Gates are structural, not heroic.</b> Enforcement hooks block ungoverned edits, tests are reviewed before code exists, and production deploys are gated on verified readiness — by scripts that fail closed, not by discipline.</li>
-      <li><b>Every claim leaves evidence.</b> Decision records, test and incident registries, a readiness register, and a traceability chain from requirement to deploy: "was this reviewed?" has a checkable answer.</li>
-    </ul>
+    <h2>What HITL establishes before AI writes a line</h2>
+    <p>Most AI tooling accelerates generation. HITL's value is everything it establishes so that generated work is <em>accurate</em> — and everything it enforces so the accuracy holds at change one hundred. Each principle below is implemented by a shipped artifact or gate, not an aspiration.</p>
+    <div class="prin-grid">
+      <div class="prin">
+        <h3>A declared system boundary</h3>
+        <p>The system manifest names every domain, the files it owns, and the design doc that governs it. The AI works inside an explicit map — and a boundary hook blocks edits that cross it.</p>
+        <span class="mech">system-manifest.yaml · check-domain-boundary · drift checker</span>
+      </div>
+      <div class="prin">
+        <h3>Interfaces as explicit contracts</h3>
+        <p>Each domain declares its facade APIs with preconditions and error modes, what it mutates, and its side effects. Integration happens against declared contracts, not inferred ones.</p>
+        <span class="mech">manifest facade_apis · mutations · side_effects</span>
+      </div>
+      <div class="prin">
+        <h3>Facts established once, reused forever</h3>
+        <p>Conventions, the codebase map, and recovered architecture decisions are written down at onboarding. Every session reloads the same facts — the hundredth change is as grounded as the first.</p>
+        <span class="mech">conventions contract · codebase map · ADRs</span>
+      </div>
+      <div class="prin">
+        <h3>Tribal knowledge, made governable</h3>
+        <p>Interviews separate deliberate decisions from historical accident; incidents and test coverage become registries. Knowledge leaves people's heads and becomes reviewed, owned artifacts the AI queries.</p>
+        <span class="mech">architecture interview · incident + test registries</span>
+      </div>
+      <div class="prin">
+        <h3>AI proposes, named humans decide</h3>
+        <p>Designs, test plans, and deploys pass through hard human gates, and reviewer agents run in a separate context from the work they judge. Every consequential action has a person in front of it.</p>
+        <span class="mech">TA design gate · QA review · operator-confirmed deploys</span>
+      </div>
+      <div class="prin">
+        <h3>Enforcement that fails closed</h3>
+        <p>Edits without an active tracked change are blocked. Production deploys are blocked on anything the readiness gate cannot positively validate — readiness is derived from evidence, never declared by a flag.</p>
+        <span class="mech">intake gate · check-platform-ready (fail-closed)</span>
+      </div>
+      <div class="prin">
+        <h3>Evidence for every claim</h3>
+        <p>Each step records what it produced; requirements trace to designs, tests, and deploys. "Was this reviewed?" has a checkable answer instead of a shrug.</p>
+        <span class="mech">decision packets · registries · traceability chain</span>
+      </div>
+      <div class="prin">
+        <h3>Process scaled to consequence</h3>
+        <p>The change's profile and tags derive its step plan; the risk tier decides how heavy the gates are. A typo carries minutes of process; a cross-domain feature carries the full ceremony.</p>
+        <span class="mech">6 profiles + 5 tags · risk tiers</span>
+      </div>
+      <div class="prin">
+        <h3>Memory that outlives everyone</h3>
+        <p>All of it is versioned in Git, so it survives AI sessions, staff rotation, and even a change of AI harness. Many people and tools, one coherent context.</p>
+        <span class="mech">docs + registries in Git · loaded every session</span>
+      </div>
+    </div>
   </div>
 
-  <footer>HITL · current release: v2.1.0 (<code>hitl@hitl</code>) — the walkthrough, step map, and catalog describe what is shipped and enforced · legacy 1.x line: v1.1.0 (<code>hitl-1x@hitl</code>), feature-frozen except critical fixes</footer>
+  <footer>HITL · current release: v2.1.1 (<code>hitl@hitl</code>) — the walkthrough, step map, and catalog describe what is shipped and enforced · legacy 1.x line: v1.1.1 (<code>hitl-1x@hitl</code>), feature-frozen except critical fixes</footer>
 </div>
