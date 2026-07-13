@@ -257,6 +257,20 @@
     </ol>
   </div>
 
+  <div class="group-label">The same shape, judgment-flavored</div>
+  <div class="trace">
+    <h3>And when the architect gets a design approved</h3>
+    <p style="font-size: 13px; color: var(--ink-soft); margin: 0 0 10px; max-width: 72ch;">The deploy trace shows deterministic enforcement — a script that blocks. Design is where the other enforcement flavor lives: independent judgment. Same five pillars, same composition.</p>
+    <ol>
+      <li>The <span class="pillref">CATALOG</span> defines the Design phase: impact analysis, design-doc updates, test planning — closing with <code>packet · Design · manual · Architect</code>, the step where the architect assembles the decision packet.</li>
+      <li>The AI runs impact analysis against the system manifest in <span class="pillref">DURABLE MEMORY</span>: which domains are touched, which facade APIs change, what risk tier applies — and that analysis is what derives the rest of the step plan.</li>
+      <li>Design updates are drafted from <span class="pillref">TEMPLATES</span> (LLD, ADR, decision packet), and the intake <span class="gateref">HOOK</span> guards every write: nothing is edited outside the tracked change.</li>
+      <li>Before anything is approved, the <span class="pillref">ARCHITECT-REVIEWER AGENT</span> examines the HLD, LLD, and ADRs in a separate context from the conversation that produced them — a reviewer that cannot be talked into agreement by the drafting session.</li>
+      <li>The architect packages the decision packet — the complete, reviewable description of what will be built — and a human technical advisor approves it at the gate (<code>/hitl:ta-approve</code>). AI proposed; the design that gets built is one humans signed.</li>
+      <li>The approval is <span class="pillref">RECORDED</span>: packet, updated design docs, and any ADRs land in durable memory, the breadcrumb advances, and the Build phase's first step — tests before code — starts from an approved design.</li>
+    </ol>
+  </div>
+
   <div class="closing">
     <p><b>The design rule underneath all of it:</b> anything that must never be skipped is a hook, not an instruction. Anything that requires judgment is a skill with a human gate, not automation. Anything worth remembering is written to durable memory, not left in a conversation. That division of labor — deterministic enforcement, instructed intelligence, recorded truth — is what makes an AI-native process trustworthy at scale.</p>
   </div>
