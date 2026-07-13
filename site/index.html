@@ -93,7 +93,7 @@
 
   .principles {
     background: var(--leaf-wash); border: 1px solid var(--line); border-radius: 8px;
-    padding: 20px 22px; margin-top: 40px;
+    padding: 20px 22px;
   }
   .principles h2 { font-family: var(--display); font-size: 17px; margin: 0 0 12px; }
   .principles > p { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 16px; max-width: 72ch; }
@@ -134,52 +134,6 @@
     <p class="thesis">AI generates. Humans shape, review, and decide.</p>
     <p class="sub">HITL is a delivery framework for teams that use AI heavily in non-trivial software work. These pages show what that actually looks like in practice: every step, every gate, and exactly where the humans stay in charge.</p>
   </header>
-
-  <div class="group-label">Start here</div>
-  <div class="cards">
-    <a class="pagecard feature" href="going-ai-native.html">
-      <h2>Going AI-native on an existing codebase <span class="pill aud">FOR YOUR WHOLE TEAM</span></h2>
-      <p>The complete brownfield walkthrough with every step expandable: what happens inside it, what the AI does, what you decide, and what artifact comes out. From "we have a codebase" to "we ship AI-built enhancements to customers" — including the production gate that makes readiness enforced rather than promised.</p>
-      <span class="go">open the walkthrough →</span>
-    </a>
-  </div>
-
-  <div class="group-label">Reference maps</div>
-  <div class="cards">
-    <a class="pagecard" href="journey-2x.html">
-      <h2>The step map <span class="pill live">CURRENT · v2.1.1</span></h2>
-      <p>The compact map of the journey on the current 2.x workflow model: steps with stable identities instead of numbers, plans derived per change from profiles and tags, phase-ribbon progress, and a dedicated route for docs-only changes.</p>
-      <span class="go">open the step map →</span>
-    </a>
-    <a class="pagecard" href="journey-1x.html">
-      <h2>1.x step map <span class="pill next">LEGACY · v1.1.1</span></h2>
-      <p>The same journey on the legacy 1.x line (served as <code>hitl-1x@hitl</code> for teams not yet ready to move): the 11 onboarding steps, the two parallel lanes, and the numbered 31-step delivery loop.</p>
-      <span class="go">open the 1.x map →</span>
-    </a>
-    <a class="pagecard" href="architecture.html">
-      <h2>The architecture <span class="pill aud">HOW IT WORKS</span></h2>
-      <p>The five pillars — catalog, skills, hooks, agents, templates — plus the durable memory they read and write, and the one repeating composition that turns them into every workflow step on this site.</p>
-      <span class="go">open the architecture &rarr;</span>
-    </a>
-    <a class="pagecard" href="catalog.html">
-      <h2>The full catalog <span class="pill aud">EVERY STEP</span></h2>
-      <p>All 7 workflows, their phases, 84 steps and the substep, in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
-      <span class="go">open the catalog &rarr;</span>
-    </a>
-    <a class="pagecard feature" href="compare.html">
-      <h2>1.x vs 2.x, side by side</h2>
-      <p>What is identical on both lines (most of it), the eight things the 2.x model changes, and why upgrading is safe: additive schema, in-flight changes keep their progress, and the readiness register carries over untouched.</p>
-      <span class="go">open the comparison →</span>
-    </a>
-  </div>
-
-
-  <div class="group-label">The system at a glance</div>
-  <figure class="shot">
-    <a href="assets/hitl-dev-platform-infographic.svg"><img src="assets/hitl-dev-platform-infographic.svg"
-      alt="HITL infographic: humans refine intent into shared documents; AI executes from those documents"></a>
-    <figcaption>the core idea on one canvas — click to open full size</figcaption>
-  </figure>
 
   <div class="principles">
     <h2>What HITL establishes before AI writes a line</h2>
@@ -232,6 +186,52 @@
       </div>
     </div>
   </div>
+
+  <div class="group-label">The system at a glance</div>
+  <figure class="shot">
+    <a href="assets/hitl-dev-platform-infographic.svg"><img src="assets/hitl-dev-platform-infographic.svg"
+      alt="HITL infographic: humans refine intent into shared documents; AI executes from those documents"></a>
+    <figcaption>the core idea on one canvas — click to open full size</figcaption>
+  </figure>
+
+  <div class="group-label">Start here</div>
+  <div class="cards">
+    <a class="pagecard feature" href="going-ai-native.html">
+      <h2>Going AI-native on an existing codebase <span class="pill aud">FOR YOUR WHOLE TEAM</span></h2>
+      <p>The complete brownfield walkthrough with every step expandable: what happens inside it, what the AI does, what you decide, and what artifact comes out. From "we have a codebase" to "we ship AI-built enhancements to customers" — including the production gate that makes readiness enforced rather than promised.</p>
+      <span class="go">open the walkthrough →</span>
+    </a>
+  </div>
+
+  <div class="group-label">Reference maps</div>
+  <div class="cards">
+    <a class="pagecard" href="journey-2x.html">
+      <h2>The step map <span class="pill live">CURRENT · v2.1.1</span></h2>
+      <p>The compact map of the journey on the current 2.x workflow model: steps with stable identities instead of numbers, plans derived per change from profiles and tags, phase-ribbon progress, and a dedicated route for docs-only changes.</p>
+      <span class="go">open the step map →</span>
+    </a>
+    <a class="pagecard" href="journey-1x.html">
+      <h2>1.x step map <span class="pill next">LEGACY · v1.1.1</span></h2>
+      <p>The same journey on the legacy 1.x line (served as <code>hitl-1x@hitl</code> for teams not yet ready to move): the 11 onboarding steps, the two parallel lanes, and the numbered 31-step delivery loop.</p>
+      <span class="go">open the 1.x map →</span>
+    </a>
+    <a class="pagecard" href="architecture.html">
+      <h2>The architecture <span class="pill aud">HOW IT WORKS</span></h2>
+      <p>The five pillars — catalog, skills, hooks, agents, templates — plus the durable memory they read and write, and the one repeating composition that turns them into every workflow step on this site.</p>
+      <span class="go">open the architecture &rarr;</span>
+    </a>
+    <a class="pagecard" href="catalog.html">
+      <h2>The full catalog <span class="pill aud">EVERY STEP</span></h2>
+      <p>All 7 workflows, their phases, 84 steps and the substep, in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
+      <span class="go">open the catalog &rarr;</span>
+    </a>
+    <a class="pagecard feature" href="compare.html">
+      <h2>1.x vs 2.x, side by side</h2>
+      <p>What is identical on both lines (most of it), the eight things the 2.x model changes, and why upgrading is safe: additive schema, in-flight changes keep their progress, and the readiness register carries over untouched.</p>
+      <span class="go">open the comparison →</span>
+    </a>
+  </div>
+
 
   <footer>HITL · current release: v2.1.1 (<code>hitl@hitl</code>) — the walkthrough, step map, and catalog describe what is shipped and enforced · legacy 1.x line: v1.1.1 (<code>hitl-1x@hitl</code>), feature-frozen except critical fixes</footer>
 </div>
