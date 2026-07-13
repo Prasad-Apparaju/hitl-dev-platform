@@ -11,8 +11,11 @@
 #   - Only Tier 2+ changes are gated. Tier comes from arg 2, else .hitl/current-change.yaml.
 #   - No register file → allowed (projects predating the register are not retro-blocked;
 #     onboarding creates it going forward).
-#   - delivery_ready: true (in a PARSEABLE register) → allowed.
-#   - Otherwise: allowed only if the register has at least one item and EVERY open item
+#   - delivery_ready is NEVER trusted as a bypass (2026-07-12 Codex round-6 note): the
+#     gate re-derives readiness from the items and waivers themselves. The flag is the
+#     recorded outcome; a register whose flag says true but whose items show open gaps
+#     blocks as inconsistent. A hand-flipped flag releases nothing.
+#   - Allowed only if the register has at least one item and EVERY open item
 #     (status gap OR accepted_gap) is covered by a waiver whose tier_limit >= the change
 #     tier and whose revisit date has not passed. A lapsed waiver counts as an open gap.
 #   - FAIL CLOSED when the gate cannot evaluate: no PyYAML-capable python, unparseable
@@ -145,8 +148,11 @@ try:
         block("HITL DEPLOY BLOCKED: platform readiness register is not parseable.",
               f"  Fix {path} or re-run /hitl:ops-plan-platform derive.")
 
-    if data.get("delivery_ready") is True:
-        sys.exit(0)
+    # The flag is DERIVED (template contract: "never hand-set"). It is never a bypass:
+    # readiness is re-derived from the items and waivers below, so a hand-flipped
+    # delivery_ready: true in an invalid or gapped register releases nothing
+    # (2026-07-12 Codex round-6 note — the short-circuit skipped all validation).
+    flag_ready = data.get("delivery_ready") is True
 
     waivers = {}
     duplicate_waivers = set()
@@ -243,12 +249,16 @@ try:
             if problem:
                 blockers.append(f"{iid} ({layer}): {problem}")
 
-    # FAIL CLOSED on a structurally empty register: no items + not delivery-ready means
-    # the register was never derived (or was truncated). There is nothing to trust.
+    # FAIL CLOSED on a structurally empty register: no items means the register was
+    # never derived (or was truncated). There is nothing to trust — whatever the flag says.
     if total_items == 0:
-        block(f"HITL DEPLOY BLOCKED: platform readiness register has no items and "
-              f"delivery_ready is not true (Tier {tier} production deploy).",
-              "  Run /hitl:ops-plan-platform derive to populate it.")
+        lines = [f"HITL DEPLOY BLOCKED: platform readiness register has no items "
+                 f"(Tier {tier} production deploy)."]
+        if flag_ready:
+            lines.append("  delivery_ready: true cannot be honored on an empty register "
+                         "— the flag is derived from items that are not there.")
+        lines.append("  Run /hitl:ops-plan-platform derive to populate it.")
+        block(*lines)
 
     # Canonical completeness: a register missing canonical items is truncated or badly
     # derived — a plausible accident (partial write, merge mistake, wrong layer key) that
@@ -261,6 +271,11 @@ try:
 
     if not blockers:
         sys.exit(0)
+
+    if flag_ready:
+        blockers.insert(0, "register: delivery_ready: true contradicts the findings below "
+                           "— the flag is derived, never hand-set; re-run "
+                           "/hitl:ops-plan-platform verify-ready")
 
     print(f"HITL DEPLOY BLOCKED: platform is not delivery-ready (Tier {tier} production deploy).",
           file=sys.stderr)

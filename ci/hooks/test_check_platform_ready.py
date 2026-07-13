@@ -4,7 +4,8 @@ Design: docs/design/platform-bootstrap/01-design.md §5, decision D2 (hard block
 Rules pinned here:
   - only production targets are gated; staging/canary always pass
   - no register file -> pass (no retro-blocking of pre-register projects)
-  - delivery_ready: true -> pass
+  - delivery_ready is DERIVED, never a bypass: the gate re-derives readiness from the
+    items and waivers, so flag=true on a gapped/invalid register blocks (round-6 note)
   - open gap without adequate, unlapsed waiver -> exit 2 for Tier 2+
   - Tier 0/1 changes are never gated; unknown tier is treated as Tier 2
 
@@ -131,10 +132,43 @@ class TestRegisterStates:
     def test_no_register_passes(self, project):
         assert run_gate(project, "production", 3)[0] == 0
 
-    def test_delivery_ready_passes(self, project):
+    def test_delivery_ready_with_green_register_passes(self, project):
+        # Flag true AND every item verified/waived: the honest delivery-ready state.
+        green = REGISTER_WITH_GAP.replace(
+            "            status: gap\n            severity: red\n",
+            '            status: verified\n            severity: red\n'
+            '            evidence: "CI run 812, staging deploy job green, 2026-07-11"\n'
+        ).replace("delivery_ready: false", "delivery_ready: true")
+        assert run_gate(project, "production", 3)[0] == 0
+
+    def test_delivery_ready_flag_is_not_a_bypass(self, project):
+        # Round-6 note 1: a hand-flipped flag over an open gap must block, and the
+        # output must name both the contradiction and the gap.
         write_register(project, REGISTER_WITH_GAP.replace(
             "delivery_ready: false", "delivery_ready: true"))
-        assert run_gate(project, "production", 3)[0] == 0
+        code, err = run_gate(project, "production", 3)
+        assert code == 2
+        assert "contradicts" in err
+        assert "E3" in err and "no waiver" in err
+
+    def test_delivery_ready_flag_on_empty_register_blocks(self, project):
+        write_register(project,
+                       'schema_version: "1.0"\nlayers: {}\ndelivery_ready: true\nwaivers: []\n')
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "no items" in err and "cannot be honored" in err
+
+    def test_delivery_ready_flag_on_truncated_register_blocks(self, project):
+        # Flag true + missing canonical items: schema validation still runs.
+        truncated = (
+            'schema_version: "1.0"\nproject_kind: brownfield\n'
+            'layers:\n  verification:\n    items:\n'
+            '      - { id: D1, name: "Suites", status: verified, evidence: "CI 812" }\n'
+            'delivery_ready: true\nwaivers: []\n')
+        write_register(project, truncated)
+        code, err = run_gate(project, "production", 2)
+        assert code == 2
+        assert "missing" in err and "contradicts" in err
 
     def test_verified_items_do_not_block(self, project):
         # Verified WITH evidence; delivery_ready still false but nothing blocks.

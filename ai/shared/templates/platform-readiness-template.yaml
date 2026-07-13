@@ -18,7 +18,9 @@
 #     `na` on the Parity/Cutover items is correct only for non-migration projects.
 #   - Item `id`s are required and must be unique: they are the waiver join key.
 #   - `delivery_ready` is DERIVED: true only when every non-na item in every applicable
-#     layer is verified or accepted_gap. Never hand-set it.
+#     layer is verified or accepted_gap. Never hand-set it — the deploy gate re-derives
+#     readiness from the items and waivers, so a hand-flipped flag releases nothing and
+#     a flag that contradicts the items blocks the deploy.
 #   - Re-running /hitl:ops-plan-platform refreshes gaps but never downgrades a `verified`
 #     item back to `gap` without showing the evidence being discarded.
 #   - Tier 2+ PRODUCTION deploys are blocked while delivery_ready is false, unless every
