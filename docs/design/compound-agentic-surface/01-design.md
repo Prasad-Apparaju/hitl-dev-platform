@@ -37,6 +37,7 @@ manifest, so this is additive.
 orchestration:                     # system-level (CR-11, M3)
   pattern: supervisor              # supervisor | hierarchical | swarm | blackboard | sequential | hybrid
   coordinator: research_supervisor # the domain that routes, if any
+  cycle_bound: 5                   # max delegation depth; a graph cycle without this blocks (M1)
 
 domains:
   research_agent:
@@ -67,8 +68,8 @@ domains:
     memory:                        # short + long term, governed                         (CR-18)
       short_term: { strategy: summarize, budget_tokens: 8000 }
       long_term:
-        store: vector
-        writes: [research_notes]   # each write ⇒ a needed write:memory/<store> scope (B1/M5)
+        store: research
+        writes: [research_notes]   # needed scope is per-STORE: write:memory/research (B1/M5)
         pii: redact
         scope: isolated            # isolated | shared                                   (m4)
         shared_store: null         # ref when scope: shared
@@ -94,22 +95,41 @@ domains:
 Two new **top-level registries** (the registries pattern):
 
 - `docs/03-engineering/approved-tools.yaml` — approved-tool registry: `{tool, risk, scopes}` where
-  **`scopes` is the list of privilege scopes the tool requires** (the source for "needed" privilege,
-  B1). (CR-15.)
+  **`scopes` is the complete set of privilege scopes the tool requires** (the source for "needed"
+  privilege, B1). Every scope an agent needs to *read* or *act* enters through a tool here — there is
+  no orphan-privilege channel (inter-agent access is via edges §5, not free-floating scopes). (CR-15.)
 - `docs/03-engineering/evals/` — per-component eval specs + the eval registry. (CR-16, CR-20.)
+
+```yaml
+# docs/03-engineering/approved-tools.yaml  (justifies the example agent's grant)
+tools:
+  vector_query: { risk: low, scopes: [vector:query, read:corpus] }
+  web_search:   { risk: med, scopes: [web:search] }
+```
+
+So the example agent's **needed** = `{vector:query, read:corpus}` (from `vector_query`) ∪ `{web:search}`
+(from `web_search`) ∪ `{write:memory/research}` (from its one long-term store) — **exactly** its
+**granted** `[read:corpus, vector:query, web:search, write:memory/research]`. The showcase manifest
+passes its own privilege validator (round-2 fix; the grant and the derived need now reconcile).
 
 ## 3. Derived + declared views (never hand-maintained)
 
-Views are *generated* from the manifest + registries, like the command-map and catalog:
+Views are *generated* from the manifest + registries, like the command-map and catalog — cannot drift,
+and static (no live dashboard — governs-not-runtime, D5).
 
-1. **Topology & routing view** (CR-3, M3): the component graph with typed edges, the declared
-   `orchestration.pattern`, and shared-vs-isolated memory (`memory.long_term.scope`, m4). Rendered as a
-   Mermaid graph + a table; the determinism boundary (§4) is drawn on it.
-2. **Privilege-posture matrix** (CR-14): each agent × granted vs derived-needed privilege, with
-   over/under flags (§6).
-3. **Approved-tool matrix** (CR-15): each agent × declared tools, unapproved/undeclared flagged.
+### 3.1 Topology & routing view (CR-3, M3)
 
-Generated (cannot drift) and static (no live dashboard — governs-not-runtime, D5).
+The component graph with typed edges, the declared `orchestration.pattern`, and shared-vs-isolated
+memory (`memory.long_term.scope`, m4). Rendered as a Mermaid graph + a table; the determinism boundary
+(§4) is drawn on it.
+
+### 3.2 Privilege-posture matrix (CR-14)
+
+Each agent × granted vs derived-needed privilege, with over/under flags (§6).
+
+### 3.3 Approved-tool matrix (CR-15)
+
+Each agent × declared tools, unapproved/undeclared flagged.
 
 ## 4. The determinism boundary (CR-4)
 
@@ -142,21 +162,26 @@ Additive, fail-closed validators with `ci/` regression suites (the platform-gate
 - **Approved-tool gate** (CR-15): every `tools[]` entry must resolve in `approved-tools.yaml`; an
   undeclared or unapproved tool **blocks**.
 - **Privilege validator** (CR-14, B1, M5): computes **needed** privilege as
-  `⋃(approved-tools[t].scopes for t in tools)` ∪ `{write:memory/<store> for each long_term.writes}`,
-  then flags **over-privilege** (`granted ∖ needed`) and **under-privilege** (`needed ∖ granted`). A
-  declared memory write without the matching `write:memory/...` grant surfaces as under-privilege — the
-  memory-write↔privilege invariant is enforced here, not in prose (M5). Emits the posture matrix.
-  Design-time; the optional granted-scope drift-check is **strictly read-only and opt-in**, never a
-  runtime opinion (m6).
+  `⋃(approved-tools[t].scopes for t in tools)` ∪ `{write:memory/<store> for each long_term store with
+  writes}` ∪ `{read:memory/<store> for each long_term store read}`. Memory scopes are **per-store, not
+  per-write** (two writes to one store collapse to one scope). It then flags **over-privilege**
+  (`granted ∖ needed`) and **under-privilege** (`needed ∖ granted`). Model invariant (D9): *every*
+  privilege an agent needs traces to a tool scope or a memory scope — there is no orphan channel, so a
+  granted scope with no such source is genuine over-privilege, not a false positive. A declared memory
+  write without its `write:memory/<store>` grant surfaces as under-privilege — the memory↔privilege
+  invariant is enforced here, not in prose (M5). Emits the posture matrix. Design-time; the optional
+  granted-scope drift-check is **strictly read-only and opt-in**, never a runtime opinion (m6).
 - **Determinism-boundary validator** (CR-4): flags a boundary edge missing its output validation or its
   cost/authority bound.
 - **Async-edge validator** (CR-12, M2): an `async` facade must declare delivery + idempotency
   (`at_least_once` without an idempotency key blocks); a multi-step async workflow must declare
   `compensation`.
-- **Topology validator** (CR-6, M1): **cycle/loop detection** off the graph (a cycle in the agent graph
-  without a declared bound blocks); the graph is already built for §3.1, so this is free.
+- **Topology validator** (CR-6, M1): **cycle/loop detection** off the graph — a cycle in the agent
+  graph without a declared `orchestration.cycle_bound` (max delegation depth) blocks; the graph is
+  already built for §3.1, so this is free.
 - **Deep-agent completeness validator** (CR-7, B2): `kind: deep_agent` REQUIRES the `deep_agent` block
-  (planner, subagents, context_isolation, gates, guardrails); missing any blocks.
+  (planner, subagents, context_isolation, gates, guardrails) **and** `memory.long_term` (persistent
+  memory is part of CR-7); missing any blocks.
 - **Lifecycle completeness validator** (CR-17, M4): `lifecycle.long_running: true` REQUIRES
   `checkpoint`, `resumable`, `idempotent_resume`, and `timeout`; missing any blocks.
 
@@ -248,6 +273,7 @@ breadcrumb. Nothing orthogonal is introduced.
 | D6 | The capability menu is **always presented**; the harness may recommend, never silently decides | "AI proposes, humans decide" applied to technology choices (CR-19) |
 | D7 | The determinism boundary is **derived** from component kinds; a validator enforces guardrail-at-boundary | Makes the det/non-det seam a checkable invariant, not prose |
 | D8 | Extend the **schema (map) form** of `facade_apis`; the A2A Task payload maps to `signature`; reconcile the older list-form template to match | The schema is authoritative; a payload contract needs a home; the pre-existing schema/template disagreement must not be inherited silently |
+| D9 | **Every agent privilege traces to a tool scope or a memory scope** — no orphan-privilege channel; memory scopes are per-store | Makes the privilege validator's needed-set complete and computable (a granted scope with no source is genuine over-privilege); inter-agent access is governed by edges (§5), not free-floating scopes |
 
 ## 15. Architect review disposition (round 1)
 
@@ -268,6 +294,17 @@ breadcrumb. Nothing orthogonal is introduced.
 | **m4** shared-vs-isolated memory no field | Fixed §2/§3: `memory.long_term.scope` |
 | **m5** CR-2/CR-11 no teeth | Acknowledged §7: TA-gate discipline, not an automated gate — stated |
 | **m6** drift-check touches live plane | Fixed §6: strictly read-only + opt-in |
+
+**Round 2** re-review confirmed round-1 closed but caught two real defects the revisions introduced:
+
+| Finding (round 2) | Disposition |
+|---|---|
+| The showcase privilege example **failed its own validator** (grant `write:memory/research` vs derived `write:memory/vector`; `read:corpus` unsourced) | Fixed §2: memory `store: research`; added the `approved-tools.yaml` scope mapping (`vector_query → [vector:query, read:corpus]`, `web_search → [web:search]`) so needed = granted exactly |
+| **Needed-set soundness** — no channel for read/input scopes that aren't tool-scopes or memory-writes | Fixed §6/D9: model invariant — every privilege traces to a tool scope or memory scope; `read:corpus` enters via `vector_query`'s scopes; no orphan channel |
+| **M1 cycle bound had no declared field** — validator blocked on a field that couldn't be declared | Fixed §2/§6: `orchestration.cycle_bound` (max delegation depth) |
+| Memory-scope granularity (per-write vs per-store) unspecified | Fixed §6: **per-store** |
+| Deep-agent completeness didn't require persistent memory (CR-7) | Fixed §6: also requires `memory.long_term` |
+| "§3.1" cross-refs but no §3.1 heading | Fixed §3: real §3.1/§3.2/§3.3 subsections |
 
 ## 16. Acceptance criteria (implementation gate)
 
