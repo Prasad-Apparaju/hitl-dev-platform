@@ -12,6 +12,7 @@ The **requirements (what)** live one layer up, under the product area:
 |---|---|---|
 | [01-design.md](01-design.md) | HLD: manifest extensions, topology model, determinism-boundary discipline, A2A-as-facade encoding, validators, eval discipline, decisions D1-D7 | Draft, pending architect review (#11) |
 | [02-adrs.md](02-adrs.md) | ADR-1..ADR-9 formalizing D1-D9 (alternatives + concrete cost) | Accepted |
+| [03-lld.md](03-lld.md) | LLD: exact schema field types, scope grammar, needed-privilege algorithm, 8 validator signatures + test matrix | Draft, pending review |
 
 Governs the composition; ships no runtime, backbone, dashboard, or eval engine. Target release:
 **2.2.0** (2.x line only). Related: `docs/design/platform-bootstrap/`, `docs/design/workflow-model/`.
