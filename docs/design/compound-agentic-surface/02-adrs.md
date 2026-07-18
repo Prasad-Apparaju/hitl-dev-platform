@@ -56,6 +56,18 @@ payload shape lives in `signature`. An agent's Agent Card *is* its facade map.
 additive. (−) The facade schema must carry `transport` + the `async` block + the payload in `signature`,
 which surfaces the pre-existing schema/template form disagreement (ADR-8).
 
+**Refinement (2026-07-18, LLD [`03-lld.md`](03-lld.md) §2.3).** The edge is realized in **two coupled
+places**: the **callee** declares the contract (its `facade_api` — `transport`, `signature`,
+preconditions/error_modes), and the **caller** declares the edge itself as a `calls: [Edge]` entry that
+*references* that facade (`Edge.to = "<domain>.<facade>"`) and carries the caller-side **boundary
+attributes** (`output_validation`, `cost_bound`, `authority_bound`) — because the caller is the party
+that must validate output and bound cost/authority. This is **not** the "separate `edges:` section"
+rejected above: `calls` *references* facades, it does not redefine their contract, so declaration and
+boundary enforcement still live on the facade. The split exists so the boundary invariant (ADR-7) has a
+home on the party responsible for it, and so the edge graph is *declared* (never inferred from
+`signature` strings). `authority_bound` MUST be ⊆ the callee's `identity.privilege` (an edge cannot
+grant authority the callee never held) — validated in LLD §5.3.
+
 ---
 
 ## ADR-3 (D3): Topology, privilege, and tool posture are generated views

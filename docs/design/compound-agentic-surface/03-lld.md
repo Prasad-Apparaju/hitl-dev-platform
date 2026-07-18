@@ -5,7 +5,7 @@
 > [#16](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/16). Implements the HLD
 > [`01-design.md`](01-design.md) + ADRs [`02-adrs.md`](02-adrs.md). EPIC
 > [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **draft — architect
-> review round 1 folded in** (§9). A developer/agent should be able to implement from this without a
+> review rounds 1-2 folded in** (§9). A developer/agent should be able to implement from this without a
 > further design decision.
 
 ## 0. What the LLD adds over the HLD
@@ -132,7 +132,7 @@ calls:
     to: { type: string, description: "'<domain>.<facade>' target. transport is read from the callee's facade." }
     output_validation: { type: string, optional: true }    # schema/guard ref. REQUIRED iff caller is an agent (stochastic) and callee is deterministic (§5.3)
     cost_bound:      { type: string, optional: true }       # token/fan-out ceiling. REQUIRED iff caller deterministic and callee is an agent (§5.3)
-    authority_bound: { type: "list[Scope]", optional: true }# scopes the callee may act with. REQUIRED with cost_bound (§5.3)
+    authority_bound: { type: "list[Scope]", optional: true }# scopes the callee may act with; REQUIRED with cost_bound. MUST be ⊆ the callee's identity.privilege (§5.3)
 ```
 
 ### 2.4 System-level
@@ -161,7 +161,9 @@ We do not duplicate them:
 - **One hop is modeled exactly one way** — as a `calls` edge OR an emit/consume event pair, never both.
   §5.5 flags a hop declared both ways (else the union would double-count it for cycle detection).
 - **Topology graph** (§7) = directed union of `depends_on` (domain-level) ∪ `calls` edges (facade-level,
-  directed caller→callee) ∪ `events_emitted → events_consumed` pairs.
+  directed caller→callee) ∪ `events_emitted → events_consumed` pairs. A `calls` edge **collapses to its
+  target domain** (`Edge.to`'s `<domain>` part) for the union/cycle graph, so all three edge sources are
+  domain-to-domain.
 
 ### 2.6 Scope grammar (L2)
 
@@ -227,9 +229,9 @@ domain" ≡ `kind ∈ {simple_agent, deep_agent}`.
 |---|---|---|
 | 5.1 | `check_approved_tools` | a `domains.*.tools[]` entry is not a key in `approved-tools.yaml` |
 | 5.2 | `check_privilege` | for any **agent domain**, `over` or `under` (§4) is non-empty |
-| 5.3 | `check_determinism_boundary` | for a `calls` edge where caller/callee differ in determinism: agent→deterministic edge missing `output_validation`; deterministic→agent edge missing `cost_bound` or `authority_bound` |
+| 5.3 | `check_determinism_boundary` | for a `calls` edge where caller/callee differ in determinism: agent→deterministic edge missing `output_validation`; deterministic→agent edge missing `cost_bound` or `authority_bound`; **or an `authority_bound` scope not ⊆ the callee's `identity.privilege`** (an edge cannot authorize a scope the callee never held) |
 | 5.4 | `check_async_edges` | `transport:async` facade with no `async` block; `async` block on a `sync` facade; `delivery:at_least_once` with no `idempotency_key`; a **multi-step async chain** (a path of ≥2 async `calls` edges) whose initiating edge's facade has no `compensation` |
-| 5.5 | `check_topology` | the directed graph (§2.5 union) has a cycle and no `orchestration.cycle_bound`; **or** a hop is declared both as a `calls` edge and an event pair |
+| 5.5 | `check_topology` | the directed graph (§2.5 union) has a cycle and no `orchestration.cycle_bound`; **or** a hop — the ordered (caller domain, callee domain) pair — is declared both as a `calls` edge and an event pair |
 | 5.6 | `check_deep_agent` | `kind:deep_agent` missing any `deep_agent` element **or** missing `memory.long_term` |
 | 5.7 | `check_lifecycle` | `lifecycle.long_running:true` missing any of checkpoint/resumable/idempotent_resume/timeout |
 | 5.8 | `check_enums` | any §2 enum field holds a value outside its set (**excludes `Scope.action`**, §2.6) |
@@ -250,6 +252,7 @@ domain" ≡ `kind ∈ {simple_agent, deep_agent}`.
 | C1 | unapproved tool | exit 2 `check_approved_tools` |
 | D1 | agent→det `calls` edge, no `output_validation` | exit 2 `check_determinism_boundary` |
 | **D2** | det→agent edge, no `cost_bound`/`authority_bound` | exit 2 `check_determinism_boundary` |
+| **D3** | det→agent edge whose `authority_bound` scope ∉ callee `identity.privilege` | exit 2 `check_determinism_boundary` |
 | E1 | async `at_least_once`, no idempotency_key | exit 2 `check_async_edges` |
 | E2 | 2-hop async chain, initiating facade no compensation | exit 2 `check_async_edges` |
 | **E3** | `async` block on a `sync` facade | exit 2 `check_async_edges` |
@@ -293,3 +296,12 @@ regenerated in CI so it cannot drift.
 | **m: §8(a) scope enum + canonicalization** | Fixed §2.6/§5.8 |
 | **m: test gaps (D2/E3/F2/I1/J1, green cases A3/A4)** | Fixed §6 |
 | **CR-9 observability / drift-check absent** | Confirmed out of scope for #13/#16 → tracked in #15 (§1) |
+
+**Round 2** confirmed both blockers + all majors closed; two new items from the `calls` revision, now fixed:
+
+| Finding (round 2) | Disposition |
+|---|---|
+| `authority_bound` unbounded by the privilege model (authority leak) | Fixed §2.3/§5.3: `authority_bound` MUST be ⊆ callee `identity.privilege`; validator checks containment; test D3 |
+| ADR-2 no longer describes the edge model (callee facade + caller `calls`) | Fixed: ADR-2 refinement note added in `02-adrs.md` |
+| §5.5/F2 hop-match key unstated | Fixed §5.5: hop = ordered (caller domain, callee domain) pair |
+| §2.5 facade→domain collapse for the cycle graph | Fixed §2.5 |
