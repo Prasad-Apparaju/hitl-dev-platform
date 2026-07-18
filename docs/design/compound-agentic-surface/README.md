@@ -10,7 +10,7 @@ The **requirements (what)** live one layer up, under the product area:
 
 | Doc | Content | Status |
 |---|---|---|
-| 01-design.md | HLD: topology model, determinism-boundary discipline, A2A-as-facade encoding, privilege/tool declarations + validators, eval discipline, decisions | To follow (#11) |
+| [01-design.md](01-design.md) | HLD: manifest extensions, topology model, determinism-boundary discipline, A2A-as-facade encoding, validators, eval discipline, decisions D1-D7 | Draft, pending architect review (#11) |
 | adr-*.md | Architecture decisions (framework-agnostic, governs-not-runtime, edge-typing) | To follow (#11) |
 
 Governs the composition; ships no runtime, backbone, dashboard, or eval engine. Target release:

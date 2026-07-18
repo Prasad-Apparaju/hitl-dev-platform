@@ -9,8 +9,8 @@
 > is **[FR-26](../prd.md)** in the PRD; this doc is its detailed requirements analysis (problem
 > framing + the `CR-n` requirements). The **how** — topology model, validators, schema encoding —
 > lives in the design package at
-> [`docs/design/compound-agentic-surface/`](../../design/compound-agentic-surface/) (`01-design.md`
-> HLD + ADRs, to follow). FR-26 ⇄ this doc are cross-linked; §7 traces every `CR-n` to a sub-issue.
+> [`docs/design/compound-agentic-surface/`](../../design/compound-agentic-surface/) (`01-design.md` HLD
+> now drafted; ADRs to follow). FR-26 ⇄ this doc are cross-linked; §7 traces every `CR-n` to a sub-issue.
 
 ## 1. Problem
 
