@@ -3,7 +3,8 @@
 > Mechanism (the *how*) for the requirements (the *what*) in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
 > (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status:
-> **draft — architect review round 1 folded in** (see §15). Targets **2.2.0** on the 2.x line.
+> **architect-approved (round 3), 2026-07-17** (see §15). Targets **2.2.0** on the 2.x line.
+> Remaining before implementation: ADRs formalizing D1-D9, then the manifest schema update (LLD/#13).
 
 The whole design rests on one move: **a compound agentic system is a manifest, extended.** Components
 are manifest domains; inter-component and A2A edges are `facade_apis`; everything else — topology,
@@ -61,7 +62,7 @@ domains:
           compensation: cancel_research   # saga/compensating action for rollback        (M2)
     identity:                      # non-human principal (granted privilege)             (CR-13, CR-14)
       principal: sa-research-agent
-      privilege: [read:corpus, vector:query, web:search, write:memory/research]
+      privilege: [read:corpus, vector:query, web:search, write:memory/research, read:memory/research]
     tools:                         # each MUST resolve in the approved-tool registry     (CR-15)
       - web_search
       - vector_query
@@ -69,7 +70,8 @@ domains:
       short_term: { strategy: summarize, budget_tokens: 8000 }
       long_term:
         store: research
-        writes: [research_notes]   # needed scope is per-STORE: write:memory/research (B1/M5)
+        writes: [research_notes]   # per-STORE scope: write:memory/research  (B1/M5)
+        reads:  [research_notes]   # retrieval; per-STORE scope: read:memory/research  (CR-18)
         pii: redact
         scope: isolated            # isolated | shared                                   (m4)
         shared_store: null         # ref when scope: shared
@@ -108,9 +110,8 @@ tools:
 ```
 
 So the example agent's **needed** = `{vector:query, read:corpus}` (from `vector_query`) ∪ `{web:search}`
-(from `web_search`) ∪ `{write:memory/research}` (from its one long-term store) — **exactly** its
-**granted** `[read:corpus, vector:query, web:search, write:memory/research]`. The showcase manifest
-passes its own privilege validator (round-2 fix; the grant and the derived need now reconcile).
+(from `web_search`) ∪ `{write:memory/research, read:memory/research}` (its long-term store's writes +
+reads) — **exactly** its **granted** set. The showcase manifest passes its own privilege validator.
 
 ## 3. Derived + declared views (never hand-maintained)
 
@@ -163,7 +164,7 @@ Additive, fail-closed validators with `ci/` regression suites (the platform-gate
   undeclared or unapproved tool **blocks**.
 - **Privilege validator** (CR-14, B1, M5): computes **needed** privilege as
   `⋃(approved-tools[t].scopes for t in tools)` ∪ `{write:memory/<store> for each long_term store with
-  writes}` ∪ `{read:memory/<store> for each long_term store read}`. Memory scopes are **per-store, not
+  writes}` ∪ `{read:memory/<store> for each store in long_term.reads}`. Memory scopes are **per-store, not
   per-write** (two writes to one store collapse to one scope). It then flags **over-privilege**
   (`granted ∖ needed`) and **under-privilege** (`needed ∖ granted`). Model invariant (D9): *every*
   privilege an agent needs traces to a tool scope or a memory scope — there is no orphan channel, so a
@@ -305,6 +306,11 @@ breadcrumb. Nothing orthogonal is introduced.
 | Memory-scope granularity (per-write vs per-store) unspecified | Fixed §6: **per-store** |
 | Deep-agent completeness didn't require persistent memory (CR-7) | Fixed §6: also requires `memory.long_term` |
 | "§3.1" cross-refs but no §3.1 heading | Fixed §3: real §3.1/§3.2/§3.3 subsections |
+
+**Round 3: APPROVED.** All round-2 items confirmed closed; the showcase reconciles exactly. One
+non-blocking latent gap it flagged for LLD — the `read:memory/<store>` clause had no declared source —
+is closed here by adding `memory.long_term.reads` (retrieval governance, CR-18); the showcase grants
+`read:memory/research` and still balances.
 
 ## 16. Acceptance criteria (implementation gate)
 
