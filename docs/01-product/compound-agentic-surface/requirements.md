@@ -102,6 +102,8 @@ Requirement IDs are `CR-<n>` (Compound Requirement). Each maps to sub-issues in 
 | **CR-14** | **Necessary-and-sufficient privilege.** Each agent-component **declares** its required identity and privilege scope in the manifest; a **validator flags both over- and under-privilege**; a **privilege-posture matrix** is *generated* (machine-readable + rendered) so a dashboard can consume it. HITL validates the declared design and may drift-check granted scopes where the product exposes them; it does not run the live IAM plane. | Must |
 | **CR-15** | **Approved tool set.** An **approved-tool registry** (tool + scope + risk) exists; each agent **declares** its tools from that registry; a **gate blocks** any agent that declares an undeclared or unapproved tool. Runtime tool allow-listing is required in the product's guardrail layer. | Must |
 | **CR-16** | **PM/QA-runnable independent evals.** PM/QA can define and run evals against a single component or flow segment, backed by an **eval-dataset spec**, a **registry**, and a **reviewer gate** — mirroring the single-agent `qa-plan-tests` → `qa-verify-quality` path — plus **continuous eval from production traffic** as a maturity rung. | Must |
+| **CR-17** | **Long-running / durable execution lifecycle.** Where a component runs over minutes-to-days, the design covers its **lifecycle**: durable **checkpointing** and **resumability** across restarts, **pause-and-resume around human gates** (human-in-the-loop over long horizons), timeout/cancellation, and **idempotency on resume** (a resumed step must not re-fire side effects). The design names how state survives a crash. Durable-execution engines (Temporal-style, LangGraph checkpointing) are named as examples the pattern governs, never modules. Complements CR-12 (this is the component's own statefulness; CR-12 is the edge's reliability). | Must |
+| **CR-18** | **Memory model, short- and long-term, governed.** The design declares each agent's memory: **short-term / working** (context-window budgeting, summarization/compression, sub-agent context isolation — the "context engineering" discipline; ephemeral) and **long-term / persistent** (cross-session semantic/episodic store, retrieval, and *what is written*). Long-term memory is a **governed durable store**, treated like HITL's own durable memory: writes are declared per agent (alongside tools/privileges, CR-14/CR-15), high-stakes writes carry guardrails, **PII/redaction** rules apply, and staleness/ownership are tracked. Shared-vs-isolated memory across agents is an explicit topology decision. | Must |
 
 ## 5. Constraints
 
@@ -135,14 +137,14 @@ Requirements → sub-issues → deliverables. Epic
 
 | Sub-issue | Deliverable | Requirements |
 |---|---|---|
-| [#11](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/11) | HLD + ADR(s) | CR-3, CR-4, CR-5, CR-10 |
-| [#12](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/12) | `pm-design-feature` + `AGENTS.md` surface branch | CR-1, CR-2, CR-7, CR-11 |
-| [#13](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/13) | HLD & test-strategy templates + manifest schema | CR-3, CR-5, CR-12, CR-13, CR-14, CR-15 |
-| [#14](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/14) | Pattern doc `docs/patterns/compound-agentic-systems.md` | CR-4, CR-6, CR-11, CR-12 |
+| [#11](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/11) | HLD + ADR(s) | CR-3, CR-4, CR-5, CR-10, CR-17, CR-18 |
+| [#12](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/12) | `pm-design-feature` + `AGENTS.md` surface branch | CR-1, CR-2, CR-7, CR-11, CR-17, CR-18 |
+| [#13](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/13) | HLD & test-strategy templates + manifest schema | CR-3, CR-5, CR-12, CR-13, CR-14, CR-15, CR-17, CR-18 |
+| [#14](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/14) | Pattern doc `docs/patterns/compound-agentic-systems.md` | CR-4, CR-6, CR-11, CR-12, CR-17, CR-18 |
 | [#15](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/15) | Agentic observability + posture views | CR-9, CR-14, CR-15 |
 | [#16](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/16) | Validators + gates | CR-14, CR-15, CR-8, CR-16 |
-| [#17](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/17) | User docs + playbook + worked example design | CR-1..CR-16 (documentation) |
-| [#18](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/18) | Website/portal update + screenshots | CR-1..CR-16 (portal) |
+| [#17](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/17) | User docs + playbook + worked example design | CR-1..CR-18 (documentation) |
+| [#18](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/18) | Website/portal update + screenshots | CR-1..CR-18 (portal) |
 | [#19](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/19) | Codex two-stage validation + guide/prompt | Definition of done |
 | [#20](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/20) | Release 2.2.0 (blocked by #19) | Version |
 
