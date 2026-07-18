@@ -29,12 +29,28 @@ trust legs** (`input_validation`, `output_validation`), an `authorization` block
 the `async` reliability block. `depends_on` becomes an auto-derived projection. Cycle/dup logic keys off
 `id`, not domain pairs. Closes B1, B2, B5, M1, M2, most of M7.
 
-**F1 — Privilege.** Narrow CR-14 from "necessary-and-sufficient" to **"declared-capability consistency +
-least-privilege review."** Validator proves every grant traces to a declared source and every declared
-use has a grant; necessity-vs-actual-code is human review + an **optional runtime drift-check** (declared
-vs granted-at-runtime, read-only). Complete the source model: add a `capabilities` block (non-tool:
-KMS/model-endpoint/delegation/ambient) and **edge-invocation scopes** (`invoke:<domain>` sourced from
-outbound interactions). needed = ⋃(tool ∪ memory ∪ capability ∪ edge-invoke scopes). Closes B4.
+**F1 — Privilege: full scoped-capability model** (user-chosen 2026-07-18 over the narrow option).
+Deliver a genuine necessary-and-sufficient claim **at declaration granularity** — stronger than mere
+consistency, and honest about its runtime limit.
+- **Complete capability sources:** tools, memory, non-tool `capabilities` (KMS, model-endpoint,
+  delegation/impersonation, ambient fs/network/process/env, direct service access), edge-invocation
+  (`invoke:<domain>`).
+- **Per-use scoping:** an agent declares each capability *use* with its specific scope —
+  `uses: [{capability, operations, resources}]` — not just the capability name. `needed = ⋃(per-use
+  scopes)`, so a read-only use of a read/write tool needs only `read:…` (fixes B4 scenario 1's false
+  over-privilege).
+- **Registry = ceiling:** the approved-capability registry declares each capability's *maximum* grantable
+  scope; every per-use scope MUST be ⊆ that ceiling — a **ceiling-violation** blocks (using a capability
+  beyond its approval; fixes B4 scenario 3's silent too-small agreement).
+- **Validator:** over = `granted ∖ ⋃per-use`; under = a declared use scope ⊄ `granted`; ceiling-violation
+  = a per-use scope ⊄ its registry ceiling. Machine-readable **and** rendered posture.
+- **Honest limit (ADR-5):** proves the *declared* per-use set is minimal, consistent, and within ceiling.
+  It does NOT prove the running code only does what it declared — that is a **read-only runtime
+  drift-check** (declared vs observed) + human review + optional static analysis, not something HITL
+  runs. Claim = "necessary-and-sufficient for the declared uses", review/drift-enforced.
+- **Trade-off (flagged):** per-use scoping is real authoring burden — require it at **Tier 2+** and
+  collapse/default it at lower tiers so it does not become box-ticking.
+Closes B4 with a real model rather than a narrowed claim.
 
 **F3 — Evals.** HITL governs **coverage + an adapter contract**, ships no runner. Add: the eval spec, a
 **coverage validator** (every component/interaction/declared segment has an eval spec or a structured
@@ -50,7 +66,7 @@ resolves the CR-16 boundary tension.
 | **B1** boundary uses call direction, not dataflow | F2: per-interaction request/response trust legs; `output_validation` on the response leg; applies to every data-carrying interaction incl. events |
 | **B2** who-may-invoke / facade enforcement no model | F2: `authorization` block per interaction (allowed callers, credential mode, JIT); reference-integrity validator (`facade`/`to` resolves); boundary-hook change added to the LLD change list |
 | **B3** evals are prose | F3: coverage validator + waiver schema + runner-adapter contract + result/reviewer schemas + tests |
-| **B4** "necessary-and-sufficient" false | F1: narrow claim; add `capabilities` + edge-invoke sources; optional drift-check |
+| **B4** "necessary-and-sufficient" false | F1 (full model): per-use scoped capabilities + registry ceilings; needed = ⋃per-use; over/under/ceiling-violation checks; read-only drift-check for runtime fidelity; claim scoped to declaration granularity |
 | **B5** async can't do reliable one-way; weak validators | F2: `kind: event` + reliability makes durable one-way events representable; drop unqualified `exactly_once` (broker boundary); per-step saga/compensation; consumer-idempotence declaration; value-check retry/timeout/dlq |
 | **B6** validators check presence; A1/Z1 additivity contradiction; schema dialect | LLD: value/reference/range/nonempty/unknown-field checks; **activation rule** — agentic checks + registry requirement fire only when an agentic marker (`kind`/interaction `kind`/`orchestration`) is present, so legacy manifests exit 0; pin the executable validation pipeline + exact dialect |
 | **M1** `interaction_matrix` duplicated/unreconciled | F2 (authoritative model) + rewrite ADR-2 decision text (not just a refinement note) |
