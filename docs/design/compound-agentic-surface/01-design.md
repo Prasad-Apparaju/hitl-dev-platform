@@ -4,7 +4,7 @@
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
 > (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status:
 > **architect-approved (round 3), 2026-07-17** (see §15). Targets **2.2.0** on the 2.x line.
-> Remaining before implementation: ADRs formalizing D1-D9, then the manifest schema update (LLD/#13).
+> ADRs for D1-D9: [`02-adrs.md`](02-adrs.md) (accepted). Remaining before implementation: the manifest schema update (LLD/#13).
 
 The whole design rests on one move: **a compound agentic system is a manifest, extended.** Components
 are manifest domains; inter-component and A2A edges are `facade_apis`; everything else — topology,
