@@ -4,12 +4,12 @@
 
 | Folder / File | What it contains |
 |--------------|-----------------|
-| `01-product/` | HITL's own PRD (`prd.md`) — the product baseline, reverse-engineered from the shipped surface; new requirements append here |
+| `01-product/` | Requirements — the **what**. HITL's own PRD (`prd.md`, product `FR-n`) plus per-feature requirements analysis (`<feature>/requirements.md`, the `MR-n`/`CR-n` for a feature, cross-linked to its `FR-n`). |
 | `playbook/` | Process guides: workflow reference, adoption guide, common pitfalls, migration guide, AI governance, evidence taxonomy |
 | `roles/` | Per-role guides: what each role does, which commands they use, and how they interact with other roles |
 | `reference/` | Context model rationale — how Claude Code and Codex load context, and how HITL was designed around it |
 | `patterns/` | Reusable design patterns: failure mode taxonomy, idempotency keys |
-| `design/` | Design packages for HITL's own evolution: `workflow-model/` (shipped as 2.0), `platform-bootstrap/` (issue #21, draft) |
+| `design/` | Design — the **how**. Design packages (HLD, ADRs) for HITL's own evolution: `workflow-model/`, `platform-bootstrap/`, `metrics-generation/` (EPIC #22, draft — targets 2.3.0). Each package's *what* lives under `01-product/<feature>/requirements.md`. |
 | `changes/` | Schema definitions: `change-context.schema.yaml` (the `.hitl/current-change.yaml` contract) |
 | `images/` | SVG and PNG assets used by the docs |
 | `validation-guide.md` | Independent-reviewer / Codex guide to verifying a release: requirement→design→test map plus the exact checks to run |
