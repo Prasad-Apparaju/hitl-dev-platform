@@ -1,16 +1,16 @@
 # Compound Agentic System Surface: Requirements
 
-> Design package for **EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)**
+> **What** the surface must do, for **EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)**
 > (compound agentic system delivery surface). Status: **draft, pending review**. Ships as
-> **2.2.0** on the 2.x line (1.x is feature-frozen). See `01-design.md` (to follow) for the
-> mechanism and locked decisions. Sub-issues: [#11–#20](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
+> **2.2.0** on the 2.x line (1.x is feature-frozen). Sub-issues:
+> [#11–#20](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
 >
-> **Two-layer requirements convention** (same as `workflow-model/` and `platform-bootstrap/`):
-> the **product** requirement lives in the PRD as **[FR-26](../../01-product/prd.md)** under
-> `docs/01-product/` — the durable, PM-owned one-liner. **This** doc is the **feature design
-> package's** requirements analysis (problem framing + the `CR-n` requirements) that feeds the
-> HLD and ADRs, so it lives with its design under `docs/design/<feature>/`. FR-26 ⇄ this doc are
-> cross-linked; §7 traces every `CR-n` to a sub-issue.
+> **Requirements (what) vs design (how).** This is the requirements layer: the product one-liner
+> is **[FR-26](../prd.md)** in the PRD; this doc is its detailed requirements analysis (problem
+> framing + the `CR-n` requirements). The **how** — topology model, validators, schema encoding —
+> lives in the design package at
+> [`docs/design/compound-agentic-surface/`](../../design/compound-agentic-surface/) (`01-design.md`
+> HLD + ADRs, to follow). FR-26 ⇄ this doc are cross-linked; §7 traces every `CR-n` to a sub-issue.
 
 ## 1. Problem
 
