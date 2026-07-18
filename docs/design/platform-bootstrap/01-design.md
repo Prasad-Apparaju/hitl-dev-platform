@@ -1,6 +1,6 @@
 # Platform Bootstrap: Design
 
-> Mechanism for the requirements in `00-requirements.md`. Status: **decisions locked
+> Mechanism (the *how*) for the requirements (the *what*) in `../../01-product/platform-bootstrap/requirements.md`. Status: **decisions locked
 > 2026-07-11** (§8). Design rationale markers (R1)-(R6) preserved for the audit trail.
 
 ## 1. The two artifacts

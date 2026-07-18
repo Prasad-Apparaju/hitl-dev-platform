@@ -1,7 +1,7 @@
 # Workflow Model: Design
 
 **Status:** Design (branch `design/workflow-model`).
-**Companion docs:** [00-requirements.md](00-requirements.md) · [02-rollout.md](02-rollout.md)
+**Companion docs:** [requirements (what)](../../01-product/workflow-model/requirements.md) · [02-rollout.md](02-rollout.md)
 
 This is the model. It satisfies the requirements: stable identities, derived numbers, structure
 separated from execution, stakeholder-legible names.

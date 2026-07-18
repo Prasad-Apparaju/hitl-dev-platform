@@ -40,9 +40,9 @@ Verify the chain is intact: each capability has a requirement, a design, and som
 
 | Capability | Requirement | Design | Test / check |
 |---|---|---|---|
-| **Numberless identity** (steps keyed by stable `key`+name+phase, not global position) | `docs/design/workflow-model/00-requirements.md` (G1), `docs/01-product/prd.md` FR-1 | `docs/design/workflow-model/01-design.md` §4; `tools/workflow-catalog/catalog.yaml` | Check 1 (derive verify) + `tools/workflow-catalog/test_derive.py` |
-| **Structure separated from execution** (generated command-map) | 00-requirements G2; PRD FR-3 | `docs/command-map.generated.md` (generated) | Check 5 (no drift) |
-| **Phase-ribbon breadcrumb** (numberless, phase ✓/◐/·) | 00-requirements; PRD FR-4 | `docs/design/workflow-model/02-rollout.md`; `ai/claude/hooks/_steps.sh` | Check 4 (`ci/breadcrumb/run_matrix.sh`, 270 assertions; see `ci/breadcrumb/README.md`) |
+| **Numberless identity** (steps keyed by stable `key`+name+phase, not global position) | `docs/01-product/workflow-model/requirements.md` (G1), `docs/01-product/prd.md` FR-1 | `docs/design/workflow-model/01-design.md` §4; `tools/workflow-catalog/catalog.yaml` | Check 1 (derive verify) + `tools/workflow-catalog/test_derive.py` |
+| **Structure separated from execution** (generated command-map) | workflow-model requirements G2; PRD FR-3 | `docs/command-map.generated.md` (generated) | Check 5 (no drift) |
+| **Phase-ribbon breadcrumb** (numberless, phase ✓/◐/·) | workflow-model requirements; PRD FR-4 | `docs/design/workflow-model/02-rollout.md`; `ai/claude/hooks/_steps.sh` | Check 4 (`ci/breadcrumb/run_matrix.sh`, 270 assertions; see `ci/breadcrumb/README.md`) |
 | **Three-tier taxonomy** (7 workflows / 6 profiles / 5 tags) | PRD §4 | `docs/design/workflow-model/01-design.md` §4 | Profiles/tags resolve in `test_derive.py`; workflows in Check 1 |
 | **Platform-bootstrap workflow (#21)** (onboarded → delivery-ready: readiness register, generated roadmap, hard production-deploy gate) | Plugin issue #21; PRD FR-25 | `docs/design/platform-bootstrap/` (D1-D6 locked); catalog `platform:` block; `ai/shared/templates/platform-readiness-template.yaml`; `ai/claude/hooks/check-platform-ready.sh` | Check 1 (`platform->platform` lossless) + Check 2 (`ci/hooks/test_check_platform_ready.py`, 17 cases) + Check 4 (platform position cases) |
 | **Skill quality gates** | `docs/design/workflow-model/04-harness-acceptance-criteria.md` Part A | Part A rules | Check 3 (`ci/skill-lint/check_skills.py`) + `test_check_skills.py` |

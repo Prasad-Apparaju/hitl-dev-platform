@@ -1,7 +1,7 @@
 # Harness Acceptance Criteria
 
 **Status:** Acceptance criteria (branch `design/workflow-model`).
-**Companion docs:** [00-requirements.md](00-requirements.md) · [01-design.md](01-design.md) · [02-rollout.md](02-rollout.md) · [03-execution-model.md](03-execution-model.md)
+**Companion docs:** [requirements (what)](../../01-product/workflow-model/requirements.md) · [01-design.md](01-design.md) · [02-rollout.md](02-rollout.md) · [03-execution-model.md](03-execution-model.md)
 
 HITL is an external harness built over Claude Code: it generates and ships `SKILL.md` files, agents,
 and commands, and it relies on hooks, slash commands, and settings precedence to enforce its

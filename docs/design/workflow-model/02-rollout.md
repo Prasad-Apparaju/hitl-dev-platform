@@ -1,7 +1,7 @@
 # Workflow Model: Cross-Check & Rollout
 
 **Status:** Design (branch `design/workflow-model`).
-**Companion docs:** [00-requirements.md](00-requirements.md) · [01-design.md](01-design.md)
+**Companion docs:** [requirements (what)](../../01-product/workflow-model/requirements.md) · [01-design.md](01-design.md)
 
 ---
 

@@ -1,7 +1,7 @@
 # Execution Model: how a change's plan is determined and enforced
 
 **Status:** Design (branch `design/workflow-model`).
-**Companion docs:** [00-requirements.md](00-requirements.md) · [01-design.md](01-design.md) · [02-rollout.md](02-rollout.md)
+**Companion docs:** [requirements (what)](../../01-product/workflow-model/requirements.md) · [01-design.md](01-design.md) · [02-rollout.md](02-rollout.md)
 
 This is the heart of the model. It supersedes the idea of a workflow as a *fixed pipeline*: a
 change's actual plan is **determined by impact analysis, iteratively with the human**, then
