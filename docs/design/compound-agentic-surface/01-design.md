@@ -3,7 +3,8 @@
 > Mechanism (the *how*) for the requirements (the *what*) in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
 > (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status:
-> **architect-approved (round 3), 2026-07-17** (see §15). Targets **2.2.0** on the 2.x line.
+> **v2 in progress** — architect-approved 2026-07-17, but an independent Codex review (2026-07-18) returned
+> REVISIONS REQUIRED (6 blockers). Revision per [`04-revision-plan.md`](04-revision-plan.md). Targets **2.2.0**.
 > ADRs for D1-D9: [`02-adrs.md`](02-adrs.md) (accepted). Remaining before implementation: the manifest schema update (LLD/#13).
 
 The whole design rests on one move: **a compound agentic system is a manifest, extended.** Components
