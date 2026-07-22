@@ -1,7 +1,9 @@
 # Agentic Design Advisor: Design (HLD) — v3
 
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
-> (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); test plan in [`03-test-plan.md`](03-test-plan.md).
+> (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); **field-level precision (catalog schema,
+> composer, floor function, command→manifest mapping, integration) in the LLD [`04-lld.md`](04-lld.md)**;
+> test plan in [`03-test-plan.md`](03-test-plan.md).
 > Status: **draft, pending review**. **v3** — reshaped around **runnable commands + a composed workflow**
 > (v2), then revised after two rounds of pm + architect review (ADV-13 integration, floor waiver, honest
 > kill-switch/observability targets, complete composition/consequence tables). The Advisor is the **front
