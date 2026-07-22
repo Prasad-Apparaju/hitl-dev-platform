@@ -17,7 +17,22 @@ agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld in both rounds**;
 skeleton stands. The rework is in the edge container, the trust legs, the privilege union, the eval
 homes, and activation.
 
-## Round-2 fix-map (the current work)
+## Round-3 fix-map (v3.1 — the current work)
+
+Round-3 reviewed the v3 docs and returned REVISIONS REQUIRED with 4 blockers (converging: 6→6→4). All
+addressed in **v3.1**, informed by the right-sizing reframe (the Advisor, FR-28):
+
+| Round-3 finding | Disposition in v3.1 |
+|---|---|
+| **B1** — the generator writes derived `interaction_matrix`/`events_*` *back into the manifest*, colliding with `edge_double_authored` (generation isn't idempotent) | Projections are emitted to a **separate generated-view file** (`agentic-posture/projections.*`), never into the source manifest; `edge_double_authored` fires only on **hand-authored** coexistence; projected `description`/`shape` specified. LLD §2.4/§9; test VIEW-IDEMPOTENT |
+| **B2** — `long_running:true` doesn't require `resumable`/`idempotent_resume` (CR-17 bypassable) | `check_lifecycle` now **requires both** for a long-running component. LLD §6.10; test LIFE-RESUME |
+| **B3** — eval coverage targets only agents/agent-edges (CR-8 says *every* component/edge); no result-review gate | Targets = **every component ∪ every interaction ∪ segments**; deterministic targets satisfied by a `kind: contract_test` spec; added a **`result_review` gate** (reviewer decision on the ingested result, distinct from spec `approval`). LLD §6.12/§7.1-7.3; tests EVAL-DET-OK/EVAL-RESULT |
+| **B4** — `check_saga` fires on wholly-deterministic sync flows → forces `policies.yaml` (refutes additive-only) and over-extends CR-12 | **Trimmed:** a saga is required only for a **declared `transactional` segment** with agent/async side effects; a synchronous deterministic flow is **exempt** and stays registry-free. The Advisor elicits whether distributed compensation is needed; #10 validates declared sagas. This is the over-engineering trim the whole session pointed at. LLD §4.2/§6.14; HLD §5; test SAGA-SYNC-OK |
+
+The v3.1 disposition supersedes the v2 saga-activation fix (which had over-corrected an internal-review
+false-negative by firing on any side-effecting flow — round-3 caught it).
+
+## Round-2 fix-map (v3)
 
 Round-2 verdict: REVISIONS REQUIRED. Six blockers, twelve majors, four minors. Disposition in v3:
 

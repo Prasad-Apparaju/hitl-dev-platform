@@ -1,11 +1,22 @@
-# Compound Agentic System Surface: LLD — v3
+# Compound Agentic System Surface: LLD — v3.1
 
 > Implementation-precision design for sub-issues [#13](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/13)
 > (manifest schema) and [#16](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/16) (validators).
-> Implements HLD [`01-design.md`](01-design.md) v3 + ADRs [`02-adrs.md`](02-adrs.md), per the round-2
-> Codex response [`04-revision-plan.md`](04-revision-plan.md). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
-> Status: **draft, pending Codex re-review (round 3)**. A developer/agent implements from this without a
-> further design decision.
+> Implements HLD [`01-design.md`](01-design.md) v3 + ADRs [`02-adrs.md`](02-adrs.md), per the Codex
+> response [`04-revision-plan.md`](04-revision-plan.md). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
+> Status: **draft, round-3 blockers addressed (v3.1), pending Codex round-4**. A developer/agent
+> implements from this without a further design decision.
+>
+> **v3.1 changelog (round-3 blockers).** **B1:** the derived `interaction_matrix`/`events_*` projections
+> are emitted to a **separate generated-view file**, not written back into the manifest (§2.4, §9) —
+> `generate` is idempotent, no `edge_double_authored` self-conflict (test VIEW-IDEMPOTENT). **B2:**
+> `long_running:true` now **requires** `resumable:true` **and** `idempotent_resume:true` (§6.10, test
+> LIFE-RESUME). **B3:** eval coverage targets **every component ∪ every interaction ∪ segments** (CR-8),
+> deterministic targets satisfied by a `contract_test` spec, plus a **result-review gate** (§6.12/§7,
+> tests EVAL-DET-OK/EVAL-RESULT). **B4:** saga is **scoped to a declared `transactional` segment** with
+> agent/async side effects — a synchronous deterministic flow is **exempt** and stays registry-free
+> (§4.2/§6.14, test SAGA-SYNC-OK); this trims the over-reach and restores additive-only. The Advisor
+> (FR-28) elicits *whether* compensation is needed.
 >
 > **v3 changelog (round-2 blockers).** B1: the edge model is a new additive top-level `interactions`
 > **list** — the existing `interaction_matrix` **map** cannot hold two edges for one domain pair, so it
@@ -171,22 +182,27 @@ is the least-privilege/JIT default made checkable.
 
 ### 2.4 Derived projections (B1, M2, D2)
 
-When `interactions` is present it is authoritative and the generator (§9) **derives**:
+When `interactions` is present it is authoritative and the generator (§9) **derives** the following into a
+**separate generated-view file** (`agentic-posture/projections.*`), **not** back into the source manifest
+(round-3 B1):
 
-- `interaction_matrix[f -> t]` = a coarse projection (one entry per distinct pair; `entity_crossing` =
-  concatenation). Hand-authoring `interaction_matrix` for a pair that also appears in `interactions` is a
-  blocker (`code: edge_double_authored`, §6.6) — one source of truth.
-- `depends_on[d]` = `{ t : ∃ interaction from d to t }` ∪ legacy import-derived deps. When `interactions`
-  is absent, `depends_on` keeps its current auto-derived meaning unchanged.
+- `interaction_matrix[f -> t]` = a coarse projection (one entry per distinct pair; `description` =
+  newline-joined interaction descriptions; `entity_crossing` = concatenation). Because the projection lives
+  in its own file, `edge_double_authored` (§6.6) fires **only** when a **human hand-authors**
+  `interaction_matrix` in the *manifest* alongside `interactions` — the generated view never triggers it.
+- `depends_on[d]` = `{ t : ∃ interaction from d to t }` ∪ legacy import-derived deps. This one **stays an
+  auto manifest field** (coarse domain list; it does not conflict with the interaction rules). When
+  `interactions` is absent, `depends_on` keeps its current auto-derived meaning unchanged.
 - `events_emitted` / `events_consumed` = projected from `kind: event` interactions: for an event
-  interaction `from=P, to=C, facade=P:e`, the generator emits `P.events_emitted[e].consumed_by ∋ C` and
-  `C.events_consumed ∋ {name: e, from: P}`. If the manifest **also** hand-authors these lists, the
-  validator requires them to **equal** the projection (`code: event_projection_mismatch`, §6.6); it never
-  silently merges. This is the exact event join the review asked for (M2): the interaction id is the key,
-  and the legacy lists are a generated view of it.
+  interaction `from=P, to=C, facade=P:e`, the view emits `P.events_emitted[e]` with `shape` = the event
+  interaction's `entity_crossing` and `consumed_by ∋ C`, and `C.events_consumed ∋ {name: e, from: P}`. If a
+  **manifest** hand-authors these lists, the validator requires them to **equal** the projection
+  (`code: event_projection_mismatch`, §6.6); it never silently merges. The interaction id is the key; the
+  legacy lists are a generated view of it (M2).
 
-CI runs the generator and **fails on any diff** (regenerate-and-diff), so a projection can never drift
-from the `interactions` source.
+CI runs the generator and **fails on any diff** (regenerate-and-diff), so the generated-view file can never
+drift from the `interactions` source, and — because it is a separate file — running the generator twice is
+idempotent (round-3 B1: no self-conflict on the second validation).
 
 ## 3. `DomainEntry` extensions (F1 capabilities, memory, lifecycle, deep-agent)
 
@@ -286,6 +302,7 @@ segments: { optional: true, type: "list[Segment]", Segment: {   # eval + routing
   id:   { type: string },
   path: { type: "list[interaction_id]" },             # consecutive; each hop's `to` == next hop's `from` (§6.5)
   e2e:  { type: bool, optional: true },                # true = an end-to-end flow (CR-8)
+  transactional: { type: bool, optional: true },       # true = a declared distributed-compensation unit → a saga is required (§4.2, §6.14; round-3 B4)
   evals:{ type: "{spec: string}", optional: true } } }
 ```
 
@@ -317,11 +334,23 @@ sagas: { optional: true, type: "list[Saga]", Saga: {
     on_compensation_failure: { type: enum[halt, escalate] } } } } }
 ```
 
-**When a saga is required (§6.7):** any set of ≥2 **side-effecting** interactions (§6.7 definition) that
-form a single ordered flow (a declared `segment`, or the forward reachable set from a coordinator) MUST be
-covered by exactly one `saga` whose `steps` reference those interaction ids. Compensation runs in
-**reverse of `order`** for `sequential`. A side-effecting interaction not covered by a saga, when ≥2 exist
-in the flow, is `code: saga_missing`.
+**When a saga is required (§6.14) — scoped to distributed-compensation flows (round-3 B4).** CR-12 is
+*async A2A reliability*; a saga is the tool for **multi-step, irreversible work across agents/async edges**
+where a single transaction can't span the boundary. So the requirement is scoped, not inferred from graph
+reachability over any side effects:
+
+- A saga is **required** only for a **declared transactional unit** — a `segment` with `transactional:
+  true` (author-declared) — that contains ≥2 **side-effecting** interactions with an **agent or
+  async/event** endpoint. A side-effecting interaction in such a unit not covered by exactly one `saga` is
+  `code: saga_missing`.
+- A **synchronous, deterministic** flow (e.g. a local debit→credit inside one service) is **not** required
+  to declare a saga — that is a database-transaction concern, not distributed compensation. Forcing a saga
+  (and `policies.yaml`) on it was the round-3 B4 over-reach (it also broke additive-only). The Advisor
+  (FR-28) elicits *whether* a flow needs distributed compensation; #10 **validates declared sagas** and
+  enforces coverage only within a declared transactional unit.
+
+Compensation runs in **reverse of `order`** for `sequential`. `check_saga` still validates every declared
+saga's well-formedness regardless of the required-when rule.
 
 ## 5. Registries
 
@@ -388,15 +417,15 @@ required registry is loaded **only when the check activates** — so a manifest 
 | 6.11 | `check_memory` | any domain has `memory` | stores, approved-capabilities |
 | 6.12 | `check_eval_coverage` | any domain is an agent, or `segments` present (i.e. there is an agentic target) | evals index/waivers |
 | 6.13 | `check_scope_grammar` | any `Scope` appears (`identity.privilege`, `uses`, `authority_bound`, ceilings) | — |
-| 6.14 | `check_saga` | any `saga` present, **or ≥2 side-effecting interactions** (`side_effecting:true`, or derived from facade `mutations`) reachable in one flow — so a purely **synchronous** side-effecting flow still activates it (fixes the round-2b false-negative) | policies |
+| 6.14 | `check_saga` | any `saga` **declared**, **or** a `segment` with `transactional:true` (round-3 B4 — a declared distributed-compensation unit; **not** inferred from sync-flow reachability) | policies |
 | 6.15 | `check_classification` | `interactions` present with ≥1 agent endpoint (a compound manifest) | — |
-| 6.15 | `check_classification` | `interactions` present with ≥1 agent endpoint (a compound manifest) and a domain has no explicit `kind`; a `simple_agent`/`deep_agent` domain with no `kind_rationale` (CR-2 "classify every component + justify the simplest") | — |
 
 A wholly deterministic manifest with typed `interactions` activates only 6.5/6.6 (graph integrity) and
-needs **no** new registry — **unless** it declares ≥2 side-effecting interactions in a flow, which
-activates `check_saga` (6.14) and its `policies` registry, because a multi-step irreversible flow needs
-compensation whether the hops are sync or async (CR-12). A deterministic flow with 0–1 side-effecting
-interactions stays registry-free. (Tests A3, SAGA-SYNC.)
+needs **no** new registry. A **synchronous, deterministic** side-effecting flow **does not** activate
+`check_saga` (round-3 B4): a saga is a *declared* distributed-compensation unit (§4.2), so `check_saga`
+activates only on a declared `saga` or a `transactional` segment — a local sync debit→credit is a database
+transaction, not a saga, and stays registry-free. The Advisor (FR-28) elicits whether a flow needs
+distributed compensation. (Tests A3, SAGA-SYNC-OK.)
 
 ### 6.2–6.14 checks
 
@@ -410,14 +439,16 @@ interactions stays registry-free. (Tests A3, SAGA-SYNC.)
 | 6.7 | `check_async` | `async` on a `sync_call`; `async_task` with no `async`; `at_least_once` without `consumer_idempotent`+`idempotency_key`; `retry` present with `delivery==at_most_once`; `at_least_once` without `dlq` and without `dlq_justification`; missing/`≤0` timeout |
 | 6.8 | `check_policy_refs` | any `PolicyRef` (`validation`, `compensation`, `gates`, `guardrails`, `high_stakes_guardrail`) that is empty/`TODO`/`none` or does not resolve in `policies.yaml`; a `validation` ref whose policy `kind ∉ {schema,guardrail}`; a `compensation` ref whose `kind ≠ action`; a `QuantPolicy` with `limit ≤ 0` or `unit` invalid |
 | 6.9 | `check_deep_agent` | `kind:deep_agent` missing `deep_agent` or `memory.long_term`; empty planner/subagents/gates/guardrails; `context_isolation≠true`; a `subagent`/`planner` not a declared domain; `memory.long_term.retrieval ∉ {filesystem,semantic}`; `deep_agent` block on a non-deep kind |
-| 6.10 | `check_lifecycle` | `long_running:true` with `checkpoint:none`, missing `resume_cursor`, missing/`≤0` `timeout`, or `cancellation` absent; `checkpoint:durable` without a `checkpoint_store` resolving to a `durable` store; `resumable:true` on a side-effecting component without `side_effect_key`; `idempotent_resume` claimed without `side_effect_key`; `human_gate:true` with `human_gate_pause≠true` |
+| 6.10 | `check_lifecycle` | `long_running:true` with **`resumable≠true`**, **`idempotent_resume≠true`** (round-3 B2 — both are required for a long-running component, not optional), `checkpoint:none`, missing `resume_cursor`, missing/`≤0` `timeout`, or `cancellation` absent; `checkpoint:durable` without a `checkpoint_store` resolving to a `durable` store; `resumable:true` on a side-effecting component without `side_effect_key`; `human_gate:true` with `human_gate_pause≠true` |
 | 6.11 | `check_memory` | `long_term` missing `owner`/`store`/`durability`/`retrieval`/`scope`/`pii`; `pii:none` without justification; `store`/`shared_store` unresolved (or `shared_store` not `shared:true`, or `scope:shared` without `shared_store`, or `shared_store` with `scope:isolated`); a `write.high_stakes:true` without `high_stakes_guardrail` or without `provenance`; a memory read/write not reconciled to a `uses` scope (§3.1) |
-| 6.12 | `check_eval_coverage` | a target (agent domain ∪ interaction touching an agent ∪ declared segment) with no `evals.spec` in the index and no unlapsed waiver; no `e2e:true` segment when ≥2 components have an agent; a spec/waiver failing its schema (§7); a spec with `approval.decision != approved` used to satisfy coverage at Tier 2+ (`baseline_only` does not satisfy coverage above Tier 1) |
+| 6.12 | `check_eval_coverage` | a **target** — per CR-8 *every component ∪ every interaction ∪ declared segment* (round-3 B3) — with no `evals.spec` in the index and no unlapsed waiver (a **deterministic** target may satisfy this with a `kind: contract_test` spec rather than an LLM eval, §7.2); no `e2e:true` segment when ≥2 components; a spec/waiver failing its schema (§7); a spec with `approval.decision != approved` used to satisfy coverage at Tier 2+; an **ingested adapter result with no reviewer `result_decision`** (the result-review gate, §7.3 — round-3 B3) |
 | 6.13 | `check_scope_grammar` | a `Scope` not matching the grammar (§0); a memory scope not canonical `read\|write:<store>/<resource>`; a ceiling/grant/authority scope with an ill-formed wildcard |
-| 6.14 | `check_saga` | a flow with ≥2 side-effecting interactions (§4.2) not covered by exactly one `saga` (`saga_missing`); a `saga` step whose `interaction_id` is not side-effecting or not in the flow; `compensation_idempotent≠true`; two sagas covering the same interaction |
+| 6.14 | `check_saga` | a **`transactional` segment** with ≥2 side-effecting agent/async interactions not covered by exactly one `saga` (`saga_missing`, round-3 B4 — sync deterministic flows are exempt, §4.2); a `saga` step whose `interaction_id` is not side-effecting or not in the segment; `compensation_idempotent≠true`; two sagas covering the same interaction |
 
-`check_saga` is separated from `check_async` so it activates on side-effecting interactions of **any**
-kind — a synchronous debit→credit pair with no async data still requires a covering saga (CR-12).
+`check_saga` is separated from `check_async` because a saga spans multiple interactions. It activates
+**only** on a declared `saga` or a `transactional` segment (round-3 B4) — a synchronous debit→credit pair
+is a database-transaction concern and does **not** require a saga; the Advisor elicits whether distributed
+compensation is actually needed.
 
 ```python
 def canon(s: str) -> str:
@@ -481,9 +512,13 @@ declared sources: tools, memory, and non-tool capabilities (B3).
 
 ### 7.1 Targets and registry
 
-- **Targets** = agent domains ∪ interactions touching an agent ∪ declared `segments` (including
-  `e2e:true` flows). `check_eval_coverage` (6.12) requires each to have a spec in the index or an unlapsed
-  waiver, and requires at least one `e2e:true` segment for a multi-agent system.
+- **Targets (round-3 B3) = every component ∪ every interaction ∪ declared `segments`** (including
+  `e2e:true` flows) — CR-8's "every component and edge is independently testable", not just the agentic
+  ones. Each must have a spec in the index or an unlapsed waiver; a **deterministic** component/edge
+  satisfies coverage with a `kind: contract_test` spec (a reference to its contract test), an **agent**
+  with a `kind: eval`. `check_eval_coverage` also requires at least one `e2e:true` segment for a
+  multi-agent system. *(Which targets are **mandatory** vs waivable at a given tier is right-sized by the
+  Advisor's floor, FR-28; #10 validates the declared coverage + waivers.)*
 - **Where a spec path is authored:** on the target itself — `domains[d].evals.spec`,
   `interactions[i].evals.spec`, `segments[s].evals.spec`. These inline fields are the **single authoring
   source** (one source of truth, ADR-2 discipline).
@@ -501,12 +536,18 @@ declared sources: tools, memory, and non-tool capabilities (B3).
 ```yaml
 target_type: enum[component, interaction, segment]
 target_id: string
+kind: enum[eval, contract_test]         # round-3 B3: a deterministic component/edge satisfies coverage with a contract_test, an agent with an eval
 owner: string
 status: enum[baseline, extended]        # authorship maturity (generated vs human-extended)
-approval:                               # the GATE (distinct from status)
+approval:                               # the SPEC gate (before execution — distinct from status)
   reviewer: string
   date: date
   decision: enum[approved, baseline_only, rejected]
+result_review:                          # the RESULT gate (after execution — round-3 B3, §7.3)
+  optional: true                        # required once an adapter result is ingested (check 6.12)
+  reviewer: string
+  date: date
+  result_decision: enum[pass, fail, waived]
 cases: list[{ id: string, given: string, expect: string,
               source: enum[acceptance_criterion, facade_contract, boundary_check, failure_mode],
               edited: bool }]           # edited:true = human-owned, preserved on regeneration (§7.4)
@@ -534,11 +575,15 @@ exit_codes: { pass: 0, fail: 1 }       # any other code ⇒ adapter_error (fail-
 
 **Contract.** For a target, HITL: substitutes `{target_id}`/spec path per `target_binding`; runs `command`
 in `cwd` with `timeout`; on exit-code `pass`/`fail` reads the result from `result.location`, validates it
-against `result.schema` (a JSON Schema), and records it with the reviewer's `approval`. Any other exit
-code, a timeout, or a schema-invalid result is `adapter_error` (fail-closed; never counted as pass).
-**Security (ADR-5):** the adapter command is repo-declared and runs **only on explicit operator
-confirmation** (the `ops-apply-iac` model) — HITL never auto-executes it in CI. HITL ships the coverage
-gate and this contract; the product ships the runner.
+against `result.schema` (a JSON Schema), and writes it into the spec's **`result_review`** block for a
+human to sign off (round-3 B3). The **result-review gate** (6.12): once a result is ingested, the spec must
+carry a `result_review.result_decision ∈ {pass, waived}` — an ingested result with no reviewer decision, or
+a `fail` without a waiver, is a coverage gap. This is distinct from `approval` (which gates the *spec*
+before execution); `result_review` gates the *result* after. Any other exit code, a timeout, or a
+schema-invalid result is `adapter_error` (fail-closed; never counted as pass). **Security (ADR-5):** the
+adapter command is repo-declared and runs **only on explicit operator confirmation** (the `ops-apply-iac`
+model) — HITL never auto-executes it in CI. HITL ships the coverage gate and this contract; the product
+ships the runner.
 
 ### 7.4 Baseline generator (`tools/manifest-agentic/gen_baseline_evals.py`, CR-20)
 
@@ -592,33 +637,40 @@ gate and this contract; the product ships the runner.
 | DLQ | `at_least_once`, no `dlq`, no justification | 2 `check_async` |
 | ASYNC-TASK-BARE | `async_task` with no `async` | 2 `check_async` |
 | RELIABLE-EVT | `kind:event` + at_least_once + idempotent consumer + dlq | exit 0 |
-| SAGA-MISSING | async flow with 2 side-effecting interactions, no `saga` | 2 `check_saga` |
-| **SAGA-SYNC** | **synchronous** debit→credit, both `side_effecting`, no async data, no `saga`, no registries | 2 `check_saga` (activates on side-effecting sync flow — proves the round-2b fix) |
+| SAGA-MISSING | a `transactional` segment with 2 side-effecting **agent/async** interactions, no `saga` | 2 `check_saga` (`saga_missing`) |
+| **SAGA-SYNC-OK** | **synchronous** deterministic debit→credit, both `side_effecting`, no `transactional` segment, no `saga`, no registries | **exit 0** — a sync deterministic flow is exempt; no saga forced, no `policies.yaml` (proves the round-3 B4 trim + additive-only) |
 | SAGA-STEP | `saga` step missing/`none` compensation or `compensation_idempotent:false` | 2 (`check_saga` + `check_policy_refs`) |
 | CYCLE | interaction cycle, no positive `cycle_bound` | 2 `check_topology` |
 | SEG-ADJ | a `segment.path` with a non-consecutive hop | 2 `check_topology` |
 | POLICY | `validation: TODO`; a `validation` ref of `kind:action`; `compensation` unresolved | 2 `check_policy_refs` |
 | LIFE | `long_running` + `checkpoint:none`; resumable+side-effecting, no `side_effect_key`; `cancellation` absent | 2 `check_lifecycle` |
+| **LIFE-RESUME** | `long_running:true` with `resumable` or `idempotent_resume` omitted/false | 2 `check_lifecycle` (both required for long-running — proves round-3 B2) |
 | LIFE-GATE | `human_gate:true` with `human_gate_pause:false` (or absent) | 2 `check_lifecycle` (proves the gate trigger field drives the rule) |
 | DEEP | empty subagents / `context_isolation:false` / no long_term / `durability` not durable / subagent not a domain | 2 `check_deep_agent` |
 | MEM | `pii:none` no justification; `shared_store` isolated; high_stakes write no guardrail/provenance | 2 `check_memory` |
-| EVAL-COV | uncovered agent target; lapsed waiver; no e2e segment | 2 `check_eval_coverage` |
+| EVAL-COV | uncovered target (agent **or** deterministic component/edge, round-3 B3); lapsed waiver; no e2e segment | 2 `check_eval_coverage` |
+| EVAL-DET-OK | a deterministic component with a `kind: contract_test` spec | exit 0 (contract test satisfies coverage for a deterministic target) |
+| EVAL-RESULT | an ingested adapter result with no `result_review.result_decision` (or a `fail` without a waiver) | 2 `check_eval_coverage` (the result-review gate — round-3 B3) |
 | EVAL-APPROVE | Tier 2 target whose only spec is `baseline_only` | 2 `check_eval_coverage` |
 | SCOPE | `Read: corpus ` (space/case) and multi-colon/traversal | 2 `check_scope_grammar` |
 | CLASSIFY | compound manifest, a domain with no explicit `kind`, or an agent with no `kind_rationale` | 2 `check_classification` |
 | UNKNOWN | an unrecognized key (not `x_`) in a governed block | 2 (unknown_field) |
-| VIEW | generator emits machine-readable + rendered + derived projections, stable ordering | assert artifacts + regenerate-and-diff clean |
+| VIEW | generator emits machine-readable + rendered posture + a **separate** `projections.*` view (not written into the manifest), stable ordering | assert artifacts + regenerate-and-diff clean |
+| **VIEW-IDEMPOTENT** | run `generate` twice, then validate | exit 0 — projections live in their own file, so the second validation has no `edge_double_authored` self-conflict (proves the round-3 B1 fix) |
 | Z1 | unparseable manifest / a required registry absent **while its check is active** | 2 fail-closed |
 
 ## 9. Generated views (`tools/manifest-agentic/generate_views.py`)
 
 `generate(manifest, registries)` writes, under `docs/03-engineering/agentic-posture/`, **paired**
 machine-readable + rendered artifacts: `topology.{json,md}`, `privilege-posture.{json,md}`,
-`capability-matrix.{json,md}`, and `tool-matrix.{json,md}` (the `class:tool` projection, CR-15). It also
-writes the **derived** `interaction_matrix`, `depends_on`, and `events_emitted`/`events_consumed` back
-into the manifest projection (§2.4). JSON carries `schema_version` + deterministic ordering; CI runs
-`generate` and **fails on a diff** (regenerate-and-diff = the "cannot drift" guarantee). Topology draws
-nodes by `kind`, interaction legs typed (sync/async/event), boundary legs marked, routes/segments, and
+`capability-matrix.{json,md}`, and `tool-matrix.{json,md}` (the `class:tool` projection, CR-15). The
+**derived** `interaction_matrix`, `events_emitted`/`events_consumed` projections (§2.4) are emitted here as
+a **separate generated-view file** (`projections.{json,md}`) — they are **not written back into the source
+manifest** (round-3 B1: writing them into the manifest would then collide with `edge_double_authored`).
+Only `depends_on` remains an auto **manifest** field (a coarse domain-level list — it does not conflict with
+the interaction rules). JSON carries `schema_version` + deterministic ordering; CI runs `generate` and
+**fails on a diff** (regenerate-and-diff = the "cannot drift" guarantee). Topology draws nodes by `kind`,
+interaction legs typed (sync/async/event), boundary legs marked, routes/segments, and
 `orchestration.pattern`. Static only (ADR-5).
 
 ## 10. LLD decisions

@@ -134,10 +134,13 @@ A genuine necessary-and-sufficient claim **at declaration granularity**, honest 
 - **Sagas are a top-level, id-keyed model (LLD §4.2, M3)** — not a string nested on one edge. A `saga`
   has a coordinator, a forward `order`, and `steps` referencing the **interaction ids** of the
   side-effecting interactions it spans; compensation runs in reverse order and must itself be idempotent.
-  A flow with ≥2 side-effecting interactions and no covering saga is a blocker, **for sync and async flows
-  alike** (`check_saga` activates on side-effecting interactions of any kind, LLD §6.14). "Side-effecting"
-  is a declared/derived property of an interaction (from facade `mutations`), so the requirement is
-  checkable.
+  **Scoped to distributed-compensation units (round-3 B4):** a saga is required only for a **declared
+  transactional unit** — a `segment` marked `transactional: true` containing ≥2 side-effecting **agent or
+  async/event** interactions. A **synchronous, deterministic** flow is *not* forced to declare a saga (it's
+  a database-transaction concern, not distributed compensation) — forcing one on it, and its `policies`
+  registry, was the round-3 over-reach that also broke additive-only. The Advisor (FR-28) elicits *whether*
+  a flow needs distributed compensation; #10 validates declared sagas and enforces coverage only within a
+  declared transactional unit.
 - **Sync vs async reliability boundary (CR-6, ADR-5).** The design value-checks the reliability *contract*
   that cannot be a plain retry — **async** delivery/idempotency/DLQ/replay and cross-flow compensation
   (sagas). A **synchronous** call's own timeout/retry is product **runtime** config (like a connection
