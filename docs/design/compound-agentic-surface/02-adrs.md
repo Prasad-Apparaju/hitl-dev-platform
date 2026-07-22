@@ -1,9 +1,10 @@
 # Compound Agentic System Surface: Architecture Decisions
 
-> ADRs formalizing decisions **D1–D12** from [`01-design.md`](01-design.md) §11. Each records the forces,
-> the decision, the **alternatives with their concrete cost**, and the consequences. **v2** — ADR-2 and
-> ADR-9 rewritten and ADR-10/11/12 added after the Codex review (2026-07-18); see [`04-revision-plan.md`](04-revision-plan.md).
-> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted, pending Codex re-review**.
+> ADRs formalizing decisions **D1–D13** from [`01-design.md`](01-design.md) §11. Each records the forces,
+> the decision, the **alternatives with their concrete cost**, and the consequences. **v3** — after the
+> **round-2** Codex review (2026-07-20) returned REVISIONS REQUIRED, ADR-2/7/9/10/11/12 are rewritten and
+> ADR-13 added; see [`04-revision-plan.md`](04-revision-plan.md).
+> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted, pending Codex re-review (round 3)**.
 
 ---
 
@@ -34,37 +35,42 @@ which the completeness validators (§6) enforce.
 
 ---
 
-## ADR-2 (D2): An edge IS an extended `interaction_matrix` entry (v2 — rewritten)
+## ADR-2 (D2): An edge IS an element of a new top-level `interactions` list (v3 — rewritten)
 
-**Status:** Accepted (rewritten 2026-07-18 after Codex review M1; supersedes the v1 "edge = facade_api"
-decision, which duplicated the manifest's existing `interaction_matrix`).
+**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B1; supersedes the v2 "edge = extended
+`interaction_matrix` entry" decision, which could not represent parallel edges).
 
 **Context.** Every inter-component call and A2A edge must be a declared, reviewed, boundary-enforced
-contract, not implicit coupling. The manifest **already** has a top-level directed edge model —
-`interaction_matrix: map["from -> to", InteractionEntry]` — carrying `entity_crossing`. v1 added a
-separate `calls` field that duplicated it (Codex M1), and asserted "edge = facade_api" — but a facade is
-a *callee-side contract*, not the *edge* (it can't carry per-edge trust legs, authorization, or
-distinguish two interactions between the same pair).
+contract. The manifest already has `interaction_matrix: map["from -> to", InteractionEntry]`. v2 decided
+the edge *was* an extended entry in that map, keyed by the domain pair, and claimed a stable `id` inside
+the value would let two edges (a `sync_call` **and** an `event`) coexist between the same pair. A map has
+**one value per key**, so this is structurally impossible — the second edge overwrites the first (Codex
+B1). The whole "parallel interactions are first-class" claim was therefore undeliverable in the map.
 
-**Decision.** The **edge is an extended `interaction_matrix` entry**, with a stable `id`, a `kind`
-(`sync_call | async_task | event`), a `facade` *reference* to the callee's contract (whose `signature`
-is the payload shape), separate **request/response trust legs**, an **authorization** block (who may
-invoke), and an `async` block. The **facade remains the contract**; the interaction is the **edge**.
-`depends_on` becomes an auto-derived projection of this model. The v1 `calls` field is deleted.
+**Decision.** The authoritative edge model is a **new, additive, top-level `interactions` list** whose
+element identity is a stable, unique `id`. Each element carries explicit `from`/`to`, `kind`
+(`sync_call | async_task | event`), a `facade` reference (facade_ref for call/task, event_ref for event),
+request/response/event **trust legs**, an **authorization** block, and an `async` block. **Two edges
+between the same pair are two list elements** — trivially representable. `interaction_matrix`,
+`depends_on`, and `events_emitted`/`events_consumed` become **derived projections** of this list
+(regenerate-and-diff); when a manifest has no `interactions` list, they keep their legacy meaning
+untouched (so the change is additive, ADR-13).
 
 **Alternatives and their cost.**
-- *Keep v1's separate `calls` field.* Cost: duplicates the existing `interaction_matrix` (two authoritative
-  edge sources with no reconciliation rule — Codex M1); the double-representation/cycle logic had to
-  match on domain pairs, which cannot distinguish two real interactions between the same pair.
+- *Extend `interaction_matrix` in place (v2).* Cost: the map key is the domain pair, so it cannot hold
+  parallel edges no matter what fields the value carries (Codex B1); the SEP-PAIR fixture is
+  unconstructable.
+- *Mutate `interaction_matrix` from a map into a list.* Cost: a **breaking** change to a shipped field —
+  every existing manifest's `interaction_matrix` would have to be migrated, violating additive-only
+  (Codex B5). The new-list approach leaves legacy manifests untouched.
 - *Edge = facade_api (v1).* Cost: a facade is callee-side and single-contract; it can't home the caller's
-  trust obligations, the response-leg validation (Codex B1), or who-may-invoke (Codex B2).
-- *A parallel `edges:` section separate from `interaction_matrix`.* Cost: same duplication, unenforced by
-  the boundary hook.
+  trust obligations, the response-leg validation, or who-may-invoke.
 
-**Consequences.** (+) One authoritative, human-authored, directed edge model with stable IDs; trust legs,
-authorization, and async live where they belong; `depends_on` is derived so it can't disagree. (−) The
-boundary hook must extend to check interaction authorization (LLD §6.4); the pre-existing facade
-list→map disagreement (ADR-8) still must be reconciled.
+**Consequences.** (+) One authoritative, human-authored edge model in which parallel edges, stable
+identity, trust legs, authorization, and async all work; the legacy map/`depends_on`/`events_*` become
+generated views that cannot disagree with it. (−) A generator must derive the projections and CI must
+regenerate-and-diff; the boundary hook extends to the static interaction-contract check (LLD §6.4); the
+pre-existing facade list→map disagreement (ADR-8) still must be reconciled.
 
 ---
 
@@ -159,24 +165,31 @@ curated catalog (ADR-4's maintenance cost).
 
 ---
 
-## ADR-7 (D7): The determinism boundary is derived and validated
+## ADR-7 (D7): The determinism boundary is derived and validated per data leg (v3 — rewritten)
 
-**Status:** Accepted.
+**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B2; supersedes the per-edge phrasing, which
+put cost/authority only on the response leg and compared authority to the callee).
 
-**Context.** The seam between deterministic components and stochastic agents is where a stochastic
-output corrupts a deterministic system, or cost/authority leaks into an agent. This must be a checkable
-invariant, not a prose reminder.
+**Context.** The seam between deterministic components and stochastic agents is where a stochastic output
+corrupts a deterministic system, or cost/authority leaks into an agent. v2 attached the controls to "the
+edge" and to the response leg only: a deterministic caller's *request* into an agent had nowhere to bound
+cost/authority, `authority_bound` was compared to the callee even when the stochastic consumer was the
+caller, and agent→agent fan-out fell outside the "det→agent" rule entirely (Codex B2).
 
-**Decision.** Boundary edges are **derived** from component `kind`s; a fail-closed validator requires
-output validation on every stochastic→deterministic edge and bounded cost + authority on every
-deterministic→stochastic edge.
+**Decision.** The invariant is applied to each **data-carrying leg** (request, response, event), using
+that leg's derived **(source, consumer)**. If the **consumer** is stochastic, the leg requires bounded
+cost **and** bounded authority, and `authority_bound ⊆ the consumer's` granted privilege. If the consumer
+is deterministic and the source stochastic, the leg requires validation. A fail-closed validator enforces
+this from declared `kind`s and the leg fields.
 
 **Alternatives and their cost.**
-- *Leave it as a design-review checklist.* Cost: unenforced, silently skipped under deadline pressure —
-  the precise failure mode HITL exists to eliminate; no teeth.
+- *Per-edge, response-leg-only (v2).* Cost: no home for request-leg delegation bounds; authority compared
+  to the wrong identity; agent→agent unbounded (Codex B2).
+- *Leave it as a design-review checklist.* Cost: unenforced, silently skipped under deadline pressure.
 
-**Consequences.** (+) A checkable, fail-closed invariant at the exact seam that matters. (−) Depends on
-component `kind`s being declared accurately, and adds a gate to the design.
+**Consequences.** (+) A checkable, fail-closed invariant at every seam, in both directions, including
+agent→agent; authority is always bounded against the *actual* stochastic consumer. (−) Depends on
+component `kind`s being declared accurately, and every stochastic-consumer leg must carry two more fields.
 
 ---
 
@@ -203,102 +216,166 @@ step, not a silent inheritance).
 
 ---
 
-## ADR-9 (D9): Scoped-capability privilege — per-use scopes + registry ceilings (v2 — rewritten)
+## ADR-9 (D9): Scoped-capability privilege — closed over tools, memory, non-tool capabilities (v3 — rewritten)
 
-**Status:** Accepted (rewritten 2026-07-18 after Codex review B4; supersedes the v1 tool/memory-only
-"needed" set, which proved only that two authored sets were equal — not necessity or sufficiency).
+**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B3; supersedes the v2 model, whose union
+was not closed — memory was declared but never joined, edge-invokes bypassed ceilings, and resource-less
+uses produced grammar-invalid scopes).
 
-**Context.** CR-14 wants necessary-and-sufficient privilege. v1 computed `needed = ⋃(tool scopes) ∪
-memory scopes` — but a tool's *global* scopes over-count (a read-only user of a read/write tool was told
-it "needs" write), non-tool capabilities (KMS, model endpoint, delegation, ambient) had no home and were
-false-flagged, and a registry that omitted a scope made both sides agree on "sufficient" while runtime
-failed. Deriving *actual* necessity requires running the code — which is the product's IAM, not the
-framework's (ADR-5).
+**Context.** CR-14 wants necessary-and-sufficient privilege. v2 introduced per-use scopes and registry
+ceilings — the right direction — but the union `needed` was not actually closed over its declared sources:
+`memory.reads/writes` were declared but never entered `needed`; `invoke:<target>` was added *after* the
+ceiling check so edge invocation bypassed ceilings; a use with omitted `resources` produced a bare `op`
+that fails the `action:resource` scope grammar; ceilings were exact-membership so a resource family could
+not be expressed; and CR-15's tool registry silently disappeared into generic capabilities (Codex B3/M9).
 
-**Decision.** A **scoped-capability** model. Capability **sources** are complete: tools, memory,
-non-tool `capabilities`, and edge-invocation. An agent declares each **use** with its specific scope
-(`uses: [{capability, operations, resources}]`), so `needed = ⋃(per-use scopes) ∪ edge-invoke scopes`.
-The **approved-capability registry declares each capability's ceiling** (maximum grantable scope); every
-per-use scope MUST be ⊆ that ceiling. The validator flags over (`granted ∖ needed`), under (a declared
-use not granted), and ceiling-violation. The claim is **necessary-and-sufficient for the declared uses**;
-whether the code matches the declaration is a **read-only runtime drift-check + human review**, not an
-IAM HITL runs. Per-use scoping is required at Tier 2+.
+**Decision.** A **scoped-capability** model whose union is closed over exactly three declared sources:
+**tools, memory, and non-tool `capabilities`** — all as per-use `uses: [{capability, operations,
+resources}]`. **Memory reads/writes are declared as memory-class `uses`** and cross-checked against the
+`memory` block, so memory enters `needed` through the same union. **Edge-invocation is removed from the
+privilege set**: "who may invoke agent B" is an authorization question governed by B's
+`authorization.allowed_callers` (ADR-2/§6.4), not by A's identity grant. A use with omitted resources
+contributes `op:*` (a grammar-valid wildcard). The registry declares each capability's **ceiling**;
+containment uses **wildcard semantics** (`read:cust/*` covers `read:cust/profile`). The validator flags
+`over = granted ∖ needed`, `under = needed ∖ granted`, and `ceiling-violation`. **Tools are the
+`class: tool` capabilities** (CR-15 fold-in): the tool registry is those rows, the tool declaration is the
+tool-class `uses`, the gate is the same validator, and a `runtime_ref` preserves the runtime allow-list
+mapping. The claim is **necessary-and-sufficient for the declared uses**; runtime fidelity is a read-only
+drift-check + human review. Per-use resource scoping is required at Tier 2+ (tier is a validator input;
+absent ⇒ highest tier).
 
 **Alternatives and their cost.**
-- *v1 global-tool-scope model.* Cost: manufactures false over/under-privilege; no home for non-tool
-  capabilities; can't establish necessity (Codex B4).
-- *Narrow the claim to "declaration consistency" only.* Cost: honest but weaker — loses per-use minimality
-  and the ceiling guarantee (was the alternative; rejected by product owner in favour of the full model).
-- *HITL derives necessity from the code itself.* Cost: requires running/statically-analysing the runtime
-  = becomes the IAM plane, crossing ADR-5.
+- *v2 four-source union with invoke inside it.* Cost: invoke bypassed ceilings and had no registry entry;
+  memory was unjoined; bare-`op` scopes failed the grammar (Codex B3).
+- *Keep CR-15 as a separate tool registry + tool model.* Cost: two overlapping privilege systems (tools
+  vs capabilities) with no reconciliation — the duplication ADR-2 exists to avoid; folding tools in as a
+  class with `runtime_ref` keeps one model and still preserves the runtime mapping.
+- *HITL derives necessity from the code itself.* Cost: requires running/statically-analysing the runtime =
+  becomes the IAM plane, crossing ADR-5.
 
-**Consequences.** (+) A real per-use necessary-and-sufficient claim within declared uses; non-tool
-capabilities modeled; ceilings prevent silent over-grant. (−) Per-use scoping is authoring burden (scoped
-to Tier 2+); runtime fidelity is explicitly out of scope (drift-check territory), so the claim is
-qualified by "for the declared uses."
+**Consequences.** (+) A real per-use necessary-and-sufficient claim, closed over its declared sources, with
+memory joined and tools preserved; ceilings with wildcards prevent silent over-grant without enumeration;
+invocation authority lives in one place (authorization). (−) Per-use scoping is authoring burden (scoped to
+Tier 2+); the claim is qualified by "for the declared uses," with runtime fidelity out of scope.
 
 ---
 
-## ADR-10 (D10): Interaction identity — stable `id`, not domain-pair matching
+## ADR-10 (D10): Interaction identity — the `id` is the list element key (v3 — rewritten)
 
-**Status:** Accepted (added 2026-07-18, Codex M1/M2).
+**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B1; supersedes v2, which placed the `id`
+inside a domain-pair-keyed map value — where it could not create a second entry for the pair).
 
 **Context.** Two legitimate interactions can exist between the same domain pair (a sync call *and* an
-audit event). Keying dedup/cycle detection on the `(from, to)` pair (v1) both false-blocks that pair as
-"double representation" and can't tell one logical interaction represented twice from two distinct ones.
+audit event). v2 gave each an `id` but kept them inside `interaction_matrix`, a map keyed by the pair — so
+the `id` distinguished nothing the map could store (Codex B1). Identity is only real if it is the
+container's key.
 
-**Decision.** Every interaction carries a stable, unique `id`. Double-representation and cycle detection
-key off `id`. A `depends_on` projection collapses to domains only for a coarse dependency view.
+**Decision.** Interactions live in a **list**; each element's stable, unique `id` **is** its identity
+(ADR-2). Reference resolution, parallel-edge distinction, event reconciliation, saga steps, and dedup all
+key off `id`. **Cycle detection keys off the graph's domain vertices and directed `from→to` endpoints**
+(not the id — ids distinguish parallel edges, not whether a cycle exists); the id is for reference and
+dedup. `depends_on` is a coarse domain-level projection.
 
-**Alternatives and their cost.** *Domain-pair keys (v1)* — cost: the false-positive/false-negative above.
-*Content-hash identity* — cost: unstable across edits, breaks cross-references.
+**Alternatives and their cost.** *Id inside a pair-keyed map (v2)* — cost: the map still holds one edge
+per pair, so the id is inert (Codex B1). *Content-hash identity* — cost: unstable across edits, breaks
+cross-references.
 
-**Consequences.** (+) Distinct interactions between a pair are first-class; cycle logic is precise.
-(−) Authors must assign stable ids (validated unique).
-
----
-
-## ADR-11 (D11): Reliable one-way events as `kind: event` + async; no broker exactly-once
-
-**Status:** Accepted (added 2026-07-18, Codex B5).
-
-**Context.** v1 declared all events best-effort and said reliable hops must be request/response facades —
-making a durable one-way event (order-created: at-least-once, DLQ, replay, no response) unrepresentable.
-v1 also offered `exactly_once` delivery, which is not achievable at the broker boundary (CR-12).
-
-**Decision.** A reliable one-way event is `kind: event` + an `async` block. `delivery ∈ {at_most_once,
-at_least_once}` only; end-to-end exactly-once = `at_least_once` + a declared **idempotent consumer**, not
-a delivery flag. Sagas declare **per-step** compensation with a coordinator and compensation-failure
-handling.
-
-**Alternatives and their cost.** *Keep events best-effort only* — cost: can't model the most common
-reliable async pattern. *Offer broker `exactly_once`* — cost: a guarantee no broker delivers; misleads
-implementers (CR-12).
-
-**Consequences.** (+) Reliable one-way events representable; the exactly-once claim is honest;
-compensation is per-side-effect. (−) More async fields to author and value-check.
+**Consequences.** (+) Distinct interactions between a pair are genuinely first-class; references and
+sagas have a stable key; cycle logic is correct because it uses endpoints, not ids. (−) Authors assign and
+maintain unique ids (validated).
 
 ---
 
-## ADR-12 (D12): Evals — govern coverage + adapter contract; ship no runner
+## ADR-11 (D11): Reliable one-way events + top-level id-keyed sagas; no broker exactly-once (v3 — rewritten)
 
-**Status:** Accepted (added 2026-07-18, Codex B3, F3).
+**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B6/M3/M4; supersedes v2, which nested the
+saga inside one interaction's `AsyncSpec` and left ownership/order/requirement undefined).
+
+**Context.** A durable one-way event (at-least-once, DLQ, replay, no response) must be representable, and
+`exactly_once` must not be offered at the broker boundary (CR-12). v2 got the event shape right but nested
+`saga` inside a single interaction's async block, while its steps referenced *multiple* interaction ids —
+so which interaction owned the saga, the forward/compensation order, and when a saga was *required* were
+all undefined (Codex M3). Async combinations (at_most_once + retry, missing DLQ) were also unconstrained
+(M4).
+
+**Decision.** A reliable one-way event is `kind: event` + an `async` block; `delivery ∈ {at_most_once,
+at_least_once}` only; end-to-end exactly-once = `at_least_once` + a declared **idempotent consumer**
+(`consumer_idempotent` + `idempotency_key`), never a delivery flag. Async combinations are value-checked:
+`async_task` requires `async`; `retry` is forbidden with `at_most_once`; `at_least_once` requires a DLQ
+unless justified. **Sagas are a top-level, id-keyed list** (not nested on an edge): each has a
+coordinator, a forward `order`, and `steps` referencing the **interaction ids** of the side-effecting
+interactions it spans; compensation runs in reverse `order` and must itself be idempotent. A flow with ≥2
+**side-effecting** interactions and no covering saga is a blocker; "side-effecting" is derived from the
+facade `mutations` (or declared), so the requirement is checkable.
+
+**Alternatives and their cost.** *Nest the saga on one interaction (v2)* — cost: undefined ownership, no
+stable saga identity, ambiguous order, and no way to state when a saga is required (Codex M3). *Keep
+events best-effort only (v1)* — cost: can't model the most common reliable async pattern. *Offer broker
+`exactly_once`* — cost: a guarantee no broker delivers; misleads implementers (CR-12).
+
+**Consequences.** (+) Reliable one-way events representable; the exactly-once claim is honest; sagas have
+one owner, a stable id, a defined order, and a checkable required-when rule; compensation is per-side-effect
+and idempotent. (−) More async/saga fields to author and value-check.
+
+---
+
+## ADR-12 (D12): Evals — govern coverage + a wired adapter contract; ship no runner (v3 — rewritten)
+
+**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B4; supersedes v2, whose target model and
+adapter had no schema home and no wire protocol).
 
 **Context.** CR-8/16/20 require independently testable components/edges/segments. Shipping an eval
-*engine* would cross governs-not-runtime (ADR-5); leaving evals as prose (v1) is unbuildable.
+*engine* would cross governs-not-runtime (ADR-5); leaving evals as prose (v1) is unbuildable. v2 named a
+coverage validator and an adapter but read a `segments` field the schema never defined, put no `evals` on
+interactions, defined no eval index / waiver file / reviewer-approval schema, and left the adapter as
+`{command, inputs, result_schema}` with no argv/target-binding/result/exit-code contract — so nothing was
+implementable (Codex B4).
 
-**Decision.** HITL governs **coverage + gating**: a target model (components ∪ interactions ∪ segments),
-a coverage validator (every target has an eval spec or an unlapsed waiver), a waiver schema, and a
-**runner-adapter contract** (`eval_adapter: {command, inputs, result_schema}`) HITL invokes into the
-*product's* runner, ingesting schema'd results + reviewer approval. A baseline generator seeds specs.
+**Decision.** HITL governs **coverage + gating** with real homes: a target model of **agent domains ∪
+interactions (each carrying `evals`) ∪ a top-level `segments` list** (including `e2e` flows); an eval
+**index** (`{target_type, target_id, spec_path}`, unique per target); a **waiver file**; a per-spec
+**approval block** (`reviewer`, `date`, `decision`), distinct from authorship `status`; and a **fully
+wired runner-adapter contract** (`eval-adapter.yaml`: argv, cwd, timeout, target/spec binding, result
+location + JSON Schema, pass/fail exit codes; any other outcome is a fail-closed adapter error). HITL
+invokes the adapter **only on explicit operator confirmation** (the `ops-apply-iac` model), ingests
+schema'd results, and records the reviewer's approval. A specified baseline generator seeds specs
+(deterministic case ids, owning-FR/failure-mode sources, merge-by-id preserving human edits).
 
 **Alternatives and their cost.** *Ship an eval runner* — cost: crosses ADR-5; couples to a framework.
-*Prose only (v1)* — cost: unbuildable (Codex B3). *No coverage gate* — cost: "independently testable"
-is unverifiable.
+*Prose-only target model (v2)* — cost: validator reads undefined fields; adapter unimplementable (Codex
+B4). *No coverage gate* — cost: "independently testable" is unverifiable.
 
-**Consequences.** (+) CR-8/16/20 become buildable and gated while the runtime stays the product's; PM
-can invoke one segment via the adapter. (−) Requires a declared adapter the product implements; HITL
-records coverage, not results-truth.
+**Consequences.** (+) CR-8/16/20 become buildable and gated while the runtime stays the product's; a PM
+can invoke one segment via the adapter on confirmation; approval (not mere authorship) is what the gate
+reads. (−) Requires a declared adapter the product implements, an eval index/waiver/approval to maintain,
+and a baseline generator; HITL records coverage, not results-truth.
+
+---
+
+## ADR-13 (D13): Per-check activation — each validator + registry activates only on its own data
+
+**Status:** Accepted (added 2026-07-20, Codex round-2 B5).
+
+**Context.** v2 used a single global "agentic marker" gate: if the manifest had *any* new marker (even
+`kind: deterministic` or a typed deterministic `sync_call`), it ran **all** checks — and then failed a
+wholly deterministic two-service manifest for a missing `approved-capabilities.yaml`. The stated boundary
+is stronger: a non-agentic manifest must validate **without any new registry**. The global gate refuted
+it (Codex B5).
+
+**Decision.** There is **no** global gate. Each check has an **activation predicate** over the data it
+governs, and loads its registry **only when it activates** (LLD §6.0): `check_capabilities` activates only
+when a domain has `uses`/`identity`/agent `kind`; `check_boundary_legs` only when an interaction touches
+an agent; `check_async` only on async/event/saga data; and so on. A legacy manifest activates nothing; a
+deterministic manifest with typed `interactions` activates only graph-integrity checks and needs **no**
+capability/policy/store/eval registry.
+
+**Alternatives and their cost.** *Global marker gate (v2)* — cost: forces registries onto non-agentic
+manifests, refuting additive-only (Codex B5). *Always run every check* — cost: same, worse. *Infer
+activation heuristically* — cost: unpredictable; a check might silently skip when it should run.
+
+**Consequences.** (+) "Additive-only; non-agentic manifests need no registry" is literally true, per data
+kind; a manifest pays only for the machinery it uses. (−) Each check must declare and test its activation
+predicate (and its skip is explicit, not vacuous-pass), which the suite covers (test A3).
 
 ---
 
@@ -307,14 +384,15 @@ records coverage, not results-truth.
 | ADR | HLD decision | One-line |
 |---|---|---|
 | ADR-1 | D1 | Component = manifest domain (+`kind`) |
-| ADR-2 | D2 | **Edge = extended `interaction_matrix` entry** (v2); facade = the contract; `calls` deleted |
+| ADR-2 | D2 | **Edge = element of a new top-level `interactions` list** (v3); the pair-keyed map/`depends_on`/`events_*` are derived projections |
 | ADR-3 | D3 | Topology/privilege/tool posture are generated views (machine-readable + rendered) |
 | ADR-4 | D4 | Framework-agnostic; implementations are examples only |
 | ADR-5 | D5 | Governs, not runs; boundary hook stays design-time |
 | ADR-6 | D6 | Capability menu always presented; recommend, never decide |
-| ADR-7 | D7 | Determinism boundary derived + fail-closed validated (per data leg) |
+| ADR-7 | D7 | **Determinism boundary per data leg** (v3), bounded against the leg's actual stochastic consumer |
 | ADR-8 | D8 | Extend the schema map form; payload = `signature` |
-| ADR-9 | D9 | **Scoped-capability privilege** (v2): per-use scopes + registry ceilings; N&S for declared uses |
-| ADR-10 | D10 | Interaction identity — stable `id`, not domain-pair matching |
-| ADR-11 | D11 | Reliable one-way events as `kind: event` + async; no broker exactly-once |
-| ADR-12 | D12 | Evals — govern coverage + adapter contract; ship no runner |
+| ADR-9 | D9 | **Scoped-capability privilege** (v3): closed over tools/memory/non-tool caps; invoke → authorization; wildcard ceilings; CR-15 fold-in |
+| ADR-10 | D10 | **Interaction identity — the `id` is the list element key** (v3); cycles key off endpoints |
+| ADR-11 | D11 | **Reliable events + top-level id-keyed sagas** (v3); no broker exactly-once |
+| ADR-12 | D12 | **Evals — coverage + a fully wired adapter contract** (v3); ship no runner |
+| ADR-13 | D13 | **Per-check activation** (v3): each validator + registry activates only on its own data |

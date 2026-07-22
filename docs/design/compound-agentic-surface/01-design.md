@@ -1,203 +1,280 @@
-# Compound Agentic System Surface: Design (HLD) — v2
+# Compound Agentic System Surface: Design (HLD) — v3
 
 > Mechanism (the *how*) for the requirements in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
-> (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). **v2** —
-> rewritten after the independent Codex review returned REVISIONS REQUIRED (6 blockers), per
-> [`04-revision-plan.md`](04-revision-plan.md). Status: **draft, pending Codex re-review**. Targets **2.2.0**.
-> Field-level precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md); decisions in
-> [`02-adrs.md`](02-adrs.md).
+> (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). **v3** —
+> rewritten after the **round-2** independent Codex review returned REVISIONS REQUIRED (6 blockers), per
+> [`04-revision-plan.md`](04-revision-plan.md). Status: **draft, pending Codex re-review (round 3)**.
+> Targets **2.2.0**. Field-level precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md);
+> decisions in [`02-adrs.md`](02-adrs.md).
 
-**Thesis (unchanged): a compound agentic system is a manifest, extended.** v2 corrects *which* manifest
-structures carry it. The load-bearing v1 mistakes Codex found: the edge model duplicated the manifest's
-existing `interaction_matrix`; the determinism boundary was derived from call direction rather than
-dataflow, so a deterministic caller could trust an agent's stochastic response unchecked; "who may
-invoke" was never modeled; and "necessary-and-sufficient privilege" was really just equality of two
-authored sets. v2 fixes all four structurally.
+**Thesis (unchanged): a compound agentic system is a manifest, extended.** Each revision corrects *which*
+manifest structures carry it. The round-2 review found that v2's fixes were partly asserted rather than
+delivered; the load-bearing miss was structural: v2 tried to carry two edges between the same domain pair
+inside `interaction_matrix`, a **map keyed by the pair**, which is impossible. v3 changes the structures
+so the properties are actually realizable, and states each boundary honestly.
 
-**Governing principle (v2):** HITL validates **declarations, coverage, and consistency — not runtime
+**Governing principle:** HITL validates **declarations, coverage, and consistency — not runtime
 behavior.** Where a claim needs runtime truth (actual privilege use, actual eval results), the framework
 validates the *declaration* and pushes runtime fidelity to a read-only drift-check + human review. This
-keeps every mechanism inside governs-not-runtime (ADR-5), which Codex upheld.
+keeps every mechanism inside governs-not-runtime (ADR-5).
 
 ## 1. The system model
 
 - **Nodes = domains**, extended with `kind`: `deterministic | simple_agent | deep_agent`.
-- **Edges = `interaction_matrix` entries** — the manifest's **existing** top-level directed edge model
-  (`from -> to`, `entity_crossing`), *extended* (§2). This replaces v1's separate `calls` field, which
-  duplicated it (Codex M1). `depends_on` becomes an **auto-derived projection** of the interaction model,
-  not an independent source.
-- **Orchestration** declared at system level (pattern + coordinator + `cycle_bound`), since it is not
-  derivable from nodes and edges (CR-11).
+- **Edges = a new top-level `interactions` list** (not the existing `interaction_matrix` map). Each
+  interaction is a list element with a stable `id`, explicit `from`/`to`, `kind`, a `facade` reference,
+  request/response trust legs, authorization, and async reliability. Because element identity is the `id`,
+  **two edges between the same pair are two elements** — the property v2 could not deliver (B1).
+- **`interaction_matrix`, `depends_on`, and `events_emitted`/`events_consumed` become derived
+  projections** of the `interactions` list (regenerate-and-diff). When a manifest has no `interactions`
+  list, these keep their existing legacy meaning untouched — the change is additive (B5).
+- **Orchestration** declared at system level (pattern + justification + coordinator + `cycle_bound`),
+  since it is not derivable from nodes and edges (CR-11).
 
-## 2. The interaction model (F2 — the core v2 change)
+## 2. The interaction model (the core v3 change, B1)
 
-Each `interaction_matrix` entry is extended. An interaction is a *single logical hop* with a stable
-identity, so multiple interactions between the same domain pair are distinct (fixes the domain-pair
-false-positives, M1/M2):
+Why a new list rather than extending the map: a map has one value per key, so `interaction_matrix["a ->
+b"]` can hold exactly one edge. Real systems have parallel edges (a synchronous call *and* an audit event
+between the same two domains). The authoritative edge model is therefore a **list** keyed by a stable,
+unique interaction `id` (LLD §2). Each element carries:
 
-- **`id`** — stable interaction identifier (the double-representation and cycle logic key off this, never
-  the domain pair).
-- **`kind`** — `sync_call` (request/response) | `async_task` (A2A Task: request with async response via
-  SSE/webhook/polling) | `event` (fire-and-forget or reliable one-way; no response).
-- **`facade`** — for `sync_call`/`async_task`, a reference to the callee's declared `facade_apis` entry
-  (its `signature` is the payload contract). For `event`, the emitted-event reference.
-- **Request/response trust legs (B1).** An interaction carries data in up to two directions, each
-  governed separately:
-  - `request` leg (caller → callee): `input_validation` required when the *caller* is stochastic (an
-    agent) and the callee is deterministic — the deterministic side must validate the agent-produced
-    input before trusting it.
-  - `response` leg (callee → caller): `output_validation` required when the *callee* is stochastic and
-    the caller is deterministic — the deterministic caller must validate the agent's response before
-    trusting it. (This is the exact case v1 missed.)
-  - `event` has only a request leg (producer → consumer); a stochastic producer to a deterministic
-    consumer requires `input_validation`.
-- **`authorization` (B2)** — who may invoke: `allowed_callers` (explicit domain list — a caller not
-  listed cannot invoke), `credential_mode`, and `jit` (just-in-time / least-privilege lifetime). Mere
-  presence in the graph is *not* authorization.
+- **`id`, `from`, `to`, `kind`** (`sync_call | async_task | event`).
+- **`facade`** — a reference to the callee's declared `facade_apis` entry for a call/task (`signature` =
+  the payload contract), or an `event_ref` (`producer:event_name`) for an event. The two reference kinds
+  have distinct grammars so they cannot be confused (LLD §0, m2). For events, the reference reconciles
+  **exactly** with the producer/consumer `events_*` lists by the interaction id (LLD §2.4, M2) — the
+  legacy event lists are a generated view of the interaction, not a second source.
+- **Request / response / event trust legs (B2).** Each data leg carries the *same* struct
+  (`validation`, `cost_bound`, `authority_bound`), and the validator derives the leg's **(source,
+  consumer)** and applies the boundary rule to that leg's *actual consumer* (§3). This fixes v2, where
+  cost/authority lived only on the response leg and authority was always compared to the callee.
+- **`authorization` (B2, CR-13)** — who may invoke, as **non-human identity**: `allowed_callers` are
+  domains that must each declare an `identity.principal`; `credential_mode` defaults to `jit` and a
+  `static`/`none` mode must be justified. Graph membership is not authorization.
 - **`async` reliability block** — present for `async_task` and reliable `event` (§5).
+- **`side_effecting`** — marks an interaction with irreversible effects (default derived from the
+  facade's `mutations`); the saga model reads it (§5).
 
-Reference-integrity (LLD §5): every `facade`/target resolves to a real domain+facade; every
-`allowed_callers` entry is a real domain; `event` producer/consumer names pair up.
+Reference-integrity (LLD §6.6): every `facade`/target resolves to a real domain+facade; every
+`allowed_callers` entry is a real domain with an identity; event references reconcile; a pair authored in
+both `interactions` and the legacy map is a blocker (one source of truth).
 
-## 3. The determinism boundary (CR-4, B1) — per leg, not per edge
+**A2A Agent Card / Task mapping, and what the hook actually enforces (CR-5, M11) — stated honestly.** The
+manifest governs the *governance* slice of an A2A Agent Card, not the whole card: the callee's
+`facade_apis` entry is the **capability + Task payload contract** (`signature` = the Task shape,
+`preconditions`/`error_modes` = the guarantees), and the interaction's `authorization` is the who-may-call
+decision. The card's **protocol/endpoint/transport/security-scheme/version** are the product's **runtime**
+configuration, not manifest fields — HITL does not model them (governs-not-runtime). The design-time
+`check-domain-boundary.sh` hook is likewise honest about its reach: it is a **static contract check** — at
+Edit/Write time it flags a cross-domain reference that has no declared `interactions` entry + facade, and
+an `interactions` entry whose facade does not resolve. It **cannot** observe a live A2A call; runtime
+allow-listing is the product's guardrail layer (CR-15 `runtime_ref`). So CR-5 is delivered as "the
+governed contract is declared, reference-checked, and boundary-hooked at design time," not as runtime A2A
+enforcement.
 
-The boundary is derived from node `kind` and applied to each **data-carrying leg** of every interaction
-(request, response, and event), not to "the edge" as a whole:
+## 3. The determinism boundary (CR-4, B2) — per leg, consumer-derived
 
-- **stochastic-source → deterministic-consumer** leg ⇒ the consumer MUST declare validation
-  (`input_validation` / `output_validation`) of that stochastic data before trusting it.
-- **deterministic-source → stochastic-consumer** leg ⇒ MUST declare **bounded cost** and **bounded
-  authority** (agent→agent fan-out included — cost is not limited to one direction, M7).
+The boundary is derived from node `kind` and applied to each **data-carrying leg** (request, response,
+event), using that leg's own (source, consumer):
 
-Validation and bound references are **typed and existence-checked**, not free strings (M12): a
-`cost_bound` is a quantitative policy, an `output_validation` resolves to a schema/guardrail, an
-`authority_bound` is scopes ⊆ the callee's grant.
+- **consumer is stochastic** (an agent) ⇒ the leg MUST declare **bounded cost** and **bounded authority**,
+  and the `authority_bound` MUST be ⊆ **that consumer's** granted privilege. This is delegation into an
+  agent, so it applies to a deterministic caller's *request* into an agent, a deterministic callee's
+  *response* back to an agent caller, **and agent→agent** (the consumer is stochastic regardless of the
+  source) — closing v2's unbounded-fan-out gap (M10).
+- **consumer is deterministic and source is stochastic** ⇒ the leg MUST declare **validation** of the
+  stochastic data before the deterministic side trusts it.
+- **both deterministic** ⇒ no boundary control.
 
-## 4. Scoped-capability privilege (F1, CR-14, B4)
+All validation/bound references are typed and existence-checked (LLD §6.3/§6.8): a `validation` resolves
+to a `schema`/`guardrail` policy, a `cost_bound` is a `QuantPolicy`, an `authority_bound` is scopes ⊆ the
+consumer's grant.
+
+## 4. Scoped-capability privilege (F1, CR-14, B3)
 
 A genuine necessary-and-sufficient claim **at declaration granularity**, honest about its runtime limit.
 
-- **Capability sources (complete):** `tools`, `memory` access, non-tool **`capabilities`** (KMS,
-  model-endpoint, delegation/impersonation, ambient fs/network/process/env, direct service access), and
-  **edge-invocation** (`invoke:<domain>`, derived from the agent's outbound interactions). Every
-  privilege an agent holds must trace to one of these.
-- **Per-use scoping:** the agent declares each *use* with its specific scope —
-  `uses: [{capability, operations, resources}]` — not just the capability name. `needed = ⋃(per-use
-  scopes)`. A read-only use of a read/write capability needs only `read:…` (fixes the false
-  over-privilege).
+- **Capability sources for the privilege claim (complete and closed):** `tools`, `memory` access, and
+  non-tool **`capabilities`** (KMS, model-endpoint, delegation, ambient fs/network/process/env, direct
+  service access) — all declared as per-use `uses` entries. **Memory reads/writes are declared as memory-
+  class `uses` and cross-checked against the `memory` block** (LLD §3.1), so memory enters `needed`
+  through the same union (fixes v2, where memory was declared but never joined, B3).
+- **Edge-invocation is *not* an identity grant.** "May domain A invoke agent B" is an **authorization**
+  question, governed by B's `authorization.allowed_callers` (§2, LLD §6.4), not by A's privilege set.
+  Removing it from the privilege union closes v2's "invoke bypasses ceilings" contradiction (B3).
+- **Per-use scoping:** each *use* declares `{capability, operations, resources}`; `needed = ⋃(per-use
+  scopes)`. A read-only use of a read/write capability needs only `read:…`. A use with omitted resources
+  contributes `op:*` — a **grammar-valid** wildcard scope (fixes v2's bare-`op` invalid scope, B3).
 - **Registry = ceiling:** the approved-capability registry declares each capability's **maximum**
-  grantable scope; every per-use scope MUST be ⊆ that ceiling — a **ceiling-violation** blocks (using a
-  capability beyond its approval).
-- **Validator (LLD §5):** `over = granted ∖ needed`; `under = a declared use not in granted`;
-  `ceiling-violation = a per-use scope ⊄ its ceiling`. Posture generated **machine-readable + rendered**
-  (M11).
+  grantable scope; every per-use scope MUST be ⊆ that ceiling under **wildcard containment** (`read:cust/*`
+  covers `read:cust/profile`), so a ceiling can express a resource family without enumeration.
+- **Tools (CR-15) are the `class: tool` capabilities.** The approved-tool registry is those rows; the
+  per-agent tool declaration is the tool-class `uses`; the gate is `check_capabilities` on them; a
+  generated **tool matrix** is the `class:tool` projection; a `runtime_ref` preserves the runtime allow-
+  list mapping the product enforces. This is a documented fold-in, not a silent drop (M9).
+- **Validator (LLD §6.2):** `over = granted ∖ needed`, `under = needed ∖ granted` (both under wildcard
+  containment), `ceiling-violation = a per-use scope ⊄ its ceiling`. Posture generated **machine-readable
+  + rendered**.
+- **Tier-proportionate:** per-use resource scoping is required at **Tier 2+**; lower tiers may declare
+  capability-level `uses` (no resources ⇒ `op:*`), so it does not become box-ticking. Tier is a validator
+  input (from the change-file breadcrumb; absent ⇒ highest tier, fail-safe).
 - **Honest limit (ADR-5):** proves the *declared* per-use set is minimal, consistent, and within ceiling.
   It does **not** prove the running code matches the declaration — that is a **read-only runtime
   drift-check** + human review, never an IAM HITL runs.
-- **Proportionate:** per-use scoping is required at **Tier 2+**; lower tiers may declare capability-level
-  scopes and default per-use, so it does not become box-ticking.
 
-## 5. Async reliability + events (CR-12, B5)
+## 5. Async reliability, events, sagas (CR-12, B6/M3/M4)
 
-- A **reliable one-way event** is representable: `kind: event` + an `async` block (delivery, DLQ, replay,
-  idempotency) — it was unrepresentable in v1. Fire-and-forget events omit the block.
-- `AsyncSpec`: `delivery ∈ {at_most_once, at_least_once}` — **`exactly_once` is not offered** at the
-  broker boundary (CR-12); end-to-end exactly-once is achieved by `at_least_once` + a declared
-  **idempotent consumer** (`consumer_idempotent: true` + key), not by a delivery flag.
-- **Sagas:** compensation is **per side-effecting step** (each step declares its compensating action),
-  with a coordinator and compensation-failure handling — not one string on the initiating edge. Async
-  paths (chains, fan-out, joins, cycles) are enumerated from the interaction graph by `id`.
-- All reliability fields are value-checked (positive timeouts/retries; `dlq`/`replay` justified when
-  the delivery semantics require them).
+- A **reliable one-way event** is `kind: event` + an `async` block (delivery, DLQ, replay, idempotency).
+  Fire-and-forget events omit reliability. `delivery ∈ {at_most_once, at_least_once}` — **`exactly_once`
+  is not offered** at the broker boundary (CR-12); end-to-end exactly-once = `at_least_once` + a declared
+  **idempotent consumer** (`consumer_idempotent` + `idempotency_key`), not a delivery flag.
+- **Value-checked combinations (LLD §6.7, M4):** `async_task` requires an `async` block; `retry` is
+  forbidden with `at_most_once`; `at_least_once` requires a DLQ unless justified; timeouts are positive.
+- **Sagas are a top-level, id-keyed model (LLD §4.2, M3)** — not a string nested on one edge. A `saga`
+  has a coordinator, a forward `order`, and `steps` referencing the **interaction ids** of the
+  side-effecting interactions it spans; compensation runs in reverse order and must itself be idempotent.
+  A flow with ≥2 side-effecting interactions and no covering saga is a blocker, **for sync and async flows
+  alike** (`check_saga` activates on side-effecting interactions of any kind, LLD §6.14). "Side-effecting"
+  is a declared/derived property of an interaction (from facade `mutations`), so the requirement is
+  checkable.
+- **Sync vs async reliability boundary (CR-6, ADR-5).** The design value-checks the reliability *contract*
+  that cannot be a plain retry — **async** delivery/idempotency/DLQ/replay and cross-flow compensation
+  (sagas). A **synchronous** call's own timeout/retry is product **runtime** config (like a connection
+  pool), so HITL does not schema-validate a timeout number; the sync cross-hop failure mode is *captured*
+  in the callee facade's `error_modes` and bounded by the leg's `cost_bound`/`cycle_bound`. This keeps the
+  line at governs-not-runtime while still capturing every CR-6 failure mode (non-determinism propagation →
+  boundary legs; timeout/retry → facade error_modes + async contract; cycles → `cycle_bound`; fan-out cost
+  → consumer-stochastic `cost_bound`; cross-agent trust → authorization).
 
-## 6. Eval coverage + adapter (F3, CR-8/16/20, B3)
+## 6. Eval coverage + adapter (F3, CR-8/16/20, B4)
 
 HITL governs **coverage and gating**; the product runs the evals (governs-not-runtime).
 
-- **Targets** are enumerable: every component, every interaction, and declared **flow segments** (routes
-  through the interaction graph). A **coverage validator** blocks a target with no eval spec and no
-  waiver.
-- **Waiver schema** (structured, like platform-readiness): owner, reason, tier-limit, expiry — a lapsed
-  waiver is a coverage gap.
-- **Runner-adapter contract:** `eval_adapter: {command, inputs, result_schema}` — a declared interface
-  HITL invokes into the product's eval runner; HITL ingests results (schema'd) and records reviewer
-  approval. "PM runs an eval on one segment" = PM invokes the adapter for that segment's spec.
-- **Baseline generator (CR-20):** a specified function (path, signature, deterministic inputs) that seeds
-  eval cases from acceptance criteria + facade contracts + boundary checks + failure modes, preserving
-  PM edits on regeneration; a no-evals component is a recorded waiver, and the reviewer gate can flag
-  "baseline-only."
+- **Targets have real homes (LLD §7):** agent domains, interactions (each carries `evals`), and declared
+  **`segments`** (a top-level list of routes through the interaction graph, including `e2e:true` flows).
+  A **coverage validator** blocks a target with no eval spec and no unlapsed waiver, and requires at least
+  one end-to-end segment for a multi-agent system.
+- **Registry + waivers + approval (LLD §7.1/§7.2):** an eval **index** (`{target_type, target_id,
+  spec_path}`, unique per target), a **waiver file** (owner, reason, tier-limit, revisit), and an
+  **approval block** on each spec (`reviewer`, `date`, `decision`). `status: baseline|extended` is
+  authorship maturity; `approval.decision` is the gate — `baseline_only` does not satisfy coverage above
+  Tier 1.
+- **Runner-adapter contract fully wired (LLD §7.3):** `eval-adapter.yaml` specifies argv, cwd, timeout,
+  how the target/spec is bound (arg/env/stdin), where the result is read (stdout/file), the result-schema
+  to validate against, and pass/fail exit codes; any other outcome is a fail-closed adapter error. HITL
+  invokes it **only on explicit operator confirmation** (the `ops-apply-iac` model), ingests schema'd
+  results, and records reviewer approval. No runner ships.
+- **Baseline generator (LLD §7.4, CR-20):** a specified function (path, signature, deterministic case
+  ids) that seeds cases from the owning `FR-n` (via a domain `owning_fr`), facade contracts, boundary
+  checks, and CR-6 failure modes; merges by case id preserving human-edited cases; a no-evals component
+  is a recorded waiver; the workflow prompts the PM to own and approve.
 
-## 7. Enforcement (LLD §5) — value-checks, fail-closed, conditionally activated
+## 7. Enforcement (LLD §6) — value-checks, fail-closed, per-check activated
 
-Validators check **values and references, not mere presence** (Codex M3/M5/M12): `long_running:true`
-requires a real durable checkpoint + resume cursor (not `checkpoint:none`); a `deep_agent`'s subagents
-are references to declared domains (not empty lists); policy strings resolve to real
-schemas/guardrails/actions. Each validator is fail-closed with a stable blocker code.
+Validators check **values and references, not mere presence**: `long_running:true` requires a real
+durable checkpoint store + resume cursor + a meaningful cancellation mode (not `none`) + a `side_effect_key`
+when a resumable step has side effects; a `deep_agent`'s subagents are references to declared domains with
+durable filesystem/semantic memory; every `PolicyRef` resolves in `policies.yaml`; every store resolves in
+`stores.yaml`. Each validator is fail-closed with a stable blocker code.
 
-**Activation rule (B6, resolves the A1/Z1 additivity contradiction):** the agentic validators and the
-capability-registry requirement fire **only when an agentic marker is present** (any `kind`,
-`interaction.kind`, `orchestration`, or an agentic block). A legacy non-agentic manifest has no markers,
-skips them entirely, and exits 0 — additive-only is true because the checks *activate* rather than always
-requiring the new registries.
+**Per-check activation (B5, resolves the additivity contradiction).** There is **no** global "agentic
+marker" switch. Each check runs only when the data it governs is present, and loads its registry only
+then (LLD §6.0). A legacy non-agentic manifest activates nothing and exits 0. A **deterministic** manifest
+that adopts `kind: deterministic` + a typed `interactions` edge activates only the graph-integrity checks
+and needs **no** capability/policy/store/eval registry — so "additive-only; non-agentic manifests need no
+registry" is literally true, not merely true for untouched legacy files.
 
 ## 8. Generated views (CR-3/CR-14, M11)
 
 Generated from the manifest + registries: a **topology/routing view** (nodes by `kind`; interaction legs
 typed; boundary legs marked; `orchestration.pattern`; routes/segments), a **privilege-posture** output,
-and an **approved-capability matrix** — each emitted **machine-readable (JSON/YAML) and rendered
-(Markdown)** with a schema version, deterministic ordering, and a CI regenerate-and-diff so they cannot
-drift. Static only (ADR-5).
+an **approved-capability matrix**, and a **tool matrix** (the `class:tool` projection, CR-15) — each
+emitted **machine-readable (JSON/YAML) and rendered (Markdown)** with a schema version, deterministic
+ordering, and a CI regenerate-and-diff. The derived `interaction_matrix`/`depends_on`/`events_*`
+projections are regenerated the same way. Static only (ADR-5).
 
-## 9. Memory, deep agents, lifecycle (CR-7/17/18, M3/M4/M5)
+## 9. Memory, deep agents, lifecycle (CR-7/17/18, M5/M6/M7)
 
-Declared per agent and **value-validated**: long-term memory carries owner, durability, retrieval policy,
-write provenance, high-stakes-write guardrails, and a required `pii` policy (explicit `none` needs
-justification); shared memory resolves `store` vs `shared_store` through a shared-store registry with one
-owner. Lifecycle requires meaningful durable checkpoint/resume/idempotency/cancellation/human-gate values.
-Deep agents require nonempty planner/subagents (as domain refs)/gates/guardrails and `context_isolation:
-true` + `memory.long_term`.
+Declared per agent and **value-validated** (LLD §3.1–3.3/§6.9–6.11): long-term memory carries owner, a
+**durable** store (ephemeral is rejected for long-term), retrieval mode, PII policy (explicit `none` needs
+justification), and — for high-stakes writes — a guardrail and **write provenance**; reads may declare a
+**staleness** bound; shared memory resolves `shared_store` through the store registry with one owner, and
+every read/write reconciles to a privilege `use` (§4). Lifecycle requires meaningful durable
+checkpoint/resume/idempotency/cancellation/human-gate values. Deep agents require a planner, subagents as
+domain references (their capability description is the referenced domain's `purpose` + facades), gates,
+guardrails, `context_isolation: true`, and durable filesystem/semantic long-term memory.
 
 ## 10. Observability (CR-9) — deferred, stated
 
 Cross-hop tracing + the token-cost amplification budget are **out of this design package**, tracked in
-[#15](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/15). Note (Codex M8): the existing
-token-cost registry measures *HITL development-change* spend, not product-agent per-node/per-edge fan-out
-— #15 must add a product-agent extension, not reuse it as-is.
+[#15](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/15). Note: the existing token-cost
+registry measures *HITL development-change* spend, not product-agent per-node/per-edge fan-out — #15 must
+add a product-agent extension, not reuse it as-is. Because CR-9 has no mechanism in this package, the
+acceptance gate (§13) is **scoped to CR-2..CR-8, CR-10..CR-18, and CR-20**, with CR-9 depending on #15
+(M12) and **CR-1/CR-19 relocated to the Agentic Design Advisor (FR-28)** — the package does not claim to
+cover any of those three.
 
-## 11. Decisions (v2 — to lock as ADRs)
+## 11. Decisions (v3 — locked as ADRs)
 
 | # | Decision | Note |
 |---|---|---|
 | D1 | Component = manifest domain (+`kind`) | unchanged |
-| **D2** | **Edge = extended `interaction_matrix` entry** (id + kind + facade + trust legs + authorization + async); `calls` deleted; `depends_on` is a projection | **rewritten in v2** — replaces "edge = facade_api"; the facade is the *contract*, the interaction is the *edge* |
-| D3 | Topology/privilege/tool posture are generated views, machine-readable + rendered | +machine-readable (M11) |
+| **D2** | **Edge = element of a new top-level `interactions` list** (id + from/to + kind + facade + trust legs + authorization + async); `interaction_matrix`/`depends_on`/`events_*` are derived projections | **rewritten in v3** — the domain-pair *map* cannot hold parallel edges (B1); the list can |
+| D3 | Topology/privilege/tool posture are generated views, machine-readable + rendered | unchanged |
 | D4 | Framework-agnostic | unchanged (upheld) |
 | D5 | Governs, not runs; validators + static views only | unchanged (upheld); anchors F1/F3 limits |
-| D6 | Capability menu always presented; recommend, never decide | unchanged |
-| D7 | Determinism boundary derived, applied **per data leg** | strengthened (B1) |
+| D6 | Capability menu always presented; recommend, never decide | **relocated to the Agentic Design Advisor (FR-28)** — the menu is elicitation (was CR-19); ADR-6 stays as the recorded rationale |
+| **D7** | Determinism boundary derived, applied **per data leg**, bounded against the leg's **actual stochastic consumer** | **strengthened in v3** (B2) |
 | D8 | Extend the schema map form of `facade_apis`; reconcile the template | unchanged; scope enumerated in LLD (M9) |
-| **D9** | **Scoped-capability privilege**: per-use scopes + registry ceilings + complete sources; necessary-and-sufficient *for declared uses*; runtime = drift-check | **rewritten in v2** (B4) |
-| **D10** | **Interaction identity**: stable `id`; dup/cycle logic keys off it, not domain pairs | new (M1/M2) |
-| **D11** | **Reliable one-way events** as `kind: event` + async; no broker exactly-once | new (B5) |
-| **D12** | **Evals: govern coverage + adapter contract**, ship no runner | new (B3, F3) |
+| **D9** | **Scoped-capability privilege**: per-use scopes + registry ceilings; memory joined via `uses`; edge-invocation moved to authorization; N&S *for declared uses*; runtime = drift-check | **rewritten in v3** (B3) |
+| **D10** | **Interaction identity**: stable `id` as the list element key; dup/cycle/reconciliation key off it | **rewritten in v3** — id is the *list key*, not a field inside a pair-keyed map (B1) |
+| **D11** | **Reliable one-way events** as `kind: event` + async; **sagas top-level, id-keyed**, per-step idempotent compensation; no broker exactly-once | **strengthened in v3** (B6/M3/M4) |
+| **D12** | **Evals: govern coverage + adapter contract**; real target model (segments/interaction evals), index, waivers, approval, wired adapter; ship no runner | **strengthened in v3** (B4) |
+| **D13** | **Per-check activation**: each validator + its registry activate only on the data they govern | **new in v3** (B5) |
 
-## 12. What changed from v1 (Codex round-1 response)
+## 12. What changed from v2 (Codex round-2 response)
 
-Blockers B1 (per-leg boundary), B2 (authorization model), B3 (eval coverage+adapter), B4 (scoped-capability
-privilege), B5 (reliable events + real sagas), B6 (value-checks + activation rule) resolved above. Majors
-M1-M14 mapped in [`04-revision-plan.md`](04-revision-plan.md); the LLD carries their field-level fixes.
-CR-9 (M8) explicitly deferred to #15. ADR-2/ADR-9 are rewritten; ADR-10/11/12 added (interaction identity,
-reliable events, eval-adapter boundary).
+Round-2 blockers resolved above and in the LLD: **B1** (edge model → additive `interactions` list; the map
+becomes a projection), **B2** (full per-leg trust struct; consumer derived per leg), **B3** (privilege
+union closed over tools/memory/non-tool capabilities; invoke → authorization; `op:*` scopes; wildcard
+ceilings; tier input; CR-15 fold-in), **B4** (segments + interaction evals + index + waivers + approval +
+wired adapter + generator spec), **B5** (per-check activation; conditional registries), **B6** (policy +
+store registries; requiredness-by-kind; value blockers; unknown-field rule). Majors M1–M12 and minors
+m1–m4 are mapped in [`04-revision-plan.md`](04-revision-plan.md); the LLD carries their field-level fixes.
+CR-9 (M12) explicitly deferred to #15 and excluded from the acceptance gate. ADR-2/D2, ADR-9/D9, ADR-10/D10
+rewritten; ADR-13/D13 added (per-check activation).
 
 ## 13. Acceptance criteria (implementation gate)
 
-1. A legacy non-agentic manifest (no agentic markers) validates unchanged and exits 0 (activation rule).
-2. Every CR-1..CR-20 has a value-checking, fail-closed validator or a specified generator/adapter, each
-   with a `ci/` regression suite; presence-only checks are gone.
-3. The showcase manifest: a deterministic caller of an agent is blocked without response `output_validation`;
-   an over/under/ceiling-violating capability declaration is blocked; an unauthorized caller is blocked; a
-   reliable one-way event validates; a saga without per-step compensation is blocked.
-4. Topology, privilege, and capability views generate machine-readable + rendered, cannot drift.
-5. The eval coverage validator blocks an uncovered target; the adapter contract lets PM invoke one segment.
-6. The re-run cold Codex review returns APPROVE (or only accepted minors) before implementation begins.
+1. A legacy non-agentic manifest (no new fields) validates unchanged and exits 0; **and** a deterministic
+   manifest that adopts `kind`/typed `interactions` validates with **no** new registry (per-check
+   activation, B5).
+2. Coverage is honest about *how* each requirement is met — not every CR is a validator:
+   - **Validated by a fail-closed `ci/` validator** (this package, #13/#15/#16): CR-3, CR-4, CR-5, CR-7,
+     CR-12, CR-13, CR-14, CR-15, CR-17, CR-18, and the mechanical parts of CR-6/CR-8/CR-16/CR-20 — each
+     with a regression suite; presence-only checks are gone.
+   - **Delivered as a generator/adapter** (this package): CR-3/CR-14 views, CR-8/CR-16 eval coverage +
+     adapter, CR-20 baseline generator.
+   - **Delivered as a workflow/pattern-doc artifact gated by its own sub-issue** (not a `ci/` validator):
+     the *justification* prose of CR-2/CR-11 and the pattern/catalog doc parts of CR-6 (#14). **Surface
+     selection (was CR-1) and the capability menu (was CR-19) are relocated to the Agentic Design Advisor
+     (FR-28)** and are gated there, not here. The
+     classification-completeness of CR-2 and the `orchestration.justification` presence of CR-11 *are*
+     validated here.
+   - **Out of this package:** **CR-9** (observability) is deferred to #15; this gate does not claim it.
+   This criterion passes when each CR is met by the mechanism named above, no CR is silently claimed to
+   have a validator it does not, and every `ci/` validator has its suite.
+3. The showcase manifest: a deterministic caller of an agent is blocked without response `validation`; a
+   request/response/agent→agent leg into an agent is blocked without cost+authority bounds; an
+   over/under/ceiling-violating capability declaration is blocked; a memory write with no matching use is
+   blocked; an unauthorized or identity-less caller is blocked; a reliable one-way event validates; a
+   two-side-effect flow without a covering saga is blocked.
+4. Topology, privilege, capability, and tool views generate machine-readable + rendered, and the derived
+   `interaction_matrix`/`depends_on`/`events_*` projections regenerate-and-diff clean (cannot drift).
+5. The eval coverage validator blocks an uncovered target, a `baseline_only` target above Tier 1, and a
+   multi-agent system with no e2e segment; the wired adapter contract lets PM invoke one segment on
+   operator confirmation.
+6. `SEP-PAIR` (a call and an event between the same pair, distinct ids) validates — the parallel-edge
+   property is realizable — and the re-run cold Codex review (round 3) returns APPROVE (or only accepted
+   minors) before implementation begins.

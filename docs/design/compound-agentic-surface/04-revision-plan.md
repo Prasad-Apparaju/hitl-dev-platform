@@ -1,96 +1,65 @@
-# Compound Agentic System Surface: v2 Revision Plan (response to Codex design review)
+# Compound Agentic System Surface: Revision Plan (response to Codex reviews)
 
-> Independent Codex design review (2026-07-18, cold/neutral prompt) returned **REVISIONS REQUIRED** with
-> 6 blockers + 14 majors — several structural and missed by 5 internal architect rounds. Report:
-> `hitl-internal/docs/validation-reports/2026-07-18-compound-agentic-design-codex-review.md`. This is
-> the accepted response: the three design forks (decided by judgment), the unifying principle, and a
-> fix-map from each finding to where it lands. The HLD ([`01-design.md`](01-design.md)), ADRs
-> ([`02-adrs.md`](02-adrs.md)), and LLD ([`03-lld.md`](03-lld.md)) are revised **per this plan**, then
-> the same cold Codex prompt is re-run. EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
+> Two independent cold/neutral Codex design reviews have run. **Round 1** (2026-07-18) returned REVISIONS
+> REQUIRED (6 blockers + 14 majors); the v2 rewrite addressed it. **Round 2** (2026-07-20) reviewed v2 and
+> again returned REVISIONS REQUIRED (6 blockers + 12 majors) — the central miss was structural: v2 tried
+> to carry parallel edges inside `interaction_matrix`, a map keyed by the domain pair, which is impossible.
+> Reports: `hitl-internal/docs/validation-reports/2026-07-18-…-review.md` and `…2026-07-19-…-review-round2.md`.
+> This document is the accepted response for **both** rounds; the **§ Round-2 fix-map** governs the current
+> **v3** docs (HLD [`01-design.md`](01-design.md), ADRs [`02-adrs.md`](02-adrs.md), LLD
+> [`03-lld.md`](03-lld.md)). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
 
-## Unifying principle
+## Unifying principle (unchanged)
 
-**HITL validates declarations, coverage, and consistency — not runtime behavior.** Every over-reach in
-v1 claimed to derive *runtime truth* (necessary privilege, actual eval results, actual tool use) that
-belongs to the product or crosses the governs-not-runtime line (ADR-5). Each fix narrows the claim to
-what a design-time framework can honestly prove and pushes runtime truth to the product plus an optional
-drift-check. Framework-agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld** by the review;
-the manifest-as-graph skeleton stands. The rework is in the edge model, the privilege claim, the eval
-design, and validator depth.
+**HITL validates declarations, coverage, and consistency — not runtime behavior.** Each over-reach claimed
+to derive runtime truth that belongs to the product or crossed governs-not-runtime (ADR-5). Framework-
+agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld in both rounds**; the manifest-as-graph
+skeleton stands. The rework is in the edge container, the trust legs, the privilege union, the eval
+homes, and activation.
 
-## Design forks (decided)
+## Round-2 fix-map (the current work)
 
-**F2 — Interaction model (edge layer).** Extend the manifest's **existing** top-level
-`interaction_matrix` (directed, human-authored, keyed `from -> to`, carries `entity_crossing`) as the
-**single authoritative edge model**. Delete the v1 `calls` field (it duplicated `interaction_matrix` —
-Codex M1). Each interaction gains: a stable `id` (distinguishes multiple interactions between one pair),
-`kind` (`sync_call | async_task | event`), `facade` (ref for call/task kinds), **separate request/response
-trust legs** (`input_validation`, `output_validation`), an `authorization` block (who-may-invoke), and
-the `async` reliability block. `depends_on` becomes an auto-derived projection. Cycle/dup logic keys off
-`id`, not domain pairs. Closes B1, B2, B5, M1, M2, most of M7.
+Round-2 verdict: REVISIONS REQUIRED. Six blockers, twelve majors, four minors. Disposition in v3:
 
-**F1 — Privilege: full scoped-capability model** (user-chosen 2026-07-18 over the narrow option).
-Deliver a genuine necessary-and-sufficient claim **at declaration granularity** — stronger than mere
-consistency, and honest about its runtime limit.
-- **Complete capability sources:** tools, memory, non-tool `capabilities` (KMS, model-endpoint,
-  delegation/impersonation, ambient fs/network/process/env, direct service access), edge-invocation
-  (`invoke:<domain>`).
-- **Per-use scoping:** an agent declares each capability *use* with its specific scope —
-  `uses: [{capability, operations, resources}]` — not just the capability name. `needed = ⋃(per-use
-  scopes)`, so a read-only use of a read/write tool needs only `read:…` (fixes B4 scenario 1's false
-  over-privilege).
-- **Registry = ceiling:** the approved-capability registry declares each capability's *maximum* grantable
-  scope; every per-use scope MUST be ⊆ that ceiling — a **ceiling-violation** blocks (using a capability
-  beyond its approval; fixes B4 scenario 3's silent too-small agreement).
-- **Validator:** over = `granted ∖ ⋃per-use`; under = a declared use scope ⊄ `granted`; ceiling-violation
-  = a per-use scope ⊄ its registry ceiling. Machine-readable **and** rendered posture.
-- **Honest limit (ADR-5):** proves the *declared* per-use set is minimal, consistent, and within ceiling.
-  It does NOT prove the running code only does what it declared — that is a **read-only runtime
-  drift-check** (declared vs observed) + human review + optional static analysis, not something HITL
-  runs. Claim = "necessary-and-sufficient for the declared uses", review/drift-enforced.
-- **Trade-off (flagged):** per-use scoping is real authoring burden — require it at **Tier 2+** and
-  collapse/default it at lower tiers so it does not become box-ticking.
-Closes B4 with a real model rather than a narrowed claim.
-
-**F3 — Evals.** HITL governs **coverage + an adapter contract**, ships no runner. Add: the eval spec, a
-**coverage validator** (every component/interaction/declared segment has an eval spec or a structured
-waiver), a **waiver schema** (owner/reason/tier/expiry, like platform-readiness), and a **runner-adapter
-contract** (`eval_adapter: {command, inputs, result_schema}`) HITL invokes into the product's runner.
-"PM runs evals" ⇒ "PM invokes the declared adapter; HITL records coverage + reviewer approval." Closes B3,
-resolves the CR-16 boundary tension.
-
-## Fix-map (Codex finding → disposition)
-
-| Finding | Disposition |
+| Round-2 finding | Disposition in v3 |
 |---|---|
-| **B1** boundary uses call direction, not dataflow | F2: per-interaction request/response trust legs; `output_validation` on the response leg; applies to every data-carrying interaction incl. events |
-| **B2** who-may-invoke / facade enforcement no model | F2: `authorization` block per interaction (allowed callers, credential mode, JIT); reference-integrity validator (`facade`/`to` resolves); boundary-hook change added to the LLD change list |
-| **B3** evals are prose | F3: coverage validator + waiver schema + runner-adapter contract + result/reviewer schemas + tests |
-| **B4** "necessary-and-sufficient" false | F1 (full model): per-use scoped capabilities + registry ceilings; needed = ⋃per-use; over/under/ceiling-violation checks; read-only drift-check for runtime fidelity; claim scoped to declaration granularity |
-| **B5** async can't do reliable one-way; weak validators | F2: `kind: event` + reliability makes durable one-way events representable; drop unqualified `exactly_once` (broker boundary); per-step saga/compensation; consumer-idempotence declaration; value-check retry/timeout/dlq |
-| **B6** validators check presence; A1/Z1 additivity contradiction; schema dialect | LLD: value/reference/range/nonempty/unknown-field checks; **activation rule** — agentic checks + registry requirement fire only when an agentic marker (`kind`/interaction `kind`/`orchestration`) is present, so legacy manifests exit 0; pin the executable validation pipeline + exact dialect |
-| **M1** `interaction_matrix` duplicated/unreconciled | F2 (authoritative model) + rewrite ADR-2 decision text (not just a refinement note) |
-| **M2** topology is adjacency, not routing | F2: entrypoints, route/segment ids, fan-out/join, response/callback routes on the interaction model |
-| **M3** lifecycle accepts unsafe values | LLD: value-checks (`long_running` ⇒ `checkpoint≠none`, `resumable=true`, `idempotent_resume=true`, `timeout>0`, `cancellation`, `human_gate_pause`); declare checkpoint store/format + resume cursor + side-effect key |
-| **M4** memory governance/shared-store | LLD: add owner/staleness/durability/retrieval/write-provenance/high-stakes-guardrail; `pii` required (may be explicit `none` with justification); reconcile `store` vs `shared_store` via a shared-store registry with one owner |
-| **M5** deep-agent syntactic | LLD: nonempty/true value-checks; subagents are references to declared domains; reject `deep_agent` on non-agent kinds |
-| **M6** CR-2/11/19 human gate + catalog unspecified | Add `pm-design-feature`/`AGENTS.md` + capability-catalog schema + decision-record schema (rationale + rejected) to the LLD change list; TA-gate contract |
-| **M7** CR-6 gaps | F2 covers fan-out bounds + interaction-level timeout/retry; add transitive-nondeterminism check across response/event legs; require positive `cycle_bound` |
-| **M8** CR-9 registry semantics | Keep deferred to #15 but state it explicitly; the token-cost registry needs a product-agent extension (not the dev-change registry) — scope note in #15 |
-| **M9** additive not end-to-end | LLD activation rule (B6) + enumerate the full D8 template/schema reconciliation (facade shape + `description`/`purpose` + mutations placement) |
-| **M10** approved-tool "undeclared" semantics | LLD: distinguish unknown-registry-key vs declared-but-unused-in-impl (drift, optional) vs runtime-allow-list evidence; risk gets a policy hook |
-| **M11** machine-readable posture missing | LLD: generator emits machine-readable (JSON/YAML) + rendered; deterministic ordering, schema version, drift-comparison |
-| **M12** unchecked policy strings | LLD: typed policy references + existence/nonempty/range validators for cost/output_validation/compensation/planner/gates/guardrails/authority |
-| **M13** canonicalization example is wrong | LLD: fix — canonicalize per token around the colon (not whole-string), single-colon + nonempty-part grammar, forbid traversal |
-| **M14** test matrix gaps | LLD: add response-direction boundary, boundary events/deps, dangling `to`, legacy-no-registry, false/none controls, reliable one-way event, `exactly_once`, separate call+event same pair, event-pair mismatch, `interaction_matrix` conflict, invalid scope, eval coverage/waiver, machine-readable view, shared-store disagreement, nonpositive numerics |
-| **m1–m4** dotted facade parsing, orchestration refs, view guarantees, LLD/ADR status | LLD: first-dot parsing + canonical ids; validate `coordinator` names an agent fitting the pattern; specify source-of-truth + CI regenerate-and-diff; add an explicit approval point + real ADRs for the new edge/privilege/eval decisions |
+| **B1** — `interaction_matrix` map can't hold parallel edges; `id` inside a pair-keyed value is inert; SEP-PAIR unconstructable | **New additive top-level `interactions` list** keyed by `id`; parallel edges = two elements; the map/`depends_on`/`events_*` become **derived projections** (regenerate-and-diff). ADR-2/D2, ADR-10/D10 rewritten; LLD §2/§2.4; SEP-PAIR now constructable (test) |
+| **B2** — cost/authority only on response leg; authority compared to callee not the stochastic consumer; agent→agent fan-out unbounded | **Uniform `Leg` struct** (`validation` + `cost_bound` + `authority_bound`) on request/response/event; validator derives (source, consumer) **per leg**; cost+authority required whenever the **consumer** is stochastic, `authority_bound ⊆ that consumer's` grant. ADR-7/D7 rewritten; LLD §2.2/§6.3 |
+| **B3** — privilege union not closed: memory unjoined, invoke bypasses ceilings, resource-less scope invalid, tier default undefined, CR-15 tools vanished | **Union closed over tools/memory/non-tool caps** via `uses`; **memory joined** through memory-class uses (§3.1); **invoke moved to authorization** (not the identity grant); resource-less ⇒ `op:*`; **wildcard ceilings**; **tier is a validator input**; **CR-15 fold-in** (`class: tool` + `runtime_ref` + tool matrix). ADR-9/D9 rewritten; LLD §3.1/§6.2/§6.x |
+| **B4** — eval validator reads `segments`/`evals` the schema never defines; no index/waiver/approval; adapter unimplementable | **Add `segments` (top-level), `evals` on interactions**; **eval index + waiver file + per-spec approval block**; **fully wired adapter** (argv/cwd/timeout/binding/result-schema/exit-codes, operator-confirmed); **baseline generator spec**. ADR-12/D12 rewritten; LLD §7 |
+| **B5** — global activation gate forces registries onto deterministic manifests using new markers | **Per-check activation predicates** (LLD §6.0); each registry loads only when its check activates; deterministic+typed-`interactions` needs **no** new registry. **ADR-13/D13 added**; test A3 |
+| **B6** — "every field value-checked" overstated; no policy/shared-store registry; requiredness rules missing | **`policies.yaml` + `stores.yaml` registries**; **requiredness-by-kind table** (§4.1); value blockers for lifecycle/memory/async/authorization; **unknown-field rule**. LLD §5/§6 |
+| **M1** authorization names domains not principals; no JIT default | `allowed_callers` must be domains with an `identity.principal`; `credential_mode` defaults `jit`, `static`/`none` needs justification; `audience`. LLD §2.3/§6.4 |
+| **M2** event reconciliation has no stable join | Event interactions are authoritative; `events_emitted`/`events_consumed` are **projections keyed by interaction id**; hand-authored lists must equal the projection (`event_projection_mismatch`). LLD §2.4/§6.6 |
+| **M3** saga ownership/id/order/required-when undefined | **Sagas hoisted to a top-level id-keyed list** with coordinator, forward `order`, steps→interaction ids; required when a flow has ≥2 side-effecting interactions; compensation reverse-order + idempotent. ADR-11/D11; LLD §4.2/§6.7 |
+| **M4** async combos underdesigned | `async_task` requires `async`; `retry` forbidden with `at_most_once`; `at_least_once` requires DLQ unless justified; `idempotency_key` grammar. LLD §2.1/§6.7 |
+| **M5** memory provenance/staleness claimed, absent | Add `provenance`/`staleness`/`high_stakes` on `MemoryAccess`; long_term must be `durable`; reconcile to `uses`. HLD §9; LLD §3.1/§6.11 |
+| **M6** lifecycle doesn't establish durable pause/resume safety | Require `side_effect_key` (resumable+side-effecting), `human_gate_pause:true` with a human gate, `cancellation≠none`, `checkpoint_store` resolving to a durable store. LLD §3.2/§6.10 |
+| **M7** deep-agent lost capability descriptions; allows ephemeral memory | Subagents are domain refs whose capability description **is** the referenced domain's `purpose`+facades; long_term must be `durable` + `filesystem`/`semantic` retrieval (virtual-fs). LLD §3.3/§6.9 |
+| **M8** CR-1/2/11/19 remain design-track prose; acceptance overclaims | CR-2 classification-completeness + CR-11 `orchestration.justification` are now checks; **CR-1/CR-19 relocated to the Agentic Design Advisor (FR-28)** — they are elicitation, not enforcement; **acceptance criterion 2 is rescoped** to name validators *or* generators *or* workflow artifacts, not "every CR has a validator." HLD §13 |
+| **M9** CR-15 silently weakened | Documented **fold-in** in CR-15 text + ADR-9: tools are `class: tool` capabilities with `runtime_ref`; tool matrix is a projection. Requirements CR-15; LLD §5 |
+| **M10** CR-6 routing/loop/fan-out/sync reliability incomplete | Fan-out covered by consumer-stochastic cost bound (§6.3); sync `timeout`/`retry` on legs; `cycle_bound` declared, **product enforces at runtime** (documented boundary); segment adjacency checked. HLD §3/§5; LLD §6.5 |
+| **M11** CR-5 overclaims Agent Card / hook enforcement | Explicit mapping: facade governs capability/signature; endpoint/security/version are product-runtime config; the design-time hook does a **static contract check** (declared-interaction ↔ facade), stated honestly. HLD §2; LLD §6.4 |
+| **M12** CR-9 deferred but acceptance claims all CRs | Acceptance gate **explicitly scoped to CR-1..CR-8, CR-10..CR-20**; CR-9 depends on #15. HLD §10/§13 |
+| **m1** first-dot facade vs unrestricted domain names | `domain_name` grammar forbids dots; first-dot split is unambiguous. LLD §0 |
+| **m2** `facade` conflates two reference kinds | Distinct `facade_ref` (`domain.facade`) vs `event_ref` (`producer:event`) grammars. LLD §0 |
+| **m3** "all optional" vs required id/kind | Requiredness-by-kind table: once a `kind` is declared, its fields are required. LLD §4.1 |
+| **m4** requirements metadata stale | Header refreshed (HLD v3 / ADR-1..13 accepted / LLD v3). Requirements header |
+
+## Round-1 fix-map (superseded, kept for history)
+
+Round 1 produced the v2 docs (interaction-matrix extension, per-leg legs, scoped-capability, eval
+coverage+adapter, activation rule). Round 2 found several of those fixes were asserted rather than
+delivered — most importantly that extending the pair-keyed map could not deliver parallel edges (B1). The
+v3 disposition above supersedes the round-1 dispositions wherever they conflict; the round-1 report
+remains on file.
 
 ## Sequencing
 
-1. **This plan + narrow CR-14** (done).
-2. **HLD v2** — the interaction model (F2), privilege claim (F1), eval coverage/adapter (F3), request/response trust, authorization, ADR-2 rewrite.
-3. **LLD v2** — field defs on `interaction_matrix`; value/reference validators; activation rule (A1/Z1); executable dialect; expanded test matrix.
-4. **ADRs** — rewrite ADR-2 decision; add ADRs for the interaction-id model, the narrowed privilege claim, and the eval-adapter boundary.
-5. **Re-run the same cold Codex prompt** → converge.
+1. Round-1 response → v2 docs (done).
+2. Round-2 response (this fix-map) → **v3 docs**: HLD, LLD, ADRs (done in this pass).
+3. Internal architect-reviewer pass with an explicit instruction to check every validator field against
+   the real schema types and every test fixture for representability (the discipline that missed B1).
+4. **Re-run the same cold Codex prompt (round 3)** → converge.
 
-Not-yet-fixed until the above lands; **implementation does not begin** until Codex re-review is clean.
+**Implementation does not begin** until the Codex re-review is clean (APPROVE or accepted minors only).
