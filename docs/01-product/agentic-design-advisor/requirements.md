@@ -8,8 +8,10 @@
 > **draft, pending PM review**. Related: EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)
 > (compound-agentic surface — the commands produce its manifest inputs) and
 > [#8](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/8) (best-practice-advisory — the Advisor
-> is its agentic-domain instance). **v3** — reshaped around **commands + composed workflow** (v2) then
-> revised after two rounds of pm + architect review; see §12.
+> is its agentic-domain instance). **Tracked as EPIC [#35](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/35)**
+> (sub-issues [#36](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/36)–[#41](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/41):
+> catalog · intake+integration · commands · composer+floor · map · CI/docs). **v3** — reshaped around
+> **commands + composed workflow** (v2) then revised after two rounds of pm + architect review; see §12.
 
 ## 1. Problem
 
