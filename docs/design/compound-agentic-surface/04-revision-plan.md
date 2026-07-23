@@ -17,7 +17,43 @@ agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld in both rounds**;
 skeleton stands. The rework is in the edge container, the trust legs, the privilege union, the eval
 homes, and activation.
 
-## Round-3 fix-map (v3.1 — the current work)
+## Round-4 fix-map (v3.2 — core scope lock, the current work)
+
+Round-4 (2026-07-22) reviewed v3.1 **against the original objectives** and returned REVISIONS REQUIRED (4
+blockers + 9 majors + 3 minors). The central finding: the design had **over-scoped** — most acutely, the
+round-3 broadening of eval coverage to *every* component/edge reintroduced the over-governance the Advisor
+exists to prevent (O6). Rather than patch 13 findings into a still-larger design, the accepted response is
+to **lock a minimal sound core and defer the heavy/contested parts** — see
+[`../agentic-core-scope.md`](../agentic-core-scope.md) for the full core/deferred boundary and the
+per-finding disposition. The #10 changes in v3.2:
+
+| Round-4 finding | Disposition in v3.2 (core) |
+|---|---|
+| **M1 / O6** — universal eval coverage over every component/edge is over-governance; no result contract | **Trim:** eval coverage is scoped to **agent targets + one e2e** (independent per-agent eval, CR-8/CR-16). Universal deterministic coverage + result-review envelope + multi-owner baseline → **deferred follow-on**. LLD §6.12/§7; ADR-12 |
+| **B4** — saga↔segment identity + requiredness underspecified; ADR-11 stale | **Defer** the required-when compensation model; core validates **declared** sagas only and adds a **`check_compensation_gap` advisory** (warn, don't enforce, when ≥2 side-effecting steps have no saga). **ADR-11 rewritten** to match. LLD §6.14 |
+| **B1 (core part)** — agent→agent boundary leg gap | Confirm the determinism boundary fires on **agent→agent** legs, not only det/external seams. LLD §6.3 |
+| **M2** — authority checks the grantee, not the delegation | **Defer** delegated per-interaction authority; core keeps `allowed_callers` + `authority ⊆ consumer`, **honestly labelled limited**. LLD §6.3/§6.4 |
+| **M5** — CR-6 sync timeout/retry disposition is false ("captured on legs") | **Narrow CR-6 honestly:** sync reliability = facade `error_modes` + product runtime; drop the design-time sync-declaration claim. Deferred. Requirements CR-6; HLD §3 |
+| **M6** — projection model half-reconciled | Specify **ownership per field** (interactions authoritative; matrix/`events_*`/`depends_on` generated-view-only) + a **mixed legacy/new fixture**. LLD §2.4 |
+| **m1** — version metadata inconsistent; ADR-11 superseded text | Header/version sweep; mark superseded ADR passages. |
+
+Deferred #10 items are tracked in **[#42](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/42)**
+(universal eval + result envelope + multi-owner baseline; saga distributed-compensation; delegated
+authority; design-time sync reliability). The Advisor's matching v3.2 changes (obligation-first floor,
+non-circular routing, terminal+Mermaid map, scenario/decision schema) are in
+[`../agentic-design-advisor/`](../agentic-design-advisor/).
+
+**Post-lock hard directive (2026-07-22) — observability + PM eval-console is now a FLOOR GATE.** Separate
+from the round-4 trims, the user directed that *a PM eval console + live traces is a hard requirement*
+(model: **HITL enforces, the product builds**). This **elevates CR-9/CR-16 to the floor** and **un-defers
+CR-9's design-time portion from #15**: a new top-level **`observability`** declaration (LLD §4.3) is
+**required on any agentic system** and enforced by a **blocking `check_observability` floor gate** (LLD
+§6.17; HLD §10). HITL ships the declaration + validator + gate + static posture view; the **product** builds
+the running console + trace backend (#21 reference), so **O1 governs-not-runtime holds**. #15 keeps only the
+runtime posture backend. The Advisor's `agentic-observability` becomes a **floor** command authoring that
+field (presence non-negotiable, depth tier-scaled — the proportionate reading).
+
+## Round-3 fix-map (v3.1 — superseded in part by the core lock above)
 
 Round-3 reviewed the v3 docs and returned REVISIONS REQUIRED with 4 blockers (converging: 6→6→4). All
 addressed in **v3.1**, informed by the right-sizing reframe (the Advisor, FR-28):
@@ -31,6 +67,11 @@ addressed in **v3.1**, informed by the right-sizing reframe (the Advisor, FR-28)
 
 The v3.1 disposition supersedes the v2 saga-activation fix (which had over-corrected an internal-review
 false-negative by firing on any side-effecting flow — round-3 caught it).
+
+> **Superseded by the round-4 core scope lock (above):** the v3.1 **B3** row (eval coverage → *every*
+> component ∪ interaction ∪ segment) over-governed and is replaced by **agents + e2e** (M1/O6); the v3.1
+> **B4** row (a saga *required* for a `transactional` segment) is replaced by **declared-saga validation +
+> a compensation-gap advisory** (required-when deferred). The rows are kept for history.
 
 ## Round-2 fix-map (v3)
 
@@ -55,7 +96,7 @@ Round-2 verdict: REVISIONS REQUIRED. Six blockers, twelve majors, four minors. D
 | **M9** CR-15 silently weakened | Documented **fold-in** in CR-15 text + ADR-9: tools are `class: tool` capabilities with `runtime_ref`; tool matrix is a projection. Requirements CR-15; LLD §5 |
 | **M10** CR-6 routing/loop/fan-out/sync reliability incomplete | Fan-out covered by consumer-stochastic cost bound (§6.3); sync `timeout`/`retry` on legs; `cycle_bound` declared, **product enforces at runtime** (documented boundary); segment adjacency checked. HLD §3/§5; LLD §6.5 |
 | **M11** CR-5 overclaims Agent Card / hook enforcement | Explicit mapping: facade governs capability/signature; endpoint/security/version are product-runtime config; the design-time hook does a **static contract check** (declared-interaction ↔ facade), stated honestly. HLD §2; LLD §6.4 |
-| **M12** CR-9 deferred but acceptance claims all CRs | Acceptance gate **explicitly scoped to CR-1..CR-8, CR-10..CR-20**; CR-9 depends on #15. HLD §10/§13 |
+| **M12** CR-9 deferred but acceptance claims all CRs | *(v3 disposition, later superseded)* Acceptance gate scoped to exclude CR-9; CR-9 depended on #15. **Superseded by the 2026-07-22 hard directive** — CR-9's design declaration + `check_observability` floor gate are now **in this package** (see the post-lock note above); only its runtime backend stays #15. HLD §10/§13 |
 | **m1** first-dot facade vs unrestricted domain names | `domain_name` grammar forbids dots; first-dot split is unambiguous. LLD §0 |
 | **m2** `facade` conflates two reference kinds | Distinct `facade_ref` (`domain.facade`) vs `event_ref` (`producer:event`) grammars. LLD §0 |
 | **m3** "all optional" vs required id/kind | Requiredness-by-kind table: once a `kind` is declared, its fields are required. LLD §4.1 |
@@ -72,9 +113,15 @@ remains on file.
 ## Sequencing
 
 1. Round-1 response → v2 docs (done).
-2. Round-2 response (this fix-map) → **v3 docs**: HLD, LLD, ADRs (done in this pass).
-3. Internal architect-reviewer pass with an explicit instruction to check every validator field against
-   the real schema types and every test fixture for representability (the discipline that missed B1).
-4. **Re-run the same cold Codex prompt (round 3)** → converge.
+2. Round-2 response → v3 docs (done).
+3. Round-3 response → v3.1 docs (done).
+4. Round-4 response → **v3.2 core lock**: trim eval to agent+e2e, defer saga model + add compensation-gap
+   advisory, narrow CR-6, confirm agent→agent boundary, reconcile projections + ADR-11 + metadata; move
+   deferred items to a follow-on issue (this pass).
+5. **Re-run the cold Codex prompt (round 5) on the locked core only** → converge.
+
+> **Note on the round-3 B3 fix (universal eval coverage):** that broadening is **superseded** by the v3.2
+> core lock (M1/O6) — it over-corrected into over-governance. Core coverage = agent targets + e2e;
+> universal coverage is deferred.
 
 **Implementation does not begin** until the Codex re-review is clean (APPROVE or accepted minors only).

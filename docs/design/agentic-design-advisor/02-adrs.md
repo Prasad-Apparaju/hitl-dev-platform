@@ -1,9 +1,11 @@
 # Agentic Design Advisor: Architecture Decisions
 
 > ADRs for decisions **A1–A9** from [`01-design.md`](01-design.md) §10. Each records the forces, the
-> decision, the **alternatives with their concrete cost**, and the consequences. **v3** — reshaped around
-> commands + composed workflow (v2), then revised after two review rounds (A8 map; A9 surface-selection
-> integration; A5 declared-artifact exception; A6 floor waiver). Status: **accepted, pending review**.
+> decision, the **alternatives with their concrete cost**, and the consequences. **v3.2** — reshaped around
+> commands + composed workflow (v2), revised after pm/architect rounds (v3), then **core-scope-locked** after
+> the round-4 objectives review ([`../agentic-core-scope.md`](../agentic-core-scope.md)): **A6** floor now
+> obligation-first (`floor ⊆ composed`, B3); **A8** map core = terminal+Mermaid, HTML/live-combined deferred
+> (M8). Status: **accepted, core-lock applied, pending Codex re-review (round 5)**.
 
 ---
 
@@ -105,14 +107,15 @@ the two must have one source of truth. v1 invented a `.hitl/agentic-profile.yaml
 predicates over manifest content** — there is no external activation input, so the seed field was inert.
 
 **Decision.** The commands **author real manifest fields** (kinds, trust legs, `uses`, lifecycle gates,
-evals). #10's **existing, unmodified** per-check activation then runs exactly the checks whose data is
-present. The Advisor **configures by authoring the manifest**; it does not pass #10 a validator list and
-requires **no change to #10**. **Honest exception:** two obligations have **no #10 target today** — the
-**kill-switch** (`agentic-reliability`) and all of **`agentic-observability`** (#10's CR-9 is deferred to
-#15). These produce **declared design artifacts** in the decision record (recorded, human-reviewed), *not*
-manifest fields #10 validates; when #15 lands, observability's artifact gains a real #10 check. They are
-stated as declared artifacts rather than as a manifest→#10 mapping that doesn't hold (the round-2 review
-caught the v2 over-claim).
+evals, the `observability` block). #10's per-check activation then runs exactly the checks whose data is
+present. The Advisor **configures by authoring the manifest**; it does not pass #10 a validator list.
+**Honest exception (now one):** the **kill-switch** (`agentic-reliability`) has **no #10 target today** —
+no `kill_switch` check exists — so it produces a **declared design artifact** in the decision record
+(recorded, human-reviewed). **`agentic-observability` is no longer an exception:** per the **2026-07-22 hard
+directive** (a PM eval-console + live traces is required), #10 gained **`check_observability`** (a floor
+gate on the `observability` block) via its own CR-9 elevation, and the Advisor authors that real field. So
+the "author, don't modify #10" premise holds — #10 changed for its *own* requirement (CR-9), not at the
+Advisor's behest.
 
 **Alternatives and their cost.**
 - *A seed with an active-validator set (v1).* Cost: describes a mechanism #10 can't consume; the field is
@@ -122,11 +125,11 @@ caught the v2 over-claim).
 - *The Advisor validates/generates too.* Cost: two implementations of the same rules that drift — the
   double-source problem.
 
-**Consequences.** (+) One source of truth; truly additive (no #10 change); the "configures, doesn't
-duplicate" property is demonstrable against #10's real activation model, and the two exceptions are honest.
-(−) Kill-switch and observability are human-reviewed, not machine-validated, until their targets exist
-(observability with #15); the Advisor must author the rest correctly for #10 to react — covered by the
-manifest-authoring tests (test plan §6).
+**Consequences.** (+) One source of truth; the "configures, doesn't duplicate" property is demonstrable
+against #10's real activation model; observability is now **machine-validated** (a #10 floor gate), and the
+one remaining exception (kill-switch) is honest. (−) The kill-switch stays human-reviewed until it gains a
+#10 target; the Advisor must author the rest correctly for #10 to react — covered by the manifest-authoring
+tests (test plan §6).
 
 ---
 
@@ -142,14 +145,20 @@ machinery). v1's L0–L4 rungs were a second scale with prose triggers and no pr
 
 **Decision.** The floor is a **deterministic function of the existing Tier (0–3) plus an enumerated set of
 agentic risk factors** (stakes, side_effects, data, autonomy, scale). Each floor rule fires monotonically;
-if several apply, the command is mandatory (union). Commands above the floor are **offered as deferrable
-rungs** — the "add now or defer" ladder is a *human-facing narrative over the same Tier+risk axis*, not a
-competing scale. **The floor is non-silently-droppable but waivable:** a floor command cannot be dropped
-silently (below the floor without a waiver is a blocker), but it **can** be dropped via an **explicit,
-tier-appropriate waiver** recorded in the decision record (owner, reason, tier-limit, revisit) — HITL's
-own hard-gate precedent (FR-25: "hard-blocked until … *or waived*") and consistent with "humans decide"
-(ADV-9). **Determinism is scoped to the computation given declared factors**, not to whether two people
-declare the same scenario identically (a softer property the categorical vocabulary mitigates).
+if several apply, the command is mandatory (union). **The floor is computed obligation-first (round-4 B3):**
+the firing floor obligations are computed first, and **each forces its owning command into the composed
+workflow** (`composed := composed ∪ floor_commands`) *before* proportionality prunes the rest — so `floor ⊆
+composed` holds by construction and a floor obligation can never be silently dropped because a relevance
+predicate happened to be false. A build-time lint (`FLOOR-SUBSET`) asserts every floor rule names a real
+command and that `floor ⊆ composed` across the whole risk-factor space. Commands above the floor are
+**offered as deferrable rungs** — the "add now or **defer**" ladder is a *human-facing narrative over the
+same Tier+risk axis*, not a competing scale (note: rung **defer** ≠ floor **waiver**, round-4 m3). **The
+floor is non-silently-droppable but waivable:** a floor command cannot be dropped silently (below the floor
+without a waiver is a blocker), but it **can** be dropped via an **explicit, tier-appropriate waiver**
+recorded in the decision record (owner, reason, tier-limit, revisit) — HITL's own hard-gate precedent
+(FR-25: "hard-blocked until … *or waived*") and consistent with "humans decide" (ADV-9). **Determinism is
+scoped to the computation given declared factors**, not to whether two people declare the same scenario
+identically (a softer property the categorical vocabulary mitigates).
 
 **Alternatives and their cost.**
 - *A separate L0–L4 scale (v1).* Cost: two governance axes with an undefined relationship — confusing and
@@ -208,17 +217,18 @@ is used mostly in the **terminal**, and it is governs-not-runtime, so the map mu
 a hosted live dashboard.
 
 **Decision.** The map is a **generated view** (the same category as the command-map/posture views),
-regenerated from the accumulating scenario record **at each meaningful step**, and rendered **terminal-first
-in three ways from one source**: (a) a terminal-native inline text map re-printed at each milestone (the
-live view, no browser); (b) a Markdown + Mermaid map in the decision record, IDE/GitHub-previewable and
-auto-updating on file change; (c) an optional rich interactive HTML rendering. On an **artifact-capable
-surface** (c) runs as a **combined "chat + live map"** mode — the intake re-publishes the map artifact to
-the same URL each step, so the discussion and the evolving map sit side-by-side. Two constraints keep it
-in-lane: the artifact is a **live view, not an input** (sandboxed, can't post answers back — the
-conversation stays the input), and it is the **rich tier only** (terminal-text is the universal baseline).
-All renderings share one **node-type visual vocabulary** (agent/service/datastore/external/store + message
-+ gate; ASCII equivalents in the terminal), so a component's kind reads at a glance. HITL **writes files
-and publishes/prints**; live refresh is the surface's, not a server HITL runs.
+regenerated from the accumulating scenario record **at each meaningful step**. **Core (v1) renders
+terminal-first in two ways from one source (round-4 M8):** (a) a terminal-native inline text map re-printed
+at each milestone (the live view, no browser); (b) a Markdown + Mermaid map in the decision record,
+IDE/GitHub-previewable and auto-updating on file change. **Deferred enhancement:** (c) a rich interactive
+HTML rendering, and — on an **artifact-capable surface** — a **combined "chat + live map"** mode that
+re-publishes the map artifact to the same URL each step (the discussion and the evolving map side-by-side).
+The combined mode is deferred because a **Should** feature should not carry a live re-publish loop and a
+host API into v1; it has a defined host API in the follow-on. Two constraints govern the deferred mode: the
+artifact is a **live view, not an input** (sandboxed, can't post answers back), and it is the **rich tier
+only** (terminal-text is the universal baseline). All renderings share one **node-type visual vocabulary**
+(agent/service/datastore/external/store + message + gate; ASCII equivalents in the terminal). HITL **writes
+files and publishes/prints**; live refresh is the surface's, not a server HITL runs.
 
 **Alternatives and their cost.**
 - *A hosted live dashboard.* Cost: crosses governs-not-runtime (a runtime service HITL would host), and
@@ -275,8 +285,8 @@ list.
 | ADR-A2 | A2 | Catalog = curated, versioned data; curated refresh, not live lookup |
 | ADR-A3 | A3 | Recommend, never decide; human confirms; record chosen/rejected |
 | ADR-A4 | A4 | HITL composes a proportionate workflow; run only what's relevant |
-| ADR-A5 | A5 | Commands author the manifest; #10 reacts — no seed, no #10 change; **exception**: kill-switch/observability are declared artifacts (no #10 target yet) |
-| ADR-A6 | A6 | Floor = deterministic fn of Tier + risk; **non-silently-droppable but waivable** (FR-25 precedent); ladder offers rungs |
+| ADR-A5 | A5 | Commands author the manifest; #10 reacts — no seed; observability authors the #10-gated `observability` block (hard directive); **only** the kill-switch remains a declared artifact (no #10 target yet) |
+| ADR-A6 | A6 | Floor = deterministic fn of Tier + risk, **computed obligation-first so `floor ⊆ composed`** (no silent drop, B3); **non-silently-droppable but waivable** (FR-25 precedent); ladder offers **deferrable** rungs (defer ≠ waiver) |
 | ADR-A7 | A7 | Record the build-vs-buy decision + portability diligence; a human carries it — provision nothing, auto-hand-off to nothing |
-| ADR-A8 | A8 | Evolving map = terminal-first generated view (inline text + Mermaid + optional HTML); regen per step; no live server |
+| ADR-A8 | A8 | Evolving map = terminal-first generated view; **core = inline text + Mermaid; rich HTML + combined live mode deferred** (M8); regen per step; no live server |
 | ADR-A9 | A9 | Intake integrates into `pm-design-feature`/`AGENTS.md` — precede for compound, skip for simple, never replace |

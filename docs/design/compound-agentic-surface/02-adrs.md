@@ -1,10 +1,12 @@
 # Compound Agentic System Surface: Architecture Decisions
 
 > ADRs formalizing decisions **D1–D13** from [`01-design.md`](01-design.md) §11. Each records the forces,
-> the decision, the **alternatives with their concrete cost**, and the consequences. **v3** — after the
-> **round-2** Codex review (2026-07-20) returned REVISIONS REQUIRED, ADR-2/7/9/10/11/12 are rewritten and
-> ADR-13 added; see [`04-revision-plan.md`](04-revision-plan.md).
-> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted, pending Codex re-review (round 3)**.
+> the decision, the **alternatives with their concrete cost**, and the consequences. **v3.2** — the
+> **round-2** review rewrote ADR-2/7/9/10/11/12 and added ADR-13; the **round-4** review (2026-07-22) drove
+> the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)), which **amends ADR-11**
+> (saga → declared-only + advisory) and **ADR-12** (eval → agent+e2e core, universal coverage deferred);
+> see [`04-revision-plan.md`](04-revision-plan.md).
+> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted, core-lock applied, pending Codex re-review (round 5)**.
 
 ---
 
@@ -288,8 +290,15 @@ maintain unique ids (validated).
 
 ## ADR-11 (D11): Reliable one-way events + top-level id-keyed sagas; no broker exactly-once (v3 — rewritten)
 
-**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B6/M3/M4; supersedes v2, which nested the
-saga inside one interaction's `AsyncSpec` and left ownership/order/requirement undefined).
+**Status:** Accepted, **amended 2026-07-22 (v3.2 core scope lock, Codex round-4 B4).** The reliable-event
+model stands. The **saga required-when model is deferred to a follow-on** — round-4 found the
+segment↔saga identity, overlap, parallel-compensation, and requiredness-inference underspecified and not
+yet sound. In core, HITL **validates declared sagas' well-formedness** and raises a **`check_compensation_gap`
+advisory** (`warning`, never a blocker) when a flow looks like it needs compensation but declares none.
+The "≥2 side-effecting interactions and no covering saga is a **blocker**" clause below is **superseded** by
+that advisory. See [`../agentic-core-scope.md`](../agentic-core-scope.md).
+(Rewritten 2026-07-20 after Codex round-2 B6/M3/M4; supersedes v2, which nested the saga inside one
+interaction's `AsyncSpec` and left ownership/order/requirement undefined.)
 
 **Context.** A durable one-way event (at-least-once, DLQ, replay, no response) must be representable, and
 `exactly_once` must not be offered at the broker boundary (CR-12). v2 got the event shape right but nested
@@ -304,25 +313,37 @@ at_least_once}` only; end-to-end exactly-once = `at_least_once` + a declared **i
 `async_task` requires `async`; `retry` is forbidden with `at_most_once`; `at_least_once` requires a DLQ
 unless justified. **Sagas are a top-level, id-keyed list** (not nested on an edge): each has a
 coordinator, a forward `order`, and `steps` referencing the **interaction ids** of the side-effecting
-interactions it spans; compensation runs in reverse `order` and must itself be idempotent. A flow with ≥2
-**side-effecting** interactions and no covering saga is a blocker; "side-effecting" is derived from the
-facade `mutations` (or declared), so the requirement is checkable.
+interactions it spans; compensation runs in reverse `order` and must itself be idempotent. **~~A flow with
+≥2 side-effecting interactions and no covering saga is a blocker~~** — *superseded (v3.2/B4): this is now a
+`check_compensation_gap` **advisory** (`warning`), not a blocker; the required-when enforcement model is
+deferred.* "Side-effecting" is derived from the facade `mutations` (or declared), so the advisory is
+checkable.
 
 **Alternatives and their cost.** *Nest the saga on one interaction (v2)* — cost: undefined ownership, no
 stable saga identity, ambiguous order, and no way to state when a saga is required (Codex M3). *Keep
 events best-effort only (v1)* — cost: can't model the most common reliable async pattern. *Offer broker
 `exactly_once`* — cost: a guarantee no broker delivers; misleads implementers (CR-12).
 
-**Consequences.** (+) Reliable one-way events representable; the exactly-once claim is honest; sagas have
-one owner, a stable id, a defined order, and a checkable required-when rule; compensation is per-side-effect
-and idempotent. (−) More async/saga fields to author and value-check.
+**Consequences.** (+) Reliable one-way events representable; the exactly-once claim is honest; declared
+sagas have one owner, a stable id, and a defined order; compensation is per-side-effect and idempotent; a
+flow that likely needs compensation but omits it is **surfaced as a warning** rather than silently passed
+(the honest "we don't enforce this yet" signal). (−) The full required-when enforcement is deferred, so a
+team can ship an under-compensated flow with only a warning — an accepted core limitation, tracked in the
+follow-on.
 
 ---
 
 ## ADR-12 (D12): Evals — govern coverage + a wired adapter contract; ship no runner (v3 — rewritten)
 
-**Status:** Accepted (rewritten 2026-07-20 after Codex round-2 B4; supersedes v2, whose target model and
-adapter had no schema home and no wire protocol).
+**Status:** Accepted, **amended 2026-07-22 (v3.2 core scope lock, Codex round-4 M1/O6).** The target model
+below is **narrowed for core**: mandatory coverage = **every agent component + one e2e segment** (CR-8/CR-16
+independent per-agent eval), *not* every deterministic component and edge. The round-3 broadening to "every
+component ∪ every interaction" reintroduced the over-governance the Advisor exists to prevent (O6) and is
+**superseded**. Deterministic coverage is **optional** (a team may opt in with a `contract_test` spec);
+**universal deterministic coverage is a deferred follow-on**. The index/waiver/approval/adapter machinery is
+unchanged. See [`../agentic-core-scope.md`](../agentic-core-scope.md).
+(Rewritten 2026-07-20 after Codex round-2 B4; supersedes v2, whose target model and adapter had no schema
+home and no wire protocol.)
 
 **Context.** CR-8/16/20 require independently testable components/edges/segments. Shipping an eval
 *engine* would cross governs-not-runtime (ADR-5); leaving evals as prose (v1) is unbuildable. v2 named a
@@ -331,8 +352,11 @@ interactions, defined no eval index / waiver file / reviewer-approval schema, an
 `{command, inputs, result_schema}` with no argv/target-binding/result/exit-code contract — so nothing was
 implementable (Codex B4).
 
-**Decision.** HITL governs **coverage + gating** with real homes: a target model of **agent domains ∪
-interactions (each carrying `evals`) ∪ a top-level `segments` list** (including `e2e` flows); an eval
+**Decision.** HITL governs **coverage + gating** with real homes. **Core mandatory target model (v3.2):
+every agent domain + one `e2e:true` segment** — independent per-agent eval plus one end-to-end flow.
+Deterministic components/edges are **optional** targets (opt in with a `contract_test` spec, then
+validated). Interactions may still carry `evals`, and the top-level `segments` list (including `e2e` flows)
+is unchanged; universal deterministic coverage is a deferred follow-on. Supporting machinery: an eval
 **index** (`{target_type, target_id, spec_path}`, unique per target); a **waiver file**; a per-spec
 **approval block** (`reviewer`, `date`, `decision`), distinct from authorship `status`; and a **fully
 wired runner-adapter contract** (`eval-adapter.yaml`: argv, cwd, timeout, target/spec binding, result
@@ -393,6 +417,6 @@ predicate (and its skip is explicit, not vacuous-pass), which the suite covers (
 | ADR-8 | D8 | Extend the schema map form; payload = `signature` |
 | ADR-9 | D9 | **Scoped-capability privilege** (v3): closed over tools/memory/non-tool caps; invoke → authorization; wildcard ceilings; CR-15 fold-in |
 | ADR-10 | D10 | **Interaction identity — the `id` is the list element key** (v3); cycles key off endpoints |
-| ADR-11 | D11 | **Reliable events + top-level id-keyed sagas** (v3); no broker exactly-once |
-| ADR-12 | D12 | **Evals — coverage + a fully wired adapter contract** (v3); ship no runner |
+| ADR-11 | D11 | **Reliable events + top-level id-keyed sagas** (v3); **core validates declared sagas + a compensation-gap advisory; required-when model deferred** (v3.2/B4); no broker exactly-once |
+| ADR-12 | D12 | **Evals — coverage + a fully wired adapter contract** (v3); **core = per-agent + e2e; universal deterministic coverage deferred** (v3.2/M1); ship no runner |
 | ADR-13 | D13 | **Per-check activation** (v3): each validator + registry activates only on its own data |

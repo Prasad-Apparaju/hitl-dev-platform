@@ -1,12 +1,14 @@
-# Compound Agentic System Surface: Design (HLD) — v3
+# Compound Agentic System Surface: Design (HLD) — v3.2 (core scope lock)
 
 > Mechanism (the *how*) for the requirements in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
-> (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). **v3** —
-> rewritten after the **round-2** independent Codex review returned REVISIONS REQUIRED (6 blockers), per
-> [`04-revision-plan.md`](04-revision-plan.md). Status: **draft, pending Codex re-review (round 3)**.
-> Targets **2.2.0**. Field-level precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md);
-> decisions in [`02-adrs.md`](02-adrs.md).
+> (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). **v3.2** —
+> the round-2 review rewrote the edge/leg/privilege/eval model; the **round-4** review (2026-07-22) drove
+> the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): eval coverage → per-agent
+> + e2e (universal deferred); saga → declared-only + compensation-gap advisory (required-when deferred);
+> CR-6 sync reliability narrowed; delegated authority deferred. Per [`04-revision-plan.md`](04-revision-plan.md).
+> Status: **draft, core-lock applied, pending Codex re-review (round 5)**. Targets **2.2.0**. Field-level
+> precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md); decisions in [`02-adrs.md`](02-adrs.md).
 
 **Thesis (unchanged): a compound agentic system is a manifest, extended.** Each revision corrects *which*
 manifest structures carry it. The round-2 review found that v2's fixes were partly asserted rather than
@@ -134,30 +136,38 @@ A genuine necessary-and-sufficient claim **at declaration granularity**, honest 
 - **Sagas are a top-level, id-keyed model (LLD §4.2, M3)** — not a string nested on one edge. A `saga`
   has a coordinator, a forward `order`, and `steps` referencing the **interaction ids** of the
   side-effecting interactions it spans; compensation runs in reverse order and must itself be idempotent.
-  **Scoped to distributed-compensation units (round-3 B4):** a saga is required only for a **declared
-  transactional unit** — a `segment` marked `transactional: true` containing ≥2 side-effecting **agent or
-  async/event** interactions. A **synchronous, deterministic** flow is *not* forced to declare a saga (it's
-  a database-transaction concern, not distributed compensation) — forcing one on it, and its `policies`
-  registry, was the round-3 over-reach that also broke additive-only. The Advisor (FR-28) elicits *whether*
-  a flow needs distributed compensation; #10 validates declared sagas and enforces coverage only within a
-  declared transactional unit.
+  **Core disposition — validate declared, advise on gaps; required-when model deferred (v3.2/B4).** Round-4
+  found the saga *required-when* model (segment↔saga identity, overlap, parallel compensation, requiredness
+  inference) not yet sound, so the core **defers the enforcement model** ([`../agentic-core-scope.md`](../agentic-core-scope.md))
+  and instead: (a) `check_saga` validates every **declared** saga's well-formedness; (b) a
+  **`check_compensation_gap` advisory** (`warning`, never a blocker) fires when a flow has ≥2 side-effecting
+  agent/async interactions and no covering saga — the honest *"looks like this needs distributed
+  compensation, which the core doesn't enforce yet"* signal that closes the "silent omission" hole. A
+  **synchronous, deterministic** flow triggers neither (a database-transaction concern). The Advisor (FR-28)
+  elicits *whether* a flow needs distributed compensation up front so the advisory is rarely a surprise.
 - **Sync vs async reliability boundary (CR-6, ADR-5).** The design value-checks the reliability *contract*
   that cannot be a plain retry — **async** delivery/idempotency/DLQ/replay and cross-flow compensation
   (sagas). A **synchronous** call's own timeout/retry is product **runtime** config (like a connection
-  pool), so HITL does not schema-validate a timeout number; the sync cross-hop failure mode is *captured*
-  in the callee facade's `error_modes` and bounded by the leg's `cost_bound`/`cycle_bound`. This keeps the
-  line at governs-not-runtime while still capturing every CR-6 failure mode (non-determinism propagation →
-  boundary legs; timeout/retry → facade error_modes + async contract; cycles → `cycle_bound`; fan-out cost
-  → consumer-stochastic `cost_bound`; cross-agent trust → authorization).
+  pool), so HITL does not schema-validate a timeout number; the sync cross-hop failure mode is *surfaced*
+  through the callee facade's `error_modes` and bounded by the leg's `cost_bound`/`cycle_bound`. **Honest
+  narrow (v3.2/M5):** a **design-time sync timeout/retry declaration** check is **deferred** — the core does
+  not claim to capture sync reliability "on the legs." CR-6's failure modes that the core *does* capture at
+  design time: non-determinism propagation → boundary legs; async timeout/retry → the async contract; cycles
+  → `cycle_bound`; fan-out cost → consumer-stochastic `cost_bound`; cross-agent trust → authorization. Sync
+  timeout/retry *values* remain product runtime.
 
 ## 6. Eval coverage + adapter (F3, CR-8/16/20, B4)
 
 HITL governs **coverage and gating**; the product runs the evals (governs-not-runtime).
 
-- **Targets have real homes (LLD §7):** agent domains, interactions (each carries `evals`), and declared
-  **`segments`** (a top-level list of routes through the interaction graph, including `e2e:true` flows).
-  A **coverage validator** blocks a target with no eval spec and no unlapsed waiver, and requires at least
-  one end-to-end segment for a multi-agent system.
+- **Core targets = every agent + one e2e segment (v3.2/M1).** The **coverage validator** blocks an
+  **agent** component with no eval spec and no unlapsed waiver, and requires at least one `e2e:true` segment
+  for a multi-agent system — this is CR-8/CR-16's *independent per-agent eval*, without the over-governance
+  of requiring a spec for every deterministic component and edge (the round-3 broadening round-4 flagged as
+  an O6 violation). Deterministic components/edges are **optional** targets (opt in with a `contract_test`
+  spec); **universal coverage is a deferred follow-on** ([`../agentic-core-scope.md`](../agentic-core-scope.md)).
+  Targets have real homes (LLD §7): agent domains, interactions (each may carry `evals`), and declared
+  `segments` (a top-level list of routes, including `e2e:true` flows).
 - **Registry + waivers + approval (LLD §7.1/§7.2):** an eval **index** (`{target_type, target_id,
   spec_path}`, unique per target), a **waiver file** (owner, reason, tier-limit, revisit), and an
   **approval block** on each spec (`reviewer`, `date`, `decision`). `status: baseline|extended` is
@@ -208,15 +218,22 @@ checkpoint/resume/idempotency/cancellation/human-gate values. Deep agents requir
 domain references (their capability description is the referenced domain's `purpose` + facades), gates,
 guardrails, `context_isolation: true`, and durable filesystem/semantic long-term memory.
 
-## 10. Observability (CR-9) — deferred, stated
+## 10. Observability + PM eval-console (CR-9/CR-16) — a floor gate (hard directive 2026-07-22)
 
-Cross-hop tracing + the token-cost amplification budget are **out of this design package**, tracked in
-[#15](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/15). Note: the existing token-cost
-registry measures *HITL development-change* spend, not product-agent per-node/per-edge fan-out — #15 must
-add a product-agent extension, not reuse it as-is. Because CR-9 has no mechanism in this package, the
-acceptance gate (§13) is **scoped to CR-2..CR-8, CR-10..CR-18, and CR-20**, with CR-9 depending on #15
-(M12) and **CR-1/CR-19 relocated to the Agentic Design Advisor (FR-28)** — the package does not claim to
-cover any of those three.
+Per the directive that a **PM eval console + live traces is a hard requirement**, the **design-time
+declaration + gate** is now **in this package** (no longer deferred): every agentic system carries a
+top-level **`observability`** block (LLD §4.3) — cross-hop tracing (OTel GenAI / OpenInference convention,
+the traced hops, span attributes), a token-cost amplification budget, and a **PM eval-console** declaration
+(the surface the PM uses to run evals + review results/traces, CR-16). **`check_observability`** (LLD §6.17)
+is a **blocking floor gate**: a missing or incomplete declaration fails.
+
+Split, honestly (governs-not-runtime, O1): **HITL ships** the declaration schema, the validator, the floor
+gate, and the **static posture view** generated from the declaration. **The product builds** the running
+trace backend + the live console + the eval execution — with the **companion product ([#21](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/21))** as the runnable reference. So HITL enforces
+that the system is observable + PM-evaluable; it does not itself run the dashboard/eval engine. **#15**
+keeps only the **runtime** posture-backend refinements (the existing token-cost registry measures *HITL
+development-change* spend, not product-agent fan-out — the product extension lives there). The acceptance
+gate (§13) now **includes CR-9**; **CR-1/CR-19 remain relocated to the Agentic Design Advisor (FR-28)**.
 
 ## 11. Decisions (v3 — locked as ADRs)
 
@@ -245,7 +262,8 @@ ceilings; tier input; CR-15 fold-in), **B4** (segments + interaction evals + ind
 wired adapter + generator spec), **B5** (per-check activation; conditional registries), **B6** (policy +
 store registries; requiredness-by-kind; value blockers; unknown-field rule). Majors M1–M12 and minors
 m1–m4 are mapped in [`04-revision-plan.md`](04-revision-plan.md); the LLD carries their field-level fixes.
-CR-9 (M12) explicitly deferred to #15 and excluded from the acceptance gate. ADR-2/D2, ADR-9/D9, ADR-10/D10
+CR-9 was deferred to #15 in v3; **per the 2026-07-22 hard directive it is now a floor gate in this package**
+(`check_observability`, §10 / LLD §6.17) — only its runtime backend stays #15. ADR-2/D2, ADR-9/D9, ADR-10/D10
 rewritten; ADR-13/D13 added (per-check activation).
 
 ## 13. Acceptance criteria (implementation gate)
@@ -254,9 +272,10 @@ rewritten; ADR-13/D13 added (per-check activation).
    manifest that adopts `kind`/typed `interactions` validates with **no** new registry (per-check
    activation, B5).
 2. Coverage is honest about *how* each requirement is met — not every CR is a validator:
-   - **Validated by a fail-closed `ci/` validator** (this package, #13/#15/#16): CR-3, CR-4, CR-5, CR-7,
-     CR-12, CR-13, CR-14, CR-15, CR-17, CR-18, and the mechanical parts of CR-6/CR-8/CR-16/CR-20 — each
-     with a regression suite; presence-only checks are gone.
+   - **Validated by a fail-closed `ci/` validator** (this package, #13/#16): CR-3, CR-4, CR-5, CR-7,
+     CR-12, CR-13, CR-14, CR-15, CR-17, CR-18, **CR-9** (`check_observability` — the design declaration +
+     floor gate), and the mechanical parts of CR-6/CR-8/CR-16/CR-20 — each with a regression suite;
+     presence-only checks are gone.
    - **Delivered as a generator/adapter** (this package): CR-3/CR-14 views, CR-8/CR-16 eval coverage +
      adapter, CR-20 baseline generator.
    - **Delivered as a workflow/pattern-doc artifact gated by its own sub-issue** (not a `ci/` validator):
@@ -265,7 +284,9 @@ rewritten; ADR-13/D13 added (per-check activation).
      (FR-28)** and are gated there, not here. The
      classification-completeness of CR-2 and the `orchestration.justification` presence of CR-11 *are*
      validated here.
-   - **Out of this package:** **CR-9** (observability) is deferred to #15; this gate does not claim it.
+   - **CR-9 (observability + PM eval-console)** is now **validated here** by `check_observability` (a floor
+     gate on the `observability` declaration, §10); only its **runtime** trace-backend/console is out of
+     package (product-built, #21 reference; #15 keeps the runtime posture refinements).
    This criterion passes when each CR is met by the mechanism named above, no CR is silently claimed to
    have a validator it does not, and every `ci/` validator has its suite.
 3. The showcase manifest: a deterministic caller of an agent is blocked without response `validation`; a

@@ -10,9 +10,16 @@ The **requirements (what)** live one layer up, under the product area:
 
 | Doc | Content | Status |
 |---|---|---|
-| [01-design.md](01-design.md) | HLD: manifest extensions, topology model, determinism-boundary discipline, A2A-as-facade encoding, validators, eval discipline, decisions D1-D7 | Draft, pending architect review (#11) |
-| [02-adrs.md](02-adrs.md) | ADR-1..ADR-9 formalizing D1-D9 (alternatives + concrete cost) | Accepted |
-| [03-lld.md](03-lld.md) | LLD: exact schema field types, scope grammar, needed-privilege algorithm, 8 validator signatures + test matrix | Draft, pending review |
+| [01-design.md](01-design.md) | HLD (v3.2): manifest extensions, `interactions` edge model, determinism-boundary per leg, A2A-as-facade encoding, per-check activation, eval + saga discipline, decisions D1-D13 | Draft, core-lock applied, pending Codex round 5 |
+| [02-adrs.md](02-adrs.md) | ADR-1..ADR-13 (v3.2) formalizing D1-D13 (alternatives + concrete cost) | Accepted, core-lock applied |
+| [03-lld.md](03-lld.md) | LLD (v3.2): exact schema field types, scope grammar, needed-privilege algorithm, validator signatures + test matrix | Draft, pending Codex round 5 |
+| [04-revision-plan.md](04-revision-plan.md) | Codex review response (rounds 1-4) + the round-4 **core scope lock** fix-map | Living |
+
+The round-4 review drove a **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)):
+eval coverage → per-agent + e2e (universal deferred); saga → declared-only + compensation-gap advisory
+(required-when deferred); CR-6 sync reliability narrowed; delegated authority deferred. The
+**Agentic Design Advisor** (FR-28, [`../agentic-design-advisor/`](../agentic-design-advisor/)) is this
+surface's right-sizing front door.
 
 Governs the composition; ships no runtime, backbone, dashboard, or eval engine. Target release:
 **2.2.0** (2.x line only). Related: `docs/design/platform-bootstrap/`, `docs/design/workflow-model/`.

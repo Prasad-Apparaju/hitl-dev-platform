@@ -1,12 +1,15 @@
-# Agentic Design Advisor: Design (HLD) — v3
+# Agentic Design Advisor: Design (HLD) — v3.2 (core scope lock)
 
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
 > (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); **field-level precision (catalog schema,
 > composer, floor function, command→manifest mapping, integration) in the LLD [`04-lld.md`](04-lld.md)**;
 > test plan in [`03-test-plan.md`](03-test-plan.md).
-> Status: **draft, pending review**. **v3** — reshaped around **runnable commands + a composed workflow**
-> (v2), then revised after two rounds of pm + architect review (ADV-13 integration, floor waiver, honest
-> kill-switch/observability targets, complete composition/consequence tables). The Advisor is the **front
+> Status: **draft, core-lock applied, pending Codex re-review (round 5)**. **v3.2** — reshaped around
+> **runnable commands + a composed workflow** (v2), revised after pm + architect rounds (v3), then
+> **core-scope-locked** after the round-4 objectives review ([`../agentic-core-scope.md`](../agentic-core-scope.md)):
+> **non-circular topology-probe routing** (B2, §3.1); **obligation-first floor** so `floor ⊆ composed` (B3,
+> §5); **map trimmed to terminal+Mermaid core**, HTML/live-combined deferred (M8, §9.7); the
+> **contract-authoring seam** (`facade_apis`+`authorization`) named (B1, §7). The Advisor is the **front
 > door** to the compound-agentic surface ([#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)):
 > it elicits the whole scenario and composes a right-sized workflow of commands; the commands produce the
 > manifest #10 then validates.
@@ -29,20 +32,20 @@ Each expert concern is one runnable command. The intake runs first; HITL compose
 |---|---|---|
 | `hitl:agentic-intake` | understand the whole scenario; **compose the workflow** (§4) | the scenario record + the composed workflow |
 | `hitl:agentic-classify` | component right-sizing (agent vs deterministic; simple vs deep) | domain `kind`s + `kind_rationale` |
-| `hitl:agentic-boundary` | the determinism boundary | trust-leg obligations on interactions |
+| `hitl:agentic-boundary` | the determinism boundary **+ the inter-component contract** | trust-leg obligations on interactions **+ `facade_apis` on each callee and `interactions.authorization.allowed_callers`** (the contract seam #10's `check_references`/`check_authorization` validate — B1) |
 | `hitl:agentic-privilege` | privilege / identity / trust (lethal-trifecta); **portability** (providers bound as capabilities, not embedded) | agent `uses`/`identity` declarations |
 | `hitl:agentic-reliability` | reliability, idempotency, failure modes | manifest `async`/idempotency fields (#10) **+ a declared kill-switch artifact** † |
-| `hitl:agentic-observability` | detectability — how misbehavior is seen in prod | **a declared observability artifact** (tracing/eval plan) † — #10 validator arrives with #15 (CR-9) |
+| `hitl:agentic-observability` | detectability — how misbehavior is seen in prod; the **PM eval console** | the `observability` manifest block (tracing hops + cost budget + **PM eval-console** declaration) → #10 `check_observability` (**floor gate**, hard directive 2026-07-22) |
 | `hitl:agentic-memory` | memory / state, PII / data classification | memory declarations + pii policy |
 | `hitl:agentic-evals` | evaluation (incl. model/prompt-version drift) | eval coverage + specs |
 | `hitl:agentic-deploy` | build-vs-buy deployment | the **recorded** deployment decision (§8) |
 
-**† Two outputs have no #10 manifest target today (ADV-8, ADR-A5):** the **kill-switch** and all of
-**`agentic-observability`** produce **declared design artifacts** in the decision record (recorded,
-human-reviewed), *not* manifest fields #10 validates. Observability's #10 check lands with **#15** (#10's
-CR-9 is deferred there). This is stated honestly rather than claimed as a manifest→#10 mapping that
-doesn't exist. **Cost / amplification** (a lens, ADV-2) is not a separate command — it is carried by
-`agentic-boundary` as the leg-level `cost_bound` on interactions into an agent.
+**† One output has no #10 manifest target today (ADV-8, ADR-A5):** the **kill-switch** produces a **declared
+design artifact** in the decision record (recorded, human-reviewed), *not* a manifest field #10 validates
+(no `kill_switch` check exists). **`agentic-observability` now authors a real #10 field** — the
+`observability` block validated by `check_observability` (a floor gate) per the 2026-07-22 hard directive, so
+it is **no longer** a declared-artifact exception. **Cost / amplification** (a lens, ADV-2) is carried both
+by `agentic-boundary` (leg-level `cost_bound`) and by the observability block's `cost_budget`.
 
 Every command is **independently runnable** (ADV-1): a team can run `hitl:agentic-privilege` alone against
 an existing design. The **intake elicits** the whole scenario; the **per-concern commands own each lens's
@@ -64,21 +67,23 @@ the questions and the option menus (the catalog, ADR-A2).
 The Advisor **does not replace** HITL's existing design intake; it is the **compound-agentic branch of
 it**. Concretely (ADR-A9):
 
-- **`pm-design-feature`** already asks "what is the delivery surface?" (web / mobile / API / agentic / …).
-  A branch is added: once the elicited system has **≥2 components and ≥1 inter-component edge**, that step
-  **hands off to `hitl:agentic-intake`** instead of the single-agent path. For a single-component product,
-  nothing changes — it stays on the existing single-agent surface. So the Advisor **precedes** the design
-  track for compound systems and is skipped for simple ones; it never gates or replaces the deterministic
-  flow.
-- **`ai/codex/AGENTS.md`** gains a **routing rule** so the Codex/agent design path recognizes the compound
-  surface (the same ≥2-components-and-≥1-edge trigger) and follows the composed workflow rather than the
-  single-agent template.
-- The trigger is evaluated **from the intake's own component/edge count** — no new detector; the intake
-  already elicits the component list (§3). The handoff writes the composed workflow (§4) and the scenario
-  record, which the design track then consumes.
+- **No routing circularity (round-4 B2).** The surface cannot be chosen *after* the full intake (that would
+  require running the agentic intake to decide whether to run the agentic intake). So `pm-design-feature`'s
+  existing "what is the delivery surface?" step gains a **short topology probe** — two questions: *how many
+  distinct components (services/agents/stores)?* and *does any component call, hand off to, or message
+  another?* This probe is **the single selector** and is cheap enough to always run:
+  - **≥2 components AND ≥1 inter-component edge → the compound surface:** hand off to `hitl:agentic-intake`
+    for the full elicitation (§3) + composition (§4).
+  - **otherwise → the existing single-agent path**, unchanged.
+- **`ai/codex/AGENTS.md`** gains the **same probe-then-route rule** so the Codex/agent design path applies
+  the identical selector before choosing the compound workflow vs the single-agent template.
+- The full `hitl:agentic-intake` then elicits the complete component/edge detail; the probe only decides
+  *which surface*, the intake fills in the rest. The handoff writes the composed workflow (§4) and the
+  scenario record, which the design track then consumes.
 
-This is the architectural sequencing the round-2 review flagged as missing: *precede for compound, skip
-for simple, never replace the existing intake.*
+This is the architectural sequencing the round-2 review flagged as missing and the round-4 review found
+still circular: *a cheap probe routes; the full intake runs only on the compound branch; the deterministic
+flow is never gated or replaced.*
 
 ## 4. Composition (ADV-3) — HITL figures out the workflow
 
@@ -107,7 +112,7 @@ table). The full set:
 | `agentic-boundary` | any interaction crosses an agent↔deterministic or agent↔external seam |
 | `agentic-privilege` | any component is an agent (it holds capabilities/identity) |
 | `agentic-reliability` | `side_effects ≠ none`, **or** any interaction is `async_task`/`event`, **or** `autonomy ∈ {supervised, autonomous}` (kill-switch) |
-| `agentic-observability` | `stakes ∈ {customer_facing, regulated}` **or** `autonomy == autonomous` |
+| `agentic-observability` | any component is an agent (observability + PM eval-console is a floor obligation for any agentic system — hard directive) |
 | `agentic-memory` | any agent declares memory/state, **or** `data ∈ {sensitive, pii}` |
 | `agentic-evals` | any component is an agent (quality is unprovable without evals) |
 | `agentic-deploy` | always for a compound system (a build-vs-buy call is always made) |
@@ -126,7 +131,7 @@ consequence:
   # kind: command          → composes a hitl:agentic-* command (name)
   # kind: floor            → adds/removes a floor entry (with the §5 rule ref)
   # kind: manifest_field   → authors a specific #10 manifest field (path)
-  # kind: declared_artifact → records a design artifact with no #10 target (kill-switch, observability §2 †)
+  # kind: declared_artifact → records a design artifact with no #10 target (kill-switch §2 †; observability now authors a #10-gated field)
   # kind: gate|boundary|classify → the specific design obligation
   target: string           # command name | manifest path | artifact id | floor-rule id
   note: string
@@ -149,22 +154,37 @@ autonomy      ∈ {assisted, supervised, autonomous}
 scale         ∈ {small, large}
 ```
 
-**Floor rule (deterministic):** `floor = the set of mandatory commands`, where a command is mandatory iff
-its rule fires. The rules (worked in the LLD) are monotone in Tier and risk, e.g.:
+**Floor rule — obligation-first, so nothing silently drops (round-4 B3).** The floor is computed **before**
+proportionality prunes, and **a firing floor rule forces its owning command into the composition** — the
+floor is never intersected with the composed set. Order of operations:
 
-| Mandatory command | Fires when |
+1. Compute the **firing floor obligations** from Tier + declared risk (the rules below). Each obligation
+   names the command that owns it.
+2. **Union those commands into the composed workflow** (`composed := composed ∪ floor_commands`). A command
+   pulled in *only* by a floor obligation is composed *because* it is mandatory — it cannot be dropped by a
+   relevance predicate that happened to be false.
+3. Proportionality then only decides which **non-floor** relevant commands are offered as rungs.
+
+| Mandatory command | Floor rule fires when |
 |---|---|
-| `agentic-classify` | always, once composed (≥1 agent) |
+| `agentic-classify` | always, for a compound system (≥2 components) |
 | `agentic-boundary` | any interaction crosses an agent↔deterministic (or external) seam |
 | `agentic-privilege` | Tier ≥ 2, **or** `data ∈ {sensitive, pii}`, **or** the lethal-trifecta pattern is present |
 | human gate (via `agentic-reliability`) | `side_effects == irreversible` |
 | kill-switch (via `agentic-reliability`) | `autonomy ∈ {supervised, autonomous}` and `side_effects ≠ none` |
-| `agentic-observability` | Tier ≥ 2, **or** `autonomy == autonomous` |
+| `agentic-observability` | **any agent is present** — presence is non-negotiable (the hard 2026-07-22 directive: every agentic system must be observable + PM-evaluable); the *depth* declared scales with Tier/stakes, but the floor obligation fires for any agent |
 | `agentic-evals` | Tier ≥ 2 and `stakes ∈ {customer_facing, regulated}` |
 
-**Precedence:** if several rules apply, the command is mandatory (union, not override) — so the floor is
-the *highest* obligation across all matching conditions; there is no ambiguity. Commands not in the floor
-but relevant are **offered as rungs** ("add now, or defer and record as waived").
+**Precedence:** if several rules apply, the command is mandatory (union, not override) — the floor is the
+*highest* obligation across all matching conditions.
+
+**Invariant `floor ⊆ composed` (lint-enforced, B3).** A build-time lint (`FLOOR-SUBSET`) asserts that every
+command a floor rule can name is a real, composable command, and that step 2 makes `floor_commands ⊆
+composed` hold for **every** point in the risk-factor space — so there is no `(Tier, risk)` combination
+where a floor obligation fires but its command is absent. A floor entry with no owning command, or a rule
+that could fire outside its command's domain, fails the lint. This closes the silent-drop hole: the floor
+cannot mandate something the composed workflow omits. Commands not in the floor but relevant are **offered
+as rungs** ("add now, or **defer** and record").
 
 **Floor enforcement — non-silently-droppable, but waivable (ADV-12, ADR-A6).** A floor command **cannot be
 dropped silently**; below the floor **without a waiver** is a blocker. But — consistent with HITL's own
@@ -172,8 +192,9 @@ hard-gate precedent (PRD FR-25: "hard-blocked until … *or waived*") and with "
 floor command **can** be dropped via an **explicit, tier-appropriate waiver** recorded in the decision
 record (owner, reason, tier-limit, revisit), the same waiver shape HITL already uses. The floor is the
 teeth (no accidental under-governance); the waiver is the human escape hatch (auditable, never silent).
-The `kill-switch` and observability floor entries are satisfied by their **declared artifacts** (§2 †),
-human-reviewed, since they have no #10 check today.
+The **observability** floor entry is satisfied by the authored `observability` manifest block, which #10's
+`check_observability` **gates** (hard directive). The **kill-switch** floor entry is satisfied by its
+**declared artifact** (§2 †), human-reviewed, since it has no #10 check today.
 
 **Determinism, honestly (ADV-12).** The floor is a deterministic function of the *declared* risk factors,
 so the *computation* is reproducible. It does **not** claim two people describe the same scenario
@@ -203,13 +224,13 @@ unchanged. There is **no** "active-validator set" passed to #10, and **no change
 authoring the manifest*, which is exactly the "additive, no double-source" property ADR-A5 claims —
 now demonstrated against #10's real activation model rather than an invented seam.
 
-**The honest exception (ADR-A5).** Not every command authors a #10-validated field. Two obligations have
-**no #10 target today** and instead produce **declared design artifacts** (recorded, human-reviewed): the
-**kill-switch** (from `agentic-reliability`) — there is no `kill_switch` field or check in #10's schema —
-and **`agentic-observability`** — #10's CR-9 is deferred to **#15**, so its validator doesn't exist yet.
-These are stated as declared artifacts, not as a manifest→#10 mapping that doesn't hold; when #15 lands,
-observability's artifact gains a real #10 check. Making them mandatory-floor is still sound — the control
-is real and human-reviewed — it just isn't machine-validated by #10 until its target exists.
+**The honest exception (ADR-A5) — now one.** Not every command authors a #10-validated field. **One**
+obligation has **no #10 target today** and produces a **declared design artifact** (recorded,
+human-reviewed): the **kill-switch** (from `agentic-reliability`) — there is no `kill_switch` field or check
+in #10's schema. **`agentic-observability` is no longer an exception** — per the 2026-07-22 hard directive,
+#10 gained `check_observability` (a floor gate on the `observability` block) via its own CR-9 elevation, and
+the observability command authors that real field. Making the kill-switch mandatory-floor is still sound —
+the control is real and human-reviewed — it just isn't machine-validated by #10 until its target exists.
 
 ## 8. Deployment (ADV-14, ADR-A7) — record, human-carries
 
@@ -267,10 +288,10 @@ FLOOR (mandatory):
   agentic-boundary        (resolution_agent → refund_service crosses the seam; intake_agent → account_service)
   agentic-privilege       (Tier 2 + PII)
   agentic-reliability      → human gate (irreversible) + kill-switch (supervised + side effects)
-  agentic-observability   (Tier 2)
+  agentic-observability   (any agent — hard directive: observable + PM-evaluable; depth scales with Tier)
   agentic-evals           (Tier 2 + customer-facing)
 OFFERED (rungs, deferrable):
-  agentic-memory          (only if you want cross-session context — team defers it, recorded as waived)
+  agentic-memory          (only if you want cross-session context — team defers it, recorded as `deferred`)
 NOT INCLUDED (no data for the lens):
   saga/compensation       (irreversible ≠ compensable — you gate, you don't compensate)
   async reliability       (the flow is synchronous)
@@ -296,10 +317,11 @@ async, or deep-agent machinery, because their system doesn't need it. That is th
   an **idempotency key** (a #10 `async`/lifecycle field); plus a **kill-switch** — a **declared artifact**
   (a flag that disables auto-resolution fleet-wide), human-reviewed, since #10 has no kill-switch field
   (§7 exception).
-- **`agentic-observability`** → records a **declared observability artifact** (tracing across the four
-  hops + an **eval on proposed refund amounts** so a hallucinated amount is caught). This is a *design
-  artifact today* — #10's observability check (CR-9) lands with #15; until then it is human-reviewed, not
-  machine-validated (§7 exception).
+- **`agentic-observability`** → authors the **`observability` block** — `tracing` across the four hops
+  (OTel GenAI), a `cost_budget`, and a **PM eval-console** declaration (where the PM runs the refund-amount
+  eval + reviews traces so a hallucinated amount is caught). #10's **`check_observability` floor-gates** it
+  (hard directive) — a missing block or console **blocks**. HITL validates the declaration; the product
+  builds the running console/trace backend (#21 reference).
 - **`agentic-evals`** → seeds baseline evals for each agent and the end-to-end flow, for the PM to own.
 - **`agentic-deploy`** → drivers say small scale, customer-facing, no data-residency constraint →
   **recommends a managed agent platform** (from-scratch listed as rejected, "you'd rebuild orchestration,
@@ -315,11 +337,11 @@ The commands have authored the manifest (`kind`s, `interactions`, trust legs, `u
 evals). On the next `derive.py verify`, **#10's per-check activation runs** (checked against #10 LLD §6.0):
 `check_classification`, `check_topology` + `check_references` (any `interactions` present),
 `check_authorization` (interactions target agents), `check_boundary_legs`, `check_capabilities`,
-`check_lifecycle` (the gate), `check_eval_coverage` — and **skips** `check_saga`, `check_async`,
-`check_deep_agent`, because there's no data for them. There is **no** `check_observability` and no
-kill-switch check — those two obligations are the **declared artifacts** of §7, not #10 fields (yet). No
-#10 change, no seed. The human carries the deployment decision onward. The result is a **right-sized,
-governed design** the team can hand to the compound-agentic build track.
+`check_lifecycle` (the gate), `check_eval_coverage`, **`check_observability`** (the `observability` block
+the observability command authored — the floor gate, hard directive) — and **skips** `check_saga`,
+`check_async`, `check_deep_agent`, because there's no data for them. The **kill-switch** obligation is the
+one remaining **declared artifact** of §7 (no #10 field yet). The human carries the deployment decision
+onward. The result is a **right-sized, governed design** the team can hand to the compound-agentic build track.
 
 ### 9.6 Contrast — a trivial case
 
@@ -328,13 +350,19 @@ effects, no PII, internal** → composition includes only `agentic-classify` and
 `agentic-evals`; the floor is essentially "declare it." The team barely feels HITL. Same commands, same
 Advisor — a completely different weight, set by the scenario, not by ceremony.
 
-### 9.7 How the map renders (ADV-15) — terminal-first, three renderings, one source
+### 9.7 How the map renders (ADV-15) — terminal-first; two core renderings, one source
+
+> **Core scope (round-4 M8).** The **core** map is **terminal text + Markdown/Mermaid** (renderings 1–2
+> below) — that is the whole shippable Should. The **rich HTML rendering and the "chat + live map" combined
+> mode** (rendering 3 + the block after it) are a **deferred enhancement** with a defined host API, not
+> core; they are kept here as the design target for the follow-on. See
+> [`../agentic-core-scope.md`](../agentic-core-scope.md).
 
 The **evolving system map** (§9.2–9.4 shows it filling in) is a **generated view** — the same category as
 HITL's command-map/posture views, regenerated from the accumulating scenario record **at each meaningful
 step** (a component named/typed, a boundary drawn, a gate added, the deploy decision made). As agents are
 added one at a time, the map grows one node/annotation at a time. Because HITL is used mostly in the
-**terminal**, the map is terminal-first and renders three ways from one data source:
+**terminal**, the map is terminal-first. The two **core** renderings from one data source:
 
 1. **Terminal-native inline** — a compact box-drawing map re-printed at each milestone (the live view, **no
    browser**), e.g.:
@@ -349,20 +377,20 @@ added one at a time, the map grows one node/annotation at a time. Because HITL i
 2. **Markdown + Mermaid** — the same map + the getting/available/not-needed table written into the decision
    record (`agentic-decisions.md`), previewable in the IDE / on GitHub, **auto-updating on file change** (no
    browser).
-3. **Optional rich interactive HTML** — for the web surface, a shareable link, or the portal (the prototype
-   at `2e888cca-…` demonstrates it). A bonus rendering, never the baseline. **"Portal" means static-file
-   publishing** (a generated HTML file served as a static page, like the existing portal) — *not* a hosted
-   rendering service, which would cross governs-not-runtime.
-
-**Combined "chat + live map" mode (artifact-capable surfaces).** On a Claude Code surface with an artifact
-panel (web/desktop), rendering (3) becomes the *live* view: the intake **re-publishes the map artifact after
-each meaningful step to the same URL**, so the discussion (the chat) and the evolving map (the side panel)
-sit together and update as the user answers. This is the natural home for "picture the system as you
-discuss it." **Two constraints keep it in-lane:** (a) the artifact is a **live view, not an input** — it is
-sandboxed and cannot post answers back, so the *conversation* stays the input and the map is the evolving
-*output*; a two-way "fill the form and it builds the design" web app would cross into runtime and is out of
-scope. (b) It is the **rich tier only** — a bare CLI or air-gapped setup still gets the terminal-text map
-(rendering 1). The demo at `efd56c28-…` shows the loop on the Cerrtus flow.
+> **Deferred enhancement (not core) — rich HTML + combined live mode.**
+>
+> 3. **Rich interactive HTML** — for the web surface, a shareable link, or the portal (the prototype at
+>    `2e888cca-…` demonstrates it). **"Portal" means static-file publishing** (a generated HTML file served
+>    as a static page) — *not* a hosted rendering service, which would cross governs-not-runtime.
+>
+> **Combined "chat + live map" mode (artifact-capable surfaces).** On a Claude Code surface with an artifact
+> panel, rendering (3) becomes the *live* view: the intake **re-publishes the map artifact after each
+> meaningful step to the same URL**, so the discussion and the evolving map sit together. **Two constraints
+> keep it in-lane** for the follow-on: (a) the artifact is a **live view, not an input** (sandboxed, cannot
+> post answers back — the conversation stays the input); (b) it is the **rich tier only** — a bare CLI or
+> air-gapped setup always falls back to the terminal-text map (rendering 1). The demo at `efd56c28-…` shows
+> the loop on a supply-chain flow. This mode is deferred because a Should feature should not carry a live
+> re-publish loop and a host API into v1 (round-4 M8).
 
 **Node-type visual vocabulary.** Every rendering uses one consistent visual language so a component's kind
 reads at a glance: **agent** (hexagon / green), **deterministic service** (chip / steel), **datastore**
@@ -372,9 +400,9 @@ equivalents of the same vocabulary. LLD §6 specifies the icon set and the ASCII
 
 **Boundary (governs-not-runtime):** HITL **writes the files and prints the text**; it does **not** run a
 live-reload server. Live browser refresh is the user's IDE/tooling (the IDE Mermaid preview updates on file
-change for free); the terminal inline map, the regenerated file, and (on capable surfaces) the re-published
-artifact are what HITL provides. Regenerate is deterministic from the scenario record, so the map never
-drifts from the design.
+change for free); the **core** deliverables are the terminal inline map and the regenerated Markdown/Mermaid
+file (the re-published artifact is the deferred rich mode above). Regenerate is deterministic from the
+scenario record, so the map never drifts from the design.
 
 ## 10. Decisions (locked as ADRs)
 
@@ -385,10 +413,10 @@ drifts from the design.
 | A3 | **Recommend, never decide** — output is a proposal + decision record the human confirms |
 | A4 | **HITL composes a proportionate workflow** from the intake — ask/run only what's relevant; depth follows risk |
 | A5 | The commands **author the manifest**; #10's existing per-check activation reacts — configure, don't feed a validator list, don't duplicate |
-| A6 | The **floor is a deterministic function of Tier + risk**; the ladder offers deferrable rungs (no new axis) |
+| A6 | The **floor is a deterministic function of Tier + risk**, computed **obligation-first** so `floor ⊆ composed` (a firing floor rule forces its command in — no silent drop, B3); the ladder offers **deferrable** rungs (no new axis) |
 | A7 | The Advisor **records the build-vs-buy decision; a human carries it** to the platform track — provisions nothing, auto-hands-off to nothing |
-| A8 | The **evolving map is a generated view, terminal-first** — inline text (no browser) + Markdown/Mermaid in the decision record + optional HTML; regenerated per step; HITL writes/prints, runs no live server |
-| A9 | The intake **integrates into `pm-design-feature`/`AGENTS.md`** — precedes the design track for compound systems (≥2 components + ≥1 edge), skipped for simple ones; never gates or replaces the existing intake |
+| A8 | The **evolving map is a generated view, terminal-first** — **core = inline text (no browser) + Markdown/Mermaid** in the decision record; regenerated per step; the **rich HTML + combined live mode are a deferred enhancement** (M8); HITL writes/prints, runs no live server |
+| A9 | The intake **integrates into `pm-design-feature`/`AGENTS.md`** — a **cheap topology probe routes** (no circularity, B2): precedes the design track for compound systems (≥2 components + ≥1 edge), skipped for simple ones; never gates or replaces the existing intake |
 
 ## 11. Acceptance criteria (implementation gate)
 
@@ -396,10 +424,10 @@ drifts from the design.
    high-risk one** (§9.3); saga/async/deep-agent commands appear only when their data is present.
 2. The floor **computation is deterministic** given declared factors (§5); a floor command **cannot be
    dropped silently** — dropping one requires a **recorded, tier-appropriate waiver** (ADV-12/ADR-A6).
-3. Each command **authors manifest fields** such that #10's *unmodified* per-check activation runs the
-   relevant validators — verified on a low- and a high-risk fixture (ADV-8), with no change to #10; the
-   **kill-switch and observability declared artifacts** are recorded (no #10 target yet), not silently
-   omitted (§7).
+3. Each command **authors manifest fields** such that #10's per-check activation runs the relevant
+   validators — verified on a low- and a high-risk fixture (ADV-8); **`agentic-observability` authors the
+   `observability` block** #10's `check_observability` floor-gates (hard directive); the **kill-switch
+   declared artifact** is recorded (no #10 target yet), not silently omitted (§7).
 4. Every menu decision emits a recommendation + rationale + recorded chosen/rejected; an override is
    recorded (ADV-6/ADV-9); build-vs-buy is owned by `agentic-deploy` alone (not the generic menu).
 5. `agentic-deploy` recommends managed for a low-stakes small-scale flow, requires a reason to override to

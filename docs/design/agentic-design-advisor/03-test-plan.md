@@ -1,9 +1,12 @@
-# Agentic Design Advisor: Test Plan — v3
+# Agentic Design Advisor: Test Plan — v3.2 (core scope lock)
 
 > Verifies the design [`01-design.md`](01-design.md) against the requirements
 > [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
-> (ADV-1..ADV-15). **v3** — command + composed-workflow model (v2), plus round-2 fixes: floor waiver,
-> declared-artifact exception, ADV-13 routing, complete relevance/consequence coverage. Status: **draft**.
+> (ADV-1..ADV-15). **v3.2** — command + composed-workflow model (v2), round-2 fixes, then the round-4 **core
+> scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): **FLOOR-SUBSET** (obligation-first,
+> B3), **AUTHOR-CONTRACT**/**AUTHOR-EVAL-CORE** (B1/M1), **RERUN-RECONCILE** (M4), **MAP-CORE-SCOPE** (M8
+> defer), ROLE-ATTR attributes-not-gates (M9), `deferred`≠`waived` (m3). Status: **draft, pending Codex
+> round 5**.
 
 ## 1. What must be true
 
@@ -48,15 +51,17 @@ Scripted-answer fixtures; assert the composed command list, the floor, and repro
 
 | Case | Scripted answers | Expect |
 |---|---|---|
-| **COMPOSE-LIGHT** | 1 component, no side effects, internal, no PII (HLD §9.6) | workflow = `agentic-classify` (+ offered `agentic-evals`); saga/async/deep/observability/deploy **not** composed |
+| **COMPOSE-LIGHT** | 1 component, no side effects, internal, no PII (HLD §9.6) | *(1 component ⇒ not compound ⇒ routed to the single-agent surface, Advisor not invoked)* — as a composer unit-test: workflow = `agentic-classify` (+ offered `agentic-evals`); saga/async/deep/deploy **not** composed |
+| **OBSERV-FLOOR** | a **low-stakes 2-agent read-only** compound flow (internal, no side effects, Tier 1) | `agentic-observability` **is in the floor** at **minimal depth** (basic trace + simple PM eval-console) — proves observability is floor for **any** agentic system (hard directive), presence non-negotiable, depth scales; still no saga/deep/reliability |
 | **COMPOSE-HEAVY** | 4 components (2 agents), irreversible, PII, supervised, Tier 2 (HLD §9.3) | floor = classify, boundary, privilege, reliability(gate+kill-switch), observability, evals, deploy; `agentic-memory` **offered**; saga/async/deep **not** composed |
 | PRUNE-SIDEEFFECT | side effects = none | no reliability/saga/idempotency command composed |
 | PRUNE-SINGLE | single component | no boundary/topology/privilege-by-edge command composed |
 | **FLOOR-DET** | run COMPOSE-HEAVY's answers twice | **identical** floor + workflow (deterministic, ADV-12) |
 | **FLOOR-RULE** | matrix over {stakes × side_effects × data × autonomy × scale} | each floor matches the §5 rule table (union/precedence) |
+| **FLOOR-SUBSET** | sweep {risk-factor space} × {tier 0..3}, for each compute `floor_commands` and `compose().workflow` | `floor ⊆ workflow` at **every** point — no `(s,tier)` where a floor rule fires but its command is absent (obligation-first, round-4 B3); e.g. `data==pii` on a non-agent path still forces `agentic-privilege` in |
 | **FLOOR-BLOCK** | Tier 2 + irreversible, then drop the human gate with **no waiver** | **blocker** — a floor command can't be dropped *silently* (ADV-12) |
-| **FLOOR-WAIVER** | same, but record an explicit tier-appropriate waiver (owner/reason/tier-limit/revisit) | **allowed** — the gate is dropped via a recorded waiver, per FR-25 (ADR-A6); the waiver lands in the decision record |
-| FLOOR-DEFER | COMPOSE-HEAVY, then defer the offered `agentic-memory` rung | allowed; recorded as waived on the ladder |
+| **FLOOR-WAIVER** | same, but record an explicit tier-appropriate waiver (owner/reason/tier-limit/revisit) | **allowed** — the gate is dropped via a recorded **waiver**, per FR-25 (ADR-A6); the waiver lands in the decision record, state `waived` |
+| FLOOR-DEFER | COMPOSE-HEAVY, then defer the offered `agentic-memory` rung | allowed; recorded as **`deferred`** (a rung deferral, *not* a `waiver` — distinct states, round-4 m3) |
 | **KILL-SWITCH** | supervised/autonomous + side effects, no declared kill-switch | `agentic-reliability` requires one; absence blocks |
 | **OBSERVABILITY** | Tier 2, no detectability declared | `agentic-observability` requires tracing + a misbehavior eval hook |
 
@@ -82,8 +87,11 @@ the right checks. These tests run the authored manifest through #10's real `chec
 | Case | Fixture | Expect |
 |---|---|---|
 | **AUTHOR-LIGHT** | COMPOSE-LIGHT's authored manifest | #10 activates only classification (+ graph integrity); **no** capability/boundary/saga/async checks; **no new registry required**; **#10 unchanged** |
-| **AUTHOR-HEAVY** | COMPOSE-HEAVY's authored manifest | #10 activates `check_classification`, `check_topology`+`check_references` (interactions present), `check_authorization` (interactions target agents), `check_boundary_legs`, `check_capabilities`, `check_lifecycle`, `check_eval_coverage`; **skips** `check_saga`/`check_async`/`check_deep_agent`; **#10 unchanged** — verified against #10 LLD §6.0 |
-| **AUTHOR-DECLARED** | the kill-switch + observability outputs | recorded as **declared artifacts** in the decision record; **no** `check_observability`/kill-switch check exists in #10 today (observability's lands with #15); the artifacts are present, not silently omitted (ADR-A5 §7) |
+| **AUTHOR-HEAVY** | COMPOSE-HEAVY's authored manifest | #10 activates `check_classification`, `check_topology`+`check_references` (interactions present), `check_authorization` (interactions target agents), `check_boundary_legs`, `check_capabilities`, `check_lifecycle`, `check_eval_coverage`, **`check_observability`** (agent present — the floor gate, hard directive); **skips** `check_saga`/`check_async`/`check_deep_agent`; verified against #10 LLD §6.0 |
+| **AUTHOR-CONTRACT** | COMPOSE-HEAVY's `agentic-boundary` output | authors `domains[callee].facade_apis[]` **and** `interactions[].authorization.allowed_callers`; run through #10 → `check_references` resolves the facades and `check_authorization` resolves the callers (proves the contract seam is authored, round-4 B1); a missing facade/authz would make #10 block |
+| **AUTHOR-EVAL-CORE** | COMPOSE-HEAVY's `agentic-evals` output | authors one eval spec **per agent** + one e2e segment spec (core scope); a **deterministic** component with no spec does **not** block #10 (`check_eval_coverage` core = agents+e2e, v3.2/M1) |
+| **AUTHOR-OBSERV** | COMPOSE-HEAVY's `agentic-observability` output | authors the top-level `observability` block (`tracing{convention,hops,attributes}` + `cost_budget` + `eval_console{access,owner,ref}`); run through #10 → **`check_observability` passes**; removing the block or the `eval_console` → #10 **blocks** (the floor gate, hard directive) |
+| **AUTHOR-DECLARED** | the kill-switch output | recorded as a **declared artifact** in the decision record; **no** kill-switch check exists in #10 today; present, not silently omitted (ADR-A5 §7). *(Observability is no longer here — it authors a #10-validated field, see AUTHOR-OBSERV.)* |
 | AUTHOR-NO-SEED | the Advisor's output artifacts | there is **no** `.hitl/agentic-profile.yaml` "active-validator set" consumed by #10; #10 activates purely from manifest content (proves the v1 fiction is gone) |
 | AUTHOR-NO-DUP | the Advisor's code/output | contains **no** copy of #10's validator logic — it authors manifest fields, #10 validates |
 
@@ -94,7 +102,8 @@ the right checks. These tests run the authored manifest through #10's real `chec
 | CMD-STANDALONE | each `hitl:agentic-*` command runs **independently** (e.g. `agentic-privilege` on an existing design) and passes skill-lint |
 | REC-DOC | a run writes a durable `agentic-decisions.md` (scenario + composed workflow + decisions) |
 | REC-REGEN | a re-run **regenerates** the record (not appends); no drift from the answers |
-| ROLE-ATTR | each catalog entry attributes to a real role; a role-scoped intake asks only that role's lenses |
+| ROLE-ATTR | each catalog entry **attributes** to a real role; role attribution is **presentation only** — it never gates whether a lens/entry **exists or is covered**. The whole-scenario intake asks **every** relevant lens regardless of role; a role filter only changes *who is shown as owner*, not which lenses run (round-4 M9 — attribute, don't gate) |
+| RERUN-RECONCILE | run the intake, record decisions/waivers, change one component's `kind` and add a component, re-run | derived workflow/floor **recomputed**; unchanged-input decisions **kept**; the changed-input decision **flagged stale for re-confirmation**; the new component **elicited fresh**; a removed one's decisions moved to `retired`; the human confirms a **diff before any write** — no silent overwrite (§7.3, round-4 M4) |
 | **ROUTE-COMPOUND** | `pm-design-feature` with an elicited ≥2-component + ≥1-edge system | routes into `hitl:agentic-intake` (the compound branch); `AGENTS.md` rule matches (ADV-13/ADR-A9) |
 | **ROUTE-SIMPLE** | a single-component product | stays on the existing single-agent surface; the Advisor is **not** invoked; the deterministic flow is unchanged |
 | **E2E-SUPPORT** | the worked example (HLD §9): scripted answers → composed 6-command floor + 1 offered rung → commands author the manifest → #10 activates the expected checks → deploy recorded + human-carry prompted |
@@ -103,6 +112,7 @@ the right checks. These tests run the authored manifest through #10's real `chec
 | **MAP-EVOLVE** | add components/decisions step by step | the map **regenerates per step** — a node/annotation/panel-item appears each step; the not-needed items show their reason |
 | **MAP-MERMAID** | the decision record after a run | contains a **Mermaid** topology + getting/available/not-needed table; regenerating the record is **deterministic** (same scenario → same map, no drift) |
 | **MAP-NO-SERVER** | the Advisor's runtime footprint | it **writes files / prints text only** — no live-reload server or hosted dashboard is started (ADR-A8, governs-not-runtime) |
+| MAP-CORE-SCOPE | the core map deliverable | is **terminal + Mermaid only**; the rich **HTML rendering and the combined "chat + live map" mode are deferred** (no core test — round-4 M8); the core suite passes without them |
 
 ## 8. Coverage of acceptance scenarios
 
@@ -112,7 +122,7 @@ the right checks. These tests run the authored manifest through #10's real `chec
 | 2. Low-stakes → short workflow, heavy commands absent | COMPOSE-LIGHT, PRUNE-*, E2E-TRIVIAL |
 | 3. High-stakes → full workflow, floor can't be dropped silently | COMPOSE-HEAVY, FLOOR-BLOCK, KILL-SWITCH |
 | 4. Every recommendation recorded + overridable | REC-RECORD, REC-OVERRIDE |
-| 5. Commands author manifest → #10 activation runs the right checks, unchanged; kill-switch/observability recorded as declared artifacts | AUTHOR-LIGHT, AUTHOR-HEAVY, AUTHOR-DECLARED, AUTHOR-NO-SEED |
+| 5. Commands author manifest → #10 activation runs the right checks; observability authored as a #10-gated field; kill-switch recorded as a declared artifact | AUTHOR-LIGHT, AUTHOR-HEAVY, AUTHOR-OBSERV, AUTHOR-CONTRACT, AUTHOR-DECLARED, AUTHOR-NO-SEED |
 | 6. Durable + re-runnable, no drift | FLOOR-DET, REC-REGEN |
 | 7. Deploy: managed default, reason to build, record + human-carry, no provisioning | DEPLOY-MANAGED, DEPLOY-BUILD-REASON, DEPLOY-EXAMPLES, DEPLOY-RECORD-CARRY, DEPLOY-PORTABILITY |
 | 8. Floor computation deterministic (given declared factors) | FLOOR-DET, FLOOR-RULE |
