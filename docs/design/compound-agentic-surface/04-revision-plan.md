@@ -17,7 +17,25 @@ agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld in both rounds**;
 skeleton stands. The rework is in the edge container, the trust legs, the privilege union, the eval
 homes, and activation.
 
-## Round-4 fix-map (v3.2 — core scope lock, the current work)
+## Round-5 fix-map (v3.3 — mechanism-level convergence, the current work)
+
+Round-5 (2026-07-22) reviewed v3.2 and returned REVISIONS REQUIRED (4 blockers + 8 majors + 3 minors). The
+central finding: the core lock's *reconciling principle* (Advisor floor ≡ #10 activation) was **asserted but
+not delivered** — the Advisor floor was still hand-tuned with Tier gates that contradict #10's content-based
+activation. This round fixes the **mechanisms**, not the prose. #10-side changes:
+
+| Round-5 finding | Disposition in v3.3 |
+|---|---|
+| **B3** result-review deferred but still blocking in core | Removed the result-review gate + `EVAL-RESULT` from core; result ingestion/envelope deferred to #42; core gates on **spec existence + approval** only. LLD §6.12/§7.2/§7.3 |
+| **B3** e2e baseline needs multi-owner (deferred) | Core generates single-owner (per-agent) baselines only; the **e2e spec is hand-authored** (multi-owner generation → #42). LLD §7.4 |
+| **M2** saga `parallel` in core but parallel-compensation deferred | Removed `parallel` from core (`order: sequential` only, → #42). LLD §4.2 |
+| **M2** compensation-gap "flow" undefined | Defined deterministically: a declared `segment.path`, or a coordinator chain; else no flow/no advisory. LLD §4.2, tests COMP-GAP-SEG/COORD/NONE |
+| **M3** observability gate toothless-or-disproportionate | Made real + tier-scaled: convention-**required** trace attributes, a **`ResolvableRef`** console `ref`, and a **tier rule** (Tier≤1 = report/existing surface; Tier≥2 = console). LLD §4.3/§6.17/§6.17.1 |
+| **M4** core defers Musts vs unchanged 2.2.0 DoD | **Re-scoped**: deferred parts downgraded Must→next-release (#42); core **closes 2.2.0**. Requirements §4.1 |
+| **M5** `depends_on` still auto-written to source manifest | `depends_on` is a **projection** when `interactions` present (legacy auto only when absent); added MIXED + DEP-DOUBLE fixtures. LLD §2.4 |
+| **M8** delegated authority | CR-13/14 core is an **explicit release limitation**, not full satisfaction. Requirements §4.1 |
+
+## Round-4 fix-map (v3.2 — core scope lock)
 
 Round-4 (2026-07-22) reviewed v3.1 **against the original objectives** and returned REVISIONS REQUIRED (4
 blockers + 9 majors + 3 minors). The central finding: the design had **over-scoped** — most acutely, the

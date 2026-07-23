@@ -37,7 +37,7 @@ deterministic composition/floor/map; the catalog holds the expertise (ADR-A1/A2)
 | `ai/claude/skills/agentic-{classify,boundary,privilege,reliability,observability,memory,evals,deploy}/SKILL.md` | the 8 per-concern commands (§5) |
 | `tools/agentic-advisor/compose.py` | relevance → workflow + floor/rung (§4) |
 | `tools/agentic-advisor/floor.py` | the deterministic floor function (§4.1) |
-| `tools/agentic-advisor/render_map.py` | the 3 map renderings (§6) |
+| `tools/agentic-advisor/render_map.py` | the 2 core map renderings — terminal + Mermaid (§6); HTML/live deferred (M8) |
 | `tools/agentic-advisor/records.py` | scenario record + decision record I/O (§7) |
 | `ai/claude/pm/design-feature/SKILL.md` | **integration**: route ≥2-component + ≥1-edge into `hitl:agentic-intake` (§8, ADV-13) |
 | `ai/codex/AGENTS.md` | **integration**: compound-surface routing rule (§8) |
@@ -82,24 +82,34 @@ A boolean expression over the **scenario record** (§7.1) fields, evaluated by a
 `>= <= == != and or not in`. Examples: `components.count >= 2`, `answers.side_effects != "none"`,
 `any_agent and answers.data in ["sensitive","pii"]`.
 
-### 2.3 `ConsequenceItem` — the tagged union (HLD §4.2, `CAT-SCHEMA`)
+### 2.3 `consequence` — one exact shape (HLD §4.2, `CAT-SCHEMA`, round-5 B4)
+
+An entry's `consequence` is a **map keyed by answer option → a list of `ConsequenceItem`**; each
+`ConsequenceItem` is a **tagged union** (exactly one `kind`). The HLD and the lint use this same shape (the
+round-5 reconciliation — no more "single union" vs "option-map" disagreement):
 
 ```yaml
-ConsequenceItem:
-  kind: enum[ classify | boundary | gate | command | floor | manifest_field | declared_artifact ]
-  target: string        # command name | #10 manifest path | floor-rule id | artifact id
-  note: string, optional
+consequence:            # map[ <option-or-"*"> -> list[ConsequenceItem] ]   ("*" = applies to any answer)
+  <option>:
+    - kind: enum[ classify | boundary | gate | command | floor | manifest_field | declared_artifact ]
+      target: string    # command name | #10 manifest path | floor-rule id | artifact id
+      note: string?      # optional
 ```
-Lint (`test_catalog_lint.py`): every entry has a non-empty `consequence`; every `command` target resolves
-to a real `hitl:agentic-*`; every `manifest_field` target resolves to a real #10 field/path; a
-`declared_artifact` target need **not** resolve to #10 (kill-switch, observability); every `role` is real.
+Lint (`test_catalog_lint.py`, `CAT-SCHEMA`): `consequence` is a non-empty option→list map; **every option in
+the entry's `options` has a key** (or a `"*"` default); every list element is a valid tagged union with a
+resolvable `target` — a `command` → a real `hitl:agentic-*`, a `manifest_field` → a real #10 field/path, a
+`floor` → a real floor obligation; a `declared_artifact` target need **not** resolve to #10 and is **only**
+valid for the **kill-switch** (observability now authors a `manifest_field`, not a declared artifact — B4);
+every `role` is real.
 
 ## 3. The intake (`hitl:agentic-intake`, ADV-1/2/3/13/15)
 
 Two-tier (ADV-1): the intake **elicits**; the per-concern commands **decide**. The skill:
 
-1. **Selects the surface (ADV-13).** Elicits the component/edge list first. If `components ≥ 2 and edges ≥
-   1` → this is a compound system → continue; else hand back to the single-agent surface (§8).
+1. **Assumes the compound surface — it does NOT re-select it (round-5 M1).** Surface selection already
+   happened in `pm-design-feature` (the `agentic` gate → topology probe → route, HLD §3.1); the intake is
+   only reached on the compound branch. It elicits the **full** component/edge detail (the probe captured
+   only counts), but performs no second surface decision — the duplicate selector is removed.
 2. **Walks the catalog adaptively (ADV-3).** For each entry whose `ask_when` holds against the scenario so
    far, asks the `question`, interprets the free-text answer into an `option` (or captures verbatim), and
    applies the entry's `consequence` to the scenario record.
@@ -108,88 +118,124 @@ Two-tier (ADV-1): the intake **elicits**; the per-concern commands **decide**. T
 
 The harness runs the conversation; `compose.py`/`floor.py`/`render_map.py` do the deterministic work.
 
-## 4. Composition (`compose.py`, ADR-A4)
+## 4. Composition (`compose.py`, ADR-A4) — the floor is DERIVED from #10 activation (round-5 B1)
+
+The central round-4/round-5 defect was that the Advisor floor was hand-tuned (tier gates) while #10's
+per-check activation fires on manifest *content* — so a control could be an Advisor "rung" while #10 made
+it mandatory, and the team would defer it into a hard #10 failure. **The fix: the floor is a pure function
+of #10's activation predicates.** A command is floor **iff** a #10 check it owns will activate on the
+manifest the scenario implies. This makes *floor ≡ #10 activation* by construction, not by assertion.
 
 ```python
 COMMANDS = ["agentic-classify","agentic-boundary","agentic-privilege","agentic-reliability",
             "agentic-observability","agentic-memory","agentic-evals","agentic-deploy"]
 
-# dependency order (topological); each runs against prior artifacts
 DEPENDS = {"agentic-boundary":["agentic-classify"], "agentic-privilege":["agentic-classify"],
            "agentic-reliability":["agentic-boundary"], "agentic-observability":["agentic-classify"],
            "agentic-memory":["agentic-classify"], "agentic-evals":["agentic-classify"],
            "agentic-deploy":["agentic-classify"]}
 
-def relevant(cmd, s):                       # HLD §4.1 — the full table, as data
+# Each Advisor command OWNS the #10 checks it must author valid input for. If any owned check will
+# activate, the command is mandatory — the Advisor cannot let the team defer it, because #10 will block.
+OWNS_CHECKS = {
+  "agentic-classify":      ["check_classification"],
+  "agentic-boundary":      ["check_boundary_legs","check_topology","check_references","check_authorization"],
+  "agentic-privilege":     ["check_capabilities","check_scope_grammar"],
+  "agentic-reliability":   ["check_async","check_lifecycle"],          # + non-#10 kill-switch/human-gate below
+  "agentic-observability": ["check_observability"],
+  "agentic-memory":        ["check_memory"],
+  "agentic-evals":         ["check_eval_coverage"],
+  "agentic-deploy":        [],                                          # no #10 check (records a decision)
+}
+
+# #10's activation predicates, mirrored from compound LLD §6.0 over the SCENARIO-implied manifest.
+# The ACTIVATION-MIRROR test (§9) asserts this dict matches #10's real activation table field-for-field,
+# so the two can never drift — the single source of truth is #10; this is its projection for planning.
+ACTIVATES = {
+  "check_classification": lambda s: is_compound(s),                    # ≥1 agent endpoint in a compound manifest
+  "check_boundary_legs":  lambda s: any_agent_endpoint(s),             # any interaction with ≥1 agent endpoint (incl. agent→agent)
+  "check_topology":       lambda s: has_interactions(s),
+  "check_references":     lambda s: has_interactions(s),
+  "check_authorization":  lambda s: any_into_agent(s),                 # any interaction whose `to` is an agent
+  "check_capabilities":   lambda s: any_agent(s),                      # any domain kind ∈ {simple_agent, deep_agent}
+  "check_scope_grammar":  lambda s: any_agent(s),                      # scopes appear once an agent has uses/identity
+  "check_async":          lambda s: any_async(s),
+  "check_lifecycle":      lambda s: any_long_running(s),
+  "check_observability":  lambda s: any_agent(s),                      # hard directive (M3): floor for any agent
+  "check_memory":         lambda s: any_memory(s),
+  "check_eval_coverage":  lambda s: any_agent(s),                      # every agent independently evaluable + e2e
+}
+
+def floor_commands(s):
+    """A command is floor iff a #10 check it owns will activate — floor ≡ #10 activation (B1)."""
+    floor = {cmd for cmd, checks in OWNS_CHECKS.items()
+             if any(ACTIVATES[c](s) for c in checks)}
+    # non-#10 floor obligations owned by agentic-reliability (no #10 check exists for these):
+    if human_gate_needed(s) or kill_switch_needed(s):
+        floor.add("agentic-reliability")
+    return floor
+
+# Genuinely-optional rungs: a command with NO firing owned-check, offered only when its own data is present.
+def rung_relevant(cmd, s):
     a = s["answers"]
     return {
-      "agentic-classify":     True,
-      "agentic-boundary":     agent_det_seam(s),
-      "agentic-privilege":    any_agent(s),
-      "agentic-reliability":  a["side_effects"] != "none" or any_async(s)
-                              or a["autonomy"] in ("supervised","autonomous"),
-      "agentic-observability":any_agent(s),   # floor for any agent (hard directive) — observability + PM eval-console is non-negotiable
-      "agentic-memory":       any_memory(s) or a["data"] in ("sensitive","pii"),
-      "agentic-evals":        any_agent(s),
-      "agentic-deploy":       True,          # a build-vs-buy call is always made for a compound system
-    }[cmd]
+      "agentic-reliability": any_async(s) or a["side_effects"] != "none",   # reliability depth beyond the floor obligation
+      "agentic-memory":      any_memory(s),                                  # cross-session memory is a rung (a #10 floor only once declared)
+      "agentic-deploy":      is_greenfield(s) or changes_platform(s)         # M6: not "always"
+                             or adds_durable_runtime(s) or a.get("deploy_requested", False),
+    }.get(cmd, False)
 
 def compose(s, tier):
-    # OBLIGATION-FIRST (round-4 B3): compute the floor first, then force its commands into the
-    # composition — never intersect the floor with the relevance set, or a firing floor rule whose
-    # command is not "relevant" would silently vanish (e.g. privilege floor fires on data==pii even
-    # when a non-agent path made agentic-privilege non-relevant).
-    floor    = floor_commands(s, tier)                       # §4.1 — {owning command per firing rule}
-    relevant_cmds = {c for c in COMMANDS if relevant(c, s)}
-    included = relevant_cmds | floor                         # floor ⊆ included, by construction
+    floor    = floor_commands(s)                                # derived from #10 activation (B1)
+    rungs    = {c for c in COMMANDS if c not in floor and rung_relevant(c, s)}
+    included = floor | rungs                                    # floor ⊆ included by construction
     order    = topo_sort(included, DEPENDS)
     return {"workflow": order, "floor": sorted(floor),
-            "rungs": [c for c in order if c not in floor]}
-# Deterministic given (s, tier): same inputs → identical workflow (ADV-12, test FLOOR-DET).
-# Invariant floor ⊆ workflow holds for ALL (s, tier) — asserted by the FLOOR-SUBSET lint (§4.1).
+            "rungs":   sorted(rungs)}                           # rungs are disjoint from floor
+# Deterministic given s (tier affects DEPTH within a control, §4.1, not WHETHER it is floor).
+# floor ⊆ workflow holds for ALL s — asserted by FLOOR-SUBSET; floor == {c : owned #10 check fires}
+# is asserted against #10's real activation by ACTIVATION-MIRROR (§9).
 ```
 
-### 4.1 The floor function (`floor.py`, ADR-A6)
+### 4.1 The floor, tier, and depth (`floor.py`, ADR-A6)
+
+**Which controls are floor** is decided by `floor_commands(s)` above (§4) — a pure function of #10
+activation, no tier gate. **Tier does not decide *whether* a control is floor; it scales the *depth*
+required within a floor control** (the proportionate lever, O6):
 
 ```python
-# risk-factor vocabulary (enumerated — categorical, so elicitation variance is bounded, not zero)
-STAKES = {"internal","customer_facing","regulated"}; SIDE = {"none","reversible","irreversible"}
-DATA = {"none","sensitive","pii"}; AUTONOMY = {"assisted","supervised","autonomous"}; SCALE = {"small","large"}
+STAKES={"internal","customer_facing","regulated"}; SIDE={"none","reversible","irreversible"}
+DATA={"none","sensitive","pii"}; AUTONOMY={"assisted","supervised","autonomous"}; SCALE={"small","large"}
 
-FLOOR_RULES = {   # command/obligation -> predicate(scenario, tier) ; union precedence (HLD §5)
-  "agentic-classify":     lambda s,t: True,
-  "agentic-boundary":     lambda s,t: agent_det_seam(s),
-  "agentic-privilege":    lambda s,t: t >= 2 or s["answers"]["data"] in ("sensitive","pii") or lethal_trifecta(s),
-  "human-gate":           lambda s,t: s["answers"]["side_effects"] == "irreversible",     # via agentic-reliability
-  "kill-switch":          lambda s,t: s["answers"]["autonomy"] in ("supervised","autonomous")
-                                      and s["answers"]["side_effects"] != "none",          # declared artifact (§5.2)
-  "agentic-observability":lambda s,t: any_agent(s),   # hard directive: floor for ANY agent (depth scales, presence non-negotiable)
-  "agentic-evals":        lambda s,t: t >= 2 and s["answers"]["stakes"] in ("customer_facing","regulated"),
-}
-# map obligation-level rules (human-gate, kill-switch) onto their owning command
-OWNS = {"human-gate":"agentic-reliability", "kill-switch":"agentic-reliability"}
+# non-#10 floor obligations (owned by agentic-reliability):
+def human_gate_needed(s):  return s["answers"]["side_effects"] == "irreversible"
+def kill_switch_needed(s): return (s["answers"]["autonomy"] in ("supervised","autonomous")
+                                   and s["answers"]["side_effects"] != "none")
 
-def floor_commands(s, tier):
-    """The set of COMMANDS made mandatory by a firing floor rule (obligation-first, B3)."""
-    return {OWNS.get(name, name) for name, rule in FLOOR_RULES.items() if rule(s, tier)}
-
-def floor_mandatory(cmd, s, tier):
-    return cmd in floor_commands(s, tier)
+# DEPTH rules — what a floor control must contain, scaled by tier (examples; full table per command §5.1):
+def observability_depth(tier):       # M3: real path at all tiers, heavier at higher tiers
+    return "report_or_existing_surface" if tier <= 1 else "console"   # §5.1 check_observability tier rule
+def privilege_granularity(tier):     return "per_capability" if tier >= 2 else "per_class"
+def eval_depth(tier):                return "extended" if tier >= 2 else "baseline"
 ```
 
-**`FLOOR-SUBSET` lint (round-4 B3).** A build-time test asserts the invariant `floor ⊆ workflow` cannot be
-violated: (a) every `OWNS.get(name, name)` resolves to a command in `COMMANDS` (no floor rule names a
-non-existent command); (b) over a swept product of the enumerated risk-factor space × `tier ∈ {0..3}`,
-`floor_commands(s,t) ⊆ set(compose(s,t)["workflow"])` for every point. Because `compose` unions the floor
-into `included`, (b) holds by construction — the lint is the guard that keeps it true if a future edit
-reintroduces an intersection. (Test `FLOOR-SUBSET`.)
+**`FLOOR-SUBSET` lint (B3, retained).** Over the swept risk-factor space × `tier ∈ {0..3}`,
+`floor_commands(s) ⊆ set(compose(s,tier)["workflow"])` — trivially true now (`compose` unions the floor in),
+the lint guards against a future edit reintroducing an intersection.
 
-**Waiver (ADR-A6):** a floor command may be dropped only with a recorded **waiver**
-`{target, owner, reason, tier_limit:int, revisit:date}` (HITL's existing waiver shape) written to the
-decision record. Composition marks a dropped-with-waiver command `waived`; dropped-without-waiver is a
-**blocker** (`floor_dropped_no_waiver`). A **rung** is not waived — it is **deferred** (offered, recorded as
-`deferred`, no blocker); `waived` and `deferred` are distinct states (round-4 m3). `tier` is read from
-`.hitl/current-change.yaml` (absent ⇒ highest tier, fail-safe — same rule as #10).
+**`ACTIVATION-MIRROR` lint (B1, new).** Asserts `ACTIVATES` matches #10's real activation predicates
+(compound LLD §6.0) check-for-check, and that every check in `OWNS_CHECKS` is a real #10 check. If #10's
+activation changes, this test fails until `ACTIVATES` is re-synced — so the floor cannot silently diverge
+from #10 again.
+
+**Waiver — one model per enforced control (round-5 B1).** A floor control that #10 also enforces is dropped
+by writing the **#10 waiver in #10's own store** (e.g. an eval drop → `docs/03-engineering/evals/waivers.yaml`;
+a privilege/boundary drop → the manifest's tier-scoped waiver), which the Advisor **authors** and mirrors a
+pointer into the decision record — so there is a *single* authoritative waiver #10 reads, never two stores
+to reconcile. A floor control with **no** #10 check (the kill-switch) is waived in the decision record
+alone. Either way: dropping a floor control silently is a **blocker** (`floor_dropped_no_waiver`); a **rung**
+is **deferred** (recorded `deferred`, no blocker). `waived` ≠ `deferred` (m3). `tier` from
+`.hitl/current-change.yaml` (absent ⇒ highest tier, fail-safe).
 
 ## 5. The commands (`ai/claude/skills/agentic-*`)
 
@@ -201,7 +247,7 @@ the simplest fit for any menu (ADR-A3), (c) **authors its output**. Independentl
 | Command | Authors (into `system-manifest.yaml`, validated by #10) |
 |---|---|
 | `agentic-classify` | `domains[d].kind`, `domains[d].kind_rationale` → #10 `check_classification` |
-| `agentic-boundary` | the **inter-component contract** — `domains[callee].facade_apis[]` (the called signatures) and `interactions[].authorization.allowed_callers` — so #10's `check_references`/`check_authorization` have data to validate (round-4 B1); the `interactions[].request/response` legs (`validation`/`cost_bound`/`authority_bound`) → `check_boundary_legs` (incl. **agent→agent** legs, whose stochastic consumer requires cost+authority); the `interactions` themselves → `check_topology` |
+| `agentic-boundary` | the **inter-component contract** — `domains[callee].facade_apis[facade_name]` (the called signatures, keyed by facade name — the stable key for rerun reconciliation, m2) and `interactions[].authorization.allowed_callers` — so #10's `check_references`/`check_authorization` have data (round-4 B1); the `interactions[].request/response` legs (`validation`/`cost_bound`/`authority_bound`) → `check_boundary_legs` (incl. **agent→agent** legs, whose stochastic consumer requires cost+authority); the `interactions` themselves → `check_topology` |
 | `agentic-privilege` | `domains[d].identity`, `domains[d].uses` → `check_capabilities` |
 | `agentic-reliability` | `interactions[].async` (delivery/idempotency), `domains[d].lifecycle` (`human_gate`, `side_effect_key`) → `check_async`/`check_lifecycle`; and any `sagas` → `check_saga` |
 | `agentic-memory` | `domains[d].memory` (store/pii/durability/reads/writes) → `check_memory` |
@@ -269,40 +315,56 @@ Deterministic from the scenario record (regenerate-and-diff), so the map never d
 
 ## 7. Records (`records.py`)
 
-### 7.1 Scenario record (`.hitl/agentic-scenario.yaml`) — the canonical state (round-4 M3)
+### 7.1 Canonical state (`.hitl/agentic-state.yaml`) — machine-readable, the single source (round-5 B4)
 
-The scenario record is the **single canonical state** the composer, floor, and map all read; every element
-carries a **stable `id`** so a re-run (§7.3) can reconcile against it. Full schema:
+**One machine-readable YAML file is the authoritative state.** It holds three layers: the **elicited facts**
+(topology + risk answers), the **authored outputs** each command produces (the structured data that becomes
+#10 manifest fields — this is what round-4/round-5 B4 found missing: the old record could not actually
+author facades/authorization/legs), and the **confirmed decisions** (choices/overrides/waivers/deferrals,
+keyed by id). `records.py`, the composer, the floor, the map, and the manifest writers all read and write
+*this* file; the Markdown decision record (§7.2) is **generated from it**, never the reverse. Every element
+carries a stable `id` for re-run reconciliation (§7.3).
 
 ```yaml
-schema_version: "1.0"
-components: [ { id: slug,                                   # stable key (e.g. "intake_agent")
-                name: string,
-                kind: enum?[deterministic,simple_agent,deep_agent],   # ? = may be unset until agentic-classify
-                kind_rationale: string? } ]
-edges:      [ { id: slug,                                   # stable key
-                from: component_id, to: component_id,
-                kind: enum?[sync_call,async_task,event],
-                side_effecting: bool? } ]
-answers:    { stakes:       enum[internal,customer_facing,regulated],
-              side_effects: enum[none,reversible,irreversible],
-              data:         enum[none,sensitive,pii],
-              autonomy:     enum[assisted,supervised,autonomous],
-              scale:        enum[small,large] }              # §4.1 vocabulary — all required once intake completes
-lens_answers: { <lens>: { <catalog_entry_id>: <option> } } # every catalog answer, keyed by entry id (provenance)
+schema_version: "2.0"
 tier: int                                                   # 0..3, from .hitl/current-change.yaml
+catalog: { version: string, last_refreshed: date,          # ADV-11 freshness in machine state (m3), not prose
+           freshness_reviewed: bool, stale_finding: string? }  # Tier-3 review sets these; a stale finding is recorded here
+# ── layer 1: elicited facts ──────────────────────────────────────────────
+components: [ { id, name, kind: enum?[deterministic,simple_agent,deep_agent], kind_rationale: string? } ]
+edges:      [ { id, from: component_id, to: component_id, kind: enum?[sync_call,async_task,event], side_effecting: bool? } ]
+answers:    { stakes, side_effects, data, autonomy, scale }  # §4.1 closed-enum vocabulary
+lens_answers: { <lens>: { <catalog_entry_id>: <option> } }  # provenance: which entry produced which answer
+# ── layer 2: authored outputs (per command; become #10 manifest fields, §5.1) ────────────────
+authored:
+  facades:        [ { id, on: component_id, name, signature, mutations:[…], preconditions:[…], error_modes:[…] } ]  # → domains[].facade_apis[name]
+  authorizations: [ { edge_id, allowed_callers:[component_id], audience?, credential_mode: enum[jit,static,none], justification? } ]  # → interactions[].authorization
+  legs:           [ { edge_id, leg: enum[request,response,event], validation_ref?, cost_bound?, authority_bound?:[Scope] } ]  # → interactions[].{request,response,event}
+  identities:     [ { component_id, principal, uses:[ {capability, scopes:[Scope]} ] } ]                            # → domains[].identity + domains[].uses
+  memory:         [ { component_id, store, durability, retrieval, scope, pii, reads:[…], writes:[…] } ]              # → domains[].memory
+  evals:          [ { target_type: enum[component,segment], target_id, kind: enum[eval], spec_path, approval? } ]    # → domains[].evals / segments[].evals
+  observability:  { convention, hops:[edge_id], attributes:[…], cost_budget:{limit,unit}, eval_console:{access,owner,ref} }  # → top-level observability (§ compound 4.3)
+  lifecycle:      [ { component_id, long_running, resumable, idempotent_resume, checkpoint, human_gate } ]           # → domains[].lifecycle
+  kill_switch:    { scope, trigger, disables }               # declared artifact only (no #10 field, §5.2)
+  deploy:         { recommend, chosen, rejected:[{opt,cost}], drivers, portability:{governance,packaging,state_export}, carry_to }  # decision record only
+# ── layer 3: confirmed decisions (keyed by id; human-owned) ───────────────
+decisions:  [ { id, attaches_to: <component|edge|lens id>, chosen, rejected:[…], rationale,
+                state: enum[confirmed,stale,retired], override: bool } ]
+waivers:    [ { control, store: enum[eval_waivers_yaml,manifest_waiver,decision_record], owner, reason, tier_limit, revisit } ]  # B1: one store per enforced control
+deferrals:  [ { rung, reason } ]                             # rungs offered but not adopted (≠ waiver, m3)
 ```
 
-Each `answers` field is closed-enum (no free text — the categorical vocabulary that bounds elicitation
-variance, ADV-12). `lens_answers` records **which catalog entry produced which answer**, so a re-run can
-tell an unchanged answer from a changed one (§7.3) and the map can attribute a `not-needed` reason to its
-gating entry.
+Every command's **input** is the layers-1/2 state it needs and its **output** is the `authored.*` block it
+owns (§5.1 maps each). Because the authored data is structured, the manifest writers can emit valid #10
+fields, and `records.py` can reconcile decisions by `id` without parsing prose (the round-5 B4 fix).
 
-### 7.2 Decision record (`docs/01-product/<feature>/agentic-decisions.md`, ADR-style)
+### 7.2 Decision record (`docs/01-product/<feature>/agentic-decisions.md`) — a GENERATED view
 
-Holds: the scenario, the composed workflow (floor/rungs/not-needed + reasons), every menu decision
-(chosen + rejected + rationale, keyed by the deciding component/edge `id`), any **waivers** (floor drops)
-and **deferrals** (rungs), the declared artifacts (§5.2), and the deploy decision.
+The Markdown decision record is **rendered from `agentic-state.yaml`** (like the map, regenerate-and-diff),
+never hand-authored. It presents the scenario, the composed workflow (floor/rungs/not-needed + reasons),
+every decision (`decisions[]` — chosen/rejected/rationale), waivers, deferrals, the declared kill-switch
+artifact, and the deploy decision — all read from the canonical state. It is human-**readable**; the canonical
+state is machine-**authoritative**. (`REC-GEN` asserts the Markdown is a pure function of the YAML.)
 
 ### 7.3 Re-run and mutation semantics (round-4 M4)
 
@@ -344,10 +406,11 @@ the full `hitl:agentic-intake` fills in the complete component/edge detail only 
 ```
 ci/agentic-advisor/
   test_catalog_lint.py        # §2 — CAT-*
-  test_compose.py             # §4/§4.1 — COMPOSE-*/FLOOR-*/FLOOR-SUBSET/PRUNE-*/KILL-SWITCH/OBSERVABILITY
+  test_activation_mirror.py   # §4 — ACTIVATION-MIRROR: ACTIVATES matches #10 LLD §6.0 field-for-field (B1)
+  test_compose.py             # §4/§4.1 — COMPOSE-LOW/HIGH/FLOOR-SUBSET/FLOOR-EQ-ACTIVATION/PRUNE-DEPLOY/KILL-SWITCH
   test_manifest_authoring.py  # §5.1 — AUTHOR-* (incl. AUTHOR-CONTRACT facade+authz, B1) run through #10's real check_manifest_agentic.py
   test_rerun.py               # §7.3 — RERUN-* (reconcile/stale/retired/confirm, M4)
-  test_advisor_e2e.py         # E2E-SUPPORT/E2E-TRIVIAL/ROUTE-*/MAP-*/DEPLOY-*
+  test_advisor_e2e.py         # E2E-SUPPORT/STANDALONE-CMD/ROUTE-*/MAP-*/DEPLOY-*
 ```
 
 ## 10. LLD decisions

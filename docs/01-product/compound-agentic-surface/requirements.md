@@ -120,20 +120,27 @@ Requirement IDs are `CR-<n>` (Compound Requirement). Each maps to sub-issues in 
 | ~~CR-19~~ | **Relocated → Agentic Design Advisor (FR-28, [ADV-6/ADV-11](../agentic-design-advisor/requirements.md)).** The design-time capability menu (present options with when-to/when-not, recommend the simplest that fits, record chosen + rejected, refreshable catalog, Tier-3 newer-capability scan) is elicitation, owned by the Advisor and the best-practice-advisory ([#8](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/8)). | *moved* |
 | **CR-20** | **Generate baseline evals by default; make PM eval ownership the default.** For each agentic component and flow segment, HITL **generates a baseline eval set by default** — derived from the acceptance criteria (the owning `FR-n`), the component's declared contract (`facade_apis` preconditions + error modes), the determinism-boundary checks (CR-4), and the known failure modes (CR-6) — and presents it to the **PM to refine, extend, and approve** (AI drafts the starting evals; the PM owns them). The workflow **actively prompts the PM** to provide/own evals as a default expectation for agentic changes; a component shipping with **no** evals is a recorded, waived exception, not a silent gap. Baseline evals seed the eval registry and the per-segment tests (CR-8, CR-16). | Must |
 
-### 4.1 Core-v1 scope vs deferred follow-ons (round-4 core scope lock)
+### 4.1 Core-v1 scope, deferred follow-ons, and the release boundary (round-4 lock + round-5 M4)
 
-The requirements above express the full intent. After four adversarial review rounds, delivery is **staged**
-so a **minimal sound core ships first** and stays proportionate (O6) — see
-[`../../design/agentic-core-scope.md`](../../design/agentic-core-scope.md). The CRs whose *enforcement* is
-staged:
+The requirements above express the full intent. Delivery is **staged**: a **minimal sound core ships as
+2.2.0**, and the heavier parts are **explicitly re-scoped to a follow-on release** (#42) — see
+[`../../design/agentic-core-scope.md`](../../design/agentic-core-scope.md). Each staged CR splits into a
+**core part (Must, 2.2.0)** and a **deferred part (re-scoped Should → next release, not release-gating for
+2.2.0)**:
 
-| CR | Core v1 delivers | Deferred to follow-on |
+| CR | Core part — **Must, 2.2.0** | Deferred part — **re-scoped, next release (#42)** |
 |---|---|---|
 | **CR-6** | compound failure modes captured; sync reliability = facade `error_modes` + product runtime (honest) | design-time sync **timeout/retry declaration** checks |
-| **CR-8 / CR-16 / CR-20** | **independent per-agent eval + one e2e** (every agent separately evaluable); PM-runnable eval-adapter contract; baseline generator; **the declared PM eval-console** (gated) | **universal** per-component/edge coverage; result-review envelope; multi-owner baseline |
-| **CR-9** *(observability)* | **the gated design declaration** — cross-hop tracing (OTel) + cost budget + PM eval-console, validated by `check_observability` and required at the floor (2026-07-22 directive) | the **runtime** trace backend + rich posture dashboard (product / #21); the static posture-view rendering refinements (#15) |
-| **CR-12** | **declared** sagas validated + a **compensation-gap advisory** (warn when a flow looks like it needs one) | the **required-when** distributed-compensation enforcement model |
-| **CR-14** *(privilege)* | `allowed_callers` + `authority ⊆ consumer` (honestly limited) | **delegated per-interaction authority** |
+| **CR-8 / CR-16 / CR-20** | **independent per-agent eval + one e2e**; PM-runnable eval-adapter *contract*; single-owner baseline generator; **the declared PM eval-console** (gated, tier-scaled) | **universal** per-component/edge coverage; **result ingestion + result-review** envelope; **multi-owner** baseline |
+| **CR-9** *(observability)* | **the gated design declaration** — tracing (OTel/OpenInference required attributes) + cost budget + tier-scaled PM eval-console, validated by `check_observability` at the floor | the **runtime** trace backend + rich posture dashboard (product / #21); posture-view rendering refinements (#15) |
+| **CR-12** | **declared** sagas validated (sequential) + a **compensation-gap advisory** | the **required-when** model; **`parallel`** compensation; segment↔saga linkage |
+| **CR-13 / CR-14** *(privilege)* | `allowed_callers` + `authority ⊆ consumer` (an **explicit release limitation**, not full satisfaction — round-5 M8) | **delegated per-interaction authority** (what caller A may ask B to exercise) |
+
+**Release boundary (round-5 M4).** The core **does** close **#10 / 2.2.0**: the deferred parts above are
+**re-scoped out of the 2.2.0 Definition of Done** (downgraded from Must to a next-release Should, tracked in
+#42) rather than left as unmet 2.2.0 Musts. So 2.2.0 ships a smaller, honestly-scoped compound surface; #42
+is a distinct follow-on release (target 2.3.0). The DoD / acceptance gate (HLD §13) is scoped to the **core
+part** of each CR above; it does not claim the deferred parts.
 
 The deferred items are not dropped — they move to a tracked #10 follow-on issue (#42). The **PM eval console
 + live traces** is a **hard, gated design obligation** (2026-07-22 directive, CR-9/CR-16 at the floor): HITL

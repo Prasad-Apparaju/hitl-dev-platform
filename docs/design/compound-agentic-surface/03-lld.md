@@ -213,9 +213,14 @@ When `interactions` is present it is authoritative and the generator (§9) **der
   newline-joined interaction descriptions; `entity_crossing` = concatenation). Because the projection lives
   in its own file, `edge_double_authored` (§6.6) fires **only** when a **human hand-authors**
   `interaction_matrix` in the *manifest* alongside `interactions` — the generated view never triggers it.
-- `depends_on[d]` = `{ t : ∃ interaction from d to t }` ∪ legacy import-derived deps. This one **stays an
-  auto manifest field** (coarse domain list; it does not conflict with the interaction rules). When
-  `interactions` is absent, `depends_on` keeps its current auto-derived meaning unchanged.
+- `depends_on[d]` = `{ t : ∃ interaction from d to t }`. **Ownership is conditional (round-5 M5):**
+  - when `interactions` **is present**, `depends_on` is a **generated projection** written to the
+    projections file (`agentic-posture/projections.*`), **not** the source manifest — exactly like
+    `interaction_matrix`/`events_*`, so all four reconcile the same way; a hand-authored `depends_on` in the
+    *manifest* alongside `interactions` is `code: depends_on_double_authored` (§6.6);
+  - when `interactions` **is absent** (a legacy manifest), `depends_on` keeps its **existing auto-derived
+    manifest meaning**, unchanged (additive-only). This is the mixed legacy/new boundary — see the MIXED
+    fixture (§ test matrix).
 - `events_emitted` / `events_consumed` = projected from `kind: event` interactions: for an event
   interaction `from=P, to=C, facade=P:e`, the view emits `P.events_emitted[e]` with `shape` = the event
   interaction's `entity_crossing` and `consumed_by ∋ C`, and `C.events_consumed ∋ {name: e, from: P}`. If a
@@ -349,7 +354,7 @@ A `kind: async_task` with no `async` block is a blocker (§6.7). A legacy `inter
 sagas: { optional: true, type: "list[Saga]", Saga: {
   id: { type: string },                               # unique
   coordinator: { type: domain_name },                 # owns/starts the saga; must be an agent or deterministic orchestrator
-  order: { type: enum[sequential, parallel] },        # forward order of steps
+  order: { type: enum[sequential] },                  # core = sequential only; `parallel` compensation deferred to #42 (round-5 M2)
   steps: { type: "list[SagaStep]", SagaStep: {
     interaction_id: { type: interaction_id },         # a side-effecting interaction in this saga's flow
     compensation: { type: PolicyRef },                # the compensating action (an `action` policy, §6.8)
@@ -368,13 +373,21 @@ incomplete enforcement model, the core **defers the full distributed-compensatio
   true`, no two sagas cover the same interaction, `order` semantics consistent. Compensation runs in
   **reverse of `order`** for `sequential`. This is unchanged and sound.
 - **Advise on compensation gaps — warn, don't enforce (the "alert users we don't support it" rule).**
-  `check_compensation_gap` (§6.14) is an **advisory** (severity `warning`, never a blocker): when a flow
-  has **≥2 side-effecting interactions with an agent or async/event endpoint and no declared `saga`
-  covering them**, it emits *"this flow looks like it needs distributed compensation, which the core does
-  not enforce yet — handle rollback deliberately or declare a `saga`."* A `segment` with `transactional:
-  true` and no covering saga always triggers the advisory. This closes the round-4 B4 "silent omission"
-  hole (a deferral must not silently pass flows that need compensation) without shipping the enforcement
-  model. The Advisor (FR-28) asks the matching intake question so the warning is rarely a surprise.
+  `check_compensation_gap` (§6.16) is an **advisory** (severity `warning`, never a blocker). **A "flow" is
+  defined deterministically** (round-5 M2) so the algorithm is unambiguous: a flow is
+  1. a declared **`segment.path`** (the primary case — the author has already grouped the interactions), or
+  2. absent a segment, a **maximal chain of interactions sharing one `orchestration.coordinator`** — i.e.
+     the set of interactions whose endpoints are governed by the same coordinator, walked over the
+     directed from→to graph. No coordinator and no segment ⇒ no flow ⇒ no advisory (a loose pair of
+     unrelated edges is not treated as a distributed transaction).
+
+  The advisory fires when a flow contains **≥2 side-effecting interactions with an agent or async/event
+  endpoint and no declared `saga` covers all of them**, emitting *"this flow looks like it needs distributed
+  compensation, which the core does not enforce yet — handle rollback deliberately or declare a `saga`."* A
+  `segment` with `transactional: true` and no covering saga always triggers it. "Covers" = every such
+  side-effecting interaction id appears in exactly one `saga.steps`. This closes the round-4 B4 "silent
+  omission" hole without shipping the enforcement model; the Advisor (FR-28) asks the matching intake
+  question so the warning is rarely a surprise. *(Test COMP-GAP-SEG / COMP-GAP-COORD / COMP-GAP-NONE.)*
 
 `saga_missing` as a **blocker** — requiring a saga for a `transactional` segment — is **deferred** to the
 follow-on; in core the same condition is the advisory above.
@@ -391,14 +404,18 @@ runnable reference).
 observability: { optional: true, type: "Observability", Observability: {   # required once any domain is an agent (§6.17)
   tracing: { type: "Tracing", Tracing: {
     convention: { type: enum[otel_genai, openinference] },   # the trace convention the product emits to
-    hops:       { type: "list[interaction_id]" },            # which inter-component hops are traced (must ⊇ every agent-endpoint interaction)
-    attributes: { type: "list[string]" } } },                # the span attributes captured (non-empty)
-  cost_budget: { type: "QuantPolicy" },                      # the token-cost amplification budget (§6.8 grammar; limit > 0)
-  eval_console: { type: "EvalConsole", EvalConsole: {        # the PM-facing surface (CR-16) — declared, product-built
-    access:   { type: enum[ui, api] },                       # how the PM runs evals + reviews results/traces (a console, not just the CLI adapter)
-    owner:    { type: string },                              # the role/team that operates it
-    ref:      { type: string } } } } }                       # a pointer to the console (design doc / product component id)
+    hops:       { type: "list[interaction_id]" },            # traced hops — must ⊇ every agent-endpoint interaction
+    attributes: { type: "list[string]" } } },                # span attributes — must ⊇ the convention's REQUIRED set (§6.17), not free text
+  cost_budget: { type: "QuantPolicy" },                      # token-cost amplification budget (§6.8 grammar; limit > 0)
+  eval_console: { type: "EvalConsole", EvalConsole: {        # the PM-facing eval surface (CR-16) — declared, product-built
+    access: { type: enum[report, existing_surface, console] }, # Tier-scaled (§6.17): report|existing_surface valid at Tier≤1; console required at Tier≥2
+    owner:  { type: string },                                # the role/team that operates it
+    ref:    { type: ResolvableRef } } } } }                  # MUST resolve (§6.17): a manifest domain id, a facade_ref, an approved-service id, or a repo-relative artifact path — not an arbitrary string
 ```
+
+`ResolvableRef` grammar: one of `domain:<domain_name>`, `facade:<facade_ref>`, `service:<approved-service
+id from a registry>`, or `artifact:<repo-relative path that exists>`. A bare/unresolvable string is a
+blocker — this is what stops `ref` from being evidence theater (round-5 M3).
 
 **`approved-capabilities.yaml`** — ceilings + tool runtime mapping (F1, CR-14/15):
 ```yaml
@@ -490,11 +507,11 @@ this yet" signal (v3.2/B4). The Advisor (FR-28) elicits whether a flow needs dis
 | 6.9 | `check_deep_agent` | `kind:deep_agent` missing `deep_agent` or `memory.long_term`; empty planner/subagents/gates/guardrails; `context_isolation≠true`; a `subagent`/`planner` not a declared domain; `memory.long_term.retrieval ∉ {filesystem,semantic}`; `deep_agent` block on a non-deep kind |
 | 6.10 | `check_lifecycle` | `long_running:true` with **`resumable≠true`**, **`idempotent_resume≠true`** (round-3 B2 — both are required for a long-running component, not optional), `checkpoint:none`, missing `resume_cursor`, missing/`≤0` `timeout`, or `cancellation` absent; `checkpoint:durable` without a `checkpoint_store` resolving to a `durable` store; `resumable:true` on a side-effecting component without `side_effect_key`; `human_gate:true` with `human_gate_pause≠true` |
 | 6.11 | `check_memory` | `long_term` missing `owner`/`store`/`durability`/`retrieval`/`scope`/`pii`; `pii:none` without justification; `store`/`shared_store` unresolved (or `shared_store` not `shared:true`, or `scope:shared` without `shared_store`, or `shared_store` with `scope:isolated`); a `write.high_stakes:true` without `high_stakes_guardrail` or without `provenance`; a memory read/write not reconciled to a `uses` scope (§3.1) |
-| 6.12 | `check_eval_coverage` | a **target** — in **core, every agent component + one `e2e:true` segment** (v3.2/M1 — independent per-agent eval, CR-8/CR-16; universal deterministic-component/edge coverage is **deferred**, see §7.1) — with no `evals.spec` in the index and no unlapsed waiver; no `e2e:true` segment when ≥2 components; a spec/waiver failing its schema (§7); a spec with `approval.decision != approved` used to satisfy coverage at Tier 2+; an **ingested adapter result with no reviewer `result_decision`** (the result-review gate, §7.3, applies to any ingested result). A **deterministic** component/edge is **not required** to have coverage in core, but **may** declare a `kind: contract_test` spec (§7.2), which is then validated |
+| 6.12 | `check_eval_coverage` | a **target** — in **core, every agent component + one `e2e:true` segment** (v3.2/M1 — independent per-agent eval, CR-8/CR-16; universal deterministic-component/edge coverage is **deferred**, see §7.1) — with no `evals.spec` in the index and no unlapsed waiver; no `e2e:true` segment when ≥2 components; a spec/waiver failing its schema (§7); a spec with `approval.decision != approved` used to satisfy coverage at Tier 2+. A **deterministic** component/edge is **not required** to have coverage in core, but **may** declare a `kind: contract_test` spec (§7.2), which is then validated. **The result-review gate (an ingested adapter *result* + reviewer `result_decision`) is NOT in core** — result ingestion + the result envelope are deferred to #42 (round-5 B3); core gates on **spec existence + approval**, not on an ingested run result |
 | 6.13 | `check_scope_grammar` | a `Scope` not matching the grammar (§0); a memory scope not canonical `read\|write:<store>/<resource>`; a ceiling/grant/authority scope with an ill-formed wildcard |
 | 6.14 | `check_saga` | (declared-saga well-formedness only, v3.2/B4) a `saga` step whose `interaction_id` is not side-effecting or not a declared interaction; `compensation` not resolving to an `action` policy; `compensation_idempotent≠true`; two sagas covering the same interaction; `order` semantics inconsistent. **`saga_missing`** (requiring a saga for a `transactional` segment) is **deferred** — in core the same condition raises the 6.16 advisory instead |
 | 6.16 | `check_compensation_gap` *(advisory, `warning` — never blocks)* | a flow has **≥2 side-effecting interactions with an agent or async/event endpoint and no declared `saga`** covering them, **or** a `segment` with `transactional:true` and no covering saga → emits the compensation-gap warning (§4.2, the "alert users we don't support it" rule, v3.2/B4). Activates independently of `check_saga` |
-| 6.17 | `check_observability` *(floor gate — blocks)* | **no `observability` block** on an agentic system; `tracing.hops` not ⊇ every interaction with an agent endpoint (an agent hop left untraced); empty `tracing.attributes`; `tracing.convention` not a known enum; `cost_budget` missing or `limit ≤ 0`; **no `eval_console`** (the PM eval surface, CR-16) or its `access`/`owner`/`ref` empty. §4.3 — the hard 2026-07-22 directive; HITL gates the **declaration**, the product builds the runtime |
+| 6.17 | `check_observability` *(floor gate — blocks)* | **no `observability` block** on an agentic system; `tracing.hops` not ⊇ every interaction with an agent endpoint (an agent hop left untraced); `tracing.attributes` **not ⊇ the required semantic-attribute set for the declared `convention`** (`REQUIRED_ATTRS[convention]`, §6.17.1 — so `["TODO"]` fails); `tracing.convention` not a known enum; `cost_budget` missing or `limit ≤ 0`; **no `eval_console`**; `eval_console.ref` **not resolving** per the `ResolvableRef` grammar (§4.3 — a bare string fails); `eval_console.owner` empty; **`eval_console.access` below the tier floor** — `report`/`existing_surface` are valid at **Tier ≤ 1**, but **Tier ≥ 2 requires `console`** (§6.17.1 tier rule, round-5 M3). §4.3 — the hard 2026-07-22 directive; HITL gates the **declaration** (real + tier-scaled), the product builds the runtime |
 
 `check_saga` is separated from `check_async` because a saga spans multiple interactions. In core it
 activates **only** on a declared `saga` and validates well-formedness (v3.2/B4) — it never *requires* a
@@ -502,6 +519,36 @@ saga. The `check_compensation_gap` advisory (6.16) is what surfaces a likely-nee
 a `warning`. A synchronous debit→credit pair is a database-transaction concern and triggers neither. The
 Advisor elicits whether distributed compensation is actually needed; the full required-when enforcement
 model is a deferred follow-on ([`../agentic-core-scope.md`](../agentic-core-scope.md)).
+
+### 6.17.1 Observability — required attributes + tier depth (round-5 M3)
+
+`check_observability` is **real, not a rubber stamp**: it enforces convention-required semantic attributes,
+a resolvable console `ref`, and a **tier-scaled** `access` mode — so it is neither theater (a bare string
+passing) nor disproportionate (a bespoke console forced on a Tier-1 tool).
+
+```python
+# Minimum span attributes the trace must carry, per declared convention (the OTel GenAI / OpenInference
+# required set — so attributes:["TODO"] fails):
+REQUIRED_ATTRS = {
+  "otel_genai":     {"gen_ai.system","gen_ai.operation.name","gen_ai.request.model","gen_ai.usage.input_tokens","gen_ai.usage.output_tokens"},
+  "openinference":  {"openinference.span.kind","llm.model_name","llm.token_count.prompt","llm.token_count.completion"},
+}
+# Tier-scaled satisfaction of the PM eval-console (M3 — real path at all tiers, heavier when the stakes rise):
+def access_ok(access, tier):
+    if tier <= 1: return access in ("report","existing_surface","console")  # a generated report or an existing approved surface suffices
+    return access == "console"                                              # Tier ≥ 2 needs a real PM-facing console
+
+def check_observability(o, tier, manifest):
+    assert set(o["tracing"]["attributes"]) >= REQUIRED_ATTRS[o["tracing"]["convention"]]   # else block
+    assert access_ok(o["eval_console"]["access"], tier)                                     # else block
+    assert resolves(o["eval_console"]["ref"], manifest)                                     # ResolvableRef, §4.3; else block
+    # + hops ⊇ agent-endpoint interactions, cost_budget.limit > 0, owner non-empty (§6.17)
+```
+
+So a **Tier-1** internal tool satisfies the floor with a **generated report or an existing approved
+surface** (no bespoke build), while a **Tier-2+** system must declare a real console — proportionate *and*
+non-toothless. HITL still ships only the declaration + validator + gate + static posture view; the product
+builds whatever the `ref` resolves to (O1).
 
 ```python
 def canon(s: str) -> str:
@@ -600,11 +647,8 @@ approval:                               # the SPEC gate (before execution — di
   reviewer: string
   date: date
   decision: enum[approved, baseline_only, rejected]
-result_review:                          # the RESULT gate (after execution — round-3 B3, §7.3)
-  optional: true                        # required once an adapter result is ingested (check 6.12)
-  reviewer: string
-  date: date
-  result_decision: enum[pass, fail, waived]
+# result_review (the RESULT gate after execution) is DEFERRED to #42 (round-5 B3) — not in core;
+# core gates on spec existence + `approval` only, never on an ingested run result.
 cases: list[{ id: string, given: string, expect: string,
               source: enum[acceptance_criterion, facade_contract, boundary_check, failure_mode],
               edited: bool }]           # edited:true = human-owned, preserved on regeneration (§7.4)
@@ -613,7 +657,13 @@ cases: list[{ id: string, given: string, expect: string,
 `status` records who wrote the cases; `approval.decision` is what the coverage gate reads. At Tier 2+,
 `baseline_only`/`rejected` does **not** satisfy coverage (6.12) — a human must approve.
 
-### 7.3 Adapter wire protocol (`docs/03-engineering/evals/eval-adapter.yaml`)
+### 7.3 Adapter wire protocol — DEFERRED to #42 (round-5 B3)
+
+> **Not in core.** Result *ingestion* (running the adapter, reading a result envelope, the result-review
+> gate) is deferred to #42 along with the result envelope. **Core** ships the eval **coverage** gate (spec
+> exists per agent + one e2e, `approval.decision == approved`) and this adapter **contract shape** as a
+> forward declaration the product implements — but the core validator never ingests a result or blocks on
+> one. The spec below is retained as the #42 target.
 
 ```yaml
 schema_version: "1.0"
@@ -646,8 +696,13 @@ ships the runner.
 
 `generate(target_type, target_id, manifest, prd, out_dir) -> writes/merges a spec`:
 
-- **owning FR**: `manifest.domains[target].owning_fr` (component) or the owning component's `owning_fr`
-  (interaction/segment); looked up in `prd` for the acceptance-criterion case source.
+- **Core generates only single-owner targets — every `component` (agent).** The **e2e `segment`** spans
+  multiple components with no single owner; **multi-owner baseline generation is deferred to #42**
+  (round-5 B3). In core the required **e2e spec is hand-authored** (a PM writes the one end-to-end spec);
+  the generator does not synthesize it. `check_eval_coverage` requires the e2e spec to *exist*, not to be
+  generated.
+- **owning FR** (single-owner component targets only): `manifest.domains[target].owning_fr`, looked up in
+  `prd` for the acceptance-criterion case source.
 - **case sources**: `acceptance_criterion` (from the FR), `facade_contract` (facade `preconditions` +
   `error_modes`), `boundary_check` (the §2.2 obligations on the target's legs), `failure_mode` (CR-6
   list: non-determinism propagation, cross-hop timeout/retry, cycle, fan-out cost, cross-agent trust).
@@ -694,7 +749,9 @@ ships the runner.
 | DLQ | `at_least_once`, no `dlq`, no justification | 2 `check_async` |
 | ASYNC-TASK-BARE | `async_task` with no `async` | 2 `check_async` |
 | RELIABLE-EVT | `kind:event` + at_least_once + idempotent consumer + dlq | exit 0 |
-| **COMP-GAP** | a flow with 2 side-effecting **agent/async** interactions and no `saga` (or a `transactional` segment with no covering saga) | exit 0 with a **`warning`** from `check_compensation_gap` — advisory, never blocks (proves the v3.2/B4 "alert, don't enforce" rule) |
+| **COMP-GAP-SEG** | a declared `segment.path` with 2 side-effecting agent/async interactions, no covering `saga` | exit 0 + a **`warning`** (flow = the segment; round-5 M2) |
+| **COMP-GAP-COORD** | no segment, but 2 side-effecting agent/async interactions sharing one `orchestration.coordinator`, no `saga` | exit 0 + a **`warning`** (flow = the coordinator chain, M2) |
+| **COMP-GAP-NONE** | 2 side-effecting interactions with **no** shared coordinator and **no** segment | exit 0, **no warning** (a loose pair is not a distributed transaction — M2) |
 | **SAGA-SYNC-OK** | **synchronous** deterministic debit→credit, both `side_effecting`, no `saga`, no registries | **exit 0, no warning** — a sync deterministic flow is exempt from both `check_saga` and the compensation-gap advisory; no saga forced, no `policies.yaml` (additive-only) |
 | SAGA-STEP | `saga` step missing/`none` compensation or `compensation_idempotent:false` | 2 (`check_saga` + `check_policy_refs`) |
 | CYCLE | interaction cycle, no positive `cycle_bound` | 2 `check_topology` |
@@ -708,16 +765,20 @@ ships the runner.
 | EVAL-COV | uncovered **agent** target; lapsed waiver; no e2e segment when ≥2 components (v3.2/M1 — core targets = agents + e2e) | 2 `check_eval_coverage` |
 | EVAL-DET-SKIP | a **deterministic** component with **no** spec, all agents covered, one e2e segment | exit 0 — deterministic coverage is **not required** in core (proves the v3.2/M1 trim; universal coverage is deferred) |
 | EVAL-DET-OK | a deterministic component that **opts in** with a `kind: contract_test` spec | exit 0 (the contract test is validated; it was optional) |
-| EVAL-RESULT | an ingested adapter result with no `result_review.result_decision` (or a `fail` without a waiver) | 2 `check_eval_coverage` (the result-review gate — applies to any ingested result) |
+| ~~EVAL-RESULT~~ | *(deferred to #42, round-5 B3)* result ingestion + the result-review gate are **not in core**; no core test asserts an ingested-result behavior |
 | EVAL-APPROVE | Tier 2 target whose only spec is `baseline_only` | 2 `check_eval_coverage` |
 | SCOPE | `Read: corpus ` (space/case) and multi-colon/traversal | 2 `check_scope_grammar` |
 | CLASSIFY | compound manifest, a domain with no explicit `kind`, or an agent with no `kind_rationale` | 2 `check_classification` |
-| **OBSERV-MISSING** | an agentic system with **no `observability` block** (or no `eval_console`) | 2 `check_observability` — the floor gate blocks (hard directive; every agentic system must be observable + PM-evaluable) |
-| **OBSERV-OK** | `observability` with `tracing.hops ⊇` all agent-endpoint interactions, non-empty attributes, positive `cost_budget`, an `eval_console{access,owner,ref}` | exit 0 (declaration complete; product builds the runtime) |
-| OBSERV-GAP | `observability` present but an agent hop missing from `tracing.hops` | 2 `check_observability` (an untraced agent hop) |
+| **OBSERV-MISSING** | an agentic system with **no `observability` block** (or no `eval_console`) | 2 `check_observability` — the floor gate blocks |
+| **OBSERV-OK-T1** | Tier 1: `access: report`, resolvable `ref` (`artifact:docs/…` that exists), `attributes ⊇ REQUIRED_ATTRS[convention]`, hops ⊇ agent interactions, `cost_budget.limit>0` | exit 0 — a generated report satisfies Tier ≤ 1 (M3, proportionate) |
+| **OBSERV-OK-T2** | Tier 2: `access: console`, resolvable `ref` (`domain:eval_console`), required attributes present | exit 0 |
+| **OBSERV-THEATER** | `attributes: ["TODO"]` **or** `ref: "some string"` (unresolvable) **or** Tier 2 with `access: report` | 2 `check_observability` — required attributes / `ResolvableRef` / tier floor all block (proves it is **not** evidence theater, M3) |
+| OBSERV-GAP | an agent hop missing from `tracing.hops` | 2 `check_observability` (an untraced agent hop) |
 | UNKNOWN | an unrecognized key (not `x_`) in a governed block | 2 (unknown_field) |
 | VIEW | generator emits machine-readable + rendered posture + a **separate** `projections.*` view (not written into the manifest), stable ordering | assert artifacts + regenerate-and-diff clean |
 | **VIEW-IDEMPOTENT** | run `generate` twice, then validate | exit 0 — projections live in their own file, so the second validation has no `edge_double_authored` self-conflict (proves the round-3 B1 fix) |
+| **MIXED** | a manifest where **some** domains use typed `interactions` and **others** are legacy (no `interactions`, keeping their auto `depends_on`) | exit 0 — the new domains project `depends_on` to the view file; the legacy domains keep their manifest `depends_on` unchanged; no `depends_on_double_authored` (proves the round-5 M5 mixed legacy/new boundary) |
+| DEP-DOUBLE | `interactions` present **and** a hand-authored `depends_on` in the manifest for the same domain | 2 `check_references` (`depends_on_double_authored` — projected fields aren't hand-authored alongside `interactions`, M5) |
 | Z1 | unparseable manifest / a required registry absent **while its check is active** | 2 fail-closed |
 
 ## 9. Generated views (`tools/manifest-agentic/generate_views.py`)
@@ -728,8 +789,9 @@ machine-readable + rendered artifacts: `topology.{json,md}`, `privilege-posture.
 **derived** `interaction_matrix`, `events_emitted`/`events_consumed` projections (§2.4) are emitted here as
 a **separate generated-view file** (`projections.{json,md}`) — they are **not written back into the source
 manifest** (round-3 B1: writing them into the manifest would then collide with `edge_double_authored`).
-Only `depends_on` remains an auto **manifest** field (a coarse domain-level list — it does not conflict with
-the interaction rules). JSON carries `schema_version` + deterministic ordering; CI runs `generate` and
+**`depends_on` is projected the same way when `interactions` is present** (round-5 M5); it is an auto
+**manifest** field **only** in a legacy manifest with no `interactions` (§2.4). JSON carries `schema_version`
++ deterministic ordering; CI runs `generate` and
 **fails on a diff** (regenerate-and-diff = the "cannot drift" guarantee). Topology draws nodes by `kind`,
 interaction legs typed (sync/async/event), boundary legs marked, routes/segments, and
 `orchestration.pattern`. Static only (ADR-5).

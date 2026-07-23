@@ -67,19 +67,25 @@ the questions and the option menus (the catalog, ADR-A2).
 The Advisor **does not replace** HITL's existing design intake; it is the **compound-agentic branch of
 it**. Concretely (ADR-A9):
 
-- **No routing circularity (round-4 B2).** The surface cannot be chosen *after* the full intake (that would
-  require running the agentic intake to decide whether to run the agentic intake). So `pm-design-feature`'s
-  existing "what is the delivery surface?" step gains a **short topology probe** — two questions: *how many
-  distinct components (services/agents/stores)?* and *does any component call, hand off to, or message
-  another?* This probe is **the single selector** and is cheap enough to always run:
-  - **≥2 components AND ≥1 inter-component edge → the compound surface:** hand off to `hitl:agentic-intake`
-    for the full elicitation (§3) + composition (§4).
-  - **otherwise → the existing single-agent path**, unchanged.
-- **`ai/codex/AGENTS.md`** gains the **same probe-then-route rule** so the Codex/agent design path applies
-  the identical selector before choosing the compound workflow vs the single-agent template.
-- The full `hitl:agentic-intake` then elicits the complete component/edge detail; the probe only decides
-  *which surface*, the intake fills in the rest. The handoff writes the composed workflow (§4) and the
-  scenario record, which the design track then consumes.
+**One selector sequence, no circularity and no misroute (round-4 B2 + round-5 M1).** `pm-design-feature`'s
+existing "what is the delivery surface?" step gates the whole thing, then a cheap probe decides compound vs
+single — three steps, evaluated in order, before any full intake runs:
+
+1. **Delivery surface = `agentic`?** (the existing surface question, one of web / mobile / api / **agentic** /
+   …). If **not agentic** — e.g. an ordinary web UI + API, or two deterministic services — the existing
+   deterministic/single-surface flow runs **unchanged**; the topology probe does **not** fire. *(This is the
+   `agentic` gate round-5 M1 found missing — a 2-component deterministic system must not route to the
+   compound-agentic intake.)*
+2. **Topology probe** (only when agentic) — two questions: *how many distinct components
+   (services/agents/stores)?* and *does any component call, hand off to, or message another?*
+3. **Route:** **≥2 components AND ≥1 inter-component edge → the compound surface** (hand off to
+   `hitl:agentic-intake` for the full elicitation §3 + composition §4); a single agent → the existing
+   single-agent path (a team may still run one `agentic-*` command standalone, ADV-1).
+
+This is **the single selector**. The full `hitl:agentic-intake` does **not** re-select the surface — it only
+fills in the complete component/edge detail on the compound branch (the duplicate selector Codex flagged in
+the LLD is removed, §8). **`ai/codex/AGENTS.md`** gains the identical gate→probe→route rule. The handoff
+writes the composed workflow (§4) and the canonical state (§7.1), which the design track consumes.
 
 This is the architectural sequencing the round-2 review flagged as missing and the round-4 review found
 still circular: *a cheap probe routes; the full intake runs only on the compound branch; the deterministic
@@ -101,82 +107,77 @@ After the intake understands the requirements, HITL **composes the workflow**: t
 The composed workflow is written to the decision record and is what the team runs. A re-run with the same
 answers composes the identical workflow (auditable, ADV-12).
 
-### 4.1 Relevance predicates — all commands (not just examples)
+### 4.1 The floor is DERIVED from #10 activation; rungs are the genuinely-optional extras (round-5 B1)
 
-A command is composed **iff** its relevance predicate holds (the same shape as #10's per-check activation
-table). The full set:
+The workflow is `floor ∪ rungs`. **The floor is not hand-tuned — it is a pure function of #10's activation
+predicates:** a command is floor **iff** a #10 check it owns will activate on the manifest the scenario
+implies (LLD §4, `floor_commands`). This is the reconciling principle made mechanical — the Advisor can
+never mark a control "deferrable" that #10 will then mandate (the round-4/round-5 B1 defect). Which #10
+check each command owns, and when it fires:
 
-| Command | Composed when (relevance) |
-|---|---|
-| `agentic-classify` | always (a compound system was selected — ≥2 components) |
-| `agentic-boundary` | any interaction crosses an agent↔deterministic or agent↔external seam |
-| `agentic-privilege` | any component is an agent (it holds capabilities/identity) |
-| `agentic-reliability` | `side_effects ≠ none`, **or** any interaction is `async_task`/`event`, **or** `autonomy ∈ {supervised, autonomous}` (kill-switch) |
-| `agentic-observability` | any component is an agent (observability + PM eval-console is a floor obligation for any agentic system — hard directive) |
-| `agentic-memory` | any agent declares memory/state, **or** `data ∈ {sensitive, pii}` |
-| `agentic-evals` | any component is an agent (quality is unprovable without evals) |
-| `agentic-deploy` | always for a compound system (a build-vs-buy call is always made) |
+| Command | Owns #10 check(s) | ⇒ floor when (the check activates) |
+|---|---|---|
+| `agentic-classify` | `check_classification` | a compound system (≥1 agent endpoint) — always here |
+| `agentic-boundary` | `check_boundary_legs`, `check_topology`, `check_references`, `check_authorization` | any interaction with an agent endpoint (**incl. agent→agent**), or into an agent |
+| `agentic-privilege` | `check_capabilities`, `check_scope_grammar` | **any** component is an agent |
+| `agentic-reliability` | `check_async`, `check_lifecycle` (+ non-#10 kill-switch/human-gate) | any async/event edge, any long-running component, **or** irreversible (human-gate) / supervised+side-effecting (kill-switch) |
+| `agentic-observability` | `check_observability` | **any** component is an agent (hard directive) |
+| `agentic-memory` | `check_memory` | memory is declared |
+| `agentic-evals` | `check_eval_coverage` | **any** component is an agent |
+
+**Rungs (genuinely optional — no firing owned check):** `agentic-memory` offered when the scenario hints at
+cross-session state (before it is declared); `agentic-deploy` offered only when the change is **greenfield,
+changes the execution platform, adds a durable runtime need, or explicitly requests the decision** (M6 — not
+"always"). `agentic-deploy` has **no** #10 check, so it is never floor. An `ACTIVATION-MIRROR` test asserts
+the Advisor's copy of #10's activation predicates matches #10's real table, so the floor can never drift
+from #10 (LLD §4.1).
 
 Composed ≠ mandatory: whether a composed command is **floor** (mandatory) or **rung** (offered) is the §5
 rule. A command whose relevance predicate is false is not composed at all (proportionality).
 
-### 4.2 The catalog `consequence` — a tagged union (ADR-A2)
+### 4.2 The catalog `consequence` — an option→list map of tagged unions (ADR-A2)
 
-Each catalog entry's `consequence` is a **tagged union** (one `kind`), so `test_catalog_lint.py` can
-validate it and the composer can act on it:
+An entry's `consequence` is a **map keyed by answer option → a list of tagged-union items** (one `kind`
+each), so different answers drive different downstream effects. The LLD (§2.3) uses this exact shape:
 
 ```yaml
-consequence:
-  kind: enum[ classify | boundary | gate | command | floor | manifest_field | declared_artifact ]
-  # kind: command          → composes a hitl:agentic-* command (name)
-  # kind: floor            → adds/removes a floor entry (with the §5 rule ref)
-  # kind: manifest_field   → authors a specific #10 manifest field (path)
-  # kind: declared_artifact → records a design artifact with no #10 target (kill-switch §2 †; observability now authors a #10-gated field)
-  # kind: gate|boundary|classify → the specific design obligation
-  target: string           # command name | manifest path | artifact id | floor-rule id
-  note: string
+consequence:                 # map[ <option-or-"*"> -> list[ item ] ]
+  <option>:
+    - kind: enum[ classify | boundary | gate | command | floor | manifest_field | declared_artifact ]
+      # command → composes a hitl:agentic-* ; floor → a floor obligation id ; manifest_field → a #10 field path ;
+      # declared_artifact → a design artifact with no #10 target (kill-switch ONLY; observability authors a manifest_field) ;
+      # gate|boundary|classify → the specific design obligation
+      target: string         # command name | manifest path | artifact id | floor-rule id
+      note: string?
 ```
 
-A lint (`CAT-CONSEQUENCE`) rejects an entry with no `consequence`; `CAT-COMMANDS`/`CAT-ACTIVATES` check
-that a `command`/`manifest_field` target actually resolves (a real command, a real #10 field).
+The lint (`CAT-SCHEMA`, LLD §2.3) rejects an entry with no `consequence`, an option without a key, or a
+list item whose `command`/`manifest_field`/`floor` target does not resolve.
 
-## 5. Floor and ladder (ADV-5/ADV-12) — reuse Tier, offer the rungs
+## 5. Floor (from #10 activation) + Tier (for depth) + rungs (ADV-5/ADV-12)
 
-The floor is a **deterministic function of the existing HITL Tier (0–3) plus agentic risk factors** — it
-does **not** introduce a competing scale (the architect review's orthogonal-machinery catch). The risk
-factors have an enumerated vocabulary so the floor is reproducible:
+**What is floor** is decided by §4.1 — a pure function of #10's activation predicates, *not* Tier. This is
+the round-5 B1 correction: the previous version hand-tuned the floor with Tier gates (e.g. "privilege only
+at Tier ≥ 2"), which contradicted #10, where `check_capabilities` activates on *any* agent. A team that
+followed the old floor would defer privilege/evals/boundary into a hard #10 failure. Now the floor **is**
+the set of controls #10 will enforce, so it can never disagree.
 
-```
-stakes        ∈ {internal, customer_facing, regulated}
-side_effects  ∈ {none, reversible, irreversible}
-data          ∈ {none, sensitive, pii}
-autonomy      ∈ {assisted, supervised, autonomous}
-scale         ∈ {small, large}
-```
+**What Tier decides is depth, not membership.** The enumerated risk factors —
+`stakes∈{internal,customer_facing,regulated}`, `side_effects∈{none,reversible,irreversible}`,
+`data∈{none,sensitive,pii}`, `autonomy∈{assisted,supervised,autonomous}`, `scale∈{small,large}` — and the
+Tier set the **depth required within a floor control** (LLD §4.1): e.g. observability at Tier 0/1 is
+satisfied by an existing approved surface or a generated report, at Tier 2+ by a fuller console (M3);
+privilege granularity is per-class vs per-capability; evals are baseline vs extended. So a low-stakes system
+still has the *same floor controls* (because #10 enforces them) but at the lightest defensible depth — the
+proportionate lever (O6) is depth, not skipping a control #10 will block on.
 
-**Floor rule — obligation-first, so nothing silently drops (round-4 B3).** The floor is computed **before**
-proportionality prunes, and **a firing floor rule forces its owning command into the composition** — the
-floor is never intersected with the composed set. Order of operations:
+Two floor obligations have **no** #10 check and so are added by rule, not activation: the **human gate**
+(`side_effects == irreversible`) and the **kill-switch** (`autonomy ∈ {supervised, autonomous}` and
+`side_effects ≠ none`), both owned by `agentic-reliability`.
 
-1. Compute the **firing floor obligations** from Tier + declared risk (the rules below). Each obligation
-   names the command that owns it.
-2. **Union those commands into the composed workflow** (`composed := composed ∪ floor_commands`). A command
-   pulled in *only* by a floor obligation is composed *because* it is mandatory — it cannot be dropped by a
-   relevance predicate that happened to be false.
-3. Proportionality then only decides which **non-floor** relevant commands are offered as rungs.
-
-| Mandatory command | Floor rule fires when |
-|---|---|
-| `agentic-classify` | always, for a compound system (≥2 components) |
-| `agentic-boundary` | any interaction crosses an agent↔deterministic (or external) seam |
-| `agentic-privilege` | Tier ≥ 2, **or** `data ∈ {sensitive, pii}`, **or** the lethal-trifecta pattern is present |
-| human gate (via `agentic-reliability`) | `side_effects == irreversible` |
-| kill-switch (via `agentic-reliability`) | `autonomy ∈ {supervised, autonomous}` and `side_effects ≠ none` |
-| `agentic-observability` | **any agent is present** — presence is non-negotiable (the hard 2026-07-22 directive: every agentic system must be observable + PM-evaluable); the *depth* declared scales with Tier/stakes, but the floor obligation fires for any agent |
-| `agentic-evals` | Tier ≥ 2 and `stakes ∈ {customer_facing, regulated}` |
-
-**Precedence:** if several rules apply, the command is mandatory (union, not override) — the floor is the
-*highest* obligation across all matching conditions.
+**`floor ⊆ workflow` by construction** (the workflow is `floor ∪ rungs`), and **`floor ≡ #10 activation`**
+by construction (floor is computed *from* the activation predicates) — the `FLOOR-SUBSET` and
+`ACTIVATION-MIRROR` tests guard both against future drift.
 
 **Invariant `floor ⊆ composed` (lint-enforced, B3).** A build-time lint (`FLOOR-SUBSET`) asserts that every
 command a floor rule can name is a real, composable command, and that step 2 makes `floor_commands ⊆
@@ -280,27 +281,29 @@ The team runs one command. It asks across the lenses; the answers that matter:
 
 ### 9.3 HITL composes the workflow
 
-From those answers (Tier 2, irreversible, PII, supervised, small), composition produces:
+From those answers (Tier 2, irreversible, PII, supervised, small; a greenfield build with one async edge —
+this is Fixture HIGH, test plan §4), composition produces — each floor entry justified by the #10 check it
+owns activating (floor ≡ #10 activation):
 
 ```
-FLOOR (mandatory):
-  agentic-classify        (≥1 agent)
-  agentic-boundary        (resolution_agent → refund_service crosses the seam; intake_agent → account_service)
-  agentic-privilege       (Tier 2 + PII)
-  agentic-reliability      → human gate (irreversible) + kill-switch (supervised + side effects)
-  agentic-observability   (any agent — hard directive: observable + PM-evaluable; depth scales with Tier)
-  agentic-evals           (Tier 2 + customer-facing)
-OFFERED (rungs, deferrable):
-  agentic-memory          (only if you want cross-session context — team defers it, recorded as `deferred`)
-NOT INCLUDED (no data for the lens):
-  saga/compensation       (irreversible ≠ compensable — you gate, you don't compensate)
-  async reliability       (the flow is synchronous)
-  deep-agent machinery    (no deep agents)
-  agentic-deploy? → INCLUDED (every compound build makes a build-vs-buy call)
+FLOOR (mandatory — its owned #10 check will fire):
+  agentic-classify        (check_classification — compound, ≥1 agent)
+  agentic-boundary        (check_boundary_legs/topology/references/authorization — agent endpoints, incl. agent→agent)
+  agentic-privilege       (check_capabilities — any agent)
+  agentic-reliability     (check_async — the async ledger write; + human gate (irreversible) + kill-switch (supervised))
+  agentic-observability   (check_observability — any agent; depth = console at Tier 2)
+  agentic-evals           (check_eval_coverage — any agent + one e2e)
+OFFERED (rungs — no firing #10 check):
+  agentic-deploy          (greenfield build → a build-vs-buy call; recorded, human-carried)
+NOT COMPOSED:
+  agentic-memory          (no cross-session memory declared or hinted — not offered)
+  (saga / deep-agent are #10 concerns, not Advisor commands; the flow is agent→async, handled by reliability)
 ```
 
-The team sees a **six-command floor + one offered rung**, and — crucially — **never sees** the saga,
-async, or deep-agent machinery, because their system doesn't need it. That is the proportionality working.
+The team sees a **six-command floor + one offered rung (deploy)**. Every floor entry is there because #10
+will enforce it — nothing is a hand-tuned guess, and nothing the team could defer would then hard-fail #10.
+Proportionality shows up as **depth** (Tier-2 console vs a Tier-1 report) and in what is *not* composed
+(no memory), not in skipping a control #10 mandates.
 
 ### 9.4 The team runs the composed commands
 
@@ -343,12 +346,20 @@ the observability command authored — the floor gate, hard directive) — and *
 one remaining **declared artifact** of §7 (no #10 field yet). The human carries the deployment decision
 onward. The result is a **right-sized, governed design** the team can hand to the compound-agentic build track.
 
-### 9.6 Contrast — a trivial case
+### 9.6 Contrast — a lighter compound case, and the single-agent path
 
-A single agent that summarizes public docs for an internal tool: the intake finds **1 component, no side
-effects, no PII, internal** → composition includes only `agentic-classify` and **offers** a light
-`agentic-evals`; the floor is essentially "declare it." The team barely feels HITL. Same commands, same
-Advisor — a completely different weight, set by the scenario, not by ceremony.
+**A lighter compound system** (Fixture LOW, test plan §4): two agents, read-only, internal, Tier 1. The
+floor is still `{classify, boundary, privilege, observability, evals}` — because a two-agent flow *does*
+activate #10's classification/boundary/capability/eval/observability checks, so pretending they were
+optional would just hard-fail #10 later. What makes it light is **depth**: observability is satisfied by an
+existing approved surface or a generated report (not a bespoke console), privilege is per-class, evals are
+baseline, and reliability/memory/deploy are absent. Proportionality is real, but it is depth-and-omission,
+not skipping a control #10 enforces.
+
+**A single agent** (one component — a doc summarizer): this is **not a compound system**, so the topology
+probe (§3.1) routes it to the existing single-agent surface; the compound intake is not invoked. A team can
+still run one command standalone (e.g. `agentic-privilege`) against it (ADV-1) — that is the supported
+single-component path, not a near-empty compound workflow.
 
 ### 9.7 How the map renders (ADV-15) — terminal-first; two core renderings, one source
 
@@ -413,7 +424,7 @@ scenario record, so the map never drifts from the design.
 | A3 | **Recommend, never decide** — output is a proposal + decision record the human confirms |
 | A4 | **HITL composes a proportionate workflow** from the intake — ask/run only what's relevant; depth follows risk |
 | A5 | The commands **author the manifest**; #10's existing per-check activation reacts — configure, don't feed a validator list, don't duplicate |
-| A6 | The **floor is a deterministic function of Tier + risk**, computed **obligation-first** so `floor ⊆ composed` (a firing floor rule forces its command in — no silent drop, B3); the ladder offers **deferrable** rungs (no new axis) |
+| A6 | The **floor is DERIVED from #10's activation** (a command is floor iff a #10 check it owns fires — floor ≡ activation, B1); **Tier scales depth, not membership**; `floor ⊆ workflow` by construction; the ladder offers **deferrable** rungs (no new axis) |
 | A7 | The Advisor **records the build-vs-buy decision; a human carries it** to the platform track — provisions nothing, auto-hands-off to nothing |
 | A8 | The **evolving map is a generated view, terminal-first** — **core = inline text (no browser) + Markdown/Mermaid** in the decision record; regenerated per step; the **rich HTML + combined live mode are a deferred enhancement** (M8); HITL writes/prints, runs no live server |
 | A9 | The intake **integrates into `pm-design-feature`/`AGENTS.md`** — a **cheap topology probe routes** (no circularity, B2): precedes the design track for compound systems (≥2 components + ≥1 edge), skipped for simple ones; never gates or replaces the existing intake |

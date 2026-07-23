@@ -133,24 +133,27 @@ tests (test plan §6).
 
 ---
 
-## ADR-A6: The floor is a deterministic function of Tier + risk; the ladder offers deferrable rungs
+## ADR-A6: The floor is DERIVED from #10's activation; Tier scales depth; the ladder offers deferrable rungs
 
-**Status:** Accepted (this **refines** the v1 decision, which introduced an L0–L4 "ladder" as a scale
-alongside HITL's Tier 0–3 without reconciling them — the architect review's orthogonal-machinery catch,
-and prose triggers that two implementers would compute differently).
+**Status:** Accepted; **rewritten round-5 (B1).** The earlier decision made the floor a function of *Tier +
+risk gates* (e.g. "privilege floor at Tier ≥ 2"). Round-4/round-5 showed this **contradicted #10**, whose
+per-check activation fires on manifest *content* — so a control the old floor treated as a deferrable rung
+(privilege/evals/boundary at low tier) would be *mandated* by #10 and hard-fail when the team deferred it.
+The floor is now a **pure function of #10's activation predicates**: a command is floor iff a #10 check it
+owns will activate. **Tier no longer decides membership — it scales the required depth within a floor
+control.** (This still refines the v1 L0–L4 "ladder" that was a second scale with no precedence rule.)
 
 **Context.** The floor (the controls that can't be skipped) must be **auditable** — reproducible for a
 given declared risk — and must **reuse HITL's existing Tier model** (requirements §6: no new orthogonal
 machinery). v1's L0–L4 rungs were a second scale with prose triggers and no precedence rule.
 
-**Decision.** The floor is a **deterministic function of the existing Tier (0–3) plus an enumerated set of
-agentic risk factors** (stakes, side_effects, data, autonomy, scale). Each floor rule fires monotonically;
-if several apply, the command is mandatory (union). **The floor is computed obligation-first (round-4 B3):**
-the firing floor obligations are computed first, and **each forces its owning command into the composed
-workflow** (`composed := composed ∪ floor_commands`) *before* proportionality prunes the rest — so `floor ⊆
-composed` holds by construction and a floor obligation can never be silently dropped because a relevance
-predicate happened to be false. A build-time lint (`FLOOR-SUBSET`) asserts every floor rule names a real
-command and that `floor ⊆ composed` across the whole risk-factor space. Commands above the floor are
+**Decision.** The floor is **`{ command : a #10 check it owns activates on the scenario-implied manifest }`**
+plus two non-#10 obligations (human gate on irreversible, kill-switch on supervised+side-effecting). The
+Advisor mirrors #10's activation predicates in an `ACTIVATES` table; the `ACTIVATION-MIRROR` lint asserts it
+matches #10's real table field-for-field, so the floor **cannot drift from #10** (B1). The workflow is
+`floor ∪ rungs`, so `floor ⊆ workflow` by construction (the `FLOOR-SUBSET` lint guards it). **Tier + risk
+factors set the required *depth*** within a floor control (e.g. observability = report vs console, M3), not
+whether it is floor. Commands above the floor are
 **offered as deferrable rungs** — the "add now or **defer**" ladder is a *human-facing narrative over the
 same Tier+risk axis*, not a competing scale (note: rung **defer** ≠ floor **waiver**, round-4 m3). **The
 floor is non-silently-droppable but waivable:** a floor command cannot be dropped silently (below the floor
@@ -239,41 +242,42 @@ files and publishes/prints**; live refresh is the surface's, not a server HITL r
   choose" value that is the whole point.
 
 **Consequences.** (+) Terminal users see the map evolve inline with no browser; IDE users get a live Mermaid
-preview for free; the rich HTML is there when wanted; all from one deterministic regenerate, so the map
-never drifts from the design. (−) Three renderings to generate and keep consistent — mitigated by one data
-source and a shared template.
+preview for free (the rich HTML/live mode is a deferred follow-on, M8); all from one deterministic
+regenerate, so the map never drifts from the design. (−) Two core renderings to keep consistent — mitigated
+by one data source and a shared template.
 
 ---
 
 ## ADR-A9: The intake integrates into the existing intake — precede for compound, skip for simple, never replace
 
-**Status:** Accepted (added after round-2; the architect review found ADV-13's required integration into
-`pm-design-feature`/`AGENTS.md` had *no design* — a Must-priority sequencing gap, not deferrable to LLD).
+**Status:** Accepted; **rewritten round-5 (M1)** to a single, non-circular selector sequence — the earlier
+text said the trigger came from "the intake's own elicited count," which both created a circularity
+(needing the intake to decide whether to run the intake) and lacked an `agentic` gate.
 
 **Context.** ADV-13 requires the Advisor to select the delivery surface and route into the compound-agentic
-workflow, integrating with `pm-design-feature` and `ai/codex/AGENTS.md`. The open question the review named
-is architectural: does the Advisor **gate, precede, or replace** the existing single-agent intake?
+workflow, integrating with `pm-design-feature` and `ai/codex/AGENTS.md`, without (a) circularity and (b)
+misrouting a non-agentic multi-component system into the compound intake.
 
-**Decision.** The Advisor is the **compound-agentic branch of the existing intake**, not a replacement.
-`pm-design-feature`'s existing "what is the delivery surface?" step gains a branch: once the elicited system
-has **≥2 components and ≥1 inter-component edge**, it **hands off to `hitl:agentic-intake`**; a
-single-component product stays on the existing single-agent path unchanged. `ai/codex/AGENTS.md` gains a
-matching routing rule so the Codex design path follows the composed workflow for compound systems. The
-trigger is evaluated from the intake's own elicited component/edge count — no new detector. So: **precede
-for compound, skip for simple, never gate or replace** the deterministic flow.
+**Decision — one selector, evaluated before any full intake (HLD §3.1):**
+1. **`agentic` gate:** `pm-design-feature`'s existing "what is the delivery surface?" answer. Not agentic ⇒
+   the deterministic/single flow runs unchanged and nothing below fires.
+2. **topology probe** (agentic only): two questions — component count; does any component call/hand-off/
+   message another?
+3. **route:** ≥2 components and ≥1 edge ⇒ hand off to `hitl:agentic-intake` (compound branch); else the
+   single-agent path. The full intake does **not** re-select the surface (the duplicate selector is
+   removed, LLD §3); it only elicits the full detail on the compound branch. `ai/codex/AGENTS.md` gets the
+   identical gate→probe→route rule.
 
 **Alternatives and their cost.**
-- *No integration design (v2).* Cost: a Must requirement with no mechanism; an implementer must invent the
-  sequencing — the round-2 blocker.
-- *The Advisor replaces `pm-design-feature`.* Cost: breaks the existing single-agent and deterministic
-  flows; a far larger, unnecessary change.
-- *A separate detector tool.* Cost: net-new machinery to decide "is this compound?" when the intake already
-  elicits the component/edge count.
+- *Select after the full intake (the old text).* Cost: circular — you must run the agentic intake to decide
+  whether to run it (round-4 B2); and with no `agentic` gate a 2-service deterministic app misroutes to the
+  compound intake (round-5 M1).
+- *The Advisor replaces `pm-design-feature`.* Cost: breaks the existing single-agent/deterministic flows.
+- *A separate detector tool.* Cost: net-new machinery when the surface question + a two-question probe suffice.
 
-**Consequences.** (+) A concrete, minimal integration: one branch in `pm-design-feature`, one rule in
-`AGENTS.md`, reusing the intake's own elicitation. Simple products are untouched. (−) Two existing
-artifacts (`pm-design-feature`, `AGENTS.md`) get a small, tracked change — enumerated in the LLD's file
-list.
+**Consequences.** (+) One cheap, non-circular selector; non-agentic and single-agent products are untouched;
+the full intake runs only where it applies. (−) `pm-design-feature` and `AGENTS.md` each get a small tracked
+change (the gate→probe→route rule), enumerated in the LLD file list.
 
 ---
 
