@@ -383,7 +383,7 @@ authored:
   orchestration:  { pattern?: enum[sequential,supervisor,hierarchical,blackboard,swarm,hybrid], coordinator?: component_id, cycle_bound?: int, justification? }  # → top-level orchestration
   sagas:          [ { id, coordinator: component_id, order: enum[sequential], steps:[{interaction_id, compensation: PolicyRef, compensation_idempotent: bool}] } ]  # → top-level sagas (sequential, round-5 M2)
   evals:          [ { target_type: enum[component,segment], target_id, kind: enum[eval], spec_path, approval?: {reviewer,date,decision} } ]  # → domains[].evals / segments[].evals
-  observability:  { convention: enum[otel_genai,openinference], hops:[edge_id], attributes:[…], cost_budget:{limit,unit}, eval_console:{access: enum[report,existing_surface,console], owner, ref: ResolvableRef} }  # → top-level observability (§ compound 4.3; access enum matches #10, round-6 B4)
+  observability:  { tracing:{ convention: enum[otel_genai,openinference], hops:[edge_id], attributes:[…] }, cost_budget:{limit,unit}, eval_console:{access: enum[report,existing_surface,console], owner, ref: ResolvableRef} }  # → top-level observability; `tracing` is NESTED to match #10 §4.3 (the spike caught a flat-vs-nested mismatch, round-8)
   policies:       [ { id: "<ns>:<name>", kind: enum[schema,guardrail,action], … } ]                                # → policies.yaml registry (every PolicyRef above resolves here, round-6 B2)
   stores:         [ { id, durable: bool, shared?: bool } ]                                                          # → stores.yaml registry (checkpoint_store/shared_store resolve here)
   kill_switch:    { scope, trigger, disables }               # declared artifact only (no #10 field, §5.2)
