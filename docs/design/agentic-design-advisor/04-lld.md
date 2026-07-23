@@ -202,6 +202,33 @@ platform-ops}`. It authors **no** manifest field and provisions nothing.
 - **`mermaid`** — the same graph + a Markdown table, written into `agentic-decisions.md` (§7.2).
 - **`html`** — an optional self-contained page (static-file publishing only; no server, ADR-A8).
 
+### 6.1 Node-type visual vocabulary
+
+Every rendering keys a node's visual off its type, so kind reads at a glance. The set:
+
+| Type | HTML/Mermaid icon | Terminal ASCII |
+|---|---|---|
+| `agent` (stochastic) | hexagon, green | `⬡ name` (or `(name)`) |
+| `service` (deterministic) | chip, steel | `▢ name` (or `[name]`) |
+| `datastore` | cylinder, teal | `⛁ name` (or `(=name=)`) |
+| `external` (actor/system) | cloud, dashed | `☁ name` (or `{name}`) |
+| `store` (output) | stacked layers | `▤ name` |
+| edge: `message`/event | dashed + `✉` | `··✉··▶` |
+| marker: `human_gate` | `⛊` badge on the edge | `──⛊──▶` |
+
+The type is `domains[d].kind` for agents/services, and derived for datastore/external/store from the
+component's role in the manifest (a domain with no facade that only stores data → `datastore`; an
+out-of-manifest actor → `external`). The demo at artifact `efd56c28` is the reference HTML rendering.
+
+### 6.2 Combined "chat + live map" mode (ADR-A8)
+
+On an **artifact-capable surface** (a capability the harness reports), the intake **re-publishes the `html`
+rendering to the same artifact URL after each meaningful step**, so the discussion and the map update
+together. It is a **live view, not an input** — the artifact is sandboxed and cannot post answers back, so
+the conversation remains the sole input. On a non-capable surface (bare CLI), the intake falls back to the
+`terminal` rendering (the universal baseline). Either way HITL only **generates and publishes/prints** — it
+runs no server.
+
 Deterministic from the scenario record (regenerate-and-diff), so the map never drifts.
 
 ## 7. Records (`records.py`)

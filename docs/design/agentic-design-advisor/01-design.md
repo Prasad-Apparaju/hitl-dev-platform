@@ -354,10 +354,27 @@ added one at a time, the map grows one node/annotation at a time. Because HITL i
    publishing** (a generated HTML file served as a static page, like the existing portal) — *not* a hosted
    rendering service, which would cross governs-not-runtime.
 
+**Combined "chat + live map" mode (artifact-capable surfaces).** On a Claude Code surface with an artifact
+panel (web/desktop), rendering (3) becomes the *live* view: the intake **re-publishes the map artifact after
+each meaningful step to the same URL**, so the discussion (the chat) and the evolving map (the side panel)
+sit together and update as the user answers. This is the natural home for "picture the system as you
+discuss it." **Two constraints keep it in-lane:** (a) the artifact is a **live view, not an input** — it is
+sandboxed and cannot post answers back, so the *conversation* stays the input and the map is the evolving
+*output*; a two-way "fill the form and it builds the design" web app would cross into runtime and is out of
+scope. (b) It is the **rich tier only** — a bare CLI or air-gapped setup still gets the terminal-text map
+(rendering 1). The demo at `efd56c28-…` shows the loop on the Cerrtus flow.
+
+**Node-type visual vocabulary.** Every rendering uses one consistent visual language so a component's kind
+reads at a glance: **agent** (hexagon / green), **deterministic service** (chip / steel), **datastore**
+(cylinder / teal), **external actor** (cloud / dashed), **output store** (stacked layers), plus a
+**message/email** edge (dashed + ✉) and a **human gate** marker (⛊). The terminal rendering uses ASCII
+equivalents of the same vocabulary. LLD §6 specifies the icon set and the ASCII map.
+
 **Boundary (governs-not-runtime):** HITL **writes the files and prints the text**; it does **not** run a
 live-reload server. Live browser refresh is the user's IDE/tooling (the IDE Mermaid preview updates on file
-change for free); the terminal inline map and the regenerated file are what HITL provides. Regenerate is
-deterministic from the scenario record, so the map never drifts from the design.
+change for free); the terminal inline map, the regenerated file, and (on capable surfaces) the re-published
+artifact are what HITL provides. Regenerate is deterministic from the scenario record, so the map never
+drifts from the design.
 
 ## 10. Decisions (locked as ADRs)
 

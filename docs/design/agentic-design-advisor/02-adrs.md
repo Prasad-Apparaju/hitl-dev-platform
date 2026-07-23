@@ -211,9 +211,14 @@ a hosted live dashboard.
 regenerated from the accumulating scenario record **at each meaningful step**, and rendered **terminal-first
 in three ways from one source**: (a) a terminal-native inline text map re-printed at each milestone (the
 live view, no browser); (b) a Markdown + Mermaid map in the decision record, IDE/GitHub-previewable and
-auto-updating on file change; (c) an optional rich interactive HTML rendering for the web surface / share /
-portal. HITL **writes files and prints text**; live browser refresh is the user's IDE/tooling, not a server
-HITL runs.
+auto-updating on file change; (c) an optional rich interactive HTML rendering. On an **artifact-capable
+surface** (c) runs as a **combined "chat + live map"** mode — the intake re-publishes the map artifact to
+the same URL each step, so the discussion and the evolving map sit side-by-side. Two constraints keep it
+in-lane: the artifact is a **live view, not an input** (sandboxed, can't post answers back — the
+conversation stays the input), and it is the **rich tier only** (terminal-text is the universal baseline).
+All renderings share one **node-type visual vocabulary** (agent/service/datastore/external/store + message
++ gate; ASCII equivalents in the terminal), so a component's kind reads at a glance. HITL **writes files
+and publishes/prints**; live refresh is the surface's, not a server HITL runs.
 
 **Alternatives and their cost.**
 - *A hosted live dashboard.* Cost: crosses governs-not-runtime (a runtime service HITL would host), and
