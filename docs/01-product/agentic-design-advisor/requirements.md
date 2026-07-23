@@ -3,10 +3,12 @@
 > **What** the surface must do, for the HITL enhancement that encodes agentic-systems expertise as
 > **runnable commands** that ask the questions an expert asks, understand the whole scenario, and let HITL
 > **compose the right-sized workflow** for the change. Product one-liner: **FR-28** in the
-> [PRD](../prd.md). The **how** (command set, intake, workflow composition, floor computation) is the
-> design package at [`docs/design/agentic-design-advisor/`](../../design/agentic-design-advisor/). Status:
-> **draft, pending PM review**. Related: EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)
-> (compound-agentic surface — the commands produce its manifest inputs) and
+> [PRD](../prd.md). The **how** (command set, intake, workflow composition, the recommended floor, the
+> handoff) is the design package at [`docs/design/agentic-design-advisor/`](../../design/agentic-design-advisor/).
+> Status: **draft, re-scoped 2026-07-23 to elicit + recommend + record + hand off (v4)**. Related: EPIC
+> [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)
+> (compound-agentic surface — a human authors its manifest; #10 validates; the Advisor hands off, it does
+> not author) and
 > [#8](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/8) (best-practice-advisory — the Advisor
 > is its agentic-domain instance). **Tracked as EPIC [#35](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/35)**
 > (sub-issues [#36](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/36)–[#41](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/41):
@@ -61,15 +63,22 @@ The **Agentic Design Advisor** is a set of HITL **commands**, run by the harness
 - let **HITL compose the right-sized workflow** after understanding the requirements: which commands this
   change needs, in what order — a two-component read-only flow gets a short workflow, a payments mesh gets
   a full one;
-- set a **risk-appropriate floor** (the commands that cannot be skipped) and **offer the rungs above it**
-  as deferrable (the adoption ladder — start minimal, add later);
+- **recommend a risk-appropriate floor** (the controls that shouldn't be skipped — advice, enforced
+  downstream by #10) and **offer the rungs above it** as deferrable (the adoption ladder);
 - **recommend** the simplest option that fits (never silently decide) and **record** every material
   decision;
-- **produce real artifacts** — manifest fields and design docs the compound-agentic surface (#10) and the
-  human then act on.
+- **hand off to the design track** — a durable **decision record** plus a **design handoff** (a scenario
+  summary + the recommended controls + a manifest *skeleton* with TODOs) that a **human authors into a real
+  design**; the Advisor **does not author the manifest itself**.
 
-It is the **front door** to the compound-agentic surface: the Advisor elicits and composes; #10 validates
-and generates; the human decides.
+It is the **front door** to the compound-agentic surface, and it stays in the **PM/elicitation lane**: the
+Advisor **elicits, recommends, records, and hands off**; a **human authors the design** (the manifest); #10
+**validates** the human-authored manifest. This boundary is the point of the feature — HITL must **not**
+become a tool that lets a PM produce design/implementation artifacts. The Advisor produces requirements-level
+outputs (decisions, recommendations, a right-sized workflow) and a handoff; the *design* is authored by the
+design role in the design phase and gated by #10. *(This is the 2026-07-23 re-scope: the earlier model, in
+which the Advisor's commands auto-authored a complete #10-valid manifest, crossed that line and is removed —
+see §12.)*
 
 ## 4. Goals
 
@@ -80,7 +89,9 @@ and generates; the human decides.
 4. **Set an honest floor, offer the rungs.** A calibrated minimum that can't be skipped, plus deferrable
    controls offered explicitly.
 5. **Propose, don't decide.** Recommend with rationale; the human confirms or overrides; record both.
-6. **Produce durable evidence** and real manifest/design artifacts the rest of HITL consumes.
+6. **Produce durable evidence + a clean handoff** — a decision record and a design handoff (scenario +
+   recommended controls + a manifest skeleton) that a human authors into the design; the Advisor authors no
+   design artifact itself.
 
 ## 5. Requirements
 
@@ -92,18 +103,18 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 
 | ID | Requirement | Priority |
 |---|---|---|
-| **ADV-1** | The Advisor is delivered as a **set of runnable commands** (`hitl:agentic-*`), each **independently invocable by anyone** and each doing one expert concern; it is **not** a monolithic skill. **Two tiers:** the **intake** (ADV-2) *elicits* the whole scenario across all lenses; the **per-concern commands** *own the decision and consequence* for their lens (ADV-4). The intake is an elicitor that hands off to the composed commands — not the monolith this requirement warns against. | Must |
-| **ADV-2** | A **thorough intake command** (`hitl:agentic-intake`) understands the **whole scenario** the way the deterministic intake does, asking the expert questions across every lens so critical things are not missed. Lenses: component right-sizing (agent vs deterministic; simple vs deep; *do you need multiple agents at all*), the **determinism boundary**, **side effects / irreversibility**, **human gates**, **privilege / identity / trust** (incl. the lethal-trifecta check), **orchestration / topology** (sync/async, loops), **reliability / failure modes** (idempotency, retry, DLQ), **observability / detectability** (how misbehavior is seen in production; targets OpenTelemetry GenAI conventions; includes the **PM eval-console** — the PM-facing surface to run evals + review results/traces — a floor obligation per the 2026-07-22 hard directive, gated by #10's `check_observability`), **kill-switch / rollback** (how the system is stopped fast), **memory / state**, **PII / data classification**, **portability** (bind model/memory/tool providers as capabilities via config — do not embed a provider in agent logic; Twelve-Factor "attached resources"), **evaluation** (incl. model/prompt-version drift), **cost / amplification**, **deployment / build-vs-buy** (ADV-14), and **stakes / tier / compliance**. | Must |
+| **ADV-1** | The Advisor is delivered as a **set of runnable commands** (`hitl:agentic-*`), each **independently invocable by anyone** and each doing one expert concern; it is **not** a monolithic skill. **Two tiers:** the **intake** (ADV-2) *elicits* the whole scenario across all lenses; the **per-concern commands** *elicit and recommend* for their lens and **record the decision** (ADV-4). No command authors a manifest field — each produces a recommendation + a decision-record entry the human carries into design. | Must |
+| **ADV-2** | A **thorough intake command** (`hitl:agentic-intake`) understands the **whole scenario** the way the deterministic intake does, asking the expert questions across every lens so critical things are not missed. Lenses: component right-sizing (agent vs deterministic; simple vs deep; *do you need multiple agents at all*), the **determinism boundary**, **side effects / irreversibility**, **human gates**, **privilege / identity / trust** (incl. the lethal-trifecta check), **orchestration / topology** (sync/async, loops), **reliability / failure modes** (idempotency, retry, DLQ), **observability / detectability** (how misbehavior is seen in production; targets OpenTelemetry GenAI conventions; includes the **PM eval-console** — the PM-facing surface to run evals + review results/traces. The Advisor **recommends** this control at the floor; **#10's `check_observability`** is what *enforces* it on the human-authored manifest at design time — 2026-07-22 hard directive), **kill-switch / rollback** (how the system is stopped fast), **memory / state**, **PII / data classification**, **portability** (bind model/memory/tool providers as capabilities via config — do not embed a provider in agent logic; Twelve-Factor "attached resources"), **evaluation** (incl. model/prompt-version drift), **cost / amplification**, **deployment / build-vs-buy** (ADV-14), and **stakes / tier / compliance**. | Must |
 | **ADV-3** | After the intake understands the requirements, **HITL composes the right-sized workflow** — the ordered set of `hitl:agentic-*` commands this change needs. The composition is **proportionate**: a change asks for and runs only the commands its risk and shape warrant (a lens with no relevant data contributes no command). | Must |
-| **ADV-4** | **Every lens/question maps to a concrete consequence** — a component classification, a boundary obligation, a required gate, a **command in the composed workflow**, or a **floor** entry. A lens with no downstream effect is not shipped. | Must |
-| **ADV-5** | The **floor is the set of controls #10 will enforce** — computed as a pure function of **#10's per-check activation predicates** (a command is floor iff a #10 check it owns activates on the manifest the scenario implies), so the Advisor floor can never disagree with #10 (round-5 B1). **Tier (0–3) + risk factors set the required *depth* within a floor control, not whether it is floor.** Two floor obligations have no #10 check and are added by rule (human gate, kill-switch). Commands with no firing #10 check are **offered as deferrable rungs** (memory when hinted; deploy when greenfield/platform-change/durable/requested). The floor reuses Tier for depth; it adds no competing governance axis. | Must |
+| **ADV-4** | **Every lens/question maps to a concrete consequence in the decision record** — a recommended component classification, a recommended boundary control, a recommended gate, a **command in the composed workflow**, or a **floor** entry (a recommended-mandatory control). The consequence is a *recommendation the human acts on in design*, never an authored manifest field. A lens with no downstream effect is not shipped. | Must |
+| **ADV-5** | The **floor is the Advisor's recommended set of mandatory controls** for this change — a deterministic function of the existing HITL **Tier (0–3) + agentic risk factors** (side effects, data sensitivity, autonomy, scale), expressing *expert judgment about what cannot be safely skipped*. It is **advice, not a gate**: the Advisor recommends the floor and records it; the actual enforcement is **#10's own validators at design time** on the human-authored manifest (plus HITL's existing tier/waiver process). Commands above the floor are **offered as deferrable rungs**. The floor reuses Tier; it adds no competing governance axis and it does **not** re-implement or predict #10's activation (the round-5→8 equivalence apparatus is removed — the Advisor recommends, #10 enforces). | Must |
 | **ADV-6** | For each material decision with modern options (component kind, orchestration pattern, memory strategy, inter-agent protocol, async transport), the Advisor **presents the menu with when-to/when-not, recommends the simplest option that fits with rationale, and records chosen + rejected** (the capability menu / best-practice-advisory, #8). **The build-vs-buy / deployment decision is owned exclusively by ADV-14**, not by this generic menu — ADV-6 does not present a deployment menu. | Must |
 | **ADV-7** | The Advisor produces **durable, reviewable artifacts**: a **decision record** (questions, answers, recommendations, chosen/rejected, floor, composed workflow) that regenerates cleanly on a re-run. | Must |
-| **ADV-8** | The commands **produce real manifest fields and design artifacts**. The compound-agentic surface (#10) then activates **only the relevant validators from the manifest content it finds** (its existing per-check activation) — the Advisor **configures by producing the right manifest, it does not feed #10 a validator list**. No change to #10 is required. The command→manifest-field map (LLD §5.1) must cover **every core #10 check**, including the **contract step** (`agentic-topology`/`agentic-boundary`) that authors `facade_apis` **and** `interactions.authorization` — without these, #10's `check_references`/`check_authorization` have nothing to validate (round-4 B1). **Exception (honest):** **one** obligation has **no #10 target today** — the **kill-switch** (from `agentic-reliability`) produces a **declared design artifact** in the decision record (recorded, human-reviewed), *not* a manifest field #10 validates. **`agentic-observability` now authors a real #10 field** — the `observability` block gated by `check_observability` (a floor gate, per the 2026-07-22 hard directive that a PM eval-console + live traces is required); #10 gained that check via its own CR-9 elevation, the Advisor simply authors into it. Every other command authors manifest fields #10 already reacts to. | Must |
+| **ADV-8** | The Advisor's output is a **design handoff, not a design.** It produces (a) the **decision record** (ADV-7) and (b) a **manifest skeleton** — a structural stub listing the elicited components + edges + the recommended controls, with **TODO placeholders and rationale comments**, explicitly marked *"to be authored by the design role and validated by #10."* A **human authors** the real manifest fields in the design phase; **#10 validates the human-authored manifest**. The Advisor **does not** author manifest field values, run #10's validators, or otherwise produce the design artifact — that would put the PM front door into design/implementation, which this feature exists to prevent. #10 requires **no** input from the Advisor and can ship independently. *(2026-07-23 re-scope: the prior "commands author the manifest #10 validates" model — canonical-state writer, `floor ≡ activation`, the equivalence apparatus — is **removed**; those existed only to serve auto-authoring.)* | Must |
 | **ADV-9** | The Advisor **recommends, never silently decides.** Every recommendation is confirmable and overridable by the human, and an override is recorded with its rationale. | Must |
 | **ADV-10** | The intake is **role-aware**, reusing HITL's **actual roles** (`docs/playbook/roles.md`: PM, Technical Advisor, Architect, Developer, QA, Ops) — each command/lens is attributed to the role whose concern it is. (Reuse of the role *taxonomy*, applied to asking rather than reviewing, is validated in design.) | Should |
 | **ADV-11** | The question/capability catalog is a **curated, human-refreshed** artifact (a curated catalog bump, **not** a live external lookup — that would cross document-driven / governs-not-runtime). It has a **named owner** and a **periodic refresh cadence** (independent of change events, so it cannot go stale indefinitely); additionally a Tier-3 agentic change prompts an **"is the catalog current?"** review step, and a stale-catalog finding is **recorded and surfaced** (not silently ignored). | Should |
-| **ADV-12** | The floor is **auditable and non-silently-droppable.** The floor is a deterministic function of **#10's activation predicates** (ADV-5, round-5 B1) evaluated over the declared scenario, so the floor *computation* is reproducible and provably equals what #10 will enforce (the requirement does **not** claim two people describe the same scenario identically — elicitation uses categorical definitions to minimize that variance). A floor command **cannot be dropped silently**; dropping one requires an **explicit, recorded, tier-appropriate waiver** written to the enforcing check's own store (e.g. #10's eval waivers) — HITL's hard-gate precedent (PRD **FR-25**: "hard-blocked until … **or waived**"), consistent with "humans decide" (ADV-9). Below the floor *without* a waiver is a blocker. Above the floor, the team defers freely. | Must |
+| **ADV-12** | The floor recommendation is **auditable and non-silently-droppable.** It is a deterministic function of Tier + declared risk factors (ADV-5), so it is reproducible for a given scenario. A team may choose to skip a recommended-mandatory control, but the Advisor **records that choice explicitly** (owner, reason) in the decision record and **surfaces it** — it is never silently dropped. The Advisor is advice, not the gate: the **actual hard-block-or-waive** happens at **design time in #10** (its validators + HITL's tier/waiver process, FR-25), on the human-authored manifest — not in the Advisor. So "the floor can't be skipped silently" holds by *recording*, and "hard-blocked until … or waived" holds *downstream at #10*. | Must |
 | **ADV-13** | The **intake selects the delivery surface and composes the compound-agentic workflow**. To avoid a routing circularity (you cannot know the surface before you know the shape), the intake **always begins with a short topology probe** — component count and whether any component calls another — and then routes: **≥2 components and ≥1 inter-component edge → compound surface**; otherwise the existing single-agent surface. One selector, no chicken-and-egg. The selection + composition integrate into **`pm-design-feature`** and **`ai/codex/AGENTS.md`**. *(Absorbed from #10 CR-1; round-4 B2.)* | Must |
 | **ADV-14** | A **`hitl:agentic-deploy` command** surfaces the **build-vs-buy** decision: it elicits the drivers (durable-execution need, scale, ops capacity, compliance / data-residency, existing cloud, time-to-market), presents the menu (**from-scratch / managed platform / self-hosted OSS**) with implementations named only as **examples** (CR-10), **recommends** with a bias toward *managed unless there is a specific reason to build*, and **records** the decision. When it recommends **managed**, it **surfaces the lock-in trade-off** and requires the team to answer the three portability-diligence questions: **governance** (is the platform's control neutral or vendor-owned), **packaging** (can the same agent artifact run on another cloud without a rewrite), and **state** (can the agent's memory/state be exported) — so "buy" is chosen with eyes open, not by default. A **human carries the recorded decision into HITL's platform/ops track** (FR-25). The Advisor **does not** provision infrastructure, pick a vendor, ship a cloud module, or auto-hand-off. | Must |
 | **ADV-15** | The front door generates an **evolving system map** — a **design-time** view (extends #10's generated topology view; **not** a runtime dashboard) that **regenerates incrementally as the intake proceeds** (a component named/typed, a boundary drawn, a gate added), from the accumulating scenario record — so as agents are added one at a time the map grows one node/annotation at a time. It shows the composed topology and a **getting / available / not-needed** breakdown, so the team can *picture the system* and *see the proportionality* — what is included, what is offered, and what is left out **and why**. It reads with a **consistent visual vocabulary per component type** (a datastore looks like a datastore, an agent like an agent, a message like a message). **Core (v1) is terminal-first — no browser required — rendered as terminal text + Markdown/Mermaid** (regenerated per intake step). A **rich HTML / live-artifact combined mode** (updating live alongside the discussion) is a **deferred enhancement** with a defined host API — not core (round-4 M8). It is design-time only (HITL does not run a live server). *(The specific renderings — terminal text, Mermaid, the deferred HTML/live mode, the icon vocabulary, and the no-live-server constraint — are **design**, HLD §9.7 / ADR-A8 / LLD §6.)* | Should |
@@ -144,19 +155,21 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 ### 8.2 Acceptance scenarios (pass/fail)
 
 1. A PM **with no agentic-systems expertise** runs the intake and comes out with a right-sized **composed
-   workflow**, a stated floor, and a decision record — without a specialist in the room.
+   workflow (recommendation)**, a stated recommended floor, a **decision record**, and a **design handoff**
+   (scenario + recommended controls + a manifest skeleton with TODOs) — without a specialist in the room, and
+   **without the PM having authored any design**.
 2. A **low-stakes** two-agent read-only flow composes a **short workflow**; the saga, deep-memory, and
-   reliability commands are **not** included. **Observability is included** (floor for any agentic system —
-   the 2026-07-22 hard directive) but at **minimal depth** — a basic trace + a simple PM eval-console
-   declaration, not a full OTel/rich-console build. *(Presence is non-negotiable; depth scales with tier —
-   the proportionate reading of the hard requirement.)*
-3. A **high-stakes** irreversible-action flow composes the **full workflow**, and its floor (declare +
-   human gate + idempotency + detectability + kill-switch) **cannot be dropped silently** (ADV-12).
+   reliability lenses are **not** recommended. **Observability is recommended** (the 2026-07-22 hard
+   directive) at **minimal depth** — a basic trace + a simple PM eval-console, not a full OTel/rich-console
+   build. *(The Advisor recommends; #10 enforces on the authored manifest; depth scales with tier.)*
+3. A **high-stakes** irreversible-action flow composes the **full workflow**, and its recommended floor
+   (classify + human gate + idempotency + detectability + kill-switch) **cannot be dropped silently** — a
+   skip is recorded with owner/reason (ADV-12); the hard block happens downstream in #10 at design time.
 4. **Every recommendation** is recorded with a rationale and is overridable (ADV-6/ADV-9).
-5. The commands **produce manifest fields** that make #10's per-check activation run exactly the relevant
-   validators (ADV-8) — verified against a low- and a high-risk fixture; `agentic-observability` authors the
-   `observability` block #10's **`check_observability` floor-gates** (hard directive); the **kill-switch**
-   artifact is recorded as a **declared design artifact** (no #10 target yet), not silently omitted.
+5. The Advisor produces a **design handoff, not a design**: a decision record + a manifest **skeleton**
+   (structure + TODOs + rationale), *not* authored manifest field values (ADV-8). Verified: no `agentic-*`
+   command writes a validated manifest field; the human authors the manifest and **#10 validates it** —
+   #10 needs no input from the Advisor.
 6. Rerunning the intake after a change reflects the change (durable, re-runnable), not a one-shot chat.
 7. On **build-vs-buy**, a low-stakes small-scale flow is recommended a **managed platform**, a specific
    reason is required to override toward **build**, the decision is **recorded**, and a human is prompted
@@ -246,3 +259,15 @@ the source is [`References`](#11-references) — not a requirement here.*
   impossible ones (B2). #10-side (compound package): result-review + saga `parallel` + multi-owner baseline
   removed from core (→#42), observability gate made real + tier-scaled (M3), release re-scoped so core = 2.2.0
   (M4). Tracker bodies #12/#13/#15/#38/#41 rewritten (M7).
+- **round-8 review + re-scope (2026-07-23):** the round-8 cold review found the executable spike's PASS was
+  an artifact of a weakened validator (7 malformed manifests passed) — the auto-authoring seam could only be
+  validated by the real validator+schema. An independent strategic evaluation, and the product owner, then
+  named the root cause: **auto-authoring the manifest crossed the line HITL exists to hold — it let the PM
+  front door produce design/implementation artifacts** (and made the gate audit HITL's own output).
+  **Resolution (this revision, v4): the Advisor is re-scoped to `elicit + recommend + record + hand off`.**
+  Removed: the canonical-state *writer*, `floor ≡ activation` and the imported-activation apparatus,
+  `OWNS_CHECKS`/`OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, the manifest-field authoring (ADV-8), and the seam
+  spike's authoring claim. The floor is again a **Tier + risk recommendation** (ADV-5), not a mirror of #10;
+  the commands **recommend + record**, they do not author (ADV-1/4); the output is a **decision record + a
+  manifest skeleton handoff** (ADV-8); a human authors the design and **#10 validates** it (#10 unchanged,
+  can ship first). This converges because the entire failing surface existed only to serve auto-authoring.

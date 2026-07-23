@@ -1,4 +1,13 @@
-# Spike: the Advisor ↔ #10 seam (executable validation)
+# Spike: the Advisor ↔ #10 seam (executable validation) — SUPERSEDED 2026-07-23
+
+> **This spike is historical.** It validated the **auto-authoring seam** (the Advisor's commands authoring a
+> complete #10-valid manifest). On 2026-07-23 the Advisor was **re-scoped** to *elicit + recommend + record +
+> hand off* — it no longer authors the manifest (a human does; #10 validates). So the mechanism this spike
+> exercised **no longer exists in the design**. It is kept as a record of (a) the round-8 finding that a weak
+> validator makes a green spike unrepresentative, and (b) the reasoning that led to removing the seam. Do not
+> treat it as current design.
+
+
 
 **Why this exists.** Seven paper review rounds kept failing on the same two claims because they are
 *executable* properties that prose can't validate: `floor ≡ #10 activation`, and "the canonical state can

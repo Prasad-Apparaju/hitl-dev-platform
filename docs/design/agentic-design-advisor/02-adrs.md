@@ -95,87 +95,68 @@ author and test (test plan §4).
 
 ---
 
-## ADR-A5: The commands author the manifest; #10's existing activation reacts — configure, don't feed, don't duplicate
+## ADR-A5: The commands recommend + record + hand off — they do NOT author the manifest (re-scoped 2026-07-23)
 
-**Status:** Accepted (this **replaces** the v1 decision, which claimed the Advisor feeds #10 an
-"active-validator set" via a seed — a contract #10 was never built to receive, caught by the architect
-review).
+**Status:** Accepted, **rewritten 2026-07-23 (v4).** Prior versions had the commands **author the manifest**
+#10 validates (v1: via a fictional seed; v3.3: via a canonical-state writer + `floor ≡ activation`). Round 8
+showed that seam could only be validated by the real validator, and the product owner named the root cause:
+**auto-authoring the manifest puts the PM front door into design/implementation — the line HITL must hold,
+and it makes the gate audit HITL's own output.** So auto-authoring is removed.
 
-**Context.** #10 owns the schema, validators, and generators. The Advisor must not re-implement them, and
-the two must have one source of truth. v1 invented a `.hitl/agentic-profile.yaml` seed whose
-"active-validator set" #10 would read. Checked against #10's actual LLD, activation is **per-check
-predicates over manifest content** — there is no external activation input, so the seed field was inert.
+**Context.** #10 owns the schema, validators, and generators. The Advisor is a PM-lane elicitor/recommender.
+The question: should the Advisor *author* the design artifact (the manifest) that #10 gates, or *recommend*
+it and hand off to a human?
 
-**Decision.** The commands **author real manifest fields** (kinds, trust legs, `uses`, lifecycle gates,
-evals, the `observability` block). #10's per-check activation then runs exactly the checks whose data is
-present. The Advisor **configures by authoring the manifest**; it does not pass #10 a validator list.
-**Honest exception (now one):** the **kill-switch** (`agentic-reliability`) has **no #10 target today** —
-no `kill_switch` check exists — so it produces a **declared design artifact** in the decision record
-(recorded, human-reviewed). **`agentic-observability` is no longer an exception:** per the **2026-07-22 hard
-directive** (a PM eval-console + live traces is required), #10 gained **`check_observability`** (a floor
-gate on the `observability` block) via its own CR-9 elevation, and the Advisor authors that real field. So
-the "author, don't modify #10" premise holds — #10 changed for its *own* requirement (CR-9), not at the
-Advisor's behest.
+**Decision.** The commands **elicit + recommend + record** — each produces a recommendation and a
+decision-record entry, and contributes TODO notes to a **manifest skeleton**. **No command authors a
+validated manifest field.** A **human authors** the real manifest in the design phase; **#10 validates** the
+human-authored manifest. The Advisor holds the requirements/design boundary and requires **no** change to
+#10, which activates purely from human-authored content and ships independently.
+The **observability + PM eval-console** hard requirement (2026-07-22) survives cleanly: the Advisor
+**recommends** it, and #10's **`check_observability`** **enforces** it on the human-authored manifest.
 
 **Alternatives and their cost.**
-- *A seed with an active-validator set (v1).* Cost: describes a mechanism #10 can't consume; the field is
-  decorative and the "only relevant validators run" claim is unbacked (architect Blocker 1).
-- *Claim kill-switch/observability author #10 fields anyway (v2).* Cost: two of six mandatory commands map
-  to #10 fields/checks that don't exist — the same fiction as the seed, recurring per-command (round-2 F1).
-- *The Advisor validates/generates too.* Cost: two implementations of the same rules that drift — the
-  double-source problem.
+- *Advisor auto-authors the manifest (v1–v3.3).* Cost: puts the PM front door into design/implementation
+  (the line HITL exists to hold); makes the gate audit HITL's own output; and — proven across rounds 4–8 —
+  is only validatable by building the real validator, so it never converges on paper.
+- *Advisor validates/generates too.* Cost: two implementations of #10's rules that drift.
 
-**Consequences.** (+) One source of truth; the "configures, doesn't duplicate" property is demonstrable
-against #10's real activation model; observability is now **machine-validated** (a #10 floor gate), and the
-one remaining exception (kill-switch) is honest. (−) The kill-switch stays human-reviewed until it gains a
-#10 target; the Advisor must author the rest correctly for #10 to react — covered by the manifest-authoring
-tests (test plan §6).
+**Consequences.** (+) The Advisor stays in the PM/elicitation lane; #10 has one source of truth (the
+human-authored manifest) and ships independently; the entire failing auto-authoring surface (writer,
+`floor ≡ activation`, ownership/author-complete) disappears. (−) A human must author the manifest from the
+handoff — but that is HITL's normal, and better, pattern (scaffold + author + gate).
 
 ---
 
-## ADR-A6: The floor is DERIVED from #10's activation; Tier scales depth; the ladder offers deferrable rungs
+## ADR-A6: The floor is a Tier + risk RECOMMENDATION (advice); #10 is the gate (re-scoped 2026-07-23)
 
-**Status:** Accepted; **rewritten round-5 (B1).** The earlier decision made the floor a function of *Tier +
-risk gates* (e.g. "privilege floor at Tier ≥ 2"). Round-4/round-5 showed this **contradicted #10**, whose
-per-check activation fires on manifest *content* — so a control the old floor treated as a deferrable rung
-(privilege/evals/boundary at low tier) would be *mandated* by #10 and hard-fail when the team deferred it.
-The floor is now a **pure function of #10's activation predicates**: a command is floor iff a #10 check it
-owns will activate. **Tier no longer decides membership — it scales the required depth within a floor
-control.** (This still refines the v1 L0–L4 "ladder" that was a second scale with no precedence rule.)
+**Status:** Accepted, **rewritten 2026-07-23 (v4).** Rounds 5–8 made the floor a *pure function of #10's
+activation* so the Advisor could author a matching manifest — an equivalence that had to be *proven* and
+kept failing (a copy that drifts, unowned checks, a spike that couldn't validate it). With auto-authoring
+removed (ADR-A5), the floor no longer needs to equal #10's activation at all: **the Advisor recommends, #10
+enforces.**
 
-**Context.** The floor (the controls that can't be skipped) must be **auditable** — reproducible for a
-given declared risk — and must **reuse HITL's existing Tier model** (requirements §6: no new orthogonal
-machinery). v1's L0–L4 rungs were a second scale with prose triggers and no precedence rule.
+**Context.** The Advisor should tell a team which controls it shouldn't skip — but it is not the gate, and
+it must not re-implement or predict #10.
 
-**Decision.** The floor is **`{ command : a #10 check it owns activates on the scenario-implied manifest }`**
-plus two non-#10 obligations (human gate on irreversible, kill-switch on supervised+side-effecting). The
-Advisor **imports #10's activation predicates** (`ci/manifest-agentic/activation.py`) rather than copying
-them — there is nothing to drift — and the `OWNERSHIP-COMPLETE` lint asserts every blocking #10 check is
-owned by some command (round-7 B1). The workflow is `floor ∪ rungs`, so `floor ⊆ workflow` by construction
-(the `FLOOR-SUBSET` lint guards it). **Tier + risk factors set the required *depth*** within a floor control
-(e.g. observability = report vs console, M3), not
-whether it is floor. Commands above the floor are
-**offered as deferrable rungs** — the "add now or **defer**" ladder is a *human-facing narrative over the
-same Tier+risk axis*, not a competing scale (note: rung **defer** ≠ floor **waiver**, round-4 m3). **The
-floor is non-silently-droppable but waivable:** a floor command cannot be dropped silently (below the floor
-without a waiver is a blocker), but it **can** be dropped via an **explicit, tier-appropriate waiver**
-recorded in the decision record (owner, reason, tier-limit, revisit) — HITL's own hard-gate precedent
-(FR-25: "hard-blocked until … *or waived*") and consistent with "humans decide" (ADV-9). **Determinism is
-scoped to the computation given declared factors**, not to whether two people declare the same scenario
-identically (a softer property the categorical vocabulary mitigates).
+**Decision.** The floor is the **Advisor's recommended set of mandatory controls**, a deterministic function
+of the existing **Tier (0–3) + risk factors** (`side_effects`, `data`, `autonomy`, `stakes`, `scale`) —
+expert judgment, not a mirror of #10. **Tier scales the recommended depth** (observability report vs console,
+etc.), not membership. The recommendation is **advice**: a team may skip a recommended control, but the
+Advisor **records the skip** (owner + reason) and surfaces it — never silent. The **actual hard
+block-or-waive** happens **downstream at #10** (its validators + HITL's tier/waiver process, FR-25) on the
+**human-authored** manifest. So "can't be skipped silently" holds by *recording*; "hard-blocked until … or
+waived" holds *at #10*. No equivalence to prove, no activation to import.
 
 **Alternatives and their cost.**
-- *A separate L0–L4 scale (v1).* Cost: two governance axes with an undefined relationship — confusing and
-  self-violating (the feature adds the orthogonal machinery it warns against).
-- *An absolutely non-waivable floor (v2).* Cost: the one hard block in HITL with no escape hatch —
-  inconsistent with FR-25's precedent and in tension with ADV-9's "everything overridable" (round-2 PM
-  finding); a signed human override with a recorded rationale is more honest than a wall.
-- *Prose triggers, no vocabulary.* Cost: two implementers compute different floors; not auditable.
+- *Floor ≡ #10 activation (v3.3).* Cost: only meaningful if the Advisor authors the manifest (removed); an
+  equivalence that must be proven and drifts every round.
+- *An absolutely non-waivable floor.* Cost: no human escape hatch — inconsistent with FR-25.
+- *Prose triggers, no vocabulary.* Cost: two people compute different floors; not auditable.
 
-**Consequences.** (+) The floor is reproducible, auditable, reuses Tier, has teeth (no silent drop) *and*
-a human escape hatch (recorded waiver) — matching HITL's established gating pattern. (−) The risk-factor
-vocabulary, the floor rules, and the waiver schema are a small, safety-critical set that must be reviewed
-as carefully as any guardrail (LLD).
+**Consequences.** (+) Reproducible, auditable, reuses Tier, no equivalence to prove, no second copy of #10.
+(−) The floor is advice; the real enforcement is #10 at design time — which is correct, because #10 is the
+gate and the Advisor is the front door.
 
 ---
 
@@ -290,8 +271,8 @@ change (the gate→probe→route rule), enumerated in the LLD file list.
 | ADR-A2 | A2 | Catalog = curated, versioned data; curated refresh, not live lookup |
 | ADR-A3 | A3 | Recommend, never decide; human confirms; record chosen/rejected |
 | ADR-A4 | A4 | HITL composes a proportionate workflow; run only what's relevant |
-| ADR-A5 | A5 | Commands author the manifest; #10 reacts — no seed; observability authors the #10-gated `observability` block (hard directive); **only** the kill-switch remains a declared artifact (no #10 target yet) |
-| ADR-A6 | A6 | Floor is **DERIVED from #10's imported activation** (floor ≡ activation, complete ownership; round-7 B1); **Tier scales depth, not membership**; `floor ⊆ workflow`; **waivable via #10's real per-check waiver store** (round-6 B3); rungs are **deferrable** (defer ≠ waiver) |
+| ADR-A5 | A5 | Commands **recommend + record + hand off** — they do **not** author the manifest (re-scope 2026-07-23); a human authors it, #10 validates; observability is **recommended** (Advisor) + **enforced** (#10 `check_observability`) |
+| ADR-A6 | A6 | Floor is a **Tier + risk recommendation** (advice, not a gate); a skip is **recorded**; the hard block-or-waive is **downstream at #10** on the human-authored manifest; Tier scales recommended depth |
 | ADR-A7 | A7 | Record the build-vs-buy decision + portability diligence; a human carries it — provision nothing, auto-hand-off to nothing |
 | ADR-A8 | A8 | Evolving map = terminal-first generated view; **core = inline text + Mermaid; rich HTML + combined live mode deferred** (M8); regen per step; no live server |
 | ADR-A9 | A9 | Intake integrates into `pm-design-feature`/`AGENTS.md` — precede for compound, skip for simple, never replace |

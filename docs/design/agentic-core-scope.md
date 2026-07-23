@@ -7,23 +7,26 @@
 > surface toward *proportionate* (the objective the review found violated) rather than patching 13 findings
 > into an ever-larger design. Governs #10 (`04-revision-plan.md`) and FR-28 (`agentic-design-advisor/`).
 
-## The reconciling principle (fixes the root cause)
+## The clean boundary (2026-07-23 re-scope — supersedes the "reconciling principle")
 
-**The Advisor's floor and #10's activation must agree on what is mandatory.** #10's per-check activation
-fires on *manifest content* — declare `kind: agent` and `check_capabilities`/`check_eval_coverage` fire
-regardless of the Advisor. So a control cannot be an Advisor "deferrable rung" while #10 mandates it. The
-core rule:
+Rounds 4–7 tried to make **the Advisor's floor equal #10's activation** so the Advisor could *author* a
+manifest #10 would accept. Round 8 showed that seam can only be validated by the real validator, and the
+product owner named the deeper problem: **auto-authoring the manifest put the PM front door into
+design/implementation — the exact line HITL must hold.** So the reconciling principle is dropped along with
+the auto-authoring it existed to serve. The boundary now:
 
-- **Mandatory for any agent** (floor, and #10 activates on it): classification, the determinism boundary
-  (incl. agent→agent), privilege (declared identity + uses, tier-scaled granularity), authorization on
-  interactions into agents, eval coverage **for agent targets + one e2e**, lifecycle safety for
-  long-running agents, and — per the 2026-07-22 hard directive — a declared **observability/tracing plan +
-  PM eval-console** (depth tier-scaled, presence non-negotiable).
-- **Genuinely deferrable rungs** (optional; #10 does *not* mandate): cross-session long-term memory,
-  deep-agent machinery, saga distributed compensation.
+- **Advisor (PM lane):** elicits, **recommends** a right-sized floor (Tier + risk expert judgment — the
+  controls that shouldn't be skipped), records decisions, and **hands off** (decision record + a manifest
+  *skeleton*). It authors **no** manifest field and predicts **nothing** about #10.
+- **A human (design role):** authors the real manifest in the design phase.
+- **#10 (the gate):** validates the human-authored manifest — unchanged, needs no Advisor input, ships
+  independently.
 
-"Deferred" (an optional rung not adopted) and "waived" (an enforced exception to a floor control) are now
-**distinct terms** (round-4 m3).
+There is nothing to reconcile because there are no two copies: the Advisor recommends, #10 enforces. The
+observability + PM eval-console hard requirement (2026-07-22) survives cleanly — the Advisor **recommends**
+it; #10's `check_observability` **enforces** it on the authored manifest.
+
+"Deferred" (an optional rung not adopted) and "waived" (a recorded exception at #10's gate) remain distinct.
 
 ## Core v1 — #10 (compound surface)
 
@@ -72,16 +75,21 @@ narrowed to facade `error_modes` + product runtime for now (M5).
 
 ## Core v1 — FR-28 (Advisor)
 
-**In:** the intake with a **non-circular** surface selection (any `agentic` answer → a short topology
-probe → branch: ≥2 components + ≥1 edge → compound, else single-agent; round-4 B2 fix); the composer with
-an **obligation-first floor** (compute firing obligations, force their owning command in, then add rungs;
-round-4 B3 fix); the per-concern commands authoring **exactly the core #10 fields** — classify, boundary
-(incl. agent→agent), privilege, **a contract step that authors `facade_apis` + `interactions.authorization`**
-(round-4 B1 fix), memory, evals (agent targets + e2e); `agentic-observability` as a **floor** command
-authoring the validated observability/tracing + PM eval-console **declaration** #10 gates (hard directive);
-`agentic-deploy` (record-only); kill-switch as a **declared artifact**; a **canonical structured state record** for answers *and*
-confirmed decisions, with stable IDs + a human-confirm-before-write merge contract (round-4 M3/M4 fix); the
-**terminal + Mermaid** map with the node-type vocabulary; recommend-not-decide.
+**In (re-scoped 2026-07-23 — elicit + recommend + record + hand off; no manifest authoring):** the intake
+with a **non-circular** surface selection (`agentic` answer → topology probe → branch); the composer that
+**recommends** a right-sized workflow of lenses/commands; a **recommended floor** = Tier + risk expert
+judgment (the controls that shouldn't be skipped — *advice*, enforced downstream by #10, not derived from
+#10 activation); the per-concern commands that **elicit + recommend + record** for their lens (classify,
+boundary, privilege, reliability, observability, memory, evals, deploy) — each producing a **decision-record
+entry**, *not* a manifest field; `agentic-deploy` (record + human-carry); a **decision record** (scenario +
+recommendations + chosen/rejected) and a **design handoff** (scenario summary + recommended controls + a
+manifest **skeleton** with TODOs, authored by a human in design); the **terminal + Mermaid** map.
+
+**Removed (was in, now cut — it served auto-authoring, which crossed the PM-shouldn't-design line):** the
+canonical-state **writer**, `floor ≡ activation` + the imported-activation apparatus, `OWNS_CHECKS`/
+`OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, the command→manifest-field authoring, and the seam spike's authoring
+claim. **#10 is unchanged and can ship first** — it validates a **human-authored** manifest and needs no
+input from the Advisor.
 
 **Deferred (follow-on):** the **rich HTML / live-artifact combined map mode** — terminal + Mermaid is the
 core; HTML/live is an optional enhancement with a defined host API (M8); advanced/optional lenses beyond
