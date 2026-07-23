@@ -1,8 +1,8 @@
 # Agentic Design Advisor: Requirements
 
-> **What** the surface must do, for the HITL enhancement that encodes agentic-systems expertise as
-> **runnable commands** that ask the questions an expert asks, understand the whole scenario, and let HITL
-> **compose the right-sized workflow** for the change. Product one-liner: **FR-28** in the
+> **What** the surface must do, for the HITL enhancement that encodes agentic-systems expertise as **one
+> runnable intake** (`hitl:agentic-intake`) that asks the questions an expert asks, understands the whole
+> scenario, and **composes a right-sized recommendation report** for the change. Product one-liner: **FR-28** in the
 > [PRD](../prd.md). The **how** (command set, intake, workflow composition, the recommended floor, the
 > handoff) is the design package at [`docs/design/agentic-design-advisor/`](../../design/agentic-design-advisor/).
 > Status: **draft, v4.1 — one intake + recommendation report; neutral `agentic-design-handoff.yaml` (no manifest fields)**. Related: EPIC
@@ -49,7 +49,7 @@ cannot yet measure — but it does carry a **baselined adoption metric** (§8) t
 |---|---|
 | **Product Manager** | to be guided to a right-sized design without hiring an agentic-systems specialist |
 | **Technical Advisor / Architect** | the expert questions asked and the material decisions surfaced, recorded with rationale |
-| **Developer** | a clear, composed workflow of commands to run — no guessing which controls apply |
+| **Developer** | a clear recommendation report + a neutral handoff — no guessing which controls apply |
 | **Ops** | the deployment (build-vs-buy) and operability decisions recorded, to carry into the platform track |
 
 ## 3. Scope
@@ -83,16 +83,16 @@ see §12.)*
 
 ## 4. Goals
 
-1. **Encode the expertise as commands.** An expert's question set and material decisions, as runnable
-   commands a non-expert invokes.
+1. **Encode the expertise as one intake.** An expert's question set and material decisions, as one runnable
+   `hitl:agentic-intake` a non-expert invokes.
 2. **Understand the whole scenario.** As thorough as the deterministic intake — miss nothing critical.
-3. **Right-size by composing the workflow.** Match the commands run to the actual risk; nothing more.
+3. **Right-size the report.** Match the lens sections to the actual risk; nothing more.
 4. **Set an honest floor, offer the rungs.** A calibrated minimum that can't be skipped, plus deferrable
    controls offered explicitly.
 5. **Propose, don't decide.** Recommend with rationale; the human confirms or overrides; record both.
-6. **Produce durable evidence + a clean handoff** — a decision record and a design handoff (scenario +
-   recommended controls + a manifest skeleton) that a human authors into the design; the Advisor authors no
-   design artifact itself.
+6. **Produce durable evidence + a clean handoff** — a decision record and a neutral `agentic-design-handoff.yaml`
+   (scenario + recommended controls + `proposed_kind`s + target-path hints) that a human authors into the
+   design; the Advisor authors no design artifact itself (not even `kind`).
 
 ## 5. Requirements
 
@@ -117,7 +117,7 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 | **ADV-11** | The question/capability catalog is a **curated, human-refreshed** artifact (a curated catalog bump, **not** a live external lookup — that would cross document-driven / governs-not-runtime). It has a **named owner** and a **periodic refresh cadence** (independent of change events, so it cannot go stale indefinitely); additionally a Tier-3 agentic change prompts an **"is the catalog current?"** review step, and a stale-catalog finding is **recorded and surfaced** (not silently ignored). | Should |
 | **ADV-12** | The floor recommendation is **auditable and non-silently-droppable.** It is deterministic for a given scenario (ADV-5). A team may **skip** a recommended-mandatory control, but the Advisor **records the skip** as `skips: [{control, owner, reason}]` and surfaces it in the handoff — never silent. **The skip is an Advisor record, not a #10 waiver**: it grants **no** exception at the gate (round-9 M3). The word **"waiver" is reserved for a human-authored downstream exception in #10** (`manifest-waivers.yaml`, tied to an actual blocker, tier + revisit) — the Advisor never authors a waiver. So "can't be skipped silently" holds by *recording* (here), and "hard-blocked until … or waived" holds *at #10* when a human later waives a real blocker. | Must |
 | **ADV-13** | **Surface selection is external to the intake and non-circular** (round-9 m1): `pm-design-feature`'s existing "delivery surface?" step is the **`agentic` gate**; only if agentic does a **two-question topology probe** run (component count; any inter-component edge); **≥2 components and ≥1 edge → compound → invoke `hitl:agentic-intake`**, else the single-agent path. The intake is reached **only on the compound branch and does not re-select the surface** — it elicits the full detail. The gate→probe→route rule lives in **`pm-design-feature`** and **`ai/codex/AGENTS.md`**. *(Absorbed from #10 CR-1; round-4 B2 / round-5 M1.)* | Must |
-| **ADV-14** | A **`hitl:agentic-deploy` command** surfaces the **build-vs-buy** decision: it elicits the drivers (durable-execution need, scale, ops capacity, compliance / data-residency, existing cloud, time-to-market), presents the menu (**from-scratch / managed platform / self-hosted OSS**) with implementations named only as **examples** (CR-10), **recommends** with a bias toward *managed unless there is a specific reason to build*, and **records** the decision. When it recommends **managed**, it **surfaces the lock-in trade-off** and requires the team to answer the three portability-diligence questions: **governance** (is the platform's control neutral or vendor-owned), **packaging** (can the same agent artifact run on another cloud without a rewrite), and **state** (can the agent's memory/state be exported) — so "buy" is chosen with eyes open, not by default. A **human carries the recorded decision into HITL's platform/ops track** (FR-25). The Advisor **does not** provision infrastructure, pick a vendor, ship a cloud module, or auto-hand-off. | Must |
+| **ADV-14** | The intake's **deploy lens** (a report section, not a separate command — round-9 M9) surfaces the **build-vs-buy** decision: it elicits the drivers (durable-execution need, scale, ops capacity, compliance / data-residency, existing cloud, time-to-market), presents the menu (**from-scratch / managed platform / self-hosted OSS**) with implementations named only as **examples** (CR-10), **recommends** with a bias toward *managed unless there is a specific reason to build*, and **records** the decision. On a **managed** recommendation it **surfaces the lock-in trade-off** and requires the three portability-diligence answers: **governance** (neutral vs vendor-owned control), **packaging** (same agent artifact on another cloud without a rewrite), and **state** (memory/state exportable) — so "buy" is eyes-open. A **human carries the recorded decision into HITL's platform/ops track** (FR-25). The Advisor **does not** provision, pick a vendor, ship a cloud module, or auto-hand-off. | Must |
 | **ADV-15** | The front door generates an **evolving system map** — a **design-time** view (extends #10's generated topology view; **not** a runtime dashboard) that **regenerates incrementally as the intake proceeds** (a component named/typed, a boundary drawn, a gate added), from the accumulating scenario record — so as agents are added one at a time the map grows one node/annotation at a time. It shows the composed topology and a **getting / available / not-needed** breakdown, so the team can *picture the system* and *see the proportionality* — what is included, what is offered, and what is left out **and why**. It reads with a **consistent visual vocabulary per component type** (a datastore looks like a datastore, an agent like an agent, a message like a message). **Core (v1) is terminal-first — no browser required — rendered as terminal text + Markdown/Mermaid** (regenerated per intake step). A **rich HTML / live-artifact combined mode** (updating live alongside the discussion) is a **deferred enhancement** with a defined host API — not core (round-4 M8). It is design-time only (HITL does not run a live server). *(The specific renderings — terminal text, Mermaid, the deferred HTML/live mode, the icon vocabulary, and the no-live-server constraint — are **design**, HLD §9.7 / ADR-A8 / LLD §6.)* | Should |
 
 ## 6. Constraints
@@ -136,7 +136,7 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 
 - **Not a runtime** and not an autonomous decider — it recommends; humans decide (ADV-9).
 - **Not the validators/design** — the commands feed #10; they do not re-implement its schema or checks.
-- **Not a monolith and not a fixed questionnaire** — it is decomposed commands (ADV-1) whose workflow is
+- **Not a fixed questionnaire** — it is one intake that composes a right-sized **recommendation report** (ADV-1/ADV-3) whose sections are
   composed to the change (ADV-3); a static form that asks everyone everything is the over-governance
   failure this feature prevents.
 - **Not a provisioner** — on build-vs-buy it decides the *direction* and records it for a human to carry;
@@ -180,8 +180,7 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 8. The floor **computation is deterministic** given the declared risk factors: two runs on the same
    *declared* factors compute the identical floor (ADV-12). *(Consistency of the human-declared factors
    themselves is a separate, softer property, mitigated by categorical definitions — design.)*
-9. A team attempting to drop a floor command is **blocked** unless it records an **explicit,
-   tier-appropriate waiver**; the waiver (owner, reason) lands in the decision record (ADV-12).
+9. A team declining a recommended-floor control **records a `skip`** (owner, reason) in the decision record; the Advisor **never blocks and never grants an exception** — the skip is a record, not a #10 **waiver** (round-10 blocker 5). The hard block-or-waive happens downstream in #10 (only a **human-authored #10 waiver** relieves a real blocker).
 10. *(ADV-15, Should)* The evolving map renders **in the terminal with no browser** and updates as the
     intake proceeds. Being a Should, it does not hard-gate the implementation.
 

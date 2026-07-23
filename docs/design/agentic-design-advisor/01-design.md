@@ -84,7 +84,7 @@ single — three steps, evaluated in order, before any full intake runs:
    (services/agents/stores)?* and *does any component call, hand off to, or message another?*
 3. **Route:** **≥2 components AND ≥1 inter-component edge → the compound surface** (hand off to
    `hitl:agentic-intake` for the full elicitation §3 + composition §4); a single agent → the existing
-   single-agent path (a team may still run one `agentic-*` command standalone, ADV-1).
+   single-agent path (a team may re-run the intake scoped to one lens, ADV-1).
 
 This is **the single selector**. The full `hitl:agentic-intake` does **not** re-select the surface — it only
 fills in the complete component/edge detail on the compound branch (the duplicate selector Codex flagged in
@@ -95,21 +95,21 @@ This is the architectural sequencing the round-2 review flagged as missing and t
 still circular: *a cheap probe routes; the full intake runs only on the compound branch; the deterministic
 flow is never gated or replaced.*
 
-## 4. Composition (ADV-3) — HITL figures out the workflow
+## 4. Composition (ADV-3) — HITL figures out the recommendation report
 
-After the intake understands the requirements, HITL **composes the workflow**: the ordered set of
-`hitl:agentic-*` commands this change needs. Composition is deterministic given the answers:
+After the intake understands the requirements, HITL **composes the recommendation report**: the ordered set
+of **lens sections** this change needs. Composition is deterministic given the answers:
 
-1. **Relevance.** A command is included only if the scenario has data for its lens — no side effects ⇒ no
-   reliability/saga command; single component ⇒ no boundary/topology command. (This is the proportionality
-   mechanism; a lens with no data contributes no command.)
-2. **Floor vs rung (§5).** Each included command is marked **mandatory** (in the floor) or **offered**
+1. **Relevance.** A lens is a report section only if the scenario has data for it — no side effects ⇒ no
+   reliability section; single component ⇒ no boundary section. (Proportionality: a lens with no data
+   contributes no section.)
+2. **Floor vs rung (§5).** Each included lens is marked **recommended-mandatory** (floor) or **offered**
    (a deferrable rung).
-3. **Order.** Commands are ordered by dependency (classify → boundary/privilege → reliability/observability
-   → evals → deploy), so each runs against the artifacts the prior ones produced.
+3. **Order.** Sections are ordered by dependency (classify → boundary/privilege → reliability/observability
+   → evals → deploy), so each recommends against the prior sections' conclusions.
 
-The composed workflow is written to the decision record and is what the team runs. A re-run with the same
-answers composes the identical workflow (auditable, ADV-12).
+The report is written to the decision record. A re-run with the same
+answers composes the identical report (auditable, ADV-12).
 
 ### 4.1 The floor is a RECOMMENDATION (Tier + risk); rungs are the optional extras
 
@@ -130,7 +130,7 @@ apparatus is removed — there is no manifest to make match). Recommended-floor 
 | kill-switch | `autonomy ∈ {supervised, autonomous}` and `side_effects ≠ none` |
 
 **Rungs (offered, deferrable):** `agentic-memory` when the scenario hints at cross-session state;
-`agentic-deploy` when the change is greenfield / changes platform / adds durable runtime / is requested.
+the **deploy lens** is included when the change is greenfield / changes platform / adds durable runtime / is requested.
 Whether a control is recommended-floor vs offered-rung is the §5 rule; Tier scales the recommended *depth*.
 
 ### 4.2 The catalog `consequence` — an option→list map of tagged unions (ADR-A2)
@@ -175,11 +175,11 @@ variance.
 
 ## 6. Recommendation + decision record (ADV-6/ADV-7/ADV-9)
 
-Inside a command, a material choice (component kind, orchestration pattern, memory strategy, protocol) is a
+Inside a lens section, a material choice (component kind, orchestration pattern, memory strategy, protocol) is a
 menu: the Advisor recommends the **simplest option that fits** (bias to simplicity — the counter to the
 AI's over-engineering instinct), shows rejected options **with their cost**, and records chosen + rejected.
 It never applies a choice silently; the human confirms, and an override is recorded with its reason.
-(**Build-vs-buy is not one of these generic menus** — it is owned exclusively by `agentic-deploy`, §8.)
+(**Build-vs-buy is not one of these generic menus** — it is owned exclusively by the **deploy lens**, §8.)
 
 The **decision record** (`docs/01-product/<feature>/agentic-decisions.md`, ADR-style) holds the scenario,
 the composed workflow, the floor, and every recommendation + chosen/rejected. It is regenerated (not
@@ -199,11 +199,10 @@ The Advisor produces **two artifacts, neither of which is the design**:
    ```yaml
    schema_version: "1.0"
    feature: <id>
-   components:   [ { id, proposed_kind: enum[deterministic,simple_agent,deep_agent], rationale } ]   # proposed_kind, NOT kind:
-   connections:  [ { from: component-id, to: component-id, nature: enum[calls,hands-off,messages] } ]  # not `interactions`
-   recommendations: [ { id, lens, control, depth, rationale } ]                                        # the floor/rungs, by id
+   components:   [ { id, role: enum[agent,service,datastore,external,store], proposed_kind: enum[deterministic,simple_agent,deep_agent], rationale } ]  # proposed_kind, NOT kind:
+   connections:  [ { from: component-id, to: component-id, transport: enum[sync_call,async_task,event] } ]  # not `interactions`
+   recommendations: [ { id, lens, control, depth_note?, rationale, target_path_hint } ]                # ONE representation — each has its own hint (m2); no separate target_paths list
    skips:        [ { control, owner, reason } ]                                                        # recorded, not a #10 waiver
-   target_paths: [ { recommendation-id, manifest_path_hint, note } ]                                   # WHERE the design role authors it
    ```
 
    Every value is a **recommendation** (`proposed_kind`) or a **hint** (`manifest_path_hint`) — nothing here
@@ -217,9 +216,9 @@ skills; **#10 validates** the human-authored manifest. The Advisor writes **no**
 and ships independently. This is the boundary the feature exists to hold: the PM front door produces a
 recommendation + a handoff, not the design.
 
-## 8. Deployment (ADV-14, ADR-A7) — record, human-carries
+## 8. Deployment (ADV-14, ADR-A7) — the deploy lens records, a human carries
 
-`hitl:agentic-deploy` elicits the build-vs-buy drivers, presents the menu (from-scratch / managed platform
+The intake's **deploy lens** (a report section, not a command) elicits the build-vs-buy drivers, presents the menu (from-scratch / managed platform
 / self-hosted OSS, implementations named only as examples), recommends **managed unless there is a specific
 reason to build**, and **records** the decision in the decision record. When it recommends **managed**, it
 **surfaces the lock-in trade-off** — the industry's platforms (AgentCore / Foundry / Gemini) integrate
@@ -334,7 +333,7 @@ recommended at all. Proportionality is depth-and-omission — and the floor is *
 
 **A single agent** (one component — a doc summarizer): this is **not a compound system**, so the topology
 probe (§3.1) routes it to the existing single-agent surface; the compound intake is not invoked. A team can
-still run one command standalone (e.g. `agentic-privilege`) against it (ADV-1) — that is the supported
+still re-run the intake scoped to one lens (e.g. privilege) against it (ADV-1) — that is the supported
 single-component path, not a near-empty compound workflow.
 
 ### 9.7 How the map renders (ADV-15) — terminal-first; two core renderings, one source
@@ -420,7 +419,7 @@ scenario record, so the map never drifts from the design.
    Verified: no `agentic-*` output contains a `system-manifest.yaml` field value.
 4. Every menu decision emits a recommendation + rationale + recorded chosen/rejected; an override is
    recorded (ADV-6/ADV-9); build-vs-buy is owned by the deploy lens alone (not the generic menu).
-5. `agentic-deploy` recommends managed for a low-stakes small-scale flow, requires a reason to override to
+5. the **deploy lens** recommends managed for a low-stakes small-scale flow, requires a reason to override to
    build, surfaces the **lock-in / portability diligence**, records the decision, and prompts a human
    handoff — provisioning nothing (ADV-14/ADR-A7).
 6. The decision record (scenario + composed workflow + decisions) is durable and regenerates on a re-run.

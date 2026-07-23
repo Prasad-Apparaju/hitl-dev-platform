@@ -196,9 +196,13 @@ Requirements → sub-issues → deliverables. Epic
 The epic is not "done" until all of the following ship, per the user's scoping:
 
 - **Design docs**: this requirements doc, `01-design.md` (HLD), ADR(s), and the pattern doc.
-- **Skills / templates / schema**: the `pm-design-feature` + `AGENTS.md` surface branch; HLD and
-  test-strategy templates; manifest schema extensions (component kinds, typed edges, identity +
-  privilege, approved-tool registry); agentic-observability additions.
+- **Skills / templates / schema**: HLD and test-strategy templates; manifest schema extensions (component
+  kinds, typed edges, identity + privilege, approved-tool registry); agentic-observability additions.
+  *(Round-10 blocker 6 — release-decoupling: the `pm-design-feature` + `AGENTS.md` **surface-branch routing**
+  is **owned by the Advisor's [#37](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/37)**, not
+  #10, and is **not** a #10 release-gate. #10's core — schema + validators — runs directly on a
+  **human-authored manifest** (a `check_manifest_agentic.py` entry point on a manifest file), so #10 ships
+  first as 2.2.0 with no dependency on Advisor routing.)*
 - **Validators / gates**: the necessary-and-sufficient privilege validator, the approved-tool gate,
   and the per-segment eval discipline — each with a regression suite under `ci/`.
 - **Worked example design package** under `docs/examples/` (an example manifest, topology +

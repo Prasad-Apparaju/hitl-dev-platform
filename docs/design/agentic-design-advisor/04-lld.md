@@ -13,14 +13,14 @@
 
 | Token | Grammar (regex) | Notes |
 |---|---|---|
-| `entry_id` / `command` | `^[a-z][a-z0-9-]*$` | catalog entry / `hitl:agentic-<command>` |
+| `entry_id` / `lens` | `^[a-z][a-z0-9-]*$` | catalog entry / report-section lens (there is one command, `hitl:agentic-intake`) |
 | `lens` | one of §2.1 | the ADV-2 lens set |
 | `role` | `pm\|technical_advisor\|architect\|developer\|qa\|ops` | `docs/playbook/roles.md` |
 | `duration` | `^[0-9]+(d\|w\|m)$` | catalog refresh cadence |
 | risk factor values | enums in §4.1 | `stakes/side_effects/data/autonomy/scale` |
 
 Validation is a **Python package** `tools/agentic-advisor/` (the composer, floor, map) + a **catalog**
-(data) + a set of **skills** (`hitl:agentic-*`). The harness runs the conversation; Python does the
+(data) + **one skill** (`hitl:agentic-intake`). The harness runs the conversation; Python does the
 deterministic composition/floor/map; the catalog holds the expertise (ADR-A1/A2).
 
 ## 1. Files created / modified
@@ -58,10 +58,10 @@ entries:
                external send, provisioning, a write to a system of record)?"
     options: [none, reversible, irreversible]     # omit ⇒ free-text captured verbatim
     guidance: "Irreversible ⇒ gate it (you can't compensate). Reversible-multistep ⇒ consider a saga."
-    recommend: simplest_fit        # enum[simplest_fit, none] (§5, menu commands only)
+    recommend: simplest_fit        # enum[simplest_fit, none] (§5, recommendation lenses only)
     consequence:                   # keyed by answer option → list[ConsequenceItem]
-      irreversible: [ {kind: floor, target: "human-gate"}, {kind: command, target: "agentic-reliability"} ]
-      reversible:   [ {kind: command, target: "agentic-reliability"} ]
+      irreversible: [ {kind: floor, target: "human-gate"}, {kind: lens, target: "reliability"} ]
+      reversible:   [ {kind: lens, target: "reliability"} ]
       none:         [ ]
 ```
 
@@ -87,20 +87,20 @@ a `#10 field`:
 ```yaml
 consequence:            # map[ <option-or-"*"> -> list[ConsequenceItem] ]   ("*" = applies to any answer)
   <option>:
-    - kind: enum[ classify | boundary | gate | command | floor | recommendation | recorded_artifact ]
-      target: string    # command name | floor-rule id | recommendation id | recorded-artifact id
-      note: string?      # optional; becomes a rationale line + a manifest-skeleton TODO
+    - kind: enum[ classify | boundary | gate | lens | floor | recommendation | recorded_artifact ]
+      target: string    # lens id (report section) | floor-rule id | recommendation id | recorded-artifact id
+      note: string?      # optional; becomes a rationale line + a handoff target_path_hint
 ```
 Lint (`test_catalog_lint.py`, `CAT-SCHEMA`): `consequence` is a non-empty option→list map; **every option in
 the entry's `options` has a key** (or a `"*"` default); every list element is a valid tagged union with a
-resolvable `target` — a `command` → a real `hitl:agentic-*`, a `floor` → a real floor-rule id, a
+resolvable `target` — a `lens` → a real report-section lens, a `floor` → a real floor-rule id, a
 `recommendation`/`recorded_artifact` → a recorded id. **No `manifest_field` kind exists** (the Advisor never
 targets a #10 field — re-scope 2026-07-23); the observability and kill-switch controls are `recommendation`
 entries the design must satisfy. Every `role` is real.
 
 ## 3. The intake (`hitl:agentic-intake`, ADV-1/2/3/13/15)
 
-Two-tier (ADV-1): the intake **elicits**; the per-concern commands **recommend + record**. The skill:
+One command (ADV-1): `hitl:agentic-intake` **elicits**, then each lens **section recommends + records**. The skill:
 
 1. **Assumes the compound surface — it does NOT re-select it (round-5 M1).** Surface selection already
    happened in `pm-design-feature` (the `agentic` gate → topology probe → route, HLD §3.1); the intake is
@@ -129,8 +129,11 @@ LENSES = ["classify","boundary","privilege","reliability","observability","memor
 DEPENDS = {"boundary":["classify"], "privilege":["classify"], "reliability":["boundary"],
            "observability":["classify"], "memory":["classify"], "evals":["classify"], "deploy":["classify"]}
 
-def any_agent(s):  return any(c["kind"] in ("simple_agent","deep_agent") for c in s["components"])
-def any_async(s):  return any(e.get("kind") in ("async_task","event") for e in s["edges"])
+# ONE component schema everywhere (round-10 B3): the composer/map/rerun read `proposed_kind` — the same
+# field the canonical state (§7.1) and fixtures use. The `classify` lens runs FIRST (DEPENDS), so
+# `proposed_kind` is populated before any other lens or the floor needs `any_agent` (no circularity).
+def any_agent(s):  return any(c.get("proposed_kind") in ("simple_agent","deep_agent") for c in s["components"])
+def any_async(s):  return any(e.get("transport") in ("async_task","event") for e in s["edges"])  # edge transport (factual), not a design kind
 
 def relevant(lens, s):
     """Proportionality: a lens is a report section only if the scenario has data for it.
@@ -163,17 +166,20 @@ def recommended_floor(s):
         floor.add("reliability")
     if a["autonomy"] in ("supervised","autonomous") and a["side_effects"] != "none":  # recommend a kill-switch
         floor.add("reliability")
+    if any_async(s):                                                       # an async_task/event needs idempotency/DLQ design
+        floor.add("reliability")                                          # → reliability IS floor-level advice (round-10 blocker 4)
     return floor
 
-def compose(s, tier):
+def compose(s):
     floor    = recommended_floor(s)
     included = {l for l in LENSES if relevant(l, s)} | floor               # floor ⊆ included report sections
     rungs    = included - floor                                            # offered, deferrable
     order    = topo_order(included, DEPENDS)                               # deterministic: topo, tie-break by LENSES index
     return {"report_sections": order, "floor": sorted(floor), "rungs": sorted(rungs)}
-# Deterministic given (s, tier): same inputs → identical recommendation report (ADV-12).
-# tier is NOT a membership input — it scales recommended DEPTH (§4.1). No floor≡activation claim: the floor
-# is a risk-factor RECOMMENDATION, #10 is the gate (ADR-A6).
+# Deterministic given s → identical recommendation report (ADV-12). There is NO computed `tier`→depth
+# function (round-10 blocker 4 — resolved by subtraction): the report may *note* a suggested depth per
+# control as advisory prose (heavier at higher Tier/stakes), but depth is a human-confirmed recommendation,
+# not a computed field. The floor is a risk-factor RECOMMENDATION; #10 is the gate (ADR-A6).
 ```
 
 ### 4.1 The recommended floor, Tier depth, and recording a skip (ADR-A6)
@@ -199,7 +205,7 @@ FR-25) on the human-authored manifest. So "can't be skipped silently" holds by *
 "hard-blocked until … or waived" holds *downstream at #10*. A **rung** not adopted is **deferred** (recorded
 `deferred`); `skip` (a recommended-floor control) ≠ `deferred` (a rung) — distinct states.
 
-## 5. The commands (`ai/claude/skills/agentic-*`)
+## 5. The lenses / report sections (one skill: `ai/claude/skills/agentic-intake/`)
 
 ## 5. The lenses (report sections of `hitl:agentic-intake`)
 
@@ -254,22 +260,26 @@ Every rendering keys a node's visual off its type, so kind reads at a glance. Th
 | edge: `message`/event | dashed + `✉` | `··✉··▶` |
 | marker: `human_gate` | `⛊` badge on the edge | `──⛊──▶` |
 
-**Every node is a component with an elicited `role`** (round-9 M8 — resolves the earlier contradiction where
-an edge endpoint could be "not in components"). The intake asks the role for each component it elicits; an
-external system or an output store the flow talks to is **elicited as a component** with `role: external` /
-`role: store`, so `edges.from/to` always resolve to a `components[].id`. The map's total role rule:
+**`role` is a single, directly-elicited, required enum on each component** (round-10 blocker 7 — total and
+single-valued by construction; no derivation from `proposed_kind` + flags, so there is no flag-conflict or
+"unclassified component selects none" case, and no dependency on `proposed_kind` being set yet). The intake
+asks one question per component — *"what is this: an agent, a service, a datastore, an external system, or
+an output store?"* — so `role ∈ {agent, service, datastore, external, store}` is always exactly one value.
+An external system or output store the flow talks to is **elicited as a component** with `role: external` /
+`role: store`, so `edges.from/to` always resolve to a `components[].id`. The map vocabulary:
 
-| `role` | when (elicited) | icon |
+| `role` | meaning | icon |
 |---|---|---|
-| `agent` | `kind ∈ {simple_agent, deep_agent}` | hexagon |
-| `service` | `kind == deterministic`, has behavior/inputs | chip |
-| `datastore` | `kind == deterministic`, the intake marked it **state-only** (holds data, no logic) | cylinder |
-| `external` | a system **outside the team's build** the flow calls | cloud/dashed |
-| `store` | an **output** sink (report/queue the flow writes) | stacked |
+| `agent` | a stochastic component (LLM-in-a-loop) | hexagon |
+| `service` | a deterministic component with behavior | chip |
+| `datastore` | a component that holds state, no logic | cylinder |
+| `external` | a system outside the team's build | cloud/dashed |
+| `store` | an output sink the flow writes to | stacked |
 
-`role` is derived from `kind` + one elicitation flag (`state_only` / `out_of_build` / `is_output`), a **total
-function** — every component gets exactly one role. The renderer reads the **scenario** only (there is no
-manifest yet). The demo at artifact `efd56c28` is the reference HTML rendering.
+`role` (map vocabulary) and `proposed_kind` (the classify lens's classification recommendation) are distinct
+single-valued fields — `role` is elicited directly; the renderer reads the **scenario** only (no manifest
+yet). A `ROLE-TOTAL` test asserts every component has exactly one `role`. The demo at artifact `efd56c28` is
+the reference HTML rendering.
 
 ### 6.2 Combined "chat + live map" mode (ADR-A8) — *deferred enhancement (round-4 M8)*
 
@@ -292,18 +302,18 @@ Deterministic from the scenario record (regenerate-and-diff), so the map never d
 **One machine-readable YAML file is the authoritative state**, holding two layers: the **elicited facts**
 (topology + risk answers) and the **recommendations + confirmed decisions** (keyed by id). There is **no
 `authored.*` manifest-fields layer** — the Advisor does not author manifest fields; it records
-recommendations and generates a manifest *skeleton* (§7.4). `records.py`, the composer, and the map read/write
-*this* file; the decision record (§7.2) and the skeleton (§7.4) are **generated from it**.
+recommendations and generates the neutral **`agentic-design-handoff.yaml`** (§7.4). `records.py`, the
+composer, and the map read/write *this* file; the decision record (§7.2) and the handoff (§7.4) are
+**generated from it**.
 
 ```yaml
 schema_version: "3.0"
 tier: int                                                   # 0..3, from .hitl/current-change.yaml
 catalog: { version: string, last_refreshed: date, freshness_reviewed: bool, stale_finding: string? }  # ADV-11 freshness (m3)
 # ── layer 1: elicited facts ──────────────────────────────────────────────
-components: [ { id, name, proposed_kind: enum?[deterministic,simple_agent,deep_agent], rationale: string?,
-               role: enum[agent,service,datastore,external,store],        # total, from proposed_kind + a flag (§6.1)
-               state_only: bool?, out_of_build: bool?, is_output: bool? } ]  # the role-deriving flags. `proposed_kind` is a RECOMMENDATION, not a manifest `kind`
-edges:      [ { id, from: component_id, to: component_id, kind: enum?[sync_call,async_task,event], side_effecting: bool? } ]  # from/to always resolve — every node is a component (M8)
+components: [ { id, name, role: enum[agent,service,datastore,external,store],   # REQUIRED, directly elicited — total & single-valued (§6.1, blocker 7)
+               proposed_kind: enum?[deterministic,simple_agent,deep_agent], rationale: string? } ]  # the classify lens's classification RECOMMENDATION (not a manifest `kind`)
+edges:      [ { id, from: component_id, to: component_id, transport: enum?[sync_call,async_task,event], side_effecting: bool? } ]  # `transport` (a factual edge property, not a design kind); from/to always resolve — every node is a component (M8)
 answers:    { stakes, side_effects, data, autonomy, scale,               # §4 closed-enum vocabulary
               greenfield: bool?, changes_platform: bool?, adds_durable_runtime: bool?,   # deploy relevance (M1 — one location)
               deploy_requested: bool?, memory_hint: bool? }              # all composition flags live here
@@ -344,7 +354,7 @@ human decisions:
 3. **A removed component/edge** carries its dependent decisions to a `retired` list in the record (not
    deleted), so an audit trail survives.
 4. **Human confirms before write.** The reconciled record is presented as a diff (added / changed / stale /
-   retired); the human confirms, and only then are `agentic-decisions.md` **and the skeleton (§7.4)**
+   retired); the human confirms, and only then are `agentic-decisions.md` **and the handoff (§7.4)**
    **regenerated** from the confirmed state (ADV-7). No silent overwrite of a human decision.
 
 This makes the record durable and re-runnable (ADV-7 acceptance scenario 6) with defined mutation
@@ -368,18 +378,22 @@ components:                                  # proposed_kind is a RECOMMENDATION
   - { id: resolver_agent, proposed_kind: simple_agent,  rationale: "bounded draft task" }
 connections:                                 # neutral — NOT `interactions`
   - { from: intake_agent, to: resolver_agent, nature: hands-off }
-recommendations:                             # the floor/rungs by id (from the report)
-  - { id: r-priv-1,  lens: privilege,     control: "least-privilege identity+uses per agent", depth: per_class }
-  - { id: r-bound-1, lens: boundary,      control: "validate the proposed refund before the service trusts it" }
-  - { id: r-obs-1,   lens: observability, control: "tracing + PM eval-console",                depth: report }
-  - { id: r-eval-1,  lens: evals,         control: "per-agent + one e2e eval" }
+recommendations:                             # the floor/rungs by id; ONE representation — each carries its own
+                                             # target_path_hint (a WHERE-to-author string, not a value). m2 fix:
+                                             # no separate `target_paths` list, so there is nothing to keep in sync.
+  - { id: r-priv-1,  lens: privilege,     control: "least-privilege identity+uses per agent", depth_note: per_class,
+      target_path_hint: "domains[<agent>].identity + .uses" }
+  - { id: r-bound-1, lens: boundary,      control: "validate the proposed refund before the service trusts it",
+      target_path_hint: "interactions[].response.validation + callee facade_apis" }
+  - { id: r-obs-1,   lens: observability, control: "tracing + PM eval-console", depth_note: report,
+      target_path_hint: "top-level observability{tracing,eval_console}  (#10 check_observability enforces)" }
+  - { id: r-eval-1,  lens: evals,         control: "per-agent + one e2e eval",
+      target_path_hint: "domains[<agent>].evals + segments[e2e].evals" }
 skips: []                                    # a recorded skip {control,owner,reason} — NOT a #10 waiver
-target_paths:                                # WHERE the design role authors each recommendation (hints, not values)
-  - { recommendation: r-priv-1,  manifest_path_hint: "domains[<agent>].identity + .uses", note: "author in design" }
-  - { recommendation: r-bound-1, manifest_path_hint: "interactions[].response.validation + callee facade_apis" }
-  - { recommendation: r-obs-1,   manifest_path_hint: "top-level observability{tracing,eval_console}", note: "#10 check_observability enforces" }
-  - { recommendation: r-eval-1,  manifest_path_hint: "domains[<agent>].evals + segments[e2e].evals" }
 ```
+`recommendations[].id` is unique; each has exactly one `target_path_hint` (a manifest *path*, never a value);
+`depth_note` is an **advisory** annotation (a human-confirmed suggestion, not a computed field — round-10
+blocker 4). `HANDOFF-REF-INTEGRITY` (§9) asserts id uniqueness and that every hint is a path string.
 
 Every value is a `proposed_*` recommendation or a `*_hint` — **no valid manifest field**. A human authors
 the real manifest; **#10 validates** it. `HANDOFF`/`NO-AUTHOR` (§9) assert the file contains **no**

@@ -5,7 +5,7 @@
 > re-scope removed manifest authoring (**A5** commands recommend + hand off, not author; **A6** floor is a
 > Tier+risk recommendation, not derived from #10; **A1** one intake command, not 8 — round-9 M9). Earlier
 > decisions (obligation-first floor, imported activation) are superseded, kept in each ADR's history.
-> Status: **accepted, v4.1 (elicit + recommend + record + hand off); pending Codex re-review (round 9)**.
+> Status: **accepted, v4.1 (elicit + recommend + record + hand off); pending Codex re-review (round 10)**.
 
 ---
 
@@ -62,10 +62,10 @@ mitigated by keeping it small and concern-organized.
 
 ## ADR-A3: Recommend, never decide — output is a proposal the human confirms
 
-**Context.** "AI proposes, humans decide" is a HITL invariant. The commands make consequential calls
-(component kinds, the floor, deployment). The AI's instinct is to pick the fanciest option.
+**Context.** "AI proposes, humans decide" is a HITL invariant. The intake makes consequential
+recommendations (component kinds, the floor, deployment). The AI's instinct is to pick the fanciest option.
 
-**Decision.** Each command **recommends** the simplest option that fits (with rejected alternatives and
+**Decision.** Each lens section **recommends** the simplest option that fits (with rejected alternatives and
 their cost) and **records** the decision; the human confirms, and an override is recorded with its reason.
 No choice is applied silently.
 
@@ -79,17 +79,17 @@ decision. (−) More confirmation points — mitigated by composition (A4), so o
 
 ---
 
-## ADR-A4: HITL composes a proportionate workflow from the intake
+## ADR-A4: HITL composes a proportionate recommendation report from the intake
 
 **Context.** A fixed questionnaire / fixed command list that runs everything for everyone is the
 over-governance failure this feature exists to prevent. Depth must follow risk.
 
-**Decision.** After the intake understands the scenario, HITL **composes the workflow** — includes a
-command only if the scenario has data for its lens, marks it mandatory (floor) or offered (rung), and
-orders it by dependency. Composition is deterministic given the answers; a re-run reproduces the workflow.
+**Decision.** After the intake understands the scenario, HITL **composes the report** — includes a lens
+section only if the scenario has data for it, marks it mandatory (floor) or offered (rung), and orders it by
+dependency. Composition is deterministic given the answers; a re-run reproduces the report.
 
 **Alternatives and their cost.**
-- *Always run every command.* Cost: drowns low-risk teams, gets routed around — the anti-over-engineering
+- *Always include every lens.* Cost: drowns low-risk teams, gets routed around — the anti-over-engineering
   tool recreating over-engineering.
 - *Free-form "let the AI decide what to run".* Cost: non-reproducible, no coverage guarantee, no record.
 
@@ -175,7 +175,7 @@ trap, and teams make it by default. A right-sizing front door must surface it. B
 choice are runtime/ops (governs-not-runtime), and platform-bootstrap has no intake for a deployment
 direction.
 
-**Decision.** `hitl:agentic-deploy` surfaces the decision, recommends **managed unless there is a specific
+**Decision.** The intake's **deploy lens** (a report section, not a command — round-9 M9) surfaces the decision, recommends **managed unless there is a specific
 reason to build**, and **records** it in the decision record. On a managed recommendation it also
 **surfaces the lock-in trade-off** and requires the three portability-diligence answers — **governance**
 (neutral vs vendor-owned), **packaging** (portable across clouds without a rewrite), **state** (memory
