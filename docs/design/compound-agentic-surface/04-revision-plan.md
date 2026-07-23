@@ -17,7 +17,28 @@ agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld in both rounds**;
 skeleton stands. The rework is in the edge container, the trust legs, the privilege union, the eval
 homes, and activation.
 
-## Round-5 fix-map (v3.3 — mechanism-level convergence, the current work)
+## Round-7 fix-map (v3.3 — structural root-cause fixes, the current work)
+
+Round-6 returned REVISIONS REQUIRED (4 blockers + 7 majors + 4 minors): the round-5 "floor ≡ activation"
+fix was itself defective — a hand copy of #10's activation table that drifted, with `check_deep_agent`/
+`check_policy_refs`/`check_saga` unowned. Round-7 attacks the root cause rather than re-transcribing:
+
+| Round-6 finding | Disposition (v3.3 round-7) |
+|---|---|
+| **B1** floor ≡ activation false (drifted copy + unowned checks) | The Advisor **imports #10's activation module** (`ci/manifest-agentic/activation.py`) — **no copy** to drift; `OWNS_CHECKS` completed (deep-agent/policy/saga/scope), `OWNERSHIP-COMPLETE` lint asserts every blocking check is owned. Compound LLD §6.0 (single source); Advisor LLD §4 |
+| **B2** canonical state can't author a valid manifest | `authored.*` completed to be **lossless** to every #10 field (identity.privilege, async, sagas, policies, stores, orchestration, segments, deep_agent, full lifecycle/memory, facade `blurb`, `credential_justification`); id-based merge contract; `AUTHOR-COMPLETE` runs the writer output through #10's **real** validator. Advisor LLD §7.1/§7.1.1 |
+| **B3** waiver escape hatch doesn't exist | Added a **general `manifest-waivers.yaml`** contract to #10 that every blocking check consults (compound LLD §6); the Advisor writes to it — the "floor is waivable" claim is now real |
+| **B4** fixture activations wrong | Fixed AUTHOR-LOW (+scope_grammar), AUTHOR-HIGH (+policy_refs/lifecycle), AUTHOR-OBSERV (valid `access` enum); exact **ordered** workflow via topo tie-break; added COMPOSE-DEEP + AUTHOR-COMPLETE |
+| **B5** release boundary not applied to authorities | Re-scoped **CR rows, PRD FR-26, HLD §13** (saga→advisory, PM-invoke→#42); core = 2.2.0, deferred → 2.3.0 |
+| **M1** observability theater / no depth table | Honest: `ResolvableRef` is a **declaration** not runtime proof (O1); real **per-command tier-depth table** (Advisor LLD §4.1); `access` enum fixed |
+| **M2** result-review half-deferred | Fully moved to #42: adapter execution out of the core file list, L5, HLD gate |
+| **M3** routing two sequences | One gate→probe→route sequence in HLD/ADR/**LLD §8** (removed the ungated wording) |
+| **M4** compensation-gap flow undefined | Core flow = a **declared `segment`** only; coordinator-chain heuristic deferred to #42 |
+| **M5** memory unreachable rung | Added a `memory_hint` state so memory is an offered rung before declaration |
+| **M6** map vocabulary underivable | Added a derived component `role` (datastore/external/output-store) computed by fixed rules from manifest content |
+| **M7** trackers stale | Rewrote #10/#12/#16/#35/#37/#40 (this pass) |
+
+## Round-5 fix-map (v3.3 — mechanism-level convergence)
 
 Round-5 (2026-07-22) reviewed v3.2 and returned REVISIONS REQUIRED (4 blockers + 8 majors + 3 minors). The
 central finding: the core lock's *reconciling principle* (Advisor floor ≡ #10 activation) was **asserted but

@@ -1,4 +1,4 @@
-# Compound Agentic System Surface: Design (HLD) — v3.2 (core scope lock)
+# Compound Agentic System Surface: Design (HLD) — v3.3 (round-7)
 
 > Mechanism (the *how*) for the requirements in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
@@ -7,7 +7,7 @@
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): eval coverage → per-agent
 > + e2e (universal deferred); saga → declared-only + compensation-gap advisory (required-when deferred);
 > CR-6 sync reliability narrowed; delegated authority deferred. Per [`04-revision-plan.md`](04-revision-plan.md).
-> Status: **draft, core-lock applied, pending Codex re-review (round 5)**. Targets **2.2.0**. Field-level
+> Status: **draft, core-lock applied, pending Codex re-review (round 7)**. Targets **2.2.0**. Field-level
 > precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md); decisions in [`02-adrs.md`](02-adrs.md).
 
 **Thesis (unchanged): a compound agentic system is a manifest, extended.** Each revision corrects *which*
@@ -293,12 +293,15 @@ rewritten; ADR-13/D13 added (per-check activation).
    request/response/agent→agent leg into an agent is blocked without cost+authority bounds; an
    over/under/ceiling-violating capability declaration is blocked; a memory write with no matching use is
    blocked; an unauthorized or identity-less caller is blocked; a reliable one-way event validates; a
-   two-side-effect flow without a covering saga is blocked.
+   two-side-effect flow without a covering saga emits the **`check_compensation_gap` advisory (warning, not
+   a block)** — the required-when block is deferred to #42 (v3.2/B4); an agentic system with no
+   `observability` block is blocked (`check_observability`, floor gate).
 4. Topology, privilege, capability, and tool views generate machine-readable + rendered, and the derived
    `interaction_matrix`/`depends_on`/`events_*` projections regenerate-and-diff clean (cannot drift).
-5. The eval coverage validator blocks an uncovered target, a `baseline_only` target above Tier 1, and a
-   multi-agent system with no e2e segment; the wired adapter contract lets PM invoke one segment on
-   operator confirmation.
+5. The eval coverage validator blocks an uncovered **agent** target, a `baseline_only` target above Tier 1,
+   and a multi-agent system with no e2e segment. **Result ingestion / PM-invokes-a-segment is deferred to
+   #42** (round-5 B3) — core ships the coverage gate + the adapter *contract shape*, not execution; the core
+   validator never runs the adapter or blocks on a result.
 6. `SEP-PAIR` (a call and an event between the same pair, distinct ids) validates — the parallel-edge
    property is realizable — and the re-run cold Codex review (round 3) returns APPROVE (or only accepted
    minors) before implementation begins.

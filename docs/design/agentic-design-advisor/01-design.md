@@ -1,10 +1,10 @@
-# Agentic Design Advisor: Design (HLD) — v3.2 (core scope lock)
+# Agentic Design Advisor: Design (HLD) — v3.3 (round-7: floor from #10 activation)
 
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
 > (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); **field-level precision (catalog schema,
 > composer, floor function, command→manifest mapping, integration) in the LLD [`04-lld.md`](04-lld.md)**;
 > test plan in [`03-test-plan.md`](03-test-plan.md).
-> Status: **draft, core-lock applied, pending Codex re-review (round 5)**. **v3.2** — reshaped around
+> Status: **draft, core-lock applied, pending Codex re-review (round 7)**. **v3.2** — reshaped around
 > **runnable commands + a composed workflow** (v2), revised after pm + architect rounds (v3), then
 > **core-scope-locked** after the round-4 objectives review ([`../agentic-core-scope.md`](../agentic-core-scope.md)):
 > **non-circular topology-probe routing** (B2, §3.1); **obligation-first floor** so `floor ⊆ composed` (B3,
@@ -128,9 +128,8 @@ check each command owns, and when it fires:
 **Rungs (genuinely optional — no firing owned check):** `agentic-memory` offered when the scenario hints at
 cross-session state (before it is declared); `agentic-deploy` offered only when the change is **greenfield,
 changes the execution platform, adds a durable runtime need, or explicitly requests the decision** (M6 — not
-"always"). `agentic-deploy` has **no** #10 check, so it is never floor. An `ACTIVATION-MIRROR` test asserts
-the Advisor's copy of #10's activation predicates matches #10's real table, so the floor can never drift
-from #10 (LLD §4.1).
+"always"). `agentic-deploy` has **no** #10 check, so it is never floor. The Advisor **imports** #10's activation predicates (one source), so there is no copy to drift; an
+`OWNERSHIP-COMPLETE` lint asserts every blocking #10 check is owned by a command (LLD §4.1).
 
 Composed ≠ mandatory: whether a composed command is **floor** (mandatory) or **rung** (offered) is the §5
 rule. A command whose relevance predicate is false is not composed at all (proportionality).
@@ -177,7 +176,7 @@ Two floor obligations have **no** #10 check and so are added by rule, not activa
 
 **`floor ⊆ workflow` by construction** (the workflow is `floor ∪ rungs`), and **`floor ≡ #10 activation`**
 by construction (floor is computed *from* the activation predicates) — the `FLOOR-SUBSET` and
-`ACTIVATION-MIRROR` tests guard both against future drift.
+`OWNERSHIP-COMPLETE` lints guard both (no unowned activatable check; floor ⊆ workflow).
 
 **Invariant `floor ⊆ composed` (lint-enforced, B3).** A build-time lint (`FLOOR-SUBSET`) asserts that every
 command a floor rule can name is a real, composable command, and that step 2 makes `floor_commands ⊆

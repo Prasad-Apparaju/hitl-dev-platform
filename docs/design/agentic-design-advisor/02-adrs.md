@@ -1,11 +1,11 @@
 # Agentic Design Advisor: Architecture Decisions
 
 > ADRs for decisions **A1–A9** from [`01-design.md`](01-design.md) §10. Each records the forces, the
-> decision, the **alternatives with their concrete cost**, and the consequences. **v3.2** — reshaped around
+> decision, the **alternatives with their concrete cost**, and the consequences. **v3.3** — reshaped around
 > commands + composed workflow (v2), revised after pm/architect rounds (v3), then **core-scope-locked** after
 > the round-4 objectives review ([`../agentic-core-scope.md`](../agentic-core-scope.md)): **A6** floor now
 > obligation-first (`floor ⊆ composed`, B3); **A8** map core = terminal+Mermaid, HTML/live-combined deferred
-> (M8). Status: **accepted, core-lock applied, pending Codex re-review (round 5)**.
+> (M8). Status: **accepted, core-lock applied, pending Codex re-review (round 7)**.
 
 ---
 
@@ -149,10 +149,11 @@ machinery). v1's L0–L4 rungs were a second scale with prose triggers and no pr
 
 **Decision.** The floor is **`{ command : a #10 check it owns activates on the scenario-implied manifest }`**
 plus two non-#10 obligations (human gate on irreversible, kill-switch on supervised+side-effecting). The
-Advisor mirrors #10's activation predicates in an `ACTIVATES` table; the `ACTIVATION-MIRROR` lint asserts it
-matches #10's real table field-for-field, so the floor **cannot drift from #10** (B1). The workflow is
-`floor ∪ rungs`, so `floor ⊆ workflow` by construction (the `FLOOR-SUBSET` lint guards it). **Tier + risk
-factors set the required *depth*** within a floor control (e.g. observability = report vs console, M3), not
+Advisor **imports #10's activation predicates** (`ci/manifest-agentic/activation.py`) rather than copying
+them — there is nothing to drift — and the `OWNERSHIP-COMPLETE` lint asserts every blocking #10 check is
+owned by some command (round-7 B1). The workflow is `floor ∪ rungs`, so `floor ⊆ workflow` by construction
+(the `FLOOR-SUBSET` lint guards it). **Tier + risk factors set the required *depth*** within a floor control
+(e.g. observability = report vs console, M3), not
 whether it is floor. Commands above the floor are
 **offered as deferrable rungs** — the "add now or **defer**" ladder is a *human-facing narrative over the
 same Tier+risk axis*, not a competing scale (note: rung **defer** ≠ floor **waiver**, round-4 m3). **The
@@ -290,7 +291,7 @@ change (the gate→probe→route rule), enumerated in the LLD file list.
 | ADR-A3 | A3 | Recommend, never decide; human confirms; record chosen/rejected |
 | ADR-A4 | A4 | HITL composes a proportionate workflow; run only what's relevant |
 | ADR-A5 | A5 | Commands author the manifest; #10 reacts — no seed; observability authors the #10-gated `observability` block (hard directive); **only** the kill-switch remains a declared artifact (no #10 target yet) |
-| ADR-A6 | A6 | Floor = deterministic fn of Tier + risk, **computed obligation-first so `floor ⊆ composed`** (no silent drop, B3); **non-silently-droppable but waivable** (FR-25 precedent); ladder offers **deferrable** rungs (defer ≠ waiver) |
+| ADR-A6 | A6 | Floor is **DERIVED from #10's imported activation** (floor ≡ activation, complete ownership; round-7 B1); **Tier scales depth, not membership**; `floor ⊆ workflow`; **waivable via #10's real per-check waiver store** (round-6 B3); rungs are **deferrable** (defer ≠ waiver) |
 | ADR-A7 | A7 | Record the build-vs-buy decision + portability diligence; a human carries it — provision nothing, auto-hand-off to nothing |
 | ADR-A8 | A8 | Evolving map = terminal-first generated view; **core = inline text + Mermaid; rich HTML + combined live mode deferred** (M8); regen per step; no live server |
 | ADR-A9 | A9 | Intake integrates into `pm-design-feature`/`AGENTS.md` — precede for compound, skip for simple, never replace |

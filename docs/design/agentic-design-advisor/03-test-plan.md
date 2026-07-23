@@ -1,4 +1,4 @@
-# Agentic Design Advisor: Test Plan — v3.2 (core scope lock)
+# Agentic Design Advisor: Test Plan — v3.3 (round-7)
 
 > Verifies the design [`01-design.md`](01-design.md) against the requirements
 > [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
@@ -6,7 +6,7 @@
 > scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): **FLOOR-SUBSET** (obligation-first,
 > B3), **AUTHOR-CONTRACT**/**AUTHOR-EVAL-CORE** (B1/M1), **RERUN-RECONCILE** (M4), **MAP-CORE-SCOPE** (M8
 > defer), ROLE-ATTR attributes-not-gates (M9), `deferred`≠`waived` (m3). Status: **draft, pending Codex
-> round 5**.
+> round 7**.
 
 ## 1. What must be true
 
@@ -62,10 +62,11 @@ answers:    {stakes: internal, side_effects: none, data: none, autonomy: assiste
 tier: 1
 ```
 → **floor** = `[agentic-boundary, agentic-classify, agentic-evals, agentic-observability, agentic-privilege]`;
-**rungs** = `[agentic-deploy]`; **workflow** = floor ∪ rungs. *(Honest: a 2-agent compound flow activates #10's
-classification/boundary/authorization/capabilities/eval/observability checks, so those are floor, not
-deferrable. Depth is minimal — observability = `report_or_existing_surface`, privilege = `per_class`, eval
-= `baseline`.)*
+**rungs** = `[agentic-deploy]`; **workflow** (ordered, topo + `COMMANDS` tie-break) = `[agentic-classify,
+agentic-boundary, agentic-privilege, agentic-observability, agentic-evals, agentic-deploy]`. *(Honest: a
+2-agent compound flow activates #10's classification/boundary/authorization/capabilities/scope/eval/
+observability checks, so those are floor. Depth is minimal — observability `access: report`, privilege
+per-class, eval baseline.)*
 
 **Fixture HIGH** — Tier-2, 4-component (2 agents), irreversible, PII, supervised, one async edge, greenfield:
 ```yaml
@@ -84,8 +85,9 @@ agentic-reliability]` (reliability floor via `human_gate_needed` = irreversible,
 |---|---|---|
 | **COMPOSE-LOW** | Fixture LOW | exact `floor`/`rungs`/`workflow` above; **deploy is a rung (greenfield), never floor** (no #10 check owns it) |
 | **COMPOSE-HIGH** | Fixture HIGH | exact `floor`/`rungs`/`workflow` above; reliability enters the floor (irreversible ⇒ human-gate; async ⇒ `check_async`) |
-| **ACTIVATION-MIRROR** | `ACTIVATES` (Advisor LLD §4) vs #10's real activation table (compound LLD §6.0) | field-for-field match; every `OWNS_CHECKS` entry is a real #10 check; a deliberate desync makes the test fail (proves floor cannot drift from #10 — B1) |
-| **FLOOR-EQ-ACTIVATION** | for LOW and HIGH, author the manifest, run #10 | every floor command's owned #10 check **activates**; no floor command's check is dormant, and no dormant-check command is floor (floor ≡ activation) |
+| **COMPOSE-DEEP** | Fixture LOW but one component `kind: deep_agent` | floor **adds no new command** but `agentic-classify` now **owns `check_deep_agent`** and authors the `deep_agent{planner,subagents,context_isolation,gates,guardrails}` block; run #10 → `check_deep_agent` passes (round-6 B1 — the deep-agent counterexample now holds) |
+| **OWNERSHIP-COMPLETE** | import #10's `ACTIVATES`; compare to `⋃ OWNS_CHECKS` | every **blocking** check in `ACTIVATES` is owned; every `OWNS_CHECKS` name is a real `ACTIVATES` key. A #10 check with no owner **fails** the lint (round-7 B1 — replaces the unimplementable mirror; no predicate copy to compare) |
+| **FLOOR-EQ-ACTIVATION** | for LOW/HIGH/DEEP, run the manifest writer, then #10's **real** validator | **every check the authored manifest activates has an owning floor command** (not just the "primary" ones): LOW also activates `check_scope_grammar` (privilege scopes); HIGH also activates `check_policy_refs` + `check_lifecycle`; DEEP activates `check_deep_agent`. No activated check is unowned (floor ≡ activation, verified through #10) |
 | PRUNE-DEPLOY | a change to an existing deployed system (not greenfield, no platform change) | `agentic-deploy` **not** composed (M6 — deploy is not "always") |
 | **FLOOR-DET** | run Fixture HIGH twice | **identical** floor + workflow (deterministic, ADV-12) |
 | **FLOOR-SUBSET** | sweep {risk-factor space} × {tier 0..3}; compute `floor_commands(s)` and `compose(s,t).workflow` | `floor ⊆ workflow` at **every** point (floor is unioned into the workflow — B3) |
@@ -117,11 +119,12 @@ the right checks. These tests run the authored manifest through #10's real `chec
 
 | Case | Fixture | Expect |
 |---|---|---|
-| **AUTHOR-LOW** | Fixture LOW's authored manifest | #10 activates exactly the LOW floor's owned checks — `check_classification`, `check_topology`/`check_references`, `check_authorization` (a1→a2 into an agent), `check_boundary_legs` (agent→agent), `check_capabilities`, `check_eval_coverage`, `check_observability`; **skips** `check_async`/`check_lifecycle`/`check_saga`/`check_memory`/`check_deep_agent`. Every activated check has an authoring command in the composed workflow (floor ≡ activation — no fictional seam) |
-| **AUTHOR-HIGH** | Fixture HIGH's authored manifest | as AUTHOR-LOW plus **`check_async`** (edge `e3`); reliability authored the async fields; verified against #10 LLD §6.0 |
+| **AUTHOR-LOW** | Fixture LOW's authored manifest | #10 activates `check_classification`, `check_topology`/`check_references`, `check_authorization`, `check_boundary_legs`, `check_capabilities`, **`check_scope_grammar`** (privilege authors scopes — round-6 B4), `check_eval_coverage`, `check_observability`; **skips** `check_async`/`check_lifecycle`/`check_saga`/`check_memory`/`check_deep_agent`/`check_policy_refs`. Every activated check is owned by a composed floor command |
+| **AUTHOR-HIGH** | Fixture HIGH's authored manifest | as AUTHOR-LOW plus **`check_async`** (edge `e3`), **`check_lifecycle`** (irreversible ⇒ human-gate lifecycle block), and **`check_policy_refs`** (the boundary `validation` refs) — all owned by boundary/reliability (round-6 B4); verified against #10's real validator, not just the owned-check list |
+| **AUTHOR-COMPLETE** | run the manifest writer on LOW/HIGH/DEEP, feed to #10's **real** `check_manifest_agentic.py` | **exit 0** — the canonical state authored a manifest that passes every activated check; a missing state field would make #10 block, so this is the executable proof the state is sufficient (round-6 B2) |
 | **AUTHOR-CONTRACT** | Fixture HIGH's `agentic-boundary` output | authors `domains[callee].facade_apis[facade_name]` **and** `interactions[].authorization.allowed_callers`; #10 → `check_references`/`check_authorization` resolve; a missing facade/authz makes #10 block (round-4 B1) |
 | **AUTHOR-EVAL-CORE** | Fixture HIGH's `agentic-evals` output | one eval spec **per agent** + one e2e segment spec; a deterministic component with no spec does **not** block (core = agents+e2e); no `result_review` gate in core (deferred, round-5 B3) |
-| **AUTHOR-OBSERV** | Fixture LOW's `agentic-observability` output at Tier 1 | authors `observability` with `eval_console.access: report_or_existing_surface` + a **resolvable** `ref` + convention-required `attributes`; #10 `check_observability` **passes**; a `ref` that resolves to nothing, `attributes:["TODO"]`, or a missing `eval_console` → **blocks** (round-5 M3 — real, tier-scaled, not theater) |
+| **AUTHOR-OBSERV** | Fixture LOW's `agentic-observability` output at Tier 1 | authors `observability` with `eval_console.access: report` (a **valid #10 enum value** — round-6 B4; `existing_surface`/`console` also accepted at Tier ≤ 1 per `access_ok`) + a **resolvable** `ref` + convention-required `attributes`; #10 `check_observability` **passes**; a `ref` resolving to nothing, `attributes:["TODO"]`, or `access: report` at Tier 2 → **blocks** (round-5 M3 / round-6 M1) |
 | **AUTHOR-DECLARED** | the kill-switch output | recorded as a **declared artifact** in the decision record; **no** kill-switch check exists in #10 today; present, not silently omitted (ADR-A5 §7). *(Observability is no longer here — it authors a #10-validated field, see AUTHOR-OBSERV.)* |
 | AUTHOR-NO-SEED | the Advisor's output artifacts | there is **no** `.hitl/agentic-profile.yaml` "active-validator set" consumed by #10; #10 activates purely from manifest content (proves the v1 fiction is gone) |
 | AUTHOR-NO-DUP | the Advisor's code/output | contains **no** copy of #10's validator logic — it authors manifest fields, #10 validates |
@@ -153,7 +156,7 @@ the right checks. These tests run the authored manifest through #10's real `chec
 | 2. Low-stakes → proportionate workflow; only truly-optional commands absent | COMPOSE-LOW, PRUNE-DEPLOY (floor still ≡ #10 activation) |
 | 3. High-stakes → full workflow, floor can't be dropped silently | COMPOSE-HIGH, FLOOR-BLOCK, KILL-SWITCH |
 | 4. Every recommendation recorded + overridable | REC-RECORD, REC-OVERRIDE |
-| 5. Commands author manifest → #10 activation runs the right checks; floor ≡ activation; observability a #10-gated field; kill-switch a declared artifact | AUTHOR-LOW, AUTHOR-HIGH, ACTIVATION-MIRROR, FLOOR-EQ-ACTIVATION, AUTHOR-OBSERV, AUTHOR-CONTRACT, AUTHOR-DECLARED, AUTHOR-NO-SEED |
+| 5. Commands author manifest → #10 activation runs the right checks; floor ≡ activation (verified through #10); observability a #10-gated field; kill-switch a declared artifact | AUTHOR-LOW, AUTHOR-HIGH, AUTHOR-COMPLETE, COMPOSE-DEEP, OWNERSHIP-COMPLETE, FLOOR-EQ-ACTIVATION, AUTHOR-OBSERV, AUTHOR-CONTRACT, AUTHOR-DECLARED, AUTHOR-NO-SEED |
 | 6. Durable + re-runnable, no drift | FLOOR-DET, REC-REGEN, RERUN-RECONCILE |
 | 7. Deploy: managed default, reason to build, record + human-carry, no provisioning | DEPLOY-MANAGED, DEPLOY-BUILD-REASON, DEPLOY-EXAMPLES, DEPLOY-RECORD-CARRY, DEPLOY-PORTABILITY |
 | 8. Floor computation deterministic (given declared factors) | FLOOR-DET, FLOOR-SUBSET |

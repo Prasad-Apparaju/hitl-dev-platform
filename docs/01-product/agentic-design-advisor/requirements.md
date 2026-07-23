@@ -237,7 +237,7 @@ the source is [`References`](#11-references) — not a requirement here.*
 - **round-5 cold Codex review (2026-07-22):** REVISIONS REQUIRED (4 blockers + 8 majors). The core finding:
   the Advisor floor was hand-tuned with Tier gates that contradicted #10's content-based activation (the
   reconciling principle was asserted, not delivered). Fixed at the **mechanism** level in **v3.3**: the floor
-  is now **derived from #10's activation predicates** (floor ≡ activation, `ACTIVATION-MIRROR` lint; ADV-5/12,
+  is now **derived from #10's imported activation predicates** (floor ≡ activation, `OWNERSHIP-COMPLETE` lint; ADV-5/12,
   B1); **Tier scales depth, not membership**; the canonical state is a **machine-readable YAML** holding the
   authored outputs, with the Markdown decision record generated from it (B4); the catalog `consequence` is
   reconciled to one option→list-of-tagged-unions shape (B4); routing gets an **`agentic` gate** before the

@@ -5,7 +5,7 @@
 > Implements HLD [`01-design.md`](01-design.md) + ADRs [`02-adrs.md`](02-adrs.md), per the Codex
 > response [`04-revision-plan.md`](04-revision-plan.md) and the core scope lock
 > [`../agentic-core-scope.md`](../agentic-core-scope.md). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
-> Status: **draft, round-4 core-lock applied (v3.2), pending Codex round-5**. A developer/agent
+> Status: **draft, round-7 applied (v3.3), pending Codex round-7**. A developer/agent
 > implements from this without a further design decision.
 >
 > **v3.2 changelog (round-4 core scope lock).** **M1/O6 (eval):** the round-3 broadening of coverage to
@@ -93,7 +93,8 @@ registry. This is what makes "additive-only; non-agentic manifests need no regis
 | `docs/03-engineering/approved-capabilities.yaml` (template) | capability registry w/ classes, risk, ceilings, `runtime_ref` (§5) | #13 |
 | `docs/03-engineering/policies.yaml` (template) | policy registry: schemas / guardrails / actions (§5, B6) | #13 |
 | `docs/03-engineering/stores.yaml` (template) | durable + shared store registry (§5, B6/M5) | #13 |
-| `docs/03-engineering/evals/index.yaml` + `waivers.yaml` + `eval-adapter.yaml` + specs | eval registry, waivers, adapter contract (§7) | #13 |
+| `docs/03-engineering/evals/index.yaml` + `waivers.yaml` + specs | eval registry, waivers (§7). Core. The `eval-adapter.yaml` **execution** contract is deferred to #42 (round-5 B3) | #16 / #42 |
+| `manifest-waivers.yaml` | general per-check waiver store every blocking check consults (round-6 B3, §6) | #16 |
 | `ci/manifest-agentic/check_manifest_agentic.py` | validator pipeline (§6), value-checking, fail-closed, **per-check activated** | #16 |
 | `ci/manifest-agentic/test_check_manifest_agentic.py` | regression suite (§8) | #16 |
 | `tools/manifest-agentic/generate_views.py` | machine-readable + rendered posture/topology; also emits derived `interaction_matrix`/`depends_on`/`events_*` (§2.4, §9) | #15 |
@@ -276,7 +277,7 @@ memory: { optional: true, Memory: {
       high_stakes: { type: bool, optional: true },          # write only; true ⇒ high_stakes_guardrail required (§6.11)
       provenance: { type: string, optional: true },         # write only; REQUIRED when high_stakes (M5)
       staleness:  { type: duration, optional: true } },     # read only; max acceptable age (M5)
-    high_stakes_guardrail: { type: PolicyRef, optional: true } } } }
+    high_stakes_guardrail: { type: PolicyRef, optional: true } } } } }
 ```
 
 **Memory ⇄ privilege reconciliation (§6.2/§6.11, closes B3.1):** every `long_term.reads[].resource`
@@ -373,21 +374,18 @@ incomplete enforcement model, the core **defers the full distributed-compensatio
   true`, no two sagas cover the same interaction, `order` semantics consistent. Compensation runs in
   **reverse of `order`** for `sequential`. This is unchanged and sound.
 - **Advise on compensation gaps — warn, don't enforce (the "alert users we don't support it" rule).**
-  `check_compensation_gap` (§6.16) is an **advisory** (severity `warning`, never a blocker). **A "flow" is
-  defined deterministically** (round-5 M2) so the algorithm is unambiguous: a flow is
-  1. a declared **`segment.path`** (the primary case — the author has already grouped the interactions), or
-  2. absent a segment, a **maximal chain of interactions sharing one `orchestration.coordinator`** — i.e.
-     the set of interactions whose endpoints are governed by the same coordinator, walked over the
-     directed from→to graph. No coordinator and no segment ⇒ no flow ⇒ no advisory (a loose pair of
-     unrelated edges is not treated as a distributed transaction).
-
-  The advisory fires when a flow contains **≥2 side-effecting interactions with an agent or async/event
-  endpoint and no declared `saga` covers all of them**, emitting *"this flow looks like it needs distributed
-  compensation, which the core does not enforce yet — handle rollback deliberately or declare a `saga`."* A
-  `segment` with `transactional: true` and no covering saga always triggers it. "Covers" = every such
-  side-effecting interaction id appears in exactly one `saga.steps`. This closes the round-4 B4 "silent
-  omission" hole without shipping the enforcement model; the Advisor (FR-28) asks the matching intake
-  question so the warning is rarely a surprise. *(Test COMP-GAP-SEG / COMP-GAP-COORD / COMP-GAP-NONE.)*
+  `check_compensation_gap` (§6.16) is an **advisory** (severity `warning`, never a blocker). **In core, a
+  "flow" is exactly a declared `segment.path`** (round-6 M4 — the deterministic, unambiguous definition; the
+  coordinator-chain / arbitrary-graph heuristic was underspecified for branches/cycles and is **deferred to
+  #42**). The advisory fires when a **`segment`** contains **≥2 side-effecting interactions with an agent or
+  async/event endpoint and no declared `saga` covers all of them** (a `transactional: true` segment with no
+  covering saga always triggers it), emitting *"this flow looks like it needs distributed compensation,
+  which the core does not enforce yet — handle rollback deliberately or declare a `saga`."* "Covers" = every
+  such side-effecting interaction id appears in exactly one `saga.steps`. Two connected side-effecting edges
+  with **no** declared segment produce no core warning — the Advisor (FR-28) asks the matching intake
+  question, and grouping them into a segment (or a saga) is the elicited action. This closes the "silent
+  omission" hole for the declared-flow case without an unsound graph algorithm. *(Tests COMP-GAP-SEG,
+  COMP-GAP-NONE.)*
 
 `saga_missing` as a **blocker** — requiring a saga for a `transactional` segment — is **deferred** to the
 follow-on; in core the same condition is the advisory above.
@@ -460,6 +458,18 @@ domain/interaction/segment/saga id; system/registry errors get reserved loci. Th
 blockers, then exits 2 if any; it fails closed on unparseable/missing input, unknown enum, unresolved
 reference, or any exception.
 
+**General waiver contract (round-6 B3 — every floor control is genuinely waivable).** HITL's model is
+"hard-block **or waived**" (FR-25). Before v3.3, only `check_eval_coverage` had a waiver store, so the
+Advisor's claim that any floor control (boundary/privilege/lifecycle/observability/…) could be dropped with
+a recorded waiver was **false** — #10 had no code to honour it. Fixed: a single **`manifest-waivers.yaml`**
+registry that **every blocking check consults**. Shape: `[{ code, locus, owner, reason, tier_limit:int,
+revisit:date }]`. Rule: when a check would emit a `Blocker{code, locus}`, `main` **suppresses** it iff a
+waiver entry matches `(code, locus)`, `tier ≤ tier_limit`, and `revisit ≥ today` — downgrading it to a
+recorded `waived` note (still surfaced, never silent); otherwise the blocker stands. A waiver that is lapsed
+(`revisit < today`) or tier-exceeded does **not** suppress. `check_eval_coverage` keeps its existing
+per-target `waivers.yaml` (a specialization); all other checks use the general store. This is what makes the
+Advisor's `manifest_waivers_yaml` waiver real: the Advisor authors an entry here, and #10 reads it.
+
 ### 6.0 Per-check activation (B5)
 
 Each check runs **iff** its predicate holds; otherwise it is skipped (not vacuously passed). A check's
@@ -482,8 +492,16 @@ required registry is loaded **only when the check activates** — so a manifest 
 | 6.13 | `check_scope_grammar` | any `Scope` appears (`identity.privilege`, `uses`, `authority_bound`, ceilings) | — |
 | 6.14 | `check_saga` | any `saga` **declared** (validates its well-formedness; v3.2/B4) | policies |
 | 6.15 | `check_classification` | `interactions` present with ≥1 agent endpoint (a compound manifest) | — |
-| 6.16 | `check_compensation_gap` *(advisory)* | ≥2 side-effecting agent/async interactions with no covering `saga`, or a `transactional` segment with no covering saga (v3.2/B4) | — |
+| 6.16 | `check_compensation_gap` *(advisory)* | a declared `segment` with ≥2 side-effecting agent/async interactions and no covering `saga` (round-6 M4 — segment-scoped) | — |
 | 6.17 | `check_observability` *(floor gate)* | any domain is an agent (an agentic system must be observable + PM-evaluable — hard directive 2026-07-22) | — |
+
+**Single activation source (round-7 B1).** The activation predicates in the table above live in **one
+module, `ci/manifest-agentic/activation.py`**, as `ACTIVATES = { check_name: predicate(manifest_features) }`.
+The #10 validator dispatch reads it to decide which checks to run; the **Agentic Design Advisor imports the
+same module** to compute its floor (FR-28 LLD §4). There is **no second copy** — the Advisor supplies only a
+`manifest_features(scenario)` mapping and calls these predicates, so the Advisor floor cannot drift from #10
+activation. An `OWNERSHIP-COMPLETE` lint (Advisor side) asserts every **blocking** check here is owned by
+some command.
 
 A wholly deterministic manifest with typed `interactions` activates only 6.5/6.6 (graph integrity) and
 needs **no** new registry. `check_saga` (6.14) activates **only on a declared `saga`** and validates its
@@ -510,7 +528,7 @@ this yet" signal (v3.2/B4). The Advisor (FR-28) elicits whether a flow needs dis
 | 6.12 | `check_eval_coverage` | a **target** — in **core, every agent component + one `e2e:true` segment** (v3.2/M1 — independent per-agent eval, CR-8/CR-16; universal deterministic-component/edge coverage is **deferred**, see §7.1) — with no `evals.spec` in the index and no unlapsed waiver; no `e2e:true` segment when ≥2 components; a spec/waiver failing its schema (§7); a spec with `approval.decision != approved` used to satisfy coverage at Tier 2+. A **deterministic** component/edge is **not required** to have coverage in core, but **may** declare a `kind: contract_test` spec (§7.2), which is then validated. **The result-review gate (an ingested adapter *result* + reviewer `result_decision`) is NOT in core** — result ingestion + the result envelope are deferred to #42 (round-5 B3); core gates on **spec existence + approval**, not on an ingested run result |
 | 6.13 | `check_scope_grammar` | a `Scope` not matching the grammar (§0); a memory scope not canonical `read\|write:<store>/<resource>`; a ceiling/grant/authority scope with an ill-formed wildcard |
 | 6.14 | `check_saga` | (declared-saga well-formedness only, v3.2/B4) a `saga` step whose `interaction_id` is not side-effecting or not a declared interaction; `compensation` not resolving to an `action` policy; `compensation_idempotent≠true`; two sagas covering the same interaction; `order` semantics inconsistent. **`saga_missing`** (requiring a saga for a `transactional` segment) is **deferred** — in core the same condition raises the 6.16 advisory instead |
-| 6.16 | `check_compensation_gap` *(advisory, `warning` — never blocks)* | a flow has **≥2 side-effecting interactions with an agent or async/event endpoint and no declared `saga`** covering them, **or** a `segment` with `transactional:true` and no covering saga → emits the compensation-gap warning (§4.2, the "alert users we don't support it" rule, v3.2/B4). Activates independently of `check_saga` |
+| 6.16 | `check_compensation_gap` *(advisory, `warning` — never blocks)* | a **declared `segment`** contains **≥2 side-effecting agent/async interactions with no covering `saga`** (or is `transactional:true` with no covering saga) → emits the compensation-gap warning (§4.2; core flow = a segment, round-6 M4). Loose edges with no segment: no core warning (the coordinator-chain heuristic is deferred to #42) |
 | 6.17 | `check_observability` *(floor gate — blocks)* | **no `observability` block** on an agentic system; `tracing.hops` not ⊇ every interaction with an agent endpoint (an agent hop left untraced); `tracing.attributes` **not ⊇ the required semantic-attribute set for the declared `convention`** (`REQUIRED_ATTRS[convention]`, §6.17.1 — so `["TODO"]` fails); `tracing.convention` not a known enum; `cost_budget` missing or `limit ≤ 0`; **no `eval_console`**; `eval_console.ref` **not resolving** per the `ResolvableRef` grammar (§4.3 — a bare string fails); `eval_console.owner` empty; **`eval_console.access` below the tier floor** — `report`/`existing_surface` are valid at **Tier ≤ 1**, but **Tier ≥ 2 requires `console`** (§6.17.1 tier rule, round-5 M3). §4.3 — the hard 2026-07-22 directive; HITL gates the **declaration** (real + tier-scaled), the product builds the runtime |
 
 `check_saga` is separated from `check_async` because a saga spans multiple interactions. In core it
@@ -750,8 +768,8 @@ ships the runner.
 | ASYNC-TASK-BARE | `async_task` with no `async` | 2 `check_async` |
 | RELIABLE-EVT | `kind:event` + at_least_once + idempotent consumer + dlq | exit 0 |
 | **COMP-GAP-SEG** | a declared `segment.path` with 2 side-effecting agent/async interactions, no covering `saga` | exit 0 + a **`warning`** (flow = the segment; round-5 M2) |
-| **COMP-GAP-COORD** | no segment, but 2 side-effecting agent/async interactions sharing one `orchestration.coordinator`, no `saga` | exit 0 + a **`warning`** (flow = the coordinator chain, M2) |
-| **COMP-GAP-NONE** | 2 side-effecting interactions with **no** shared coordinator and **no** segment | exit 0, **no warning** (a loose pair is not a distributed transaction — M2) |
+| ~~COMP-GAP-COORD~~ | *(deferred to #42, round-6 M4)* the coordinator-chain flow definition is not in core |
+| **COMP-GAP-NONE** | 2 side-effecting interactions with **no** declared segment | exit 0, **no warning** — core flow = a declared segment only (round-6 M4) |
 | **SAGA-SYNC-OK** | **synchronous** deterministic debit→credit, both `side_effecting`, no `saga`, no registries | **exit 0, no warning** — a sync deterministic flow is exempt from both `check_saga` and the compensation-gap advisory; no saga forced, no `policies.yaml` (additive-only) |
 | SAGA-STEP | `saga` step missing/`none` compensation or `compensation_idempotent:false` | 2 (`check_saga` + `check_policy_refs`) |
 | CYCLE | interaction cycle, no positive `cycle_bound` | 2 `check_topology` |
@@ -810,6 +828,7 @@ interaction legs typed (sync/async/event), boundary legs marked, routes/segments
   registry ceilings; edge-invocation is an **authorization** concern (§6.4), not an identity grant; the
   N&S claim is scoped to declared uses; runtime fidelity is the read-only drift-check (HLD §4), not built
   here.
-- **L5:** eval coverage reads a defined target model (`segments` + interaction `evals` + agent domains),
-  an index, a waiver file, and an approval schema; the adapter wire protocol (§7.3) is fully specified and
-  runs only on operator confirmation.
+- **L5:** eval **coverage** (core) reads a defined target model (agent domains + one e2e `segment`), an
+  index, a waiver file, and an approval schema, and gates on **spec existence + approval**. The adapter
+  wire protocol and result ingestion are the **#42 target** (§7.3, round-5 B3) — core does not execute the
+  adapter or block on a result; it ships the coverage gate + the contract shape only.
