@@ -1,16 +1,13 @@
 # Agentic Design Advisor: LLD
 
-> **RE-SCOPED 2026-07-23 (v4) — elicit + recommend + record + hand off. This LLD is being rewritten to the
-> new model and the sections below that describe manifest AUTHORING are superseded.** Removed: the composer's
-> `compose.py` **manifest-authoring apparatus** (`PRIMARY_CHECKS`/`OWNS_CHECKS`/`SECONDARY_OWNERS`, the
-> imported-`ACTIVATES` floor, `floor_commands`, `manifest_features`), the **manifest writer** (§5.1
-> command→field map, §7.1.1 writer/merge), `OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, and the canonical state's
-> `authored.*` layer. **Retained + reframed:** the intake + catalog (§2/§3), the **composer as a
-> recommendation engine** (which lenses are relevant + a Tier+risk recommended floor — §4), the commands as
-> **recommend + record** (§5), the **decision record + manifest-skeleton handoff** (§7), the terminal+Mermaid
-> map (§6), and the routing (§8). The **canonical state** keeps the scenario + **decisions/recommendations**
-> (no `authored.*` manifest fields). Implements HLD [`01-design.md`](01-design.md) v4 + ADRs (A5/A6
-> rewritten). Status: **v4 re-scope applied — elicit + recommend + record + hand off.**
+> **v4.1 (2026-07-23) — one intake + recommendation report; neutral handoff.** The Advisor is **one
+> `hitl:agentic-intake` command** that elicits, recommends (a report whose sections are the relevant lenses —
+> not 8 commands, round-9 M9), records, and hands off a **neutral `agentic-design-handoff.yaml`**
+> (`proposed_kind`s + recommendation IDs + target-path hints — **no** manifest field, not even `kind`, round-9
+> B2). It **authors no manifest field**; a human authors the manifest, #10 validates it. **Removed** (the
+> auto-authoring apparatus): the manifest writer, `OWNS_CHECKS`/imported-`ACTIVATES`/`floor ≡ activation`/
+> `OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, `manifest_features`, and the `authored.*` state layer. Implements
+> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — round-9 fixes applied.**
 
 ## 0. Grammars & conventions
 
@@ -30,22 +27,21 @@ deterministic composition/floor/map; the catalog holds the expertise (ADR-A1/A2)
 
 | File | Change |
 |---|---|
-| `ai/shared/agentic/catalog.yaml` | the question/option catalog (§2), curated data |
-| `ai/claude/skills/agentic-intake/SKILL.md` | the intake command (§3) — elicits, composes, renders the map |
-| `ai/claude/skills/agentic-{classify,boundary,privilege,reliability,observability,memory,evals,deploy}/SKILL.md` | the 8 per-concern commands (§5) |
-| `tools/agentic-advisor/compose.py` | relevance → recommended workflow + recommended floor/rung (§4) |
+| `ai/shared/agentic/catalog.yaml` | the question/option catalog (§2), curated data — each lens's questions + `consequence` |
+| `ai/claude/skills/agentic-intake/SKILL.md` | **the one command** (§3) — elicits, recommends (all lenses as report sections, §5), records, renders the map, writes the handoff |
+| `tools/agentic-advisor/compose.py` | relevance → recommended report sections + recommended floor/rung (§4) |
 | `tools/agentic-advisor/render_map.py` | the 2 core map renderings — terminal + Mermaid (§6); HTML/live deferred (M8) |
-| `tools/agentic-advisor/records.py` | scenario record + decision record + **manifest-skeleton handoff** I/O (§7) |
-| `ai/claude/pm/design-feature/SKILL.md` | **integration**: route ≥2-component + ≥1-edge into `hitl:agentic-intake` (§8, ADV-13) |
-| `ai/codex/AGENTS.md` | **integration**: compound-surface routing rule (§8) |
+| `tools/agentic-advisor/records.py` | canonical state + decision record + **neutral `agentic-design-handoff.yaml`** I/O (§7) |
+| `ai/claude/pm/design-feature/SKILL.md` | **integration**: gate→probe→route ≥2-component + ≥1-edge into `hitl:agentic-intake` (§8, ADV-13) |
+| `ai/codex/AGENTS.md` | **integration**: the same gate→probe→route rule (§8) |
 | `ci/agentic-advisor/test_catalog_lint.py` / `test_compose.py` / `test_handoff.py` / `test_advisor_e2e.py` | the suites (test plan) |
 
-The Advisor **elicits, recommends, and records** — it **does not author the manifest** (re-scope
-2026-07-23, ADR-A5). Each command produces a **recommendation + a decision-record entry** and contributes
-**TODO notes to a manifest skeleton** (§7); a **human** authors the real manifest in the design phase, and
-**#10 validates** it. The observability + PM eval-console control is **recommended** by the Advisor and
-**enforced** by #10's `check_observability` on the human-authored manifest. There is no manifest writer and
-no #10 change.
+The Advisor is **one intake command** that **elicits, recommends, and records** — it **authors no manifest
+field** (re-scope 2026-07-23, ADR-A5). Each lens is a **report section** (not a separate command) producing a
+recommendation + a decision-record entry + a `target_path_hint` in the neutral handoff (§7); a **human**
+authors the real manifest in the design phase, and **#10 validates** it. Observability + PM eval-console is
+**recommended** by the Advisor and **enforced** by #10's `check_observability` on the human-authored
+manifest. There is no manifest writer and no #10 change.
 
 ## 2. The catalog (`ai/shared/agentic/catalog.yaml`, ADR-A2)
 
@@ -127,56 +123,57 @@ own checks at design time on the *human-authored* manifest. Relevance gives prop
 scenario data contributes no command); the floor rules give the recommended-mandatory set.
 
 ```python
-COMMANDS = ["agentic-classify","agentic-boundary","agentic-privilege","agentic-reliability",
-            "agentic-observability","agentic-memory","agentic-evals","agentic-deploy"]  # stable order (topo tie-break)
+# LENSES (report sections, not separate commands — round-9 M9). Stable order = topo tie-break.
+LENSES = ["classify","boundary","privilege","reliability","observability","memory","evals","deploy"]
 
-DEPENDS = {"agentic-boundary":["agentic-classify"], "agentic-privilege":["agentic-classify"],
-           "agentic-reliability":["agentic-boundary"], "agentic-observability":["agentic-classify"],
-           "agentic-memory":["agentic-classify"], "agentic-evals":["agentic-classify"],
-           "agentic-deploy":["agentic-classify"]}
+DEPENDS = {"boundary":["classify"], "privilege":["classify"], "reliability":["boundary"],
+           "observability":["classify"], "memory":["classify"], "evals":["classify"], "deploy":["classify"]}
 
 def any_agent(s):  return any(c["kind"] in ("simple_agent","deep_agent") for c in s["components"])
 def any_async(s):  return any(e.get("kind") in ("async_task","event") for e in s["edges"])
 
-def relevant(cmd, s):
-    """Proportionality: a command is composed only if the scenario has data for its lens."""
+def relevant(lens, s):
+    """Proportionality: a lens is a report section only if the scenario has data for it.
+    All scenario flags live under s["answers"] (one canonical location — round-9 M1)."""
     a = s["answers"]
     return {
-      "agentic-classify":      any_agent(s),                                # right-size the components
-      "agentic-boundary":      len(s["edges"]) > 0 and any_agent(s),        # inter-component contract + boundary
-      "agentic-privilege":     any_agent(s),
-      "agentic-reliability":   any_async(s) or a["side_effects"] != "none"
-                               or a["autonomy"] in ("supervised","autonomous"),
-      "agentic-observability": any_agent(s),                               # hard directive: any agentic system
-      "agentic-memory":        any(c.get("memory") for c in s["components"]) or s.get("memory_hint", False),
-      "agentic-evals":         any_agent(s),
-      "agentic-deploy":        s.get("greenfield") or s.get("changes_platform")
-                               or s.get("adds_durable_runtime") or a.get("deploy_requested", False),  # M6
-    }.get(cmd, False)
+      "classify":      any_agent(s),                                 # right-size the components
+      "boundary":      len(s["edges"]) > 0 and any_agent(s),         # inter-component contract + boundary
+      "privilege":     any_agent(s),
+      "reliability":   any_async(s) or a["side_effects"] != "none"
+                       or a["autonomy"] in ("supervised","autonomous"),
+      "observability": any_agent(s),                                 # hard directive: any agentic system
+      "memory":        any(c.get("memory") for c in s["components"]) or a.get("memory_hint", False),
+      "evals":         any_agent(s),
+      "deploy":        a.get("greenfield") or a.get("changes_platform")           # M1: read from answers
+                       or a.get("adds_durable_runtime") or a.get("deploy_requested", False),  # M6
+    }.get(lens, False)
 
-# The RECOMMENDED floor — a deterministic function of Tier + risk (expert judgment, NOT #10 activation).
-# Each rule recommends a control as non-skippable. #10 enforces its own checks downstream; this is advice.
-def recommended_floor(s, tier):
+# The RECOMMENDED floor — a deterministic function of the safety-relevant risk factors (expert judgment,
+# NOT #10 activation). Membership uses the factors it names (round-9 M2 — honest); Tier + data/stakes/scale
+# inform recommended DEPTH (§4.1), not membership. #10 enforces downstream; this is advice.
+def recommended_floor(s):
     a = s["answers"]
     floor = set()
     if any_agent(s):
-        floor |= {"agentic-classify", "agentic-privilege", "agentic-observability", "agentic-evals"}
+        floor |= {"classify", "privilege", "observability", "evals"}
     if len(s["edges"]) > 0 and any_agent(s):
-        floor.add("agentic-boundary")
-    if a["side_effects"] == "irreversible":                                # human gate
-        floor.add("agentic-reliability")
-    if a["autonomy"] in ("supervised","autonomous") and a["side_effects"] != "none":  # kill-switch
-        floor.add("agentic-reliability")
+        floor.add("boundary")
+    if a["side_effects"] == "irreversible":                                # recommend a human gate
+        floor.add("reliability")
+    if a["autonomy"] in ("supervised","autonomous") and a["side_effects"] != "none":  # recommend a kill-switch
+        floor.add("reliability")
     return floor
 
 def compose(s, tier):
-    floor    = recommended_floor(s, tier)
-    included = {c for c in COMMANDS if relevant(c, s)} | floor             # floor ⊆ included
+    floor    = recommended_floor(s)
+    included = {l for l in LENSES if relevant(l, s)} | floor               # floor ⊆ included report sections
     rungs    = included - floor                                            # offered, deferrable
-    order    = topo_order(included, DEPENDS)                               # deterministic: topo, tie-break by COMMANDS index
-    return {"workflow": order, "floor": sorted(floor), "rungs": sorted(rungs)}
-# Deterministic given (s, tier): same inputs → identical recommended workflow (ADV-12).
-# There is no floor≡activation claim: the floor is a Tier+risk RECOMMENDATION, #10 is the gate (ADR-A6).
+    order    = topo_order(included, DEPENDS)                               # deterministic: topo, tie-break by LENSES index
+    return {"report_sections": order, "floor": sorted(floor), "rungs": sorted(rungs)}
+# Deterministic given (s, tier): same inputs → identical recommendation report (ADV-12).
+# tier is NOT a membership input — it scales recommended DEPTH (§4.1). No floor≡activation claim: the floor
+# is a risk-factor RECOMMENDATION, #10 is the gate (ADR-A6).
 ```
 
 ### 4.1 The recommended floor, Tier depth, and recording a skip (ADR-A6)
@@ -204,28 +201,31 @@ FR-25) on the human-authored manifest. So "can't be skipped silently" holds by *
 
 ## 5. The commands (`ai/claude/skills/agentic-*`)
 
-Each command: (a) asks its lens's catalog entries (if not already answered by the intake), (b) recommends
-the simplest fit for any menu (ADR-A3), (c) **records a decision-record entry + a manifest-skeleton TODO**.
-No command authors a validated manifest field. Independently runnable (ADV-1).
+## 5. The lenses (report sections of `hitl:agentic-intake`)
 
-### 5.1 Command → recommendation + decision-record entry + skeleton TODO
+Each lens is a **section of the recommendation report** (not a separate command — round-9 M9): it (a) reads
+its catalog answers from the intake, (b) recommends the simplest fit for any menu (ADR-A3), (c) **records a
+decision-record entry + a `target_path_hint` in the handoff**. No lens authors a manifest field.
 
-Each command records **what the design must do** (a recommendation) and drops a `# TODO(design): …` into the
-manifest skeleton (§7) for the human to author, which **#10 then validates**.
+### 5.1 Lens → recommendation + decision-record entry + target-path hint
 
-| Command | Recommends + records (→ decision record + skeleton TODO for the design role) |
+Each lens records **what the design should do** (a recommendation) and a **`target_path_hint`** (WHERE in the
+manifest the design role authors it, §7.4) — never the value, which **#10 then validates** after a human
+authors it.
+
+| Lens | Recommends + records (→ decision record + `target_path_hint` for the design role) |
 |---|---|
-| `agentic-classify` | a recommended `kind` + rationale per component; for a `deep_agent`, a TODO to author `deep_agent{planner, subagents, context_isolation, gates, guardrails}` |
-| `agentic-boundary` | the recommended inter-component contract — which `facade_apis` and `interactions.authorization` the design must declare, and the trust-leg controls (validation on stochastic→det; cost/authority into agents) |
-| `agentic-privilege` | the recommended capability/identity bounds per agent (`identity` + least-privilege `uses`) |
-| `agentic-reliability` | recommended async/idempotency/DLQ controls + lifecycle (human-gate, resumability) + a recommended **kill-switch** |
-| `agentic-memory` | recommended memory/PII controls (durability, retrieval, PII handling, high-stakes guardrail) |
-| `agentic-evals` | recommended eval coverage — a spec per **agent** + one **e2e** flow (core scope) |
-| `agentic-observability` | a recommended observability/tracing plan + **PM eval-console** — which #10's `check_observability` enforces on the authored manifest (hard directive 2026-07-22) |
+| classify | a `proposed_kind` + rationale per component; for a deep agent, a hint to author `deep_agent{planner, subagents, context_isolation, gates, guardrails}` |
+| boundary | the recommended inter-component contract — which `facade_apis` / `interactions.authorization` the design must declare, and trust-leg controls (validation on stochastic→det; cost/authority into agents) |
+| privilege | recommended capability/identity bounds per agent (`identity` + least-privilege `uses`) |
+| reliability | recommended async/idempotency/DLQ controls + lifecycle (human-gate, resumability) + a recommended **kill-switch** |
+| memory | recommended memory/PII controls (durability, retrieval, PII handling, high-stakes guardrail) |
+| evals | recommended eval coverage — a spec per **agent** + one **e2e** flow (core scope) |
+| observability | a recommended observability/tracing plan + **PM eval-console** — which #10's `check_observability` enforces on the authored manifest (hard directive 2026-07-22) |
 
-`agentic-deploy` records the **deployment decision** in the decision record (ADR-A7): `{recommend, chosen,
-rejected:[{opt, cost}], drivers, portability:{governance, packaging, state_export}, carry_to: platform-ops}`.
-A human carries it to the platform/ops track; it provisions nothing and authors no manifest field.
+The **deploy** lens records the **deployment decision** (ADR-A7): `{recommend, chosen, rejected:[{opt,cost}],
+drivers, portability:{governance, packaging, state_export}, carry_to: platform-ops}`. A human carries it to
+the platform/ops track; it provisions nothing and authors no manifest field.
 
 ## 6. The evolving map (`render_map.py`, ADR-A8)
 
@@ -254,11 +254,22 @@ Every rendering keys a node's visual off its type, so kind reads at a glance. Th
 | edge: `message`/event | dashed + `✉` | `··✉··▶` |
 | marker: `human_gate` | `⛊` badge on the edge | `──⛊──▶` |
 
-The type is the scenario `components[d].kind` for agents/services, and a derived `role` for
-datastore/external/store computed from the scenario (a component the intake marked state-only → `datastore`;
-a `to`/`from` id not in `components` → an `external` actor). The renderer applies fixed rules over the
-**scenario** (it never reads a manifest — there is none yet). The demo at artifact `efd56c28` is the
-reference HTML rendering.
+**Every node is a component with an elicited `role`** (round-9 M8 — resolves the earlier contradiction where
+an edge endpoint could be "not in components"). The intake asks the role for each component it elicits; an
+external system or an output store the flow talks to is **elicited as a component** with `role: external` /
+`role: store`, so `edges.from/to` always resolve to a `components[].id`. The map's total role rule:
+
+| `role` | when (elicited) | icon |
+|---|---|---|
+| `agent` | `kind ∈ {simple_agent, deep_agent}` | hexagon |
+| `service` | `kind == deterministic`, has behavior/inputs | chip |
+| `datastore` | `kind == deterministic`, the intake marked it **state-only** (holds data, no logic) | cylinder |
+| `external` | a system **outside the team's build** the flow calls | cloud/dashed |
+| `store` | an **output** sink (report/queue the flow writes) | stacked |
+
+`role` is derived from `kind` + one elicitation flag (`state_only` / `out_of_build` / `is_output`), a **total
+function** — every component gets exactly one role. The renderer reads the **scenario** only (there is no
+manifest yet). The demo at artifact `efd56c28` is the reference HTML rendering.
 
 ### 6.2 Combined "chat + live map" mode (ADR-A8) — *deferred enhancement (round-4 M8)*
 
@@ -289,13 +300,17 @@ schema_version: "3.0"
 tier: int                                                   # 0..3, from .hitl/current-change.yaml
 catalog: { version: string, last_refreshed: date, freshness_reviewed: bool, stale_finding: string? }  # ADV-11 freshness (m3)
 # ── layer 1: elicited facts ──────────────────────────────────────────────
-components: [ { id, name, kind: enum?[deterministic,simple_agent,deep_agent], kind_rationale: string?, role: enum?[agent,service,datastore,external,store] } ]  # `role` for the map (§6.1), derived at elicitation
-edges:      [ { id, from: component_id, to: component_id, kind: enum?[sync_call,async_task,event], side_effecting: bool? } ]
-answers:    { stakes, side_effects, data, autonomy, scale }  # §4 closed-enum vocabulary
+components: [ { id, name, proposed_kind: enum?[deterministic,simple_agent,deep_agent], rationale: string?,
+               role: enum[agent,service,datastore,external,store],        # total, from proposed_kind + a flag (§6.1)
+               state_only: bool?, out_of_build: bool?, is_output: bool? } ]  # the role-deriving flags. `proposed_kind` is a RECOMMENDATION, not a manifest `kind`
+edges:      [ { id, from: component_id, to: component_id, kind: enum?[sync_call,async_task,event], side_effecting: bool? } ]  # from/to always resolve — every node is a component (M8)
+answers:    { stakes, side_effects, data, autonomy, scale,               # §4 closed-enum vocabulary
+              greenfield: bool?, changes_platform: bool?, adds_durable_runtime: bool?,   # deploy relevance (M1 — one location)
+              deploy_requested: bool?, memory_hint: bool? }              # all composition flags live here
 lens_answers: { <lens>: { <catalog_entry_id>: <option> } }  # provenance: which entry produced which answer
 # ── layer 2: recommendations + decisions (keyed by id; human-owned) ───────
-recommendations: [ { id, lens, control, text, skeleton_todo: string,      # what the design should do + the TODO written into the skeleton
-                     kind: enum[floor,rung,recorded_artifact] } ]         # floor = recommended-mandatory; rung = offered
+recommendations: [ { id, lens, control, text, target_path_hint: string,  # what the design should do + WHERE (a manifest-path hint, not a value)
+                     kind: enum[floor,rung,recorded_artifact] } ]        # floor = recommended-mandatory; rung = offered
 decisions:  [ { id, attaches_to: <component|edge|lens id>, chosen, rejected:[…], rationale,
                 depends_on:[<state field path>], state: enum[confirmed,stale,retired], override: bool } ]  # depends_on = fields that, if changed, make this stale (§7.3)
 skips:      [ { control, owner, reason } ]                   # a recommended-floor control the team chose to skip — recorded, never silent (ADR-A6)
@@ -335,28 +350,41 @@ human decisions:
 This makes the record durable and re-runnable (ADV-7 acceptance scenario 6) with defined mutation
 semantics, closing the round-4 M4 gap.
 
-### 7.4 The design handoff — a manifest SKELETON (ADV-8)
+### 7.4 The design handoff — a NEUTRAL file, not a manifest (ADV-8, round-9 B2)
 
-The Advisor's handoff artifact is a **manifest skeleton** (`docs/01-product/<feature>/agentic-skeleton.yaml`),
-generated from the canonical state — a **structural stub the design role fleshes out**, never a valid
-manifest:
+The handoff is **`docs/01-product/<feature>/agentic-design-handoff.yaml`** — explicitly **NOT**
+`system-manifest.yaml`. It carries **recommendations and hints only**: no `system-manifest.yaml` field
+appears, **not even `kind`** (a component kind is a design classification the architect must author). A
+component is a `proposed_kind` (a recommendation), an edge is a neutral `connection`, and every control is a
+recommendation id with a **target-path hint** telling the design role *where* to author it.
 
 ```yaml
-# GENERATED by the Agentic Design Advisor — a HANDOFF, not a design.
-# Author the fields below in the design phase; #10 validates the result. The Advisor does NOT author these.
-domains:
-  intake_agent:   { kind: simple_agent }   # TODO(design): identity{principal,privilege} + least-privilege uses (rec: privilege)
-  resolver_agent: { kind: simple_agent }    # TODO(design): facade_apis for what it exposes (rec: boundary)
-interactions:
-  - { id: e1, from: intake_agent, to: resolver_agent }  # TODO(design): facade + trust legs + authorization.allowed_callers (rec: boundary)
-# TODO(design): top-level `observability` block — tracing + PM eval-console (rec: observability; #10 check_observability enforces)
-# TODO(design): eval spec per agent + one e2e segment (rec: evals)
+# GENERATED by the Agentic Design Advisor — a RECOMMENDATION HANDOFF, not a design.
+# The design role authors system-manifest.yaml ANEW from this; #10 validates that. Nothing here is a manifest field.
+schema_version: "1.0"
+feature: refund-assistant
+components:                                  # proposed_kind is a RECOMMENDATION, never a `kind:` field
+  - { id: intake_agent,   proposed_kind: simple_agent,  rationale: "bounded classify task" }
+  - { id: resolver_agent, proposed_kind: simple_agent,  rationale: "bounded draft task" }
+connections:                                 # neutral — NOT `interactions`
+  - { from: intake_agent, to: resolver_agent, nature: hands-off }
+recommendations:                             # the floor/rungs by id (from the report)
+  - { id: r-priv-1,  lens: privilege,     control: "least-privilege identity+uses per agent", depth: per_class }
+  - { id: r-bound-1, lens: boundary,      control: "validate the proposed refund before the service trusts it" }
+  - { id: r-obs-1,   lens: observability, control: "tracing + PM eval-console",                depth: report }
+  - { id: r-eval-1,  lens: evals,         control: "per-agent + one e2e eval" }
+skips: []                                    # a recorded skip {control,owner,reason} — NOT a #10 waiver
+target_paths:                                # WHERE the design role authors each recommendation (hints, not values)
+  - { recommendation: r-priv-1,  manifest_path_hint: "domains[<agent>].identity + .uses", note: "author in design" }
+  - { recommendation: r-bound-1, manifest_path_hint: "interactions[].response.validation + callee facade_apis" }
+  - { recommendation: r-obs-1,   manifest_path_hint: "top-level observability{tracing,eval_console}", note: "#10 check_observability enforces" }
+  - { recommendation: r-eval-1,  manifest_path_hint: "domains[<agent>].evals + segments[e2e].evals" }
 ```
 
-It carries **only structure + `TODO(design)` markers keyed to the recommendations** (§7.1 `skeleton_todo`),
-with **no authored field values**. A human authors the real fields; **#10 validates** the authored manifest.
-`HANDOFF` (§9) asserts the skeleton contains no validated field value and that every recommended-floor
-control has a matching TODO.
+Every value is a `proposed_*` recommendation or a `*_hint` — **no valid manifest field**. A human authors
+the real manifest; **#10 validates** it. `HANDOFF`/`NO-AUTHOR` (§9) assert the file contains **no**
+`system-manifest.yaml` field value (no `kind`, no `interactions`) and that every recommended-floor control
+has a `recommendations` entry + a `target_paths` hint.
 
 ## 8. Integration (ADV-13, ADR-A9)
 

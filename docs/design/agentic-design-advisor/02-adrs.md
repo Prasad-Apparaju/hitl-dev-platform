@@ -1,35 +1,39 @@
 # Agentic Design Advisor: Architecture Decisions
 
 > ADRs for decisions **A1–A9** from [`01-design.md`](01-design.md) §10. Each records the forces, the
-> decision, the **alternatives with their concrete cost**, and the consequences. **v3.3** — reshaped around
-> commands + composed workflow (v2), revised after pm/architect rounds (v3), then **core-scope-locked** after
-> the round-4 objectives review ([`../agentic-core-scope.md`](../agentic-core-scope.md)): **A6** floor now
-> obligation-first (`floor ⊆ composed`, B3); **A8** map core = terminal+Mermaid, HTML/live-combined deferred
-> (M8). Status: **accepted, core-lock applied, pending Codex re-review (round 7)**.
+> decision, the **alternatives with their concrete cost**, and the consequences. **v4.1** — the 2026-07-23
+> re-scope removed manifest authoring (**A5** commands recommend + hand off, not author; **A6** floor is a
+> Tier+risk recommendation, not derived from #10; **A1** one intake command, not 8 — round-9 M9). Earlier
+> decisions (obligation-first floor, imported activation) are superseded, kept in each ADR's history.
+> Status: **accepted, v4.1 (elicit + recommend + record + hand off); pending Codex re-review (round 9)**.
 
 ---
 
-## ADR-A1: The Advisor is a set of harness-run commands — not a separate app, not a monolith
+## ADR-A1: The Advisor is one harness-run intake command producing a recommendation report — not an app, not 8 commands
 
-**Context.** The Advisor asks expert questions and produces design artifacts at design time. HITL's
-mechanisms already run *inside* the harness (skills, hooks, reviewer agents). The work spans many distinct
-concerns (classification, boundary, privilege, reliability, observability, deployment), and different
-people want to run different pieces at different times.
+**Status:** Accepted; **amended round-9 (M9).** Earlier versions shipped the Advisor as *8 per-concern
+commands*. For a recommendation front door that authors nothing, that is disproportionate machinery — the
+concerns are **sections of one report**, not separate runnable commands.
 
-**Decision.** Ship the Advisor as a **set of runnable commands** (`hitl:agentic-*`), each doing one expert
-concern and each **independently invocable by anyone**. A thorough `hitl:agentic-intake` command runs first
-and **composes** the rest into a workflow (ADR-A4). The harness runs the conversation; HITL supplies the
-catalog, the composition rules, and the gates.
+**Context.** The Advisor asks expert questions and produces a **recommendation** at design time (it does not
+author the design). HITL's mechanisms already run *inside* the harness (skills, hooks, reviewer agents). The
+work spans many concerns (classification, boundary, privilege, reliability, observability, deployment), but
+they are elicited together and recommended together.
+
+**Decision.** Ship the Advisor as **one `hitl:agentic-intake` command** that elicits the whole scenario and
+produces a **recommendation report** whose **sections are the relevant lenses** (§2). There are no separate
+`hitl:agentic-privilege`/etc. commands; a team may re-run the intake focused on one lens to refresh a
+recommendation. The harness runs the conversation; HITL supplies the catalog + the composition rules.
 
 **Alternatives and their cost.**
-- *One monolithic intake skill.* Cost: can't run `agentic-privilege` alone against an existing design; the
-  whole thing is all-or-nothing; harder to test, extend, or right-size.
+- *8 per-concern commands (v1–v4).* Cost: disproportionate for a recommendation front door (round-9 M9);
+  8 skills to maintain and compose when the output is one advisory report.
 - *A standalone questionnaire app.* Cost: a separate runtime (crosses governs-not-runtime), outside the
-  design flow, can't author the manifest.
+  design flow.
 
-**Consequences.** (+) Anyone can run any piece; the commands compose into a right-sized workflow; each is
-independently testable. (−) The command boundaries and their compose order must be defined (§2/§4) and
-kept coherent — the composition step (ADR-A4) is what holds them together.
+**Consequences.** (+) One command, one report; proportionate; the lens sections are still independently
+testable. (−) A team wanting just one lens re-runs the intake scoped to it rather than a dedicated command —
+an accepted, minor trade for the smaller surface.
 
 ---
 
@@ -107,8 +111,9 @@ and it makes the gate audit HITL's own output.** So auto-authoring is removed.
 The question: should the Advisor *author* the design artifact (the manifest) that #10 gates, or *recommend*
 it and hand off to a human?
 
-**Decision.** The commands **elicit + recommend + record** — each produces a recommendation and a
-decision-record entry, and contributes TODO notes to a **manifest skeleton**. **No command authors a
+**Decision.** The intake's lens sections **recommend + record** — each produces a recommendation and a
+decision-record entry, and contributes `proposed_*` entries + target-path hints to a neutral
+**`agentic-design-handoff.yaml`** (round-9 B2 — **not** a manifest, no `kind:` field). **No lens authors a
 validated manifest field.** A **human authors** the real manifest in the design phase; **#10 validates** the
 human-authored manifest. The Advisor holds the requirements/design boundary and requires **no** change to
 #10, which activates purely from human-authored content and ships independently.
@@ -267,7 +272,7 @@ change (the gate→probe→route rule), enumerated in the LLD file list.
 
 | ADR | Decision | One-line |
 |---|---|---|
-| ADR-A1 | A1 | Advisor = a set of harness-run commands (not a monolith, not an app) |
+| ADR-A1 | A1 | Advisor = **one `hitl:agentic-intake` command** producing a recommendation report (lenses are report sections, not 8 commands; round-9 M9) |
 | ADR-A2 | A2 | Catalog = curated, versioned data; curated refresh, not live lookup |
 | ADR-A3 | A3 | Recommend, never decide; human confirms; record chosen/rejected |
 | ADR-A4 | A4 | HITL composes a proportionate workflow; run only what's relevant |

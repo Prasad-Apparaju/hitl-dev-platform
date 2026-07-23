@@ -458,17 +458,23 @@ domain/interaction/segment/saga id; system/registry errors get reserved loci. Th
 blockers, then exits 2 if any; it fails closed on unparseable/missing input, unknown enum, unresolved
 reference, or any exception.
 
-**General waiver contract (round-6 B3 — every floor control is genuinely waivable).** HITL's model is
-"hard-block **or waived**" (FR-25). Before v3.3, only `check_eval_coverage` had a waiver store, so the
-Advisor's claim that any floor control (boundary/privilege/lifecycle/observability/…) could be dropped with
-a recorded waiver was **false** — #10 had no code to honour it. Fixed: a single **`manifest-waivers.yaml`**
+**General waiver contract (round-6 B3 — every blocking check is genuinely waivable by a human).** HITL's
+model is "hard-block **or waived**" (FR-25). Before v3.3, only `check_eval_coverage` had a waiver store, so a
+human could not record a tier-appropriate exception for a boundary/privilege/lifecycle/observability blocker.
+Fixed: a single **`manifest-waivers.yaml`**
 registry that **every blocking check consults**. Shape: `[{ code, locus, owner, reason, tier_limit:int,
 revisit:date }]`. Rule: when a check would emit a `Blocker{code, locus}`, `main` **suppresses** it iff a
 waiver entry matches `(code, locus)`, `tier ≤ tier_limit`, and `revisit ≥ today` — downgrading it to a
 recorded `waived` note (still surfaced, never silent); otherwise the blocker stands. A waiver that is lapsed
 (`revisit < today`) or tier-exceeded does **not** suppress. `check_eval_coverage` keeps its existing
-per-target `waivers.yaml` (a specialization); all other checks use the general store. This is what makes the
-Advisor's `manifest_waivers_yaml` waiver real: the Advisor authors an entry here, and #10 reads it.
+per-target `waivers.yaml` (a specialization); all other checks use the general store. **A human authors the
+waiver entry** (HITL's tier/waiver process) — #10 reads `manifest-waivers.yaml`; it takes **no** input from
+the Agentic Design Advisor (which only recommends). **Fail-closed schema (round-9 M7):** `schema_version` +
+a fixed file location (`ci/manifest-agentic/manifest-waivers.yaml`); `locus` uses the canonical
+domain/interaction/segment/saga-id grammar (§0) with reserved loci `registry:*`/`system:*`; `owner`/`reason`
+non-empty; a **non-waivable error class** — `unparseable`, `unknown_field`, `schema_invalid`, and any
+`system:*`/`registry:*` blocker **cannot be waived**; a duplicate `(code, locus)` entry is a blocker; a
+malformed waiver file **fails closed** (every blocker stands).
 
 ### 6.0 Per-check activation (B5)
 
@@ -495,13 +501,11 @@ required registry is loaded **only when the check activates** — so a manifest 
 | 6.16 | `check_compensation_gap` *(advisory)* | a declared `segment` with ≥2 side-effecting agent/async interactions and no covering `saga` (round-6 M4 — segment-scoped) | — |
 | 6.17 | `check_observability` *(floor gate)* | any domain is an agent (an agentic system must be observable + PM-evaluable — hard directive 2026-07-22) | — |
 
-**Single activation source (round-7 B1).** The activation predicates in the table above live in **one
-module, `ci/manifest-agentic/activation.py`**, as `ACTIVATES = { check_name: predicate(manifest_features) }`.
-The #10 validator dispatch reads it to decide which checks to run; the **Agentic Design Advisor imports the
-same module** to compute its floor (FR-28 LLD §4). There is **no second copy** — the Advisor supplies only a
-`manifest_features(scenario)` mapping and calls these predicates, so the Advisor floor cannot drift from #10
-activation. An `OWNERSHIP-COMPLETE` lint (Advisor side) asserts every **blocking** check here is owned by
-some command.
+**Activation is computed solely from the manifest (round-9 M4).** The predicates in the table above are
+evaluated by #10's own validator dispatch over the **human-authored manifest + tier + registries + waiver
+files supplied to #10** — there is **no dependency on the Agentic Design Advisor**. (The Advisor is a
+separate, PM-lane front door that *recommends* a design; it authors no manifest and #10 takes no input from
+it. #10 ships and runs independently.)
 
 A wholly deterministic manifest with typed `interactions` activates only 6.5/6.6 (graph integrity) and
 needs **no** new registry. `check_saga` (6.14) activates **only on a declared `saga`** and validates its
@@ -639,8 +643,9 @@ declared sources: tools, memory, and non-tool capabilities (B3).
     spec for one (it is then validated and appears in the index), but coverage is **not required** for it.
     **Universal deterministic coverage** (a spec for every component ∪ every interaction) is a **deferred
     follow-on** ([`../agentic-core-scope.md`](../agentic-core-scope.md)), not core.
-  - *(Which agent targets are mandatory vs waivable at a given tier is right-sized by the Advisor's floor,
-    FR-28; #10 validates the declared coverage + waivers.)*
+  - *(#10 determines eval coverage solely from the human-authored manifest + tier + the eval waiver file —
+    every agent + one e2e, waivable per the waiver contract. The Advisor may *recommend* coverage, but #10
+    takes no input from it.)*
 - **Where a spec path is authored:** on the target itself — `domains[d].evals.spec`,
   `interactions[i].evals.spec`, `segments[s].evals.spec`. These inline fields are the **single authoring
   source** (one source of truth, ADR-2 discipline).

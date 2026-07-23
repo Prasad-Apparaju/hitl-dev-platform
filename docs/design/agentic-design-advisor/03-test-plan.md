@@ -154,7 +154,7 @@ is a stub, not a design.
 | Portability: bind-not-embed; state/packaging/governance diligence | BIND-NOT-EMBED, DEPLOY-PORTABILITY |
 | ADV-13: routing — compound in, simple out | ROUTE-COMPOUND, ROUTE-SIMPLE |
 | ADV-15 renderings: Mermaid + no live server | MAP-MERMAID, MAP-NO-SERVER |
-| Catalog consequence schema | CAT-SCHEMA, CAT-COMMANDS, CAT-ACTIVATES |
+| Catalog consequence schema | CAT-SCHEMA, CAT-COMMANDS, CAT-RECOMMEND |
 
 ## 9. Out of scope for this plan
 

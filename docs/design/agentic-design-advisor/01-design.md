@@ -1,63 +1,60 @@
-# Agentic Design Advisor: Design (HLD) — v3.3 (round-7: floor from #10 activation)
+# Agentic Design Advisor: Design (HLD) — v4.1 (one intake + recommendation report; neutral handoff)
 
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
-> (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); **field-level precision (catalog schema,
-> composer, floor function, command→manifest mapping, integration) in the LLD [`04-lld.md`](04-lld.md)**;
-> test plan in [`03-test-plan.md`](03-test-plan.md).
-> Status: **draft, core-lock applied, pending Codex re-review (round 7)**. **v3.2** — reshaped around
-> **runnable commands + a composed workflow** (v2), revised after pm + architect rounds (v3), then
-> **core-scope-locked** after the round-4 objectives review ([`../agentic-core-scope.md`](../agentic-core-scope.md)):
-> **non-circular topology-probe routing** (B2, §3.1); **obligation-first floor** so `floor ⊆ composed` (B3,
-> §5); **map trimmed to terminal+Mermaid core**, HTML/live-combined deferred (M8, §9.7); the
-> **contract-authoring seam** (`facade_apis`+`authorization`) named (B1, §7). The Advisor is the **front
-> door** to the compound-agentic surface ([#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)):
-> it elicits the whole scenario and composes a right-sized workflow of commands; the commands produce the
-> manifest #10 then validates.
-
-> **RE-SCOPED 2026-07-23 (v4) — elicit + recommend + record + hand off.** The Advisor stays in the
-> PM/elicitation lane: it does **not** author the manifest. Round 8 showed the auto-authoring seam could
-> only be validated by the real validator; the deeper problem is that auto-authoring put the PM front door
-> into design/implementation — the line HITL must hold. **Removed:** the canonical-state writer, `floor ≡
-> activation` + imported-activation, `OWNS_CHECKS`/`OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, and the
-> command→manifest-field authoring. Sections below that describe those mechanisms are **superseded**; the
-> load-bearing sections (§1, §2, §4, §5, §7) are rewritten to the new model. A human authors the manifest;
-> #10 validates it (unchanged, ships independently).
+> (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); field-level precision in the LLD
+> [`04-lld.md`](04-lld.md); test plan in [`03-test-plan.md`](03-test-plan.md).
+> Status: **draft, v4.1 — round-9 fixes applied.**
+>
+> **The model (v4.1):** the Advisor is **one intake command** (`hitl:agentic-intake`) that **elicits** the
+> whole scenario, **recommends** a right-sized set of controls (a **recommendation report** whose sections
+> are the relevant lenses — not 8 separate commands), **records** every decision, and **hands off** a
+> **decision record + a neutral `agentic-design-handoff.yaml`** (components + connections + `proposed_kind`s
+> + recommendation IDs + target-path hints — **not** a manifest). A **human authors** the manifest in the
+> design phase; **#10 validates** it (unchanged, ships independently). The Advisor **authors no manifest
+> field** (not even `kind`) — that boundary is the point of the feature: HITL must not let a PM front door
+> produce design/implementation.
+>
+> **History (superseded).** v2–v3.3 had the Advisor's commands *author* the manifest #10 validates (a
+> canonical-state writer, `floor ≡ activation`, imported activation, `OWNS_CHECKS`/`OWNERSHIP-COMPLETE`/
+> `AUTHOR-COMPLETE`). Rounds 4–8 showed that seam only validated by building the real validator, and it
+> crossed the PM/design line. It is **removed** (2026-07-23 re-scope); any residual authoring wording is a
+> defect, not current design.
 
 ## 1. Thesis
 
-**Encode the expert's questions as a thorough intake, right-size the workflow, recommend the controls,
-record the decisions, and hand off to design.** There is no engine, no monolith, and — deliberately — **no
-manifest authoring**: the Advisor is a set of `hitl:agentic-*` commands (each runnable on its own), an
-intake that understands the whole scenario, a **composition step** that recommends which lenses this change
-needs, and a **handoff** (a decision record + a manifest *skeleton* with TODOs). A **human** authors the
-real manifest in the design phase; **#10 validates** it. The Advisor produces requirements-level outputs and
-a handoff — never the design artifact itself. That boundary is the point: HITL must not let a PM front door
-produce design/implementation.
+**Encode the expert's questions as one thorough intake, right-size the recommendations, record the
+decisions, and hand off to design.** There is no engine, no monolith, and — deliberately — **no manifest
+authoring**: the Advisor is **one `hitl:agentic-intake` command** that understands the whole scenario,
+**recommends** which controls this change needs (a right-sized **recommendation report** whose sections are
+the relevant lenses), and **hands off** a decision record + a neutral `agentic-design-handoff.yaml`
+(`proposed_kind`s + recommendation IDs + target-path hints). A **human** authors the real manifest in the
+design phase; **#10 validates** it. The Advisor produces requirements-level outputs and a handoff — never
+the design artifact itself (not even a `kind:` field). That boundary is the point: HITL must not let a PM
+front door produce design/implementation.
 
-## 2. The command set (ADV-1)
+## 2. One intake + its recommendation report (ADV-1)
 
-Each expert concern is one runnable command. The intake runs first; HITL composes which of the rest apply.
+The Advisor is **one command, `hitl:agentic-intake`** (round-9 M9: proportionate to a recommendation front
+door — no 8 separate `hitl:agentic-*` commands). It elicits the whole scenario, then produces a
+**recommendation report** whose **sections are the lenses** this change warrants. Each lens is a **section**,
+not a runnable command; it **recommends + records** for its concern. No lens authors a manifest field — the
+report is *advice* the design role acts on.
 
-Each command **elicits + recommends + records** for its lens. The **Produces** column is a **decision-record
-entry + a note in the manifest skeleton** — a recommendation the human authors into the manifest in design.
-No command authors a validated manifest field (re-scope 2026-07-23).
-
-| Command | Concern (lens) | Recommends + records (→ decision record + skeleton note) |
+| Lens (report section) | Concern | Recommends + records (→ decision record; handoff = `proposed_*` + recommendation IDs) |
 |---|---|---|
-| `hitl:agentic-intake` | understand the whole scenario; **compose the recommended workflow** (§4) | the scenario record + the recommended workflow + the design handoff |
-| `hitl:agentic-classify` | component right-sizing (agent vs deterministic; simple vs deep) | a recommended `kind` + rationale per component |
-| `hitl:agentic-boundary` | the determinism boundary + the inter-component contract | the recommended trust-leg controls + which facades/authorizations the design must declare (skeleton TODOs) |
-| `hitl:agentic-privilege` | privilege / identity / trust (lethal-trifecta); **portability** | the recommended capability/identity bounds for each agent |
-| `hitl:agentic-reliability` | reliability, idempotency, failure modes | recommended async/idempotency controls **+ a recommended kill-switch** |
-| `hitl:agentic-observability` | detectability; the **PM eval console** | a recommended observability/tracing plan + PM eval-console (which #10's `check_observability` will enforce on the authored manifest — hard directive) |
-| `hitl:agentic-memory` | memory / state, PII / data classification | recommended memory/PII controls |
-| `hitl:agentic-evals` | evaluation (incl. model/prompt-version drift) | recommended eval coverage (per-agent + e2e) |
-| `hitl:agentic-deploy` | build-vs-buy deployment | the **recorded** deployment decision (§8), human-carried |
+| classify | component right-sizing (agent vs deterministic; simple vs deep) | a **`proposed_kind`** + rationale per component (a recommendation, not a `kind:` field) |
+| boundary | the determinism boundary + the inter-component contract | recommended trust-leg controls + which facades/authorizations the design must declare (target-path hints) |
+| privilege | privilege / identity / trust (lethal-trifecta); **portability** | recommended capability/identity bounds per agent |
+| reliability | reliability, idempotency, failure modes | recommended async/idempotency controls + a recommended **kill-switch** |
+| observability | detectability; the **PM eval console** | a recommended observability/tracing plan + PM eval-console (which #10's `check_observability` **enforces** on the authored manifest — hard directive) |
+| memory | memory / state, PII / data classification | recommended memory/PII controls |
+| evals | evaluation (incl. model/prompt-version drift) | recommended eval coverage (per-agent + e2e) |
+| deploy | build-vs-buy deployment | the **recorded** deployment decision (§8), human-carried |
 
-Every command is **independently runnable** (ADV-1): a team can run `hitl:agentic-privilege` alone against an
-existing design to get a privilege *recommendation*. The **intake elicits** the whole scenario; the
-**per-concern commands recommend and record** each lens's decision (the two-tier split, ADV-1). None of them
-writes a manifest field — the design role authors the manifest from the handoff, and **#10 validates it**.
+A team may **re-run the intake focused on one lens** to refresh a single recommendation, but there is no
+separate command per lens. The intake elicits once; each lens section **recommends and records** off the
+already-elicited answers (no re-elicitation). None writes a manifest field — the design role authors the
+manifest from the handoff (§7), and **#10 validates it**.
 
 ## 3. The intake (ADV-2) — understand the whole scenario
 
@@ -139,21 +136,22 @@ Whether a control is recommended-floor vs offered-rung is the §5 rule; Tier sca
 ### 4.2 The catalog `consequence` — an option→list map of tagged unions (ADR-A2)
 
 An entry's `consequence` is a **map keyed by answer option → a list of tagged-union items** (one `kind`
-each), so different answers drive different downstream effects. The LLD (§2.3) uses this exact shape:
+each), so different answers drive different downstream effects. There is **no `manifest_field` kind** — the
+Advisor targets no #10 field (round-9 B2). The LLD (§2.3) uses this exact shape:
 
 ```yaml
 consequence:                 # map[ <option-or-"*"> -> list[ item ] ]
   <option>:
-    - kind: enum[ classify | boundary | gate | command | floor | manifest_field | declared_artifact ]
-      # command → composes a hitl:agentic-* ; floor → a floor obligation id ; manifest_field → a #10 field path ;
-      # declared_artifact → a design artifact with no #10 target (kill-switch ONLY; observability authors a manifest_field) ;
-      # gate|boundary|classify → the specific design obligation
-      target: string         # command name | manifest path | artifact id | floor-rule id
+    - kind: enum[ classify | boundary | gate | floor | recommendation | recorded_artifact ]
+      # floor → a recommended-floor obligation id ; recommendation → a report recommendation id ;
+      # recorded_artifact → a recorded design note with no #10 target (kill-switch; observability is a recommendation) ;
+      # gate|boundary|classify → the specific recommended obligation
+      target: string         # floor-rule id | recommendation id | artifact id
       note: string?
 ```
 
 The lint (`CAT-SCHEMA`, LLD §2.3) rejects an entry with no `consequence`, an option without a key, or a
-list item whose `command`/`manifest_field`/`floor` target does not resolve.
+list item whose `floor`/`recommendation` target does not resolve. No consequence names a manifest field.
 
 ## 5. The recommended floor + Tier depth + rungs (ADV-5/ADV-12)
 
@@ -191,19 +189,33 @@ appended) on a re-run, so it never drifts from the answers.
 
 The Advisor produces **two artifacts, neither of which is the design**:
 
-1. **The decision record** (`docs/01-product/<feature>/agentic-decisions.md`) — the scenario, the recommended
-   workflow, the recommended floor + rungs, every menu decision (chosen/rejected + rationale), recorded
-   skips, and the deploy decision. Regenerated from the scenario state on a re-run (never appended).
-2. **The design handoff** — a **scenario summary + the recommended controls + a manifest *skeleton***: a
-   structural stub listing the elicited components + edges + which controls the design must include, with
-   **TODO placeholders and rationale comments** (`# TODO(design): author facade_apis for callee X`). It is
-   explicitly marked *"to be authored by the design role and validated by #10."*
+1. **The decision record / recommendation report** (`docs/01-product/<feature>/agentic-decisions.md`) — the
+   scenario, the recommendation report (per-lens recommendations), the recommended floor + rungs, every menu
+   decision (chosen/rejected + rationale), recorded **skips**, and the deploy decision. Regenerated from the
+   scenario state on a re-run (never appended).
+2. **The neutral design handoff — `agentic-design-handoff.yaml`** (explicitly **NOT** `system-manifest.yaml`;
+   round-9 B2). It carries **recommendations and hints, no manifest field**:
+
+   ```yaml
+   schema_version: "1.0"
+   feature: <id>
+   components:   [ { id, proposed_kind: enum[deterministic,simple_agent,deep_agent], rationale } ]   # proposed_kind, NOT kind:
+   connections:  [ { from: component-id, to: component-id, nature: enum[calls,hands-off,messages] } ]  # not `interactions`
+   recommendations: [ { id, lens, control, depth, rationale } ]                                        # the floor/rungs, by id
+   skips:        [ { control, owner, reason } ]                                                        # recorded, not a #10 waiver
+   target_paths: [ { recommendation-id, manifest_path_hint, note } ]                                   # WHERE the design role authors it
+   ```
+
+   Every value is a **recommendation** (`proposed_kind`) or a **hint** (`manifest_path_hint`) — nothing here
+   is a valid `system-manifest.yaml` field, not even `kind`, because a kind is a design classification the
+   architect must author. If the design role adopts it, they author the manifest **anew** (a defined
+   conversion step they own); the handoff is never edited-in-place into a manifest.
 
 **A human authors the real manifest** from the handoff, in the design phase, using HITL's normal design
-skills; **#10 validates** the human-authored manifest. The Advisor writes **no** validated manifest field,
-runs **no** #10 validator, and requires **no** change to #10 — #10 activates purely from the *human-authored*
-manifest content and can ship independently. This is the boundary the feature exists to hold: the PM front
-door produces a recommendation + a handoff, not the design.
+skills; **#10 validates** the human-authored manifest. The Advisor writes **no** manifest field, runs **no**
+#10 validator, and requires **no** change to #10 — #10 activates purely from the *human-authored* manifest
+and ships independently. This is the boundary the feature exists to hold: the PM front door produces a
+recommendation + a handoff, not the design.
 
 ## 8. Deployment (ADV-14, ADR-A7) — record, human-carries
 
@@ -251,82 +263,74 @@ The team runs one command. It asks across the lenses; the answers that matter:
 - **Stakes:** customer-facing + money → **Tier 2**.
 - **Scale:** moderate, **small**.
 
-### 9.3 HITL composes the workflow
+### 9.3 The intake recommends a right-sized floor
 
-From those answers (Tier 2, irreversible, PII, supervised, small; a greenfield build with one async edge —
-this is Fixture HIGH, test plan §4), composition produces — each floor entry justified by the #10 check it
-owns activating (floor ≡ #10 activation):
+From those answers (Tier 2, irreversible, PII, supervised, small; greenfield, one async connection — Fixture
+HIGH, test plan §4), the intake recommends a floor **from the risk factors** (expert safety judgment — *not*
+derived from #10 activation):
 
 ```
-FLOOR (mandatory — its owned #10 check will fire):
-  agentic-classify        (check_classification — compound, ≥1 agent)
-  agentic-boundary        (check_boundary_legs/topology/references/authorization — agent endpoints, incl. agent→agent)
-  agentic-privilege       (check_capabilities — any agent)
-  agentic-reliability     (check_async — the async ledger write; + human gate (irreversible) + kill-switch (supervised))
-  agentic-observability   (check_observability — any agent; depth = console at Tier 2)
-  agentic-evals           (check_eval_coverage — any agent + one e2e)
-OFFERED (rungs — no firing #10 check):
-  agentic-deploy          (greenfield build → a build-vs-buy call; recorded, human-carried)
-NOT COMPOSED:
-  agentic-memory          (no cross-session memory declared or hinted — not offered)
-  (saga / deep-agent are #10 concerns, not Advisor commands; the flow is agent→async, handled by reliability)
+RECOMMENDED FLOOR (report sections — shouldn't be skipped):
+  classify        (any agent — right-size the two agents)
+  boundary        (agent endpoints — validate the refund proposal before the deterministic service trusts it)
+  privilege       (any agent — bound capabilities)
+  reliability     (irreversible ⇒ recommend a HUMAN GATE; supervised+side-effects ⇒ recommend a KILL-SWITCH; async ⇒ idempotency)
+  observability   (any agent — recommend tracing + a PM eval-console; depth: a console at Tier 2)
+  evals           (any agent — recommend per-agent + one e2e eval)
+OFFERED (rungs):
+  deploy          (greenfield ⇒ a build-vs-buy recommendation; recorded, human-carried)
+NOT RECOMMENDED:
+  memory          (no cross-session state hinted)
 ```
 
-The team sees a **six-command floor + one offered rung (deploy)**. Every floor entry is there because #10
-will enforce it — nothing is a hand-tuned guess, and nothing the team could defer would then hard-fail #10.
-Proportionality shows up as **depth** (Tier-2 console vs a Tier-1 report) and in what is *not* composed
-(no memory), not in skipping a control #10 mandates.
+The team sees a **six-section floor + one offered rung (deploy)** — one intake, not eight commands.
+Proportionality shows up as **recommended depth** (a Tier-2 console vs a Tier-1 report) and in what is *not*
+recommended (no memory). The floor is **advice**: nothing here gates — #10 does, later, on the human-authored
+manifest.
 
-### 9.4 The team runs the composed commands
+### 9.4 What each lens recommends (into the report + the handoff)
 
-- **`agentic-classify`** → writes `kind: simple_agent` on the two agents, `deterministic` on the two
-  services, with `kind_rationale` ("bounded task, no long-horizon planning").
-- **`agentic-boundary`** → marks `resolution_agent → refund_service`: the proposed refund (agent output)
-  must be **validated** (amount within policy, matches the looked-up order) before the deterministic
-  `refund_service` trusts it; and `intake_agent`'s classification is validated before `account_service`
-  queries on it.
-- **`agentic-privilege`** → `resolution_agent` may **read** account data and **propose**, nothing more;
-  `refund_service` may call the payment API. The command flags that giving `resolution_agent` direct
-  payment access would be over-privilege → declined.
-- **`agentic-reliability`** → a **human gate** before any refund (`lifecycle.human_gate`, a #10 field) and
-  an **idempotency key** (a #10 `async`/lifecycle field); plus a **kill-switch** — a **declared artifact**
-  (a flag that disables auto-resolution fleet-wide), human-reviewed, since #10 has no kill-switch field
-  (§7 exception).
-- **`agentic-observability`** → authors the **`observability` block** — `tracing` across the four hops
-  (OTel GenAI), a `cost_budget`, and a **PM eval-console** declaration (where the PM runs the refund-amount
-  eval + reviews traces so a hallucinated amount is caught). #10's **`check_observability` floor-gates** it
-  (hard directive) — a missing block or console **blocks**. HITL validates the declaration; the product
-  builds the running console/trace backend (#21 reference).
-- **`agentic-evals`** → seeds baseline evals for each agent and the end-to-end flow, for the PM to own.
-- **`agentic-deploy`** → drivers say small scale, customer-facing, no data-residency constraint →
-  **recommends a managed agent platform** (from-scratch listed as rejected, "you'd rebuild orchestration,
-  state, and retries for no reason"). It then surfaces the **lock-in trade-off** and makes the team answer:
-  governance (the platform is vendor-owned — accepted), packaging (the agent is packaged portably, not
-  cloud-locked — required), and state (the refund/session memory must be **exportable** — recorded as a
-  requirement on the chosen platform). **Records** the decision, and a human carries "managed platform,
-  with exportable state" to the platform/ops track.
+- **classify** → **recommends** `proposed_kind: simple_agent` for the two agents, `deterministic` for the
+  services, with rationale ("bounded task, no long-horizon planning"). *(A recommendation in the handoff —
+  the architect authors the real `kind`.)*
+- **boundary** → recommends validating `resolution_agent → refund_service` (the proposed refund must be
+  checked before the deterministic service trusts it) and notes the target paths the design must author
+  (`interactions[].response.validation`, the callee `facade_apis`).
+- **privilege** → recommends `resolution_agent` may read + propose, nothing more; flags that direct payment
+  access would be over-privilege.
+- **reliability** → recommends a **human gate** before any refund, an **idempotency key** on the async ledger
+  write, and a **kill-switch** (a recorded recommendation — #10 has no kill-switch field).
+- **observability** → recommends a tracing plan across the four hops (OTel GenAI), a cost budget, and a **PM
+  eval-console** (where the PM runs the refund-amount eval). *#10's `check_observability` will **enforce**
+  this on the human-authored manifest (hard directive); the Advisor only recommends it.*
+- **evals** → recommends per-agent baselines + one e2e, for the PM to own.
+- **deploy** → recommends a **managed platform** (from-scratch rejected: "you'd rebuild orchestration/state/
+  retries for no reason"), surfaces the lock-in trade-off + the three portability questions, **records** the
+  decision, and prompts a human to carry it to the platform/ops track.
 
-### 9.5 What #10 and the human do next
+### 9.5 The handoff, and what the human + #10 do next
 
-The commands have authored the manifest (`kind`s, `interactions`, trust legs, `uses`, lifecycle gate,
-evals). On the next `derive.py verify`, **#10's per-check activation runs** (checked against #10 LLD §6.0):
-`check_classification`, `check_topology` + `check_references` (any `interactions` present),
-`check_authorization` (interactions target agents), `check_boundary_legs`, `check_capabilities`,
-`check_lifecycle` (the gate), `check_eval_coverage`, **`check_observability`** (the `observability` block
-the observability command authored — the floor gate, hard directive) — and **skips** `check_saga`,
-`check_async`, `check_deep_agent`, because there's no data for them. The **kill-switch** obligation is the
-one remaining **declared artifact** of §7 (no #10 field yet). The human carries the deployment decision
-onward. The result is a **right-sized, governed design** the team can hand to the compound-agentic build track.
+The intake writes the **decision record** (the report above) and the neutral **`agentic-design-handoff.yaml`**
+— `proposed_kind`s, connections, the recommendation IDs, and target-path hints. **No manifest field is
+written.** In the **design phase**, a human (architect/developer) authors the real `system-manifest.yaml`
+from the handoff — the actual `kind`s, `interactions`, trust legs, `uses`, lifecycle gate, `observability`
+block, evals. On `derive.py verify`, **#10's per-check activation runs on that human-authored manifest** and
+enforces exactly the checks its content triggers — including `check_observability` on the authored block. If
+the team **skipped** a recommended control (say the human gate), that skip is recorded in the handoff (owner
++ reason) but grants **no** #10 exception — #10 will still block until a human authors the control or a
+**human-authored #10 waiver** relieves it. The result is a right-sized recommendation the design role turns
+into a governed design.
 
 ### 9.6 Contrast — a lighter compound case, and the single-agent path
 
 **A lighter compound system** (Fixture LOW, test plan §4): two agents, read-only, internal, Tier 1. The
-floor is still `{classify, boundary, privilege, observability, evals}` — because a two-agent flow *does*
-activate #10's classification/boundary/capability/eval/observability checks, so pretending they were
-optional would just hard-fail #10 later. What makes it light is **depth**: observability is satisfied by an
-existing approved surface or a generated report (not a bespoke console), privilege is per-class, evals are
-baseline, and reliability/memory/deploy are absent. Proportionality is real, but it is depth-and-omission,
-not skipping a control #10 enforces.
+recommended floor is `{classify, boundary, privilege, observability, evals}` — recommended because a
+two-agent agentic system genuinely needs those controls (and #10 will enforce them once the design is
+authored), so recommending them is honest safety advice, not ceremony. These are **five report sections of
+one intake**, computed off the already-elicited answers — **not** five commands that re-elicit. What makes
+it light: recommended **depth** is minimal (observability = an existing approved surface or a generated
+report, not a bespoke console; privilege per-class; evals baseline) and reliability/memory/deploy are not
+recommended at all. Proportionality is depth-and-omission — and the floor is *advice*, not a gate.
 
 **A single agent** (one component — a doc summarizer): this is **not a compound system**, so the topology
 probe (§3.1) routes it to the existing single-agent surface; the compound intake is not invoked. A team can
@@ -391,11 +395,11 @@ scenario record, so the map never drifts from the design.
 
 | # | Decision |
 |---|---|
-| A1 | The Advisor is a **set of harness-run commands**, not a separate app and not a monolith |
+| A1 | The Advisor is **one `hitl:agentic-intake` command** producing a recommendation report — not 8 commands, not an app (round-9 M9) |
 | A2 | The question/option **catalog is curated, versioned data** (question→consequence), curated-refresh not live lookup |
 | A3 | **Recommend, never decide** — output is a proposal + decision record the human confirms |
 | A4 | **HITL composes a proportionate workflow** from the intake — ask/run only what's relevant; depth follows risk |
-| A5 | The commands **recommend + record**; they **do not author the manifest** (re-scope 2026-07-23). The output is a decision record + a manifest skeleton handoff; a **human authors** the manifest; **#10 validates** it |
+| A5 | The intake **recommends + records**; it **authors no manifest field** (re-scope 2026-07-23). Output = a decision record + a neutral `agentic-design-handoff.yaml` (`proposed_kind`s + recommendation IDs + hints, no `kind:`); a **human authors** the manifest; **#10 validates** it |
 | A6 | The **floor is a Tier + risk recommendation** (advice, not a gate) — the controls that shouldn't be skipped; a skip is **recorded**, and the hard block-or-waive happens **downstream at #10** on the human-authored manifest; Tier scales recommended depth |
 | A7 | The Advisor **records the build-vs-buy decision; a human carries it** to the platform track — provisions nothing, auto-hands-off to nothing |
 | A8 | The **evolving map is a generated view, terminal-first** — **core = inline text (no browser) + Markdown/Mermaid** in the decision record; regenerated per step; the **rich HTML + combined live mode are a deferred enhancement** (M8); HITL writes/prints, runs no live server |
@@ -403,16 +407,19 @@ scenario record, so the map never drifts from the design.
 
 ## 11. Acceptance criteria (implementation gate)
 
-1. The intake composes a workflow that is **short for a low-risk change** (example §9.6) and **full for a
-   high-risk one** (§9.3); saga/async/deep-agent commands appear only when their data is present.
-2. The floor **computation is deterministic** given declared factors (§5); a floor command **cannot be
-   dropped silently** — dropping one requires a **recorded, tier-appropriate waiver** (ADV-12/ADR-A6).
-3. Each command **authors manifest fields** such that #10's per-check activation runs the relevant
-   validators — verified on a low- and a high-risk fixture (ADV-8); **`agentic-observability` authors the
-   `observability` block** #10's `check_observability` floor-gates (hard directive); the **kill-switch
-   declared artifact** is recorded (no #10 target yet), not silently omitted (§7).
+1. The intake produces a **recommendation report** that is **short for a low-risk change** (§9.6) and **full
+   for a high-risk one** (§9.3) — a lens section appears only when its data is present; it is **one intake**,
+   not per-lens commands.
+2. The recommended floor is **deterministic** given declared factors (§5); a recommended-floor control
+   **cannot be skipped silently** — a skip is recorded `{control, owner, reason}` (ADV-12). The skip is an
+   Advisor record, **not** a #10 waiver, and grants no gate exception; the hard block is downstream at #10.
+3. The Advisor **authors no manifest field.** The output is the decision record + a neutral
+   **`agentic-design-handoff.yaml`** (`proposed_kind`s + recommendation IDs + target-path hints, **no**
+   manifest field, not even `kind`, §7/ADV-8); a **human authors** the manifest; **#10 validates** it —
+   including `check_observability` on the *authored* observability block (the Advisor only *recommends* it).
+   Verified: no `agentic-*` output contains a `system-manifest.yaml` field value.
 4. Every menu decision emits a recommendation + rationale + recorded chosen/rejected; an override is
-   recorded (ADV-6/ADV-9); build-vs-buy is owned by `agentic-deploy` alone (not the generic menu).
+   recorded (ADV-6/ADV-9); build-vs-buy is owned by the deploy lens alone (not the generic menu).
 5. `agentic-deploy` recommends managed for a low-stakes small-scale flow, requires a reason to override to
    build, surfaces the **lock-in / portability diligence**, records the decision, and prompts a human
    handoff — provisioning nothing (ADV-14/ADR-A7).

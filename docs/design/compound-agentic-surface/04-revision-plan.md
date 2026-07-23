@@ -17,7 +17,19 @@ agnostic (ADR-4) and governs-not-runtime (ADR-5) were **upheld in both rounds**;
 skeleton stands. The rework is in the edge container, the trust legs, the privilege union, the eval
 homes, and activation.
 
-## Round-7 fix-map (v3.3 — structural root-cause fixes, the current work)
+## v4 supersession (2026-07-23) — the Advisor no longer authors the manifest
+
+The round-5→7 fix-maps below repaired the **Advisor↔#10 auto-authoring seam** (imported activation, the
+manifest writer, `floor ≡ activation`, `OWNS_CHECKS`/`OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, and "the Advisor
+authors the general waiver"). **All of that is superseded**: rounds 8–9 removed auto-authoring entirely — the
+**Advisor recommends** and a **human authors** the manifest, which **#10 validates** (see FR-28 requirements
+§12 + `../agentic-core-scope.md`). What **stands on the #10 side**: its schema, per-check activation
+(computed solely from the human-authored manifest + tier + registries + waiver files — *no Advisor
+dependency*), the general `manifest-waivers.yaml` contract (authored by a **human**), the observability floor
+gate, the segment-scoped compensation-gap advisory, and the eval coverage gate (spec existence + approval;
+adapter execution → #42). Read the round-5→7 entries below as history of the (now-removed) seam.
+
+## Round-7 fix-map (v3.3 — structural root-cause fixes, superseded on the Advisor side by v4)
 
 Round-6 returned REVISIONS REQUIRED (4 blockers + 7 majors + 4 minors): the round-5 "floor ≡ activation"
 fix was itself defective — a hand copy of #10's activation table that drifted, with `check_deep_agent`/

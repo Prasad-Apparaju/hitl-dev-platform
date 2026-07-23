@@ -1,4 +1,4 @@
-# Compound Agentic System Surface: Design (HLD) — v3.3 (round-7)
+# Compound Agentic System Surface: Design (HLD) — v3.3 (#10 core; Advisor decoupled per the 2026-07-23 re-scope)
 
 > Mechanism (the *how*) for the requirements in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
@@ -7,7 +7,7 @@
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): eval coverage → per-agent
 > + e2e (universal deferred); saga → declared-only + compensation-gap advisory (required-when deferred);
 > CR-6 sync reliability narrowed; delegated authority deferred. Per [`04-revision-plan.md`](04-revision-plan.md).
-> Status: **draft, core-lock applied, pending Codex re-review (round 7)**. Targets **2.2.0**. Field-level
+> Status: **draft, #10 core stable; the Advisor no longer authors this manifest (2026-07-23 re-scope) — #10 ships first as 2.2.0; pending Codex re-review (round 9)**. Targets **2.2.0**. Field-level
 > precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md); decisions in [`02-adrs.md`](02-adrs.md).
 
 **Thesis (unchanged): a compound agentic system is a manifest, extended.** Each revision corrects *which*
@@ -303,5 +303,4 @@ rewritten; ADR-13/D13 added (per-check activation).
    #42** (round-5 B3) — core ships the coverage gate + the adapter *contract shape*, not execution; the core
    validator never runs the adapter or blocks on a result.
 6. `SEP-PAIR` (a call and an event between the same pair, distinct ids) validates — the parallel-edge
-   property is realizable — and the re-run cold Codex review (round 3) returns APPROVE (or only accepted
-   minors) before implementation begins.
+   property is realizable — and the cold Codex re-review returns APPROVE (or only accepted minors) before implementation begins.

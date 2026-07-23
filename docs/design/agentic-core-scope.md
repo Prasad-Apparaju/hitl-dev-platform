@@ -15,9 +15,11 @@ product owner named the deeper problem: **auto-authoring the manifest put the PM
 design/implementation — the exact line HITL must hold.** So the reconciling principle is dropped along with
 the auto-authoring it existed to serve. The boundary now:
 
-- **Advisor (PM lane):** elicits, **recommends** a right-sized floor (Tier + risk expert judgment — the
-  controls that shouldn't be skipped), records decisions, and **hands off** (decision record + a manifest
-  *skeleton*). It authors **no** manifest field and predicts **nothing** about #10.
+- **Advisor (PM lane):** one intake that elicits, **recommends** a right-sized floor (Tier + risk expert
+  judgment — the controls that shouldn't be skipped), records decisions, and **hands off** (a decision
+  record + a neutral `agentic-design-handoff.yaml` — `proposed_kind`s + recommendation IDs + target-path
+  hints, **not** a manifest). It authors **no** manifest field (not even `kind`) and predicts **nothing**
+  about #10.
 - **A human (design role):** authors the real manifest in the design phase.
 - **#10 (the gate):** validates the human-authored manifest — unchanged, needs no Advisor input, ships
   independently.
@@ -34,9 +36,10 @@ it; #10's `check_observability` **enforces** it on the authored manifest.
 agent→agent** (round-4 B1/C3 fix); classification; scoped-capability privilege (declaration consistency +
 ceilings, runtime-necessity honestly out of scope); interaction well-formedness (`check_topology`,
 `check_references`, `check_authorization`); lifecycle safety; **independent per-agent eval coverage +
-e2e** (every agent is independently evaluable — CR-8/CR-16) with the **PM-runnable eval-adapter contract**
-(a PM invokes an eval on one agent/segment via the declared adapter — HITL ships the *contract*, the runner
-executes it); a **gated observability/tracing + PM eval-console declaration** (`check_observability`, floor
+e2e** (every agent is independently evaluable — CR-8/CR-16), gated on **spec existence + approval** only —
+the **adapter *execution* / result ingestion is deferred to #42** (round-9 M6: core ships the coverage gate
++ the adapter contract *shape*, not a runner that invokes evals); a **gated observability/tracing + PM
+eval-console declaration** (`check_observability`, floor
 — the 2026-07-22 hard directive); async reliability value-checks (idempotency/DLQ) **without saga-required
 inference**; policy/store registries; per-check activation.
 
@@ -75,15 +78,16 @@ narrowed to facade `error_modes` + product runtime for now (M5).
 
 ## Core v1 — FR-28 (Advisor)
 
-**In (re-scoped 2026-07-23 — elicit + recommend + record + hand off; no manifest authoring):** the intake
-with a **non-circular** surface selection (`agentic` answer → topology probe → branch); the composer that
-**recommends** a right-sized workflow of lenses/commands; a **recommended floor** = Tier + risk expert
-judgment (the controls that shouldn't be skipped — *advice*, enforced downstream by #10, not derived from
-#10 activation); the per-concern commands that **elicit + recommend + record** for their lens (classify,
-boundary, privilege, reliability, observability, memory, evals, deploy) — each producing a **decision-record
-entry**, *not* a manifest field; `agentic-deploy` (record + human-carry); a **decision record** (scenario +
-recommendations + chosen/rejected) and a **design handoff** (scenario summary + recommended controls + a
-manifest **skeleton** with TODOs, authored by a human in design); the **terminal + Mermaid** map.
+**In (re-scoped 2026-07-23, v4.1 — elicit + recommend + record + hand off; no manifest authoring):** **one
+intake command** (`hitl:agentic-intake`; surface selection is external — `agentic` gate → topology probe →
+route) that produces a **right-sized recommendation report** (the per-concern lenses are report *sections*,
+not 8 commands — round-9 M9); a **recommended floor** = the safety-relevant risk factors (any agent →
+classify/boundary/privilege/observability/evals; irreversible → human gate; supervised+side-effects →
+kill-switch), Tier/data/stakes/scale informing recommended *depth* — advice, not a gate, not derived from #10
+activation; a **decision record** (recommendations + chosen/rejected + recorded **skips**) and a **neutral
+`agentic-design-handoff.yaml`** (components + connections + `proposed_kind`s + recommendation IDs +
+target-path hints — **not** a manifest, no `kind:` field, round-9 B2); the deploy recommendation
+(record + human-carry); the **terminal + Mermaid** map.
 
 **Removed (was in, now cut — it served auto-authoring, which crossed the PM-shouldn't-design line):** the
 canonical-state **writer**, `floor ≡ activation` + the imported-activation apparatus, `OWNS_CHECKS`/
@@ -129,6 +133,7 @@ the core floor.
 1. This scope lock (confirm the core boundary).
 2. Apply the **fix-in-core** set to the #10 + Advisor docs; move the **deferred** items to follow-on issues
    + notes; reconcile ADR-11, metadata, and the issue bodies.
-3. Re-run the cold Codex review (round 5) on the **locked core only**.
+3. Re-run the cold Codex review on the current design (rounds 5→9 have run; the Advisor was re-scoped after
+   round 8, and round 9 confirmed the re-scope is sound and now applied in v4.1).
 
-Implementation begins only when the core review is clean.
+Implementation begins only when the review is clean.
