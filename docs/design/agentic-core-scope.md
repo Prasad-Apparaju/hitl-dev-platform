@@ -133,7 +133,8 @@ the core floor.
 1. This scope lock (confirm the core boundary).
 2. Apply the **fix-in-core** set to the #10 + Advisor docs; move the **deferred** items to follow-on issues
    + notes; reconcile ADR-11, metadata, and the issue bodies.
-3. Re-run the cold Codex review on the current design (rounds 5→9 have run; the Advisor was re-scoped after
-   round 8, and round 9 confirmed the re-scope is sound and now applied in v4.1).
+3. Re-run the cold Codex review on the current design (rounds 5→10 have run; the Advisor was re-scoped after
+   round 8; rounds 9–10 confirmed the re-scope is sound, and round 10's residual conversion findings are
+   applied in v4.1 / v3.3; round 11 is the confirmation pass).
 
 Implementation begins only when the review is clean.

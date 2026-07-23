@@ -120,7 +120,7 @@ The handoff is `agentic-design-handoff.yaml`, explicitly **not** `system-manifes
 |---|---|
 | REC-DOC | a run writes `agentic-decisions.md` (scenario + report + decisions) |
 | REC-REGEN | a re-run **regenerates** the record (not appends); no drift |
-| **RERUN-RECONCILE** | change a component/answer and re-run | the report is recomputed; unchanged decisions kept; a changed-input decision flagged stale for re-confirm; a removed one → `retired`; recorded **skips** (not "waivers") are reconciled; human confirms a diff before write |
+| **RERUN-RECONCILE** | change a component's **`proposed_kind`** (e.g. `simple_agent`→`deterministic`) or an answer and re-run | the report is recomputed via `compose(scenario)` (no `tier` arg); unchanged decisions kept; the changed-`proposed_kind` decision flagged stale for re-confirm; a removed one → `retired`; recorded **skips** (not "waivers") are reconciled; human confirms a diff before write |
 | ROLE-ATTR | each catalog lens attributes to a real role; a role filter is presentation-only, never gating which lens exists |
 | **STANDALONE-LENS** | re-run the intake scoped to one lens (e.g. privilege) on an existing design | runs — the supported single-lens path (there is **no** `hitl:agentic-privilege` command); the full intake is not invoked for a single component |
 | MAP-TERMINAL | run the intake in a terminal | a text/box-drawing map + getting/not-needed lines printed inline; no browser |

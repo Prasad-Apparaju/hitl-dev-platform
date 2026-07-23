@@ -1,7 +1,7 @@
 # Compound Agentic System Surface: Requirements
 
 > **What** the surface must do, for **EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)**
-> (compound agentic system delivery surface). Status: **draft, pending review**. Ships as
+> (compound agentic system delivery surface). Status: **draft, v3.3 — round-10 findings addressed; pending Codex round-11**. Ships as
 > **2.2.0** on the 2.x line (1.x is feature-frozen). Sub-issues:
 > [#11–#20](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
 >
@@ -12,8 +12,8 @@
 > [`docs/design/compound-agentic-surface/`](../../design/compound-agentic-surface/): HLD
 > [`01-design.md`](../../design/compound-agentic-surface/01-design.md) **v3**, ADRs
 > [`02-adrs.md`](../../design/compound-agentic-surface/02-adrs.md) (ADR-1..ADR-13, accepted), LLD
-> [`03-lld.md`](../../design/compound-agentic-surface/03-lld.md) **v3** — all pending Codex round-3
-> re-review. FR-26 ⇄ this doc are cross-linked; §7 traces every `CR-n` to a sub-issue.
+> [`03-lld.md`](../../design/compound-agentic-surface/03-lld.md) **v3.3** — round-10 findings addressed;
+> pending Codex round-11 re-review. FR-26 ⇄ this doc are cross-linked; §7 traces every `CR-n` to a sub-issue.
 
 ## 1. Problem
 

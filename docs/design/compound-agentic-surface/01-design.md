@@ -2,12 +2,12 @@
 
 > Mechanism (the *how*) for the requirements in
 > [`../../01-product/compound-agentic-surface/requirements.md`](../../01-product/compound-agentic-surface/requirements.md)
-> (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). **v3.2** —
+> (CR-1..CR-20). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). **Changelog (through v3.3):**
 > the round-2 review rewrote the edge/leg/privilege/eval model; the **round-4** review (2026-07-22) drove
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): eval coverage → per-agent
 > + e2e (universal deferred); saga → declared-only + compensation-gap advisory (required-when deferred);
 > CR-6 sync reliability narrowed; delegated authority deferred. Per [`04-revision-plan.md`](04-revision-plan.md).
-> Status: **draft, #10 core stable; the Advisor no longer authors this manifest (2026-07-23 re-scope) — #10 ships first as 2.2.0; pending Codex re-review (round 9)**. Targets **2.2.0**. Field-level
+> Status: **draft, v3.3 — #10 core stable; the Advisor no longer authors this manifest (2026-07-23 re-scope) — #10 ships first as 2.2.0; round-10 findings addressed; pending Codex re-review (round 11)**. Targets **2.2.0**. Field-level
 > precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md); decisions in [`02-adrs.md`](02-adrs.md).
 
 **Thesis (unchanged): a compound agentic system is a manifest, extended.** Each revision corrects *which*
@@ -173,11 +173,13 @@ HITL governs **coverage and gating**; the product runs the evals (governs-not-ru
   **approval block** on each spec (`reviewer`, `date`, `decision`). `status: baseline|extended` is
   authorship maturity; `approval.decision` is the gate — `baseline_only` does not satisfy coverage above
   Tier 1.
-- **Runner-adapter contract fully wired (LLD §7.3):** `eval-adapter.yaml` specifies argv, cwd, timeout,
-  how the target/spec is bound (arg/env/stdin), where the result is read (stdout/file), the result-schema
-  to validate against, and pass/fail exit codes; any other outcome is a fail-closed adapter error. HITL
-  invokes it **only on explicit operator confirmation** (the `ops-apply-iac` model), ingests schema'd
-  results, and records reviewer approval. No runner ships.
+- **Runner-adapter contract — declared + validated in core; execution deferred to #42 (LLD §7.3):**
+  `eval-adapter.yaml` specifies argv, cwd, timeout, how the target/spec is bound (arg/env/stdin), where the
+  result is read (stdout/file), the result-schema to validate against, and pass/fail exit codes; any other
+  outcome is a fail-closed adapter error. **In 2.2.0 core, HITL validates this declaration's well-formedness
+  only — it does NOT invoke the adapter, ingest results, or record a run-result decision.** The executable
+  protocol (invocation on operator confirmation, schema'd-result ingestion, the reviewer result-review gate)
+  is **wholly deferred to #42** (consistent with acceptance criterion 5 and LLD §7.3). No runner ships.
 - **Baseline generator (LLD §7.4, CR-20):** a specified function (path, signature, deterministic case
   ids) that seeds cases from the owning `FR-n` (via a domain `owning_fr`), facade contracts, boundary
   checks, and CR-6 failure modes; merges by case id preserving human-edited cases; a no-evals component
@@ -250,7 +252,7 @@ gate (§13) now **includes CR-9**; **CR-1/CR-19 remain relocated to the Agentic 
 | **D9** | **Scoped-capability privilege**: per-use scopes + registry ceilings; memory joined via `uses`; edge-invocation moved to authorization; N&S *for declared uses*; runtime = drift-check | **rewritten in v3** (B3) |
 | **D10** | **Interaction identity**: stable `id` as the list element key; dup/cycle/reconciliation key off it | **rewritten in v3** — id is the *list key*, not a field inside a pair-keyed map (B1) |
 | **D11** | **Reliable one-way events** as `kind: event` + async; **sagas top-level, id-keyed**, per-step idempotent compensation; no broker exactly-once | **strengthened in v3** (B6/M3/M4) |
-| **D12** | **Evals: govern coverage + adapter contract**; real target model (segments/interaction evals), index, waivers, approval, wired adapter; ship no runner | **strengthened in v3** (B4) |
+| **D12** | **Evals: govern coverage + adapter contract**; real target model (segments/interaction evals), index, waivers, approval, a **declared** adapter contract (**execution/ingestion deferred to #42**); ship no runner | **strengthened in v3** (B4); execution scoped to #42 |
 | **D13** | **Per-check activation**: each validator + its registry activate only on the data they govern | **new in v3** (B5) |
 
 ## 12. What changed from v2 (Codex round-2 response)
@@ -276,8 +278,9 @@ rewritten; ADR-13/D13 added (per-check activation).
      CR-12, CR-13, CR-14, CR-15, CR-17, CR-18, **CR-9** (`check_observability` — the design declaration +
      floor gate), and the mechanical parts of CR-6/CR-8/CR-16/CR-20 — each with a regression suite;
      presence-only checks are gone.
-   - **Delivered as a generator/adapter** (this package): CR-3/CR-14 views, CR-8/CR-16 eval coverage +
-     adapter, CR-20 baseline generator.
+   - **Delivered as a generator/adapter** (this package): CR-3/CR-14 views, CR-8/CR-16 eval coverage + the
+     **adapter contract declaration** (its validated shape — invocation/ingestion is #42, criterion 5), CR-20
+     baseline generator.
    - **Delivered as a workflow/pattern-doc artifact gated by its own sub-issue** (not a `ci/` validator):
      the *justification* prose of CR-2/CR-11 and the pattern/catalog doc parts of CR-6 (#14). **Surface
      selection (was CR-1) and the capability menu (was CR-19) are relocated to the Agentic Design Advisor

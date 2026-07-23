@@ -6,7 +6,7 @@
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)), which **amends ADR-11**
 > (saga → declared-only + advisory) and **ADR-12** (eval → agent+e2e core, universal coverage deferred);
 > see [`04-revision-plan.md`](04-revision-plan.md).
-> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted; #10 core stable; Advisor decoupled (2026-07-23); pending Codex re-review (round 10)**.
+> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted; #10 core stable; Advisor decoupled (2026-07-23); round-10 findings addressed; pending Codex re-review (round 11)**.
 
 ---
 
@@ -333,7 +333,7 @@ follow-on.
 
 ---
 
-## ADR-12 (D12): Evals — govern coverage + a wired adapter contract; ship no runner (v3 — rewritten)
+## ADR-12 (D12): Evals — govern coverage + a declared adapter contract; execution deferred to #42; ship no runner (v3 — rewritten)
 
 **Status:** Accepted, **amended 2026-07-22 (v3.2 core scope lock, Codex round-4 M1/O6).** The target model
 below is **narrowed for core**: mandatory coverage = **every agent component + one e2e segment** (CR-8/CR-16
@@ -358,21 +358,24 @@ Deterministic components/edges are **optional** targets (opt in with a `contract
 validated). Interactions may still carry `evals`, and the top-level `segments` list (including `e2e` flows)
 is unchanged; universal deterministic coverage is a deferred follow-on. Supporting machinery: an eval
 **index** (`{target_type, target_id, spec_path}`, unique per target); a **waiver file**; a per-spec
-**approval block** (`reviewer`, `date`, `decision`), distinct from authorship `status`; and a **fully
-wired runner-adapter contract** (`eval-adapter.yaml`: argv, cwd, timeout, target/spec binding, result
-location + JSON Schema, pass/fail exit codes; any other outcome is a fail-closed adapter error). HITL
-invokes the adapter **only on explicit operator confirmation** (the `ops-apply-iac` model), ingests
-schema'd results, and records the reviewer's approval. A specified baseline generator seeds specs
-(deterministic case ids, owning-FR/failure-mode sources, merge-by-id preserving human edits).
+**approval block** (`reviewer`, `date`, `decision`), distinct from authorship `status`; and a **declared
+runner-adapter contract** (`eval-adapter.yaml`: argv, cwd, timeout, target/spec binding, result
+location + JSON Schema, pass/fail exit codes; any other outcome is a fail-closed adapter error). **In 2.2.0
+core, HITL validates this declaration's well-formedness only.** The **executable protocol — invoking the
+adapter (on operator confirmation), ingesting schema'd results, and the reviewer's result-review decision —
+is wholly deferred to #42**; core gates on **spec existence + approval**, never on a run result. A specified
+baseline generator seeds specs (deterministic case ids, owning-FR/failure-mode sources, merge-by-id
+preserving human edits).
 
 **Alternatives and their cost.** *Ship an eval runner* — cost: crosses ADR-5; couples to a framework.
 *Prose-only target model (v2)* — cost: validator reads undefined fields; adapter unimplementable (Codex
 B4). *No coverage gate* — cost: "independently testable" is unverifiable.
 
-**Consequences.** (+) CR-8/16/20 become buildable and gated while the runtime stays the product's; a PM
-can invoke one segment via the adapter on confirmation; approval (not mere authorship) is what the gate
-reads. (−) Requires a declared adapter the product implements, an eval index/waiver/approval to maintain,
-and a baseline generator; HITL records coverage, not results-truth.
+**Consequences.** (+) CR-8/16/20 become buildable and gated while the runtime stays the product's; approval
+(not mere authorship) is what the core gate reads; the core stays purely declarative (no execution). (−)
+Requires a declared adapter the product implements, an eval index/waiver/approval to maintain, and a baseline
+generator; HITL records coverage, not results-truth. **PM-invokes-a-segment (adapter execution + result
+ingestion) is not in 2.2.0 — it is #42.**
 
 ---
 
@@ -418,5 +421,5 @@ predicate (and its skip is explicit, not vacuous-pass), which the suite covers (
 | ADR-9 | D9 | **Scoped-capability privilege** (v3): closed over tools/memory/non-tool caps; invoke → authorization; wildcard ceilings; CR-15 fold-in |
 | ADR-10 | D10 | **Interaction identity — the `id` is the list element key** (v3); cycles key off endpoints |
 | ADR-11 | D11 | **Reliable events + top-level id-keyed sagas** (v3); **core validates declared sagas + a compensation-gap advisory; required-when model deferred** (v3.2/B4); no broker exactly-once |
-| ADR-12 | D12 | **Evals — coverage + a fully wired adapter contract** (v3); **core = per-agent + e2e; universal deterministic coverage deferred** (v3.2/M1); ship no runner |
+| ADR-12 | D12 | **Evals — coverage + a declared adapter contract** (v3); **core = per-agent + e2e; universal deterministic coverage deferred** (v3.2/M1); **adapter execution/ingestion deferred to #42**; ship no runner |
 | ADR-13 | D13 | **Per-check activation** (v3): each validator + registry activates only on its own data |

@@ -3,7 +3,7 @@
 > **What** the surface must do, for the HITL enhancement that encodes agentic-systems expertise as **one
 > runnable intake** (`hitl:agentic-intake`) that asks the questions an expert asks, understands the whole
 > scenario, and **composes a right-sized recommendation report** for the change. Product one-liner: **FR-28** in the
-> [PRD](../prd.md). The **how** (command set, intake, workflow composition, the recommended floor, the
+> [PRD](../prd.md). The **how** (the one intake, workflow composition, the recommended floor, the
 > handoff) is the design package at [`docs/design/agentic-design-advisor/`](../../design/agentic-design-advisor/).
 > Status: **draft, v4.1 — one intake + recommendation report; neutral `agentic-design-handoff.yaml` (no manifest fields)**. Related: EPIC
 > [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)
@@ -12,7 +12,7 @@
 > [#8](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/8) (best-practice-advisory — the Advisor
 > is its agentic-domain instance). **Tracked as EPIC [#35](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/35)**
 > (sub-issues [#36](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/36)–[#41](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/41):
-> catalog · intake+integration · commands · composer+floor · map · CI/docs). **v3.2** — reshaped around
+> catalog · intake+integration · intake sections · composer+floor · map · CI/docs). **v3.2** — reshaped around
 > **commands + composed workflow** (v2), revised after pm + architect rounds (v3), then **core-scope-locked**
 > after the round-4 objectives review (map → terminal+Mermaid core, HTML/live deferred; non-circular routing;
 > obligation-first floor; contract-authoring seam); see §12 and [`../../design/agentic-core-scope.md`](../../design/agentic-core-scope.md).
@@ -108,12 +108,12 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 | **ADV-2** | A **thorough intake command** (`hitl:agentic-intake`) understands the **whole scenario** the way the deterministic intake does, asking the expert questions across every lens so critical things are not missed. Lenses: component right-sizing (agent vs deterministic; simple vs deep; *do you need multiple agents at all*), the **determinism boundary**, **side effects / irreversibility**, **human gates**, **privilege / identity / trust** (incl. the lethal-trifecta check), **orchestration / topology** (sync/async, loops), **reliability / failure modes** (idempotency, retry, DLQ), **observability / detectability** (how misbehavior is seen in production; targets OpenTelemetry GenAI conventions; includes the **PM eval-console** — the PM-facing surface to run evals + review results/traces. The Advisor **recommends** this control at the floor; **#10's `check_observability`** is what *enforces* it on the human-authored manifest at design time — 2026-07-22 hard directive), **kill-switch / rollback** (how the system is stopped fast), **memory / state**, **PII / data classification**, **portability** (bind model/memory/tool providers as capabilities via config — do not embed a provider in agent logic; Twelve-Factor "attached resources"), **evaluation** (incl. model/prompt-version drift), **cost / amplification**, **deployment / build-vs-buy** (ADV-14), and **stakes / tier / compliance**. | Must |
 | **ADV-3** | After eliciting, the intake **composes a right-sized recommendation report** — only the lenses this change's risk and shape warrant appear (a lens with no relevant data contributes no section). Proportionality is *which lenses are in the report*, not how many commands run. | Must |
 | **ADV-4** | **Every lens/question maps to a concrete consequence in the recommendation report** — a recommended component classification, a recommended boundary control, a recommended gate, a lens **section**, or a **floor** entry (a recommended-mandatory control). The consequence is a *recommendation the human acts on in design*, never an authored manifest field. A lens with no downstream effect is not shipped. | Must |
-| **ADV-5** | The **floor is the Advisor's recommended set of mandatory controls** — a deterministic function of the declared risk factors, stated honestly (round-9 M2): **membership** is driven by the safety-relevant factors — *any agent* ⇒ classify/boundary/privilege/observability/evals; *irreversible side effects* ⇒ human gate; *supervised/autonomous + side effects* ⇒ kill-switch. **Tier + `data`/`stakes`/`scale` inform the recommended *depth*** of a floor control (e.g. observability report vs console), not membership — the doc does not claim a factor drives the floor unless the function uses it. It is **advice, not a gate**: the Advisor recommends and records; enforcement is **#10's validators at design time** on the human-authored manifest. Above the floor = offered rungs. The floor does **not** re-implement or predict #10's activation (removed). | Must |
+| **ADV-5** | The **floor is the Advisor's recommended set of mandatory controls** — a deterministic function of the declared **safety-relevant risk factors**, stated honestly (round-9 M2; async settled round-10 blocker 4): **membership** is driven only by the factors the composer actually uses — *any agent* ⇒ classify/boundary/privilege/observability/evals; *irreversible side effects* ⇒ reliability (human gate); *supervised/autonomous + side effects* ⇒ reliability (kill-switch); *any async transport (`async_task`/`event`)* ⇒ reliability (idempotency/DLQ). **`Tier`/`data`/`stakes`/`scale` are NOT composer inputs and produce no computed field**: they may inform a **human-confirmed advisory depth note** per floor control (e.g. observability report vs console), never membership — the doc does not claim a factor drives the floor unless the function uses it. It is **advice, not a gate**: the Advisor recommends and records; enforcement is **#10's validators at design time** on the human-authored manifest. Above the floor = offered rungs. The floor does **not** re-implement or predict #10's activation (removed). | Must |
 | **ADV-6** | For each material decision with modern options (component kind, orchestration pattern, memory strategy, inter-agent protocol, async transport), the Advisor **presents the menu with when-to/when-not, recommends the simplest option that fits with rationale, and records chosen + rejected** (the capability menu / best-practice-advisory, #8). **The build-vs-buy / deployment decision is owned exclusively by ADV-14**, not by this generic menu — ADV-6 does not present a deployment menu. | Must |
 | **ADV-7** | The Advisor produces **durable, reviewable artifacts**: a **decision record** (questions, answers, recommendations, chosen/rejected, floor, composed workflow) that regenerates cleanly on a re-run. | Must |
 | **ADV-8** | The Advisor's output is a **recommendation + a handoff, not a design.** It produces (a) the **decision record / recommendation report** (ADV-7) and (b) a **neutral design-handoff file `agentic-design-handoff.yaml`** — explicitly **NOT** `system-manifest.yaml`. The handoff carries the elicited **components** and **connections**, a **`proposed_kind`** per component (a *recommendation*, not a `kind:` field), the recommended controls as **recommendation IDs**, and **target-path hints** (which manifest fields the design role must author). It contains **no `system-manifest.yaml` field** — not even `kind`, because a component kind is a design classification (round-9 B2). A **human authors** the real manifest from the handoff in the design phase; **#10 validates the human-authored manifest**. The Advisor **does not** author any manifest field (including `kind`), run #10's validators, or produce the design artifact — that would put the PM front door into design/implementation, which this feature exists to prevent. #10 needs **no** input from the Advisor and ships independently. | Must |
 | **ADV-9** | The Advisor **recommends, never silently decides.** Every recommendation is confirmable and overridable by the human, and an override is recorded with its rationale. | Must |
-| **ADV-10** | The intake is **role-aware**, reusing HITL's **actual roles** (`docs/playbook/roles.md`: PM, Technical Advisor, Architect, Developer, QA, Ops) — each command/lens is attributed to the role whose concern it is. (Reuse of the role *taxonomy*, applied to asking rather than reviewing, is validated in design.) | Should |
+| **ADV-10** | The intake is **role-aware**, reusing HITL's **actual roles** (`docs/playbook/roles.md`: PM, Technical Advisor, Architect, Developer, QA, Ops) — each lens is attributed to the role whose concern it is. (Reuse of the role *taxonomy*, applied to asking rather than reviewing, is validated in design.) | Should |
 | **ADV-11** | The question/capability catalog is a **curated, human-refreshed** artifact (a curated catalog bump, **not** a live external lookup — that would cross document-driven / governs-not-runtime). It has a **named owner** and a **periodic refresh cadence** (independent of change events, so it cannot go stale indefinitely); additionally a Tier-3 agentic change prompts an **"is the catalog current?"** review step, and a stale-catalog finding is **recorded and surfaced** (not silently ignored). | Should |
 | **ADV-12** | The floor recommendation is **auditable and non-silently-droppable.** It is deterministic for a given scenario (ADV-5). A team may **skip** a recommended-mandatory control, but the Advisor **records the skip** as `skips: [{control, owner, reason}]` and surfaces it in the handoff — never silent. **The skip is an Advisor record, not a #10 waiver**: it grants **no** exception at the gate (round-9 M3). The word **"waiver" is reserved for a human-authored downstream exception in #10** (`manifest-waivers.yaml`, tied to an actual blocker, tier + revisit) — the Advisor never authors a waiver. So "can't be skipped silently" holds by *recording* (here), and "hard-blocked until … or waived" holds *at #10* when a human later waives a real blocker. | Must |
 | **ADV-13** | **Surface selection is external to the intake and non-circular** (round-9 m1): `pm-design-feature`'s existing "delivery surface?" step is the **`agentic` gate**; only if agentic does a **two-question topology probe** run (component count; any inter-component edge); **≥2 components and ≥1 edge → compound → invoke `hitl:agentic-intake`**, else the single-agent path. The intake is reached **only on the compound branch and does not re-select the surface** — it elicits the full detail. The gate→probe→route rule lives in **`pm-design-feature`** and **`ai/codex/AGENTS.md`**. *(Absorbed from #10 CR-1; round-4 B2 / round-5 M1.)* | Must |
@@ -122,20 +122,22 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 
 ## 6. Constraints
 
-- **Governs, does not run.** The commands elicit, record, and produce design artifacts; they ship no
-  runtime, dashboard, engine, or provisioning.
-- **Reuse existing mechanisms.** Commands/skills, reviewer-role taxonomy, the capability menu (#8), the
+- **Governs, does not run.** The **one intake** elicits, records, and produces a **recommendation report +
+  neutral handoff**; it authors **no manifest field** and ships no runtime, dashboard, engine, or provisioning.
+- **Reuse existing mechanisms.** One skill (`hitl:agentic-intake`), reviewer-role taxonomy, the capability menu (#8), the
   manifest + #10's per-check activation, **the existing Tier 0–3 model** (the floor reuses Tier — no new
   tier axis), the breadcrumb, and durable-artifact conventions. No new orthogonal machinery.
 - **Proportionate to itself.** The composed workflow must be light for light changes; an over-heavy
   Advisor would defeat its purpose.
 - **Document-driven.** Output is durable, reviewable artifacts — never a lost chat.
-- **Additive.** The commands produce manifest content #10 already knows how to react to; #10 is unchanged.
+- **Additive.** The intake produces a **recommendation + neutral handoff**; a **human authors** the manifest
+  #10 validates. #10 is **unchanged** and needs no Advisor input.
 
 ## 7. Non-goals
 
 - **Not a runtime** and not an autonomous decider — it recommends; humans decide (ADV-9).
-- **Not the validators/design** — the commands feed #10; they do not re-implement its schema or checks.
+- **Not the validators/design** — the intake **hands off to a human who authors the manifest** #10 validates;
+  it does not re-implement #10's schema or checks, and authors no manifest field.
 - **Not a fixed questionnaire** — it is one intake that composes a right-sized **recommendation report** (ADV-1/ADV-3) whose sections are
   composed to the change (ADV-3); a static form that asks everyone everything is the over-governance
   failure this feature prevents.
@@ -286,3 +288,17 @@ the source is [`References`](#11-references) — not a requirement here.*
   + §11 acceptance + §4.2 `manifest_field`), LLD (one-intake model, neutral handoff schema, composer path
   fix), and #10 (remove Advisor-import/writer refs from its LLD so it ships first). The re-scope itself is
   retained and confirmed.
+- **round-10 confirmation review (2026-07-23):** REVISIONS REQUIRED, but "the corrected architecture is
+  approvable in principle — this does not call for another re-scope." The composer ran cold and produced the
+  exact LOW/HIGH/async outputs; blockers 5 (skip≠waiver) and 6 (#10 ships first) were cleared. The 7 residual
+  findings were **conversion/consistency**, not architecture: (1) plural-command/manifest-content residue in
+  the constraints/non-goals/ADR-A5/LLD §9–10; (2) a second handoff schema in LLD §7.4 (`nature`/no-`role`)
+  vs HLD/tests; (3) stale `kind`/`tier`/`COMMANDS`/`components[].memory` reads around the fixed composer;
+  (4) async missing from the ADV-5/HLD floor tables + lingering "Tier scales depth" claims; (5) adapter
+  execution/ingestion still in compound HLD §6/§13 + ADR-12 vs the "wholly #42" boundary; (6) a role
+  "computed by fixed rules" line reviving derivation; (7) an unswept version/status metadata layer. **All
+  applied in this revision (v4.1 / compound v3.3):** one intake everywhere, one neutral handoff schema
+  (`role` + `proposed_kind` + connection `transport` + inline `target_path_hint`), the canonical-field sweep
+  (`compose(scenario)`, `proposed_kind`, `answers.memory_hint`), async as floor-level in every authority,
+  depth as a human-confirmed advisory note (no computed field), adapter execution wholly under #42, role
+  directly elicited, and a full metadata sweep. Round 11 is the confirmation pass.

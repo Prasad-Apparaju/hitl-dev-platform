@@ -5,7 +5,7 @@
 > re-scope removed manifest authoring (**A5** commands recommend + hand off, not author; **A6** floor is a
 > Tier+risk recommendation, not derived from #10; **A1** one intake command, not 8 — round-9 M9). Earlier
 > decisions (obligation-first floor, imported activation) are superseded, kept in each ADR's history.
-> Status: **accepted, v4.1 (elicit + recommend + record + hand off); pending Codex re-review (round 10)**.
+> Status: **accepted, v4.1 (elicit + recommend + record + hand off); round-10 fixes applied; pending Codex re-review (round 11)**.
 
 ---
 
@@ -99,7 +99,7 @@ author and test (test plan §4).
 
 ---
 
-## ADR-A5: The commands recommend + record + hand off — they do NOT author the manifest (re-scoped 2026-07-23)
+## ADR-A5: The intake's lens sections recommend + record + hand off — they do NOT author the manifest (re-scoped 2026-07-23)
 
 **Status:** Accepted, **rewritten 2026-07-23 (v4).** Prior versions had the commands **author the manifest**
 #10 validates (v1: via a fictional seed; v3.3: via a canonical-state writer + `floor ≡ activation`). Round 8
@@ -145,9 +145,12 @@ enforces.**
 it must not re-implement or predict #10.
 
 **Decision.** The floor is the **Advisor's recommended set of mandatory controls**, a deterministic function
-of the existing **Tier (0–3) + risk factors** (`side_effects`, `data`, `autonomy`, `stakes`, `scale`) —
-expert judgment, not a mirror of #10. **Tier scales the recommended depth** (observability report vs console,
-etc.), not membership. The recommendation is **advice**: a team may skip a recommended control, but the
+of the **safety-relevant risk factors the composer actually uses** — agent presence, inter-component edges,
+`side_effects` (irreversible ⇒ human gate), `autonomy`+`side_effects` (⇒ kill-switch), and async transport
+(`async_task`/`event` ⇒ idempotency/DLQ) — expert judgment, not a mirror of #10. **`Tier`/`stakes` are not
+membership inputs and produce no computed field**; they may inform a **human-confirmed advisory depth note**
+(observability report vs console, etc.), never which controls are in the floor. The recommendation is
+**advice**: a team may skip a recommended control, but the
 Advisor **records the skip** (owner + reason) and surfaces it — never silent. The **actual hard
 block-or-waive** happens **downstream at #10** (its validators + HITL's tier/waiver process, FR-25) on the
 **human-authored** manifest. So "can't be skipped silently" holds by *recording*; "hard-blocked until … or
@@ -276,8 +279,8 @@ change (the gate→probe→route rule), enumerated in the LLD file list.
 | ADR-A2 | A2 | Catalog = curated, versioned data; curated refresh, not live lookup |
 | ADR-A3 | A3 | Recommend, never decide; human confirms; record chosen/rejected |
 | ADR-A4 | A4 | HITL composes a proportionate workflow; run only what's relevant |
-| ADR-A5 | A5 | Commands **recommend + record + hand off** — they do **not** author the manifest (re-scope 2026-07-23); a human authors it, #10 validates; observability is **recommended** (Advisor) + **enforced** (#10 `check_observability`) |
-| ADR-A6 | A6 | Floor is a **Tier + risk recommendation** (advice, not a gate); a skip is **recorded**; the hard block-or-waive is **downstream at #10** on the human-authored manifest; Tier scales recommended depth |
+| ADR-A5 | A5 | The intake's **lens sections recommend + record + hand off** — they do **not** author the manifest (re-scope 2026-07-23); a human authors it, #10 validates; observability is **recommended** (Advisor) + **enforced** (#10 `check_observability`) |
+| ADR-A6 | A6 | Floor membership = the **safety-relevant risk factors** (agent presence, edges, irreversible side-effects, autonomy+side-effects, async); advice not a gate; a skip is **recorded**; the hard block-or-waive is **downstream at #10**; `Tier`/`stakes` inform only an **advisory depth note** (no computed field) |
 | ADR-A7 | A7 | Record the build-vs-buy decision + portability diligence; a human carries it — provision nothing, auto-hand-off to nothing |
 | ADR-A8 | A8 | Evolving map = terminal-first generated view; **core = inline text + Mermaid; rich HTML + combined live mode deferred** (M8); regen per step; no live server |
 | ADR-A9 | A9 | Intake integrates into `pm-design-feature`/`AGENTS.md` — precede for compound, skip for simple, never replace |

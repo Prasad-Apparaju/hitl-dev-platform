@@ -7,7 +7,7 @@
 > B2). It **authors no manifest field**; a human authors the manifest, #10 validates it. **Removed** (the
 > auto-authoring apparatus): the manifest writer, `OWNS_CHECKS`/imported-`ACTIVATES`/`floor ≡ activation`/
 > `OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, `manifest_features`, and the `authored.*` state layer. Implements
-> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — round-9 fixes applied.**
+> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — round-10 fixes applied.**
 
 ## 0. Grammars & conventions
 
@@ -120,7 +120,7 @@ The composer recommends **which lenses this change needs** and a **recommended f
 shouldn't be skipped) from **Tier + risk factors** — expert judgment. It does **not** author a manifest,
 import or predict #10's activation, or prove any equivalence: the Advisor recommends, and #10 enforces its
 own checks at design time on the *human-authored* manifest. Relevance gives proportionality (a lens with no
-scenario data contributes no command); the floor rules give the recommended-mandatory set.
+scenario data contributes no report section); the floor rules give the recommended-mandatory set.
 
 ```python
 # LENSES (report sections, not separate commands — round-9 M9). Stable order = topo tie-break.
@@ -146,7 +146,7 @@ def relevant(lens, s):
       "reliability":   any_async(s) or a["side_effects"] != "none"
                        or a["autonomy"] in ("supervised","autonomous"),
       "observability": any_agent(s),                                 # hard directive: any agentic system
-      "memory":        any(c.get("memory") for c in s["components"]) or a.get("memory_hint", False),
+      "memory":        a.get("memory_hint", False),                  # canonical input: answers.memory_hint (no components[].memory field)
       "evals":         any_agent(s),
       "deploy":        a.get("greenfield") or a.get("changes_platform")           # M1: read from answers
                        or a.get("adds_durable_runtime") or a.get("deploy_requested", False),  # M6
@@ -184,7 +184,10 @@ def compose(s):
 
 ### 4.1 The recommended floor, Tier depth, and recording a skip (ADR-A6)
 
-The floor is **advice** (§4). **Tier scales the recommended *depth*** of a floor control, not membership:
+The floor is **advice** (§4). Membership is fixed by the safety-relevant factors (§4 `recommended_floor`),
+**not** by Tier. Separately, `Tier`/`stakes` may inform a **human-confirmed advisory *depth note*** per floor
+control (a suggestion, **not** a composer input and **not** a computed field — round-10 blocker 4); the note
+never changes membership. Illustrative depths:
 
 | Recommended floor control | Tier 0–1 recommended depth | Tier 2+ recommended depth |
 |---|---|---|
@@ -205,9 +208,7 @@ FR-25) on the human-authored manifest. So "can't be skipped silently" holds by *
 "hard-blocked until … or waived" holds *downstream at #10*. A **rung** not adopted is **deferred** (recorded
 `deferred`); `skip` (a recommended-floor control) ≠ `deferred` (a rung) — distinct states.
 
-## 5. The lenses / report sections (one skill: `ai/claude/skills/agentic-intake/`)
-
-## 5. The lenses (report sections of `hitl:agentic-intake`)
+## 5. The lenses (report sections of the one skill `ai/claude/skills/agentic-intake/`)
 
 Each lens is a **section of the recommendation report** (not a separate command — round-9 M9): it (a) reads
 its catalog answers from the intake, (b) recommends the simplest fit for any menu (ADR-A3), (c) **records a
@@ -241,7 +242,7 @@ enhancement**, kept below as the follow-on target.
 
 - **`terminal`** — a box-drawing topology + a `getting / available / not-needed` block, re-printed by the
   intake at each meaningful step. **getting** = floor ∪ adopted rungs; **available** = offered rungs;
-  **not-needed** = `COMMANDS − included`, each with its **reason** = the catalog `guidance`/`note` of the
+  **not-needed** = `LENSES − included`, each with its **reason** = the catalog `guidance`/`note` of the
   gating answer (e.g. saga → "irreversible → you gate, not compensate").
 - **`mermaid`** — the same graph + a Markdown table, written into `agentic-decisions.md` (§7.2).
 - **`html`** *(deferred)* — an optional self-contained page (static-file publishing only; no server, ADR-A8).
@@ -328,8 +329,9 @@ deferrals:  [ { rung, reason } ]                             # a rung offered bu
 deploy:     { recommend, chosen, rejected:[{opt,cost}], drivers, portability:{governance,packaging,state_export}, carry_to }
 ```
 
-The map's richer vocabulary is the elicited `components[].role` (§6.1) — computed by fixed rules over the
-scenario at elicitation time, never from a manifest (there is none). The Advisor **records skips**, not
+The map's richer vocabulary is the **directly elicited** `components[].role` (§6.1) — asked as one question
+per component at elicitation time (a required single-valued enum), never derived from `proposed_kind`+flags
+and never from a manifest (there is none). The Advisor **records skips**, not
 `manifest-waivers` — the hard waive-or-block is #10's, downstream on the human-authored manifest (ADR-A6).
 
 ### 7.2 Decision record (`docs/01-product/<feature>/agentic-decisions.md`) — a GENERATED view
@@ -344,12 +346,13 @@ canonical state. (`REC-GEN` asserts the Markdown is a pure function of the YAML.
 A re-run is **recompute + reconcile, human-confirm before write** — never a blind regenerate that discards
 human decisions:
 
-1. **Recompute the derived state** — `compose(scenario, tier)` is a pure function of the scenario record, so
+1. **Recompute the derived state** — `compose(scenario)` is a pure function of the scenario record (no `tier`
+   input — round-10 blocker 4), so
    the workflow/floor/rungs are recomputed deterministically (ADV-12). Derived state is never hand-edited.
 2. **Reconcile human-owned decisions by `id`.** Menu choices, overrides, skips, and deferrals are keyed by
    the component/edge/lens `id` they attach to. On re-run: an id whose inputs are **unchanged** keeps its
    recorded decision; an id that is **new** is elicited fresh; an id whose **gating inputs changed** (e.g. a
-   component's `kind` changed, or `side_effects` moved to `irreversible`) has its decision **flagged stale
+   component's `proposed_kind` changed, or `side_effects` moved to `irreversible`) has its decision **flagged stale
    and surfaced for re-confirmation** — it is neither silently kept nor silently dropped (ADV-9).
 3. **A removed component/edge** carries its dependent decisions to a `retired` list in the record (not
    deleted), so an audit trail survives.
@@ -365,19 +368,20 @@ semantics, closing the round-4 M4 gap.
 The handoff is **`docs/01-product/<feature>/agentic-design-handoff.yaml`** — explicitly **NOT**
 `system-manifest.yaml`. It carries **recommendations and hints only**: no `system-manifest.yaml` field
 appears, **not even `kind`** (a component kind is a design classification the architect must author). A
-component is a `proposed_kind` (a recommendation), an edge is a neutral `connection`, and every control is a
-recommendation id with a **target-path hint** telling the design role *where* to author it.
+component carries its **elicited `role`** (the required map enum) and a `proposed_kind` (a recommendation),
+an edge is a neutral `connection` with a factual `transport`, and every control is a recommendation id with a
+**target-path hint** telling the design role *where* to author it.
 
 ```yaml
 # GENERATED by the Agentic Design Advisor — a RECOMMENDATION HANDOFF, not a design.
 # The design role authors system-manifest.yaml ANEW from this; #10 validates that. Nothing here is a manifest field.
 schema_version: "1.0"
 feature: refund-assistant
-components:                                  # proposed_kind is a RECOMMENDATION, never a `kind:` field
-  - { id: intake_agent,   proposed_kind: simple_agent,  rationale: "bounded classify task" }
-  - { id: resolver_agent, proposed_kind: simple_agent,  rationale: "bounded draft task" }
-connections:                                 # neutral — NOT `interactions`
-  - { from: intake_agent, to: resolver_agent, nature: hands-off }
+components:                                  # role = elicited map enum (required); proposed_kind = a RECOMMENDATION, never a `kind:` field
+  - { id: intake_agent,   role: agent, proposed_kind: simple_agent,  rationale: "bounded classify task" }
+  - { id: resolver_agent, role: agent, proposed_kind: simple_agent,  rationale: "bounded draft task" }
+connections:                                 # neutral — NOT `interactions`; `transport` is the factual edge property
+  - { from: intake_agent, to: resolver_agent, transport: async_task }
 recommendations:                             # the floor/rungs by id; ONE representation — each carries its own
                                              # target_path_hint (a WHERE-to-author string, not a value). m2 fix:
                                              # no separate `target_paths` list, so there is nothing to keep in sync.
@@ -398,7 +402,7 @@ blocker 4). `HANDOFF-REF-INTEGRITY` (§9) asserts id uniqueness and that every h
 Every value is a `proposed_*` recommendation or a `*_hint` — **no valid manifest field**. A human authors
 the real manifest; **#10 validates** it. `HANDOFF`/`NO-AUTHOR` (§9) assert the file contains **no**
 `system-manifest.yaml` field value (no `kind`, no `interactions`) and that every recommended-floor control
-has a `recommendations` entry + a `target_paths` hint.
+has a `recommendations` entry + exactly one inline `target_path_hint`.
 
 ## 8. Integration (ADV-13, ADR-A9)
 
@@ -422,9 +426,9 @@ edits; no separate detector.
 ci/agentic-advisor/
   test_catalog_lint.py        # §2 — CAT-*
   test_compose.py             # §4 — COMPOSE-LOW/HIGH (recommended workflow + floor), PRUNE-DEPLOY, FLOOR-SKIP
-  test_handoff.py             # §7.4 — HANDOFF (skeleton has TODOs + NO authored field values), REC-GEN
-  test_rerun.py               # §7.3 — RERUN-* (reconcile/stale/retired/confirm, M4)
-  test_advisor_e2e.py         # E2E-SUPPORT/STANDALONE-CMD/ROUTE-*/MAP-*/DEPLOY-*
+  test_handoff.py             # §7.4 — HANDOFF/NO-AUTHOR (neutral: role + proposed_kind + connection transport + inline hints; NO manifest field), REC-GEN
+  test_rerun.py               # §7.3 — RERUN-* (reconcile/stale/retired/confirm incl. a proposed_kind change, M4)
+  test_advisor_e2e.py         # E2E-SUPPORT/ROUTE-*/MAP-*/DEPLOY-*
 ```
 
 ## 10. LLD decisions
@@ -432,11 +436,14 @@ ci/agentic-advisor/
 - **L1:** the composer/map are **deterministic Python** over the scenario record; the catalog is data; the
   commands are skills. Expertise reviewable (catalog), logic testable (Python), conversation in the harness
   (skills) — ADR-A1/A2/A4.
-- **L2:** the floor is a **Tier + risk recommendation** (§4/§4.1) — advice, not a gate; a skip is
-  **recorded** (never silent), and the hard block-or-waive is **downstream at #10** on the human-authored
-  manifest (ADR-A6). Two runs on the same declared factors recommend the identical floor (ADV-12).
-- **L3:** commands **recommend + record** (§5.1) and contribute TODOs to a manifest **skeleton** (§7.4) — they
-  **author no manifest field**. A human authors the manifest; **#10 validates** it. Observability is
+- **L2:** the floor is a **risk-factor recommendation** — membership from agent presence, edges, irreversible
+  side-effects, autonomy+side-effects, and async (§4/§4.1); `Tier`/`stakes` inform only an **advisory depth
+  note**, never membership (round-10 blocker 4). It is advice, not a gate; a skip is **recorded** (never
+  silent), and the hard block-or-waive is **downstream at #10** on the human-authored manifest (ADR-A6). Two
+  runs on the same declared factors recommend the identical floor (ADV-12).
+- **L3:** the intake's **lens sections recommend + record** (§5.1) and contribute `proposed_*` entries +
+  `target_path_hint`s to the **neutral handoff** (§7.4) — they **author no manifest field**, and there is
+  **no manifest skeleton**. A human authors the manifest; **#10 validates** it. Observability is
   recommended (Advisor) + enforced (#10 `check_observability`); the kill-switch is a recorded recommendation
   (ADR-A5). No manifest writer, no floor≡activation, no #10 change.
 - **L4:** ADV-13 integration is **two small edits** to `pm-design-feature`/`AGENTS.md` (§8), routed by a

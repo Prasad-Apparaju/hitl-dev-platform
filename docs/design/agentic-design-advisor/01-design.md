@@ -3,7 +3,7 @@
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
 > (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); field-level precision in the LLD
 > [`04-lld.md`](04-lld.md); test plan in [`03-test-plan.md`](03-test-plan.md).
-> Status: **draft, v4.1 — round-9 fixes applied.**
+> Status: **draft, v4.1 — round-10 fixes applied.**
 >
 > **The model (v4.1):** the Advisor is **one intake command** (`hitl:agentic-intake`) that **elicits** the
 > whole scenario, **recommends** a right-sized set of controls (a **recommendation report** whose sections
@@ -114,11 +114,12 @@ answers composes the identical report (auditable, ADV-12).
 ### 4.1 The floor is a RECOMMENDATION (Tier + risk); rungs are the optional extras
 
 The workflow is `floor ∪ rungs`. **The floor is the Advisor's expert recommendation of the controls that
-shouldn't be skipped for this change** — a deterministic function of the existing HITL **Tier (0–3) + risk
-factors** (`side_effects`, `data`, `autonomy`, `stakes`, `scale`). It is **advice**: the Advisor recommends
-and records it; the actual enforcement is **#10's own validators at design time** on the human-authored
-manifest. The Advisor does **not** predict, mirror, or import #10's activation (the round-5→8 equivalence
-apparatus is removed — there is no manifest to make match). Recommended-floor rules (illustrative):
+shouldn't be skipped for this change** — a deterministic function of the **safety-relevant risk factors the
+composer actually uses**: agent presence, inter-component edges, `side_effects`, `autonomy`, and **async
+transport**. It is **advice**: the Advisor recommends and records it; the actual enforcement is **#10's own
+validators at design time** on the human-authored manifest. The Advisor does **not** predict, mirror, or
+import #10's activation (the round-5→8 equivalence apparatus is removed — there is no manifest to make
+match). Recommended-floor rules (the exact membership the composer computes):
 
 | Recommended floor control | Recommended when |
 |---|---|
@@ -126,12 +127,14 @@ apparatus is removed — there is no manifest to make match). Recommended-floor 
 | privilege | any agent (bound its capabilities) |
 | observability + PM eval-console | any agent (hard directive; #10's `check_observability` enforces it) |
 | evals (per-agent + e2e) | any agent |
-| human gate | `side_effects == irreversible` |
-| kill-switch | `autonomy ∈ {supervised, autonomous}` and `side_effects ≠ none` |
+| reliability (human gate) | `side_effects == irreversible` |
+| reliability (kill-switch) | `autonomy ∈ {supervised, autonomous}` and `side_effects ≠ none` |
+| reliability (idempotency/DLQ) | any **async transport** (`async_task`/`event`) — round-10 blocker 4 |
 
 **Rungs (offered, deferrable):** `agentic-memory` when the scenario hints at cross-session state;
 the **deploy lens** is included when the change is greenfield / changes platform / adds durable runtime / is requested.
-Whether a control is recommended-floor vs offered-rung is the §5 rule; Tier scales the recommended *depth*.
+Whether a control is recommended-floor vs offered-rung is the §5 rule. `Tier`/`stakes` are **not** membership
+inputs and produce no computed field; they may inform a **human-confirmed advisory depth note** only.
 
 ### 4.2 The catalog `consequence` — an option→list map of tagged unions (ADR-A2)
 
@@ -156,9 +159,10 @@ list item whose `floor`/`recommendation` target does not resolve. No consequence
 ## 5. The recommended floor + Tier depth + rungs (ADV-5/ADV-12)
 
 **The floor is a recommendation, not a gate.** §4.1 lists which controls the Advisor recommends as
-non-skippable, from Tier + risk (expert judgment). **Tier scales the recommended depth**, not membership:
-observability at Tier 0/1 = an existing approved surface or a generated report, at Tier 2+ = a fuller
-console; privilege = per-class vs per-capability; evals = baseline vs extended.
+non-skippable, from the **safety-relevant risk factors** (agent presence, edges, `side_effects`, `autonomy`,
+async — expert judgment). `Tier`/`stakes` are **not** membership inputs; they may inform a **human-confirmed
+advisory depth note** only: observability at Tier 0/1 = an existing approved surface or a generated report, at
+Tier 2+ = a fuller console; privilege = per-class vs per-capability; evals = baseline vs extended.
 
 **Non-silently-droppable — by recording, then gated downstream.** A team may choose to skip a
 recommended-floor control, but the Advisor **records that choice** (owner + reason) and **surfaces it** — it
@@ -205,7 +209,7 @@ The Advisor produces **two artifacts, neither of which is the design**:
    skips:        [ { control, owner, reason } ]                                                        # recorded, not a #10 waiver
    ```
 
-   Every value is a **recommendation** (`proposed_kind`) or a **hint** (`manifest_path_hint`) — nothing here
+   Every value is a **recommendation** (`proposed_kind`) or a **hint** (`target_path_hint`) — nothing here
    is a valid `system-manifest.yaml` field, not even `kind`, because a kind is a design classification the
    architect must author. If the design role adopts it, they author the manifest **anew** (a defined
    conversion step they own); the handoff is never edited-in-place into a manifest.
@@ -251,8 +255,8 @@ a resolution is drafted, and — for some cases — a **refund is issued**. Four
 
 The team runs one command. It asks across the lenses; the answers that matter:
 
-- **Components:** 4, two of them agents → **≥2 components + ≥1 edge**, so the intake **selects the
-  compound-agentic surface** (ADV-13) and routes in.
+- **Components:** 4, two of them agents → **≥2 components + ≥1 edge**, so the **external gate→probe selector**
+  (§3.1, ADV-13) routes into `hitl:agentic-intake` — the intake itself does **not** select the surface.
 - **Right-sizing:** are the agents *deep*? No — bounded classify/draft tasks → **simple agents**. Do you
   need multi-agent at all? Yes, two distinct jobs. (The intake actively pushes back on over-engineering
   here.)
@@ -399,7 +403,7 @@ scenario record, so the map never drifts from the design.
 | A3 | **Recommend, never decide** — output is a proposal + decision record the human confirms |
 | A4 | **HITL composes a proportionate workflow** from the intake — ask/run only what's relevant; depth follows risk |
 | A5 | The intake **recommends + records**; it **authors no manifest field** (re-scope 2026-07-23). Output = a decision record + a neutral `agentic-design-handoff.yaml` (`proposed_kind`s + recommendation IDs + hints, no `kind:`); a **human authors** the manifest; **#10 validates** it |
-| A6 | The **floor is a Tier + risk recommendation** (advice, not a gate) — the controls that shouldn't be skipped; a skip is **recorded**, and the hard block-or-waive happens **downstream at #10** on the human-authored manifest; Tier scales recommended depth |
+| A6 | Floor membership = the **safety-relevant risk factors** (agent presence, edges, irreversible side-effects, autonomy+side-effects, async) — advice, not a gate; a skip is **recorded**, and the hard block-or-waive happens **downstream at #10** on the human-authored manifest; `Tier`/`stakes` inform only an **advisory depth note** (no computed field) |
 | A7 | The Advisor **records the build-vs-buy decision; a human carries it** to the platform track — provisions nothing, auto-hands-off to nothing |
 | A8 | The **evolving map is a generated view, terminal-first** — **core = inline text (no browser) + Markdown/Mermaid** in the decision record; regenerated per step; the **rich HTML + combined live mode are a deferred enhancement** (M8); HITL writes/prints, runs no live server |
 | A9 | The intake **integrates into `pm-design-feature`/`AGENTS.md`** — a **cheap topology probe routes** (no circularity, B2): precedes the design track for compound systems (≥2 components + ≥1 edge), skipped for simple ones; never gates or replaces the existing intake |
