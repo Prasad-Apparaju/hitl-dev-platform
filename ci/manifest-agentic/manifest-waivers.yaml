@@ -1,0 +1,13 @@
+# General manifest-waiver store (compound-agentic surface, #10 / LLD §6).
+# EVERY blocking check consults this file. When a check would emit Blocker{code,
+# locus}, `main` suppresses it iff a waiver matches (code, locus), tier <= tier_limit,
+# and revisit >= today — downgrading to a recorded `waived` note (surfaced, never
+# silent). A lapsed or tier-exceeded waiver does NOT suppress. NON-WAIVABLE:
+# unparseable / unknown_field / schema_invalid and any system:* / registry:* blocker.
+# Human-authored (HITL's tier/waiver process); #10 takes no input from the Advisor.
+schema_version: "1.0"
+
+waivers: []
+  # - { code: leg_missing, locus: some_interaction, owner: platform-team,
+  #     reason: "tracked in #NNN; deterministic caller hardened out-of-band",
+  #     tier_limit: 1, revisit: 2026-10-01 }

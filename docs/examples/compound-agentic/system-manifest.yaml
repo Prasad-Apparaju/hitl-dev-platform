@@ -46,6 +46,13 @@ domains:
       privilege: ["read:customer", "read:order"]
     uses:
       - { capability: crm.read, operations: [read], resources: [customer, order] }
+    facade_apis:
+      lookup:
+        signature: "lookup(customer_ref: CustomerRef) -> AccountView"
+        blurb: "Returns the account/order view for a customer reference."
+        mutations: []
+        preconditions: ["customer_ref is well-formed"]
+        error_modes: ["not_found -> AccountView.empty"]
 
   resolution_agent:
     purpose: "Drafts a resolution; may propose a refund for a human-approved case."
@@ -72,6 +79,13 @@ domains:
           - { resource: session, staleness: 1h }
         writes:
           - { resource: session }
+    facade_apis:
+      resolve:
+        signature: "resolve(request: ClassifiedRequest) -> DraftResolution"
+        blurb: "Drafts a resolution and may propose a refund for human approval."
+        mutations: ["writes session memory (Langfuse span)"]
+        preconditions: ["request is classified"]
+        error_modes: ["low_confidence -> escalate to human"]
     evals: { spec: "docs/03-engineering/evals/component/resolution_agent.yaml" }
 
   refund_service:
@@ -83,6 +97,13 @@ domains:
       privilege: ["execute:refund"]
     uses:
       - { capability: refund.execute, operations: [execute], resources: [refund] }
+    facade_apis:
+      issue_refund:
+        signature: "issue_refund(proposal: RefundProposal) -> RefundReceipt"
+        blurb: "Executes an approved refund via the payment API. IRREVERSIBLE."
+        mutations: ["external API call: payment refund (IRREVERSIBLE)"]
+        preconditions: ["proposal validated + human-approved"]
+        error_modes: ["payment_declined -> RefundReceipt.failed"]
 
 interactions:
 
@@ -156,7 +177,7 @@ interactions:
 
 segments:
   - id: refund_flow
-    path: [classify_to_lookup, lookup_to_resolve, propose_refund]
+    path: [lookup_to_resolve, propose_refund]   # consecutive: resolution_agent -> refund_service
     e2e: true
     transactional: true
     evals: { spec: "docs/03-engineering/evals/segment/refund_flow.yaml" }
