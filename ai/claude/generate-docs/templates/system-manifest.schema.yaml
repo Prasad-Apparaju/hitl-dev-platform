@@ -20,7 +20,7 @@ schema:
     description: "Path to the generator script"
 
   domains:
-    type: map[string, DomainEntry]
+    type: "map[string, DomainEntry]"
     description: "One entry per domain (bounded context). Key is the domain name."
 
     DomainEntry:
@@ -30,7 +30,7 @@ schema:
         description: "One-line description of what this domain does"
 
       files:
-        type: list[string]
+        type: "list[string]"
         authored: auto
         description: "File paths relative to the project root"
 
@@ -40,12 +40,12 @@ schema:
         description: "Path(s) to LLD documentation"
 
       tests:
-        type: list[string]
+        type: "list[string]"
         authored: auto
         description: "Test file paths for this domain"
 
       boundary_entities:
-        type: map[string, BoundaryEntity]
+        type: "map[string, BoundaryEntity]"
         authored: human
         description: "Entity shapes that cross this domain's boundary — what callers see"
 
@@ -54,14 +54,14 @@ schema:
             type: string
             description: "Multi-line field definition with types"
           consumed_by:
-            type: list[string]
+            type: "list[string]"
             description: "Which domains consume this entity"
           note:
             type: string
             optional: true
 
       facade_apis:
-        type: map[string, FacadeAPI]
+        type: "map[string, FacadeAPI]"
         authored: human
         description: "APIs visible to other domains — enough to call correctly without reading source"
 
@@ -73,17 +73,17 @@ schema:
             type: string
             description: "What the API does in one paragraph. Written for someone who will never read the implementation."
           mutations:
-            type: list[string]
+            type: "list[string]"
             description: "Side effects: INSERT, UPDATE, external API call, Langfuse span, etc. Mark IRREVERSIBLE effects explicitly."
           preconditions:
-            type: list[string]
+            type: "list[string]"
             description: "What must be true before calling"
           error_modes:
-            type: list[string]
+            type: "list[string]"
             description: "What can go wrong and how it's handled"
 
       events_emitted:
-        type: list[EventEntry]
+        type: "list[EventEntry]"
         authored: human
         EventEntry:
           name: { type: string }
@@ -92,7 +92,7 @@ schema:
           note: { type: string, optional: true }
 
       events_consumed:
-        type: list[EventRef]
+        type: "list[EventRef]"
         authored: human
         EventRef:
           name: { type: string }
@@ -100,12 +100,12 @@ schema:
           note: { type: string, optional: true }
 
       depends_on:
-        type: list[string]
+        type: "list[string]"
         authored: auto
         description: "Other domain names this domain depends on"
 
       conventions:
-        type: list[string]
+        type: "list[string]"
         authored: auto
         description: "Convention names from the cross_cutting section that apply to this domain"
 
@@ -116,8 +116,135 @@ schema:
           date: { type: string, description: "YYYY-MM-DD" }
           summary: { type: string, description: "One-line change summary" }
 
+      # ───────────────────────────────────────────────────────────────────────
+      # Compound-agentic extensions (EPIC #10, v3.3) — ALL optional and additive.
+      # A domain with none of these is deterministic and validates unchanged
+      # (per-check activation, ADR-13). Field spec: LLD 03-lld.md §3; validators:
+      # ci/manifest-agentic/check_manifest_agentic.py (#16).
+      # ───────────────────────────────────────────────────────────────────────
+      kind:
+        type: "enum[deterministic, simple_agent, deep_agent]"
+        optional: true
+        authored: human
+        description: "Component kind; absent ⇒ deterministic. Choose the SIMPLEST that fits (CR-2)."
+      kind_rationale:
+        type: string
+        optional: true
+        authored: human
+        description: "Why this is the simplest kind that fits (CR-2). Required for agents in a compound manifest (check_classification, §6.15)."
+      owning_fr:
+        type: string
+        optional: true
+        authored: human
+        description: "e.g. 'FR-26' — baseline-eval + traceability source (§7.4)."
+
+      identity:
+        type: Identity
+        optional: true
+        authored: human
+        description: "Non-human identity + granted privilege scopes (§6.2)."
+        Identity:
+          principal:
+            type: string
+            description: "The non-human identity (service account / workload id)."
+          privilege:
+            type: "list[Scope]"
+            description: "GRANTED scopes {op:resource}; each MUST be ⊆ the capability registry ceiling (§6.2)."
+
+      uses:
+        type: "list[CapabilityUse]"
+        optional: true
+        authored: human
+        description: "Per-use capability scoping (F1, §6.2). Each contributes scopes {op:resource} (or {op:*} if resources omitted), each ⊆ registry ceiling."
+        CapabilityUse:
+          capability:
+            type: string
+            description: "Key in approved-capabilities.yaml."
+          operations:
+            type: "list[string]"
+            description: "The specific ops, e.g. [read]."
+          resources:
+            type: "list[string]"
+            optional: true
+            description: "e.g. [customer]; omitted ⇒ resource '*'."
+
+      memory:
+        type: Memory
+        optional: true
+        authored: human
+        description: "Memory / state model, value-checked against uses + stores.yaml (CR-18, §3.1/§6.11)."
+        Memory:
+          short_term:
+            type: Strategy
+            optional: true
+            Strategy:
+              strategy: { type: "enum[none, summarize, compress, isolate]" }
+              budget_tokens: { type: "int>0", optional: true, description: "REQUIRED unless strategy==none (§6.11)." }
+          long_term:
+            type: LongTerm
+            optional: true
+            LongTerm:
+              store: { type: string, description: "Resolves in stores.yaml; MUST be durability:durable (§6.11)." }
+              durability: { type: "enum[durable]", description: "ONLY durable is valid for long_term." }
+              owner: { type: domain_name }
+              retrieval: { type: "enum[semantic, episodic, keyed, filesystem]", description: "filesystem = deep-agent virtual-fs (M7)." }
+              scope: { type: "enum[isolated, shared]" }
+              shared_store: { type: string, optional: true, description: "REQUIRED iff scope==shared; resolves in stores.yaml with shared:true (§6.11)." }
+              pii: { type: "enum[none, redact, block]", description: "REQUIRED; 'none' needs pii_justification." }
+              pii_justification: { type: string, optional: true }
+              reads:
+                type: "list[MemoryAccess]"
+                optional: true
+              writes:
+                type: "list[MemoryAccess]"
+                optional: true
+              MemoryAccess:
+                resource: { type: string, description: "Store resource; requires a matching uses scope (§6.2/§6.11)." }
+                high_stakes: { type: bool, optional: true, description: "Write only; true ⇒ high_stakes_guardrail required (§6.11)." }
+                provenance: { type: string, optional: true, description: "Write only; REQUIRED when high_stakes (M5)." }
+                staleness: { type: duration, optional: true, description: "Read only; max acceptable age (M5)." }
+              high_stakes_guardrail: { type: PolicyRef, optional: true }
+
+      lifecycle:
+        type: Lifecycle
+        optional: true
+        authored: human
+        description: "Long-running / durable-execution lifecycle (CR-17, §3.2/§6.10)."
+        Lifecycle:
+          long_running: { type: bool }
+          checkpoint: { type: "enum[none, durable]" }
+          checkpoint_store: { type: string, optional: true, description: "REQUIRED iff checkpoint==durable; resolves in stores.yaml, durable class (§6.10)." }
+          resume_cursor: { type: string, optional: true, description: "REQUIRED iff long_running; grammar ^[a-z0-9_.-]+$." }
+          resumable: { type: bool, optional: true }
+          idempotent_resume: { type: bool, optional: true }
+          side_effect_key: { type: idempotency_key, optional: true, description: "REQUIRED iff resumable AND the component is side-effecting (§6.10)." }
+          human_gate: { type: bool, optional: true, description: "Declares a human-in-the-loop gate over the long horizon." }
+          human_gate_pause: { type: bool, optional: true, description: "REQUIRED true iff human_gate==true (§6.10)." }
+          timeout: { type: duration, optional: true }
+          cancellation: { type: "enum[cooperative, hard]", optional: true, description: "REQUIRED iff long_running; 'none' is not a member (§6.10)." }
+
+      deep_agent:
+        type: DeepAgent
+        optional: true
+        authored: human
+        description: "Deep-agent structure; REQUIRED iff kind==deep_agent (CR-7, §3.3/§6.9). Also requires memory.long_term durable + retrieval filesystem|semantic."
+        DeepAgent:
+          planner: { type: domain_name }
+          subagents: { type: "list[domain_name]", description: "REFERENCES to declared domains (M7)." }
+          context_isolation: { type: bool, description: "MUST be true (§6.9)." }
+          gates: { type: "list[PolicyRef]" }
+          guardrails: { type: "list[PolicyRef]" }
+
+      evals:
+        type: object
+        optional: true
+        authored: human
+        description: "Component-level eval spec path (§7); the inline authoring source for the eval index."
+        fields:
+          spec: { type: string, description: "Repo-relative path to the eval spec (§7.2)." }
+
   cross_cutting:
-    type: list[ConventionEntry]
+    type: "list[ConventionEntry]"
     description: "Conventions that apply across domain boundaries"
 
     ConventionEntry:
@@ -128,7 +255,7 @@ schema:
         type: string
         description: "The enforceable rule — specific enough to check"
       affected_domains:
-        type: list[string]
+        type: "list[string]"
         description: "Which domains must follow this rule"
       enforcement:
         type: string
@@ -139,8 +266,13 @@ schema:
         description: "Path to the ADR that decided this convention"
 
   interaction_matrix:
-    type: map[string, InteractionEntry]
-    description: "Directed edges between domains. Key format: 'domain_a -> domain_b'"
+    type: "map[string, InteractionEntry]"
+    description: >
+      Directed edges between domains. Key format: 'domain_a -> domain_b'.
+      DERIVED when top-level `interactions` is present (a generated coarse projection,
+      one entry per distinct pair — LLD §2.4); hand-authoring it in the manifest
+      alongside `interactions` is a blocker (edge_double_authored, §6.6). Retained
+      as-is for legacy manifests with no `interactions` list.
 
     InteractionEntry:
       description:
@@ -149,3 +281,133 @@ schema:
       entity_crossing:
         type: string
         description: "What data crosses the boundary (entity names or shapes)"
+
+  # ═════════════════════════════════════════════════════════════════════════════
+  # Compound-agentic surface (EPIC #10, v3.3) — top-level additions, ALL optional
+  # and additive. Field spec: LLD 03-lld.md §2/§4; validators: ci/manifest-agentic
+  # (#16). `depends_on`/`events_emitted`/`events_consumed` (in DomainEntry above)
+  # become DERIVED projections when `interactions` is present (§2.4).
+  # ═════════════════════════════════════════════════════════════════════════════
+
+  interactions:
+    type: "list[InteractionElement]"
+    optional: true
+    authored: human
+    description: >
+      Authoritative edge model when present (§2). The element identity is `id`, so
+      two edges between the same pair (a sync_call AND an event) are two elements —
+      what the pair-keyed interaction_matrix cannot represent (B1).
+
+    InteractionElement:
+      id: { type: interaction_id, description: "Unique across the list (§6.5)." }
+      from: { type: domain_name, description: "Source domain." }
+      to: { type: domain_name, description: "Destination domain." }
+      kind: { type: "enum[sync_call, async_task, event]" }
+      facade: { type: string, description: "facade_ref for call/task; event_ref for event (§4.1 requiredness)." }
+      description: { type: string }
+      entity_crossing: { type: string }
+      request: { type: Leg, optional: true, description: "from → to (§2.2)." }
+      response: { type: Leg, optional: true, description: "to → from (§2.2); FORBIDDEN when kind==event." }
+      authorization: { type: Authorization, optional: true, description: "§2.3." }
+      async: { type: AsyncSpec, optional: true, description: "§2.1; required for async_task and reliable event." }
+      side_effecting: { type: bool, optional: true, description: "Default derived from facade.mutations (§6.7); saga input." }
+      evals: { type: object, optional: true, fields: { spec: { type: string } }, description: "Eval spec path for this edge (§7)." }
+
+      # Leg — the trust struct, one shape for every data leg (§2.2). The validator
+      # derives (source, consumer) per leg and applies the boundary rule to the
+      # leg's actual consumer.
+      Leg:
+        validation: { type: PolicyRef, optional: true, description: "schema/guardrail on the data (§6.3)." }
+        cost_bound: { type: QuantPolicy, optional: true, description: "§6.3." }
+        authority_bound: { type: "list[Scope]", optional: true, description: "⊆ consumer.identity.privilege (§6.3)." }
+
+      # AsyncSpec (§2.1) — reliability for async_task / reliable event.
+      AsyncSpec:
+        delivery: { type: "enum[at_most_once, at_least_once]", description: "NO exactly_once (broker boundary, CR-12)." }
+        consumer_idempotent: { type: bool, optional: true, description: "REQUIRED true iff delivery==at_least_once (§6.7)." }
+        idempotency_key: { type: idempotency_key, optional: true, description: "REQUIRED iff consumer_idempotent (payload field path)." }
+        timeout: { type: duration, description: "Logical task/delivery timeout, >0." }
+        retry: { type: object, optional: true, fields: { max: { type: "int>=1" }, backoff: { type: "enum[linear, exponential]" } }, description: "FORBIDDEN when delivery==at_most_once (§6.7)." }
+        dlq: { type: bool, optional: true, description: "REQUIRED true when delivery==at_least_once unless dlq_justification (§6.7)." }
+        dlq_justification: { type: string, optional: true }
+        replay: { type: "enum[none, event_sourced]", optional: true }
+
+      # Authorization (§2.3) — non-human identity, JIT default.
+      Authorization:
+        allowed_callers: { type: "list[domain_name]", description: "Each MUST be a domain with an identity.principal (§6.4)." }
+        audience: { type: domain_name, optional: true, description: "The callee identity invoked; defaults to `to`." }
+        credential_mode: { type: "enum[jit, static, none]", description: "Default expectation is jit." }
+        credential_justification: { type: string, optional: true, description: "REQUIRED when credential_mode ∈ {static, none} (§6.4)." }
+
+  orchestration:
+    type: Orchestration
+    optional: true
+    authored: human
+    description: "Multi-agent coordination pattern (CR-11, §4/§6.5)."
+    Orchestration:
+      pattern: { type: "enum[supervisor, hierarchical, swarm, blackboard, sequential, hybrid]" }
+      justification: { type: string, description: "REQUIRED: task-shape fit + token-overhead ack (CR-11, §6.5)." }
+      coordinator: { type: domain_name, optional: true, description: "MUST name an agent domain fitting the pattern (§6.5)." }
+      cycle_bound: { type: "int>0", optional: true, description: "REQUIRED (and >0) iff the interaction graph has a cycle (§6.5)." }
+
+  segments:
+    type: "list[Segment]"
+    optional: true
+    authored: human
+    description: "Eval + routing targets (§7, CR-3/8)."
+    Segment:
+      id: { type: string }
+      path: { type: "list[interaction_id]", description: "Consecutive; each hop's `to` == next hop's `from` (§6.5)." }
+      e2e: { type: bool, optional: true, description: "true = an end-to-end flow (CR-8)." }
+      transactional: { type: bool, optional: true, description: "true = author-declared distributed-compensation unit; drives an ADVISORY in core (§4.2)." }
+      evals: { type: object, optional: true, fields: { spec: { type: string } } }
+
+  sagas:
+    type: "list[Saga]"
+    optional: true
+    authored: human
+    description: "Top-level, id-keyed distributed-compensation units (CR-12, §4.2). Core validates well-formedness; the required-when model is deferred to #42."
+    Saga:
+      id: { type: string, description: "Unique." }
+      coordinator: { type: domain_name, description: "Owns/starts the saga; an agent or deterministic orchestrator." }
+      order: { type: "enum[sequential]", description: "Core = sequential only; parallel compensation deferred to #42." }
+      steps:
+        type: "list[SagaStep]"
+        SagaStep:
+          interaction_id: { type: interaction_id, description: "A side-effecting interaction in this saga's flow." }
+          compensation: { type: PolicyRef, description: "The compensating action (an `action` policy, §6.8)." }
+          compensation_idempotent: { type: bool, description: "MUST be true (§6.7)." }
+          on_compensation_failure: { type: "enum[halt, escalate]" }
+
+  observability:
+    type: Observability
+    optional: true
+    authored: human
+    description: >
+      Cross-hop tracing + cost budget + PM eval-console declaration (CR-9/CR-16,
+      §4.3). REQUIRED once any domain is an agent — check_observability is a FLOOR
+      GATE (§6.17). HITL validates + gates the declaration; the product builds the
+      running trace backend + console (governs-not-runtime, #21).
+    Observability:
+      tracing:
+        type: Tracing
+        Tracing:
+          convention: { type: "enum[otel_genai, openinference]", description: "The trace convention the product emits to." }
+          hops: { type: "list[interaction_id]", description: "Traced hops — must ⊇ every agent-endpoint interaction (§6.17)." }
+          attributes: { type: "list[string]", description: "Span attributes — must ⊇ the convention's REQUIRED set (§6.17), not free text." }
+      cost_budget: { type: QuantPolicy, description: "Token-cost amplification budget (§6.8 grammar; limit > 0)." }
+      eval_console:
+        type: EvalConsole
+        EvalConsole:
+          access: { type: "enum[report, existing_surface, console]", description: "Tier-scaled: report|existing_surface valid at Tier≤1; console required at Tier≥2 (§6.17)." }
+          owner: { type: string, description: "The role/team that operates it." }
+          ref: { type: ResolvableRef, description: "MUST resolve (§6.17): domain:<id> | facade:<ref> | service:<id> | artifact:<repo-path>." }
+
+  # Shared grammars referenced above (validated by ci/manifest-agentic, §6):
+  #   Scope          = "op:resource" (or "op:*"); each granted scope ⊆ a registry ceiling.
+  #   PolicyRef      = a "<ns>:<name>" key in policies.yaml (resolves to schema|guardrail|action).
+  #   QuantPolicy    = { limit: int>0, unit: enum[tokens, calls, fanout] }.
+  #   ResolvableRef  = domain:<domain_name> | facade:<facade_ref> | service:<registry id> | artifact:<repo-relative path that exists>.
+  #   interaction_id = ^[a-z0-9][a-z0-9_-]*$ ; idempotency_key = a payload field path ; duration = ^[0-9]+(ms|s|m|h|d)$.
+  # Registries (docs/03-engineering/): approved-capabilities.yaml (ceilings + runtime_ref),
+  #   policies.yaml (PolicyRefs), stores.yaml (durable/shared stores), evals/index.yaml + waivers.yaml.

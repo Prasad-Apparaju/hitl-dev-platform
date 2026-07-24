@@ -1,0 +1,191 @@
+# System Manifest — Worked Example (Compound Agentic: Support Assistant)
+#
+# Reference manifest for the compound-agentic surface (EPIC #10). A support
+# assistant built as a graph of deterministic services + simple agents with sync,
+# async, and event edges. Exercises every new block so it doubles as the #16
+# conformance showcase (HLD §13.3).
+#
+# Registries it resolves against (docs/03-engineering/): approved-capabilities.yaml,
+# policies.yaml, stores.yaml, evals/index.yaml + waivers.yaml.
+# Field documentation: ai/claude/generate-docs/templates/system-manifest.schema.yaml
+#
+# NOTE: value-level pass/fail is tuned against the real validator in Phase B (#16);
+# this file is shape-complete and intended to VALIDATE clean.
+
+version: "1.0"
+generated_at: "2026-07-23T00:00:00Z"
+
+orchestration:
+  pattern: sequential
+  justification: >
+    A request flows classify -> lookup -> resolve -> (maybe) refund. A sequential
+    pipeline fits the fixed task shape; no supervisor loop is needed, so the
+    token overhead of multi-agent coordination is avoided (CR-11).
+
+domains:
+
+  intake_agent:
+    purpose: "Classifies an incoming support request and extracts intent."
+    kind: simple_agent
+    kind_rationale: "Bounded single-shot classification; no long-horizon planning or sub-agents ⇒ simplest fit is a simple agent (CR-2)."
+    owning_fr: "FR-26"
+    files: ["src/agents/intake.py"]
+    identity:
+      principal: "sa-intake"
+      privilege: ["invoke:completion"]
+    uses:
+      - { capability: llm.generate, operations: [invoke], resources: [completion] }
+    evals: { spec: "docs/03-engineering/evals/component/intake_agent.yaml" }
+
+  account_service:
+    purpose: "Looks up the customer's account and order (system of record)."
+    kind: deterministic
+    files: ["src/services/account.py"]
+    identity:
+      principal: "sa-account"
+      privilege: ["read:customer", "read:order"]
+    uses:
+      - { capability: crm.read, operations: [read], resources: [customer, order] }
+
+  resolution_agent:
+    purpose: "Drafts a resolution; may propose a refund for a human-approved case."
+    kind: simple_agent
+    kind_rationale: "Bounded draft-and-propose task over the retrieved context; no planner/sub-agents ⇒ simple agent (CR-2)."
+    owning_fr: "FR-26"
+    files: ["src/agents/resolution.py"]
+    identity:
+      principal: "sa-resolution"
+      privilege: ["invoke:completion", "read:session", "write:session"]
+    uses:
+      - { capability: llm.generate, operations: [invoke], resources: [completion] }
+      - { capability: session.memory, operations: [read], resources: [session] }
+      - { capability: session.memory, operations: [write], resources: [session] }
+    memory:
+      long_term:
+        store: session_store
+        durability: durable
+        owner: resolution_agent
+        retrieval: semantic
+        scope: isolated
+        pii: redact
+        reads:
+          - { resource: session, staleness: 1h }
+        writes:
+          - { resource: session }
+    evals: { spec: "docs/03-engineering/evals/component/resolution_agent.yaml" }
+
+  refund_service:
+    purpose: "Executes an approved refund via the payment API (IRREVERSIBLE)."
+    kind: deterministic
+    files: ["src/services/refund.py"]
+    identity:
+      principal: "sa-refund"
+      privilege: ["execute:refund"]
+    uses:
+      - { capability: refund.execute, operations: [execute], resources: [refund] }
+
+interactions:
+
+  - id: classify_to_lookup
+    from: intake_agent
+    to: account_service
+    kind: sync_call
+    facade: "account_service:lookup"
+    description: "Intake asks the account service to look up the customer/order."
+    entity_crossing: "CustomerRef -> AccountView"
+    request:
+      validation: refund:request_schema        # source is stochastic, consumer deterministic ⇒ validate
+    response:
+      cost_bound: { limit: 4000, unit: tokens } # consumer (intake) is stochastic ⇒ cost + authority
+      authority_bound: ["invoke:completion"]
+
+  - id: lookup_to_resolve
+    from: intake_agent
+    to: resolution_agent
+    kind: sync_call
+    facade: "resolution_agent:resolve"
+    description: "Intake hands the classified request to the resolution agent."
+    entity_crossing: "ClassifiedRequest -> DraftResolution"
+    request:
+      cost_bound: { limit: 8000, unit: tokens }
+      authority_bound: ["invoke:completion", "read:session"]
+    response:
+      cost_bound: { limit: 4000, unit: tokens }
+      authority_bound: ["invoke:completion"]
+    authorization:
+      allowed_callers: [intake_agent]
+      credential_mode: jit
+
+  - id: propose_refund
+    from: resolution_agent
+    to: refund_service
+    kind: async_task
+    facade: "refund_service:issue_refund"
+    description: "Resolution agent proposes a refund; the payment service executes it (irreversible)."
+    entity_crossing: "RefundProposal -> RefundReceipt"
+    side_effecting: true
+    request:
+      validation: refund:request_schema         # stochastic -> deterministic ⇒ validate the proposal
+    response:
+      cost_bound: { limit: 2000, unit: tokens }  # consumer (resolution) is stochastic ⇒ cost + authority
+      authority_bound: ["invoke:completion"]
+    authorization:
+      allowed_callers: [resolution_agent]
+      credential_mode: jit
+    async:
+      delivery: at_least_once
+      consumer_idempotent: true
+      idempotency_key: "proposal.refund_id"
+      timeout: 30s
+      dlq: true
+
+  - id: refund_executed_event
+    from: refund_service
+    to: account_service
+    kind: event
+    facade: "refund_service:refund_executed"
+    description: "Refund service emits a reliable event that a refund was executed."
+    entity_crossing: "RefundExecuted"
+    side_effecting: true
+    async:
+      delivery: at_least_once
+      consumer_idempotent: true
+      idempotency_key: "event.refund_id"
+      timeout: 60s
+      dlq: true
+
+segments:
+  - id: refund_flow
+    path: [classify_to_lookup, lookup_to_resolve, propose_refund]
+    e2e: true
+    transactional: true
+    evals: { spec: "docs/03-engineering/evals/segment/refund_flow.yaml" }
+
+sagas:
+  - id: refund_saga
+    coordinator: resolution_agent
+    order: sequential
+    steps:
+      - interaction_id: propose_refund
+        compensation: refund:reversal
+        compensation_idempotent: true
+        on_compensation_failure: escalate
+
+observability:
+  tracing:
+    convention: otel_genai
+    hops: [classify_to_lookup, lookup_to_resolve, propose_refund]
+    attributes:
+      - gen_ai.system
+      - gen_ai.request.model
+      - gen_ai.usage.input_tokens
+      - gen_ai.usage.output_tokens
+  cost_budget: { limit: 100000, unit: tokens }
+  eval_console:
+    access: console
+    owner: "product-support-pm"
+    ref: "domain:resolution_agent"
+
+cross_cutting:
+  - name: input-validation
+    rule: "All external inputs validated at the boundary before an agent or service trusts them."

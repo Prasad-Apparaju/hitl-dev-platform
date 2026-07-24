@@ -1,0 +1,17 @@
+# Store registry (compound-agentic surface, #10 / LLD §5, §6.10/§6.11).
+# Durable + shared stores referenced by memory.long_term.store, memory
+# shared_store, and lifecycle.checkpoint_store. A long_term / checkpoint store
+# must resolve here with durability: durable; a shared_store must resolve with
+# shared: true (check_memory, check_lifecycle). Human-authored.
+schema_version: "1.0"
+
+stores:
+  session_store:
+    durability: durable
+    owner: resolution_agent
+    shared: false
+
+  audit_log:
+    durability: durable
+    owner: refund_service
+    shared: true

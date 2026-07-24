@@ -1,0 +1,12 @@
+# Eval-coverage waivers (compound-agentic surface, #10 / LLD §7.1).
+# Human-authored. A mandatory eval target (an agent domain, or the e2e segment)
+# with no `evals.spec` is a coverage gap UNLESS an unlapsed waiver covers it. A
+# waiver is LAPSED (and thus a gap again) when `revisit < today` OR the change
+# tier > `tier_limit`. check_eval_coverage consults this file.
+schema_version: "1.0"
+
+waivers: []
+  # Example:
+  # - { target_type: component, target_id: legacy_summarizer, owner: platform-team,
+  #     reason: "covered by upstream contract tests; eval spec tracked in #NNN",
+  #     tier_limit: 1, revisit: 2026-10-01 }

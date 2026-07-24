@@ -1,0 +1,13 @@
+# Eval coverage index (compound-agentic surface, #10 / LLD §7.1).
+# GENERATED projection of the inline `evals.spec` declarations on domains /
+# interactions / segments (regenerate-and-diff, §2.4). Do NOT hand-edit — a row
+# that differs from the projection is `eval_index_mismatch` (§6.6). `rows` is
+# unique on (target_type, target_id). check_eval_coverage reads this index; core
+# mandatory targets = every agent domain + one e2e segment.
+schema_version: "1.0"
+
+rows: []
+  # Example (generated from a manifest's inline evals.spec fields):
+  # - { target_type: component, target_id: intake_agent,     spec_path: "docs/03-engineering/evals/component/intake_agent.yaml" }
+  # - { target_type: component, target_id: resolution_agent, spec_path: "docs/03-engineering/evals/component/resolution_agent.yaml" }
+  # - { target_type: segment,   target_id: refund_flow,      spec_path: "docs/03-engineering/evals/segment/refund_flow.yaml" }

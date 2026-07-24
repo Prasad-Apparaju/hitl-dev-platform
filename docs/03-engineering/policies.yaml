@@ -1,0 +1,23 @@
+# Policy registry (compound-agentic surface, #10 / LLD §5, §6.8).
+# Every PolicyRef in the manifest resolves to a key here. `kind` declares what the
+# ref resolves to: `schema` (data validation), `guardrail` (input/output guard,
+# high-stakes memory guard, deep-agent gate/guardrail), or `action` (a saga
+# compensation). Human-authored; HITL checks resolution + kind fit (check_policy_refs).
+# Key format: "<ns>:<name>". `ref` points at the product-owned implementation/artifact.
+schema_version: "1.0"
+
+policies:
+  refund:request_schema:
+    kind: schema
+    ref: "docs/03-engineering/schemas/refund_request.json"
+    note: "Validates a proposed refund on the resolution_agent -> refund_service leg before the deterministic service trusts it."
+
+  pii:redact:
+    kind: guardrail
+    ref: "guardrails/pii_redaction"
+    note: "Redacts customer PII in agent context/memory."
+
+  refund:reversal:
+    kind: action
+    ref: "actions/refund_reversal"
+    note: "Compensating action for an executed refund (saga step compensation)."
