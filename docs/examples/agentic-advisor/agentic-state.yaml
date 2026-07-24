@@ -1,0 +1,44 @@
+feature: support-assistant
+components:
+- id: intake_agent
+  role: agent
+  proposed_kind: simple_agent
+  rationale: bounded classify task
+- id: account_service
+  role: service
+  proposed_kind: deterministic
+  rationale: system of record
+- id: resolution_agent
+  role: agent
+  proposed_kind: simple_agent
+  rationale: bounded draft task
+- id: refund_service
+  role: service
+  proposed_kind: deterministic
+  rationale: executes an irreversible refund
+edges:
+- id: classify
+  from: intake_agent
+  to: account_service
+  transport: sync_call
+- id: resolve
+  from: intake_agent
+  to: resolution_agent
+  transport: sync_call
+- id: refund
+  from: resolution_agent
+  to: refund_service
+  transport: async_task
+  side_effecting: true
+answers:
+  stakes: customer_facing
+  side_effects: irreversible
+  data: pii
+  autonomy: supervised
+  scale: small
+  greenfield: true
+skips: []
+deploy:
+  recommend: managed
+  chosen: managed
+  carry_to: platform/ops (FR-25)

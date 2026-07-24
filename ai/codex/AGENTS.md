@@ -93,7 +93,7 @@ Ask one at a time. Wait for each answer before asking the next.
    - Backend/API only → Phase 4 skipped; acceptance criteria will be contract-shaped.
    - Agentic → Phase 4 replaced with tool schema, decision flow, and HITL gate definitions. **Then run the compound-surface probe.**
    - *Follow-up (if vague):* "Is there a primary surface, or are they truly equal-priority?"
-   - **Compound-surface probe (agentic only, EPIC #10):** ask (a) how many distinct components (services/agents/stores)? (b) does any component call/hand-off/message another? **≥2 components AND ≥1 edge → the compound-agentic surface** — design it as an extended manifest gated by `ci/manifest-agentic` (Phase 4 compound track). A single agent → the existing single-agent path; a non-agentic multi-service app never reaches this probe. *(FR-28/#35 Advisor will recommend into this same branch later; #10 needs no input from it — a human authors the manifest, the validators gate it.)*
+   - **Compound-surface probe (agentic only, EPIC #10):** ask (a) how many distinct components (services/agents/stores)? (b) does any component call/hand-off/message another? **≥2 components AND ≥1 edge → the compound-agentic surface** — **run `hitl:agentic-intake` first** (elicit → recommend a right-sized control set → record → neutral `agentic-design-handoff.yaml`), **then** a human authors the extended manifest from the handoff, gated by `ci/manifest-agentic` (Phase 4 compound track). A single agent → the existing single-agent path; a non-agentic multi-service app never reaches this probe. *(The Advisor authors no manifest field; #10 needs no input from it and validates the human-authored manifest.)*
 
 2. **Who is this for?** Which persona from `docs/01-product/prd.md` §3?
 
