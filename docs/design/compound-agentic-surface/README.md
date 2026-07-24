@@ -10,10 +10,11 @@ The **requirements (what)** live one layer up, under the product area:
 
 | Doc | Content | Status |
 |---|---|---|
-| [01-design.md](01-design.md) | HLD (v3.2): manifest extensions, `interactions` edge model, determinism-boundary per leg, A2A-as-facade encoding, per-check activation, eval + saga discipline, decisions D1-D13 | Draft, core-lock applied, pending Codex round 5 |
-| [02-adrs.md](02-adrs.md) | ADR-1..ADR-13 (v3.2) formalizing D1-D13 (alternatives + concrete cost) | Accepted, core-lock applied |
-| [03-lld.md](03-lld.md) | LLD (v3.2): exact schema field types, scope grammar, needed-privilege algorithm, validator signatures + test matrix | Draft, pending Codex round 5 |
-| [04-revision-plan.md](04-revision-plan.md) | Codex review response (rounds 1-4) + the round-4 **core scope lock** fix-map | Living |
+| [01-design.md](01-design.md) | HLD (v3.3): manifest extensions, `interactions` edge model, determinism-boundary per leg, A2A-as-facade encoding, per-check activation, eval + saga discipline, decisions D1-D13 | **Review concluded 2026-07-23; cleared to implement** |
+| [02-adrs.md](02-adrs.md) | ADR-1..ADR-13 (v3.3) formalizing D1-D13 (alternatives + concrete cost) | **Accepted; cleared to implement** |
+| [03-lld.md](03-lld.md) | LLD (v3.3): exact schema field types, scope grammar, needed-privilege algorithm, validator signatures + test matrix | **Review concluded 2026-07-23; cleared to implement** |
+| [04-revision-plan.md](04-revision-plan.md) | Codex review response (rounds 1-12) + the round-4 **core scope lock** fix-map | Living |
+| [05-implementation-plan.md](05-implementation-plan.md) | Build sequencing for 2.2.0: schema (#13) → validators (#16) → views (#15) → design-flow (#12) → docs (#14/#17) → validate/release (#19/#20), TDD + per-rule conformance | **Active — implementation roadmap** |
 
 The round-4 review drove a **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)):
 eval coverage → per-agent + e2e (universal deferred); saga → declared-only + compensation-gap advisory
