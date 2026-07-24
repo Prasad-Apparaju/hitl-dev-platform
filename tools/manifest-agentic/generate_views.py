@@ -125,7 +125,7 @@ def render_topology_md(m):
              "```mermaid", "graph LR"]
     for name in sorted(_domains(m)):
         lo, hi = _SHAPE.get(_kind(m, name), ("[", "]"))
-        lines.append(f"  {name}{lo}{name}<br/>{_kind(m, name)}{hi}")
+        lines.append(f"  {name}{lo}{name} · {_kind(m, name)}{hi}")
     for i in sorted(_interactions(m), key=lambda x: x.get("id", "")):
         arrow = _EDGE.get(i.get("kind"), "-->")
         lines.append(f"  {i.get('from')} {arrow}|{i.get('id')}| {i.get('to')}")
