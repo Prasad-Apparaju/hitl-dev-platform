@@ -125,6 +125,36 @@ def test_reconcile_carries_deferrals_and_deploy():
     assert rec["deferrals"] == old["deferrals"] and rec["deploy"] == old["deploy"]
 
 
+def test_reconcile_tolerates_idless_edge_and_string_depends_on():
+    # round-2 F4: an id-less edge must not crash reconcile (was `{e["id"]: e}` KeyError);
+    # a string `depends_on` is ONE path, not a char-iterable (typo'd path no longer silently confirms).
+    old = {"components": [{"id": "a", "proposed_kind": "simple_agent"}],
+           "edges": [{"from": "a", "to": "b", "transport": "sync_call"}],   # NO id
+           "decisions": [{"id": "d1", "attaches_to": "a", "depends_on": "answers.side_effects", "state": "confirmed"}],
+           "answers": {"side_effects": "none"}}
+    new = {"components": [{"id": "a", "proposed_kind": "deep_agent"}],       # kind changed ⇒ stale
+           "edges": [{"from": "a", "to": "b", "transport": "sync_call"}],
+           "answers": {"side_effects": "irreversible"}}                     # depends_on target changed too
+    rec = R.reconcile(old, new)                                             # must not raise
+    assert rec["decisions"][0]["state"] == "stale"
+
+
+def test_validate_skips_does_not_crash_on_structure():
+    # round-2: a dict/list-valued skip field is FLAGGED, never crashes `.strip()`
+    assert R.validate_skips({"skips": [{"control": {"nested": 1}, "owner": "pm", "reason": "r"}]})
+    assert R.validate_skips({"skips": ["not-a-dict"]})
+    assert R.validate_skips({"skips": None}) == []                          # blank YAML section
+
+
+def test_generate_handoff_survives_blank_state():
+    # round-2 F3: blank/None sections (mid-intake YAML) don't crash record generation
+    blank = {"feature": "x", "components": None, "edges": None, "answers": None, "skips": None}
+    h = R.generate_handoff(blank)
+    assert h["components"] == [] and h["connections"] == [] and h["skips"] == []
+    assert R.handoff_authors_no_manifest_field(h) == set()
+    assert "Floor" in R.generate_decision_record(blank)
+
+
 def test_decision_record_renders_decisions():
     # F5: the decision record shows chosen/rejected/rationale
     s = copy.deepcopy(STATE)

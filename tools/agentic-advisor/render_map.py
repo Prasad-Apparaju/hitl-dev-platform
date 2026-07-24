@@ -31,10 +31,16 @@ ROLE_STYLE = {
 EDGE = {"sync_call": "-->", "async_task": "-.->", "event": "-.->"}
 
 
+# Accessors mirror compose (advisor-F3): a MISSING or present-but-None section (`components:\n`
+# in a mid-intake YAML) degrades to empty and a non-dict entry is skipped — the map never crashes.
+def _comps(s):   return [c for c in _compose._list(s, "components") if isinstance(c, dict)]
+def _edges(s):   return [e for e in _compose._list(s, "edges") if isinstance(e, dict)]
+
+
 def validate_roles(scenario):
     """ROLE-TOTAL: every component has exactly one role from the enum. Returns offending ids."""
     bad = []
-    for c in scenario["components"]:
+    for c in _comps(scenario):
         if c.get("role") not in ROLES:
             bad.append(c.get("id"))
     return bad
@@ -50,12 +56,13 @@ def _breakdown(scenario, composed):
 
 def render_terminal(scenario, composed):
     lines = [f"{scenario.get('feature', 'agentic system')} · compound-agentic surface"]
-    for c in scenario["components"]:
+    for c in _comps(scenario):
         _, _, icon = ROLE_STYLE.get(c.get("role"), ("", "", "?"))
-        lines.append(f"  {icon} {c['id']}  ({c.get('role')}{' · ' + c['proposed_kind'] if c.get('proposed_kind') else ''})")
-    for e in scenario["edges"]:
+        pk = c.get("proposed_kind")
+        lines.append(f"  {icon} {c.get('id')}  ({c.get('role')}{' · ' + pk if pk else ''})")
+    for e in _edges(scenario):
         arrow = {"sync_call": "─▶", "async_task": "··▶", "event": "··✉··▶"}.get(e.get("transport"), "─▶")
-        lines.append(f"    {e['from']} {arrow} {e['to']}")
+        lines.append(f"    {e.get('from')} {arrow} {e.get('to')}")
     getting, available, not_needed = _breakdown(scenario, composed)
     lines += [f"  getting:    {' · '.join(getting) or '(none)'}",
               f"  available:  {' · '.join(available) or '(none)'}",
@@ -65,14 +72,14 @@ def render_terminal(scenario, composed):
 
 def render_mermaid(scenario, composed):
     lines = ["```mermaid", "graph LR"]
-    for c in scenario["components"]:
+    for c in _comps(scenario):
         lo, hi, _ = ROLE_STYLE.get(c.get("role"), ("[", "]", ""))
-        label = f"{c['id']} · {c.get('role')}"
-        lines.append(f"  {c['id']}{lo}{label}{hi}")
-    for e in scenario["edges"]:
+        cid = c.get("id")
+        lines.append(f"  {cid}{lo}{cid} · {c.get('role')}{hi}")
+    for e in _edges(scenario):
         arrow = EDGE.get(e.get("transport"), "-->")
         label = e.get("id") or e.get("transport") or "edge"     # never empty (|| is a parse error)
-        lines.append(f"  {e['from']} {arrow}|{label}| {e['to']}")
+        lines.append(f"  {e.get('from')} {arrow}|{label}| {e.get('to')}")
     lines.append("```")
     return "\n".join(lines) + "\n"
 

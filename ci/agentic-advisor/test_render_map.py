@@ -60,6 +60,23 @@ def test_deterministic():
     assert M.render(SCEN) == M.render(copy.deepcopy(SCEN))
 
 
+def test_blank_yaml_sections_do_not_crash():
+    # round-2 F3: a mid-intake YAML with empty sections parses to None, not [] —
+    # the renderer must degrade to empty, not raise 'NoneType' is not iterable.
+    blank = {"feature": "x", "components": None, "edges": None, "answers": None}
+    out = M.render(blank)
+    assert "graph LR" in out["mermaid"]
+    assert M.validate_roles(blank) == []
+
+
+def test_non_dict_entries_are_skipped():
+    # a malformed component/edge (a bare string) must not crash the map
+    messy = {"feature": "x", "components": ["oops", {"id": "a", "role": "agent"}],
+             "edges": ["bad", {"from": "a", "to": "a", "transport": "sync_call"}], "answers": {}}
+    out = M.render(messy)
+    assert "a" in out["terminal"]
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:

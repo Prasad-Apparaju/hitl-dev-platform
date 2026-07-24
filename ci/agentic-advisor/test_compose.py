@@ -90,6 +90,17 @@ def test_partial_state_does_not_crash():
     assert r["report_sections"]
 
 
+def test_blank_yaml_sections_degrade_to_empty():
+    # round-2 F3: empty YAML sections parse to None (not []); accessors must degrade, not crash
+    r = C.compose({"feature": "x", "components": None, "edges": None, "answers": None})
+    assert r == {"report_sections": [], "floor": [], "rungs": []}
+    # a non-dict answers / non-list components likewise degrade (compose never crashes)
+    assert C.compose({"components": "oops", "edges": 5, "answers": ["bad"]})["report_sections"] == []
+    # validate_scenario is the FINALIZE validator: it surfaces malformed entries (doesn't crash, doesn't skip silently)
+    errs = C.validate_scenario({"components": [None, "x"], "edges": [None]})
+    assert len(errs) == 3
+
+
 def test_validate_scenario_flags_bad_enums():
     # F8: a typo'd proposed_kind / transport is surfaced, not silently demoted
     errs = C.validate_scenario({"components": [{"id": "a1", "proposed_kind": "deep-agent"}],

@@ -34,8 +34,13 @@ def validate(expr):
             if node.id not in ALLOWED_NAMES and node.id not in ATTR_ROOTS:
                 errs.append(f"name '{node.id}' is not in the grammar")
         elif isinstance(node, ast.Attribute):
-            if not (isinstance(node.value, ast.Name) and node.value.id in ATTR_ROOTS):
+            root = node.value
+            if not (isinstance(root, ast.Name) and root.id in ATTR_ROOTS):
                 errs.append("only answers.<factor> / components.count / edges.count are allowed")
+            elif root.id in ("components", "edges") and node.attr != "count":
+                errs.append(f"{root.id}.{node.attr}: only .count is allowed")
+            elif root.id == "answers" and (node.attr.startswith("_") or not node.attr.isidentifier()):
+                errs.append(f"answers.{node.attr}: not a valid factor name")
         else:
             errs.append(f"disallowed expression: {type(node).__name__}")
     return errs

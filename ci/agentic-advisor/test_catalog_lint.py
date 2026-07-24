@@ -84,6 +84,22 @@ def test_ask_when_evaluator_rejects_unsafe():
     assert AW.validate("1 + 1") != []                       # arithmetic not in the grammar
 
 
+def test_ask_when_grammar_is_not_a_superset():
+    # round-2 F7: the grammar is EXACTLY §2.2, not a superset. A dunder attr walk or a bogus
+    # aggregate must be rejected even though the root name (answers/components) is allowed.
+    assert AW.validate("answers.__class__") != []           # dunder factor rejected
+    assert AW.validate("components.size") != []             # only .count on components/edges
+    assert AW.validate("edges.length >= 1") != []
+    # the legitimate §2.2 forms still validate + evaluate
+    scen = {"components": [{"proposed_kind": "simple_agent"}], "edges": [{"transport": "async_task"}],
+            "answers": {"side_effects": "irreversible"}}
+    for good in ("answers.side_effects == 'none'", "components.count >= 2", "edges.count > 0 and any_async",
+                 "any_agent", "not any_async", "true"):
+        assert AW.validate(good) == [], good
+        AW.evaluate(good, scen)                              # must not raise
+    assert AW.evaluate("answers.side_effects == 'irreversible'", scen) is True
+
+
 def test_no_orphan_question():
     """ADV-4: every question changes the report — at least one option has a non-empty consequence."""
     for e in _catalog()["entries"]:

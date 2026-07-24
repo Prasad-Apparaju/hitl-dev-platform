@@ -12,6 +12,8 @@ The Advisor records a `skip` (an Advisor record, granting no #10 exception); the
 a manifest field or runs a #10 validator — that boundary is the point of the feature.
 """
 from __future__ import annotations
+import os
+import sys
 
 try:
     import compose as _compose
@@ -38,16 +40,56 @@ LENS_RECS = {
     "deploy":        ("build-vs-buy decision (managed unless a reason to build) + portability diligence",
                       "carried to the platform/ops track (FR-25) — authors no manifest field"),
 }
-# NO-AUTHOR guard — the FULL #10 manifest vocabulary (F2). A handoff key that is a manifest
-# field name is a boundary violation. (proposed_kind / role / transport / target_path_hint are
-# NOT manifest fields — they are the Advisor's recommendation/neutral vocabulary and stay allowed.)
-MANIFEST_FIELDS = {
+# The handoff's own NEUTRAL vocabulary (structural keys it legitimately shares with #10) — excluded
+# from the guard so a component `id` / connection `from`/`to` / skip `owner` don't self-trip. Every
+# such key is PROJECTED + stringified at emit time, so none can carry an authored manifest value.
+_HANDOFF_NEUTRAL = {"id", "from", "to", "control", "owner", "reason"}
+# A comprehensive static fallback (top-level + NESTED #10 field names) used if #10 isn't co-located.
+_STATIC_MANIFEST_FIELDS = {
     "kind", "kind_rationale", "domains", "interactions", "facade_apis", "boundary_entities",
     "events_emitted", "events_consumed", "cross_cutting", "interaction_matrix", "uses", "identity",
     "memory", "lifecycle", "deep_agent", "orchestration", "segments", "sagas", "observability",
-    "authorization", "async", "owning_fr", "evals",
+    "authorization", "async", "owning_fr", "evals", "depends_on", "conventions",
+    # nested (round-2 F2): the full #10 vocabulary, not just wrappers
+    "principal", "privilege", "capability", "operations", "resources", "short_term", "long_term",
+    "strategy", "budget_tokens", "store", "durability", "retrieval", "scope", "shared_store", "pii",
+    "pii_justification", "reads", "writes", "high_stakes", "provenance", "staleness", "high_stakes_guardrail",
+    "long_running", "checkpoint", "checkpoint_store", "resume_cursor", "resumable", "idempotent_resume",
+    "side_effect_key", "human_gate", "human_gate_pause", "timeout", "cancellation", "planner", "subagents",
+    "context_isolation", "gates", "guardrails", "facade", "entity_crossing", "request", "response",
+    "side_effecting", "validation", "cost_bound", "authority_bound", "delivery", "consumer_idempotent",
+    "idempotency_key", "retry", "dlq", "dlq_justification", "replay", "allowed_callers", "audience",
+    "credential_mode", "credential_justification", "pattern", "justification", "coordinator", "cycle_bound",
+    "path", "e2e", "transactional", "compensation", "compensation_idempotent", "on_compensation_failure",
+    "tracing", "cost_budget", "eval_console", "convention", "hops", "attributes", "access", "ref",
+    "limit", "unit", "signature", "blurb", "mutations", "preconditions", "error_modes", "spec",
 }
-SKIP_FIELDS = {"control", "owner", "reason"}          # a skip is projected to exactly these (F2 channel)
+
+
+def _manifest_field_names():
+    """Every #10 manifest field name (top-level + NESTED), minus the neutral handoff identity keys.
+    Derived from #10's authoritative FIELD_SPEC so it can't drift; static fallback if #10 is absent."""
+    try:
+        p = os.path.join(os.path.dirname(__file__), "..", "..", "ci", "manifest-agentic")
+        if p not in sys.path:
+            sys.path.insert(0, p)
+        import check_manifest_agentic as _m10  # type: ignore
+        names = set()
+        for fields in _m10.FIELD_SPEC.values():
+            names |= set(fields)
+        return (names | _STATIC_MANIFEST_FIELDS) - _HANDOFF_NEUTRAL
+    except Exception:  # noqa: BLE001
+        return _STATIC_MANIFEST_FIELDS - _HANDOFF_NEUTRAL
+
+
+MANIFEST_FIELDS = _manifest_field_names()
+SKIP_FIELDS = ["control", "owner", "reason"]          # a skip is projected to exactly these (F2 channel)
+
+
+def _text(v):
+    """Coerce a free-text field to a scalar STRING so a dict/list can't smuggle nested manifest
+    keys through an open channel (rationale/feature/skip) past the key-walking guard (F2)."""
+    return "" if v is None else str(v)
 
 
 def build_recommendations(composed):
@@ -69,26 +111,35 @@ def generate_handoff(state, composed=None):
     """The NEUTRAL `agentic-design-handoff.yaml` — elicited facts + recommendations/hints;
     NO manifest field (HANDOFF/NO-AUTHOR, §7.4)."""
     composed = composed or _compose.compose(state)
+    comps = [c for c in (state.get("components") or []) if isinstance(c, dict)]
+    edges = [e for e in (state.get("edges") or []) if isinstance(e, dict)]
+    skips = [sk for sk in (state.get("skips") or []) if isinstance(sk, dict)]
     return {
         "schema_version": "1.0",
-        "feature": state.get("feature", "<feature>"),
-        # elicited neutral facts (role/transport) + a proposed_kind RECOMMENDATION (never a `kind:` field)
-        "components": [{"id": c["id"], "role": c["role"], "proposed_kind": c.get("proposed_kind"),
-                        "rationale": c.get("rationale", "")} for c in state["components"]],
-        "connections": [{"from": e["from"], "to": e["to"], "transport": e.get("transport")} for e in state["edges"]],
+        "feature": _text(state.get("feature", "<feature>")),
+        # elicited neutral facts (role/transport) + a proposed_kind RECOMMENDATION (never a `kind:` field);
+        # free-text `rationale` is stringified so it can't carry a nested manifest fragment (F2).
+        "components": [{"id": _text(c.get("id")), "role": c.get("role"), "proposed_kind": c.get("proposed_kind"),
+                        "rationale": _text(c.get("rationale", ""))} for c in comps],
+        "connections": [{"from": _text(e.get("from")), "to": _text(e.get("to")), "transport": e.get("transport")} for e in edges],
         "recommendations": build_recommendations(composed),
-        # skips are PROJECTED to {control,owner,reason} — not passed verbatim (closes the F2 channel)
-        "skips": [{k: sk.get(k) for k in SKIP_FIELDS} for sk in state.get("skips", [])],
+        # skips are PROJECTED to {control,owner,reason} and STRINGIFIED — not passed verbatim (closes the F2 channel)
+        "skips": [{k: _text(sk.get(k)) for k in SKIP_FIELDS} for sk in skips],
     }
 
 
 def validate_skips(state):
-    """FLOOR-SKIP-SILENT (F8): a recorded skip must name control + owner + reason — never silent."""
+    """FLOOR-SKIP-SILENT (F8): a recorded skip must name control + owner + reason as non-empty
+    SCALARS — never silent, never a smuggled structure. Must not crash on malformed input."""
     errs = []
-    for sk in state.get("skips", []):
-        missing = [k for k in SKIP_FIELDS if not (sk.get(k) or "").strip()]
-        if missing:
-            errs.append(f"skip {sk.get('control', '?')}: missing {missing} (a skip must record control+owner+reason)")
+    for sk in (state.get("skips") or []):
+        if not isinstance(sk, dict):
+            errs.append(f"skip must be a mapping: {sk!r}")
+            continue
+        for k in SKIP_FIELDS:
+            v = sk.get(k)
+            if isinstance(v, (dict, list)) or not str(v if v is not None else "").strip():
+                errs.append(f"skip {sk.get('control', '?')}: field '{k}' must be a non-empty scalar")
     return errs
 
 
@@ -175,21 +226,24 @@ def reconcile(old_state, new_scenario):
     a removed component OR edge is `retired`. skips AND deferrals AND deploy are carried, never
     silently dropped. Returns a diff-ready state (the human confirms before write)."""
     new = dict(new_scenario)
-    old_comp = {c["id"]: c for c in old_state.get("components", [])}
-    old_edge = {e["id"]: e for e in old_state.get("edges", [])}
-    new_comp = {c["id"]: c for c in new_scenario.get("components", [])}
-    new_edge_ids = {e["id"] for e in new_scenario.get("edges", [])}
+    def _by_id(state, key):     # id-keyed, tolerating id-less / non-dict entries (F4)
+        return {x["id"]: x for x in (state.get(key) or []) if isinstance(x, dict) and x.get("id") is not None}
+    old_comp, old_edge = _by_id(old_state, "components"), _by_id(old_state, "edges")
+    new_comp, new_edge = _by_id(new_scenario, "components"), _by_id(new_scenario, "edges")
     decisions, retired = [], []
-    for d in old_state.get("decisions", []):
+    for d in (old_state.get("decisions") or []):
+        if not isinstance(d, dict):
+            continue
         att = d.get("attaches_to")
-        removed = (att in old_comp and att not in new_comp) or (att in old_edge and att not in new_edge_ids)
+        removed = (att in old_comp and att not in new_comp) or (att in old_edge and att not in new_edge)
         if removed:
             retired.append({**d, "state": "retired"})
             continue
         stale = False
         if att in new_comp and old_comp.get(att, {}).get("proposed_kind") != new_comp[att].get("proposed_kind"):
             stale = True
-        for path in d.get("depends_on", []):        # a changed risk answer / state field ⇒ stale
+        dep = d.get("depends_on") or []
+        for path in ([dep] if isinstance(dep, str) else dep):    # a string depends_on is one path, not chars (F4)
             if _resolve(old_state, path) != _resolve(new_scenario, path):
                 stale = True
         decisions.append({**d, "state": "stale" if stale else "confirmed"})

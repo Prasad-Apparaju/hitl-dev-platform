@@ -28,24 +28,30 @@ DEPENDS = {
 # One component schema everywhere (round-10 B3): the composer/map/rerun read `proposed_kind` —
 # the same field the canonical state (§7.1) and fixtures use. `classify` runs FIRST (DEPENDS),
 # so `proposed_kind` is populated before any lens/floor needs `any_agent` (no circularity).
+# Accessors default a MISSING or present-but-None ("components:\n" in YAML) section, so a
+# partially-elicited state never crashes (advisor-F3). A non-list value degrades to empty.
+def _list(s, k):    v = s.get(k);  return v if isinstance(v, list) else []
+def _answers(s):    v = s.get("answers");  return v if isinstance(v, dict) else {}
+
+
 def any_agent(s):
-    return any(c.get("proposed_kind") in ("simple_agent", "deep_agent") for c in s["components"])
+    return any(isinstance(c, dict) and c.get("proposed_kind") in ("simple_agent", "deep_agent") for c in _list(s, "components"))
 
 
 def any_async(s):
     # edge transport (a factual property), not a design kind
-    return any(e.get("transport") in ("async_task", "event") for e in s["edges"])
+    return any(isinstance(e, dict) and e.get("transport") in ("async_task", "event") for e in _list(s, "edges"))
 
 
 def relevant(lens, s):
     """Proportionality: a lens is a report section only if the scenario has data for it.
     All scenario flags live under s["answers"] (one canonical location — round-9 M1). Every
     read defaults so a PARTIALLY-elicited state (mid-intake render) never crashes (F3)."""
-    a = s.get("answers", {})
+    a = _answers(s)
     side, auto = a.get("side_effects", "none"), a.get("autonomy", "assisted")
     return {
         "classify":      any_agent(s),
-        "boundary":      len(s["edges"]) > 0 and any_agent(s),
+        "boundary":      len(_list(s, "edges")) > 0 and any_agent(s),
         "privilege":     any_agent(s),
         "reliability":   any_async(s) or side != "none" or auto in ("supervised", "autonomous"),
         "observability": any_agent(s),                      # hard directive: any agentic system
@@ -60,12 +66,12 @@ def recommended_floor(s):
     """The RECOMMENDED floor — a deterministic function of the safety-relevant risk factors
     (expert judgment, NOT #10 activation). Membership uses only the factors it names; all
     reads default (F3)."""
-    a = s.get("answers", {})
+    a = _answers(s)
     side, auto = a.get("side_effects", "none"), a.get("autonomy", "assisted")
     floor = set()
     if any_agent(s):
         floor |= {"classify", "privilege", "observability", "evals"}
-    if len(s["edges"]) > 0 and any_agent(s):
+    if len(_list(s, "edges")) > 0 and any_agent(s):
         floor.add("boundary")
     if side == "irreversible":                                # recommend a human gate
         floor.add("reliability")
@@ -104,11 +110,15 @@ def validate_scenario(s):
     """Return enum errors (so a typo'd proposed_kind/transport is surfaced, not silently
     demoted — F8). The intake calls this before composing/handing off."""
     errs = []
-    for c in s.get("components", []):
+    for c in _list(s, "components"):
+        if not isinstance(c, dict):
+            errs.append(f"component must be a mapping: {c!r}"); continue
         pk = c.get("proposed_kind")
         if pk is not None and pk not in PROPOSED_KINDS:
             errs.append(f"component {c.get('id')}: unknown proposed_kind '{pk}' (expected {sorted(PROPOSED_KINDS)})")
-    for e in s.get("edges", []):
+    for e in _list(s, "edges"):
+        if not isinstance(e, dict):
+            errs.append(f"edge must be a mapping: {e!r}"); continue
         t = e.get("transport")
         if t is not None and t not in TRANSPORTS:
             errs.append(f"edge {e.get('id')}: unknown transport '{t}' (expected {sorted(TRANSPORTS)})")

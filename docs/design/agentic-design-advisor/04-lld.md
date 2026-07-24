@@ -73,9 +73,13 @@ observability · kill-switch · memory · pii · portability · evaluation · co
 ### 2.2 `ask_when` predicate grammar
 
 A boolean expression over the **scenario record** (§7.1) fields, evaluated by a small safe evaluator
-(no arbitrary code): `components.count`, `edges.count`, `answers.<factor>`, `any_agent`, and the operators
-`>= <= == != and or not in`. Examples: `components.count >= 2`, `answers.side_effects != "none"`,
-`any_agent and answers.data in ["sensitive","pii"]`.
+(no arbitrary code): the aggregates `components.count` / `edges.count`, factor reads `answers.<factor>`,
+the derived booleans `any_agent` / `any_async`, the literals `true` / `false`, and the operators
+`>= <= == != and or not in`. The grammar is **exactly** this set — it is not a superset: only `.count`
+is allowed on `components`/`edges`, and `answers.<factor>` rejects dunder / non-identifier names, so an
+attribute walk (`answers.__class__`, `components.size`) fails at `validate()` time (round-2 F7). Examples:
+`components.count >= 2`, `answers.side_effects != "none"`, `any_agent and answers.data in ["sensitive","pii"]`,
+`edges.count > 0 and any_async`.
 
 ### 2.3 `consequence` — one exact shape (HLD §4.2, `CAT-SCHEMA`, round-5 B4)
 
@@ -339,7 +343,8 @@ answers:    { stakes, side_effects, data, autonomy, scale,               # §4 c
 lens_answers: { <lens>: { <catalog_entry_id>: <option> } }  # provenance: which entry produced which answer
 # ── layer 2: recommendations + decisions (keyed by id; human-owned) ───────
 recommendations: [ { id, lens, control, text, target_path_hint: string,  # what the design should do + WHERE (a manifest-path hint, not a value)
-                     kind: enum[floor,rung,recorded_artifact] } ]        # floor = recommended-mandatory; rung = offered
+                     category: enum[floor,rung,recorded_artifact] } ]    # `category`, NOT `kind`: a bare `kind:` key would itself trip
+                                                                         # the NO-AUTHOR guard (it is a #10 manifest field). floor = recommended-mandatory; rung = offered
 decisions:  [ { id, attaches_to: <component|edge|lens id>, chosen, rejected:[…], rationale,
                 depends_on:[<state field path>], state: enum[confirmed,stale,retired], override: bool } ]  # depends_on = fields that, if changed, make this stale (§7.3)
 skips:      [ { control, owner, reason } ]                   # a recommended-floor control the team chose to skip — recorded, never silent (ADR-A6)

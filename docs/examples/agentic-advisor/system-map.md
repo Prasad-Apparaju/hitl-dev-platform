@@ -1,6 +1,6 @@
-# Support assistant — evolving system map (generated)
+# System map — support-assistant (generated)
 
-```
+```text
 support-assistant · compound-agentic surface
   ⬡ intake_agent  (agent · simple_agent)
   ▢ account_service  (service · deterministic)
