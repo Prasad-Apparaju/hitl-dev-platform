@@ -78,7 +78,7 @@ FIELD_SPEC = {
                  "cross_cutting": "l:convention_entry", "interaction_matrix": "m:interaction_entry",
                  "interactions": "l:interaction", "orchestration": "orchestration",
                  "segments": "l:segment", "sagas": "l:saga", "observability": "observability"},
-    "domain": {"purpose": "s", "files": "l:s", "lld": "s", "tests": "l:s",
+    "domain": {"purpose": "s", "files": "l:s", "lld": "sl", "tests": "l:s",  # lld = string | list[string] (R3-2)
                "boundary_entities": "m:boundary_entity", "facade_apis": "m:facade_api",
                "events_emitted": "l:event_entry", "events_consumed": "l:event_ref",
                "depends_on": "l:s", "conventions": "l:s", "last_changed": "last_changed",
@@ -209,11 +209,22 @@ def check_schema(m, reg, tier):
         if (struct, field) == ("quantpolicy", "limit") and not (isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0):
             out.append(block(locus, "bad_value", f"{locus}: QuantPolicy.limit must be > 0"))
 
+    def extkey(k):
+        return str(k).startswith("x_")     # reserved user-extension keys are ignored (R3-3)
+
     def field(spec, v, locus, fname, parent):
-        if v is None:
-            return
-        if spec == "s":                                     # scalar — never a container
-            if isinstance(v, (dict, list)):
+        # v is a PRESENT value (callers only invoke for present keys). A present `null`
+        # (v is None) is NOT one of the declared types ⇒ bad_type (R3-1).
+        if spec == "sl":                                    # scalar OR list[scalar] (e.g. domain.lld, R3-2)
+            if isinstance(v, list):
+                for e in v:
+                    field("s", e, locus, fname, parent)
+            elif v is None or isinstance(v, dict):
+                out.append(block(locus, "bad_type", f"{locus}: {parent}.{fname} must be a scalar or list of scalars"))
+            else:
+                value_grammar(parent, fname, v, locus)
+        elif spec == "s":                                   # scalar — never a container, never null
+            if v is None or isinstance(v, (dict, list)):
                 out.append(block(locus, "bad_type", f"{locus}: {parent}.{fname} must be a scalar (got {type(v).__name__})"))
             else:
                 value_grammar(parent, fname, v, locus)
@@ -229,68 +240,77 @@ def check_schema(m, reg, tier):
             else:
                 for vv in v.values():
                     walk(spec[2:], vv, locus)
-        else:                                               # nested object
+        else:                                               # nested object (walk rejects present-null / non-dict)
             walk(spec, v, locus)
 
     def walk(struct, val, locus):
-        if val is None:
-            return
+        # val is a PRESENT value; a present non-dict (incl. None) ⇒ bad_type.
         if not isinstance(val, dict):
             out.append(block(locus, "bad_type", f"{locus}: {struct} must be a mapping (got {type(val).__name__})"))
             return
         spec = FIELD_SPEC[struct]
-        for k in val:
-            if k not in spec:
+        for k, v in val.items():                            # PRESENT keys only
+            if k in spec:
+                field(spec[k], v, locus, k, struct)
+            elif not extkey(k):
                 out.append(block(locus, "unknown_field", f"{locus}: unknown field '{k}' in {struct}"))
-        for f, fs in spec.items():
-            field(fs, val.get(f), locus, f, struct)
 
-    # Top-level, with per-entry (id-based) loci where meaningful.
+    # Top-level, with per-entry (id-based) loci where meaningful; only PRESENT keys validated.
     if not isinstance(m, dict):
         return [block("system:manifest", "bad_type", "manifest must be a mapping")]
+    mspec = FIELD_SPEC["manifest"]
     for k in m:
-        if k not in FIELD_SPEC["manifest"]:
+        if k not in mspec and not extkey(k):
             out.append(block("system:manifest", "unknown_field", f"unknown top-level field '{k}'"))
     for f in ("version", "generated_at", "generator"):
-        field("s", m.get(f), "system:manifest", f, "manifest")
+        if f in m:
+            field("s", m[f], "system:manifest", f, "manifest")
 
-    doms = m.get("domains")
-    if doms is not None and not isinstance(doms, dict):
-        out.append(block("system:manifest", "bad_type", "domains must be a mapping"))
-    elif isinstance(doms, dict):
-        for name, d in doms.items():
-            if not ID_RE.match(str(name)):
-                out.append(block(str(name), "bad_id", f"domain name '{name}' is not a valid id"))
-            walk("domain", d, str(name))
+    if "domains" in m:
+        doms = m["domains"]
+        if not isinstance(doms, dict):
+            out.append(block("system:manifest", "bad_type", "domains must be a mapping"))
+        else:
+            for name, d in doms.items():
+                if not ID_RE.match(str(name)):
+                    out.append(block(str(name), "bad_id", f"domain name '{name}' is not a valid id"))
+                walk("domain", d, str(name))
 
-    ints = m.get("interactions")
-    if ints is not None and not isinstance(ints, list):
-        out.append(block("system:manifest", "bad_type", "interactions must be a list"))
-    elif isinstance(ints, list):
-        for i in ints:
-            locus = str(i.get("id", "?")) if isinstance(i, dict) else "system:interactions"
-            if isinstance(i, dict) and i.get("id") is not None and not ID_RE.match(str(i.get("id"))):
-                out.append(block(locus, "bad_id", f"interaction id '{i.get('id')}' is not a valid id"))
-            walk("interaction", i, locus)
+    if "interactions" in m:
+        ints = m["interactions"]
+        if not isinstance(ints, list):
+            out.append(block("system:manifest", "bad_type", "interactions must be a list"))
+        else:
+            for i in ints:
+                locus = str(i.get("id", "?")) if isinstance(i, dict) else "system:interactions"
+                if isinstance(i, dict) and i.get("id") is not None and not (isinstance(i.get("id"), str) and ID_RE.match(i["id"])):
+                    out.append(block(locus, "bad_id", f"interaction id '{i.get('id')}' is not a valid id"))
+                walk("interaction", i, locus)
 
-    field("l:convention_entry", m.get("cross_cutting"), "system:cross_cutting", "cross_cutting", "manifest")
-    field("m:interaction_entry", m.get("interaction_matrix"), "system:interaction_matrix", "interaction_matrix", "manifest")
-    field("orchestration", m.get("orchestration"), "system:orchestration", "orchestration", "manifest")
-    field("observability", m.get("observability"), "system:observability", "observability", "manifest")
+    if "cross_cutting" in m:
+        field("l:convention_entry", m["cross_cutting"], "system:cross_cutting", "cross_cutting", "manifest")
+    if "interaction_matrix" in m:
+        field("m:interaction_entry", m["interaction_matrix"], "system:interaction_matrix", "interaction_matrix", "manifest")
+    if "orchestration" in m:
+        field("orchestration", m["orchestration"], "system:orchestration", "orchestration", "manifest")
+    if "observability" in m:
+        field("observability", m["observability"], "system:observability", "observability", "manifest")
 
-    segs = m.get("segments")
-    if segs is not None and not isinstance(segs, list):
-        out.append(block("system:manifest", "bad_type", "segments must be a list"))
-    elif isinstance(segs, list):
-        for s in segs:
-            walk("segment", s, str(s.get("id", "?")) if isinstance(s, dict) else "system:segments")
+    if "segments" in m:
+        segs = m["segments"]
+        if not isinstance(segs, list):
+            out.append(block("system:manifest", "bad_type", "segments must be a list"))
+        else:
+            for s in segs:
+                walk("segment", s, str(s.get("id", "?")) if isinstance(s, dict) else "system:segments")
 
-    sgs = m.get("sagas")
-    if sgs is not None and not isinstance(sgs, list):
-        out.append(block("system:manifest", "bad_type", "sagas must be a list"))
-    elif isinstance(sgs, list):
-        for s in sgs:
-            walk("saga", s, str(s.get("id", "?")) if isinstance(s, dict) else "system:sagas")
+    if "sagas" in m:
+        sgs = m["sagas"]
+        if not isinstance(sgs, list):
+            out.append(block("system:manifest", "bad_type", "sagas must be a list"))
+        else:
+            for s in sgs:
+                walk("saga", s, str(s.get("id", "?")) if isinstance(s, dict) else "system:sagas")
     return out
 
 
@@ -300,9 +320,10 @@ def _has_compound(m):
     manifest with only legacy keys is untouched (additivity)."""
     if any(m.get(k) for k in ("interactions", "orchestration", "segments", "sagas", "observability")):
         return True
-    if any(k not in LEGACY_TOP for k in m):
+    if any(k not in LEGACY_TOP and not str(k).startswith("x_") for k in m):   # x_ = reserved extension (R3-3)
         return True
-    return any(isinstance(d, dict) and any(k not in LEGACY_DOMAIN for k in d) for d in domains(m).values())
+    return any(isinstance(d, dict) and any(k not in LEGACY_DOMAIN and not str(k).startswith("x_") for k in d)
+               for d in domains(m).values())
 
 
 # ══════════════════════════════════════════════════════════════════════════════

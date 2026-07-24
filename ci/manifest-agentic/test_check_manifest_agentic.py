@@ -530,10 +530,35 @@ def test_field_spec_is_self_consistent():
     for struct, fields in C.FIELD_SPEC.items():
         for f, spec in fields.items():
             ref = spec[2:] if spec.startswith(("l:", "m:")) else spec
-            if ref not in ("s",):
+            if ref not in ("s", "sl"):
                 assert ref in known, f"{struct}.{f} -> unknown struct '{ref}'"
     # ALLOWED_KEYS is derived from FIELD_SPEC and must match
     assert C.ALLOWED_KEYS == {k: set(v) for k, v in C.FIELD_SPEC.items()}
+
+
+def test_present_null_is_bad_type():
+    """R3-1: an explicit `null` on a present typed field is bad_type, not treated as absent."""
+    assert "bad_type" in mut(lambda m: _dom(m, "intake_agent").__setitem__("owning_fr", None))
+    assert "bad_type" in mut(lambda m: _dom(m, "intake_agent").__setitem__("identity", None))     # nested
+    assert "bad_type" in mut(lambda m: _dom(m, "intake_agent").__setitem__("files", [None]))       # list member
+    # an ABSENT optional field is still fine (additivity)
+    assert "bad_type" not in mut(lambda m: _dom(m, "intake_agent").pop("owning_fr"))
+
+
+def test_lld_union_scalar_or_list():
+    """R3-2: domain.lld accepts string | list[string] (must not narrow the shipped schema)."""
+    base = {"version": "1", "domains": {"a": {"purpose": "p", "kind": "deterministic"}}}
+    def codes_of(lld):
+        m = copy.deepcopy(base); m["domains"]["a"]["lld"] = lld
+        return codes(m)[0]
+    assert "bad_type" not in codes_of("docs/a.md")            # scalar ok
+    assert "bad_type" not in codes_of(["docs/a.md", "docs/b.md"])  # list ok
+    assert "bad_type" in codes_of({"x": 1})                   # map is invalid
+
+
+def test_x_extension_keys_ignored():
+    """R3-3: `x_`-prefixed reserved extension keys are ignored (top-level + nested)."""
+    assert codes({"version": "1", "x_note": "hi", "domains": {"a": {"purpose": "p", "kind": "deterministic", "x_team": "z"}}})[0] == set()
 
 
 def test_r21_reviewer_input_blocks_solely_on_type():
