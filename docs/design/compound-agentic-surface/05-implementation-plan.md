@@ -142,6 +142,26 @@ A cold Fable subagent reviewed the implementation by execution and returned REVI
   `event_projection_mismatch` is covered by the generator's regenerate-and-diff rather than a standalone check;
   no CI workflow invokes the tools yet (repo convention — invocation lives in the workflow docs).
 
+### 7.6 Round-fable-2 (re-review of the fix, 2026-07-23)
+
+A second Fable pass attacked the fix itself and found the fail-open had moved up one level:
+
+- **F-A (critical, fixed):** `check_schema` only ran when `_has_compound` matched compound field names by
+  exact spelling — so a manifest whose *only* compound marker was misspelled (`kindd: simple_agent`) dodged
+  the gate entirely (exit 0). `_has_compound` now activates on **any non-legacy key** anywhere (a curated
+  legacy allow-list); a pure-legacy manifest is still untouched (additivity holds, verified).
+- **F-B (fixed):** `async.retry` was wholly unvalidated — now `retry` is in ALLOWED_KEYS, `backoff` in ENUMS,
+  and `max >= 1` / mapping-shape are checked.
+- **F-C (fixed):** unresolved schema-typed references now block — `saga.coordinator`, `orchestration.coordinator`
+  (any pattern), `segment.path` hops, `memory.long_term.owner`, `authorization.audience`.
+- **F-D (fixed):** value grammars enforced — `memory_access.staleness` (duration), `lifecycle.resume_cursor`
+  (grammar), `short_term.budget_tokens > 0`.
+- **F-F (fixed):** duplicate `saga.id` blocks. **Nit:** the dead `quantpolicy.unit` ENUM entry removed (unit is
+  validated by check_policy_refs).
+- **F-E / legacy-structure key checks:** accepted as scoped-out (base-schema structures, not compound-new).
+
+Suite 52 → 57. Every attack in the round-2 battery now fails closed; showcase clean at Tier 2 and 3.
+
 ## 8. Definition of done (2.2.0)
 
 Every `CR-n` met by the mechanism HLD §13.2 names (validator / generator / workflow-doc); every `ci/`

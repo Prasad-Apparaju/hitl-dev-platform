@@ -33,6 +33,12 @@ def warn(locus, code, message):    return Blocker(locus, code, message, "warning
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")                 # interaction_id / domain_name
 SCOPE_RE = re.compile(r"^[a-z][a-z0-9_]*:(?:\*|[a-z0-9_][a-z0-9_.*/-]*)$")  # "op:resource" | "op:*"
 DURATION_RE = re.compile(r"^(?:0*[1-9][0-9]*)(?:ms|s|m|h|d)$")   # positive only (0s rejected — round-fable F7)
+CURSOR_RE = re.compile(r"^[a-z0-9_.-]+$")                        # lifecycle.resume_cursor grammar (§3.2)
+# Legacy (pre-compound) key sets — a manifest with ONLY these needs no schema gate (additivity);
+# ANY other key anywhere is a compound intent and activates check_schema (round-fable-2 F-A).
+LEGACY_TOP = {"version", "generated_at", "generator", "domains", "cross_cutting", "interaction_matrix"}
+LEGACY_DOMAIN = {"purpose", "files", "lld", "tests", "boundary_entities", "facade_apis",
+                 "events_emitted", "events_consumed", "depends_on", "conventions", "last_changed"}
 AGENT_KINDS = {"simple_agent", "deep_agent"}
 NON_WAIVABLE = {"unparseable", "unknown_field", "unknown_enum", "schema_invalid"}
 
@@ -43,6 +49,7 @@ ENUMS = {
     ("interaction", "kind"): {"sync_call", "async_task", "event"},
     ("async", "delivery"): {"at_most_once", "at_least_once"},
     ("async", "replay"): {"none", "event_sourced"},
+    ("retry", "backoff"): {"linear", "exponential"},
     ("authorization", "credential_mode"): {"jit", "static", "none"},
     ("orchestration", "pattern"): {"supervisor", "hierarchical", "swarm", "blackboard", "sequential", "hybrid"},
     ("short_term", "strategy"): {"none", "summarize", "compress", "isolate"},
@@ -56,7 +63,7 @@ ENUMS = {
     ("saga_step", "on_compensation_failure"): {"halt", "escalate"},
     ("tracing", "convention"): {"otel_genai", "openinference"},
     ("eval_console", "access"): {"report", "existing_surface", "console"},
-    ("quantpolicy", "unit"): {"tokens", "calls", "fanout"},
+    # QuantPolicy.unit is validated by check_policy_refs (value check); not an enum here.
 }
 # Allowed keys per structure (round-fable F2 — unknown field is fail-CLOSED, not ignored).
 ALLOWED_KEYS = {
@@ -72,6 +79,7 @@ ALLOWED_KEYS = {
     "leg": {"validation", "cost_bound", "authority_bound"},
     "async": {"delivery", "consumer_idempotent", "idempotency_key", "timeout", "retry", "dlq",
               "dlq_justification", "replay"},
+    "retry": {"max", "backoff"},
     "authorization": {"allowed_callers", "audience", "credential_mode", "credential_justification"},
     "memory": {"short_term", "long_term"},
     "short_term": {"strategy", "budget_tokens"},
@@ -183,6 +191,9 @@ def check_schema(m, reg, tier):
         if st:
             keys("short_term", st, name)
             enum("short_term", "strategy", st.get("strategy"), name)
+            bt = st.get("budget_tokens")
+            if bt is not None and not (isinstance(bt, int) and not isinstance(bt, bool) and bt > 0):
+                out.append(block(name, "bad_value", f"{name}: short_term.budget_tokens must be a positive int"))
         lt = mem.get("long_term")
         if lt:
             keys("long_term", lt, name)
@@ -190,12 +201,17 @@ def check_schema(m, reg, tier):
                 enum("long_term", f, lt.get(f), name)
             for acc in (lt.get("reads") or []) + (lt.get("writes") or []):
                 keys("memory_access", acc, name)
+                if isinstance(acc, dict) and acc.get("staleness") is not None:
+                    dur(acc.get("staleness"), name, "memory_access.staleness")
         lc = d.get("lifecycle")
         if lc:
             keys("lifecycle", lc, name)
             enum("lifecycle", "checkpoint", lc.get("checkpoint"), name)
             enum("lifecycle", "cancellation", lc.get("cancellation"), name)
             dur(lc.get("timeout"), name, "lifecycle.timeout")
+            rc = lc.get("resume_cursor")
+            if rc is not None and not CURSOR_RE.match(str(rc)):
+                out.append(block(name, "bad_id", f"{name}: lifecycle.resume_cursor '{rc}' is ill-formed"))
         if d.get("deep_agent"):
             keys("deep_agent", d["deep_agent"], name)
         keys("evals", d.get("evals"), name)
@@ -213,6 +229,16 @@ def check_schema(m, reg, tier):
             enum("async", "delivery", a.get("delivery"), iid)
             enum("async", "replay", a.get("replay"), iid)
             dur(a.get("timeout"), iid, "async.timeout")
+            rt = a.get("retry")
+            if rt is not None:
+                if not isinstance(rt, dict):
+                    out.append(block(iid, "unknown_field", f"{iid}: async.retry must be a mapping {{max, backoff}}"))
+                else:
+                    keys("retry", rt, iid)
+                    enum("retry", "backoff", rt.get("backoff"), iid)
+                    mx = rt.get("max")
+                    if mx is not None and not (isinstance(mx, int) and not isinstance(mx, bool) and mx >= 1):
+                        out.append(block(iid, "bad_value", f"{iid}: async.retry.max must be an int >= 1"))
         au = i.get("authorization")
         if au:
             keys("authorization", au, iid)
@@ -224,6 +250,7 @@ def check_schema(m, reg, tier):
         enum("orchestration", "pattern", orch.get("pattern"), "system:orchestration")
     for s in segments(m):
         keys("segment", s, s.get("id", "?"))
+        keys("evals", s.get("evals"), s.get("id", "?"))
     for s in sagas(m):
         keys("saga", s, s.get("id", "?"))
         enum("saga", "order", s.get("order"), s.get("id", "?"))
@@ -246,10 +273,14 @@ def check_schema(m, reg, tier):
 
 
 def _has_compound(m):
+    """Activate the schema gate on ANY non-legacy key — so a misspelled compound field
+    (e.g. `kindd`) cannot dodge the gate that exists to catch it (round-fable-2 F-A). A
+    manifest with only legacy keys is untouched (additivity)."""
     if any(m.get(k) for k in ("interactions", "orchestration", "segments", "sagas", "observability")):
         return True
-    compound = ("kind", "kind_rationale", "owning_fr", "identity", "uses", "memory", "lifecycle", "deep_agent", "evals")
-    return any(any(f in d for f in compound) for d in domains(m).values())
+    if any(k not in LEGACY_TOP for k in m):
+        return True
+    return any(isinstance(d, dict) and any(k not in LEGACY_DOMAIN for k in d) for d in domains(m).values())
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -308,10 +339,17 @@ def check_topology(m, reg, tier):
         if pat == "swarm" and coord:
             out.append(block("system:orchestration", "coordinator_forbidden",
                              "pattern 'swarm' forbids a coordinator (peer mesh)"))
+        if coord and coord not in domains(m):   # any pattern: a named coordinator must resolve (round-fable-2 F-C)
+            out.append(block("system:orchestration", "coordinator_unknown",
+                             f"orchestration.coordinator '{coord}' is not a declared domain"))
 
     by_id = {i.get("id"): i for i in interactions(m)}
     for s in segments(m):
         path = s.get("path") or []
+        for hop in path:                        # every hop must resolve to a declared interaction (F-C)
+            if hop not in by_id:
+                out.append(block(s.get("id", "?"), "segment_hop_unknown",
+                                 f"segment '{s.get('id')}': hop '{hop}' is not a declared interaction"))
         for a, b in zip(path, path[1:]):
             ia, ib = by_id.get(a), by_id.get(b)
             if ia and ib and ia.get("to") != ib.get("from"):
@@ -517,6 +555,9 @@ def check_authorization(m, reg, tier):
             cm = auth.get("credential_mode")
             if cm in ("static", "none") and not (auth.get("credential_justification") or "").strip():
                 out.append(block(iid, "credential_unjustified", f"{iid}: credential_mode '{cm}' needs credential_justification"))
+            aud = auth.get("audience")
+            if aud and aud not in dmap:   # audience must resolve to a declared domain (round-fable-2 F-C)
+                out.append(block(iid, "audience_unknown", f"{iid}: authorization.audience '{aud}' is not a declared domain"))
     return out
 
 
@@ -642,6 +683,8 @@ def check_memory(m, reg, tier):
         for req in ("owner", "store", "durability", "retrieval", "scope", "pii"):
             if lt.get(req) in (None, ""):
                 out.append(block(name, "memory_field_missing", f"{name}: long_term.{req} is required"))
+        if lt.get("owner") and lt["owner"] not in domains(m):   # owner must resolve (round-fable-2 F-C)
+            out.append(block(name, "memory_owner_unknown", f"{name}: long_term.owner '{lt['owner']}' is not a declared domain"))
         if lt.get("pii") == "none" and not (lt.get("pii_justification") or "").strip():
             out.append(block(name, "memory_pii_unjustified", f"{name}: long_term.pii 'none' needs pii_justification"))
         store = lt.get("store")
@@ -742,8 +785,14 @@ def check_saga(m, reg, tier):
     pols = (reg.get("policies") or {}).get("policies") or {}
     by_id = {i.get("id"): i for i in interactions(m)}
     coverage = {}
+    seen_ids = set()
     for s in sagas(m):
         sid = s.get("id", "?")
+        if sid in seen_ids:   # saga id must be unique (round-fable-2 F-F)
+            out.append(block(sid, "saga_id_duplicate", f"saga id '{sid}' is not unique"))
+        seen_ids.add(sid)
+        if s.get("coordinator") and s["coordinator"] not in domains(m):   # coordinator must resolve (F-C)
+            out.append(block(sid, "saga_coordinator_unknown", f"saga '{sid}' coordinator '{s['coordinator']}' is not a declared domain"))
         if s.get("order") != "sequential":
             out.append(block(sid, "saga_order_invalid", f"saga '{sid}': core supports order 'sequential' only"))
         for st in s.get("steps", []):

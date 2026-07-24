@@ -463,6 +463,40 @@ def test_saga_overlap():
     assert "saga_overlap" in mut(f)
 
 
+# ── round-fable-2: gate can't be dodged by a typo; retry + reference resolution ──
+def test_typod_sole_compound_marker_still_blocks():
+    # F-A: a manifest whose ONLY compound signal is a misspelled key must NOT pass at exit 0
+    cs, act = codes({"domains": {"h": {"purpose": "an agent", "files": [], "kindd": "simple_agent"}}})
+    assert "unknown_field" in cs and "check_schema" in act
+    cs2, _ = codes({"domains": {"h": {"purpose": "p"}}, "observabilty": {}})
+    assert "unknown_field" in cs2
+
+
+def test_retry_validated():
+    assert "unknown_enum" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", {"max": 2, "backoff": "fibonacci"}))
+    assert "bad_value" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", {"max": 0, "backoff": "linear"}))
+    assert "unknown_field" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", {"max": 2, "backoff": "linear", "jitterz": True}))
+    assert "unknown_field" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", "aggressive"))
+
+
+def test_reference_resolution():
+    assert "saga_coordinator_unknown" in mut(lambda m: m["sagas"][0].__setitem__("coordinator", "ghost"))
+    assert "segment_hop_unknown" in mut(lambda m: m["segments"][0].__setitem__("path", ["lookup_to_resolve", "ghost"]))
+    assert "coordinator_unknown" in mut(lambda m: m.__setitem__("orchestration", {"pattern": "sequential", "justification": "x", "coordinator": "ghost"}))
+    assert "memory_owner_unknown" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].__setitem__("owner", "ghost"))
+    assert "audience_unknown" in mut(lambda m: _intr(m, "lookup_to_resolve")["authorization"].__setitem__("audience", "ghost"))
+
+
+def test_value_grammar_checks():
+    assert "bad_duration" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"]["reads"][0].__setitem__("staleness", "yesterday"))
+    assert "bad_id" in mut(lambda m: _dom(m, "refund_service").__setitem__("lifecycle", {"resumable": True, "resume_cursor": "NOT A CURSOR!!"}))
+    assert "bad_value" in mut(lambda m: _dom(m, "resolution_agent")["memory"].__setitem__("short_term", {"strategy": "summarize", "budget_tokens": -5}))
+
+
+def test_saga_id_duplicate():
+    assert "saga_id_duplicate" in mut(lambda m: m["sagas"].append(copy.deepcopy(m["sagas"][0])))
+
+
 # ── wave 1: waiver suppression ────────────────────────────────────────────────
 def test_waiver_suppresses_matching_blocker():
     m = _base_compound()
