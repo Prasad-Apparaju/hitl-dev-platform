@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "tools": {
+    "crm.read": {
+      "runtime_ref": "crm-api-readonly",
+      "used_by": [
+        "account_service"
+      ]
+    },
+    "refund.execute": {
+      "runtime_ref": "payments-api-refund",
+      "used_by": [
+        "refund_service"
+      ]
+    }
+  }
+}
