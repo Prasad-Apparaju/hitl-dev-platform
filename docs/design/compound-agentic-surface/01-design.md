@@ -7,7 +7,7 @@
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)): eval coverage → per-agent
 > + e2e (universal deferred); saga → declared-only + compensation-gap advisory (required-when deferred);
 > CR-6 sync reliability narrowed; delegated authority deferred. Per [`04-revision-plan.md`](04-revision-plan.md).
-> Status: **draft, v3.3 — #10 core stable; the Advisor no longer authors this manifest (2026-07-23 re-scope) — #10 ships first as 2.2.0; round-10 findings addressed; pending Codex re-review (round 11)**. Targets **2.2.0**. Field-level
+> Status: **v3.3 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; round 12: architecture converged, residuals applied + self-verified in `b14dc96`); CLEARED TO IMPLEMENT. #10 ships first as 2.2.0.** Targets **2.2.0**. Field-level
 > precision + validator signatures are in the LLD [`03-lld.md`](03-lld.md); decisions in [`02-adrs.md`](02-adrs.md).
 
 **Thesis (unchanged): a compound agentic system is a manifest, extended.** Each revision corrects *which*

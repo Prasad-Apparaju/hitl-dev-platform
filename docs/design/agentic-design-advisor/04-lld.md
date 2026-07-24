@@ -7,7 +7,7 @@
 > B2). It **authors no manifest field**; a human authors the manifest, #10 validates it. **Removed** (the
 > auto-authoring apparatus): the manifest writer, `OWNS_CHECKS`/imported-`ACTIVATES`/`floor ≡ activation`/
 > `OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, `manifest_features`, and the `authored.*` state layer. Implements
-> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — round-10 fixes applied.**
+> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12); CLEARED TO IMPLEMENT (#35).**
 
 ## 0. Grammars & conventions
 

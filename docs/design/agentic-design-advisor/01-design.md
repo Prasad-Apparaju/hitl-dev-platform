@@ -3,7 +3,7 @@
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
 > (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); field-level precision in the LLD
 > [`04-lld.md`](04-lld.md); test plan in [`03-test-plan.md`](03-test-plan.md).
-> Status: **draft, v4.1 — round-10 fixes applied.**
+> Status: **v4.1 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; architecture converged); CLEARED TO IMPLEMENT (#35). #10 ships first.**
 >
 > **The model (v4.1):** the Advisor is **one intake command** (`hitl:agentic-intake`) that **elicits** the
 > whole scenario, **recommends** a right-sized set of controls (a **recommendation report** whose sections
