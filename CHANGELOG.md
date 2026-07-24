@@ -4,6 +4,17 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.3.0] — 2026-07-24
+
+### Added
+
+**Agentic Design Advisor (EPIC #35, FR-28).** A PM-lane front door for the compound-agentic surface: `hitl:agentic-intake` elicits an agentic system's shape and risks, recommends a right-sized set of controls (a recommendation report, not 8 commands), records the decisions, renders an evolving system map, and hands off a **neutral** design handoff — then a human authors the `system-manifest.yaml` from it, which `ci/manifest-agentic` (#10) validates.
+
+- **The load-bearing boundary:** the Advisor **authors no manifest field** (not even `kind`). It recommends and records; #10 needs no input from it and validates the human-authored manifest independently. The neutral handoff is certified against the entire #10 field vocabulary before hand-off (`handoff_authors_no_manifest_field`), and every emitted channel is scalar-coerced so no nested manifest fragment can ride through.
+- **`tools/agentic-advisor/`** — `compose.py` (relevance → report sections + a recommended floor from safety factors, no Tier input), `records.py` (canonical state, neutral handoff, decision record, rerun reconcile with typo-surfacing warnings), `render_map.py` (terminal + Mermaid), `askwhen.py` (a small AST-restricted safe evaluator for catalog predicates — no arbitrary code).
+- **`ai/shared/agentic/catalog.yaml`** — the 16-lens curated elicitation data.
+- **Proportionate, fail-safe, deterministic:** the floor is advice (a skip is recorded, never a #10 waiver); a partial/malformed state never crashes the intake; the same scenario yields the identical report. Hardened across four adversarial review rounds.
+
 ## [2.2.0] — 2026-07-24
 
 ### Added
