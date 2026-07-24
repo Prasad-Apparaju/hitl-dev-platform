@@ -1,0 +1,190 @@
+# Agentic Design Advisor — question/option catalog (EPIC #35 / LLD §2, ADR-A2).
+# Curated, versioned DATA (not a live lookup). Each entry is one expert question with a
+# machine-checkable `consequence` (option -> list of tagged-union items). The Advisor
+# RECOMMENDS + records; a consequence targets a report-section lens / floor-rule /
+# recommendation — NEVER a #10 manifest field. Lint: ci/agentic-advisor/test_catalog_lint.py.
+schema_version: "1.0"
+owner: technical_advisor
+refresh_cadence: 3m            # ADV-11: periodic, independent of change events
+
+entries:
+  - id: right-sizing
+    lens: right-sizing
+    role: architect
+    ask_when: "any_agent"
+    question: "For each agent — is this a bounded single task (a simple agent), or does it need long-horizon planning with sub-agents (a deep agent)? Do you even need multiple agents?"
+    options: [simple, deep, over-engineered]
+    guidance: "Prefer the simplest kind that fits. Reach for deep only with genuine long-horizon planning."
+    recommend: simplest_fit
+    consequence:
+      simple: [{kind: classify, target: classify}]
+      deep:   [{kind: classify, target: classify}, {kind: recommendation, target: r-classify-1}]
+      over-engineered: [{kind: classify, target: classify}]
+
+  - id: determinism-boundary
+    lens: determinism-boundary
+    role: architect
+    ask_when: "components.count >= 2 and any_agent"
+    question: "Where does a stochastic (agent) output cross into a deterministic service that will act on it?"
+    options: ["*"]
+    guidance: "Validate the agent's proposal before the deterministic service trusts it; bound cost/authority into agents."
+    consequence:
+      "*": [{kind: boundary, target: boundary}]
+
+  - id: side-effects
+    lens: irreversibility
+    role: architect
+    ask_when: "true"
+    question: "Does any step take an action that is hard or impossible to undo (money, an order, an external send, provisioning, a write to a system of record)?"
+    options: [none, reversible, irreversible]
+    guidance: "Irreversible ⇒ gate it (you cannot compensate). Reversible-multistep ⇒ consider a saga."
+    consequence:
+      irreversible: [{kind: floor, target: reliability}, {kind: lens, target: reliability}]
+      reversible:   [{kind: lens, target: reliability}]
+      none:         []
+
+  - id: human-gate
+    lens: human-gate
+    role: pm
+    ask_when: "answers.side_effects != \"none\""
+    question: "Which side-effecting steps require a human to approve before they execute?"
+    options: ["*"]
+    guidance: "A human gate before an irreversible action; the agent proposes, a human approves."
+    consequence:
+      "*": [{kind: gate, target: reliability}]
+
+  - id: privilege
+    lens: privilege
+    role: architect
+    ask_when: "any_agent"
+    question: "What is the least privilege each agent needs — which capabilities, on which resources? (Watch the lethal trifecta: private data + untrusted content + external send.)"
+    options: ["*"]
+    guidance: "Least-privilege identity + per-use capabilities; who-may-invoke is authorization, not an identity grant."
+    consequence:
+      "*": [{kind: floor, target: privilege}, {kind: lens, target: privilege}]
+
+  - id: topology
+    lens: topology
+    role: architect
+    ask_when: "components.count >= 2"
+    question: "How do components talk — synchronous call, async task, or event? Are there loops (an agent calling back)?"
+    options: [sync, async, event, loop]
+    guidance: "Async/event needs idempotency + DLQ. A loop needs a bounded cycle."
+    consequence:
+      async: [{kind: lens, target: reliability}]
+      event: [{kind: lens, target: reliability}]
+      loop:  [{kind: lens, target: boundary}]
+      sync:  [{kind: lens, target: boundary}]
+
+  - id: reliability
+    lens: reliability
+    role: developer
+    ask_when: "any_async or answers.side_effects != \"none\""
+    question: "How does an async step behave on failure — retry, dead-letter, idempotency key? How is a long run resumed?"
+    options: ["*"]
+    guidance: "at-least-once ⇒ consumer idempotency + DLQ; long-running ⇒ durable checkpoint/resume."
+    consequence:
+      "*": [{kind: lens, target: reliability}]
+
+  - id: observability
+    lens: observability
+    role: ops
+    ask_when: "any_agent"
+    question: "How is misbehavior seen in production — tracing across hops, a cost budget, and a PM-facing eval console to run evals and review traces?"
+    options: [report, existing_surface, console]
+    guidance: "Any agentic system must be observable + PM-evaluable (hard directive). #10's check_observability enforces the authored block."
+    consequence:
+      report:           [{kind: floor, target: observability}]
+      existing_surface: [{kind: floor, target: observability}]
+      console:          [{kind: floor, target: observability}]
+
+  - id: kill-switch
+    lens: kill-switch
+    role: ops
+    ask_when: "answers.autonomy in [\"supervised\", \"autonomous\"] and answers.side_effects != \"none\""
+    question: "How is the system stopped fast if it starts misbehaving (a kill-switch / rollback)?"
+    options: ["*"]
+    guidance: "A recorded kill-switch recommendation (no #10 field today) — the design must provide a stop."
+    consequence:
+      "*": [{kind: recorded_artifact, target: r-reliability-1}]
+
+  - id: memory
+    lens: memory
+    role: architect
+    ask_when: "any_agent"
+    question: "Does any agent keep state across turns/sessions? Short-term (context budget) or long-term (a durable store)?"
+    options: [none, short_term, long_term]
+    guidance: "Long-term ⇒ a durable store, retrieval strategy, and PII handling; reconcile memory access with privilege."
+    recommend: simplest_fit
+    consequence:
+      long_term:  [{kind: lens, target: memory}, {kind: recommendation, target: r-memory-1}]
+      short_term: [{kind: lens, target: memory}]
+      none:       []
+
+  - id: pii
+    lens: pii
+    role: pm
+    ask_when: "answers.data in [\"sensitive\", \"pii\"]"
+    question: "Does the agent touch PII / sensitive data? How is it classified, redacted, or blocked?"
+    options: [none, redact, block]
+    guidance: "PII in memory/context needs redaction or a hard block + a high-stakes guardrail on writes."
+    consequence:
+      redact: [{kind: lens, target: memory}]
+      block:  [{kind: lens, target: memory}]
+      none:   []
+
+  - id: portability
+    lens: portability
+    role: architect
+    ask_when: "any_agent"
+    question: "Are model/memory/tool providers bound as capabilities via config, or embedded in agent logic? (Twelve-Factor attached resources.)"
+    options: [portable, embedded]
+    guidance: "Bind providers as capabilities; do not embed a provider in agent logic."
+    consequence:
+      embedded: [{kind: recommendation, target: r-privilege-1}]
+      portable: []
+
+  - id: evaluation
+    lens: evaluation
+    role: qa
+    ask_when: "any_agent"
+    question: "How is each agent independently evaluated, and how is the end-to-end flow evaluated (incl. model/prompt-version drift)?"
+    options: ["*"]
+    guidance: "A per-agent eval spec + one e2e flow; the PM owns and approves."
+    consequence:
+      "*": [{kind: floor, target: evals}, {kind: lens, target: evals}]
+
+  - id: cost
+    lens: cost
+    role: ops
+    ask_when: "any_agent"
+    question: "What is the token-cost amplification budget across the hops, and how is a runaway loop caught?"
+    options: ["*"]
+    guidance: "A cost budget on the observability block; bound fan-out."
+    consequence:
+      "*": [{kind: lens, target: observability}]
+
+  - id: deployment
+    lens: deployment
+    role: ops
+    ask_when: "answers.greenfield or answers.changes_platform or answers.adds_durable_runtime or answers.deploy_requested"
+    question: "Build the agent infrastructure from scratch, use a managed platform, or self-host OSS? What drives it (durable execution, scale, ops capacity, compliance, existing cloud, time-to-market)?"
+    options: [from_scratch, managed, self_hosted]
+    guidance: "Managed unless there is a specific reason to build; on managed, do the portability diligence (governance/packaging/state)."
+    recommend: simplest_fit
+    consequence:
+      managed:      [{kind: lens, target: deploy}, {kind: recommendation, target: r-deploy-1}]
+      self_hosted:  [{kind: lens, target: deploy}]
+      from_scratch: [{kind: lens, target: deploy}]
+
+  - id: stakes-tier
+    lens: stakes-tier
+    role: pm
+    ask_when: "true"
+    question: "What are the stakes (internal / customer-facing / regulated) and the change Tier? (This informs recommended DEPTH, not which controls are in the floor.)"
+    options: [internal, customer_facing, regulated]
+    guidance: "Tier/stakes inform a human-confirmed advisory depth note, never floor membership."
+    consequence:
+      internal:        []
+      customer_facing: [{kind: recommendation, target: r-observability-1}]
+      regulated:       [{kind: recommendation, target: r-observability-1}]
