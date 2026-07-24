@@ -6,6 +6,7 @@ incrementally; this file covers what check_manifest_agentic.py currently impleme
 (wave 1 activation/additivity/waivers + wave 2 graph integrity). Runnable directly
 and as pytest.
 """
+import copy
 import os
 import tempfile
 import yaml
@@ -148,6 +149,95 @@ def test_scope_grammar():
     assert "scope_grammar" in codes(m)[0]
     m["domains"]["ag"]["identity"]["privilege"] = ["read:customer"]
     assert "scope_grammar" not in codes(m)[0]
+
+
+# ── wave 3: trust / privilege, per-rule (mutate a passing showcase copy) ──────
+def mut(fn, tier=2):
+    m = copy.deepcopy(load(SHOWCASE))
+    fn(m)
+    return codes(m, tier=tier)[0]
+
+
+def _dom(m, n):  return m["domains"][n]
+def _intr(m, iid):  return next(i for i in m["interactions"] if i["id"] == iid)
+
+
+def test_capability_not_in_registry():
+    assert "capability_not_in_registry" in mut(
+        lambda m: _dom(m, "intake_agent")["uses"].append({"capability": "ghost.cap", "operations": ["x"], "resources": ["y"]}))
+
+
+def test_ceiling_violation():
+    # account_service uses crm.read for a write op — exceeds the read-only ceiling
+    assert "ceiling_violation" in mut(
+        lambda m: _dom(m, "account_service")["uses"].append({"capability": "crm.read", "operations": ["write"], "resources": ["customer"]}))
+
+
+def test_over_privilege():
+    assert "over_privilege" in mut(
+        lambda m: _dom(m, "intake_agent")["identity"]["privilege"].append("delete:everything"))
+
+
+def test_under_privilege():
+    assert "under_privilege" in mut(
+        lambda m: _dom(m, "intake_agent")["identity"].__setitem__("privilege", []))
+
+
+def test_agent_unscoped_tier2():
+    def f(m):
+        _dom(m, "resolution_agent").pop("uses")
+        _dom(m, "resolution_agent").pop("memory")   # memory would re-imply scopes
+    assert "agent_unscoped" in mut(f, tier=2)
+
+
+def test_boundary_leg_missing():
+    assert "leg_missing" in mut(lambda m: _intr(m, "classify_to_lookup").pop("response"))
+
+
+def test_boundary_cost_and_authority_missing():
+    assert "boundary_cost_missing" in mut(lambda m: _intr(m, "classify_to_lookup")["response"].pop("cost_bound"))
+    assert "boundary_authority_missing" in mut(lambda m: _intr(m, "classify_to_lookup")["response"].pop("authority_bound"))
+
+
+def test_authority_exceeds_privilege():
+    assert "authority_exceeds_privilege" in mut(
+        lambda m: _intr(m, "classify_to_lookup")["response"].__setitem__("authority_bound", ["delete:all"]))
+
+
+def test_validation_missing():
+    assert "validation_missing" in mut(lambda m: _intr(m, "classify_to_lookup")["request"].pop("validation"))
+
+
+def test_authorization_missing():
+    assert "authorization_missing" in mut(lambda m: _intr(m, "lookup_to_resolve").pop("authorization"))
+
+
+def test_caller_not_allowed():
+    assert "caller_not_allowed" in mut(
+        lambda m: _intr(m, "lookup_to_resolve")["authorization"].__setitem__("allowed_callers", ["refund_service"]))
+
+
+def test_caller_no_identity():
+    def f(m):
+        m["domains"]["ext_caller"] = {"purpose": "no identity"}
+        _intr(m, "lookup_to_resolve")["authorization"]["allowed_callers"] = ["intake_agent", "ext_caller"]
+    assert "caller_no_identity" in mut(f)
+
+
+def test_credential_unjustified():
+    assert "credential_unjustified" in mut(
+        lambda m: _intr(m, "lookup_to_resolve")["authorization"].__setitem__("credential_mode", "static"))
+
+
+def test_policy_ref_unresolved_kind_and_empty():
+    assert "policy_ref_unresolved" in mut(lambda m: _intr(m, "classify_to_lookup")["request"].__setitem__("validation", "ghost:policy"))
+    assert "policy_kind_mismatch" in mut(lambda m: _intr(m, "classify_to_lookup")["request"].__setitem__("validation", "refund:reversal"))
+    assert "policy_ref_empty" in mut(lambda m: _intr(m, "classify_to_lookup")["request"].__setitem__("validation", "TODO"))
+
+
+def test_quantpolicy_limit_and_unit():
+    assert "quantpolicy_limit" in mut(lambda m: _intr(m, "classify_to_lookup")["response"]["cost_bound"].__setitem__("limit", 0))
+    assert "quantpolicy_unit" in mut(lambda m: m["observability"]["cost_budget"].__setitem__("unit", "bogus"))
 
 
 # ── wave 1: waiver suppression ────────────────────────────────────────────────

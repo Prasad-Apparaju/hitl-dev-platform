@@ -11,6 +11,7 @@ unknown enum, unresolved reference, or any exception.
 Waves land incrementally (05-implementation-plan.md §3). Implemented so far:
   wave 1  activation dispatch + additivity + waiver suppression + main
   wave 2  check_topology, check_references, check_classification, check_scope_grammar
+  wave 3  check_capabilities, check_boundary_legs, check_authorization, check_policy_refs
 """
 from __future__ import annotations
 import os
@@ -215,6 +216,212 @@ def check_scope_grammar(m, reg, tier):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Scope containment helpers (§6.17.1, verbatim semantics) + wave 3 checks
+# ══════════════════════════════════════════════════════════════════════════════
+def canon(s):            return str(s).strip().lower()
+def _split(scope):       return scope.split(":", 1)
+
+def resource_covers(ceiling_res, use_res):
+    if ceiling_res == "*":
+        return True
+    if ceiling_res.endswith("/*"):
+        base = ceiling_res[:-2]
+        return use_res == base or use_res.startswith(base + "/")
+    return ceiling_res == use_res
+
+def scope_in_ceiling(scope, ceiling):
+    if ":" not in scope:
+        return False
+    act, res = _split(scope)
+    for c in ceiling:
+        if ":" not in c:
+            continue
+        ca, cr = _split(c)
+        if ca == act and resource_covers(cr, res):
+            return True
+    return False
+
+def use_scopes(u):
+    out = []
+    for op in u.get("operations", []):
+        for res in (u.get("resources") or ["*"]):
+            out.append(canon(f"{op}:{res}"))
+    return out
+
+def _privilege(m, dname):
+    return {canon(x) for x in ((domains(m).get(dname) or {}).get("identity") or {}).get("privilege", [])}
+
+
+def check_capabilities(m, reg, tier):
+    """§6.2: capability-in-registry, ceiling containment, over/under privilege
+    (mutual wildcard coverage), Tier2+ agent-with-identity-but-no-uses."""
+    out = []
+    regfile = reg.get("capabilities")
+    if regfile is None:
+        return []  # registry error already recorded
+    caps = regfile.get("capabilities") or {}
+    for name, d in domains(m).items():
+        uses = d.get("uses") or []
+        granted = _privilege(m, name)
+        needed = set()
+        for u in uses:
+            cap = caps.get(u.get("capability"))
+            if not cap:
+                out.append(block(name, "capability_not_in_registry",
+                                 f"{name}: capability '{u.get('capability')}' not in approved-capabilities.yaml"))
+                continue
+            for sc in use_scopes(u):
+                if not scope_in_ceiling(sc, cap.get("ceiling", [])):
+                    out.append(block(name, "ceiling_violation",
+                                     f"{name}: scope '{sc}' exceeds the ceiling of '{u['capability']}'"))
+                needed.add(sc)
+        for g in granted:
+            if not scope_in_ceiling(g, list(needed)):
+                out.append(block(name, "over_privilege", f"{name}: granted scope '{g}' exceeds what is needed"))
+        for n in needed:
+            if not scope_in_ceiling(n, list(granted)):
+                out.append(block(name, "under_privilege", f"{name}: needed scope '{n}' is not granted"))
+        if tier >= 2 and d.get("kind") in AGENT_KINDS and d.get("identity") and not uses:
+            out.append(block(name, "agent_unscoped",
+                             f"{name}: a Tier {tier} agent with identity must scope its capabilities via `uses`"))
+    return out
+
+
+def check_boundary_legs(m, reg, tier):
+    """§6.3/§2.2: per leg, from (source,consumer) apply the boundary rule; a
+    required leg must be present; agent-consumer needs cost+authority (⊆ its
+    privilege); stochastic-source→deterministic-consumer needs validation."""
+    out = []
+    for i in interactions(m):
+        iid = i.get("id", "?")
+        k = i.get("kind")
+        frm, to = i.get("from"), i.get("to")
+        legs = ([("request", frm, to), ("response", to, frm)]
+                if k in ("sync_call", "async_task")
+                else [("request", frm, to)] if k == "event" else [])
+        for leg_name, source, consumer in legs:
+            leg = i.get(leg_name)
+            consumer_agent = is_agent(m, consumer)
+            source_agent = is_agent(m, source)
+            required = consumer_agent or (source_agent and not consumer_agent)
+            if required and leg is None:
+                out.append(block(iid, "leg_missing",
+                                 f"{iid}.{leg_name}: required control leg (source {source} -> consumer {consumer}) is absent"))
+                continue
+            if consumer_agent:
+                if leg.get("cost_bound") is None:
+                    out.append(block(iid, "boundary_cost_missing", f"{iid}.{leg_name}: agent consumer needs cost_bound"))
+                ab = leg.get("authority_bound")
+                if ab is None:
+                    out.append(block(iid, "boundary_authority_missing", f"{iid}.{leg_name}: agent consumer needs authority_bound"))
+                else:
+                    priv = _privilege(m, consumer)
+                    for sc in ab:
+                        if not scope_in_ceiling(canon(sc), list(priv)):
+                            out.append(block(iid, "authority_exceeds_privilege",
+                                             f"{iid}.{leg_name}: authority '{sc}' ⊄ {consumer}.identity.privilege"))
+            elif source_agent and not consumer_agent:
+                if leg.get("validation") is None:
+                    out.append(block(iid, "validation_missing",
+                                     f"{iid}.{leg_name}: stochastic source -> deterministic consumer needs validation"))
+    return out
+
+
+def check_authorization(m, reg, tier):
+    """§6.4: interaction into an agent needs allowed_callers incl. the caller;
+    each allowed_caller is a domain with identity.principal; static/none justified."""
+    out = []
+    dmap = domains(m)
+    for i in interactions(m):
+        iid, to, frm = i.get("id", "?"), i.get("to"), i.get("from")
+        auth = i.get("authorization")
+        into_agent = is_agent(m, to)
+        if into_agent and not (auth and auth.get("allowed_callers")):
+            out.append(block(iid, "authorization_missing",
+                             f"{iid}: interaction into agent '{to}' needs authorization.allowed_callers"))
+        if auth:
+            ac = auth.get("allowed_callers") or []
+            if into_agent and frm not in ac:
+                out.append(block(iid, "caller_not_allowed", f"{iid}: caller '{frm}' not in allowed_callers of '{to}'"))
+            for c in ac:
+                principal = ((dmap.get(c) or {}).get("identity") or {}).get("principal")
+                if not principal:
+                    out.append(block(iid, "caller_no_identity", f"{iid}: allowed_caller '{c}' has no identity.principal"))
+            cm = auth.get("credential_mode")
+            if cm in ("static", "none") and not (auth.get("credential_justification") or "").strip():
+                out.append(block(iid, "credential_unjustified", f"{iid}: credential_mode '{cm}' needs credential_justification"))
+    return out
+
+
+def check_policy_refs(m, reg, tier):
+    """§6.8: every PolicyRef resolves + fits its expected kind; QuantPolicy limit>0/unit valid."""
+    out = []
+    regfile = reg.get("policies")
+    if regfile is None:
+        return []
+    pols = regfile.get("policies") or {}
+
+    def ref(r, locus, expect):
+        if not r or canon(r) in ("todo", "none", ""):
+            out.append(block(locus, "policy_ref_empty", f"{locus}: empty/TODO policy ref"))
+            return
+        p = pols.get(r)
+        if not p:
+            out.append(block(locus, "policy_ref_unresolved", f"{locus}: policy '{r}' not in policies.yaml"))
+            return
+        if expect and p.get("kind") not in expect:
+            out.append(block(locus, "policy_kind_mismatch",
+                             f"{locus}: policy '{r}' kind '{p.get('kind')}' not in {sorted(expect)}"))
+
+    def quant(qp, locus):
+        if qp is None:
+            return
+        if not (isinstance(qp.get("limit"), (int, float)) and not isinstance(qp.get("limit"), bool) and qp["limit"] > 0):
+            out.append(block(locus, "quantpolicy_limit", f"{locus}: QuantPolicy limit must be > 0"))
+        if qp.get("unit") not in ("tokens", "calls", "fanout"):
+            out.append(block(locus, "quantpolicy_unit", f"{locus}: QuantPolicy unit invalid"))
+
+    for i in interactions(m):
+        iid = i.get("id", "?")
+        for leg in ("request", "response"):
+            L = i.get(leg) or {}
+            if L.get("validation") is not None:
+                ref(L["validation"], iid, {"schema", "guardrail"})
+            quant(L.get("cost_bound"), iid)
+    for s in sagas(m):
+        for st in s.get("steps", []):
+            ref(st.get("compensation"), s.get("id", "?"), {"action"})
+    for name, d in domains(m).items():
+        da = d.get("deep_agent") or {}
+        for r in (da.get("gates") or []) + (da.get("guardrails") or []):
+            ref(r, name, {"guardrail"})
+        hsg = ((d.get("memory") or {}).get("long_term") or {}).get("high_stakes_guardrail")
+        if hsg is not None:
+            ref(hsg, name, {"guardrail"})
+    ob = m.get("observability")
+    if ob:
+        quant(ob.get("cost_budget"), "system:observability")
+    return out
+
+
+def _has_policy_or_quant(m):
+    for i in interactions(m):
+        for leg in ("request", "response"):
+            L = i.get(leg) or {}
+            if L.get("validation") is not None or L.get("cost_bound") is not None:
+                return True
+    if sagas(m):
+        return True
+    for d in domains(m).values():
+        da = d.get("deep_agent") or {}
+        if da.get("gates") or da.get("guardrails"):
+            return True
+        if ((d.get("memory") or {}).get("long_term") or {}).get("high_stakes_guardrail"):
+            return True
+    return bool((m.get("observability") or {}).get("cost_budget"))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Cycle helper
 # ══════════════════════════════════════════════════════════════════════════════
 def _has_cycle(adj):
@@ -242,6 +449,12 @@ def _compound_with_agent(m):
 def _any_scope(m):
     return any((d.get("identity") or {}).get("privilege") or d.get("uses") for d in domains(m).values()) \
         or any((i.get(leg) or {}).get("authority_bound") for i in interactions(m) for leg in ("request", "response"))
+def _any_capability(m):
+    return any(d.get("uses") or d.get("identity") or d.get("kind") in AGENT_KINDS for d in domains(m).values())
+def _any_agent_endpoint(m):
+    return any(is_agent(m, i.get("from")) or is_agent(m, i.get("to")) for i in interactions(m))
+def _to_agent_or_auth(m):
+    return any(is_agent(m, i.get("to")) or i.get("authorization") for i in interactions(m))
 
 DISPATCH = [
     # (name, fn, predicate, [registries])
@@ -249,6 +462,10 @@ DISPATCH = [
     ("check_references",     check_references,     _has_typed_interactions, []),
     ("check_classification", check_classification, _compound_with_agent, []),
     ("check_scope_grammar",  check_scope_grammar,  _any_scope, []),
+    ("check_capabilities",   check_capabilities,   _any_capability, ["capabilities"]),
+    ("check_boundary_legs",  check_boundary_legs,  _any_agent_endpoint, []),
+    ("check_authorization",  check_authorization,  _to_agent_or_auth, []),
+    ("check_policy_refs",    check_policy_refs,    _has_policy_or_quant, ["policies"]),
 ]
 
 
