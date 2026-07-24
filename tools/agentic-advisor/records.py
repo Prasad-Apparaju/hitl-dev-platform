@@ -41,8 +41,10 @@ LENS_RECS = {
                       "carried to the platform/ops track (FR-25) — authors no manifest field"),
 }
 # The handoff's own NEUTRAL vocabulary (structural keys it legitimately shares with #10) — excluded
-# from the guard so a component `id` / connection `from`/`to` / skip `owner` don't self-trip. Every
-# such key is PROJECTED + stringified at emit time, so none can carry an authored manifest value.
+# from the guard so a component `id` / connection `from`/`to` / skip `owner` don't self-trip. This
+# exclusion is sound ONLY because every emitted channel is scalar-coerced (`_text`/`_enum`), so a
+# neutral key can appear only as the handoff's own scalar structural key — never as a smuggled dict
+# key under a passthrough field. Do NOT emit any handoff field verbatim without coercion (round-4 F2).
 _HANDOFF_NEUTRAL = {"id", "from", "to", "control", "owner", "reason"}
 # A comprehensive static fallback (top-level + NESTED #10 field names) used if #10 isn't co-located.
 _STATIC_MANIFEST_FIELDS = {
@@ -97,6 +99,21 @@ def _text(v):
     return "" if v is None else str(v)
 
 
+def _enum(v):
+    """Coerce an ELICITED-ENUM channel (role / proposed_kind / transport) to a scalar. These three
+    are emitted for the human to eyeball, so a dict/list value would ride into the handoff verbatim
+    and — keyed only on neutral names (id/from/to/owner) — smuggle a manifest value past the guard
+    (round-4 F2). A non-scalar becomes None, which `validate_roles`/`validate_scenario` then flag on
+    the underlying state. This is what makes the `_HANDOFF_NEUTRAL` exclusion sound."""
+    return v if v is None or isinstance(v, (str, bool, int, float)) else None
+
+
+def _sid(v):
+    """A hashable scalar id, else None — so a container-valued id/attaches_to (unhashable) can't
+    crash a set/dict build or an `in` test (round-4 F1). A malformed id degrades to unresolvable."""
+    return v if isinstance(v, (str, int, float, bool)) else None
+
+
 def build_recommendations(composed):
     """One recommendation per included lens; floor entries carry an advisory depth_note."""
     recs = []
@@ -123,11 +140,12 @@ def generate_handoff(state, composed=None):
     return {
         "schema_version": "1.0",
         "feature": _text(state.get("feature", "<feature>")),
-        # elicited neutral facts (role/transport) + a proposed_kind RECOMMENDATION (never a `kind:` field);
-        # free-text `rationale` is stringified so it can't carry a nested manifest fragment (F2).
-        "components": [{"id": _text(c.get("id")), "role": c.get("role"), "proposed_kind": c.get("proposed_kind"),
+        # elicited neutral facts (role/transport) + a proposed_kind RECOMMENDATION (never a `kind:` field).
+        # EVERY channel is scalar-coerced at emit: free-text via _text, elicited enums via _enum — so no
+        # channel (not even the verbatim-looking ones) can carry a nested manifest fragment (F2, round-4 F2).
+        "components": [{"id": _text(c.get("id")), "role": _enum(c.get("role")), "proposed_kind": _enum(c.get("proposed_kind")),
                         "rationale": _text(c.get("rationale", ""))} for c in comps],
-        "connections": [{"from": _text(e.get("from")), "to": _text(e.get("to")), "transport": e.get("transport")} for e in edges],
+        "connections": [{"from": _text(e.get("from")), "to": _text(e.get("to")), "transport": _enum(e.get("transport"))} for e in edges],
         "recommendations": build_recommendations(composed),
         # skips are PROJECTED to {control,owner,reason} and STRINGIFIED — not passed verbatim (closes the F2 channel)
         "skips": [{k: _text(sk.get(k)) for k in SKIP_FIELDS} for sk in skips],
@@ -137,6 +155,7 @@ def generate_handoff(state, composed=None):
 def validate_skips(state):
     """FLOOR-SKIP-SILENT (F8): a recorded skip must name control + owner + reason as non-empty
     SCALARS — never silent, never a smuggled structure. Must not crash on malformed input."""
+    state = state or {}                                     # tolerate a None root (round-4 F4)
     errs = []
     for sk in (state.get("skips") or []):
         if not isinstance(sk, dict):
@@ -154,17 +173,19 @@ def validate_decision_refs(state):
     component/edge/lens id and every `depends_on` path has a known root. A typo here silently
     disables staleness/retirement on rerun, so surface it before handoff. Returns warnings."""
     state = state or {}
-    comp = {c["id"] for c in (state.get("components") or []) if isinstance(c, dict) and c.get("id") is not None}
-    edge = {e["id"] for e in (state.get("edges") or []) if isinstance(e, dict) and e.get("id") is not None}
+    comp = {_sid(c.get("id")) for c in (state.get("components") or []) if isinstance(c, dict)} - {None}
+    edge = {_sid(e.get("id")) for e in (state.get("edges") or []) if isinstance(e, dict)} - {None}
     targets = comp | edge | set(_compose.LENSES)
     warns = []
     for d in (state.get("decisions") or []):
         if not isinstance(d, dict):
             continue
         att = d.get("attaches_to")
-        if att is not None and att not in targets:
+        if att is not None and _sid(att) not in targets:   # _sid guards an unhashable att (round-4 F1)
             warns.append(f"decision {d.get('id', '?')}: attaches_to '{att}' resolves to no component/edge/lens")
-        dep = d.get("depends_on") or []
+        dep = d.get("depends_on")
+        if dep is not None and not isinstance(dep, (str, list)):   # a dict/other depends_on can't resolve (round-4 F6)
+            warns.append(f"decision {d.get('id', '?')}: depends_on {dep!r} is malformed (expected a path string or list)")
         for path in ([dep] if isinstance(dep, str) else (dep if isinstance(dep, list) else [])):
             if _resolve(state, path) is None:   # at finalize every gating input should resolve; None ⇒ typo/gap
                 warns.append(f"decision {d.get('id', '?')}: depends_on '{path}' resolves to nothing (typo or uncaptured input)")
@@ -259,8 +280,12 @@ def reconcile(old_state, new_scenario):
     silently dropped. Returns a diff-ready state (the human confirms before write)."""
     old_state, new_scenario = old_state or {}, new_scenario or {}   # tolerate a None root (round-3 L4)
     new = dict(new_scenario)
-    def _by_id(state, key):     # id-keyed, tolerating id-less / non-dict entries (F4)
-        return {x["id"]: x for x in (state.get(key) or []) if isinstance(x, dict) and x.get("id") is not None}
+    def _by_id(state, key):     # id-keyed, tolerating id-less / non-dict / unhashable-id entries (F4, round-4 F1)
+        out = {}
+        for x in (state.get(key) or []):
+            if isinstance(x, dict) and _sid(x.get("id")) is not None:
+                out[x["id"]] = x
+        return out
     old_comp, old_edge = _by_id(old_state, "components"), _by_id(old_state, "edges")
     new_comp, new_edge = _by_id(new_scenario, "components"), _by_id(new_scenario, "edges")
     targets = set(new_comp) | set(new_edge) | set(_compose.LENSES)  # where a live attaches_to may point
@@ -268,11 +293,13 @@ def reconcile(old_state, new_scenario):
     for d in (old_state.get("decisions") or []):
         if not isinstance(d, dict):
             continue
-        att = d.get("attaches_to")
-        # retired ONLY when the id is gone from BOTH new components AND edges — a same-id overlap in
-        # the other namespace must not silently drop a live decision (round-3 M1).
-        known = att in old_comp or att in old_edge
-        if known and att not in new_comp and att not in new_edge:
+        att = _sid(d.get("attaches_to"))   # unhashable att degrades to None (unresolvable) rather than crashing (round-4 F1)
+        # A decision attaches to a SPECIFIC entity. Retire it when the id is gone from every namespace
+        # it lived in — but a same-id flip (component x removed while edge x appears) is NOT the same
+        # entity, so it must retire too, not silently survive on the impostor (round-3 M1 + round-4 F3).
+        old_ns = [ns for ns, m in (("comp", old_comp), ("edge", old_edge)) if att in m]
+        still_live = any((ns == "comp" and att in new_comp) or (ns == "edge" and att in new_edge) for ns in old_ns)
+        if old_ns and not still_live:
             retired.append({**d, "state": "retired"})
             continue
         if att is not None and att not in targets:                 # a ghost id can't go stale/retired — surface it (round-3 M2)
@@ -280,7 +307,9 @@ def reconcile(old_state, new_scenario):
         stale = False
         if att in new_comp and old_comp.get(att, {}).get("proposed_kind") != new_comp[att].get("proposed_kind"):
             stale = True
-        dep = d.get("depends_on") or []
+        dep = d.get("depends_on")
+        if dep is not None and not isinstance(dep, (str, list)):    # a dict/other depends_on can't resolve (round-4 F6)
+            warnings.append(f"decision {d.get('id', '?')}: depends_on {dep!r} is malformed (expected a path string or list)")
         for path in ([dep] if isinstance(dep, str) else (dep if isinstance(dep, list) else [])):  # a string is ONE path (F4)
             ov, nv = _resolve(old_state, path), _resolve(new_scenario, path)
             if ov is None and nv is None:   # a typo'd / uncaptured path resolves None on both sides ⇒ never stale (round-3 M2)

@@ -27,11 +27,17 @@ def validate(expr):
     except SyntaxError as e:
         return [f"syntax error: {e}"]
     errs = []
+    # a root name (answers/components/edges) is only meaningful as `<root>.<attr>`; used bare it is a
+    # namespace object, not a boolean — reject it so it can't pass validate then TypeError at eval (round-4 F5)
+    attr_bases = {id(n.value) for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
     for node in ast.walk(tree):
         if isinstance(node, ALLOWED_NODES):
             continue
         if isinstance(node, ast.Name):
-            if node.id not in ALLOWED_NAMES and node.id not in ATTR_ROOTS:
+            if node.id in ATTR_ROOTS:
+                if id(node) not in attr_bases:
+                    errs.append(f"'{node.id}' must be used as {node.id}.<attr> (e.g. {node.id}.count)")
+            elif node.id not in ALLOWED_NAMES:
                 errs.append(f"name '{node.id}' is not in the grammar")
         elif isinstance(node, ast.Attribute):
             root = node.value
@@ -68,4 +74,7 @@ def evaluate(expr, scenario):
         "components": types.SimpleNamespace(count=len(comps)),
         "edges": types.SimpleNamespace(count=len(scenario.get("edges", []))),
     }
-    return bool(eval(compile(ast.parse(expr, mode="eval"), "<ask_when>", "eval"), {"__builtins__": {}}, ns))
+    try:
+        return bool(eval(compile(ast.parse(expr, mode="eval"), "<ask_when>", "eval"), {"__builtins__": {}}, ns))
+    except Exception as e:   # a grammar-valid predicate can still fail at runtime (e.g. -None) — one ValueError contract (round-4 F5)
+        raise ValueError(f"ask_when '{expr}' failed to evaluate: {e}") from e

@@ -101,6 +101,16 @@ def test_ask_when_grammar_is_not_a_superset():
     # round-3 L3: a signed numeric literal is in-grammar (unary minus on a constant, no escape)
     assert AW.validate("edges.count == -1") == []
     assert AW.validate("components.count >= -0") == []
+    # round-4 F5: a bare root name (namespace, not a boolean) is rejected — it can't validate then TypeError
+    assert AW.validate("components") != []
+    assert AW.validate("-components") != []
+    # a grammar-valid predicate that still fails at runtime raises ValueError (one contract), never a bare TypeError
+    import pytest
+    with pytest.raises(ValueError):
+        AW.evaluate("-answers.missing == 1", {"components": [], "edges": [], "answers": {}})
+    # the unary-op addition opens no escape
+    for esc in ("-__import__('os')", "--answers.x.__class__", "+any_agent.__call__"):
+        assert AW.validate(esc) != [], esc
 
 
 def test_no_orphan_question():

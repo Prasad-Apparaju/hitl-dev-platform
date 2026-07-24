@@ -113,6 +113,9 @@ def validate_scenario(s):
     for c in _list(s, "components"):
         if not isinstance(c, dict):
             errs.append(f"component must be a mapping: {c!r}"); continue
+        cid = c.get("id")
+        if cid is not None and not isinstance(cid, (str, int, float, bool)):  # a container id breaks id-keying downstream (round-4 F1)
+            errs.append(f"component id must be a scalar, got {cid!r}")
         pk = c.get("proposed_kind")
         # a container value (list/dict from a YAML slip) is unhashable — guard the `in` (round-3 H1)
         if pk is not None and (not isinstance(pk, str) or pk not in PROPOSED_KINDS):
@@ -120,6 +123,9 @@ def validate_scenario(s):
     for e in _list(s, "edges"):
         if not isinstance(e, dict):
             errs.append(f"edge must be a mapping: {e!r}"); continue
+        eid = e.get("id")
+        if eid is not None and not isinstance(eid, (str, int, float, bool)):  # a container id breaks id-keying downstream (round-4 F1)
+            errs.append(f"edge id must be a scalar, got {eid!r}")
         t = e.get("transport")
         if t is not None and (not isinstance(t, str) or t not in TRANSPORTS):
             errs.append(f"edge {e.get('id')}: unknown transport '{t}' (expected {sorted(TRANSPORTS)})")

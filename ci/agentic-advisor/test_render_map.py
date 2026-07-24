@@ -69,6 +69,11 @@ def test_blank_yaml_sections_do_not_crash():
     assert M.validate_roles(blank) == []
 
 
+def test_validate_roles_flags_container_role_without_crashing():
+    # round-4 F1: a dict-valued role is unhashable — the ROLE-TOTAL gate must flag it, not TypeError
+    assert M.validate_roles({"components": [{"id": "a", "role": {"id": "i1"}}]}) == ["a"]
+
+
 def test_non_dict_entries_are_skipped():
     # a malformed component/edge (a bare string) must not crash the map
     messy = {"feature": "x", "components": ["oops", {"id": "a", "role": "agent"}],

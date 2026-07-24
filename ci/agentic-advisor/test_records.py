@@ -212,6 +212,59 @@ def test_records_tolerate_none_root():
     assert R.reconcile(None, None)["decisions"] == []
 
 
+def test_verbatim_channels_cannot_smuggle_via_neutral_keys():
+    # round-4 F2 (the near-miss on NO-AUTHOR): role/proposed_kind/transport were emitted verbatim,
+    # so a dict keyed only on neutral names (id/from/to/owner — all real #10 fields, excluded from
+    # the guard) rode into the handoff carrying an authored manifest value. Now scalar-coerced.
+    s = {"feature": "f",
+         "components": [{"id": "a", "role": {"id": "i1", "from": "x", "to": "billing", "owner": "attacker"},
+                         "proposed_kind": {"kind": "deep_agent", "uses": ["invoke:billing"]}}],
+         "edges": [{"id": "e", "from": "a", "to": "a", "transport": {"async": {"delivery": "at_least_once"}}}],
+         "answers": {}}
+    h = R.generate_handoff(s)
+    assert R.handoff_authors_no_manifest_field(h) == set()          # nothing smuggled
+    c0, cn0 = h["components"][0], h["connections"][0]
+    assert c0["role"] is None and c0["proposed_kind"] is None and cn0["transport"] is None  # coerced, not verbatim
+    # a well-formed scalar still passes through untouched
+    good = R.generate_handoff({"components": [{"id": "a", "role": "agent", "proposed_kind": "simple_agent"}],
+                               "edges": [{"id": "e", "from": "a", "to": "a", "transport": "sync_call"}]})
+    assert good["components"][0]["role"] == "agent" and good["connections"][0]["transport"] == "sync_call"
+
+
+def test_container_valued_ids_and_refs_do_not_crash():
+    # round-4 F1: an unhashable (dict/list) id / attaches_to must not crash the id-keyed maps —
+    # every gate function degrades it to unresolvable and (where appropriate) warns.
+    assert R.validate_decision_refs({"decisions": [{"id": "d", "attaches_to": {"a": 1}}]})   # warns, no crash
+    rec = R.reconcile({"components": [{"id": {"x": 1}}], "edges": [{"id": ["y"]}],
+                       "decisions": [{"id": "d", "attaches_to": {"a": 1}}]}, {"components": []})
+    assert isinstance(rec["decisions"], list)                       # did not raise
+
+
+def test_reconcile_retires_on_namespace_flip():
+    # round-4 F3 (inverse of M1): component `x` removed while an edge `x` appears is NOT the same
+    # entity — the decision must retire, not silently survive attached to the impostor.
+    old = {"components": [{"id": "x", "proposed_kind": "simple_agent"}], "edges": [],
+           "decisions": [{"id": "d1", "attaches_to": "x", "state": "confirmed"}], "answers": {}}
+    new = {"components": [], "edges": [{"id": "x", "from": "a", "to": "b"}], "answers": {}}
+    rec = R.reconcile(old, new)
+    assert rec["decisions"] == [] and [d["attaches_to"] for d in rec["retired"]] == ["x"]
+    # and the M1 keep-case (component stays, same-id edge removed) must STILL be preserved
+    keep = R.reconcile({"components": [{"id": "x", "proposed_kind": "simple_agent"}], "edges": [{"id": "x", "from": "a", "to": "b"}],
+                        "decisions": [{"id": "d", "attaches_to": "x"}], "answers": {}},
+                       {"components": [{"id": "x", "proposed_kind": "simple_agent"}], "edges": [], "answers": {}})
+    assert keep["decisions"][0]["state"] == "confirmed" and keep["retired"] == []
+
+
+def test_validate_skips_tolerates_none_root():
+    assert R.validate_skips(None) == []                             # round-4 F4
+
+
+def test_malformed_depends_on_is_warned_not_ignored():
+    # round-4 F6: a dict-valued depends_on can't resolve — it must warn, not silently no-op
+    assert R.validate_decision_refs({"components": [{"id": "a"}],
+                                     "decisions": [{"id": "d", "attaches_to": "a", "depends_on": {"x": 1}}]})
+
+
 def test_decision_record_renders_decisions():
     # F5: the decision record shows chosen/rejected/rationale
     s = copy.deepcopy(STATE)

@@ -41,7 +41,9 @@ def validate_roles(scenario):
     """ROLE-TOTAL: every component has exactly one role from the enum. Returns offending ids."""
     bad = []
     for c in _comps(scenario):
-        if c.get("role") not in ROLES:
+        role = c.get("role")
+        # a container-valued role is unhashable — guard the `in` so the gate flags it, not crashes (round-4 F1)
+        if not isinstance(role, str) or role not in ROLES:
             bad.append(c.get("id"))
     return bad
 

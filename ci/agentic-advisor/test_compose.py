@@ -115,6 +115,13 @@ def test_none_root_does_not_crash():
     assert C.validate_scenario(None) == []
 
 
+def test_validate_scenario_flags_container_valued_id():
+    # round-4 F1: a dict/list id breaks id-keying downstream (unhashable) — surface it, don't stay silent
+    errs = C.validate_scenario({"components": [{"id": {"x": 1}, "proposed_kind": "simple_agent"}],
+                                "edges": [{"id": ["e"], "transport": "sync_call"}]})
+    assert len(errs) == 2
+
+
 def test_validate_scenario_flags_bad_enums():
     # F8: a typo'd proposed_kind / transport is surfaced, not silently demoted
     errs = C.validate_scenario({"components": [{"id": "a1", "proposed_kind": "deep-agent"}],
