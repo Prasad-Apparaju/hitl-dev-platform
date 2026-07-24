@@ -1,0 +1,36 @@
+{
+  "edges": [
+    {
+      "from": "intake_agent",
+      "id": "classify_to_lookup",
+      "kind": "sync_call",
+      "to": "account_service"
+    },
+    {
+      "from": "intake_agent",
+      "id": "lookup_to_resolve",
+      "kind": "sync_call",
+      "to": "resolution_agent"
+    },
+    {
+      "from": "resolution_agent",
+      "id": "propose_refund",
+      "kind": "async_task",
+      "to": "refund_service"
+    },
+    {
+      "from": "refund_service",
+      "id": "refund_executed_event",
+      "kind": "event",
+      "to": "account_service"
+    }
+  ],
+  "nodes": {
+    "account_service": "deterministic",
+    "intake_agent": "simple_agent",
+    "refund_service": "deterministic",
+    "resolution_agent": "simple_agent"
+  },
+  "orchestration": "sequential",
+  "schema_version": "1.0"
+}

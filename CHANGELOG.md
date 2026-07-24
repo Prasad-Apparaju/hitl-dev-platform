@@ -4,6 +4,50 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.2.0] — 2026-07-24
+
+### Added
+
+**Compound-agentic system delivery surface (EPIC #10, FR-26).** HITL now governs products built as a **graph
+of deterministic services + simple/deep agents** with sync, async, and event edges — not just single agents.
+Everything is additive and per-check activated: a legacy or deterministic manifest validates unchanged and
+needs no new registry (proven by test, not asserted).
+
+- **Manifest schema extensions** (`system-manifest.schema.yaml`): a top-level `interactions` edge model (the
+  element identity is `id`, so parallel edges between the same pair are representable), `orchestration`,
+  `segments`, `sagas`, and an `observability` block; `DomainEntry` gains `kind`/`kind_rationale`/`identity`/
+  `uses`/`memory`/`lifecycle`/`deep_agent`/`evals`. `interaction_matrix`/`depends_on`/`events_*` become
+  generated projections when `interactions` is present.
+- **17 fail-closed validators** (`ci/manifest-agentic/check_manifest_agentic.py`), each activating only on its
+  own data. A **schema gate** runs first — an unknown enum value or unknown field is a non-waivable blocker, so
+  a typo can never silently switch a governance check off (fail-*closed*, not fail-open). Then: graph integrity
+  (topology, references, classification, scope grammar); trust + privilege
+  (per-leg determinism boundary, necessary-and-sufficient capability check with over/under/ceiling,
+  non-human authorization, policy resolution); reliability + state (async idempotency/DLQ, memory ⇄ uses
+  reconciliation, durable lifecycle, deep-agent structure, declared-saga well-formedness, a
+  compensation-gap **advisory**); and the **observability floor gate** + per-agent-plus-e2e eval coverage.
+  A general `manifest-waivers.yaml` lets a human record a tier-appropriate exception for any blocker — never
+  a silent skip; `unparseable`/`unknown_field`/`schema_invalid` and `system:`/`registry:` loci are
+  non-waivable.
+- **Generated posture views** (`tools/manifest-agentic/generate_views.py`): topology (Mermaid), privilege,
+  tool matrix, observability, projections, and the eval index — deterministic, with a `--check`
+  regenerate-and-diff so a view can never drift from the manifest.
+- **Baseline eval generator** (`tools/manifest-agentic/gen_baseline_evals.py`, CR-20): seeds a `baseline_only`
+  eval spec per agent + e2e segment (from `owning_fr`, facade failure modes, privilege boundary), merge-by-id
+  preserving human-edited cases — HITL seeds, humans approve.
+- **Design-flow integration:** `pm-design-feature` and `ai/codex/AGENTS.md` gain the gate→probe→route rule
+  (agentic surface → topology probe → the compound track) and the compound-agentic authoring checklist.
+- **Docs + worked example:** `docs/patterns/compound-agentic-systems.md` and a validator-clean reference
+  system at `docs/examples/compound-agentic/` (manifest + registries + eval specs + generated views).
+
+Conformance: 43 per-rule validator cases + generator/schema suites, all green; the worked showcase passes the
+full validator end-to-end at Tier 2. **Governs-not-runtime:** HITL ships the schema, validators, generators,
+and posture views — no runtime, broker, durable-execution engine, dashboard, or eval runner. Heavier items
+(universal eval coverage, the saga required-when model, delegated per-interaction authority, sync-reliability
+declarations, and eval-adapter *execution*/result ingestion) are a scoped follow-on (#42).
+
+---
+
 ## [2.1.1] — 2026-07-13
 
 ### Fixed

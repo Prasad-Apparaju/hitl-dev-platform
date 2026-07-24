@@ -1,0 +1,31 @@
+{
+  "agent_hops": [
+    "classify_to_lookup",
+    "lookup_to_resolve",
+    "propose_refund"
+  ],
+  "attributes": [
+    "gen_ai.operation.name",
+    "gen_ai.request.model",
+    "gen_ai.system",
+    "gen_ai.usage.input_tokens",
+    "gen_ai.usage.output_tokens"
+  ],
+  "convention": "otel_genai",
+  "cost_budget": {
+    "limit": 100000,
+    "unit": "tokens"
+  },
+  "declared": true,
+  "eval_console": {
+    "access": "console",
+    "owner": "product-support-pm",
+    "ref": "domain:resolution_agent"
+  },
+  "schema_version": "1.0",
+  "traced_hops": [
+    "classify_to_lookup",
+    "lookup_to_resolve",
+    "propose_refund"
+  ]
+}

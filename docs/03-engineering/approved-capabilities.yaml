@@ -1,0 +1,30 @@
+# Approved capabilities registry (compound-agentic surface, #10 / LLD §5).
+# The ceiling registry: the MAXIMUM grantable scope per capability. A domain's
+# `identity.privilege` and `uses`-derived scopes must each be ⊆ a ceiling here
+# (check_capabilities, §6.2). `class: tool` rows also carry `runtime_ref` — the
+# product's runtime allow-list key (CR-15). Human-authored; HITL validates, never
+# provisions. Scope grammar: "op:resource" (or "op:*").
+schema_version: "1.0"
+
+capabilities:
+  crm.read:
+    class: tool
+    risk: low
+    ceiling: ["read:customer", "read:order"]
+    runtime_ref: "crm-api-readonly"          # product runtime allow-list identifier
+
+  refund.execute:
+    class: tool
+    risk: high
+    ceiling: ["execute:refund"]
+    runtime_ref: "payments-api-refund"
+
+  llm.generate:
+    class: model
+    risk: low
+    ceiling: ["invoke:completion"]
+
+  session.memory:
+    class: memory
+    risk: med
+    ceiling: ["read:session", "write:session"]

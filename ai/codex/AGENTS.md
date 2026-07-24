@@ -91,8 +91,9 @@ Ask one at a time. Wait for each answer before asking the next.
 1. **Delivery surface?** Web UI, mobile (iOS/Android/responsive), API/backend only, agentic workflow, internal/ops tool, or combination? This gates which later phases apply.
    - Web or mobile UI → all phases apply, including **Phase 4 UI prototyping with Claude Design**. Say immediately: "Since this has a UI, we'll prototype it with Claude Design in Phase 4 — text-only requirements for UI features are incomplete."
    - Backend/API only → Phase 4 skipped; acceptance criteria will be contract-shaped.
-   - Agentic → Phase 4 replaced with tool schema, decision flow, and HITL gate definitions.
+   - Agentic → Phase 4 replaced with tool schema, decision flow, and HITL gate definitions. **Then run the compound-surface probe.**
    - *Follow-up (if vague):* "Is there a primary surface, or are they truly equal-priority?"
+   - **Compound-surface probe (agentic only, EPIC #10):** ask (a) how many distinct components (services/agents/stores)? (b) does any component call/hand-off/message another? **≥2 components AND ≥1 edge → the compound-agentic surface** — design it as an extended manifest gated by `ci/manifest-agentic` (Phase 4 compound track). A single agent → the existing single-agent path; a non-agentic multi-service app never reaches this probe. *(FR-28/#35 Advisor will recommend into this same branch later; #10 needs no input from it — a human authors the manifest, the validators gate it.)*
 
 2. **Who is this for?** Which persona from `docs/01-product/prd.md` §3?
 
@@ -158,6 +159,7 @@ Present a table: scenario | proposed handling. **STOP — get confirmation befor
 
 - **API/Backend only:** Skip — acceptance criteria in Phase 5 will be contract-shaped (request/response, error codes, edge cases).
 - **Agentic:** Produce (1) tool schema — name, inputs, outputs, failure modes; (2) decision flow — numbered trigger → tool calls → branches; (3) HITL gate definitions; (4) guardrails — actions the agent must never take autonomously. **STOP — get explicit approval: "Agent design approved."**
+- **Compound-agentic (if the probe routed here — ≥2 components + ≥1 edge):** design the system as an **extended `docs/system-manifest.yaml`** gated by `ci/manifest-agentic`. Author: component `kind` + `kind_rationale` (simplest fit); `interactions[]` edges with `kind`/`facade`/trust legs (validation on stochastic→deterministic; cost+authority ⊆ privilege on agent-consumer legs); per-agent `identity`+least-privilege `uses` and edge `authorization`; `async`/`lifecycle`/`sagas` for reliability; the **`observability` floor block** (tracing + cost_budget + tier-scaled eval_console — required); per-agent evals + one `e2e` segment. Validate: `python3 ci/manifest-agentic/check_manifest_agentic.py docs/system-manifest.yaml --tier <n>` must exit 0. Reference: `docs/examples/compound-agentic/system-manifest.yaml`; pattern: `docs/patterns/compound-agentic-systems.md`. **STOP — get explicit approval: "Agent design approved."**
 - **Web/Mobile:** A visual reference is required before Phase 5 — do not proceed without one. Say: "Let's prototype this with Claude Design now — I'll generate screens for each step from Phase 2. If you'd rather start from something you already have (Figma, tool screenshot, hand-drawn sketch), share it and I'll annotate it instead." **Primary path:** generate with Claude Design — one screen per journey step, states: default, empty, loading, error, success, following existing UI patterns. **Alternative:** if PM shares an image, read it and annotate missing states and unhandled edge cases from Phase 3. Either way: **STOP — iterate until satisfied. Get explicit approval: "Design approved."**
 
 #### Phase 5 — Acceptance Criteria

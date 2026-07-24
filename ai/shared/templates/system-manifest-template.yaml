@@ -64,3 +64,21 @@ domains:
   # integrations:
   #   lld: docs/02-design/technical/lld/services/integrations.md
   #   files: [...]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Compound-agentic surface (EPIC #10) — OPTIONAL, additive.
+# If your product is a graph of deterministic services + simple/deep agents with
+# sync/async/event edges, declare the agentic blocks. A manifest with none of them
+# is deterministic and validates exactly as before (per-check activation).
+#
+# On a domain that is an agent:      kind, kind_rationale, identity, uses, memory,
+#                                    lifecycle, deep_agent, evals
+# Top-level:                         interactions (the edge model), orchestration,
+#                                    segments, sagas, observability (a FLOOR GATE
+#                                    once any domain is an agent)
+# Registries (docs/03-engineering/): approved-capabilities.yaml, policies.yaml,
+#                                    stores.yaml, evals/index.yaml + waivers.yaml
+#
+# Full worked example: docs/examples/compound-agentic/system-manifest.yaml
+# Field docs:          ai/claude/generate-docs/templates/system-manifest.schema.yaml
+# ─────────────────────────────────────────────────────────────────────────────

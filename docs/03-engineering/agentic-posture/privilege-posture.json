@@ -1,0 +1,51 @@
+{
+  "domains": {
+    "account_service": {
+      "granted": [
+        "read:customer",
+        "read:order"
+      ],
+      "kind": "deterministic",
+      "principal": "sa-account",
+      "uses": [
+        "crm.read:read:customer",
+        "crm.read:read:order"
+      ]
+    },
+    "intake_agent": {
+      "granted": [
+        "invoke:completion"
+      ],
+      "kind": "simple_agent",
+      "principal": "sa-intake",
+      "uses": [
+        "llm.generate:invoke:completion"
+      ]
+    },
+    "refund_service": {
+      "granted": [
+        "execute:refund"
+      ],
+      "kind": "deterministic",
+      "principal": "sa-refund",
+      "uses": [
+        "refund.execute:execute:refund"
+      ]
+    },
+    "resolution_agent": {
+      "granted": [
+        "invoke:completion",
+        "read:session",
+        "write:session"
+      ],
+      "kind": "simple_agent",
+      "principal": "sa-resolution",
+      "uses": [
+        "llm.generate:invoke:completion",
+        "session.memory:read:session",
+        "session.memory:write:session"
+      ]
+    }
+  },
+  "schema_version": "1.0"
+}

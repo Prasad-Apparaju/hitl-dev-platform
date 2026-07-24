@@ -1,0 +1,50 @@
+{
+  "depends_on": {
+    "intake_agent": [
+      "account_service",
+      "resolution_agent"
+    ],
+    "refund_service": [
+      "account_service"
+    ],
+    "resolution_agent": [
+      "refund_service"
+    ]
+  },
+  "events_consumed": {
+    "account_service": [
+      {
+        "from": "refund_service",
+        "name": "refund_executed"
+      }
+    ]
+  },
+  "events_emitted": {
+    "refund_service": [
+      {
+        "consumed_by": "account_service",
+        "name": "refund_executed",
+        "shape": "RefundExecuted"
+      }
+    ]
+  },
+  "interaction_matrix": {
+    "intake_agent -> account_service": {
+      "description": "Intake asks the account service to look up the customer/order.",
+      "entity_crossing": "CustomerRef -> AccountView"
+    },
+    "intake_agent -> resolution_agent": {
+      "description": "Intake hands the classified request to the resolution agent.",
+      "entity_crossing": "ClassifiedRequest -> DraftResolution"
+    },
+    "refund_service -> account_service": {
+      "description": "Refund service emits a reliable event that a refund was executed.",
+      "entity_crossing": "RefundExecuted"
+    },
+    "resolution_agent -> refund_service": {
+      "description": "Resolution agent proposes a refund; the payment service executes it (irreversible).",
+      "entity_crossing": "RefundProposal -> RefundReceipt"
+    }
+  },
+  "schema_version": "1.0"
+}

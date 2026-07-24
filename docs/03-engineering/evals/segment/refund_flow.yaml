@@ -1,0 +1,11 @@
+target_type: segment
+target_id: refund_flow
+kind: eval
+owner: product-support-pm
+status: baseline
+approval:
+  reviewer: qa-lead
+  date: 2026-07-23
+  decision: approved
+cases:
+  - { id: refund_flow_e2e, given: "an approved refund case end to end", expect: "refund issued once, traced", source: acceptance_criterion, edited: false }

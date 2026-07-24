@@ -83,12 +83,14 @@ Ask the PM these questions one at a time. Wait for answers before moving on. Do 
 
 1. **What is the delivery surface?** Web UI, mobile (iOS/Android/responsive web), API/backend only, agentic workflow (AI agent with no direct UI), internal/ops tool, or a combination? The answer gates which phases apply:
    - Backend-only or API → Phase 2 describes request/response flows, not screen steps; Phase 4 is skipped
-   - Agentic → Phase 2 describes the agent's decision path and HITL gates; Phase 4 is replaced with tool/gate design
+   - Agentic → Phase 2 describes the agent's decision path and HITL gates; Phase 4 is replaced with tool/gate design. **Then run the compound-surface probe below.**
    - Web or mobile UI → all phases apply, including **Phase 4 UI prototyping with Claude Design**
 
    If the answer is Web or Mobile, say immediately: "Great — since this has a UI, we'll prototype it with Claude Design in Phase 4. Text-only requirements for UI features are incomplete; the prototype is part of the spec."
 
    *Follow-up probe (if the answer is vague or combo):* "Just to make sure I design the right flows — is there a primary surface, or are web and mobile truly equal-priority?"
+
+   **Compound-surface probe (agentic only — routes to the compound-agentic surface, EPIC #10).** Only if the surface is agentic, ask two cheap questions before designing: **(a)** how many distinct components (services / agents / stores)? **(b)** does any component call, hand off to, or message another? **≥2 components AND ≥1 inter-component edge → the compound-agentic surface** (a graph of deterministic services + simple/deep agents with sync/async/event edges); design it as a manifest per Phase 4's compound track. A single agent → the existing single-agent agentic path. A 2-service deterministic app that answered "not agentic" never reaches this probe. *(The Agentic Design Advisor, FR-28/#35, is a future right-sizing front door that will recommend into this same branch; #10 does not require it — a human authors the manifest and the validators gate it.)*
 
 2. **Who is this for?** Which persona from the PRD (`docs/01-product/prd.md` §3) is the primary user? Is there a secondary user?
 3. **What evidence confirms this is a real problem?** What are users doing or saying that points to this gap? (Support tickets, user research, analytics, churn feedback.)
@@ -204,6 +206,16 @@ Present a table of edge cases with proposed handling. Get confirmation before pr
 2. **Decision flow** — a numbered sequence showing trigger → tool calls → decision branches → output. Include the conditions at each branch.
 3. **HITL gate definitions** — for each gate: what the human sees, what they can approve/reject/correct, and what the agent does with each response.
 4. **Guardrails** — what the agent must never do autonomously (irreversible actions, external sends, data deletion). These become hard HITL gates.
+
+**Compound-agentic track (if the compound-surface probe routed here — ≥2 components + ≥1 edge).** Design the system as an **extended manifest** (`docs/system-manifest.yaml`), which the `ci/manifest-agentic` validators gate at design time. Author, per component and edge:
+1. **Component classification** — for each domain, the **simplest `kind` that fits**: `deterministic` (a service), `simple_agent` (a bounded LLM task), or `deep_agent` (planner + subagents + virtual-fs memory). State `kind_rationale` for every agent — the anti-over-engineering check.
+2. **Interactions** (the edge model) — one `interactions[]` element per edge with `kind` (`sync_call`/`async_task`/`event`), the `facade` it calls, and the **trust legs**: a stochastic→deterministic leg needs `validation`; an agent-consumer leg needs `cost_bound` + `authority_bound ⊆ the agent's privilege`.
+3. **Privilege** — each agent's `identity` + least-privilege `uses` (each scope ⊆ its `approved-capabilities.yaml` ceiling), and `authorization.allowed_callers` on edges into an agent.
+4. **Reliability** — `async` idempotency/DLQ on async edges, `lifecycle` for long-running components, declared `sagas` for distributed compensation.
+5. **Observability (floor gate)** — a top-level `observability` block: tracing (convention-required attributes, agent hops), a `cost_budget`, and a tier-scaled PM `eval_console`. **An agentic system without it does not pass.**
+6. **Evals** — a per-agent eval `spec` + one `e2e` segment (`segments[]`), approved at Tier 2+.
+
+Run `python3 ci/manifest-agentic/check_manifest_agentic.py docs/system-manifest.yaml --tier <n>` (and `tools/manifest-agentic/generate_views.py` for the posture views); the manifest must exit 0 before Phase 5. Worked reference: `docs/examples/compound-agentic/system-manifest.yaml`; pattern: `docs/patterns/compound-agentic-systems.md`.
 
 Present to the PM. Get explicit approval: "Agent design approved" before proceeding.
 
