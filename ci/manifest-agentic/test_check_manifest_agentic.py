@@ -504,7 +504,7 @@ def test_sep_pair_parallel_edges_validate():
         "domains": {"a": {"purpose": "p", "facade_apis": {"go": {"signature": "g()"}}},
                     "b": {"purpose": "q", "facade_apis": {"do": {"signature": "d()"}}}},
         "interactions": [
-            {"id": "e_call", "from": "a", "to": "b", "kind": "sync_call", "facade": "b:go", "response": {}},
+            {"id": "e_call", "from": "a", "to": "b", "kind": "sync_call", "facade": "b:do", "response": {}},
             {"id": "e_evt", "from": "a", "to": "b", "kind": "event", "facade": "a:evt"},
         ],
     }
