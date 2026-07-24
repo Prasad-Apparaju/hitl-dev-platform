@@ -85,6 +85,7 @@ def render_mermaid(scenario, composed):
 
 
 def render(scenario, composed=None):
+    scenario = scenario or {}                               # tolerate a None root (round-3 L4)
     composed = composed or _compose.compose(scenario)
     return {"terminal": render_terminal(scenario, composed),
             "mermaid": render_mermaid(scenario, composed)}

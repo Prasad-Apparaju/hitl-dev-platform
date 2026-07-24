@@ -378,8 +378,14 @@ human decisions:
    component's `proposed_kind` changed, or `side_effects` moved to `irreversible`) has its decision **flagged stale
    and surfaced for re-confirmation** — it is neither silently kept nor silently dropped (ADV-9).
 3. **A removed component/edge** carries its dependent decisions to a `retired` list in the record (not
-   deleted), so an audit trail survives.
-4. **Human confirms before write.** The reconciled record is presented as a diff (added / changed / stale /
+   deleted), so an audit trail survives. A decision is retired only when its `attaches_to` id is absent from
+   **both** the new components AND edges — a same-id overlap across the two namespaces must never silently drop
+   a still-live decision.
+4. **Unresolvable refs are surfaced, never silent.** `reconcile` returns a `warnings` list (also available at
+   finalize via `records.validate_decision_refs`) for any decision whose `attaches_to` points at no
+   component/edge/lens, or whose `depends_on` path resolves to nothing on both sides — a typo that would
+   otherwise silently defeat staleness/retirement. The human clears warnings before confirming.
+5. **Human confirms before write.** The reconciled record is presented as a diff (added / changed / stale /
    retired); the human confirms, and only then are `agentic-decisions.md` **and the handoff (§7.4)**
    **regenerated** from the confirmed state (ADV-7). No silent overwrite of a human decision.
 

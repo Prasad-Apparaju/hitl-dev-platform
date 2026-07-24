@@ -101,6 +101,20 @@ def test_blank_yaml_sections_degrade_to_empty():
     assert len(errs) == 3
 
 
+def test_validate_scenario_flags_container_valued_enum_without_crashing():
+    # round-3 H1: a YAML slip making proposed_kind/transport a list/dict is unhashable — the
+    # `in` test must be guarded so the gate FLAGS it instead of crashing with TypeError.
+    errs = C.validate_scenario({"components": [{"id": "a", "proposed_kind": ["deep_agent"]}],
+                                "edges": [{"id": "e", "transport": {"k": 1}}]})
+    assert len(errs) == 2
+
+
+def test_none_root_does_not_crash():
+    # round-3 L4: a None root (empty file) degrades, never AttributeErrors
+    assert C.compose(None) == {"report_sections": [], "floor": [], "rungs": []}
+    assert C.validate_scenario(None) == []
+
+
 def test_validate_scenario_flags_bad_enums():
     # F8: a typo'd proposed_kind / transport is surfaced, not silently demoted
     errs = C.validate_scenario({"components": [{"id": "a1", "proposed_kind": "deep-agent"}],

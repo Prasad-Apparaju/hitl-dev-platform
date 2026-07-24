@@ -98,6 +98,9 @@ def test_ask_when_grammar_is_not_a_superset():
         assert AW.validate(good) == [], good
         AW.evaluate(good, scen)                              # must not raise
     assert AW.evaluate("answers.side_effects == 'irreversible'", scen) is True
+    # round-3 L3: a signed numeric literal is in-grammar (unary minus on a constant, no escape)
+    assert AW.validate("edges.count == -1") == []
+    assert AW.validate("components.count >= -0") == []
 
 
 def test_no_orphan_question():

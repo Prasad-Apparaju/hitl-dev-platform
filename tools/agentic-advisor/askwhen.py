@@ -16,7 +16,7 @@ ATTR_ROOTS = {"answers", "components", "edges"}
 ALLOWED_NODES = (
     ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.UnaryOp, ast.Not, ast.Compare, ast.Load,
     ast.Constant, ast.List, ast.Tuple, ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
-    ast.In, ast.NotIn,
+    ast.In, ast.NotIn, ast.USub, ast.UAdd,   # signed numeric literals (round-3 L3): `x == -1`
 )
 
 

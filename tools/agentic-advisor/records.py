@@ -63,6 +63,11 @@ _STATIC_MANIFEST_FIELDS = {
     "path", "e2e", "transactional", "compensation", "compensation_idempotent", "on_compensation_failure",
     "tracing", "cost_budget", "eval_console", "convention", "hops", "attributes", "access", "ref",
     "limit", "unit", "signature", "blurb", "mutations", "preconditions", "error_modes", "spec",
+    # kept at parity with #10.FIELD_SPEC so the fallback is never weaker than the live derivation
+    # (round-3 L1; a parity test in ci/agentic-advisor guards against future drift)
+    "adr", "affected_domains", "backoff", "consumed_by", "date", "description", "enforcement", "files",
+    "generated_at", "generator", "interaction_id", "last_changed", "lld", "max", "name", "note", "order",
+    "purpose", "resource", "rule", "shape", "steps", "summary", "tests", "version",
 }
 
 
@@ -110,6 +115,7 @@ def build_recommendations(composed):
 def generate_handoff(state, composed=None):
     """The NEUTRAL `agentic-design-handoff.yaml` — elicited facts + recommendations/hints;
     NO manifest field (HANDOFF/NO-AUTHOR, §7.4)."""
+    state = state or {}                                     # tolerate a None root (round-3 L4)
     composed = composed or _compose.compose(state)
     comps = [c for c in (state.get("components") or []) if isinstance(c, dict)]
     edges = [e for e in (state.get("edges") or []) if isinstance(e, dict)]
@@ -141,6 +147,28 @@ def validate_skips(state):
             if isinstance(v, (dict, list)) or not str(v if v is not None else "").strip():
                 errs.append(f"skip {sk.get('control', '?')}: field '{k}' must be a non-empty scalar")
     return errs
+
+
+def validate_decision_refs(state):
+    """Finalize-time check (round-3 M2): every decision's `attaches_to` resolves to a real
+    component/edge/lens id and every `depends_on` path has a known root. A typo here silently
+    disables staleness/retirement on rerun, so surface it before handoff. Returns warnings."""
+    state = state or {}
+    comp = {c["id"] for c in (state.get("components") or []) if isinstance(c, dict) and c.get("id") is not None}
+    edge = {e["id"] for e in (state.get("edges") or []) if isinstance(e, dict) and e.get("id") is not None}
+    targets = comp | edge | set(_compose.LENSES)
+    warns = []
+    for d in (state.get("decisions") or []):
+        if not isinstance(d, dict):
+            continue
+        att = d.get("attaches_to")
+        if att is not None and att not in targets:
+            warns.append(f"decision {d.get('id', '?')}: attaches_to '{att}' resolves to no component/edge/lens")
+        dep = d.get("depends_on") or []
+        for path in ([dep] if isinstance(dep, str) else (dep if isinstance(dep, list) else [])):
+            if _resolve(state, path) is None:   # at finalize every gating input should resolve; None ⇒ typo/gap
+                warns.append(f"decision {d.get('id', '?')}: depends_on '{path}' resolves to nothing (typo or uncaptured input)")
+    return warns
 
 
 def handoff_ref_integrity(handoff):
@@ -178,6 +206,7 @@ def handoff_authors_no_manifest_field(handoff):
 
 def generate_decision_record(state, composed=None):
     """`agentic-decisions.md` — a pure function of the state (REC-GEN, regenerate-and-diff)."""
+    state = state or {}                                     # tolerate a None root (round-3 L4)
     composed = composed or _compose.compose(state)
     not_needed = [l for l in _compose.LENSES if l not in composed["report_sections"]]
     lines = [f"# Agentic design decisions — {state.get('feature', '<feature>')}", "",
@@ -189,17 +218,20 @@ def generate_decision_record(state, composed=None):
              "## Recommendations (a human authors the manifest; #10 validates)", ""]
     for r in build_recommendations(composed):
         lines.append(f"- **{r['lens']}** ({r['category']}) — {r['control']}  ·  hint: `{r['target_path_hint']}`")
-    if state.get("decisions"):
+    decs = [d for d in (state.get("decisions") or []) if isinstance(d, dict)]   # tolerate junk entries (round-3 H2)
+    if decs:
         lines += ["", "## Menu decisions (chosen / rejected / rationale)", ""]
-        for d in state["decisions"]:
-            rej = ", ".join(str(x) for x in (d.get("rejected") or [])) or "—"
+        for d in decs:
+            rejected = d.get("rejected")
+            rej = ", ".join(str(x) for x in rejected) if isinstance(rejected, list) else "—"
             state_tag = f" [{d['state']}]" if d.get("state") else ""
             lines.append(f"- **{d.get('attaches_to', '?')}**{state_tag}: chose **{d.get('chosen')}** "
                          f"(rejected: {rej}) — {d.get('rationale', '')}"
                          + ("  · OVERRIDE" if d.get("override") else ""))
-    if state.get("skips"):
+    skps = [s for s in (state.get("skips") or []) if isinstance(s, dict)]
+    if skps:
         lines += ["", "## Recorded skips (Advisor records — grant no #10 gate exception)", ""]
-        for s in state["skips"]:
+        for s in skps:
             lines.append(f"- `{s.get('control')}` — owner {s.get('owner')}, reason: {s.get('reason')}")
     if state.get("deploy"):
         d = state["deploy"]
@@ -225,30 +257,40 @@ def reconcile(old_state, new_scenario):
     `depends_on` state field (e.g. `answers.side_effects` moving to irreversible). A decision on
     a removed component OR edge is `retired`. skips AND deferrals AND deploy are carried, never
     silently dropped. Returns a diff-ready state (the human confirms before write)."""
+    old_state, new_scenario = old_state or {}, new_scenario or {}   # tolerate a None root (round-3 L4)
     new = dict(new_scenario)
     def _by_id(state, key):     # id-keyed, tolerating id-less / non-dict entries (F4)
         return {x["id"]: x for x in (state.get(key) or []) if isinstance(x, dict) and x.get("id") is not None}
     old_comp, old_edge = _by_id(old_state, "components"), _by_id(old_state, "edges")
     new_comp, new_edge = _by_id(new_scenario, "components"), _by_id(new_scenario, "edges")
-    decisions, retired = [], []
+    targets = set(new_comp) | set(new_edge) | set(_compose.LENSES)  # where a live attaches_to may point
+    decisions, retired, warnings = [], [], []
     for d in (old_state.get("decisions") or []):
         if not isinstance(d, dict):
             continue
         att = d.get("attaches_to")
-        removed = (att in old_comp and att not in new_comp) or (att in old_edge and att not in new_edge)
-        if removed:
+        # retired ONLY when the id is gone from BOTH new components AND edges — a same-id overlap in
+        # the other namespace must not silently drop a live decision (round-3 M1).
+        known = att in old_comp or att in old_edge
+        if known and att not in new_comp and att not in new_edge:
             retired.append({**d, "state": "retired"})
             continue
+        if att is not None and att not in targets:                 # a ghost id can't go stale/retired — surface it (round-3 M2)
+            warnings.append(f"decision {d.get('id', '?')}: attaches_to '{att}' resolves to no component/edge/lens (typo? re-review disabled)")
         stale = False
         if att in new_comp and old_comp.get(att, {}).get("proposed_kind") != new_comp[att].get("proposed_kind"):
             stale = True
         dep = d.get("depends_on") or []
-        for path in ([dep] if isinstance(dep, str) else dep):    # a string depends_on is one path, not chars (F4)
-            if _resolve(old_state, path) != _resolve(new_scenario, path):
+        for path in ([dep] if isinstance(dep, str) else (dep if isinstance(dep, list) else [])):  # a string is ONE path (F4)
+            ov, nv = _resolve(old_state, path), _resolve(new_scenario, path)
+            if ov is None and nv is None:   # a typo'd / uncaptured path resolves None on both sides ⇒ never stale (round-3 M2)
+                warnings.append(f"decision {d.get('id', '?')}: depends_on '{path}' resolves to nothing in either state (typo or uncaptured input? staleness can't fire)")
+            if ov != nv:
                 stale = True
         decisions.append({**d, "state": "stale" if stale else "confirmed"})
     new["decisions"] = decisions
     new["retired"] = retired
+    new["warnings"] = warnings                              # human sees typo'd refs before confirming the diff
     new["skips"] = old_state.get("skips", [])
     new["deferrals"] = old_state.get("deferrals", [])       # carried, never silently dropped (F4)
     if "deploy" in old_state:

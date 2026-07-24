@@ -155,6 +155,63 @@ def test_generate_handoff_survives_blank_state():
     assert "Floor" in R.generate_decision_record(blank)
 
 
+def test_decision_record_tolerates_junk_entries():
+    # round-3 H2: non-dict decisions/skips + a non-list `rejected` must not crash the record
+    # (every sibling — handoff/reconcile/validate_skips — already tolerates this)
+    s = {"feature": "f", "decisions": [{"chosen": "a", "rejected": 5}, "STRAY", None],
+         "skips": [{"control": "x", "owner": "o", "reason": "r"}, None]}
+    rec = R.generate_decision_record(s)                     # must not raise
+    assert "Menu decisions" in rec and "chose **a**" in rec
+
+
+def test_reconcile_id_overlap_keeps_live_decision():
+    # round-3 M1: a decision on component `x` must survive removal of a same-id EDGE `x`
+    # (components + edges share the attaches_to namespace — the second disjunct must not fire)
+    old = {"components": [{"id": "x", "proposed_kind": "simple_agent"}],
+           "edges": [{"id": "x", "from": "a", "to": "b"}],
+           "decisions": [{"id": "d1", "attaches_to": "x", "state": "confirmed"}], "answers": {}}
+    new = {"components": [{"id": "x", "proposed_kind": "simple_agent"}], "edges": [], "answers": {}}
+    rec = R.reconcile(old, new)
+    assert rec["decisions"][0]["state"] == "confirmed" and rec["retired"] == []
+
+
+def test_reconcile_surfaces_typoed_refs():
+    # round-3 M2: a ghost attaches_to and a typo'd depends_on both silently disable re-review —
+    # reconcile must WARN (never silently leave the decision confirmed with staleness dead)
+    old = {"components": [{"id": "a", "proposed_kind": "simple_agent"}], "edges": [],
+           "decisions": [{"id": "c", "attaches_to": "ghost", "depends_on": "answers.side_efects"}],
+           "answers": {"side_effects": "none"}}
+    new = {"components": [{"id": "a", "proposed_kind": "simple_agent"}], "edges": [],
+           "answers": {"side_effects": "irreversible"}}
+    warns = R.reconcile(old, new)["warnings"]
+    assert any("attaches_to" in w for w in warns) and any("depends_on" in w for w in warns)
+    # a CORRECT path warns not at all and still flags stale
+    good = {"components": [{"id": "a", "proposed_kind": "simple_agent"}], "edges": [],
+            "decisions": [{"id": "c2", "attaches_to": "a", "depends_on": "answers.side_effects"}],
+            "answers": {"side_effects": "none"}}
+    rec = R.reconcile(good, new)
+    assert rec["warnings"] == [] and rec["decisions"][0]["state"] == "stale"
+    assert R.validate_decision_refs(old)                   # finalize-time check surfaces the same typos
+
+
+def test_static_fallback_is_superset_of_live_vocabulary():
+    # round-3 L1: if the #10 import ever fails, the fallback must never be WEAKER than the live
+    # derivation — so a manifest field can't slip past the guard in degraded mode.
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "ci", "manifest-agentic"))
+    import check_manifest_agentic as m10
+    live = set()
+    for fields in m10.FIELD_SPEC.values():
+        live |= set(fields)
+    assert (live - R._HANDOFF_NEUTRAL) <= R._STATIC_MANIFEST_FIELDS
+
+
+def test_records_tolerate_none_root():
+    # round-3 L4
+    assert R.generate_handoff(None)["components"] == []
+    assert "Floor" in R.generate_decision_record(None)
+    assert R.reconcile(None, None)["decisions"] == []
+
+
 def test_decision_record_renders_decisions():
     # F5: the decision record shows chosen/rejected/rationale
     s = copy.deepcopy(STATE)

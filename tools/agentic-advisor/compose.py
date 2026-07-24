@@ -30,8 +30,8 @@ DEPENDS = {
 # so `proposed_kind` is populated before any lens/floor needs `any_agent` (no circularity).
 # Accessors default a MISSING or present-but-None ("components:\n" in YAML) section, so a
 # partially-elicited state never crashes (advisor-F3). A non-list value degrades to empty.
-def _list(s, k):    v = s.get(k);  return v if isinstance(v, list) else []
-def _answers(s):    v = s.get("answers");  return v if isinstance(v, dict) else {}
+def _list(s, k):    v = (s or {}).get(k);  return v if isinstance(v, list) else []
+def _answers(s):    v = (s or {}).get("answers");  return v if isinstance(v, dict) else {}
 
 
 def any_agent(s):
@@ -114,18 +114,20 @@ def validate_scenario(s):
         if not isinstance(c, dict):
             errs.append(f"component must be a mapping: {c!r}"); continue
         pk = c.get("proposed_kind")
-        if pk is not None and pk not in PROPOSED_KINDS:
+        # a container value (list/dict from a YAML slip) is unhashable — guard the `in` (round-3 H1)
+        if pk is not None and (not isinstance(pk, str) or pk not in PROPOSED_KINDS):
             errs.append(f"component {c.get('id')}: unknown proposed_kind '{pk}' (expected {sorted(PROPOSED_KINDS)})")
     for e in _list(s, "edges"):
         if not isinstance(e, dict):
             errs.append(f"edge must be a mapping: {e!r}"); continue
         t = e.get("transport")
-        if t is not None and t not in TRANSPORTS:
+        if t is not None and (not isinstance(t, str) or t not in TRANSPORTS):
             errs.append(f"edge {e.get('id')}: unknown transport '{t}' (expected {sorted(TRANSPORTS)})")
     return errs
 
 
 def compose(s):
+    s = s or {}                                                           # tolerate a None root (round-3 L4)
     floor = recommended_floor(s)
     included = {l for l in LENSES if relevant(l, s)} | floor               # floor ⊆ included report sections
     rungs = included - floor                                               # offered, deferrable

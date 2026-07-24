@@ -45,8 +45,10 @@ are only reached on the compound branch. Elicit the **full** component/edge deta
 4. **Render the evolving map** after each meaningful step: `render_map.render(state, composed)` →
    terminal + Mermaid (getting / available / not-needed with reasons). Re-print at each milestone.
 5. **Validate + record + hand off**: before finalizing, run `compose.validate_scenario(state)` (no typo'd
-   `proposed_kind`/`transport`), `render_map.validate_roles(state)` (ROLE-TOTAL), and
-   `records.validate_skips(state)` (every skip records control+owner+reason — never silent). Generate the
+   `proposed_kind`/`transport`), `render_map.validate_roles(state)` (ROLE-TOTAL),
+   `records.validate_skips(state)` (every skip records control+owner+reason — never silent), and
+   `records.validate_decision_refs(state)` (no decision points its `attaches_to`/`depends_on` at a
+   non-existent id or field — a typo there would silently disable re-review on the next run). Generate the
    decision record and neutral handoff with `records.generate_decision_record` / `records.generate_handoff`,
    then **certify the boundary**: `records.handoff_authors_no_manifest_field(handoff) == set()` (no
    manifest field, whole #10 vocabulary) and `records.handoff_ref_integrity(handoff) == []` (unique ids,
@@ -62,7 +64,10 @@ record; it grants NO #10 exception.** "Waiver" is reserved for a human-authored 
 ## Re-run
 A re-run is recompute + reconcile + confirm-before-write (`records.reconcile`): unchanged decisions kept, a
 changed-`proposed_kind` decision flagged stale for re-confirm, a removed component's decisions retired, skips
-reconciled (not waivers). The human confirms a diff before the record + handoff are regenerated.
+reconciled (not waivers). A decision is retired only when its id is gone from **both** components and edges (a
+same-id overlap never silently drops it). `reconcile` returns a `warnings` list for any decision whose
+`attaches_to`/`depends_on` no longer resolves — a typo that would otherwise disable its re-review. The human
+confirms the diff (and clears any warnings) before the record + handoff are regenerated.
 
 ## Deploy lens (a report section, not a command)
 Surface build-vs-buy: recommend **managed unless there is a specific reason to build**, surface the lock-in /
