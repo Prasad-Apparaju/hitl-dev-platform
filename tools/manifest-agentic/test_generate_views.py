@@ -26,6 +26,23 @@ def test_regenerate_and_diff_is_clean():
     assert drift == [], f"drift detected (regenerate to fix): {drift}"
 
 
+def test_required_artifact_inventory():
+    """LLD §9: paired machine-readable + rendered artifacts for topology, privilege,
+    capability, tool, projections (+ observability + eval index)."""
+    m = yaml.safe_load(open(SHOWCASE))
+    arts = set(G.build_artifacts(m, _caps()))
+    d = G.POSTURE_DIR
+    required = {
+        f"{d}/topology.json", f"{d}/topology.md",
+        f"{d}/privilege-posture.json", f"{d}/privilege-posture.md",
+        f"{d}/capability-matrix.json", f"{d}/capability-matrix.md",
+        f"{d}/tool-matrix.json", f"{d}/tool-matrix.md",
+        f"{d}/projections.json", f"{d}/projections.md",
+        f"{d}/observability-posture.json", G.EVAL_INDEX,
+    }
+    assert required <= arts, f"missing required artifacts: {sorted(required - arts)}"
+
+
 def test_output_is_deterministic():
     m = yaml.safe_load(open(SHOWCASE))
     a1 = G.build_artifacts(m, _caps())

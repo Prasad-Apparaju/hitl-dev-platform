@@ -1,0 +1,48 @@
+{
+  "capabilities": {
+    "crm.read": {
+      "ceiling": [
+        "read:customer",
+        "read:order"
+      ],
+      "class": "tool",
+      "risk": "low",
+      "used_by": [
+        "account_service"
+      ]
+    },
+    "llm.generate": {
+      "ceiling": [
+        "invoke:completion"
+      ],
+      "class": "model",
+      "risk": "low",
+      "used_by": [
+        "intake_agent",
+        "resolution_agent"
+      ]
+    },
+    "refund.execute": {
+      "ceiling": [
+        "execute:refund"
+      ],
+      "class": "tool",
+      "risk": "high",
+      "used_by": [
+        "refund_service"
+      ]
+    },
+    "session.memory": {
+      "ceiling": [
+        "read:session",
+        "write:session"
+      ],
+      "class": "memory",
+      "risk": "med",
+      "used_by": [
+        "resolution_agent"
+      ]
+    }
+  },
+  "schema_version": "1.0"
+}

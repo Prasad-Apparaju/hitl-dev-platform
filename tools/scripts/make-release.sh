@@ -32,6 +32,16 @@ rm -rf "$STAGING/$RELEASE_DIR/.semgrep"
 find "$STAGING/$RELEASE_DIR/tools/scripts" -name "test-*.sh" -delete 2>/dev/null || true
 find "$STAGING/$RELEASE_DIR" \( -name "*.pdf" -o -name "*.pptx" \) -delete 2>/dev/null || true
 
+# ── 2b. Derive installed Claude artifacts from the source tree ────────────────
+# The active packaged skill reads the installed schema under .claude/…; it must be
+# byte-identical to the source under ai/claude/… (a stale copy ships legacy fields).
+echo "==> Deriving installed Claude schema from source..."
+SRC_SCHEMA="$STAGING/$RELEASE_DIR/ai/claude/generate-docs/templates/system-manifest.schema.yaml"
+INSTALLED_SCHEMA="$STAGING/$RELEASE_DIR/.claude/commands/skills/generate-docs/templates/system-manifest.schema.yaml"
+if [[ -f "$SRC_SCHEMA" && -f "$INSTALLED_SCHEMA" ]]; then
+    cp "$SRC_SCHEMA" "$INSTALLED_SCHEMA"
+fi
+
 # ── 3. Apply HumAIn branding (order matters) ─────────────────────────────────
 # Process every text file regardless of extension (covers .gitignore, .toml,
 # .html, .js, .template, extensionless git hooks, etc.)
@@ -68,18 +78,20 @@ done
 
 # ── 5. Verify no HITL references remain in text files ────────────────────────
 echo "==> Verifying replacements..."
-REMAINING=$({ grep -rl --include="*.sh" --include="*.json" --include="*.yaml" \
-    --include="*.yml" --include="*.md" --include="*.py" \
-    -e "hitl" -e "HITL" \
-    "$STAGING/$RELEASE_DIR" 2>/dev/null || true; } | wc -l | tr -d ' ')
+# Exclude the builder itself — its own replacement regexes (s/hitl/humain/) are not
+# stray references and must not trip the check.
+scan_remaining() {
+    grep -rl --include="*.sh" --include="*.json" --include="*.yaml" \
+        --include="*.yml" --include="*.md" --include="*.py" \
+        -e "hitl" -e "HITL" \
+        "$STAGING/$RELEASE_DIR" 2>/dev/null \
+        | grep -v "tools/scripts/make-release.sh" || true
+}
+REMAINING=$(scan_remaining | wc -l | tr -d ' ')
 
 if [[ "$REMAINING" -gt 0 ]]; then
     echo "    WARNING: ${REMAINING} file(s) still contain HITL references:"
-    { grep -rl --include="*.sh" --include="*.json" --include="*.yaml" \
-        --include="*.yml" --include="*.md" --include="*.py" \
-        -e "hitl" -e "HITL" \
-        "$STAGING/$RELEASE_DIR" 2>/dev/null || true; } \
-        | sed "s|$STAGING/$RELEASE_DIR/||"
+    scan_remaining | sed "s|$STAGING/$RELEASE_DIR/||"
     echo "    These may need manual review."
 else
     echo "    OK — no HITL references found in text files."

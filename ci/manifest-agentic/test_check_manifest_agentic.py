@@ -476,7 +476,7 @@ def test_retry_validated():
     assert "unknown_enum" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", {"max": 2, "backoff": "fibonacci"}))
     assert "bad_value" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", {"max": 0, "backoff": "linear"}))
     assert "unknown_field" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", {"max": 2, "backoff": "linear", "jitterz": True}))
-    assert "unknown_field" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", "aggressive"))
+    assert "bad_type" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("retry", "aggressive"))
 
 
 def test_reference_resolution():
@@ -495,6 +495,84 @@ def test_value_grammar_checks():
 
 def test_saga_id_duplicate():
     assert "saga_id_duplicate" in mut(lambda m: m["sagas"].append(copy.deepcopy(m["sagas"][0])))
+
+
+def test_sep_pair_parallel_edges_validate():
+    """SEP-PAIR (LLD): a sync_call AND an event between the same pair (distinct ids)
+    both validate — the parallel-edge property the pair-keyed matrix couldn't represent."""
+    m = {
+        "domains": {"a": {"purpose": "p", "facade_apis": {"go": {"signature": "g()"}}},
+                    "b": {"purpose": "q", "facade_apis": {"do": {"signature": "d()"}}}},
+        "interactions": [
+            {"id": "e_call", "from": "a", "to": "b", "kind": "sync_call", "facade": "b:go", "response": {}},
+            {"id": "e_evt", "from": "a", "to": "b", "kind": "event", "facade": "a:evt"},
+        ],
+    }
+    cs, _ = codes(m)
+    assert cs == set(), cs
+
+
+# ── round-codex: type confusion, projection double-authoring, waiver types, positives ──
+def test_wrong_type_fails_closed():
+    for f in ("identity", "memory", "lifecycle", "deep_agent", "evals"):
+        assert "bad_type" in mut(lambda m, f=f: _dom(m, "intake_agent").__setitem__(f, [])), f
+    assert "bad_type" in mut(lambda m: m.__setitem__("orchestration", []))
+    assert "bad_type" in mut(lambda m: m.__setitem__("segments", {}))
+    assert "bad_type" in mut(lambda m: m.__setitem__("observability", []))
+    assert "bad_type" in mut(lambda m: _intr(m, "classify_to_lookup").__setitem__("request", []))
+    assert "bad_type" is not None  # sanity
+
+
+def test_wrong_type_is_non_waivable():
+    m = copy.deepcopy(load(SHOWCASE))
+    m["domains"]["intake_agent"]["identity"] = []
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "ci/manifest-agentic"))
+        with open(os.path.join(d, "ci/manifest-agentic/manifest-waivers.yaml"), "w") as f:
+            yaml.safe_dump({"schema_version": "1.0", "waivers": [
+                {"code": "bad_type", "locus": "intake_agent", "owner": "t", "reason": "r", "tier_limit": 3, "revisit": "2099-01-01"}]}, f)
+        assert "bad_type" in {b.code for b in C.run(m, d, 2)[0]}
+
+
+def test_legacy_object_unknown_field():
+    assert "unknown_field" in mut(lambda m: _dom(m, "account_service")["facade_apis"]["lookup"].__setitem__("bogus_field", "x"))
+
+
+def test_projection_double_authoring():
+    assert "depends_on_double_authored" in mut(lambda m: _dom(m, "intake_agent").__setitem__("depends_on", ["refund_service"]))
+    assert "event_projection_mismatch" in mut(
+        lambda m: _dom(m, "refund_service").__setitem__("events_emitted", [{"name": "wrong", "shape": "x", "consumed_by": ["account_service"]}]))
+
+
+def test_malformed_waiver_types_fail_closed():
+    m = copy.deepcopy(load(SHOWCASE))
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "ci/manifest-agentic"))
+        import shutil
+        shutil.copytree(os.path.join(ROOT, "docs/03-engineering"), os.path.join(d, "docs/03-engineering"))
+        with open(os.path.join(d, "ci/manifest-agentic/manifest-waivers.yaml"), "w") as f:
+            yaml.safe_dump({"schema_version": "1.0", "waivers": [
+                {"code": "x", "locus": "y", "owner": "o", "reason": "r", "tier_limit": "not-int", "revisit": "not-date"}]}, f)
+        assert "schema_invalid" in {b.code for b in C.run(m, d, 2)[0]}
+
+
+def test_positive_lifecycle_and_deep_agent_pass():
+    # a fully valid long_running lifecycle produces no lifecycle blocker
+    def good_lc(m):
+        _dom(m, "refund_service")["lifecycle"] = {
+            "long_running": True, "resumable": True, "idempotent_resume": True,
+            "checkpoint": "durable", "checkpoint_store": "audit_log", "resume_cursor": "cursor_1",
+            "timeout": "1h", "cancellation": "cooperative", "side_effect_key": "event.refund_id"}
+    cs = mut(good_lc)
+    assert not any(c.startswith("lifecycle_") for c in cs), cs
+    # a fully valid deep agent produces no deep_agent blocker
+    def good_deep(m):
+        d = _dom(m, "resolution_agent")
+        d["kind"] = "deep_agent"
+        d["deep_agent"] = {"planner": "intake_agent", "subagents": ["account_service"],
+                           "gates": ["pii:redact"], "guardrails": ["pii:redact"], "context_isolation": True}
+    cs2 = mut(good_deep)
+    assert not any(c.startswith("deep_agent_") for c in cs2), cs2
 
 
 # ── wave 1: waiver suppression ────────────────────────────────────────────────

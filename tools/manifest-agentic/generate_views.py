@@ -114,6 +114,48 @@ def project_tool_matrix(m, caps):
     return rows
 
 
+def project_capability_matrix(m, caps):
+    """All capabilities × domain usage (superset of the tool matrix, §9)."""
+    rows = {}
+    for name in sorted(_domains(m)):
+        for u in (_domains(m)[name].get("uses") or []):
+            cap = u.get("capability")
+            meta = (caps or {}).get(cap, {})
+            rows.setdefault(cap, {"class": meta.get("class"), "risk": meta.get("risk"),
+                                  "ceiling": meta.get("ceiling", []), "used_by": []})
+            rows[cap]["used_by"].append(name)
+    for cap in rows:
+        rows[cap]["used_by"] = sorted(set(rows[cap]["used_by"]))
+    return rows
+
+
+def _md_table(title, headers, rows):
+    out = [f"# {title} (generated — do not edit)", ""]
+    out.append("| " + " | ".join(headers) + " |")
+    out.append("|" + "|".join("---" for _ in headers) + "|")
+    for r in rows:
+        out.append("| " + " | ".join(str(c) for c in r) + " |")
+    out.append("")
+    return "\n".join(out) + "\n"
+
+
+def render_projections_md(proj):
+    out = ["# Projections (generated — do not edit; derived from `interactions`, §2.4)", ""]
+    out.append("## interaction_matrix\n")
+    out.append("| edge | entity crossing |\n|---|---|")
+    for k, v in sorted((proj.get("interaction_matrix") or {}).items()):
+        out.append(f"| {k} | {v.get('entity_crossing','')} |")
+    out.append("\n## depends_on\n")
+    for k, v in sorted((proj.get("depends_on") or {}).items()):
+        out.append(f"- **{k}** → {', '.join(v)}")
+    out.append("\n## events\n")
+    for p, evs in sorted((proj.get("events_emitted") or {}).items()):
+        for e in evs:
+            out.append(f"- {p} emits `{e['name']}` → {e['consumed_by']}")
+    out.append("")
+    return "\n".join(out) + "\n"
+
+
 # ── topology render (Mermaid) ─────────────────────────────────────────────────
 _SHAPE = {"simple_agent": ("{{", "}}"), "deep_agent": ("{{", "}}"),
           "deterministic": ("[", "]")}
@@ -151,7 +193,10 @@ def build_artifacts(m, caps):
             "nodes": {n: _kind(m, n) for n in sorted(_domains(m))},
             "edges": [{"id": i.get("id"), "from": i.get("from"), "to": i.get("to"), "kind": i.get("kind")}
                       for i in sorted(_interactions(m), key=lambda x: x.get("id", ""))]}
-    tools = {"schema_version": "1.0", "tools": project_tool_matrix(m, caps)}
+    tool_rows = project_tool_matrix(m, caps)
+    tools = {"schema_version": "1.0", "tools": tool_rows}
+    cap_rows = project_capability_matrix(m, caps)
+    capmatrix = {"schema_version": "1.0", "capabilities": cap_rows}
     ob = m.get("observability") or {}
     tr = ob.get("tracing") or {}
     ec = ob.get("eval_console") or {}
@@ -172,12 +217,25 @@ def build_artifacts(m, caps):
                   + ("rows: []\n" if not idx_rows else "rows:\n"
                      + "".join(f"  - {{ target_type: {r['target_type']}, target_id: {r['target_id']}, "
                                f"spec_path: \"{r['spec_path']}\" }}\n" for r in idx_rows)))
+    priv_md = _md_table("Privilege posture", ["domain", "kind", "principal", "granted", "uses"],
+                        [[n, v["kind"], v["principal"] or "", "; ".join(v["granted"]), "; ".join(v["uses"])]
+                         for n, v in sorted(priv["domains"].items())])
+    tool_md = _md_table("Tool matrix (class:tool, CR-15)", ["tool", "runtime_ref", "used_by"],
+                        [[c, r["runtime_ref"] or "", ", ".join(r["used_by"])] for c, r in sorted(tool_rows.items())])
+    cap_md = _md_table("Capability matrix", ["capability", "class", "risk", "ceiling", "used_by"],
+                       [[c, r["class"] or "", r["risk"] or "", "; ".join(r["ceiling"]), ", ".join(r["used_by"])]
+                        for c, r in sorted(cap_rows.items())])
     return {
         f"{POSTURE_DIR}/projections.json": _jdump(proj),
+        f"{POSTURE_DIR}/projections.md": render_projections_md(proj) if has_interactions else "# Projections (none — no `interactions`)\n",
         f"{POSTURE_DIR}/topology.json": _jdump(topo),
         f"{POSTURE_DIR}/topology.md": render_topology_md(m),
         f"{POSTURE_DIR}/privilege-posture.json": _jdump(priv),
+        f"{POSTURE_DIR}/privilege-posture.md": priv_md,
+        f"{POSTURE_DIR}/capability-matrix.json": _jdump(capmatrix),
+        f"{POSTURE_DIR}/capability-matrix.md": cap_md,
         f"{POSTURE_DIR}/tool-matrix.json": _jdump(tools),
+        f"{POSTURE_DIR}/tool-matrix.md": tool_md,
         f"{POSTURE_DIR}/observability-posture.json": _jdump(obs),
         EVAL_INDEX: eval_index,
     }

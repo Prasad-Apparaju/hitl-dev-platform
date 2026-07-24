@@ -40,7 +40,8 @@ LEGACY_TOP = {"version", "generated_at", "generator", "domains", "cross_cutting"
 LEGACY_DOMAIN = {"purpose", "files", "lld", "tests", "boundary_entities", "facade_apis",
                  "events_emitted", "events_consumed", "depends_on", "conventions", "last_changed"}
 AGENT_KINDS = {"simple_agent", "deep_agent"}
-NON_WAIVABLE = {"unparseable", "unknown_field", "unknown_enum", "schema_invalid"}
+NON_WAIVABLE = {"unparseable", "unknown_field", "unknown_enum", "schema_invalid",
+                "bad_type", "bad_value", "bad_duration", "bad_id"}
 
 # Load-bearing enums (round-fable F1) — an unknown value is a fail-CLOSED blocker, not a
 # silent fallthrough (the LLD §0/§6 "never by presence alone" promise). Keyed by (structure, field).
@@ -98,6 +99,14 @@ ALLOWED_KEYS = {
     "eval_console": {"access", "owner", "ref"},
     "quantpolicy": {"limit", "unit"},
     "evals": {"spec"},
+    # legacy (base-schema) objects — bogus keys here also block (round-codex #4):
+    "facade_api": {"signature", "blurb", "mutations", "preconditions", "error_modes"},
+    "boundary_entity": {"shape", "consumed_by", "note"},
+    "event_entry": {"name", "shape", "consumed_by", "note"},
+    "event_ref": {"name", "from", "note"},
+    "last_changed": {"date", "summary"},
+    "convention_entry": {"name", "rule", "affected_domains", "enforcement", "adr"},
+    "interaction_entry": {"description", "entity_crossing"},
 }
 
 REGISTRY_DIR = "docs/03-engineering"
@@ -166,10 +175,26 @@ def check_schema(m, reg, tier):
             out.append(block(locus, "unknown_enum",
                              f"{locus}: {struct}.{field} '{val}' is not valid {sorted(ENUMS[(struct, field)])}"))
     def keys(struct, d, locus):
-        if isinstance(d, dict):
-            for k in d:
-                if k not in ALLOWED_KEYS[struct]:
-                    out.append(block(locus, "unknown_field", f"{locus}: unknown field '{k}' in {struct}"))
+        """Validate a MAPPING: wrong type is a blocker (not a silent skip — round-codex #1)."""
+        if d is None:
+            return False
+        if not isinstance(d, dict):
+            out.append(block(locus, "bad_type", f"{locus}: {struct} must be a mapping (got {type(d).__name__})"))
+            return False
+        for k in d:
+            if k not in ALLOWED_KEYS[struct]:
+                out.append(block(locus, "unknown_field", f"{locus}: unknown field '{k}' in {struct}"))
+        return True
+    def lst(val, locus, field):
+        if val is not None and not isinstance(val, list):
+            out.append(block(locus, "bad_type", f"{locus}: {field} must be a list (got {type(val).__name__})"))
+            return False
+        return True
+    def scalar(val, locus, field):   # must be a str/number, not a container
+        if val is not None and isinstance(val, (dict, list)):
+            out.append(block(locus, "bad_type", f"{locus}: {field} must be a scalar"))
+            return False
+        return True
     def dur(val, locus, field):
         if val is not None and not DURATION_RE.match(str(val)):
             out.append(block(locus, "bad_duration", f"{locus}: {field} '{val}' must be a positive duration (e.g. 30s)"))
@@ -178,96 +203,121 @@ def check_schema(m, reg, tier):
             out.append(block(locus, "bad_id", f"{locus}: {what} '{x}' is not a valid id"))
 
     keys("manifest", m, "system:manifest")
+    if m.get("domains") is not None and not isinstance(m["domains"], dict):
+        out.append(block("system:manifest", "bad_type", "domains must be a mapping"))
+    for top, t in (("interactions", list), ("segments", list), ("sagas", list),
+                   ("cross_cutting", list), ("interaction_matrix", dict),
+                   ("orchestration", dict), ("observability", dict)):
+        v = m.get(top)
+        if v is not None and not isinstance(v, t):
+            out.append(block("system:manifest", "bad_type", f"{top} must be a {'list' if t is list else 'mapping'}"))
+
     for name, d in domains(m).items():
         ident(name, name, "domain name")
-        keys("domain", d, name)
+        if not keys("domain", d, name):    # wrong-type domain already reported; don't descend
+            continue
         enum("domain", "kind", d.get("kind"), name)
         keys("identity", d.get("identity"), name)
-        for u in d.get("uses") or []:
-            keys("use", u, name)
-        mem = d.get("memory") or {}
-        keys("memory", mem, name)
-        st = mem.get("short_term")
-        if st:
-            keys("short_term", st, name)
-            enum("short_term", "strategy", st.get("strategy"), name)
-            bt = st.get("budget_tokens")
-            if bt is not None and not (isinstance(bt, int) and not isinstance(bt, bool) and bt > 0):
-                out.append(block(name, "bad_value", f"{name}: short_term.budget_tokens must be a positive int"))
-        lt = mem.get("long_term")
-        if lt:
-            keys("long_term", lt, name)
-            for f in ("durability", "retrieval", "scope", "pii"):
-                enum("long_term", f, lt.get(f), name)
-            for acc in (lt.get("reads") or []) + (lt.get("writes") or []):
-                keys("memory_access", acc, name)
-                if isinstance(acc, dict) and acc.get("staleness") is not None:
-                    dur(acc.get("staleness"), name, "memory_access.staleness")
+        if lst(d.get("uses"), name, "uses"):
+            for u in d.get("uses") or []:
+                keys("use", u, name)
+        if lst(d.get("files"), name, "files"):
+            pass
+        # legacy structures (round-codex #4)
+        for api, spec in (d.get("facade_apis") or {}).items() if isinstance(d.get("facade_apis"), dict) else []:
+            keys("facade_api", spec, name)
+        for be, spec in (d.get("boundary_entities") or {}).items() if isinstance(d.get("boundary_entities"), dict) else []:
+            keys("boundary_entity", spec, name)
+        if lst(d.get("events_emitted"), name, "events_emitted"):
+            for ev in d.get("events_emitted") or []:
+                keys("event_entry", ev, name)
+        if lst(d.get("events_consumed"), name, "events_consumed"):
+            for ev in d.get("events_consumed") or []:
+                keys("event_ref", ev, name)
+        keys("last_changed", d.get("last_changed"), name)
+        if keys("memory", d.get("memory"), name):
+            mem = d["memory"]
+            st = mem.get("short_term")
+            if keys("short_term", st, name):
+                enum("short_term", "strategy", st.get("strategy"), name)
+                bt = st.get("budget_tokens")
+                if bt is not None and not (isinstance(bt, int) and not isinstance(bt, bool) and bt > 0):
+                    out.append(block(name, "bad_value", f"{name}: short_term.budget_tokens must be a positive int"))
+            lt = mem.get("long_term")
+            if keys("long_term", lt, name):
+                for f in ("durability", "retrieval", "scope", "pii"):
+                    enum("long_term", f, lt.get(f), name)
+                for key in ("reads", "writes"):
+                    if lst(lt.get(key), name, f"long_term.{key}"):
+                        for acc in lt.get(key) or []:
+                            if keys("memory_access", acc, name) and acc.get("staleness") is not None:
+                                dur(acc.get("staleness"), name, "memory_access.staleness")
         lc = d.get("lifecycle")
-        if lc:
-            keys("lifecycle", lc, name)
+        if keys("lifecycle", lc, name):
             enum("lifecycle", "checkpoint", lc.get("checkpoint"), name)
             enum("lifecycle", "cancellation", lc.get("cancellation"), name)
             dur(lc.get("timeout"), name, "lifecycle.timeout")
             rc = lc.get("resume_cursor")
             if rc is not None and not CURSOR_RE.match(str(rc)):
                 out.append(block(name, "bad_id", f"{name}: lifecycle.resume_cursor '{rc}' is ill-formed"))
-        if d.get("deep_agent"):
-            keys("deep_agent", d["deep_agent"], name)
+        if keys("deep_agent", d.get("deep_agent"), name):
+            lst(d["deep_agent"].get("subagents"), name, "deep_agent.subagents")
         keys("evals", d.get("evals"), name)
+
     for i in interactions(m):
+        if not isinstance(i, dict):
+            out.append(block("system:interactions", "bad_type", "each interaction must be a mapping"))
+            continue
         iid = i.get("id", "?")
         ident(iid, iid, "interaction id")
         keys("interaction", i, iid)
         enum("interaction", "kind", i.get("kind"), iid)
         for leg in ("request", "response"):
-            keys("leg", i.get(leg), iid)
-            keys("quantpolicy", (i.get(leg) or {}).get("cost_bound"), iid)
-        a = i.get("async")
-        if a:
-            keys("async", a, iid)
+            if keys("leg", i.get(leg), iid):
+                keys("quantpolicy", i[leg].get("cost_bound"), iid)
+                lst(i[leg].get("authority_bound"), iid, f"{leg}.authority_bound")
+        if keys("async", i.get("async"), iid):
+            a = i["async"]
             enum("async", "delivery", a.get("delivery"), iid)
             enum("async", "replay", a.get("replay"), iid)
             dur(a.get("timeout"), iid, "async.timeout")
-            rt = a.get("retry")
-            if rt is not None:
-                if not isinstance(rt, dict):
-                    out.append(block(iid, "unknown_field", f"{iid}: async.retry must be a mapping {{max, backoff}}"))
-                else:
-                    keys("retry", rt, iid)
-                    enum("retry", "backoff", rt.get("backoff"), iid)
-                    mx = rt.get("max")
-                    if mx is not None and not (isinstance(mx, int) and not isinstance(mx, bool) and mx >= 1):
-                        out.append(block(iid, "bad_value", f"{iid}: async.retry.max must be an int >= 1"))
-        au = i.get("authorization")
-        if au:
-            keys("authorization", au, iid)
-            enum("authorization", "credential_mode", au.get("credential_mode"), iid)
+            if keys("retry", a.get("retry"), iid):
+                enum("retry", "backoff", a["retry"].get("backoff"), iid)
+                mx = a["retry"].get("max")
+                if mx is not None and not (isinstance(mx, int) and not isinstance(mx, bool) and mx >= 1):
+                    out.append(block(iid, "bad_value", f"{iid}: async.retry.max must be an int >= 1"))
+        if keys("authorization", i.get("authorization"), iid):
+            enum("authorization", "credential_mode", i["authorization"].get("credential_mode"), iid)
+            lst(i["authorization"].get("allowed_callers"), iid, "authorization.allowed_callers")
         keys("evals", i.get("evals"), iid)
-    orch = m.get("orchestration")
-    if orch:
-        keys("orchestration", orch, "system:orchestration")
-        enum("orchestration", "pattern", orch.get("pattern"), "system:orchestration")
+
+    if keys("orchestration", m.get("orchestration"), "system:orchestration"):
+        enum("orchestration", "pattern", m["orchestration"].get("pattern"), "system:orchestration")
+    for c in (m.get("cross_cutting") or []):
+        keys("convention_entry", c, "system:cross_cutting")
+    for pair, entry in (m.get("interaction_matrix") or {}).items() if isinstance(m.get("interaction_matrix"), dict) else []:
+        keys("interaction_entry", entry, str(pair))
     for s in segments(m):
-        keys("segment", s, s.get("id", "?"))
+        if not keys("segment", s, s.get("id", "?") if isinstance(s, dict) else "?"):
+            continue
+        lst(s.get("path"), s.get("id", "?"), "path")
         keys("evals", s.get("evals"), s.get("id", "?"))
     for s in sagas(m):
-        keys("saga", s, s.get("id", "?"))
+        if not keys("saga", s, s.get("id", "?") if isinstance(s, dict) else "?"):
+            continue
         enum("saga", "order", s.get("order"), s.get("id", "?"))
-        for st in s.get("steps") or []:
-            keys("saga_step", st, s.get("id", "?"))
-            enum("saga_step", "on_compensation_failure", st.get("on_compensation_failure"), s.get("id", "?"))
-    ob = m.get("observability")
-    if ob:
-        keys("observability", ob, "system:observability")
-        tr = ob.get("tracing")
-        if tr:
-            keys("tracing", tr, "system:observability")
-            enum("tracing", "convention", tr.get("convention"), "system:observability")
-        ec = ob.get("eval_console")
-        if ec:
-            keys("eval_console", ec, "system:observability")
-            enum("eval_console", "access", ec.get("access"), "system:observability")
+        if lst(s.get("steps"), s.get("id", "?"), "steps"):
+            for st in s.get("steps") or []:
+                if keys("saga_step", st, s.get("id", "?")):
+                    enum("saga_step", "on_compensation_failure", st.get("on_compensation_failure"), s.get("id", "?"))
+    if keys("observability", m.get("observability"), "system:observability"):
+        ob = m["observability"]
+        if keys("tracing", ob.get("tracing"), "system:observability"):
+            enum("tracing", "convention", ob["tracing"].get("convention"), "system:observability")
+            lst(ob["tracing"].get("hops"), "system:observability", "tracing.hops")
+            lst(ob["tracing"].get("attributes"), "system:observability", "tracing.attributes")
+        if keys("eval_console", ob.get("eval_console"), "system:observability"):
+            enum("eval_console", "access", ob["eval_console"].get("access"), "system:observability")
         keys("quantpolicy", ob.get("cost_budget"), "system:observability")
     return out
 
@@ -381,11 +431,37 @@ def check_references(m, reg, tier):
                 if owner != to or api not in fac_apis:
                     out.append(block(iid, "facade_unresolved",
                                      f"interaction '{iid}' facade '{fac}' does not resolve to {to}.facade_apis"))
-    # double-authoring: a hand-authored interaction_matrix alongside interactions
-    if interactions(m) and m.get("interaction_matrix"):
-        out.append(block("system:interactions", "edge_double_authored",
-                         "interaction_matrix is hand-authored in the manifest alongside `interactions` "
-                         "(it must be a generated projection, §2.4)"))
+    # double-authoring: hand-authored projections alongside authoritative `interactions` (§2.4/§6.6)
+    if interactions(m):
+        if m.get("interaction_matrix"):
+            out.append(block("system:interactions", "edge_double_authored",
+                             "interaction_matrix is hand-authored alongside `interactions` (it must be a generated projection, §2.4)"))
+        for name, d in domains(m).items():
+            if isinstance(d, dict) and d.get("depends_on"):
+                out.append(block(name, "depends_on_double_authored",
+                                 f"{name}: depends_on is hand-authored alongside `interactions` (it must be a generated projection, §2.4)"))
+        # event_projection_mismatch: hand-authored events_emitted/consumed must EQUAL the projection of `event` interactions
+        proj_emit, proj_cons = {}, {}
+        for i in interactions(m):
+            if i.get("kind") != "event":
+                continue
+            fac = i.get("facade") or ""
+            ev = fac.split(":", 1)[1] if ":" in fac else fac
+            proj_emit.setdefault(i.get("from"), set()).add(ev)
+            proj_cons.setdefault(i.get("to"), set()).add((ev, i.get("from")))
+        for name, d in domains(m).items():
+            if not isinstance(d, dict):
+                continue
+            if d.get("events_emitted") is not None:
+                authored = {e.get("name") for e in d["events_emitted"] if isinstance(e, dict)}
+                if authored != proj_emit.get(name, set()):
+                    out.append(block(name, "event_projection_mismatch",
+                                     f"{name}: hand-authored events_emitted != the projection of `event` interactions (§2.4)"))
+            if d.get("events_consumed") is not None:
+                authored = {(e.get("name"), e.get("from")) for e in d["events_consumed"] if isinstance(e, dict)}
+                if authored != proj_cons.get(name, set()):
+                    out.append(block(name, "event_projection_mismatch",
+                                     f"{name}: hand-authored events_consumed != the projection of `event` interactions (§2.4)"))
     return out
 
 
@@ -1054,11 +1130,32 @@ def load_waivers(root):
         data = yaml.safe_load(open(path)) or {}
         assert data.get("schema_version") is not None
         rows = data.get("waivers") or []
+        if not isinstance(rows, list):
+            return None, [block("system:waivers", "schema_invalid", "waivers must be a list")]
         seen, errs = set(), []
+        ALLOWED = {"code", "locus", "owner", "reason", "tier_limit", "revisit"}
         for w in rows:
-            for k in ("code", "locus", "owner", "reason", "tier_limit", "revisit"):
+            if not isinstance(w, dict):
+                errs.append(block("system:waivers", "schema_invalid", "each waiver must be a mapping"))
+                continue
+            for k in ALLOWED:
                 if w.get(k) in (None, ""):
                     errs.append(block("system:waivers", "schema_invalid", f"waiver missing {k}"))
+            for k in w:                                      # no unknown waiver keys (round-codex #5)
+                if k not in ALLOWED:
+                    errs.append(block("system:waivers", "schema_invalid", f"waiver has unknown field '{k}'"))
+            tl = w.get("tier_limit")                          # tier_limit must be an int
+            if tl is not None and not (isinstance(tl, int) and not isinstance(tl, bool)):
+                errs.append(block("system:waivers", "schema_invalid", f"waiver tier_limit '{tl}' must be an int"))
+            rv = w.get("revisit")                             # revisit must be an ISO date
+            if rv is not None:
+                try:
+                    _date(rv)
+                except (ValueError, TypeError):
+                    errs.append(block("system:waivers", "schema_invalid", f"waiver revisit '{rv}' is not a valid date"))
+            loc = w.get("locus")                              # locus must match the id/reserved grammar
+            if loc and not (ID_RE.match(str(loc)) or str(loc).startswith(("system:", "registry:"))):
+                errs.append(block("system:waivers", "schema_invalid", f"waiver locus '{loc}' is ill-formed"))
             key = (w.get("code"), w.get("locus"))
             if key in seen:
                 errs.append(block("system:waivers", "schema_invalid", f"duplicate waiver {key}"))

@@ -35,6 +35,16 @@ NEW_DOMAIN_FIELDS = ["kind", "kind_rationale", "owning_fr", "identity", "uses",
                      "memory", "lifecycle", "deep_agent", "evals"]
 
 
+def test_installed_claude_schema_matches_source():
+    """The packaged plugin's active schema (.claude/…) must equal the source schema
+    (ai/claude/…) — else a built-plugin user gets a stale, non-compound schema
+    (round-codex #2)."""
+    src = os.path.join(ROOT, "ai/claude/generate-docs/templates/system-manifest.schema.yaml")
+    installed = os.path.join(ROOT, ".claude/commands/skills/generate-docs/templates/system-manifest.schema.yaml")
+    with open(src) as a, open(installed) as b:
+        assert a.read() == b.read(), "installed .claude schema is out of sync with the source schema — resync it"
+
+
 def test_schema_loads_and_declares_extensions():
     s = _load(SCHEMA)["schema"]
     for k in NEW_TOP_LEVEL:
