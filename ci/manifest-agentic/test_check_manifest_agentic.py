@@ -311,6 +311,64 @@ def test_compensation_gap_advisory_is_warning_not_block():
     assert "compensation_gap" not in codes(m)[0]   # advisory: never a blocker
 
 
+# ── wave 5: coverage / floor, per-rule ────────────────────────────────────────
+def test_eval_coverage_missing_for_uncovered_agent():
+    def f(m):
+        m["domains"]["extra_agent"] = {"purpose": "p", "kind": "simple_agent", "kind_rationale": "bounded"}
+    assert "eval_coverage_missing" in mut(f)
+
+
+def test_eval_index_mismatch():
+    assert "eval_index_mismatch" in mut(
+        lambda m: _dom(m, "intake_agent")["evals"].__setitem__("spec", "docs/03-engineering/evals/component/moved.yaml"))
+
+
+def test_e2e_segment_required():
+    assert "e2e_missing" in mut(lambda m: m["segments"][0].__setitem__("e2e", False))
+
+
+def test_eval_approval_required_at_tier2():
+    """A covered agent whose spec is not `approved` fails at Tier 2, passes at Tier 1."""
+    m = {
+        "domains": {"ag": {"purpose": "p", "kind": "simple_agent", "kind_rationale": "b",
+                           "evals": {"spec": "e/ag.yaml"}},
+                    "svc": {"purpose": "q"}},
+        "segments": [{"id": "s", "path": [], "e2e": True, "evals": {"spec": "e/s.yaml"}}],
+    }
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "docs/03-engineering/evals"))
+        idx = {"schema_version": "1.0", "rows": [
+            {"target_type": "component", "target_id": "ag", "spec_path": "e/ag.yaml"},
+            {"target_type": "segment", "target_id": "s", "spec_path": "e/s.yaml"}]}
+        with open(os.path.join(d, "docs/03-engineering/evals/index.yaml"), "w") as f:
+            yaml.safe_dump(idx, f)
+        with open(os.path.join(d, "docs/03-engineering/evals/waivers.yaml"), "w") as f:
+            yaml.safe_dump({"schema_version": "1.0", "waivers": []}, f)
+        os.makedirs(os.path.join(d, "e"))
+        for tid in ("ag", "s"):
+            with open(os.path.join(d, "e", f"{tid}.yaml"), "w") as f:
+                yaml.safe_dump({"approval": {"decision": "baseline_only"}}, f)
+        cs2 = {b.code for b in C.run(m, d, 2)[0]}
+        cs1 = {b.code for b in C.run(m, d, 1)[0]}
+    assert "eval_not_approved" in cs2
+    assert "eval_not_approved" not in cs1
+
+
+def test_observability_floor_gate():
+    assert "observability_missing" in mut(lambda m: m.pop("observability"))
+    assert "observability_attributes" in mut(lambda m: m["observability"]["tracing"]["attributes"].remove("gen_ai.operation.name"))
+    assert "observability_hops" in mut(lambda m: m["observability"]["tracing"]["hops"].remove("propose_refund"))
+    assert "observability_cost_budget" in mut(lambda m: m["observability"]["cost_budget"].__setitem__("limit", 0))
+    assert "eval_console_owner" in mut(lambda m: m["observability"]["eval_console"].__setitem__("owner", ""))
+    assert "eval_console_ref_unresolved" in mut(lambda m: m["observability"]["eval_console"].__setitem__("ref", "domain:ghost"))
+
+
+def test_eval_console_access_tier_scaled():
+    # access 'report' fails at Tier 2 but is fine at Tier 1
+    assert "eval_console_access" in mut(lambda m: m["observability"]["eval_console"].__setitem__("access", "report"), tier=2)
+    assert "eval_console_access" not in mut(lambda m: m["observability"]["eval_console"].__setitem__("access", "report"), tier=1)
+
+
 # ── wave 1: waiver suppression ────────────────────────────────────────────────
 def test_waiver_suppresses_matching_blocker():
     m = _base_compound()

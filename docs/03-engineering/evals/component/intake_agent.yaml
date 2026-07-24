@@ -1,0 +1,11 @@
+target_type: component
+target_id: intake_agent
+kind: eval
+owner: product-support-pm
+status: baseline
+approval:
+  reviewer: qa-lead
+  date: 2026-07-23
+  decision: approved
+cases:
+  - { id: intake_agent_happy, given: "a typical request", expect: "correct handling", source: acceptance_criterion, edited: false }

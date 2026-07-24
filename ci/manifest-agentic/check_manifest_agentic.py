@@ -623,6 +623,152 @@ def check_compensation_gap(m, reg, tier):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Wave 5 — coverage / floor
+# ══════════════════════════════════════════════════════════════════════════════
+def _eval_projection(m):
+    rows = []
+    for name, d in domains(m).items():
+        sp = (d.get("evals") or {}).get("spec")
+        if sp:
+            rows.append(("component", name, sp))
+    for i in interactions(m):
+        sp = (i.get("evals") or {}).get("spec")
+        if sp:
+            rows.append(("interaction", i.get("id"), sp))
+    for s in segments(m):
+        sp = (s.get("evals") or {}).get("spec")
+        if sp:
+            rows.append(("segment", s.get("id"), sp))
+    return rows
+
+
+def _eval_waived(t, i, waivers, tier, today):
+    for w in waivers:
+        if w.get("target_type") == t and w.get("target_id") == i \
+           and tier <= int(w.get("tier_limit", -1)) and _date(w["revisit"]) >= today:
+            return True
+    return False
+
+
+def check_eval_coverage(m, reg, tier):
+    """§6.12: mandatory targets = every agent domain + one e2e segment. Each needs an
+    index row (a projection of inline evals.spec) or an unlapsed waiver; at Tier2+ the
+    spec's approval.decision must be `approved`. Result ingestion is #42, not here."""
+    import datetime
+    out = []
+    idx = reg.get("evals_index") or {}
+    wv = reg.get("evals_waivers") or {}
+    if idx is None or wv is None:
+        return out
+    index_rows = {(r.get("target_type"), r.get("target_id")): r.get("spec_path") for r in (idx.get("rows") or [])}
+    waivers = wv.get("waivers") or []
+
+    proj = {(t, i): sp for (t, i, sp) in _eval_projection(m)}
+    if proj != index_rows:
+        out.append(block("system:evals", "eval_index_mismatch",
+                         "evals/index.yaml differs from the inline evals.spec projection (regenerate)"))
+
+    mandatory = [("component", n) for n, d in domains(m).items() if d.get("kind") in AGENT_KINDS]
+    e2e = [("segment", s.get("id")) for s in segments(m) if s.get("e2e")]
+    if len(domains(m)) >= 2 and not e2e:
+        out.append(block("system:evals", "e2e_missing", "a multi-component agentic system needs one e2e:true segment"))
+    mandatory += e2e[:1]
+
+    today = datetime.date.today()
+    for (t, i) in mandatory:
+        if _eval_waived(t, i, waivers, tier, today):
+            continue
+        sp = index_rows.get((t, i))
+        if not sp:
+            out.append(block(str(i), "eval_coverage_missing", f"{t} '{i}' has no eval spec in the index and no unlapsed waiver"))
+            continue
+        if tier >= 2:
+            spec = _load_yaml(os.path.join(reg.root, sp))
+            if spec is None or (spec.get("approval") or {}).get("decision") != "approved":
+                out.append(block(str(i), "eval_not_approved", f"{t} '{i}' eval spec approval.decision != approved (required at Tier {tier})"))
+    return out
+
+
+REQUIRED_ATTRS = {
+    "otel_genai": {"gen_ai.system", "gen_ai.operation.name", "gen_ai.request.model",
+                   "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens"},
+    "openinference": {"openinference.span.kind", "llm.model_name",
+                      "llm.token_count.prompt", "llm.token_count.completion"},
+}
+
+def _access_ok(access, tier):
+    if tier <= 1:
+        return access in ("report", "existing_surface", "console")
+    return access == "console"
+
+def _resolves(ref, m, root):
+    if not ref or ":" not in str(ref):
+        return False
+    kind, val = str(ref).split(":", 1)
+    if kind == "domain":
+        return val in domains(m)
+    if kind == "facade":
+        if ":" not in val:
+            return False
+        d, api = val.split(":", 1)
+        return d in domains(m) and api in ((domains(m).get(d) or {}).get("facade_apis") or {})
+    if kind == "service":
+        return bool(val.strip())            # an approved-service registry id (registry check out of core here)
+    if kind == "artifact":
+        return os.path.exists(os.path.join(root, val))
+    return False
+
+
+def check_observability(m, reg, tier):
+    """§6.17 FLOOR GATE: an agentic system must declare a real, tier-scaled
+    observability block — convention-required attributes, agent-hop tracing, a
+    positive cost budget, and a resolvable, tier-appropriate PM eval-console."""
+    out = []
+    o = m.get("observability")
+    if not o:
+        out.append(block("system:observability", "observability_missing",
+                         "an agentic system must declare `observability` (floor gate, hard directive)"))
+        return out
+    tr = o.get("tracing") or {}
+    conv = tr.get("convention")
+    if conv not in REQUIRED_ATTRS:
+        out.append(block("system:observability", "observability_convention", "tracing.convention must be otel_genai|openinference"))
+    elif not set(tr.get("attributes") or []) >= REQUIRED_ATTRS[conv]:
+        missing = REQUIRED_ATTRS[conv] - set(tr.get("attributes") or [])
+        out.append(block("system:observability", "observability_attributes",
+                         f"tracing.attributes must ⊇ the required {conv} set (missing {sorted(missing)})"))
+    agent_hops = {i.get("id") for i in interactions(m) if is_agent(m, i.get("from")) or is_agent(m, i.get("to"))}
+    if not set(tr.get("hops") or []) >= agent_hops:
+        out.append(block("system:observability", "observability_hops",
+                         "tracing.hops must ⊇ every agent-endpoint interaction"))
+    cb = o.get("cost_budget")
+    if not (cb and isinstance(cb.get("limit"), (int, float)) and not isinstance(cb.get("limit"), bool) and cb["limit"] > 0):
+        out.append(block("system:observability", "observability_cost_budget", "observability.cost_budget.limit must be > 0"))
+    ec = o.get("eval_console")
+    if not ec:
+        out.append(block("system:observability", "eval_console_missing", "observability requires an eval_console"))
+        return out
+    if not (ec.get("owner") or "").strip():
+        out.append(block("system:observability", "eval_console_owner", "eval_console.owner is required"))
+    if not _access_ok(ec.get("access"), tier):
+        out.append(block("system:observability", "eval_console_access",
+                         f"Tier {tier} requires eval_console.access 'console' (got '{ec.get('access')}')"))
+    if not _resolves(ec.get("ref"), m, reg.root):
+        out.append(block("system:observability", "eval_console_ref_unresolved",
+                         f"eval_console.ref '{ec.get('ref')}' does not resolve (domain:/facade:/service:/artifact:)"))
+    return out
+
+
+def _load_yaml(path):
+    import yaml
+    try:
+        with open(path) as f:
+            return yaml.safe_load(f)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Cycle helper
 # ══════════════════════════════════════════════════════════════════════════════
 def _has_cycle(adj):
@@ -673,6 +819,8 @@ DISPATCH = [
     ("check_deep_agent",     check_deep_agent,     lambda m: any(d.get("kind") == "deep_agent" or d.get("deep_agent") for d in domains(m).values()), []),
     ("check_saga",           check_saga,           lambda m: bool(sagas(m)), ["policies"]),
     ("check_compensation_gap", check_compensation_gap, lambda m: bool(segments(m)), []),
+    ("check_eval_coverage",  check_eval_coverage,  lambda m: any_agent(m) or bool(segments(m)), ["evals_index", "evals_waivers"]),
+    ("check_observability",  check_observability,  any_agent, []),
 ]
 
 
