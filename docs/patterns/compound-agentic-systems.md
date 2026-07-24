@@ -20,6 +20,39 @@ During `pm-design-feature`, if the delivery surface is **agentic**, answer the t
 single-agent path; a non-agentic multi-service app never reaches the probe. Don't reach for this pattern for a
 lone tool-using agent — that is over-engineering, which the surface exists to prevent.
 
+## Start with the advisor — `hitl:agentic-intake`
+
+On the compound branch, the probe routes into the **Agentic Design Advisor** *before* you author anything. Run
+it first — it is the front door:
+
+```
+hitl:agentic-intake
+```
+
+It interrogates the design the way an agentic-systems expert would, **recommends** a right-sized set of
+controls (the lenses are report *sections*, not a fixed checklist — a lens with no data contributes nothing),
+pushes back on over-engineering, **records** every decision (a skipped floor control is recorded with
+owner + reason — never silent), renders an evolving system map, and **hands off** a neutral
+`agentic-design-handoff.yaml`. It authors **no** manifest field — not even `kind`. A **human** then authors the
+`system-manifest.yaml` from that handoff, and the validators below gate it.
+
+The handoff is the bridge to the manifest: each recommendation carries a `target_path_hint` telling you
+*where* it lands in the manifest you author next. The recommended **floor** maps straight onto the six manifest
+concerns below:
+
+| Advisor recommendation | `target_path_hint` | Manifest concern (below) |
+|---|---|---|
+| `classify` | `domains[<agent>].kind (+ deep_agent{…})` | §1 Classify |
+| `boundary` | `interactions[].response.validation + callee facade_apis` | §2 Edges / trust legs |
+| `privilege` | `domains[<agent>].identity + .uses` | §3 Privilege |
+| `reliability` | `interactions[].async + domains[<agent>].lifecycle + sagas` | §4 Reliability |
+| `observability` | `observability{tracing, eval_console}` | §5 Observability |
+| `evals` | `domains[<agent>].evals + segments[e2e].evals` | §6 Evals |
+
+Worked end-to-end example (intake state → decision record → neutral handoff → system map):
+[`docs/examples/agentic-advisor/`](../examples/agentic-advisor/) (see its `README.md`). The advisor itself is
+[`docs/design/agentic-design-advisor/`](../design/agentic-design-advisor/) (EPIC #35).
+
 ## The model: a manifest, extended
 
 A compound system is your existing `docs/system-manifest.yaml` with additive, optional blocks. A deterministic
