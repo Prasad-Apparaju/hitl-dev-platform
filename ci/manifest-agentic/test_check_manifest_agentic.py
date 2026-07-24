@@ -523,6 +523,72 @@ def test_wrong_type_fails_closed():
     assert "bad_type" is not None  # sanity
 
 
+def test_field_spec_is_self_consistent():
+    """Every nested struct / list-elem / map-value referenced in FIELD_SPEC must exist
+    as a struct (catches a table typo that would silently skip type checks)."""
+    known = set(C.FIELD_SPEC)
+    for struct, fields in C.FIELD_SPEC.items():
+        for f, spec in fields.items():
+            ref = spec[2:] if spec.startswith(("l:", "m:")) else spec
+            if ref not in ("s",):
+                assert ref in known, f"{struct}.{f} -> unknown struct '{ref}'"
+    # ALLOWED_KEYS is derived from FIELD_SPEC and must match
+    assert C.ALLOWED_KEYS == {k: set(v) for k, v in C.FIELD_SPEC.items()}
+
+
+def test_r21_reviewer_input_blocks_solely_on_type():
+    """The exact round-codex-2 R2-1 failing input must exit 2 with ONLY bad_type blockers."""
+    m = yaml.safe_load("""
+version: []
+domains:
+  a:
+    purpose: []
+    kind: deterministic
+    kind_rationale: []
+    owning_fr: {}
+    identity:
+      principal: []
+      privilege: []
+    evals:
+      spec: []
+""")
+    standing, _, _, _ = C.run(m, ROOT, 2)
+    assert standing, "R2-1 input must not exit 0"
+    assert {b.code for b in standing} == {"bad_type"}, {b.code for b in standing}
+
+
+def test_scalar_fields_reject_containers():
+    # a container on any scalar field is bad_type (mechanical sweep over showcase-present scalars)
+    def setpath(m, path, val):
+        cur = m
+        for k in path[:-1]:
+            cur = cur[k] if not isinstance(k, int) else cur[k]
+        cur[path[-1]] = val
+    cases = [
+        ["domains", "intake_agent", "kind_rationale"],
+        ["domains", "intake_agent", "owning_fr"],
+        ["domains", "intake_agent", "identity", "principal"],
+        ["domains", "intake_agent", "evals", "spec"],
+        ["domains", "resolution_agent", "memory", "long_term", "owner"],
+        ["observability", "eval_console", "owner"],
+        ["observability", "tracing", "convention"],
+    ]
+    for path in cases:
+        assert "bad_type" in mut(lambda m, p=path: setpath(m, p, [])), path
+
+
+def test_list_fields_reject_scalars():
+    assert "bad_type" in mut(lambda m: _dom(m, "intake_agent").__setitem__("files", "x"))
+    assert "bad_type" in mut(lambda m: _dom(m, "intake_agent")["identity"].__setitem__("privilege", "x"))
+    assert "bad_type" in mut(lambda m: m["observability"]["tracing"].__setitem__("hops", "x"))
+    assert "bad_type" in mut(lambda m: m["segments"][0].__setitem__("path", "x"))
+
+
+def test_map_fields_reject_lists():
+    assert "bad_type" in mut(lambda m: _dom(m, "account_service").__setitem__("facade_apis", []))
+    assert "bad_type" in mut(lambda m: _dom(m, "resolution_agent")["memory"].__setitem__("long_term", []))
+
+
 def test_wrong_type_is_non_waivable():
     m = copy.deepcopy(load(SHOWCASE))
     m["domains"]["intake_agent"]["identity"] = []
