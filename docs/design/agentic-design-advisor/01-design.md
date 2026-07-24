@@ -3,7 +3,7 @@
 > Mechanism (the *how*) for [`../../01-product/agentic-design-advisor/requirements.md`](../../01-product/agentic-design-advisor/requirements.md)
 > (ADV-1..ADV-15). Decisions in [`02-adrs.md`](02-adrs.md); field-level precision in the LLD
 > [`04-lld.md`](04-lld.md); test plan in [`03-test-plan.md`](03-test-plan.md).
-> Status: **v4.1 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; architecture converged); CLEARED TO IMPLEMENT (#35). #10 ships first.**
+> Status: **v4.1 — IMPLEMENTED + SHIPPED as HITL 2.3.0 (EPIC #35, 2026-07-24).** Design review concluded 2026-07-23 (Codex rounds 1–12; architecture converged); implementation hardened across 5 Fable adversarial passes (the NO-AUTHOR boundary held throughout). #10 shipped first as 2.2.0.
 >
 > **The model (v4.1):** the Advisor is **one intake command** (`hitl:agentic-intake`) that **elicits** the
 > whole scenario, **recommends** a right-sized set of controls (a **recommendation report** whose sections

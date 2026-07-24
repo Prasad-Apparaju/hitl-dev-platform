@@ -1,7 +1,8 @@
 # Agentic Design Advisor (#35 / FR-28): Implementation Plan
 
-> Build sequencing for the **design-review-concluded** Advisor (v4.1: HLD `01-design.md`, ADRs `02-adrs.md`,
-> LLD `04-lld.md`, test-plan `03-test-plan.md`). Ships **after** #10 (2.2.0 released); targets the 2.x line.
+> Build sequencing for the Advisor (v4.1: HLD `01-design.md`, ADRs `02-adrs.md`,
+> LLD `04-lld.md`, test-plan `03-test-plan.md`). **SHIPPED as HITL 2.3.0 (EPIC #35, 2026-07-24)**, after
+> #10 (2.2.0); implementation hardened across 5 Fable adversarial passes.
 > This is the *how-to-build* roadmap — no new design decisions; every artifact traces to an LLD §.
 
 ## 0. Principles (carried from #10)

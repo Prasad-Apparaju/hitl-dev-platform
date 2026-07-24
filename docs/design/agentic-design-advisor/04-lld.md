@@ -7,7 +7,7 @@
 > B2). It **authors no manifest field**; a human authors the manifest, #10 validates it. **Removed** (the
 > auto-authoring apparatus): the manifest writer, `OWNS_CHECKS`/imported-`ACTIVATES`/`floor ≡ activation`/
 > `OWNERSHIP-COMPLETE`/`AUTHOR-COMPLETE`, `manifest_features`, and the `authored.*` state layer. Implements
-> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12); CLEARED TO IMPLEMENT (#35).**
+> HLD [`01-design.md`](01-design.md) v4.1 + ADRs A5/A6. Status: **v4.1 — IMPLEMENTED + SHIPPED as HITL 2.3.0 (EPIC #35, 2026-07-24).** Design review concluded 2026-07-23 (Codex rounds 1–12); implementation hardened across 5 Fable adversarial passes.
 
 ## 0. Grammars & conventions
 
@@ -433,6 +433,15 @@ recommendation or a `*_hint` — **no valid manifest field**. A human authors
 the real manifest; **#10 validates** it. `HANDOFF`/`NO-AUTHOR` (§9) assert the file contains **no**
 `system-manifest.yaml` field value (no `kind`, no `interactions`) and that every recommended-floor control
 has a `recommendations` entry + exactly one inline `target_path_hint`.
+
+**Certification is against the whole #10 vocabulary, and every channel is scalar-coerced at emit.**
+`handoff_authors_no_manifest_field` key-walks the handoff against the **entire** `#10.FIELD_SPEC` field
+set (derived at import, not a hand-maintained denylist), minus the handoff's own neutral structural keys.
+That exclusion is sound **only because every emitted channel is scalar-coerced** — free-text via a
+string coercion, the elicited enums (`role`/`proposed_kind`/`transport`) via a scalar coercion that maps
+any non-scalar to `None`. Without the coercion, a `dict` keyed on neutral names (e.g. `role: {owner: …}`)
+would ride a passthrough channel and smuggle an authored value past the key-walk (the round-4 adversarial
+near-miss). No handoff field is ever emitted verbatim.
 
 ## 8. Integration (ADV-13, ADR-A9)
 

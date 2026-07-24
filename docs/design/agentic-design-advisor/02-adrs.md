@@ -5,7 +5,7 @@
 > re-scope removed manifest authoring (**A5** commands recommend + hand off, not author; **A6** floor is a
 > Tier+risk recommendation, not derived from #10; **A1** one intake command, not 8 — round-9 M9). Earlier
 > decisions (obligation-first floor, imported activation) are superseded, kept in each ADR's history.
-> Status: **accepted, v4.1 (elicit + recommend + record + hand off); DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; architecture converged); CLEARED TO IMPLEMENT (#35)**.
+> Status: **accepted, v4.1 (elicit + recommend + record + hand off); IMPLEMENTED + SHIPPED as HITL 2.3.0 (EPIC #35, 2026-07-24)**. Design review concluded 2026-07-23 (Codex rounds 1–12; architecture converged); implementation hardened across 5 Fable adversarial passes.
 
 ---
 

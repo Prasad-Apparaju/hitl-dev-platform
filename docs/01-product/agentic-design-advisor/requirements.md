@@ -5,7 +5,7 @@
 > scenario, and **composes a right-sized recommendation report** for the change. Product one-liner: **FR-28** in the
 > [PRD](../prd.md). The **how** (the one intake, workflow composition, the recommended floor, the
 > handoff) is the design package at [`docs/design/agentic-design-advisor/`](../../design/agentic-design-advisor/).
-> Status: **draft, v4.1 — one intake + recommendation report; neutral `agentic-design-handoff.yaml` (no manifest fields)**. Related: EPIC
+> Status: **SHIPPED as HITL 2.3.0 (EPIC #35, 2026-07-24) — v4.1: one intake + recommendation report; neutral `agentic-design-handoff.yaml` (no manifest fields)**. Related: EPIC
 > [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)
 > (compound-agentic surface — a human authors its manifest; #10 validates; the Advisor hands off, it does
 > not author) and

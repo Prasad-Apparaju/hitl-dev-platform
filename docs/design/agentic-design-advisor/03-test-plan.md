@@ -5,7 +5,7 @@
 > (ADV-1..ADV-15). **This plan was rewritten for v4.1** (round-10) — the auto-authoring and 8-command test
 > families are gone. The Advisor is **one `hitl:agentic-intake` command** that produces a **recommendation
 > report** + a **neutral `agentic-design-handoff.yaml`**; it authors **no** manifest field. There is **no**
-> per-lens command, **no** manifest skeleton, and **no** #10 field in any Advisor output. Status: **v4.1.**
+> per-lens command, **no** manifest skeleton, and **no** #10 field in any Advisor output. Status: **v4.1 — IMPLEMENTED + SHIPPED as HITL 2.3.0 (EPIC #35, 2026-07-24); conformance suite green + 5 Fable adversarial passes.**
 
 ## 1. What must be true
 
