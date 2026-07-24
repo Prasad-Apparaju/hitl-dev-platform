@@ -133,7 +133,7 @@ handoff — but that is HITL's normal, and better, pattern (scaffold + author + 
 
 ---
 
-## ADR-A6: The floor is a Tier + risk RECOMMENDATION (advice); #10 is the gate (re-scoped 2026-07-23)
+## ADR-A6: The floor is a safety-factor RECOMMENDATION (advice); #10 is the gate (re-scoped 2026-07-23)
 
 **Status:** Accepted, **rewritten 2026-07-23 (v4).** Rounds 5–8 made the floor a *pure function of #10's
 activation* so the Advisor could author a matching manifest — an equivalence that had to be *proven* and
@@ -162,7 +162,7 @@ waived" holds *at #10*. No equivalence to prove, no activation to import.
 - *An absolutely non-waivable floor.* Cost: no human escape hatch — inconsistent with FR-25.
 - *Prose triggers, no vocabulary.* Cost: two people compute different floors; not auditable.
 
-**Consequences.** (+) Reproducible, auditable, reuses Tier, no equivalence to prove, no second copy of #10.
+**Consequences.** (+) Reproducible, auditable, reuses the existing risk vocabulary, no equivalence to prove, no second copy of #10.
 (−) The floor is advice; the real enforcement is #10 at design time — which is correct, because #10 is the
 gate and the Advisor is the front door.
 

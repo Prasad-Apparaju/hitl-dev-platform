@@ -10,7 +10,7 @@
 > framing + the `CR-n` requirements). The **how** — topology model, validators, schema encoding —
 > lives in the design package at
 > [`docs/design/compound-agentic-surface/`](../../design/compound-agentic-surface/): HLD
-> [`01-design.md`](../../design/compound-agentic-surface/01-design.md) **v3**, ADRs
+> [`01-design.md`](../../design/compound-agentic-surface/01-design.md) **v3.3**, ADRs
 > [`02-adrs.md`](../../design/compound-agentic-surface/02-adrs.md) (ADR-1..ADR-13, accepted), LLD
 > [`03-lld.md`](../../design/compound-agentic-surface/03-lld.md) **v3.3** — round-10 findings addressed;
 > pending Codex round-11 re-review. FR-26 ⇄ this doc are cross-linked; §7 traces every `CR-n` to a sub-issue.

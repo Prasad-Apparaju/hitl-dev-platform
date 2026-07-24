@@ -1,7 +1,7 @@
 # Compound Agentic System Surface: Architecture Decisions
 
 > ADRs formalizing decisions **D1–D13** from [`01-design.md`](01-design.md) §11. Each records the forces,
-> the decision, the **alternatives with their concrete cost**, and the consequences. **v3.2** — the
+> the decision, the **alternatives with their concrete cost**, and the consequences. **Current: v3.3** (the v3.2 core-scope-lock amendment is retained as history below). **v3.2** — the
 > **round-2** review rewrote ADR-2/7/9/10/11/12 and added ADR-13; the **round-4** review (2026-07-22) drove
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)), which **amends ADR-11**
 > (saga → declared-only + advisory) and **ADR-12** (eval → agent+e2e core, universal coverage deferred);

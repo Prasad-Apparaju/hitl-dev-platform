@@ -117,7 +117,8 @@ The harness runs the conversation; `compose.py`/`render_map.py`/`records.py` do 
 ## 4. Composition (`compose.py`, ADR-A4) — a RECOMMENDATION engine (re-scope 2026-07-23)
 
 The composer recommends **which lenses this change needs** and a **recommended floor** (the controls that
-shouldn't be skipped) from **Tier + risk factors** — expert judgment. It does **not** author a manifest,
+shouldn't be skipped) from the **safety-relevant risk factors** (agent presence, edges, `side_effects`,
+`autonomy`, async — **not** Tier) — expert judgment. It does **not** author a manifest,
 import or predict #10's activation, or prove any equivalence: the Advisor recommends, and #10 enforces its
 own checks at design time on the *human-authored* manifest. Relevance gives proportionality (a lens with no
 scenario data contributes no report section); the floor rules give the recommended-mandatory set.
@@ -153,8 +154,8 @@ def relevant(lens, s):
     }.get(lens, False)
 
 # The RECOMMENDED floor — a deterministic function of the safety-relevant risk factors (expert judgment,
-# NOT #10 activation). Membership uses the factors it names (round-9 M2 — honest); Tier + data/stakes/scale
-# inform recommended DEPTH (§4.1), not membership. #10 enforces downstream; this is advice.
+# NOT #10 activation). Membership uses ONLY the safety factors it names (round-9 M2 — honest); Tier/stakes are
+# NOT inputs — they may inform a human-confirmed advisory depth NOTE (§4.1), never membership. #10 enforces.
 def recommended_floor(s):
     a = s["answers"]
     floor = set()
@@ -169,6 +170,17 @@ def recommended_floor(s):
     if any_async(s):                                                       # an async_task/event needs idempotency/DLQ design
         floor.add("reliability")                                          # → reliability IS floor-level advice (round-10 blocker 4)
     return floor
+
+def topo_order(included, depends):
+    """Deterministic dependency order with a LENSES-index tie-break (round-12 B3 — published, not implied):
+    repeatedly emit the FIRST lens in LENSES order whose deps are all already emitted (Kahn, single-ready
+    choice). This exact rule — not a generic batching Kahn — reproduces the test-plan fixture order."""
+    order, remaining = [], [l for l in LENSES if l in included]            # `remaining` preserves LENSES order
+    while remaining:
+        for l in remaining:
+            if all(d in order for d in depends.get(l, [])):                # every dep already emitted
+                order.append(l); remaining.remove(l); break
+    return order
 
 def compose(s):
     floor    = recommended_floor(s)
@@ -399,7 +411,8 @@ skips: []                                    # a recorded skip {control,owner,re
 `depth_note` is an **advisory** annotation (a human-confirmed suggestion, not a computed field — round-10
 blocker 4). `HANDOFF-REF-INTEGRITY` (§9) asserts id uniqueness and that every hint is a path string.
 
-Every value is a `proposed_*` recommendation or a `*_hint` — **no valid manifest field**. A human authors
+Beyond the elicited neutral facts (`role`, `transport`, `feature`), every value is a `proposed_*`
+recommendation or a `*_hint` — **no valid manifest field**. A human authors
 the real manifest; **#10 validates** it. `HANDOFF`/`NO-AUTHOR` (§9) assert the file contains **no**
 `system-manifest.yaml` field value (no `kind`, no `interactions`) and that every recommended-floor control
 has a `recommendations` entry + exactly one inline `target_path_hint`.
@@ -434,8 +447,9 @@ ci/agentic-advisor/
 ## 10. LLD decisions
 
 - **L1:** the composer/map are **deterministic Python** over the scenario record; the catalog is data; the
-  commands are skills. Expertise reviewable (catalog), logic testable (Python), conversation in the harness
-  (skills) — ADR-A1/A2/A4.
+  intake is **one skill** (`hitl:agentic-intake`), and the lenses are **report sections** of it — not separate
+  commands. Expertise reviewable (catalog), logic testable (Python), conversation in the harness (the one
+  skill) — ADR-A1/A2/A4.
 - **L2:** the floor is a **risk-factor recommendation** — membership from agent presence, edges, irreversible
   side-effects, autonomy+side-effects, and async (§4/§4.1); `Tier`/`stakes` inform only an **advisory depth
   note**, never membership (round-10 blocker 4). It is advice, not a gate; a skip is **recorded** (never

@@ -111,7 +111,7 @@ of **lens sections** this change needs. Composition is deterministic given the a
 The report is written to the decision record. A re-run with the same
 answers composes the identical report (auditable, ADV-12).
 
-### 4.1 The floor is a RECOMMENDATION (Tier + risk); rungs are the optional extras
+### 4.1 The floor is a RECOMMENDATION (safety factors, not Tier); rungs are the optional extras
 
 The workflow is `floor ∪ rungs`. **The floor is the Advisor's expert recommendation of the controls that
 shouldn't be skipped for this change** — a deterministic function of the **safety-relevant risk factors the
@@ -209,7 +209,8 @@ The Advisor produces **two artifacts, neither of which is the design**:
    skips:        [ { control, owner, reason } ]                                                        # recorded, not a #10 waiver
    ```
 
-   Every value is a **recommendation** (`proposed_kind`) or a **hint** (`target_path_hint`) — nothing here
+   The handoff carries **elicited neutral facts** (`role`, `transport`, `feature`) plus **recommendations**
+   (`proposed_kind`) and **hints** (`target_path_hint`) — nothing here
    is a valid `system-manifest.yaml` field, not even `kind`, because a kind is a design classification the
    architect must author. If the design role adopts it, they author the manifest **anew** (a defined
    conversion step they own); the handoff is never edited-in-place into a manifest.

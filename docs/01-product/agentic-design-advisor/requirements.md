@@ -125,8 +125,9 @@ Requirement IDs are `ADV-<n>` (Advisor Requirement).
 - **Governs, does not run.** The **one intake** elicits, records, and produces a **recommendation report +
   neutral handoff**; it authors **no manifest field** and ships no runtime, dashboard, engine, or provisioning.
 - **Reuse existing mechanisms.** One skill (`hitl:agentic-intake`), reviewer-role taxonomy, the capability menu (#8), the
-  manifest + #10's per-check activation, **the existing Tier 0–3 model** (the floor reuses Tier — no new
-  tier axis), the breadcrumb, and durable-artifact conventions. No new orthogonal machinery.
+  manifest + #10's per-check activation, **the existing Tier 0–3 model** (reused for the *advisory depth note*
+  only — floor **membership** is the safety-relevant risk factors, not Tier; no new tier axis), the
+  breadcrumb, and durable-artifact conventions. No new orthogonal machinery.
 - **Proportionate to itself.** The composed workflow must be light for light changes; an over-heavy
   Advisor would defeat its purpose.
 - **Document-driven.** Output is durable, reviewable artifacts — never a lost chat.
