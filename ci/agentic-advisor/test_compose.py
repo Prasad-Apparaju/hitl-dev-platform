@@ -77,6 +77,26 @@ def test_topo_order_high_reliability_before_deploy():
     assert C.topo_order(inc, C.DEPENDS) == ["classify", "boundary", "privilege", "reliability", "observability", "evals", "deploy"]
 
 
+def test_no_hang_reliability_without_boundary():
+    # F1: a single irreversible agent, no edges ⇒ reliability recommended WITHOUT boundary — must not hang
+    r = C.compose({"components": [{"id": "a1", "role": "agent", "proposed_kind": "simple_agent"}],
+                   "edges": [], "answers": {"side_effects": "irreversible", "autonomy": "assisted"}})
+    assert "reliability" in r["floor"] and "boundary" not in r["report_sections"]
+
+
+def test_partial_state_does_not_crash():
+    # F3: a mid-intake render with answers not yet elicited must not KeyError
+    r = C.compose({"components": [{"id": "a1", "role": "agent", "proposed_kind": "simple_agent"}], "edges": [], "answers": {}})
+    assert r["report_sections"]
+
+
+def test_validate_scenario_flags_bad_enums():
+    # F8: a typo'd proposed_kind / transport is surfaced, not silently demoted
+    errs = C.validate_scenario({"components": [{"id": "a1", "proposed_kind": "deep-agent"}],
+                                "edges": [{"id": "e1", "transport": "stream"}]})
+    assert len(errs) == 2
+
+
 def test_no_agent_no_sections():
     det = {"components": [{"id": "s1", "role": "service", "proposed_kind": "deterministic"}],
            "edges": [], "answers": {"side_effects": "none", "autonomy": "assisted"}}

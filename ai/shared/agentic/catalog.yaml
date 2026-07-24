@@ -4,6 +4,8 @@
 # RECOMMENDS + records; a consequence targets a report-section lens / floor-rule /
 # recommendation — NEVER a #10 manifest field. Lint: ci/agentic-advisor/test_catalog_lint.py.
 schema_version: "1.0"
+version: "1.0.0"               # ADV-11 freshness: bumped on each curated refresh
+last_refreshed: 2026-07-24
 owner: technical_advisor
 refresh_cadence: 3m            # ADV-11: periodic, independent of change events
 

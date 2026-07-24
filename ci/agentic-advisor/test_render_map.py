@@ -48,6 +48,14 @@ def test_not_needed_breakdown():
     assert "classify" in getting
 
 
+def test_mermaid_edges_are_valid_form():
+    # F6: no combined inline+pipe label; dotted arrow for async/event; every pipe label non-empty
+    m = M.render(SCEN)["mermaid"]
+    assert "-. async .->" not in m and "-. event .->" not in m
+    assert "||" not in m                       # an empty pipe label is a parse error
+    assert "-.->" in m                         # the async edge uses a dotted arrow
+
+
 def test_deterministic():
     assert M.render(SCEN) == M.render(copy.deepcopy(SCEN))
 

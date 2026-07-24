@@ -25,7 +25,10 @@ ROLE_STYLE = {
     "external":  ("([", "])", "☁"),
     "store":     ("[[", "]]", "▤"),
 }
-EDGE = {"sync_call": "-->", "async_task": "-. async .->", "event": "-. event .->"}
+# Valid Mermaid link forms only: solid `-->` and dotted `-.->`; the transport goes in the
+# (always non-empty) pipe label — an inline `-. x .->` combined with a pipe label is a parse
+# error (round-fable-advisor F6).
+EDGE = {"sync_call": "-->", "async_task": "-.->", "event": "-.->"}
 
 
 def validate_roles(scenario):
@@ -39,8 +42,8 @@ def validate_roles(scenario):
 
 def _breakdown(scenario, composed):
     included = set(composed["report_sections"])
-    getting = sorted(set(composed["floor"]) | set(composed.get("adopted_rungs", [])))
-    available = sorted(r for r in composed["rungs"] if r not in composed.get("adopted_rungs", []))
+    getting = sorted(composed["floor"])                 # floor = recommended-mandatory
+    available = sorted(composed["rungs"])               # offered, deferrable
     not_needed = [l for l in _compose.LENSES if l not in included]
     return getting, available, not_needed
 
@@ -68,7 +71,8 @@ def render_mermaid(scenario, composed):
         lines.append(f"  {c['id']}{lo}{label}{hi}")
     for e in scenario["edges"]:
         arrow = EDGE.get(e.get("transport"), "-->")
-        lines.append(f"  {e['from']} {arrow}|{e.get('id', '')}| {e['to']}")
+        label = e.get("id") or e.get("transport") or "edge"     # never empty (|| is a parse error)
+        lines.append(f"  {e['from']} {arrow}|{label}| {e['to']}")
     lines.append("```")
     return "\n".join(lines) + "\n"
 

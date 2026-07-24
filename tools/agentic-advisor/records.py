@@ -38,7 +38,16 @@ LENS_RECS = {
     "deploy":        ("build-vs-buy decision (managed unless a reason to build) + portability diligence",
                       "carried to the platform/ops track (FR-25) — authors no manifest field"),
 }
-MANIFEST_FIELDS = {"kind", "domains", "interactions", "facade_apis", "uses", "identity", "sagas"}  # NO-AUTHOR guard
+# NO-AUTHOR guard — the FULL #10 manifest vocabulary (F2). A handoff key that is a manifest
+# field name is a boundary violation. (proposed_kind / role / transport / target_path_hint are
+# NOT manifest fields — they are the Advisor's recommendation/neutral vocabulary and stay allowed.)
+MANIFEST_FIELDS = {
+    "kind", "kind_rationale", "domains", "interactions", "facade_apis", "boundary_entities",
+    "events_emitted", "events_consumed", "cross_cutting", "interaction_matrix", "uses", "identity",
+    "memory", "lifecycle", "deep_agent", "orchestration", "segments", "sagas", "observability",
+    "authorization", "async", "owning_fr", "evals",
+}
+SKIP_FIELDS = {"control", "owner", "reason"}          # a skip is projected to exactly these (F2 channel)
 
 
 def build_recommendations(composed):
@@ -68,8 +77,35 @@ def generate_handoff(state, composed=None):
                         "rationale": c.get("rationale", "")} for c in state["components"]],
         "connections": [{"from": e["from"], "to": e["to"], "transport": e.get("transport")} for e in state["edges"]],
         "recommendations": build_recommendations(composed),
-        "skips": state.get("skips", []),        # a recorded skip {control,owner,reason} — NOT a #10 waiver
+        # skips are PROJECTED to {control,owner,reason} — not passed verbatim (closes the F2 channel)
+        "skips": [{k: sk.get(k) for k in SKIP_FIELDS} for sk in state.get("skips", [])],
     }
+
+
+def validate_skips(state):
+    """FLOOR-SKIP-SILENT (F8): a recorded skip must name control + owner + reason — never silent."""
+    errs = []
+    for sk in state.get("skips", []):
+        missing = [k for k in SKIP_FIELDS if not (sk.get(k) or "").strip()]
+        if missing:
+            errs.append(f"skip {sk.get('control', '?')}: missing {missing} (a skip must record control+owner+reason)")
+    return errs
+
+
+def handoff_ref_integrity(handoff):
+    """HANDOFF-REF-INTEGRITY (§7.4/§9): recommendation ids are unique and every
+    target_path_hint is a non-empty PATH string (a WHERE, never an authored value)."""
+    errs = []
+    seen = set()
+    for r in handoff.get("recommendations", []):
+        rid = r.get("id")
+        if rid in seen:
+            errs.append(f"duplicate recommendation id '{rid}'")
+        seen.add(rid)
+        hint = r.get("target_path_hint")
+        if not isinstance(hint, str) or not hint.strip():
+            errs.append(f"recommendation '{rid}': target_path_hint must be a non-empty path string")
+    return errs
 
 
 def handoff_authors_no_manifest_field(handoff):
@@ -102,6 +138,14 @@ def generate_decision_record(state, composed=None):
              "## Recommendations (a human authors the manifest; #10 validates)", ""]
     for r in build_recommendations(composed):
         lines.append(f"- **{r['lens']}** ({r['category']}) — {r['control']}  ·  hint: `{r['target_path_hint']}`")
+    if state.get("decisions"):
+        lines += ["", "## Menu decisions (chosen / rejected / rationale)", ""]
+        for d in state["decisions"]:
+            rej = ", ".join(str(x) for x in (d.get("rejected") or [])) or "—"
+            state_tag = f" [{d['state']}]" if d.get("state") else ""
+            lines.append(f"- **{d.get('attaches_to', '?')}**{state_tag}: chose **{d.get('chosen')}** "
+                         f"(rejected: {rej}) — {d.get('rationale', '')}"
+                         + ("  · OVERRIDE" if d.get("override") else ""))
     if state.get("skips"):
         lines += ["", "## Recorded skips (Advisor records — grant no #10 gate exception)", ""]
         for s in state["skips"]:
@@ -113,25 +157,46 @@ def generate_decision_record(state, composed=None):
     return "\n".join(lines) + "\n"
 
 
+def _resolve(state, path):
+    """Resolve a dotted state path like 'answers.side_effects' (for a decision's depends_on)."""
+    cur = state
+    for part in str(path).split("."):
+        if isinstance(cur, dict):
+            cur = cur.get(part)
+        else:
+            return None
+    return cur
+
+
 def reconcile(old_state, new_scenario):
-    """Re-run = recompute derived + reconcile human-owned decisions by id (§7.3). A decision
-    whose gating input (proposed_kind / a risk answer) changed is flagged `stale` for
-    re-confirmation; a removed component's decisions are `retired`; unchanged are kept.
-    Returns the reconciled state as a diff-ready dict (the human confirms before write)."""
+    """Re-run = recompute derived + reconcile human-owned decisions by id (§7.3). A decision is
+    flagged `stale` if a gating input changed — the attached component's proposed_kind OR any
+    `depends_on` state field (e.g. `answers.side_effects` moving to irreversible). A decision on
+    a removed component OR edge is `retired`. skips AND deferrals AND deploy are carried, never
+    silently dropped. Returns a diff-ready state (the human confirms before write)."""
     new = dict(new_scenario)
     old_comp = {c["id"]: c for c in old_state.get("components", [])}
-    new_ids = {c["id"] for c in new_scenario.get("components", [])}
+    old_edge = {e["id"]: e for e in old_state.get("edges", [])}
+    new_comp = {c["id"]: c for c in new_scenario.get("components", [])}
+    new_edge_ids = {e["id"] for e in new_scenario.get("edges", [])}
     decisions, retired = [], []
     for d in old_state.get("decisions", []):
         att = d.get("attaches_to")
-        if att in old_comp and att not in new_ids:
+        removed = (att in old_comp and att not in new_comp) or (att in old_edge and att not in new_edge_ids)
+        if removed:
             retired.append({**d, "state": "retired"})
             continue
-        prev = old_comp.get(att, {})
-        cur = next((c for c in new_scenario.get("components", []) if c["id"] == att), {})
-        changed = prev.get("proposed_kind") != cur.get("proposed_kind")
-        decisions.append({**d, "state": "stale" if changed else "confirmed"})
+        stale = False
+        if att in new_comp and old_comp.get(att, {}).get("proposed_kind") != new_comp[att].get("proposed_kind"):
+            stale = True
+        for path in d.get("depends_on", []):        # a changed risk answer / state field ⇒ stale
+            if _resolve(old_state, path) != _resolve(new_scenario, path):
+                stale = True
+        decisions.append({**d, "state": "stale" if stale else "confirmed"})
     new["decisions"] = decisions
     new["retired"] = retired
-    new["skips"] = old_state.get("skips", [])        # skips are reconciled, never silently dropped
+    new["skips"] = old_state.get("skips", [])
+    new["deferrals"] = old_state.get("deferrals", [])       # carried, never silently dropped (F4)
+    if "deploy" in old_state:
+        new["deploy"] = old_state["deploy"]
     return new

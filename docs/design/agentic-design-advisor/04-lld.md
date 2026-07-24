@@ -138,16 +138,17 @@ def any_async(s):  return any(e.get("transport") in ("async_task","event") for e
 
 def relevant(lens, s):
     """Proportionality: a lens is a report section only if the scenario has data for it.
-    All scenario flags live under s["answers"] (one canonical location — round-9 M1)."""
-    a = s["answers"]
+    All scenario flags live under s["answers"] (one canonical location — round-9 M1). Every
+    read DEFAULTS so a partially-elicited state (a mid-intake render) never crashes (advisor-F3)."""
+    a = s.get("answers", {})
+    side, auto = a.get("side_effects", "none"), a.get("autonomy", "assisted")
     return {
       "classify":      any_agent(s),                                 # right-size the components
       "boundary":      len(s["edges"]) > 0 and any_agent(s),         # inter-component contract + boundary
       "privilege":     any_agent(s),
-      "reliability":   any_async(s) or a["side_effects"] != "none"
-                       or a["autonomy"] in ("supervised","autonomous"),
+      "reliability":   any_async(s) or side != "none" or auto in ("supervised","autonomous"),
       "observability": any_agent(s),                                 # hard directive: any agentic system
-      "memory":        a.get("memory_hint", False),                  # canonical input: answers.memory_hint (no components[].memory field)
+      "memory":        a.get("memory_hint", False),                  # canonical input: answers.memory_hint
       "evals":         any_agent(s),
       "deploy":        a.get("greenfield") or a.get("changes_platform")           # M1: read from answers
                        or a.get("adds_durable_runtime") or a.get("deploy_requested", False),  # M6
@@ -157,29 +158,34 @@ def relevant(lens, s):
 # NOT #10 activation). Membership uses ONLY the safety factors it names (round-9 M2 — honest); Tier/stakes are
 # NOT inputs — they may inform a human-confirmed advisory depth NOTE (§4.1), never membership. #10 enforces.
 def recommended_floor(s):
-    a = s["answers"]
+    a = s.get("answers", {}); side, auto = a.get("side_effects", "none"), a.get("autonomy", "assisted")
     floor = set()
     if any_agent(s):
         floor |= {"classify", "privilege", "observability", "evals"}
     if len(s["edges"]) > 0 and any_agent(s):
         floor.add("boundary")
-    if a["side_effects"] == "irreversible":                                # recommend a human gate
+    if side == "irreversible":                                             # recommend a human gate
         floor.add("reliability")
-    if a["autonomy"] in ("supervised","autonomous") and a["side_effects"] != "none":  # recommend a kill-switch
+    if auto in ("supervised","autonomous") and side != "none":            # recommend a kill-switch
         floor.add("reliability")
     if any_async(s):                                                       # an async_task/event needs idempotency/DLQ design
         floor.add("reliability")                                          # → reliability IS floor-level advice (round-10 blocker 4)
     return floor
+# NOTE (advisor-F1): reliability can enter the floor WITHOUT boundary (a single irreversible agent, no edges).
+# So topo_order must only wait on deps that are IN the included set — a dep not included can never arrive.
 
 def topo_order(included, depends):
-    """Deterministic dependency order with a LENSES-index tie-break (round-12 B3 — published, not implied):
-    repeatedly emit the FIRST lens in LENSES order whose deps are all already emitted (Kahn, single-ready
-    choice). This exact rule — not a generic batching Kahn — reproduces the test-plan fixture order."""
+    """Deterministic dependency order with a LENSES-index tie-break: repeatedly emit the FIRST lens in LENSES
+    order whose IN-SET deps are already emitted (Kahn, single-ready choice). A dep NOT in `included` is not a
+    blocker (advisor-F1 — else reliability-without-boundary loops forever); a progress guard flushes any residue."""
     order, remaining = [], [l for l in LENSES if l in included]            # `remaining` preserves LENSES order
     while remaining:
+        progressed = False
         for l in remaining:
-            if all(d in order for d in depends.get(l, [])):                # every dep already emitted
-                order.append(l); remaining.remove(l); break
+            if all(d in order for d in depends.get(l, []) if d in included):   # only wait on IN-SET deps
+                order.append(l); remaining.remove(l); progressed = True; break
+        if not progressed:                                                 # unreachable now; guard against a future cycle
+            order.extend(remaining); break
     return order
 
 def compose(s):

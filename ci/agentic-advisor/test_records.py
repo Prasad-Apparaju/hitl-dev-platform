@@ -64,6 +64,76 @@ def test_rerun_reconcile_flags_stale_and_retires():
     assert rec["skips"] == STATE["skips"]                              # skips reconciled, never dropped
 
 
+def test_guard_catches_full_manifest_vocabulary():
+    # F2: the NO-AUTHOR guard covers ALL #10 manifest fields, not a 7-key denylist
+    for f in ("observability", "orchestration", "segments", "evals", "memory", "lifecycle",
+              "deep_agent", "kind_rationale", "authorization", "async", "facade_apis"):
+        h = R.generate_handoff(STATE)
+        h[f] = {"x": 1}
+        assert f in R.handoff_authors_no_manifest_field(h), f
+
+
+def test_skips_are_projected_not_verbatim():
+    # F2: an injected manifest field inside a skip does NOT reach the handoff (skip is projected)
+    s = copy.deepcopy(STATE)
+    s["skips"] = [{"control": "reliability", "owner": "pm", "reason": "r", "lifecycle": {"x": 1}, "evals": {"y": 2}}]
+    h = R.generate_handoff(s)
+    assert R.handoff_authors_no_manifest_field(h) == set()
+    assert set(h["skips"][0]) == {"control", "owner", "reason"}
+
+
+def test_ref_integrity():
+    # F2: HANDOFF-REF-INTEGRITY — unique ids, hint is a non-empty path string
+    h = R.generate_handoff(STATE)
+    assert R.handoff_ref_integrity(h) == []
+    dup = copy.deepcopy(h)
+    dup["recommendations"].append(dict(dup["recommendations"][0]))
+    assert R.handoff_ref_integrity(dup)
+    empty = copy.deepcopy(h)
+    empty["recommendations"][0]["target_path_hint"] = ""
+    assert R.handoff_ref_integrity(empty)
+
+
+def test_validate_skips_rejects_silent():
+    # F8 / FLOOR-SKIP-SILENT: a skip must record control+owner+reason
+    assert R.validate_skips({"skips": [{"control": "reliability"}]})
+    assert R.validate_skips({"skips": [{"control": "x", "owner": "o", "reason": "r"}]}) == []
+
+
+def test_reconcile_risk_answer_and_removed_edge():
+    # F4: a changed risk answer (via depends_on) flags stale; a removed EDGE retires its decision
+    old = dict(STATE)
+    old["decisions"] = [{"id": "d1", "attaches_to": "e1", "depends_on": ["answers.side_effects"], "chosen": "gate"}]
+    new = copy.deepcopy(STATE)
+    new["answers"]["side_effects"] = "reversible"
+    rec = R.reconcile(old, new)
+    assert any(d["id"] == "d1" and d["state"] == "stale" for d in rec["decisions"])
+    old2 = dict(STATE)
+    old2["decisions"] = [{"id": "d2", "attaches_to": "e1", "chosen": "x"}]
+    new2 = copy.deepcopy(STATE)
+    new2["edges"] = [e for e in new2["edges"] if e["id"] != "e1"]
+    rec2 = R.reconcile(old2, new2)
+    assert any(d["id"] == "d2" and d["state"] == "retired" for d in rec2["retired"])
+
+
+def test_reconcile_carries_deferrals_and_deploy():
+    # F4: deferrals + deploy are carried on rerun, not silently dropped
+    old = dict(STATE)
+    old["deferrals"] = [{"rung": "deploy", "reason": "later"}]
+    old["deploy"] = {"recommend": "managed"}
+    rec = R.reconcile(old, copy.deepcopy(STATE))
+    assert rec["deferrals"] == old["deferrals"] and rec["deploy"] == old["deploy"]
+
+
+def test_decision_record_renders_decisions():
+    # F5: the decision record shows chosen/rejected/rationale
+    s = copy.deepcopy(STATE)
+    s["decisions"] = [{"attaches_to": "resolver_agent", "chosen": "simple_agent",
+                       "rejected": ["deep_agent"], "rationale": "bounded task"}]
+    rec = R.generate_decision_record(s)
+    assert "Menu decisions" in rec and "simple_agent" in rec and "bounded task" in rec
+
+
 def test_skip_is_not_a_waiver():
     # the record uses "skip"; "waiver" is reserved for a human-authored #10 exception (ADV-12)
     rec = R.generate_decision_record(STATE)

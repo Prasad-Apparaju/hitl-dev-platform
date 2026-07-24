@@ -22,5 +22,5 @@ graph LR
   refund_service[refund_service · service]
   intake_agent -->|classify| account_service
   intake_agent -->|resolve| resolution_agent
-  resolution_agent -. async .->|refund| refund_service
+  resolution_agent -.->|refund| refund_service
 ```

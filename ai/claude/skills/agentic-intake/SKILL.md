@@ -27,8 +27,9 @@ are only reached on the compound branch. Elicit the **full** component/edge deta
 
 ## Procedure
 1. **Elicit** the scenario by walking `ai/shared/agentic/catalog.yaml` adaptively: for each entry whose
-   `ask_when` predicate holds against the scenario-so-far, ask its `question`, interpret the answer into an
-   `option` (or capture free-text), and apply the entry's `consequence`. Ask in plain language; you supply the
+   `ask_when` predicate holds against the scenario-so-far — evaluated by the small **safe** evaluator
+   `askwhen.evaluate(entry.ask_when, state)` (grammar only, no arbitrary code, §2.2) — ask its `question`,
+   interpret the answer into an `option` (or capture free-text), and apply the entry's `consequence`. Ask in plain language; you supply the
    questions and menus (the catalog), the human answers. Attribute each lens to its owning role.
    - For every component ask ONE question — *"is this an agent, a service, a datastore, an external system, or
      an output store?"* — so each has exactly one directly-elicited `role` (never derived).
@@ -43,9 +44,13 @@ are only reached on the compound branch. Elicit the **full** component/edge deta
    no Tier input, no computed depth), not a gate — #10 enforces on the human-authored manifest.
 4. **Render the evolving map** after each meaningful step: `render_map.render(state, composed)` →
    terminal + Mermaid (getting / available / not-needed with reasons). Re-print at each milestone.
-5. **Record + hand off**: generate the decision record and the neutral handoff with
-   `records.generate_decision_record` / `records.generate_handoff`. Verify the handoff authors no manifest
-   field (`records.handoff_authors_no_manifest_field(...) == set()`).
+5. **Validate + record + hand off**: before finalizing, run `compose.validate_scenario(state)` (no typo'd
+   `proposed_kind`/`transport`), `render_map.validate_roles(state)` (ROLE-TOTAL), and
+   `records.validate_skips(state)` (every skip records control+owner+reason — never silent). Generate the
+   decision record and neutral handoff with `records.generate_decision_record` / `records.generate_handoff`,
+   then **certify the boundary**: `records.handoff_authors_no_manifest_field(handoff) == set()` (no
+   manifest field, whole #10 vocabulary) and `records.handoff_ref_integrity(handoff) == []` (unique ids,
+   each hint a path string). If any check fails, fix the state — do not hand off.
 
 ## Floor, skips, and the boundary
 The **recommended floor** is the set of controls that shouldn't be skipped. A team may **skip** one, but you
