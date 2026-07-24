@@ -12,6 +12,8 @@ Waves land incrementally (05-implementation-plan.md §3). Implemented so far:
   wave 1  activation dispatch + additivity + waiver suppression + main
   wave 2  check_topology, check_references, check_classification, check_scope_grammar
   wave 3  check_capabilities, check_boundary_legs, check_authorization, check_policy_refs
+  wave 4  check_async, check_memory, check_lifecycle, check_deep_agent, check_saga,
+          check_compensation_gap (advisory)
 """
 from __future__ import annotations
 import os
@@ -421,6 +423,205 @@ def _has_policy_or_quant(m):
     return bool((m.get("observability") or {}).get("cost_budget"))
 
 
+def _declared_scopes(d):
+    s = set()
+    for u in d.get("uses") or []:
+        s |= set(use_scopes(u))
+    return s
+
+def _domain_side_effecting(m, name):
+    return any(i.get("from") == name and i.get("side_effecting") for i in interactions(m))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Wave 4 — reliability / state
+# ══════════════════════════════════════════════════════════════════════════════
+def check_async(m, reg, tier):
+    """§6.7: async-block reliability contract (delivery/idempotency/dlq/retry/timeout).
+    Presence-by-kind (async on sync_call, async_task w/o async) is check_topology."""
+    out = []
+    for i in interactions(m):
+        a = i.get("async")
+        if a is None:
+            continue
+        iid = i.get("id", "?")
+        to = a.get("timeout")
+        if not to or not DURATION_RE.match(str(to)):
+            out.append(block(iid, "async_timeout_missing", f"{iid}: async.timeout must be a positive duration"))
+        if a.get("delivery") == "at_least_once":
+            if not a.get("consumer_idempotent") or not a.get("idempotency_key"):
+                out.append(block(iid, "async_not_idempotent",
+                                 f"{iid}: at_least_once requires consumer_idempotent + idempotency_key"))
+            if not a.get("dlq") and not (a.get("dlq_justification") or "").strip():
+                out.append(block(iid, "async_dlq_missing", f"{iid}: at_least_once requires dlq (or a dlq_justification)"))
+        if a.get("retry") is not None and a.get("delivery") == "at_most_once":
+            out.append(block(iid, "async_retry_forbidden", f"{iid}: retry is forbidden with delivery at_most_once"))
+    return out
+
+
+def check_memory(m, reg, tier):
+    """§6.11: long_term completeness, store/shared resolution, PII, high-stakes
+    guardrail+provenance, and read/write ⇄ uses reconciliation (§3.1)."""
+    out = []
+    stores = (reg.get("stores") or {}).get("stores") or {}
+    for name, d in domains(m).items():
+        mem = d.get("memory")
+        if not mem:
+            continue
+        st = mem.get("short_term")
+        if st and st.get("strategy") not in (None, "none") and not st.get("budget_tokens"):
+            out.append(block(name, "memory_budget_missing", f"{name}: short_term needs budget_tokens unless strategy==none"))
+        lt = mem.get("long_term")
+        if not lt:
+            continue
+        for req in ("owner", "store", "durability", "retrieval", "scope", "pii"):
+            if lt.get(req) in (None, ""):
+                out.append(block(name, "memory_field_missing", f"{name}: long_term.{req} is required"))
+        if lt.get("pii") == "none" and not (lt.get("pii_justification") or "").strip():
+            out.append(block(name, "memory_pii_unjustified", f"{name}: long_term.pii 'none' needs pii_justification"))
+        store = lt.get("store")
+        if store and (stores.get(store) or {}).get("durability") != "durable":
+            out.append(block(name, "memory_store_unresolved", f"{name}: store '{store}' must resolve to a durable store"))
+        scope, ss = lt.get("scope"), lt.get("shared_store")
+        if scope == "shared":
+            if not ss:
+                out.append(block(name, "memory_shared_store_missing", f"{name}: scope 'shared' needs shared_store"))
+            elif not (stores.get(ss) or {}).get("shared"):
+                out.append(block(name, "memory_shared_store_invalid", f"{name}: shared_store '{ss}' must be shared:true"))
+        if scope == "isolated" and ss:
+            out.append(block(name, "memory_shared_on_isolated", f"{name}: shared_store set with scope 'isolated'"))
+        for w in lt.get("writes", []):
+            if w.get("high_stakes"):
+                if not lt.get("high_stakes_guardrail"):
+                    out.append(block(name, "memory_high_stakes_guardrail_missing", f"{name}: high_stakes write needs high_stakes_guardrail"))
+                if not (w.get("provenance") or "").strip():
+                    out.append(block(name, "memory_provenance_missing", f"{name}: high_stakes write needs provenance"))
+        declared = _declared_scopes(d)
+        for r in lt.get("reads", []):
+            if canon(f"read:{r.get('resource')}") not in declared:
+                out.append(block(name, "memory_use_unreconciled", f"{name}: memory read '{r.get('resource')}' has no matching uses scope"))
+        for w in lt.get("writes", []):
+            if canon(f"write:{w.get('resource')}") not in declared:
+                out.append(block(name, "memory_use_unreconciled", f"{name}: memory write '{w.get('resource')}' has no matching uses scope"))
+    return out
+
+
+def check_lifecycle(m, reg, tier):
+    """§6.10: long_running completeness, durable checkpoint store, resumable side-effect
+    key, human-gate pause."""
+    out = []
+    stores = (reg.get("stores") or {}).get("stores") or {}
+    for name, d in domains(m).items():
+        lc = d.get("lifecycle")
+        if not lc:
+            continue
+        if lc.get("long_running"):
+            if lc.get("resumable") is not True:
+                out.append(block(name, "lifecycle_not_resumable", f"{name}: long_running requires resumable:true"))
+            if lc.get("idempotent_resume") is not True:
+                out.append(block(name, "lifecycle_not_idempotent_resume", f"{name}: long_running requires idempotent_resume:true"))
+            if lc.get("checkpoint") == "none":
+                out.append(block(name, "lifecycle_checkpoint_none", f"{name}: long_running requires a checkpoint"))
+            if not lc.get("resume_cursor"):
+                out.append(block(name, "lifecycle_resume_cursor_missing", f"{name}: long_running requires resume_cursor"))
+            to = lc.get("timeout")
+            if not to or not DURATION_RE.match(str(to)):
+                out.append(block(name, "lifecycle_timeout_missing", f"{name}: long_running requires a positive timeout"))
+            if not lc.get("cancellation"):
+                out.append(block(name, "lifecycle_cancellation_missing", f"{name}: long_running requires cancellation"))
+        if lc.get("checkpoint") == "durable":
+            cs = lc.get("checkpoint_store")
+            if not cs or (stores.get(cs) or {}).get("durability") != "durable":
+                out.append(block(name, "lifecycle_checkpoint_store_invalid", f"{name}: checkpoint_store must resolve to a durable store"))
+        if lc.get("resumable") and _domain_side_effecting(m, name) and not lc.get("side_effect_key"):
+            out.append(block(name, "lifecycle_side_effect_key_missing", f"{name}: resumable + side-effecting needs side_effect_key"))
+        if lc.get("human_gate") and lc.get("human_gate_pause") is not True:
+            out.append(block(name, "lifecycle_human_gate_pause_missing", f"{name}: human_gate requires human_gate_pause:true"))
+    return out
+
+
+def check_deep_agent(m, reg, tier):
+    """§6.9: deep_agent structure completeness + references; block on non-deep kind."""
+    out = []
+    dset = set(domains(m))
+    for name, d in domains(m).items():
+        da = d.get("deep_agent")
+        if d.get("kind") == "deep_agent":
+            if not da:
+                out.append(block(name, "deep_agent_missing", f"{name}: kind deep_agent requires a deep_agent block"))
+                continue
+            lt = (d.get("memory") or {}).get("long_term")
+            if not lt:
+                out.append(block(name, "deep_agent_memory_missing", f"{name}: deep agent requires memory.long_term"))
+            elif lt.get("retrieval") not in ("filesystem", "semantic"):
+                out.append(block(name, "deep_agent_retrieval_invalid", f"{name}: deep agent memory retrieval must be filesystem|semantic"))
+            for f in ("planner", "subagents", "gates", "guardrails"):
+                if not da.get(f):
+                    out.append(block(name, "deep_agent_incomplete", f"{name}: deep_agent.{f} is required and non-empty"))
+            if da.get("context_isolation") is not True:
+                out.append(block(name, "deep_agent_context_isolation", f"{name}: deep_agent.context_isolation must be true"))
+            if da.get("planner") and da["planner"] not in dset:
+                out.append(block(name, "deep_agent_ref_unknown", f"{name}: planner '{da['planner']}' is not a declared domain"))
+            for sa in da.get("subagents", []):
+                if sa not in dset:
+                    out.append(block(name, "deep_agent_ref_unknown", f"{name}: subagent '{sa}' is not a declared domain"))
+        elif da is not None:
+            out.append(block(name, "deep_agent_on_non_deep", f"{name}: deep_agent block on a non-deep kind"))
+    return out
+
+
+def check_saga(m, reg, tier):
+    """§6.14: declared-saga well-formedness (steps side-effecting+declared,
+    compensation→action, idempotent, no overlap, sequential order)."""
+    out = []
+    pols = (reg.get("policies") or {}).get("policies") or {}
+    by_id = {i.get("id"): i for i in interactions(m)}
+    coverage = {}
+    for s in sagas(m):
+        sid = s.get("id", "?")
+        if s.get("order") != "sequential":
+            out.append(block(sid, "saga_order_invalid", f"saga '{sid}': core supports order 'sequential' only"))
+        for st in s.get("steps", []):
+            iid = st.get("interaction_id")
+            i = by_id.get(iid)
+            if not i:
+                out.append(block(sid, "saga_step_unknown", f"saga '{sid}' step '{iid}' is not a declared interaction"))
+            elif not i.get("side_effecting"):
+                out.append(block(sid, "saga_step_not_side_effecting", f"saga '{sid}' step '{iid}' is not side-effecting"))
+            comp = st.get("compensation")
+            p = pols.get(comp)
+            if not p or p.get("kind") != "action":
+                out.append(block(sid, "saga_compensation_invalid", f"saga '{sid}' compensation '{comp}' must resolve to an action policy"))
+            if st.get("compensation_idempotent") is not True:
+                out.append(block(sid, "saga_compensation_not_idempotent", f"saga '{sid}' step '{iid}' compensation must be idempotent"))
+            coverage.setdefault(iid, []).append(sid)
+    for iid, owners in coverage.items():
+        if len(owners) > 1:
+            out.append(block(owners[0], "saga_overlap", f"interaction '{iid}' is covered by multiple sagas {owners}"))
+    return out
+
+
+def check_compensation_gap(m, reg, tier):
+    """§6.16 ADVISORY (warning, never blocks): a declared segment with ≥2
+    side-effecting agent/async steps (or transactional) not covered by a saga."""
+    out = []
+    by_id = {i.get("id"): i for i in interactions(m)}
+    covered = {st.get("interaction_id") for s in sagas(m) for st in s.get("steps", [])}
+    for seg in segments(m):
+        se = []
+        for iid in seg.get("path", []):
+            i = by_id.get(iid)
+            if i and i.get("side_effecting") and (is_agent(m, i.get("from")) or is_agent(m, i.get("to"))
+                                                  or i.get("kind") in ("async_task", "event")):
+                se.append(iid)
+        uncovered = [iid for iid in se if iid not in covered]
+        if uncovered and (seg.get("transactional") or len(se) >= 2):
+            out.append(warn(seg.get("id", "?"), "compensation_gap",
+                            f"segment '{seg.get('id')}' has side-effecting steps {uncovered} with no covering saga — "
+                            f"handle rollback deliberately or declare a saga (§4.2, core does not enforce distributed compensation)"))
+    return out
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Cycle helper
 # ══════════════════════════════════════════════════════════════════════════════
@@ -466,6 +667,12 @@ DISPATCH = [
     ("check_boundary_legs",  check_boundary_legs,  _any_agent_endpoint, []),
     ("check_authorization",  check_authorization,  _to_agent_or_auth, []),
     ("check_policy_refs",    check_policy_refs,    _has_policy_or_quant, ["policies"]),
+    ("check_async",          check_async,          lambda m: any(i.get("kind") in ("async_task", "event") or i.get("async") for i in interactions(m)), []),
+    ("check_memory",         check_memory,         lambda m: any(d.get("memory") for d in domains(m).values()), ["stores"]),
+    ("check_lifecycle",      check_lifecycle,      lambda m: any(d.get("lifecycle") for d in domains(m).values()), ["stores"]),
+    ("check_deep_agent",     check_deep_agent,     lambda m: any(d.get("kind") == "deep_agent" or d.get("deep_agent") for d in domains(m).values()), []),
+    ("check_saga",           check_saga,           lambda m: bool(sagas(m)), ["policies"]),
+    ("check_compensation_gap", check_compensation_gap, lambda m: bool(segments(m)), []),
 ]
 
 

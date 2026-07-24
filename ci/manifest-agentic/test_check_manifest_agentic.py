@@ -23,6 +23,11 @@ def codes(manifest, tier=2, root=ROOT):
     return {b.code for b in standing}, activated
 
 
+def warncodes(manifest, tier=2, root=ROOT):
+    standing, warnings, waived, activated = C.run(manifest, root, tier)
+    return {b.code for b in warnings}
+
+
 def load(path):
     with open(path) as f:
         return yaml.safe_load(f)
@@ -238,6 +243,72 @@ def test_policy_ref_unresolved_kind_and_empty():
 def test_quantpolicy_limit_and_unit():
     assert "quantpolicy_limit" in mut(lambda m: _intr(m, "classify_to_lookup")["response"]["cost_bound"].__setitem__("limit", 0))
     assert "quantpolicy_unit" in mut(lambda m: m["observability"]["cost_budget"].__setitem__("unit", "bogus"))
+
+
+# ── wave 4: reliability / state, per-rule ─────────────────────────────────────
+def test_async_reliability():
+    assert "async_timeout_missing" in mut(lambda m: _intr(m, "propose_refund")["async"].pop("timeout"))
+    assert "async_not_idempotent" in mut(lambda m: _intr(m, "propose_refund")["async"].pop("consumer_idempotent"))
+    assert "async_dlq_missing" in mut(lambda m: _intr(m, "propose_refund")["async"].pop("dlq"))
+    assert "async_retry_forbidden" in mut(
+        lambda m: _intr(m, "propose_refund")["async"].update({"delivery": "at_most_once", "retry": {"max": 2, "backoff": "linear"}}))
+
+
+def test_memory_rules():
+    assert "memory_field_missing" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].pop("owner"))
+    assert "memory_pii_unjustified" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].__setitem__("pii", "none"))
+    assert "memory_store_unresolved" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].__setitem__("store", "ghost_store"))
+    assert "memory_use_unreconciled" in mut(
+        lambda m: _dom(m, "resolution_agent")["memory"]["long_term"]["reads"].append({"resource": "unlinked"}))
+
+
+def test_memory_high_stakes_needs_guardrail_and_provenance():
+    def f(m):
+        lt = _dom(m, "resolution_agent")["memory"]["long_term"]
+        lt["writes"] = [{"resource": "session", "high_stakes": True}]  # no guardrail, no provenance
+    cs = mut(f)
+    assert "memory_high_stakes_guardrail_missing" in cs and "memory_provenance_missing" in cs
+
+
+def test_memory_shared_store():
+    assert "memory_shared_store_missing" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].__setitem__("scope", "shared"))
+    def f(m):
+        lt = _dom(m, "resolution_agent")["memory"]["long_term"]
+        lt["scope"] = "shared"; lt["shared_store"] = "session_store"   # session_store is shared:false
+    assert "memory_shared_store_invalid" in mut(f)
+
+
+def test_lifecycle_rules():
+    cs = mut(lambda m: _dom(m, "refund_service").__setitem__("lifecycle", {"long_running": True, "checkpoint": "none"}))
+    assert "lifecycle_not_resumable" in cs
+    assert "lifecycle_checkpoint_none" in cs
+    # resumable + side-effecting (refund_service emits refund_executed_event) needs side_effect_key
+    cs2 = mut(lambda m: _dom(m, "refund_service").__setitem__("lifecycle", {"resumable": True}))
+    assert "lifecycle_side_effect_key_missing" in cs2
+    assert "lifecycle_human_gate_pause_missing" in mut(
+        lambda m: _dom(m, "refund_service").__setitem__("lifecycle", {"human_gate": True}))
+
+
+def test_deep_agent_rules():
+    assert "deep_agent_missing" in mut(lambda m: _dom(m, "resolution_agent").__setitem__("kind", "deep_agent"))
+    assert "deep_agent_on_non_deep" in mut(
+        lambda m: _dom(m, "account_service").__setitem__("deep_agent", {"planner": "x", "subagents": [], "gates": [], "guardrails": [], "context_isolation": True}))
+
+
+def test_saga_rules():
+    assert "saga_step_not_side_effecting" in mut(lambda m: _intr(m, "propose_refund").__setitem__("side_effecting", False))
+    assert "saga_compensation_not_idempotent" in mut(lambda m: m["sagas"][0]["steps"][0].__setitem__("compensation_idempotent", False))
+    assert "saga_compensation_invalid" in mut(lambda m: m["sagas"][0]["steps"][0].__setitem__("compensation", "refund:request_schema"))  # schema, not action
+    assert "saga_order_invalid" in mut(lambda m: m["sagas"][0].__setitem__("order", "parallel"))
+
+
+def test_compensation_gap_advisory_is_warning_not_block():
+    # remove the saga ⇒ the transactional refund_flow segment's side-effecting step is uncovered
+    def f(m):
+        m["sagas"] = []
+    m = copy.deepcopy(load(SHOWCASE)); f(m)
+    assert "compensation_gap" in warncodes(m)
+    assert "compensation_gap" not in codes(m)[0]   # advisory: never a blocker
 
 
 # ── wave 1: waiver suppression ────────────────────────────────────────────────
