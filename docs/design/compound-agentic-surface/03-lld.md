@@ -99,7 +99,7 @@ registry. This is what makes "additive-only; non-agentic manifests need no regis
 | `ci/manifest-agentic/test_check_manifest_agentic.py` | regression suite (§8) | #16 |
 | `tools/manifest-agentic/generate_views.py` | machine-readable + rendered posture/topology; also emits derived `interaction_matrix`/`depends_on`/`events_*` (§2.4, §9) | #15 |
 | `tools/manifest-agentic/gen_baseline_evals.py` | baseline eval generator (§7.4) | #16 |
-| `ai/claude/hooks/check-domain-boundary.sh` | extend to the static interaction-contract check (§6.4, honest scope in HLD §2/M11) | #16 |
+| ~~`ai/claude/hooks/check-domain-boundary.sh`~~ | **SUPERSEDED (impl):** the static interaction-contract check (§6.4) is `check_boundary_legs` + `check_authorization` in `ci/manifest-agentic/check_manifest_agentic.py`, invoked by the same CI entry as the other validators — no separate shell hook (round-fable F4 disposition) | #16 |
 
 Schema `version` bumps. **CR-9 observability fields ARE here now** — the top-level `observability`
 declaration (§4.3) + `check_observability` floor gate (§6.17), per the 2026-07-22 hard directive (HLD §10);

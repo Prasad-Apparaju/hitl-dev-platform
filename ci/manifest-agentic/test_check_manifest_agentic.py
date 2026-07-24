@@ -369,6 +369,100 @@ def test_eval_console_access_tier_scaled():
     assert "eval_console_access" not in mut(lambda m: m["observability"]["eval_console"].__setitem__("access", "report"), tier=1)
 
 
+# ── round-fable: fail-closed schema gate (F1/F2/F7) + F6 + per-rule gap fixtures ──
+def test_unknown_enum_does_not_silently_deactivate():
+    # F1: a typo'd kind must be a blocker, not a silent fallthrough to deterministic
+    assert "unknown_enum" in mut(lambda m: _dom(m, "intake_agent").__setitem__("kind", "agent"))
+    assert "unknown_enum" in mut(lambda m: _intr(m, "classify_to_lookup").__setitem__("kind", "sync"))
+    assert "unknown_enum" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("delivery", "exactly_once"))
+    assert "unknown_enum" in mut(lambda m: _intr(m, "lookup_to_resolve")["authorization"].__setitem__("credential_mode", "hardcoded"))
+    assert "unknown_enum" in mut(lambda m: m["orchestration"].__setitem__("pattern", "boss"))
+    assert "unknown_enum" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].__setitem__("scope", "sharedd"))
+    assert "unknown_enum" in mut(lambda m: m["observability"]["tracing"].__setitem__("convention", "otel"))
+    assert "unknown_enum" in mut(lambda m: m["observability"]["eval_console"].__setitem__("access", "dashboard"))
+
+
+def test_unknown_field_rejected():
+    # F2: an unknown field (typo'd key) is a blocker, not ignored
+    assert "unknown_field" in mut(lambda m: _dom(m, "intake_agent").__setitem__("kind_rational", "x"))
+    assert "unknown_field" in mut(lambda m: m.__setitem__("bogus_top_level", {}))
+    assert "unknown_field" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("delivry", True))
+
+
+def test_bad_duration_and_id():
+    assert "bad_duration" in mut(lambda m: _intr(m, "propose_refund")["async"].__setitem__("timeout", "0s"))  # F7
+    assert "bad_id" in mut(lambda m: m["domains"].__setitem__("Bad Name", {"purpose": "p", "kind": "deterministic"}))
+
+
+def test_unknown_enum_is_non_waivable():
+    m = copy.deepcopy(load(SHOWCASE))
+    m["domains"]["intake_agent"]["kind"] = "agent"
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "ci/manifest-agentic"))
+        with open(os.path.join(d, "ci/manifest-agentic/manifest-waivers.yaml"), "w") as f:
+            yaml.safe_dump({"schema_version": "1.0", "waivers": [
+                {"code": "unknown_enum", "locus": "intake_agent", "owner": "t", "reason": "r",
+                 "tier_limit": 3, "revisit": "2099-01-01"}]}, f)
+        assert "unknown_enum" in {b.code for b in C.run(m, d, 2)[0]}  # cannot be waived
+
+
+def test_malformed_waiver_fails_closed_no_crash():
+    """F3: a matching but malformed waiver row must NOT crash and must NOT suppress."""
+    m = copy.deepcopy(load(SHOWCASE))
+    m["domains"]["intake_agent"].pop("kind_rationale")   # emits kind_rationale_missing @ intake_agent
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "ci/manifest-agentic"))
+        with open(os.path.join(d, "ci/manifest-agentic/manifest-waivers.yaml"), "w") as f:
+            yaml.safe_dump({"schema_version": "1.0", "waivers": [
+                {"code": "kind_rationale_missing", "locus": "intake_agent", "owner": "o", "reason": "r"}]}, f)  # no tier_limit/revisit
+        standing = {b.code for b in C.run(m, d, 2)[0]}   # must not raise
+        assert "kind_rationale_missing" in standing        # not suppressed by the malformed row
+        assert "schema_invalid" in standing                # the malformed waiver is itself reported
+
+
+def test_crashing_check_fails_closed():
+    """F3: if a check raises, run() records a fail-closed blocker instead of a traceback."""
+    boom = ("check_boom", lambda *a: (_ for _ in ()).throw(RuntimeError("boom")), lambda m: True, [])
+    C.DISPATCH.append(boom)
+    try:
+        standing = {b.code for b in C.run(copy.deepcopy(load(SHOWCASE)), ROOT, 2)[0]}
+        assert "schema_invalid" in standing
+    finally:
+        C.DISPATCH.remove(boom)
+
+
+def test_service_ref_must_resolve():
+    # F6: service:<arbitrary> no longer passes the floor gate
+    assert "eval_console_ref_unresolved" in mut(lambda m: m["observability"]["eval_console"].__setitem__("ref", "service:tbd"))
+
+
+def test_perrule_gap_fixtures():
+    # rules the reviewer flagged as lacking a dedicated fail fixture
+    assert "event_ref_unresolved" in mut(lambda m: _intr(m, "refund_executed_event").__setitem__("facade", "account_service:evt"))  # producer != from
+    assert "memory_budget_missing" in mut(lambda m: _dom(m, "resolution_agent")["memory"].__setitem__("short_term", {"strategy": "summarize"}))
+    assert "memory_shared_on_isolated" in mut(lambda m: _dom(m, "resolution_agent")["memory"]["long_term"].__setitem__("shared_store", "audit_log"))
+    assert "saga_step_unknown" in mut(lambda m: m["sagas"][0]["steps"][0].__setitem__("interaction_id", "ghost"))
+    assert "eval_console_missing" in mut(lambda m: m["observability"].pop("eval_console"))
+    assert "observability_convention" in mut(lambda m: m["observability"]["tracing"].__setitem__("convention", "bogus"))  # also unknown_enum
+    # lifecycle sub-rules
+    assert "lifecycle_not_idempotent_resume" in mut(
+        lambda m: _dom(m, "refund_service").__setitem__("lifecycle", {"long_running": True, "resumable": True, "checkpoint": "durable", "checkpoint_store": "audit_log", "resume_cursor": "c", "timeout": "1h", "cancellation": "hard", "side_effect_key": "k"}))
+    # deep_agent sub-rules
+    def deep(m):
+        d = _dom(m, "resolution_agent")
+        d["kind"] = "deep_agent"
+        d["deep_agent"] = {"planner": "ghost", "subagents": ["intake_agent"], "gates": [], "guardrails": [], "context_isolation": True}
+    assert "deep_agent_incomplete" in mut(deep)
+
+
+def test_saga_overlap():
+    def f(m):
+        m["sagas"].append({"id": "dup_saga", "coordinator": "resolution_agent", "order": "sequential",
+                           "steps": [{"interaction_id": "propose_refund", "compensation": "refund:reversal",
+                                      "compensation_idempotent": True, "on_compensation_failure": "halt"}]})
+    assert "saga_overlap" in mut(f)
+
+
 # ── wave 1: waiver suppression ────────────────────────────────────────────────
 def test_waiver_suppresses_matching_blocker():
     m = _base_compound()
@@ -382,9 +476,13 @@ def test_waiver_suppresses_matching_blocker():
         standing, _, waived, _ = C.run(m, d, 2)
         assert "kind_rationale_missing" not in {b.code for b in standing}
         assert "kind_rationale_missing" in {b.code for b in waived}
-        # tier above the limit does NOT suppress
-        standing2, _, _, _ = C.run(m, d, 2)
-        assert True
+        # tier ABOVE the limit does NOT suppress
+        with open(os.path.join(d, "ci/manifest-agentic/manifest-waivers.yaml"), "w") as f:
+            yaml.safe_dump({"schema_version": "1.0", "waivers": [
+                {"code": "kind_rationale_missing", "locus": "ag", "owner": "team",
+                 "reason": "tracked", "tier_limit": 1, "revisit": "2099-01-01"}]}, f)
+        standing2, _, _, _ = C.run(m, d, 2)   # tier 2 > tier_limit 1
+        assert "kind_rationale_missing" in {b.code for b in standing2}
         # lapsed revisit does NOT suppress
         with open(os.path.join(d, "ci/manifest-agentic/manifest-waivers.yaml"), "w") as f:
             yaml.safe_dump({"schema_version": "1.0", "waivers": [

@@ -14,6 +14,10 @@ Waves land incrementally (05-implementation-plan.md §3). Implemented so far:
   wave 3  check_capabilities, check_boundary_legs, check_authorization, check_policy_refs
   wave 4  check_async, check_memory, check_lifecycle, check_deep_agent, check_saga,
           check_compensation_gap (advisory)
+  wave 5  check_eval_coverage, check_observability (floor gate)
+  round-fable  check_schema (unknown enum/field, id grammar, positive duration — runs
+          FIRST so a typo can't deactivate a check); waiver + crash fail-closed hardening;
+          service-ref resolution. 17 checks total.
 """
 from __future__ import annotations
 import os
@@ -28,9 +32,65 @@ def warn(locus, code, message):    return Blocker(locus, code, message, "warning
 # ── grammars (§0) ────────────────────────────────────────────────────────────
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")                 # interaction_id / domain_name
 SCOPE_RE = re.compile(r"^[a-z][a-z0-9_]*:(?:\*|[a-z0-9_][a-z0-9_.*/-]*)$")  # "op:resource" | "op:*"
-DURATION_RE = re.compile(r"^[0-9]+(?:ms|s|m|h|d)$")
+DURATION_RE = re.compile(r"^(?:0*[1-9][0-9]*)(?:ms|s|m|h|d)$")   # positive only (0s rejected — round-fable F7)
 AGENT_KINDS = {"simple_agent", "deep_agent"}
-NON_WAIVABLE = {"unparseable", "unknown_field", "schema_invalid"}
+NON_WAIVABLE = {"unparseable", "unknown_field", "unknown_enum", "schema_invalid"}
+
+# Load-bearing enums (round-fable F1) — an unknown value is a fail-CLOSED blocker, not a
+# silent fallthrough (the LLD §0/§6 "never by presence alone" promise). Keyed by (structure, field).
+ENUMS = {
+    ("domain", "kind"): {"deterministic", "simple_agent", "deep_agent"},
+    ("interaction", "kind"): {"sync_call", "async_task", "event"},
+    ("async", "delivery"): {"at_most_once", "at_least_once"},
+    ("async", "replay"): {"none", "event_sourced"},
+    ("authorization", "credential_mode"): {"jit", "static", "none"},
+    ("orchestration", "pattern"): {"supervisor", "hierarchical", "swarm", "blackboard", "sequential", "hybrid"},
+    ("short_term", "strategy"): {"none", "summarize", "compress", "isolate"},
+    ("long_term", "durability"): {"durable"},
+    ("long_term", "retrieval"): {"semantic", "episodic", "keyed", "filesystem"},
+    ("long_term", "scope"): {"isolated", "shared"},
+    ("long_term", "pii"): {"none", "redact", "block"},
+    ("lifecycle", "checkpoint"): {"none", "durable"},
+    ("lifecycle", "cancellation"): {"cooperative", "hard"},
+    ("saga", "order"): {"sequential"},
+    ("saga_step", "on_compensation_failure"): {"halt", "escalate"},
+    ("tracing", "convention"): {"otel_genai", "openinference"},
+    ("eval_console", "access"): {"report", "existing_surface", "console"},
+    ("quantpolicy", "unit"): {"tokens", "calls", "fanout"},
+}
+# Allowed keys per structure (round-fable F2 — unknown field is fail-CLOSED, not ignored).
+ALLOWED_KEYS = {
+    "manifest": {"version", "generated_at", "generator", "domains", "cross_cutting",
+                 "interaction_matrix", "interactions", "orchestration", "segments", "sagas", "observability"},
+    "domain": {"purpose", "files", "lld", "tests", "boundary_entities", "facade_apis", "events_emitted",
+               "events_consumed", "depends_on", "conventions", "last_changed", "kind", "kind_rationale",
+               "owning_fr", "identity", "uses", "memory", "lifecycle", "deep_agent", "evals"},
+    "identity": {"principal", "privilege"},
+    "use": {"capability", "operations", "resources"},
+    "interaction": {"id", "from", "to", "kind", "facade", "description", "entity_crossing",
+                    "request", "response", "authorization", "async", "side_effecting", "evals"},
+    "leg": {"validation", "cost_bound", "authority_bound"},
+    "async": {"delivery", "consumer_idempotent", "idempotency_key", "timeout", "retry", "dlq",
+              "dlq_justification", "replay"},
+    "authorization": {"allowed_callers", "audience", "credential_mode", "credential_justification"},
+    "memory": {"short_term", "long_term"},
+    "short_term": {"strategy", "budget_tokens"},
+    "long_term": {"store", "durability", "owner", "retrieval", "scope", "shared_store", "pii",
+                  "pii_justification", "reads", "writes", "high_stakes_guardrail"},
+    "memory_access": {"resource", "high_stakes", "provenance", "staleness"},
+    "lifecycle": {"long_running", "checkpoint", "checkpoint_store", "resume_cursor", "resumable",
+                  "idempotent_resume", "side_effect_key", "human_gate", "human_gate_pause", "timeout", "cancellation"},
+    "deep_agent": {"planner", "subagents", "context_isolation", "gates", "guardrails"},
+    "orchestration": {"pattern", "justification", "coordinator", "cycle_bound"},
+    "segment": {"id", "path", "e2e", "transactional", "evals"},
+    "saga": {"id", "coordinator", "order", "steps"},
+    "saga_step": {"interaction_id", "compensation", "compensation_idempotent", "on_compensation_failure"},
+    "observability": {"tracing", "cost_budget", "eval_console"},
+    "tracing": {"convention", "hops", "attributes"},
+    "eval_console": {"access", "owner", "ref"},
+    "quantpolicy": {"limit", "unit"},
+    "evals": {"spec"},
+}
 
 REGISTRY_DIR = "docs/03-engineering"
 
@@ -85,6 +145,111 @@ class Registries:
             data = None
         self._cache[name] = data
         return data
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# check_schema — the FAIL-CLOSED gate (round-fable F1/F2/F7). Runs first, before any
+# activation, so a typo'd enum/field cannot silently switch a governance check off.
+# ══════════════════════════════════════════════════════════════════════════════
+def check_schema(m, reg, tier):
+    out = []
+    def enum(struct, field, val, locus):
+        if val is not None and val not in ENUMS[(struct, field)]:
+            out.append(block(locus, "unknown_enum",
+                             f"{locus}: {struct}.{field} '{val}' is not valid {sorted(ENUMS[(struct, field)])}"))
+    def keys(struct, d, locus):
+        if isinstance(d, dict):
+            for k in d:
+                if k not in ALLOWED_KEYS[struct]:
+                    out.append(block(locus, "unknown_field", f"{locus}: unknown field '{k}' in {struct}"))
+    def dur(val, locus, field):
+        if val is not None and not DURATION_RE.match(str(val)):
+            out.append(block(locus, "bad_duration", f"{locus}: {field} '{val}' must be a positive duration (e.g. 30s)"))
+    def ident(x, locus, what):
+        if x is not None and not ID_RE.match(str(x)):
+            out.append(block(locus, "bad_id", f"{locus}: {what} '{x}' is not a valid id"))
+
+    keys("manifest", m, "system:manifest")
+    for name, d in domains(m).items():
+        ident(name, name, "domain name")
+        keys("domain", d, name)
+        enum("domain", "kind", d.get("kind"), name)
+        keys("identity", d.get("identity"), name)
+        for u in d.get("uses") or []:
+            keys("use", u, name)
+        mem = d.get("memory") or {}
+        keys("memory", mem, name)
+        st = mem.get("short_term")
+        if st:
+            keys("short_term", st, name)
+            enum("short_term", "strategy", st.get("strategy"), name)
+        lt = mem.get("long_term")
+        if lt:
+            keys("long_term", lt, name)
+            for f in ("durability", "retrieval", "scope", "pii"):
+                enum("long_term", f, lt.get(f), name)
+            for acc in (lt.get("reads") or []) + (lt.get("writes") or []):
+                keys("memory_access", acc, name)
+        lc = d.get("lifecycle")
+        if lc:
+            keys("lifecycle", lc, name)
+            enum("lifecycle", "checkpoint", lc.get("checkpoint"), name)
+            enum("lifecycle", "cancellation", lc.get("cancellation"), name)
+            dur(lc.get("timeout"), name, "lifecycle.timeout")
+        if d.get("deep_agent"):
+            keys("deep_agent", d["deep_agent"], name)
+        keys("evals", d.get("evals"), name)
+    for i in interactions(m):
+        iid = i.get("id", "?")
+        ident(iid, iid, "interaction id")
+        keys("interaction", i, iid)
+        enum("interaction", "kind", i.get("kind"), iid)
+        for leg in ("request", "response"):
+            keys("leg", i.get(leg), iid)
+            keys("quantpolicy", (i.get(leg) or {}).get("cost_bound"), iid)
+        a = i.get("async")
+        if a:
+            keys("async", a, iid)
+            enum("async", "delivery", a.get("delivery"), iid)
+            enum("async", "replay", a.get("replay"), iid)
+            dur(a.get("timeout"), iid, "async.timeout")
+        au = i.get("authorization")
+        if au:
+            keys("authorization", au, iid)
+            enum("authorization", "credential_mode", au.get("credential_mode"), iid)
+        keys("evals", i.get("evals"), iid)
+    orch = m.get("orchestration")
+    if orch:
+        keys("orchestration", orch, "system:orchestration")
+        enum("orchestration", "pattern", orch.get("pattern"), "system:orchestration")
+    for s in segments(m):
+        keys("segment", s, s.get("id", "?"))
+    for s in sagas(m):
+        keys("saga", s, s.get("id", "?"))
+        enum("saga", "order", s.get("order"), s.get("id", "?"))
+        for st in s.get("steps") or []:
+            keys("saga_step", st, s.get("id", "?"))
+            enum("saga_step", "on_compensation_failure", st.get("on_compensation_failure"), s.get("id", "?"))
+    ob = m.get("observability")
+    if ob:
+        keys("observability", ob, "system:observability")
+        tr = ob.get("tracing")
+        if tr:
+            keys("tracing", tr, "system:observability")
+            enum("tracing", "convention", tr.get("convention"), "system:observability")
+        ec = ob.get("eval_console")
+        if ec:
+            keys("eval_console", ec, "system:observability")
+            enum("eval_console", "access", ec.get("access"), "system:observability")
+        keys("quantpolicy", ob.get("cost_budget"), "system:observability")
+    return out
+
+
+def _has_compound(m):
+    if any(m.get(k) for k in ("interactions", "orchestration", "segments", "sagas", "observability")):
+        return True
+    compound = ("kind", "kind_rationale", "owning_fr", "identity", "uses", "memory", "lifecycle", "deep_agent", "evals")
+    return any(any(f in d for f in compound) for d in domains(m).values())
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -644,9 +809,12 @@ def _eval_projection(m):
 
 def _eval_waived(t, i, waivers, tier, today):
     for w in waivers:
-        if w.get("target_type") == t and w.get("target_id") == i \
-           and tier <= int(w.get("tier_limit", -1)) and _date(w["revisit"]) >= today:
-            return True
+        try:
+            if w.get("target_type") == t and w.get("target_id") == i \
+               and tier <= int(w.get("tier_limit", -1)) and _date(w["revisit"]) >= today:
+                return True
+        except (KeyError, ValueError, TypeError):
+            continue  # malformed eval-waiver row never suppresses (fail closed)
     return False
 
 
@@ -701,7 +869,7 @@ def _access_ok(access, tier):
         return access in ("report", "existing_surface", "console")
     return access == "console"
 
-def _resolves(ref, m, root):
+def _resolves(ref, m, reg):
     if not ref or ":" not in str(ref):
         return False
     kind, val = str(ref).split(":", 1)
@@ -712,10 +880,12 @@ def _resolves(ref, m, root):
             return False
         d, api = val.split(":", 1)
         return d in domains(m) and api in ((domains(m).get(d) or {}).get("facade_apis") or {})
-    if kind == "service":
-        return bool(val.strip())            # an approved-service registry id (registry check out of core here)
+    if kind == "service":                    # must resolve to a declared class:service capability (round-fable F6)
+        regfile = reg.get("capabilities")
+        services = {n for n, c in ((regfile or {}).get("capabilities") or {}).items() if c.get("class") == "service"}
+        return val.strip() in services
     if kind == "artifact":
-        return os.path.exists(os.path.join(root, val))
+        return os.path.exists(os.path.join(reg.root, val))
     return False
 
 
@@ -753,7 +923,7 @@ def check_observability(m, reg, tier):
     if not _access_ok(ec.get("access"), tier):
         out.append(block("system:observability", "eval_console_access",
                          f"Tier {tier} requires eval_console.access 'console' (got '{ec.get('access')}')"))
-    if not _resolves(ec.get("ref"), m, reg.root):
+    if not _resolves(ec.get("ref"), m, reg):
         out.append(block("system:observability", "eval_console_ref_unresolved",
                          f"eval_console.ref '{ec.get('ref')}' does not resolve (domain:/facade:/service:/artifact:)"))
     return out
@@ -805,6 +975,7 @@ def _to_agent_or_auth(m):
 
 DISPATCH = [
     # (name, fn, predicate, [registries])
+    ("check_schema",         check_schema,         _has_compound, []),
     ("check_topology",       check_topology,       lambda m: _has_typed_interactions(m) or m.get("orchestration") or segments(m), []),
     ("check_references",     check_references,     _has_typed_interactions, []),
     ("check_classification", check_classification, _compound_with_agent, []),
@@ -843,19 +1014,22 @@ def load_waivers(root):
             if key in seen:
                 errs.append(block("system:waivers", "schema_invalid", f"duplicate waiver {key}"))
             seen.add(key)
-        return rows, errs
+        # any schema error ⇒ distrust the whole file: NO row suppresses (fail closed, round-fable F3)
+        return ([] if errs else rows), errs
     except Exception as e:  # noqa: BLE001 — malformed waiver file fails closed
         return None, [block("system:waivers", "schema_invalid", f"manifest-waivers.yaml invalid: {e}")]
 
 
 def _waived(b, waivers, tier, today):
-    import datetime
     if b.code in NON_WAIVABLE or b.locus.startswith(("system:", "registry:")):
         return False
     for w in waivers:
-        if w.get("code") == b.code and w.get("locus") == b.locus \
-           and tier <= int(w["tier_limit"]) and _date(w["revisit"]) >= today:
-            return True
+        try:
+            if w.get("code") == b.code and w.get("locus") == b.locus \
+               and tier <= int(w["tier_limit"]) and _date(w["revisit"]) >= today:
+                return True
+        except (KeyError, ValueError, TypeError):
+            continue  # a malformed row never suppresses (fail closed)
     return False
 
 
@@ -873,11 +1047,14 @@ def run(manifest, root, tier):
     reg = Registries(root)
     activated, produced = [], []
     for name, fn, pred, needs in DISPATCH:
-        if pred(manifest):
-            activated.append(name)
-            for rname in needs:
-                reg.get(rname)
-            produced.extend(fn(manifest, reg, tier))
+        try:
+            if pred(manifest):
+                activated.append(name)
+                for rname in needs:
+                    reg.get(rname)
+                produced.extend(fn(manifest, reg, tier))
+        except Exception as e:  # noqa: BLE001 — a crashing check FAILS CLOSED (round-fable F3)
+            produced.append(block(f"system:{name}", "schema_invalid", f"{name} raised {type(e).__name__}: {e}"))
     produced.extend(reg.errors)
 
     waivers, werrs = load_waivers(root)

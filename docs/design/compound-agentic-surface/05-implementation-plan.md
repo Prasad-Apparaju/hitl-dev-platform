@@ -117,6 +117,31 @@ into the Advisor is #37/#35's, not here — #10 validates a human-authored manif
 Two-stage Codex validation (source repo, then built plugin via `tools/scripts/make-release.sh`) → report to hitl-internal
 (#19, blocks release). Then CHANGELOG 2.2.0 + build + publish on `release/2.x` (#20). #20 is blocked by #19.
 
+## 7.5 Round-fable adversarial review — dispositions (2026-07-23)
+
+A cold Fable subagent reviewed the implementation by execution and returned REVISIONS REQUIRED. Dispositions:
+
+- **F1 (CRITICAL, fixed):** an unknown `kind`/enum silently fell through and deactivated governance checks
+  (fail-*open*). Added **`check_schema`** — a fail-closed gate that runs first (on any compound content) and
+  blocks `unknown_enum` for every load-bearing enum. A typo'd `kind: agent` now blocks, not passes.
+- **F2 (fixed):** `unknown_field` was advertised but unimplemented. `check_schema` now rejects unknown keys in
+  every known structure. Both `unknown_enum`/`unknown_field` are non-waivable.
+- **F3 (fixed):** a matching-but-malformed waiver row crashed (exit 1). Now the whole waiver file is distrusted
+  on any schema error (no row suppresses), `_waived`/`_eval_waived` are exception-guarded, and a crashing check
+  is caught in `run()` as a fail-closed `schema_invalid` blocker.
+- **F4 (fixed):** `gen_baseline_evals.py` (CR-20) and an observability posture view now ship; the
+  `check-domain-boundary.sh` extension is **superseded** by the Python validators (§1, documented).
+- **F5 (fixed):** the dead `assert True` waiver case is now a real tier/lapse assertion; per-rule fixtures added
+  for the schema gate and the previously-thin rules (event ref, memory/lifecycle/deep-agent/saga sub-rules,
+  observability convention/console). Suite: 43 → 52.
+- **F6 (fixed):** `eval_console.ref: service:<x>` now must resolve to a declared `class: service` capability —
+  no more evidence-theater bare strings.
+- **F7 (accepted deviations, documented):** memory↔uses reconciliation is exact-scope (stricter than the LLD's
+  `memory:<store>` capability route — no false negatives, but skips the memory ceiling); the §6.0 registry
+  column lists advisory maxima (code loads only what it resolves); `facade_ref` is colon-form in code/showcase;
+  `event_projection_mismatch` is covered by the generator's regenerate-and-diff rather than a standalone check;
+  no CI workflow invokes the tools yet (repo convention — invocation lives in the workflow docs).
+
 ## 8. Definition of done (2.2.0)
 
 Every `CR-n` met by the mechanism HLD §13.2 names (validator / generator / workflow-doc); every `ci/`

@@ -19,7 +19,9 @@ needs no new registry (proven by test, not asserted).
   `uses`/`memory`/`lifecycle`/`deep_agent`/`evals`. `interaction_matrix`/`depends_on`/`events_*` become
   generated projections when `interactions` is present.
 - **17 fail-closed validators** (`ci/manifest-agentic/check_manifest_agentic.py`), each activating only on its
-  own data: graph integrity (topology, references, classification, scope grammar); trust + privilege
+  own data. A **schema gate** runs first — an unknown enum value or unknown field is a non-waivable blocker, so
+  a typo can never silently switch a governance check off (fail-*closed*, not fail-open). Then: graph integrity
+  (topology, references, classification, scope grammar); trust + privilege
   (per-leg determinism boundary, necessary-and-sufficient capability check with over/under/ceiling,
   non-human authorization, policy resolution); reliability + state (async idempotency/DLQ, memory ⇄ uses
   reconciliation, durable lifecycle, deep-agent structure, declared-saga well-formedness, a
@@ -28,8 +30,11 @@ needs no new registry (proven by test, not asserted).
   a silent skip; `unparseable`/`unknown_field`/`schema_invalid` and `system:`/`registry:` loci are
   non-waivable.
 - **Generated posture views** (`tools/manifest-agentic/generate_views.py`): topology (Mermaid), privilege,
-  tool matrix, projections, and the eval index — deterministic, with a `--check` regenerate-and-diff so a
-  view can never drift from the manifest.
+  tool matrix, observability, projections, and the eval index — deterministic, with a `--check`
+  regenerate-and-diff so a view can never drift from the manifest.
+- **Baseline eval generator** (`tools/manifest-agentic/gen_baseline_evals.py`, CR-20): seeds a `baseline_only`
+  eval spec per agent + e2e segment (from `owning_fr`, facade failure modes, privilege boundary), merge-by-id
+  preserving human-edited cases — HITL seeds, humans approve.
 - **Design-flow integration:** `pm-design-feature` and `ai/codex/AGENTS.md` gain the gate→probe→route rule
   (agentic surface → topology probe → the compound track) and the compound-agentic authoring checklist.
 - **Docs + worked example:** `docs/patterns/compound-agentic-systems.md` and a validator-clean reference
