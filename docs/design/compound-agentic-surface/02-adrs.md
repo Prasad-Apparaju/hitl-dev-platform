@@ -6,7 +6,7 @@
 > the **core scope lock** ([`../agentic-core-scope.md`](../agentic-core-scope.md)), which **amends ADR-11**
 > (saga → declared-only + advisory) and **ADR-12** (eval → agent+e2e core, universal coverage deferred);
 > see [`04-revision-plan.md`](04-revision-plan.md).
-> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted, v3.3 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; architecture converged); CLEARED TO IMPLEMENT. #10 ships first as 2.2.0.**
+> EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10). Status: **accepted, v3.3 — IMPLEMENTED + Codex-APPROVED (impl review round 4, 2026-07-24, `c4f112f`). CLEARED TO RELEASE 2.2.0.**
 
 ---
 

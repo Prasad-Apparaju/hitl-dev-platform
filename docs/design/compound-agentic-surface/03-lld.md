@@ -5,7 +5,7 @@
 > Implements HLD [`01-design.md`](01-design.md) + ADRs [`02-adrs.md`](02-adrs.md), per the Codex
 > response [`04-revision-plan.md`](04-revision-plan.md) and the core scope lock
 > [`../agentic-core-scope.md`](../agentic-core-scope.md). EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
-> Status: **v3.3 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; architecture converged); CLEARED TO IMPLEMENT. #10 ships first as 2.2.0.** A developer/agent
+> Status: **v3.3 — IMPLEMENTED + Codex-APPROVED (impl review round 4, 2026-07-24, `c4f112f`). CLEARED TO RELEASE 2.2.0.** A developer/agent
 > implements from this without a further design decision.
 >
 > **v3.2 changelog (round-4 core scope lock).** **M1/O6 (eval):** the round-3 broadening of coverage to

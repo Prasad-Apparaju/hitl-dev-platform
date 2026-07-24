@@ -1,7 +1,7 @@
 # Compound Agentic System Surface: Requirements
 
 > **What** the surface must do, for **EPIC [#10](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10)**
-> (compound agentic system delivery surface). Status: **v3.3 — DESIGN REVIEW CONCLUDED 2026-07-23 (Codex rounds 1–12; architecture converged); CLEARED TO IMPLEMENT**. Ships as
+> (compound agentic system delivery surface). Status: **v3.3 — IMPLEMENTED + Codex-APPROVED (impl review round 4, 2026-07-24); CLEARED TO RELEASE**. Ships as
 > **2.2.0** on the 2.x line (1.x is feature-frozen). Sub-issues:
 > [#11–#20](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/10).
 >
