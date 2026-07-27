@@ -1,6 +1,6 @@
 # First Pass — High-Level Design (the HOW)
 
-> Status: **draft, v1 (2026-07-27)** — HLD for **FR-29** (requirements: [`../../01-product/first-pass/requirements.md`](../../01-product/first-pass/requirements.md)).
+> Status: **IMPLEMENTED (Phases A–I), v1 (2026-07-27)** — HLD for **FR-29** (requirements: [`../../01-product/first-pass/requirements.md`](../../01-product/first-pass/requirements.md)). Code under `ci/first-pass/` + `ai/shared/first-pass/`; hardened across **4 clean-context adversarial rounds (converged)**. On branch `feat/first-pass`, not yet released.
 > First Pass is a **mode overlay** on the existing workflow model, not a new workflow. It ships as
 > document/schema/skill assets (governs-not-runtime). Design decisions are in [`02-adrs.md`](02-adrs.md);
 > concrete schemas + tables in [`03-lld.md`](03-lld.md).

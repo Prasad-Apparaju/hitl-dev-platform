@@ -1,6 +1,6 @@
 # First Pass — Architecture Decision Records
 
-> Status: **accepted (draft), v1 (2026-07-27)** — decisions for FR-29. HLD: [`01-design.md`](01-design.md);
+> Status: **accepted + IMPLEMENTED, v1 (2026-07-27)** — decisions for FR-29 (all realized in code; 4 adversarial rounds converged). HLD: [`01-design.md`](01-design.md);
 > LLD: [`03-lld.md`](03-lld.md); requirements: [`../../01-product/first-pass/requirements.md`](../../01-product/first-pass/requirements.md).
 
 ---

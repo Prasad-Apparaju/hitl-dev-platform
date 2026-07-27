@@ -1,6 +1,6 @@
 # First Pass (FR-29) — Implementation Plan
 
-> Status: **draft, v1 (2026-07-27)** — the *how-to-build* roadmap for the design-drafted First Pass (HLD
+> Status: **BUILT (Phases A–I complete), v1 (2026-07-27)** — all phases implemented on `feat/first-pass`; 4 clean-context adversarial rounds converged (r1 2 CRITICAL → r4 clean); 51 first-pass tests, breadcrumb 271, derive verify OK. Remaining: Codex validation + 2.x release. The *how-to-build* roadmap for First Pass (HLD
 > [`01-design.md`](01-design.md), ADRs [`02-adrs.md`](02-adrs.md), LLD [`03-lld.md`](03-lld.md), test-plan
 > [`04-test-plan.md`](04-test-plan.md)). No new design decisions — every artifact traces to an LLD §.
 > Targets the 2.x line, after #22 metrics or interleaved (version TBD).
@@ -50,14 +50,28 @@ a ledger anyone trusts. It reuses FR-28's `validate_skips` shape and #10's fail-
 (silent skip), NEG-3/4 (unauthorized floor skip), and NEG-5 (TDD omission) are **non-waivable** and asserted by
 mutation, not happy path.
 
+## Build status (2026-07-27)
+
+**Phases A–H: DONE.** Phase A (schema+catalog: `crit`/`crit_by_tier`/`no_omit` sourced in `catalog.yaml`,
+`derive.py verify` guards crit-sync; `first_pass`+`skips[]`+status glyphs in the change schema; shared
+skip-record). B (`ci/first-pass/check_skips.py`, fail-closed). C (`dispositions.py` + start-change Step 4b).
+D (`starters.py`). E (`resurface.py` + `language.md`). F (breadcrumb ⊘/◐ in `_steps.sh`). G (`permissions.py`
++ `permissions.md`). H (worked example `docs/examples/first-pass/` + challenge-stance convergence).
+
+**Phase I (validation): DONE for the adversarial half.** 4 clean-context Fable rounds, CONVERGED
+(r1 2 CRITICAL exit-0 bypasses → r2 no bypass → r3 core converged → r4 clean). Every finding fixed by mutation
++ locked with a regression; the fail-closed vocabulary that emerged is in test-plan §0.1 and LLD §11.
+**Remaining:** two-stage Codex validation, then package + release on 2.x (build.sh ships `ci/first-pass` +
+`ai/shared/first-pass` prose + the skill; version bump; sandbox-install verify) — **not yet done**. The
+validator is also not yet wired into CI (`.github/`).
+
 ## Definition of done
 
-- All test-plan families green, **with the NEG-* cases proven to fail-closed by mutation** (not just the happy
-  path); back-compat (COMPAT-*) holds for non-First-Pass changes.
-- A worked Tier-2 First Pass example exists (ledger + breadcrumb + a starter artifact + a seeded follow-up),
-  regenerate-and-diff.
-- One skip dialect: the FR-28 Advisor and FR-29 First Pass share the record schema (no second renderer).
-- Adversarial (Fable) + two-stage Codex validation clean; released on the 2.x line, sandbox-install verified.
+- ✅ All test-plan families green (**51 tests**), with the NEG-* cases (incl. the hardening set §0.1) proven
+  fail-closed **by mutation**; back-compat holds for non-First-Pass changes.
+- ✅ A worked Tier-2 First Pass example exists (ledger + breadcrumb + starter artifact + roll-up), validates clean.
+- ✅ One skip dialect (`ai/shared/skip-record.md`) shared by FR-28 + FR-29.
+- ⏳ Adversarial (Fable) **done + converged**; two-stage Codex + 2.x release + CI wiring **pending**.
 
 ## Open items to resolve during build (from LLD)
 

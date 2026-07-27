@@ -1,6 +1,6 @@
 # First Pass — Test Plan
 
-> Status: **draft, v1 (2026-07-27)** — conformance for FR-29. Verifies the HLD [`01-design.md`](01-design.md) /
+> Status: **IMPLEMENTED (51 tests) + 4 adversarial rounds converged, v1 (2026-07-27)** — conformance for FR-29. The fail-closed core grew during adversarial review (§0). Verifies the HLD [`01-design.md`](01-design.md) /
 > ADRs [`02-adrs.md`](02-adrs.md) / LLD [`03-lld.md`](03-lld.md) against the requirements
 > [`../../01-product/first-pass/requirements.md`](../../01-product/first-pass/requirements.md).
 > Discipline (session lesson from #10/#35): **verify by running and by mutating inputs** — a green happy path is
@@ -25,6 +25,26 @@ These are the load-bearing negatives — each must be **caught**, not silently a
 | **NEG-10** | a permission policy that auto-allows a critical action (deploy / out-of-scope write / force-push) | FAIL — critical-only (CR-15) |
 
 `NEG-1`, `NEG-3`, `NEG-4`, `NEG-5` are **non-waivable** (they are the framework's guarantee under First Pass).
+
+### 0.1 The fail-closed set as HARDENED (four adversarial rounds — the actual implemented guarantee)
+
+The design's negatives above were necessary but not sufficient. Four clean-context adversarial passes (r1 found
+**2 CRITICAL exit-0 bypasses** → r4 converged clean) established that a *mismatched/typo'd/wrong-type* input must
+**fail closed, never coerce to a safe default**. The implemented non-waivable set (`ci/first-pass/check_skips.py`,
+regression-tested in `ci/first-pass/test_check_skips.py`) therefore adds:
+
+| ID | Adversarial input | Required outcome |
+|----|-------------------|------------------|
+| **NEG-11** | a skip on a typo'd/whitespace/wrong-case step key (`"deploy "`) | FAIL `UNKNOWN_STEP` — never resolve an unknown key to `standard` (r1 CRIT-1) |
+| **NEG-12** | a floor step hidden behind a bogus status (`declined`, `""`, a list) with no record | FAIL `INVALID_STATUS` — closed status enum (r1 CRIT-2) |
+| **NEG-13** | `tier: "3"` (string) or `True` (bool) | FAIL `INVALID_TIER` + resolve at the strictest tier (r1 HIGH) |
+| **NEG-14** | `workflow`/`steps`/`skips` present but not the right type; non-string/duplicate step key; duplicate YAML key | FAIL `MALFORMED` (r2/r3/r4) |
+| **NEG-15** | any hostile top-level/catalog input (workflow as string, unhashable key/status, unknown workflow id, nested-dict `crit_by_tier`, a symlink/dir `starter_artifact`) | **exit 2, never a traceback** — `run()` fails closed (r3/r4) |
+| **NEG-16** | a permission `read`/`edit` of an absolute (POSIX / Windows drive-letter / UNC) or `..`-escaping path | FAIL — prompts, never auto-allows (r1 MED-5, r2 MED) |
+| **NEG-17** | a catalog whose `crit_by_tier` lowers a floor | FAIL `CRIT_MONOTONIC`, and `resolve_crit` is monotonic-safe by construction so the floor still holds at runtime |
+
+`NEG-11..NEG-15` and `NEG-17` join the non-waivable core. Every case above is asserted **by mutation** (a
+green happy path is not acceptance). Current suite: **51 tests** (validator + library), breadcrumb matrix 271.
 
 ## 1. Criticality resolution (CR-2)
 

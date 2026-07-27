@@ -1,6 +1,6 @@
 # First Pass — Low-Level Design
 
-> Status: **draft, v1 (2026-07-27)** — implements HLD [`01-design.md`](01-design.md) + ADRs [`02-adrs.md`](02-adrs.md)
+> Status: **IMPLEMENTED, v1 (2026-07-27)** — realized in `ci/first-pass/` (validator + lib) + `ai/shared/first-pass/` (prose), hardened across 4 adversarial rounds (see §11). Implements HLD [`01-design.md`](01-design.md) + ADRs [`02-adrs.md`](02-adrs.md)
 > for FR-29. Every schema/table here traces to a CR in [`../../01-product/first-pass/requirements.md`](../../01-product/first-pass/requirements.md).
 
 ## 1. Scope
@@ -263,18 +263,33 @@ for each step the team lightened:
 proceed to build (kept steps run as today; brief mode + permission policy on)
 ```
 
-## 11. Lints / conformance (fail-closed where it matters)
+## 11. Validator findings — the fail-closed set (`ci/first-pass/check_skips.py`)
 
-- **Criticality monotonicity** — `resolve_crit` never lowers criticality as tier rises (a `crit_by_tier` that
-  demotes is a lint error).
-- **No silent skip** — every `status: skipped` step has a matching ledger entry with non-empty `actor` +
-  `reason` + valid `disposition` (mirrors FR-28's `validate_skips`).
-- **Floor integrity** — a `floor` skip has `ack_by` set and, when it maps to a hard gate, a resolvable
-  `waiver_ref`; a floor step can never be `skipped` without them.
-- **Ledger ↔ steps consistency** — every ledger `step` exists in `steps[]` with `status: skipped`, and vice
-  versa (ADR-8's two-places reconciliation).
-- **Starter marking** — every `disposition: starter` artifact carries the `needs-enhancement` marker.
-- **Roll-up integrity** — each per-change skip is reflected in `.hitl/skip-ledger.yaml` with `domains`/`paths`.
+Table-driven, FR-28-style. **Exit 2 on any non-waivable finding; exit 0 only when genuinely clean; and the CLI
+NEVER tracebacks** — any residual exception on hostile input becomes a `MALFORMED` block (`run()` catches it),
+so a caller that treats only exit-2 as a block fails **closed**. The load-bearing rule learned across four
+adversarial rounds: **a mismatched/typo'd/wrong-type input must fail closed, never coerce to a safe default.**
 
-These reuse FR-28's validator style (table-driven, fail-closed on the load-bearing checks: no-silent-skip and
-floor-integrity are non-waivable).
+**Non-waivable (the guarantee):**
+
+| finding | fires when | CR |
+|---|---|---|
+| `SILENT_SKIP` | a `skipped`/`starter` step has no record, or a record has empty actor/reason/invalid disposition | CR-3 |
+| `FLOOR_NO_ACK` | a `floor` skip has no accountable-role `ack_by` | CR-5 |
+| `FLOOR_NO_WAIVER` | a `floor` skip on a **hard-gate** step (conventions/qa_verify/arch_review/integration_verify/iac/security_review/sec_design/cve_audit/pentest/manifest_validate) has no `waiver_ref` — deploy/promote are irreversible-**ops** floor, ack-only, no gate to waive | CR-4 |
+| `NO_OMIT` | a `no_omit` step (TDD RED/GREEN) is defer/decline rather than starter | CR-6 |
+| `UNKNOWN_STEP` | a skip's step key is not in the catalog (a typo/whitespace/case must not resolve to `standard`) | — |
+| `INVALID_STATUS` | a step status is outside the closed enum {done,current,open,skipped,starter} (a bogus status can't hide a silent floor skip) | — |
+| `INVALID_TIER` | `tier` is not an int in 0..4 (a string/bool must not default to 2 and dodge a tier-3 floor); criticality is then evaluated at the strictest tier | — |
+| `MALFORMED` | a present-but-wrong-type `workflow`/`steps`/`skips`, a non-string/duplicate step key, a duplicate YAML key, or any parse/validation crash | — |
+| `CRIT_MONOTONIC` | a catalog `crit_by_tier` lowers criticality as tier rises (`resolve_crit` is also monotonic-safe by construction, so a bad catalog can never lower a floor at runtime) | — |
+
+**Waivable (surfaced, not blocking):** `LEDGER_STEPS` (ledger↔steps inconsistency), `STARTER_MARK` (a starter
+artifact must carry the `needs-enhancement` marker on its own line), `ROLLUP` (a per-change skip missing from
+the auxiliary `.hitl/skip-ledger.yaml`, or a malformed roll-up — resurfacing degraded, change not blocked),
+`DEFER_NO_FOLLOWUP` (a deferred step with no linked fast-follow).
+
+**Permission classifier** (`ci/first-pass/permissions.py`, §9) and the **resurfacing voice**
+(`ci/first-pass/resurface.py`, §6) were hardened in the same rounds: reads/edits auto-allow only within the
+project/scope (absolute — incl. Windows drive-letter/UNC — and `..`-escaping paths always prompt); blame words
+in a user-supplied `reason` are redacted from the reminder (CR-9).
