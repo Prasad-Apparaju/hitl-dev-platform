@@ -14,22 +14,29 @@ SCOPED_OK = {"read", "edit", "write"}
 
 
 def _norm(x):
-    """Normalize a path for scope comparison — resolve `..`/`.` so a traversal can't prefix-match a
-    scope (e.g. 'src/billing/../../../etc' must NOT count as under 'src/billing')."""
-    return os.path.normpath(str(x).replace("\\", "/")).lstrip("./")
+    """Normalize a path for comparison — collapse `..`/`.` via normpath. Do NOT strip leading dots as a
+    char set: `lstrip('./')` turned '.src/x' into 'src/x' and let a hidden dir match scope (round-1 MED-6).
+    normpath alone already drops a leading './' while preserving a real leading dot (`.src`)."""
+    return os.path.normpath(str(x).replace("\\", "/"))
+
+
+def _escapes_project(path):
+    """True if a path is absolute or, after normalization, climbs out of the project root ('..')."""
+    if os.path.isabs(str(path)):
+        return True
+    p = _norm(path)
+    return p == ".." or p.startswith("../")
 
 
 def _in_scope(path, scope_paths):
-    """A path is in scope if, AFTER normalization, it sits under a declared allowed_path prefix.
-    An absolute path or one that escapes the project root (starts with '..') is never in scope."""
-    if path is None:
+    """A path is in the change scope if, AFTER normalization, it sits strictly under a declared
+    allowed_path (true path-segment containment). Absolute / project-escaping paths are never in scope."""
+    if path is None or _escapes_project(path):
         return False
     p = _norm(path)
-    if os.path.isabs(str(path)) or p.startswith("..") or p == "..":
-        return False
     for s in (scope_paths or []):
         s = _norm(str(s).rstrip("*"))
-        if s and (p == s or p.startswith(s + "/")):   # true path-segment containment, not bare prefix
+        if s and (p == s or p.startswith(s + "/")):   # segment containment, not a bare string prefix
             return True
     return False
 
@@ -42,6 +49,10 @@ def decide(action, path=None, scope_paths=None):
     if action in ALWAYS_PROMPT:
         return True, f"{action}: critical/irreversible/outward — prompts even under First Pass"
     if action == "read":
+        # reads auto-allow only WITHIN the project — an absolute path or a `..`-escape (e.g. /etc/passwd,
+        # ../secrets.env) still prompts (round-1 MED-5: reads were ungated, an exfil surface).
+        if path is not None and _escapes_project(path):
+            return True, f"read outside the project ({path}) — prompts"
         return False, "in-project read — auto-allowed"
     if action in ("edit", "write"):
         if _in_scope(path, scope_paths):

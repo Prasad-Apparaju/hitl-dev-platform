@@ -166,8 +166,52 @@ def test_neg9_rollup_missing():
 
 # ── non-waivable set + back-compat ────────────────────────────────────────────
 def test_core_findings_are_non_waivable():
-    for code in ("SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT"):
+    for code in ("SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
+                 "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER"):
         assert code in C.NON_WAIVABLE
+
+
+# ── round-1 adversarial regressions (a mismatch must fail CLOSED, not coerce to a safe default) ──
+def test_r1_unknown_step_key_blocks_not_degrades_to_standard():
+    # a floor key with a trailing space / wrong case is UNKNOWN, never resolved to `standard` (CRIT-1)
+    for k in ("deploy ", "Deploy", "dep loy"):
+        ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": k, "status": "skipped"}]},
+              "skips": [base_skip(k, disposition="decline")]}
+        assert "UNKNOWN_STEP" in blockers(C.check(ch, CATALOG)), k
+
+
+def test_r1_unrecognized_status_blocks():
+    # a floor step hidden behind a bogus status ('declined') with NO record must BLOCK (CRIT-2)
+    for status in ("declined", "omitted", "n/a", "lightened", ""):
+        ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "deploy", "status": status}]}, "skips": []}
+        assert "INVALID_STATUS" in blockers(C.check(ch, CATALOG)), status
+
+
+def test_r1_non_int_tier_blocks_and_fails_safe_high():
+    # string/bool tier must BLOCK and not default to 2 (which would miss tier-3 floors) (HIGH-3)
+    for t in ("3", True, -1, 9, 2.0):
+        ch = {"first_pass": True, "tier": t, "workflow": {"steps": [{"key": "arch_review", "status": "skipped"}]},
+              "skips": [base_skip("arch_review", disposition="decline")]}
+        b = blockers(C.check(ch, CATALOG))
+        assert "INVALID_TIER" in b and "FLOOR_NO_ACK" in b, t   # floor enforced at fail-safe tier 4
+
+
+def test_r1_hard_gate_set_is_accurate():
+    # dead entries do no harm; deploy/promote are ack-only (no waiver); real gates need a waiver (HIGH-4)
+    deploy = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "deploy", "status": "skipped"}]},
+              "skips": [base_skip("deploy", disposition="decline", ack_by="ops")]}
+    assert C.check(deploy, CATALOG) == []          # deploy floor: ack is the control, no waiver gate
+    for gate in ("qa_verify", "arch_review"):      # floor gates at tier 3 need a waiver
+        ch = {"first_pass": True, "tier": 3, "workflow": {"steps": [{"key": gate, "status": "skipped"}]},
+              "skips": [base_skip(gate, disposition="decline", ack_by="lead")]}
+        assert "FLOOR_NO_WAIVER" in blockers(C.check(ch, CATALOG)), gate
+
+
+def test_r1_starter_marker_must_head_a_line(tmp_path):
+    buried = tmp_path / "x.md"; buried.write_text("# looks done\n<!-- needs-enhancement -->\n")
+    ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "test_plan", "status": "starter"}]},
+          "skips": [base_skip("test_plan", disposition="starter", starter_artifact="x.md")]}
+    assert "STARTER_MARK" in codes(C.check(ch, CATALOG, change_dir=str(tmp_path)))
 
 
 def test_back_compat_non_first_pass():

@@ -112,6 +112,26 @@ def test_path_traversal_cannot_escape_scope():
     assert P.decide("edit", "src/billing-secrets/x", ["src/billing"])[0] is True
 
 
+def test_r1_reads_are_scope_gated():
+    # round-1 MED-5: reads were ungated — an out-of-project read must now prompt; in-project is fine
+    assert P.decide("read", "/etc/passwd", ["src/billing/**"])[0] is True
+    assert P.decide("read", "../secrets.env")[0] is True
+    assert P.decide("read", "src/anything.py")[0] is False
+
+
+def test_r1_hidden_dir_not_confused_with_scope():
+    # round-1 MED-6: '.src/billing' must NOT normalize to 'src/billing' and auto-allow
+    assert P.decide("edit", ".src/billing/x", ["src/billing/**"])[0] is True
+    assert P.decide("edit", "src/billing/x", ["src/billing/**"])[0] is False
+
+
+def test_r1_blame_words_redacted_from_user_reason():
+    # round-1 MED-7: blame words in the recorded reason must not leak into the reminder (incl. "should have")
+    msg = R.message({"step": "qa_verify", "crit": "floor", "disposition": "decline", "actor": "d",
+                     "reason": "the dev failed, was careless and should have known"}).lower()
+    assert not any(w in msg for w in R.BLAME_WORDS)
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))

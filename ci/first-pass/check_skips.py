@@ -20,10 +20,20 @@ import sys
 
 CRIT_ORDER = {"ceremony": 0, "standard": 1, "floor": 2}
 DISPOSITIONS = {"defer", "decline", "starter"}
-# Floor steps whose skip also needs a linked waiver because they map to a fail-closed / PR-blocking gate.
-HARD_GATE_STEPS = {"conventions", "security_review", "qa_verify", "arch_review", "manifest_validate"}
-# Non-waivable finding codes — the framework's guarantee under First Pass.
-NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT"}
+# The ONLY valid step statuses. Anything else is a fail-open vector (a floor step hidden behind an
+# unknown status like "declined") — so an unrecognized status is a non-waivable BLOCK (round-1 CRIT-2).
+VALID_STATUSES = {"done", "current", "open", "skipped", "starter"}
+# A lightening status: the step was skipped/thinned, so it REQUIRES a complete record.
+LIGHTENED_STATUSES = {"skipped", "starter"}
+# Floor steps whose skip ALSO needs a linked waiver because they map to a fail-closed / merge-blocking
+# gate (conventions/reviews/QA/security/infra/pentest). deploy/promote are irreversible OPS floor —
+# ack_by is their control, there is no CI gate to waive. (round-1 HIGH-4: real dev-workflow keys, no
+# dead entries.)
+HARD_GATE_STEPS = {"conventions", "qa_verify", "arch_review", "integration_verify", "iac",
+                   "security_review", "sec_design", "cve_audit", "pentest", "manifest_validate"}
+# Non-waivable finding codes — the framework's guarantee under First Pass. A mismatch fails CLOSED.
+NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
+                "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER"}
 STARTER_MARKER = "needs-enhancement"
 
 
@@ -81,17 +91,28 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     if not change.get("first_pass"):
         return findings  # not a First Pass change — nothing to enforce (back-compat)
 
+    # tier must be a real int in range — a string "3" or bool True must NOT silently default to 2 and let
+    # a tier-3 floor escape (round-1 HIGH-3). Fail closed AND evaluate at the strictest tier so no floor hides.
     tier = change.get("tier") if tier is None else tier
-    tier = tier if isinstance(tier, int) else 2
+    if type(tier) is not int or not (0 <= tier <= 4):
+        findings.append(_f("INVALID_TIER", f"tier {tier!r} is not an integer in 0..4"))
+        tier = 4   # fail-safe: resolve criticality at the most restrictive tier
     steps = {s.get("key"): s for s in _list(change.get("workflow", {}).get("steps")) if isinstance(s, dict)}
     skips = [s for s in _list(change.get("skips")) if isinstance(s, dict)]
     skip_by_step = {}
     for s in skips:
         skip_by_step.setdefault(_str(s.get("step")), []).append(s)
 
+    # 0) every step status must be recognized — an unknown status (e.g. "declined") is a fail-open vector
+    #    that hides a lightened floor step with no record (round-1 CRIT-2). Non-waivable.
+    for key, st in steps.items():
+        status = st.get("status")
+        if status is not None and status not in VALID_STATUSES:
+            findings.append(_f("INVALID_STATUS", f"step '{key}' has unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
+
     # 1) LEDGER_STEPS both ways (NEG-7): every skipped/starter step has a record; every record maps to such a step.
     for key, st in steps.items():
-        if st.get("status") in ("skipped", "starter") and not skip_by_step.get(key):
+        if st.get("status") in LIGHTENED_STATUSES and not skip_by_step.get(key):
             findings.append(_f("SILENT_SKIP", f"step '{key}' is {st.get('status')} but has no skip record"))
     for s in skips:
         k = _str(s.get("step"))
@@ -112,7 +133,12 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         if disp not in DISPOSITIONS:
             findings.append(_f("SILENT_SKIP", f"skip '{key}': disposition '{disp}' invalid (expected {sorted(DISPOSITIONS)})"))
 
-        meta = catalog.get(key, {})
+        # a skip whose step key is not in the catalog can't have its criticality resolved — it must NOT
+        # degrade to `standard` and slip a floor step past (round-1 CRIT-1: "deploy " / "Deploy" / typos).
+        if key not in catalog:
+            findings.append(_f("UNKNOWN_STEP", f"skip references step '{key}' not in the workflow catalog (criticality unresolvable)"))
+            continue
+        meta = catalog[key]
         crit = resolve_crit(meta, tier)
         no_omit = bool(meta.get("no_omit"))
 
@@ -137,8 +163,13 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
                 path = art if os.path.isabs(art) else os.path.join(change_dir, art)
                 if not os.path.exists(path):
                     findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' does not exist"))
-                elif STARTER_MARKER not in open(path, errors="ignore").read():
-                    findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' is not marked '{STARTER_MARKER}'"))
+                else:
+                    # the marker must head its own line (a real annotation) — not be buried in a comment
+                    # or unrelated prose (round-1 LOW: naive substring accepted `<!-- needs-enhancement -->`).
+                    marked = any(ln.lstrip().lower().startswith(STARTER_MARKER)
+                                 for ln in open(path, errors="ignore").read().splitlines())
+                    if not marked:
+                        findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' has no '{STARTER_MARKER}' line"))
 
         # defer seeds a follow-up (CR-7) — warn if missing (waivable)
         if disp == "defer" and not _str(s.get("followup_ref")).strip():
