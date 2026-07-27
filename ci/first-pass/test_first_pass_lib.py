@@ -132,6 +132,20 @@ def test_r1_blame_words_redacted_from_user_reason():
     assert not any(w in msg for w in R.BLAME_WORDS)
 
 
+def test_r2_windows_abs_paths_escape_project():
+    # round-2 MED: Windows drive-letter / UNC absolute reads must prompt (POSIX isabs misses them)
+    for p in ("C:\\secrets", "\\\\srv\\share\\x", "//srv/share/x"):
+        assert P.decide("read", p)[0] is True, p
+
+
+def test_r2_blame_redaction_covers_inflections():
+    # round-2 LOW: stems + hyphen/space variants + flexible whitespace
+    msg = R.message({"reason": "careless, negligence, care-less, should  have, failing, sloppily"}).lower()
+    for w in ("careless", "neglig", "care-less", "should  have", "failing", "sloppily"):
+        assert w not in msg, w
+    assert isinstance(R.message(None), str)   # non-dict entry is safe
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))

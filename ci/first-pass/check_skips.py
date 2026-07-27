@@ -33,7 +33,7 @@ HARD_GATE_STEPS = {"conventions", "qa_verify", "arch_review", "integration_verif
                    "security_review", "sec_design", "cve_audit", "pentest", "manifest_validate"}
 # Non-waivable finding codes — the framework's guarantee under First Pass. A mismatch fails CLOSED.
 NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
-                "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER"}
+                "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC"}
 STARTER_MARKER = "needs-enhancement"
 
 
@@ -42,16 +42,22 @@ def _str(v):    return v if isinstance(v, str) else ""
 
 
 def resolve_crit(step_meta, tier):
-    """Effective criticality of a catalog step at a tier: the highest `crit_by_tier` key <= tier, else `crit`."""
+    """Effective criticality of a catalog step at a tier. Criticality may only RISE with tier, so the
+    result is the MAX (by severity) of `crit` and every `crit_by_tier` value whose key <= tier — a
+    non-monotonic catalog can therefore never LOWER a floor at runtime (round-2 defense-in-depth; the
+    catalog is also lint-guarded)."""
     base = step_meta.get("crit", "standard")
     if base not in CRIT_ORDER:
         base = "standard"
+    best = CRIT_ORDER[base]
     cbt = step_meta.get("crit_by_tier") or {}
-    keys = [int(k) for k in cbt if str(k).lstrip("-").isdigit() and int(k) <= tier]
-    if keys:
-        v = cbt[max(keys)] if max(keys) in cbt else cbt[str(max(keys))]
-        return v if v in CRIT_ORDER else base
-    return base
+    for k, v in (cbt.items() if isinstance(cbt, dict) else []):
+        if str(k).lstrip("-").isdigit() and int(k) <= tier and v in CRIT_ORDER:
+            best = max(best, CRIT_ORDER[v])
+    return _CRIT_BY_RANK[best]
+
+
+_CRIT_BY_RANK = {v: k for k, v in CRIT_ORDER.items()}
 
 
 def load_catalog(workflows_path, workflow_id="development"):
@@ -97,8 +103,30 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     if type(tier) is not int or not (0 <= tier <= 4):
         findings.append(_f("INVALID_TIER", f"tier {tier!r} is not an integer in 0..4"))
         tier = 4   # fail-safe: resolve criticality at the most restrictive tier
-    steps = {s.get("key"): s for s in _list(change.get("workflow", {}).get("steps")) if isinstance(s, dict)}
-    skips = [s for s in _list(change.get("skips")) if isinstance(s, dict)]
+
+    # a structure that is PRESENT but not the expected type must NOT be coerced to empty — that hides a
+    # skipped floor step in a `steps`/`skips` mapping (round-2 MED). Fail closed, non-waivable.
+    wf = change.get("workflow")
+    wf = wf if isinstance(wf, dict) else {}
+    raw_steps, raw_skips = wf.get("steps"), change.get("skips")
+    if raw_steps is not None and not isinstance(raw_steps, list):
+        findings.append(_f("MALFORMED", f"workflow.steps is present but not a list ({type(raw_steps).__name__})"))
+    if raw_skips is not None and not isinstance(raw_skips, list):
+        findings.append(_f("MALFORMED", f"skips is present but not a list ({type(raw_skips).__name__})"))
+    if change.get("workflow") is not None and not isinstance(change.get("workflow"), dict):
+        findings.append(_f("MALFORMED", "workflow is present but not a mapping"))
+
+    steplist = [s for s in _list(raw_steps) if isinstance(s, dict)]
+    # a duplicate step key can mask a skipped step behind a later `done` duplicate (round-2 LOW) — flag it.
+    seen_keys = {}
+    for s in steplist:
+        k = s.get("key")
+        seen_keys[k] = seen_keys.get(k, 0) + 1
+    for k, n in seen_keys.items():
+        if n > 1:
+            findings.append(_f("MALFORMED", f"duplicate step key '{k}' ({n}x) — statuses may mask each other"))
+    steps = {s.get("key"): s for s in steplist}
+    skips = [s for s in _list(raw_skips) if isinstance(s, dict)]
     skip_by_step = {}
     for s in skips:
         skip_by_step.setdefault(_str(s.get("step")), []).append(s)
@@ -161,14 +189,18 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
                 findings.append(_f("STARTER_MARK", f"starter '{key}': no starter_artifact path"))
             else:
                 path = art if os.path.isabs(art) else os.path.join(change_dir, art)
-                if not os.path.exists(path):
-                    findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' does not exist"))
+                # isfile (not exists) — a directory/symlink-to-dir must FAIL CLOSED, not crash open() (round-2 HIGH)
+                if not os.path.isfile(path):
+                    findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' is not a readable file"))
                 else:
+                    try:
+                        content = open(path, errors="ignore").read()
+                    except OSError as e:
+                        findings.append(_f("STARTER_MARK", f"starter '{key}': cannot read artifact '{art}' ({e.__class__.__name__})"))
+                        content = ""
                     # the marker must head its own line (a real annotation) — not be buried in a comment
                     # or unrelated prose (round-1 LOW: naive substring accepted `<!-- needs-enhancement -->`).
-                    marked = any(ln.lstrip().lower().startswith(STARTER_MARKER)
-                                 for ln in open(path, errors="ignore").read().splitlines())
-                    if not marked:
+                    if not any(ln.lstrip().lower().startswith(STARTER_MARKER) for ln in content.splitlines()):
                         findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' has no '{STARTER_MARKER}' line"))
 
         # defer seeds a follow-up (CR-7) — warn if missing (waivable)

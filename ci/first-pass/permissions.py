@@ -6,6 +6,11 @@ still prompts. This is the floor logic applied to tool permissions — NOT `bypa
 `decide()` is the single classifier; default is fail-safe (unknown ⇒ prompt)."""
 from __future__ import annotations
 import os.path
+import re
+
+# A Windows drive-letter (C:\) or UNC (\\srv, //srv, \\?\) absolute path — POSIX os.path.isabs misses
+# these on a non-Windows runner, so they must be caught explicitly (round-2 MED; Windows is in scope).
+_WIN_ABS = re.compile(r"^[A-Za-z]:|^\\\\|^//|^\\\\\?\\")
 
 # Actions that ALWAYS prompt — irreversible / destructive / outward, regardless of scope.
 ALWAYS_PROMPT = {"deploy", "promote", "migrate", "external_send", "force_push", "secret_access", "delete"}
@@ -21,8 +26,10 @@ def _norm(x):
 
 
 def _escapes_project(path):
-    """True if a path is absolute or, after normalization, climbs out of the project root ('..')."""
-    if os.path.isabs(str(path)):
+    """True if a path is absolute (POSIX, Windows drive-letter, or UNC) or, after normalization, climbs
+    out of the project root ('..')."""
+    s = str(path)
+    if os.path.isabs(s) or _WIN_ABS.match(s):
         return True
     p = _norm(path)
     return p == ".." or p.startswith("../")

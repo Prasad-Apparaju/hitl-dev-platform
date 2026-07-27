@@ -207,6 +207,37 @@ def test_r1_hard_gate_set_is_accurate():
         assert "FLOOR_NO_WAIVER" in blockers(C.check(ch, CATALOG)), gate
 
 
+def test_r2_starter_artifact_directory_blocks_not_crashes(tmp_path):
+    # round-2 HIGH: a starter_artifact pointing at a directory must BLOCK (STARTER_MARK), never crash open()
+    (tmp_path / "adir").mkdir()
+    ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "test_plan", "status": "starter"}]},
+          "skips": [base_skip("test_plan", disposition="starter", starter_artifact="adir")]}
+    assert "STARTER_MARK" in codes(C.check(ch, CATALOG, change_dir=str(tmp_path)))   # no exception
+
+
+def test_r2_malformed_structures_fail_closed():
+    # round-2 MED: a `steps`/`skips` mapping (not list) must not coerce to empty and hide a floor skip
+    ch = {"first_pass": True, "tier": 3, "workflow": {"steps": {"qa_verify": "skipped"}}, "skips": []}
+    assert "MALFORMED" in blockers(C.check(ch, CATALOG))
+    ch2 = {"first_pass": True, "tier": 2, "workflow": {"steps": []}, "skips": {"x": 1}}
+    assert "MALFORMED" in blockers(C.check(ch2, CATALOG))
+
+
+def test_r2_duplicate_step_key_flagged():
+    ch = {"first_pass": True, "tier": 2,
+          "workflow": {"steps": [{"key": "deploy", "status": "skipped"}, {"key": "deploy", "status": "done"}]},
+          "skips": [base_skip("deploy", disposition="decline", ack_by="ops")]}
+    assert "MALFORMED" in blockers(C.check(ch, CATALOG))
+
+
+def test_r2_resolve_crit_is_monotonic_safe():
+    # a demoting crit_by_tier can never LOWER a floor at runtime (defense-in-depth), and the lint blocks it
+    assert C.resolve_crit({"crit": "floor", "crit_by_tier": {4: "ceremony"}}, 4) == "floor"
+    assert C.resolve_crit({"crit": "standard", "crit_by_tier": {3: "floor"}}, 3) == "floor"
+    assert "CRIT_MONOTONIC" in C.NON_WAIVABLE
+    assert any(f["code"] == "CRIT_MONOTONIC" for f in C.lint_catalog({"x": {"key": "x", "crit": "floor", "crit_by_tier": {3: "ceremony"}}}))
+
+
 def test_r1_starter_marker_must_head_a_line(tmp_path):
     buried = tmp_path / "x.md"; buried.write_text("# looks done\n<!-- needs-enhancement -->\n")
     ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "test_plan", "status": "starter"}]},

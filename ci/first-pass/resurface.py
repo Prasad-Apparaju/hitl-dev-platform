@@ -8,10 +8,13 @@ from __future__ import annotations
 import re
 
 CRIT_RANK = {"ceremony": 0, "standard": 1, "floor": 2}
-# Words/phrases the resurfacing voice must never use (CR-9). Lint target + redaction list.
+# Words/phrases the resurfacing voice must never use (CR-9). Lint target.
 BLAME_WORDS = {"failed", "negligent", "careless", "fault", "blame", "lazy", "should have", "sloppy"}
-_BLAME_RE = re.compile("|".join(r"\b" + re.escape(w) + r"\b"
-                                for w in sorted(BLAME_WORDS, key=len, reverse=True)), re.I)
+# Redaction stems — catch inflections (failing, negligence, carelessly), hyphen/space variants
+# (care-less), and flexible whitespace (should  have / should\nhave).
+_BLAME_STEMS = [r"fail\w*", r"neglig\w*", r"care[\s-]?less\w*", r"fault\w*", r"blam\w*",
+                r"laz\w*", r"should\s+have", r"sloppy", r"sloppily"]
+_BLAME_RE = re.compile(r"\b(?:" + "|".join(_BLAME_STEMS) + r")\b", re.I | re.S)
 
 
 def _paths_overlap(a, b):
@@ -56,6 +59,7 @@ def _clean(text):
 
 def message(entry):
     """A respectful, persuasive, NON-blaming reminder for one entry (CR-9)."""
+    entry = entry if isinstance(entry, dict) else {}
     step = _clean(entry.get("step", "a step"))
     crit = entry.get("crit", "standard")
     lead = {"floor": "Worth a careful look", "standard": "A quick heads-up"}.get(crit, "A note")
