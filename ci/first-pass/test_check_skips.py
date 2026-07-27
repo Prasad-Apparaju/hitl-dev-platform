@@ -272,6 +272,35 @@ def test_r3_non_dict_and_keyless_step_entries_flagged():
     assert "MALFORMED" in blockers(C.check(ch, CATALOG))
 
 
+def test_r4_unhashable_crit_and_status_do_not_crash():
+    # round-4 LOW-1: a non-string `crit` value is unhashable — must not crash resolve_crit / lint_catalog
+    assert C.resolve_crit({"crit": ["floor"]}, 2) == "standard"
+    assert isinstance(C.lint_catalog({"x": {"key": "x", "crit": ["floor"]}}), list)
+    # round-4 LOW-2: a non-string status must be flagged, not crash the SILENT_SKIP loop
+    ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "deploy", "status": ["skipped"]}]},
+          "skips": [base_skip("deploy", disposition="decline", ack_by="x")]}
+    assert "INVALID_STATUS" in blockers(C.check(ch, CATALOG))
+
+
+def test_r4_malformed_rollup_warns_not_blocks():
+    # round-4 LOW-3: a malformed AUXILIARY roll-up warns (waivable), it does not block the change
+    ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "roi", "status": "skipped"}]},
+          "skips": [base_skip("roi", disposition="decline")]}
+    fs = C.check(ch, CATALOG, rollup=[1, 2])
+    assert [f for f in fs if not f["waivable"]] == []      # no blocker
+    assert any(f["code"] == "ROLLUP" for f in fs)          # but a warning
+
+
+def test_r4_duplicate_yaml_key_rejected(tmp_path):
+    # round-4 LOW-4: a forged ledger hiding a skip behind a duplicate `workflow:` key must be rejected
+    p = tmp_path / "dup.yaml"
+    p.write_text("first_pass: true\ntier: 2\n"
+                 "workflow:\n  steps: [ { key: deploy, status: skipped } ]\n"
+                 "workflow:\n  steps: []\nskips: []\n")
+    fs = C.run(str(p), os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml"))
+    assert any(not f["waivable"] for f in fs)              # MALFORMED, blocks
+
+
 def test_r1_starter_marker_must_head_a_line(tmp_path):
     buried = tmp_path / "x.md"; buried.write_text("# looks done\n<!-- needs-enhancement -->\n")
     ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "test_plan", "status": "starter"}]},

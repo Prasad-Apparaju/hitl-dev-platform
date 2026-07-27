@@ -18,6 +18,29 @@ from __future__ import annotations
 import os
 import sys
 
+
+def _strict_load(path):
+    """Parse YAML rejecting DUPLICATE keys — a forged ledger must not hide a skipped floor step behind a
+    second `workflow:`/`skips:` key that PyYAML would collapse last-wins (round-4 LOW-4). Raises on a dup."""
+    import yaml
+
+    class _L(yaml.SafeLoader):
+        pass
+
+    def _no_dup(loader, node, deep=False):
+        m = {}
+        for kn, vn in node.value:
+            k = loader.construct_object(kn, deep=deep)
+            if k in m:
+                raise yaml.constructor.ConstructorError(None, None, f"duplicate key {k!r}", kn.start_mark)
+            m[k] = loader.construct_object(vn, deep=deep)
+        return m
+
+    _L.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_dup)
+    with open(path) as f:
+        return yaml.load(f, Loader=_L)
+
+
 CRIT_ORDER = {"ceremony": 0, "standard": 1, "floor": 2}
 DISPOSITIONS = {"defer", "decline", "starter"}
 # The ONLY valid step statuses. Anything else is a fail-open vector (a floor step hidden behind an
@@ -66,7 +89,7 @@ def resolve_crit(step_meta, tier):
     if not isinstance(step_meta, dict):
         return "standard"
     base = step_meta.get("crit", "standard")
-    if base not in CRIT_ORDER:
+    if not isinstance(base, str) or base not in CRIT_ORDER:   # a non-string crit (e.g. [floor]) is unhashable (round-4 LOW-1)
         base = "standard"
     best = CRIT_ORDER[base]
     cbt = step_meta.get("crit_by_tier")
@@ -96,7 +119,7 @@ def lint_catalog(catalog):
         if not isinstance(meta, dict):
             continue
         base = meta.get("crit", "standard")
-        b = CRIT_ORDER.get(base, 1)
+        b = CRIT_ORDER.get(base, 1) if isinstance(base, str) else 1   # non-string crit is unhashable (round-4 LOW-1)
         cbt = meta.get("crit_by_tier")
         pairs = [(_tier_key(k), v) for k, v in cbt.items()] if isinstance(cbt, dict) else []
         ordered = sorted(((tk, v) for tk, v in pairs if tk is not None and isinstance(v, str)), key=lambda x: x[0])
@@ -170,7 +193,8 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
 
     # 1) LEDGER_STEPS both ways (NEG-7): every skipped/starter step has a record; every record maps to such a step.
     for key, st in steps.items():
-        if st.get("status") in LIGHTENED_STATUSES and not skip_by_step.get(key):
+        status = st.get("status")   # a non-string status is unhashable → guard the set membership (round-4 LOW-2)
+        if isinstance(status, str) and status in LIGHTENED_STATUSES and not skip_by_step.get(key):
             findings.append(_f("SILENT_SKIP", f"step '{key}' is {st.get('status')} but has no skip record"))
     for s in skips:
         k = _str(s.get("step"))
@@ -240,7 +264,9 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     # 3) ROLLUP (NEG-9): every per-change skip present in the project roll-up
     if rollup is not None:
         if not isinstance(rollup, dict):
-            findings.append(_f("MALFORMED", f"roll-up is present but not a mapping ({type(rollup).__name__})"))
+            # the roll-up is an AUXILIARY project file (resurfacing), not the change's ledger — a malformed
+            # one WARNS (like a missing entry), it does not block the change (round-4 LOW-3, consistent leniency)
+            findings.append(_f("ROLLUP", f"roll-up is present but not a mapping ({type(rollup).__name__}) — resurfacing degraded"))
             rollup = {}
         rolled = {(_str(e.get("change_id")), _str(e.get("step")))
                   for e in _list(rollup.get("entries")) if isinstance(e, dict)}
@@ -258,7 +284,7 @@ def run(change_path, workflows_path, rollup_path=None, tier=None):
     a clean result as safe therefore fails CLOSED."""
     import yaml
     try:
-        change = yaml.safe_load(open(change_path))
+        change = _strict_load(change_path)   # rejects duplicate keys (round-4 LOW-4)
     except Exception as e:  # noqa: BLE001
         return [_f("MALFORMED", f"cannot parse change file: {e.__class__.__name__}")]
     if not isinstance(change, dict):
