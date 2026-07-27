@@ -104,6 +104,14 @@ def test_out_of_scope_and_unknown_prompt():
     assert P.decide("frobnicate")[0] is True   # fail-safe default
 
 
+def test_path_traversal_cannot_escape_scope():
+    # a `..` traversal must NOT prefix-match its way back into scope
+    assert P.decide("edit", "src/billing/../../../etc/passwd", ["src/billing/"])[0] is True
+    assert P.decide("write", "src/billing/../secrets", ["src/billing/**"])[0] is True
+    # a sibling that merely shares a name prefix is not in scope ('src/billing-secrets' vs 'src/billing')
+    assert P.decide("edit", "src/billing-secrets/x", ["src/billing"])[0] is True
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))

@@ -5,6 +5,7 @@ Under First Pass, routine reversible in-scope work proceeds without a prompt; th
 still prompts. This is the floor logic applied to tool permissions — NOT `bypassPermissions`.
 `decide()` is the single classifier; default is fail-safe (unknown ⇒ prompt)."""
 from __future__ import annotations
+import os.path
 
 # Actions that ALWAYS prompt — irreversible / destructive / outward, regardless of scope.
 ALWAYS_PROMPT = {"deploy", "promote", "migrate", "external_send", "force_push", "secret_access", "delete"}
@@ -12,14 +13,23 @@ ALWAYS_PROMPT = {"deploy", "promote", "migrate", "external_send", "force_push", 
 SCOPED_OK = {"read", "edit", "write"}
 
 
+def _norm(x):
+    """Normalize a path for scope comparison — resolve `..`/`.` so a traversal can't prefix-match a
+    scope (e.g. 'src/billing/../../../etc' must NOT count as under 'src/billing')."""
+    return os.path.normpath(str(x).replace("\\", "/")).lstrip("./")
+
+
 def _in_scope(path, scope_paths):
-    """A path is in scope if it sits under the project root / a declared allowed_path prefix."""
+    """A path is in scope if, AFTER normalization, it sits under a declared allowed_path prefix.
+    An absolute path or one that escapes the project root (starts with '..') is never in scope."""
     if path is None:
         return False
-    p = str(path).lstrip("./")
+    p = _norm(path)
+    if os.path.isabs(str(path)) or p.startswith("..") or p == "..":
+        return False
     for s in (scope_paths or []):
-        s = str(s).rstrip("*").lstrip("./")
-        if s and p.startswith(s):
+        s = _norm(str(s).rstrip("*"))
+        if s and (p == s or p.startswith(s + "/")):   # true path-segment containment, not bare prefix
             return True
     return False
 
