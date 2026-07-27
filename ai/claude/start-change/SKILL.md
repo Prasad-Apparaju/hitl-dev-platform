@@ -103,6 +103,45 @@ development workflow — 31 steps (+ 19a):
 
 ---
 
+## Step 4b — Offer First Pass (optional, FR-29)
+
+If the team wants to ship a basic version fast and iterate (PMs especially), offer **First Pass** — a
+thin-whole-first, skip-with-record way to run this same plan. It is opt-in; the default is the full plan.
+
+**Present the disposition menu ONCE** (brief mode — not a step-by-step interview). Each step's `crit`
+(from the catalog, resolved against this change's `tier`) constrains its options:
+
+| step type | options offered |
+|---|---|
+| `ceremony` | keep · starter\* · skip (defer / decline) |
+| `standard` | keep · starter\* · defer · decline |
+| `standard` + `no_omit` (TDD RED/GREEN) | keep · starter — *never defer/decline* |
+| `floor` | keep · *request risk-accepted skip* |
+
+\*starter offered only for steps in the registry (`ci/first-pass/starters.py`); `keep` is the default.
+
+For each lightened step:
+1. **Record it, never silent** — append `{step, crit, actor, reason, ts, disposition}` to `skips[]` in
+   `.hitl/current-change.yaml` and to the roll-up `.hitl/skip-ledger.yaml` (with domains/paths). Set the
+   step's `status` to `skipped` (defer/decline) or `starter`.
+2. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
+   step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver.
+3. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
+   version of the system"), mark it `needs-enhancement`, record its path; seed a fast-follow to *enhance* it.
+4. **Defer** — seed a linked fast-follow ticket.
+
+Then **certify before proceeding**: run `python3 ci/first-pass/check_skips.py .hitl/current-change.yaml
+--rollup .hitl/skip-ledger.yaml` — it must exit 0 (a silent skip, an unauthorized floor skip, or a TDD
+omission exits 2, non-waivable). Run the change under **brief mode** and the **reduced-friction permission
+policy** ([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
+respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
+
+**At change start, also resurface** any unresolved skips whose area overlaps this change (read the roll-up;
+`ci/first-pass/resurface.py`) — politely, escalating by criticality. See the worked example at
+[`docs/examples/first-pass/`](../../../docs/examples/first-pass/).
+
+---
+
 ## Step 5 — Create the branch
 
 ```bash

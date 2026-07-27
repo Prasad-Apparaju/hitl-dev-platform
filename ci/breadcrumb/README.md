@@ -52,7 +52,7 @@ Plus the cross-cutting cases:
 | Case | Asserts |
 |------|---------|
 | **19a substep** (development) | `hitl_current_n` returns `19a`; trail shows `▶ Architect Code Review` (full name, numberless) in banner, statusline, and library; ribbon shows `Verify ◐` |
-| **skipped** step in the window | parser keeps `status: skipped` (now `n\|label\|status\|phase`); current still highlighted by full name; skipped neighbour renders numberless as `·<label>` (open glyph), **not** `✓` |
+| **skipped / starter** step in the window (First Pass, FR-29) | parser keeps `status: skipped`/`starter`; current still highlighted by full name; a skipped neighbour renders as `⊘<label>` and a starter as `◐<label>` — visually distinct from open (`·`) and never `✓` |
 | **branch mismatch** | `expected_branch` ≠ checked-out branch → soft `⚠` warning in both renderers; trail still renders the full current name (warn, not crash) |
 | **block-style YAML** (issue #15) | multi-line `- n:`/`key:`/`label:`/`status:`/`phase:` steps parse identically to flow-map style — both the trail **and** the phase ribbon match flow style |
 | **back-compat: steps with no per-step `phase`** | a workflow block whose steps carry no `phase` → ribbon falls back to the lone `current_step.phase` (`<phase> ◐`, not the full ribbon); banner still renders the full trail without crashing |
@@ -73,12 +73,13 @@ Total: **238 assertions across 24 cases** (the position cases now cover the `doc
   `·Rerun`) and the current step renders as `▶ <full name>` (expanded from `current_step.name`).
   There is no global `Step N / total` counter anywhere — the denominator was replaced by the
   **phase ribbon** (`hitl_render_ribbon`), e.g. `Requirements ✓  Design ✓  Build ◐  Verify ·`.
-- `hitl_render_trail` maps only `done → ✓` and `current → ▶`; **every** other status — including
-  `skipped` and `open` — renders as `·`. So a `skipped` step is visually indistinguishable from an
-  `open` one in the trail today. That is the renderer's current contract, and the matrix asserts it
-  (skipped shows as `·<label>`, never `✓<label>`).
+- `hitl_render_trail` maps `done → ✓`, `current → ▶`, and (First Pass, FR-29) `skipped → ⊘`,
+  `starter → ◐`; every other status (`open`) renders as `·`. A `skipped`/`starter` step is therefore
+  **visually distinct** from an open one, so the trail shows the First Pass shape at a glance. The
+  matrix asserts `⊘<label>` for skipped, never `✓<label>` or `·<label>`.
 - The phase ribbon is driven by each step's per-step `phase` + `status`: a phase shows `✓` when all
-  its steps are done, `◐` when it holds the current step (or is partly done), `·` when untouched.
+  its steps are **addressed** (done, or First Pass skipped/starter), `◐` when it holds the current
+  step (or is partly addressed), `·` when untouched.
   A change file whose steps carry **no** per-step `phase` falls back to the lone `current_step.phase`
   (`<phase> ◐`) — exercised by the `dev/nophase` back-compat case.
 - `hitl_render_trail` windows on the **last** step whose status is `current`, while

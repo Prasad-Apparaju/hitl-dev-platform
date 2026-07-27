@@ -1,0 +1,22 @@
+# Worked example — a Tier-2 refund feature run in First Pass (FR-29).
+# Validate: python3 ci/first-pass/check_skips.py docs/examples/first-pass/current-change.yaml
+first_pass: true
+schema_version: "2.1"
+change_id: GH-123
+tier: 2
+status: implementation-approved
+manifest: { domain: billing }
+allowed_paths: ["src/billing/**", "tests/billing/**"]
+workflow:
+  id: development
+  total: 31
+  steps:
+    - { n: 3,  key: impact,    label: "Impact", status: done,    phase: "Design" }
+    - { n: 4,  key: roi,       label: "ROI",    status: skipped, phase: "Design" }
+    - { n: 7,  key: test_plan, label: "Tests",  status: starter, phase: "Design" }
+    - { n: 10, key: red,       label: "RED",    status: current, phase: "Build" }
+    - { n: 28, key: deploy,    label: "Deploy", status: skipped, phase: "Ship" }
+skips:
+  - { step: roi,       crit: ceremony, actor: "pm@acme",  reason: "internal ops tool; ROI self-evident for v1", ts: "2026-07-27T10:00:00Z", disposition: decline }
+  - { step: test_plan, crit: standard, actor: "dev@acme", reason: "thin v1; happy path only for now",           ts: "2026-07-27T10:01:00Z", disposition: starter, starter_artifact: "test-plan.starter.md" }
+  - { step: deploy,    crit: floor,    actor: "ops@acme", reason: "manual deploy for v1, redeploy-previous rollback", ts: "2026-07-27T10:02:00Z", disposition: decline, ack_by: "ops-lead" }

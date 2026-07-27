@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""First Pass (FR-29) — resurfacing (Phase E, LLD §6, CR-8/CR-9).
+
+Surfaces unresolved skips at the next change that overlaps the same area, escalating by criticality,
+in respectful-persuasive language (never blaming). Persuade at boundaries only — the driver does not
+call this mid-build (ADR-5). v1 overlap = manifest-domain or path-prefix intersection."""
+from __future__ import annotations
+
+CRIT_RANK = {"ceremony": 0, "standard": 1, "floor": 2}
+# Words the resurfacing voice must never use (CR-9). Lint target.
+BLAME_WORDS = {"failed", "negligent", "careless", "fault", "blame", "lazy", "should have", "sloppy"}
+
+
+def _paths_overlap(a, b):
+    for p in a:
+        for q in b:
+            if p and q and (str(p).startswith(str(q)) or str(q).startswith(str(p))):
+                return True
+    return False
+
+
+def overlaps(entry, new_domains, new_paths):
+    """Does a ledger entry's area intersect the new change's? (domain OR path-prefix intersection.)"""
+    if not isinstance(entry, dict):
+        return False
+    ed = set(entry.get("domains") or [])
+    if ed & set(new_domains or []):
+        return True
+    return _paths_overlap(entry.get("paths") or [], new_paths or [])
+
+
+def surface(rollup, new_domains, new_paths):
+    """The unresolved skips to raise at a new overlapping change. A `ceremony` skip is NOT resurfaced
+    here (only at its own follow-up); `standard`/`floor` are, escalating by rank (CR-8)."""
+    out = []
+    for e in ((rollup or {}).get("entries") or []):
+        if not isinstance(e, dict) or e.get("resolved"):
+            continue
+        if e.get("crit") == "ceremony":
+            continue
+        if overlaps(e, new_domains, new_paths):
+            out.append(e)
+    out.sort(key=lambda e: -CRIT_RANK.get(e.get("crit"), 1))   # floor first
+    return out
+
+
+def message(entry):
+    """A respectful, persuasive, NON-blaming reminder for one entry (CR-9)."""
+    step = entry.get("step", "a step")
+    crit = entry.get("crit", "standard")
+    lead = {"floor": "Worth a careful look", "standard": "A quick heads-up"}.get(crit, "A note")
+    tail = " (this one was on the recommended floor, so it may be worth doing before you go further)" if crit == "floor" else ""
+    return (f"{lead}: last time work touched this area, '{step}' was lightened "
+            f"({entry.get('disposition', 'skipped')} by {entry.get('actor', 'the team')} — "
+            f"reason: {entry.get('reason', 'n/a')}). Since this change overlaps, it may be a good moment "
+            f"to fold in the enhancement — happy to scope it{tail}.")

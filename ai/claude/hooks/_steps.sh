@@ -227,7 +227,8 @@ DIRECTIVE
 #   Position is carried by order + the ▶ glyph — no global step numbers (Phase 2).
 #   The current step is expanded to its full name when `current_name` (3rd arg) is given;
 #   neighbours stay as short labels. Pass "color" (2nd arg) to wrap the current step green.
-#   Glyphs: done ✓ · current ▶ · everything else (open/skipped/…) ·
+#   Glyphs: done ✓ · current ▶ · skipped ⊘ (First Pass defer/decline) · starter ◐ (First Pass
+#   needs-enhancement) · everything else (open) ·
 hitl_render_trail() {
   local f="$1" color="${2:-}" cur_name="${3:-}"
   hitl_steps "$f" | awk -F'|' -v color="$color" -v curname="$cur_name" '
@@ -244,6 +245,8 @@ hitl_render_trail() {
         glyph="·"
         if (st[i]=="done") glyph="✓"
         else if (st[i]=="current") glyph="▶"
+        else if (st[i]=="skipped") glyph="⊘"      # First Pass: defer/decline (FR-29)
+        else if (st[i]=="starter") glyph="◐"      # First Pass: minimal, needs-enhancement (FR-29)
         if (st[i]=="current") {
           disp=(curname!="") ? curname : lbl[i]
           seg=glyph " " disp                    # current: glyph + space + full name
@@ -272,7 +275,9 @@ hitl_render_ribbon() {
       st=$3
       if (!(ph in seen)) { seen[ph]=1; order[++np]=ph }
       cnt[ph]++
-      if (st=="done") ndone[ph]++
+      # "addressed" = done OR First Pass skipped/starter (FR-29 CR-16) — a phase whose steps are all
+      # addressed shows ✓, even if some were lightened.
+      if (st=="done" || st=="skipped" || st=="starter") ndone[ph]++
       if (st=="current") cur[ph]=1
     }
     END {

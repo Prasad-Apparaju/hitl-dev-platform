@@ -370,10 +370,11 @@ assert_contains   "dev/skip: steps parse keeps skipped status" "$lib_steps" "3|I
 assert_nonempty   "dev/skip: trail non-empty"                  "$lib_trail"
 # current step is shown numberless by its FULL name.
 assert_contains   "dev/skip: current still highlighted ▶ Update Docs" "$lib_trail" "▶ Update Docs"
-# a skipped step renders with the open glyph "·" (renderer maps only done/current specially),
-# and crucially is NOT shown as done (✓) — assert it appears as ·Impact (numberless), never ✓Impact.
-assert_contains   "dev/skip: skipped step shown as ·Impact"    "$lib_trail" "·Impact"
+# First Pass (FR-29 CR-16): a skipped step renders with its own glyph "⊘" — visually DISTINCT from
+# open (·) and never done (✓). (Pre-FR-29 it shared the open glyph; now it is distinguishable.)
+assert_contains   "dev/skip: skipped step shown as ⊘Impact"    "$lib_trail" "⊘Impact"
 assert_not_contains "dev/skip: skipped step not marked done"   "$lib_trail" "✓Impact"
+assert_not_contains "dev/skip: skipped step not open glyph"    "$lib_trail" "·Impact"
 assert_no_global_counter "dev/skip"                            "$combined"
 assert_no_error_leak     "dev/skip"                            "$combined"
 

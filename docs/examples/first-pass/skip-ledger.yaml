@@ -1,0 +1,6 @@
+# Project-level skip roll-up (.hitl/skip-ledger.yaml) — cross-change recall (CR-10).
+schema_version: "1.0"
+entries:
+  - { change_id: GH-123, step: roi,       crit: ceremony, disposition: decline, domains: [billing], paths: ["src/billing/"], ts: "2026-07-27T10:00:00Z", resolved: false }
+  - { change_id: GH-123, step: test_plan, crit: standard, disposition: starter, domains: [billing], paths: ["src/billing/"], ts: "2026-07-27T10:01:00Z", resolved: false }
+  - { change_id: GH-123, step: deploy,    crit: floor,    disposition: decline, domains: [billing], paths: ["src/billing/"], ts: "2026-07-27T10:02:00Z", resolved: false }
