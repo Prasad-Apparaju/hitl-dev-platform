@@ -238,6 +238,40 @@ def test_r2_resolve_crit_is_monotonic_safe():
     assert any(f["code"] == "CRIT_MONOTONIC" for f in C.lint_catalog({"x": {"key": "x", "crit": "floor", "crit_by_tier": {3: "ceremony"}}}))
 
 
+def test_r3_hostile_input_fails_closed_never_crashes(tmp_path):
+    # round-3: run() must return findings (exit-2 material), never traceback, on hostile top-level input
+    import yaml
+    cases = [
+        {"first_pass": True, "workflow": "development"},                       # workflow a string
+        {"first_pass": True, "workflow": None, "skips": []},                   # workflow null
+        {"first_pass": True, "tier": 2, "workflow": {"id": "developement",     # typo'd workflow id
+         "steps": [{"key": "deploy", "status": "skipped"}]},
+         "skips": [base_skip("deploy", disposition="decline")]},
+        {"first_pass": True, "workflow": {"steps": [{"key": ["a"], "status": "skipped"}]}, "skips": []},  # unhashable key
+        {"first_pass": True, "workflow": {"steps": [{"key": "deploy", "status": ["skipped"]}]},           # unhashable status
+         "skips": [base_skip("deploy", disposition="decline", ack_by="x")]},
+    ]
+    wpath = os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml")
+    for i, ch in enumerate(cases):
+        p = tmp_path / f"c{i}.yaml"; p.write_text(yaml.safe_dump(ch))
+        fs = C.run(str(p), wpath)                       # must not raise
+        assert any(not f["waivable"] for f in fs), (i, fs)   # and must block
+
+
+def test_r3_malformed_catalog_cbt_does_not_crash():
+    # round-3 MED: a nested-dict crit_by_tier value must be ignored, not crash resolve_crit / lint_catalog
+    assert C.resolve_crit({"crit": "standard", "crit_by_tier": {3: {"nested": 1}}}, 3) == "standard"
+    assert isinstance(C.lint_catalog({"x": {"key": "x", "crit": "floor", "crit_by_tier": {3: {"n": 1}}}}), list)
+    # float-int crit_by_tier key now works instead of being silently ignored
+    assert C.resolve_crit({"crit": "standard", "crit_by_tier": {2.0: "floor"}}, 2) == "floor"
+
+
+def test_r3_non_dict_and_keyless_step_entries_flagged():
+    ch = {"first_pass": True, "tier": 2, "skips": [],
+          "workflow": {"steps": ["deploy", 42, {"status": "skipped"}]}}   # non-dicts + a keyless dict
+    assert "MALFORMED" in blockers(C.check(ch, CATALOG))
+
+
 def test_r1_starter_marker_must_head_a_line(tmp_path):
     buried = tmp_path / "x.md"; buried.write_text("# looks done\n<!-- needs-enhancement -->\n")
     ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "test_plan", "status": "starter"}]},

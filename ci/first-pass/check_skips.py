@@ -41,41 +41,65 @@ def _list(x):   return x if isinstance(x, list) else []
 def _str(v):    return v if isinstance(v, str) else ""
 
 
+_CRIT_BY_RANK = {v: k for k, v in CRIT_ORDER.items()}
+
+
+def _tier_key(k):
+    """A `crit_by_tier` key coerced to an int tier, or None if it isn't an integer tier (bool is ambiguous
+    and ignored; a float like 2.0 is accepted; a nested/other type is ignored, never crashes)."""
+    if isinstance(k, bool):
+        return None
+    if isinstance(k, int):
+        return k
+    if isinstance(k, float) and k.is_integer():
+        return int(k)
+    if isinstance(k, str) and k.lstrip("-").isdigit():
+        return int(k)
+    return None
+
+
 def resolve_crit(step_meta, tier):
     """Effective criticality of a catalog step at a tier. Criticality may only RISE with tier, so the
-    result is the MAX (by severity) of `crit` and every `crit_by_tier` value whose key <= tier — a
-    non-monotonic catalog can therefore never LOWER a floor at runtime (round-2 defense-in-depth; the
-    catalog is also lint-guarded)."""
+    result is the MAX (by severity) of `crit` and every valid `crit_by_tier` value whose key <= tier — a
+    non-monotonic catalog can never LOWER a floor at runtime (round-2 defense-in-depth). Tolerant of a
+    malformed cbt (non-dict, exotic keys, or a non-string value) — it is ignored, never crashed (round-3)."""
+    if not isinstance(step_meta, dict):
+        return "standard"
     base = step_meta.get("crit", "standard")
     if base not in CRIT_ORDER:
         base = "standard"
     best = CRIT_ORDER[base]
-    cbt = step_meta.get("crit_by_tier") or {}
-    for k, v in (cbt.items() if isinstance(cbt, dict) else []):
-        if str(k).lstrip("-").isdigit() and int(k) <= tier and v in CRIT_ORDER:
-            best = max(best, CRIT_ORDER[v])
+    cbt = step_meta.get("crit_by_tier")
+    if isinstance(cbt, dict):
+        for k, v in cbt.items():
+            tk = _tier_key(k)
+            if tk is not None and tk <= tier and isinstance(v, str) and v in CRIT_ORDER:
+                best = max(best, CRIT_ORDER[v])
     return _CRIT_BY_RANK[best]
 
 
-_CRIT_BY_RANK = {v: k for k, v in CRIT_ORDER.items()}
-
-
 def load_catalog(workflows_path, workflow_id="development"):
-    """{ step_key: {crit, crit_by_tier, no_omit} } for one workflow in ai/shared/workflows.yaml."""
+    """{ step_key: {crit, crit_by_tier, no_omit} } for one workflow. An unknown/typo'd workflow id returns
+    an EMPTY catalog (so every skip resolves to UNKNOWN_STEP — fail closed) rather than a KeyError (round-3)."""
     import yaml
     d = yaml.safe_load(open(workflows_path))
-    steps = d["workflows"][workflow_id]["steps"]
-    return {s["key"]: s for s in steps if isinstance(s, dict) and "key" in s}
+    wfs = d.get("workflows", {}) if isinstance(d, dict) else {}
+    wf = wfs.get(workflow_id) if isinstance(wfs, dict) else None
+    steps = wf.get("steps") if isinstance(wf, dict) else None
+    return {s["key"]: s for s in (steps or []) if isinstance(s, dict) and isinstance(s.get("key"), str)}
 
 
 def lint_catalog(catalog):
     """CRIT_MONOTONIC — criticality may only rise with tier, never fall (LLD §11 / NEG-8)."""
     findings = []
-    for key, meta in catalog.items():
+    for key, meta in (catalog.items() if isinstance(catalog, dict) else []):
+        if not isinstance(meta, dict):
+            continue
         base = meta.get("crit", "standard")
         b = CRIT_ORDER.get(base, 1)
-        cbt = meta.get("crit_by_tier") or {}
-        ordered = sorted(((int(k), v) for k, v in cbt.items() if str(k).lstrip("-").isdigit()), key=lambda x: x[0])
+        cbt = meta.get("crit_by_tier")
+        pairs = [(_tier_key(k), v) for k, v in cbt.items()] if isinstance(cbt, dict) else []
+        ordered = sorted(((tk, v) for tk, v in pairs if tk is not None and isinstance(v, str)), key=lambda x: x[0])
         prev = b
         for tier, v in ordered:
             cur = CRIT_ORDER.get(v, 1)
@@ -116,16 +140,22 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     if change.get("workflow") is not None and not isinstance(change.get("workflow"), dict):
         findings.append(_f("MALFORMED", "workflow is present but not a mapping"))
 
-    steplist = [s for s in _list(raw_steps) if isinstance(s, dict)]
-    # a duplicate step key can mask a skipped step behind a later `done` duplicate (round-2 LOW) — flag it.
-    seen_keys = {}
-    for s in steplist:
+    # a non-dict step entry, or a dict step whose `key` is missing/not a string, is malformed (round-3):
+    # flag it and keep it OUT of the step map (a non-string key would also be unhashable → crash).
+    steps, seen_keys = {}, {}
+    for s in _list(raw_steps):
+        if not isinstance(s, dict):
+            findings.append(_f("MALFORMED", f"step entry is not a mapping: {s!r}"))
+            continue
         k = s.get("key")
-        seen_keys[k] = seen_keys.get(k, 0) + 1
+        if not isinstance(k, str):
+            findings.append(_f("MALFORMED", f"step entry has a missing/non-string key: {k!r}"))
+            continue
+        seen_keys[k] = seen_keys.get(k, 0) + 1   # a duplicate key can mask a skip behind a later `done` (round-2)
+        steps[k] = s
     for k, n in seen_keys.items():
         if n > 1:
             findings.append(_f("MALFORMED", f"duplicate step key '{k}' ({n}x) — statuses may mask each other"))
-    steps = {s.get("key"): s for s in steplist}
     skips = [s for s in _list(raw_skips) if isinstance(s, dict)]
     skip_by_step = {}
     for s in skips:
@@ -135,7 +165,7 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     #    that hides a lightened floor step with no record (round-1 CRIT-2). Non-waivable.
     for key, st in steps.items():
         status = st.get("status")
-        if status is not None and status not in VALID_STATUSES:
+        if status is not None and (not isinstance(status, str) or status not in VALID_STATUSES):
             findings.append(_f("INVALID_STATUS", f"step '{key}' has unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
 
     # 1) LEDGER_STEPS both ways (NEG-7): every skipped/starter step has a record; every record maps to such a step.
@@ -209,6 +239,9 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
 
     # 3) ROLLUP (NEG-9): every per-change skip present in the project roll-up
     if rollup is not None:
+        if not isinstance(rollup, dict):
+            findings.append(_f("MALFORMED", f"roll-up is present but not a mapping ({type(rollup).__name__})"))
+            rollup = {}
         rolled = {(_str(e.get("change_id")), _str(e.get("step")))
                   for e in _list(rollup.get("entries")) if isinstance(e, dict)}
         cid = _str(change.get("change_id"))
@@ -220,13 +253,35 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
 
 
 def run(change_path, workflows_path, rollup_path=None, tier=None):
+    """Load + validate. NEVER raises on hostile input — any residual exception becomes a MALFORMED
+    blocker so the CLI honors its 'exit 2, never traceback' contract (round-3). A caller that treats only
+    a clean result as safe therefore fails CLOSED."""
     import yaml
-    change = yaml.safe_load(open(change_path))
-    catalog = load_catalog(workflows_path, (change or {}).get("workflow", {}).get("id", "development"))
-    rollup = yaml.safe_load(open(rollup_path)) if rollup_path and os.path.exists(rollup_path) else None
-    findings = lint_catalog(catalog) + check(change, catalog, tier=tier, rollup=rollup,
+    try:
+        change = yaml.safe_load(open(change_path))
+    except Exception as e:  # noqa: BLE001
+        return [_f("MALFORMED", f"cannot parse change file: {e.__class__.__name__}")]
+    if not isinstance(change, dict):
+        return [_f("MALFORMED", "change record is not a mapping")]
+    # resolve the workflow id defensively — a string/typo/non-str yields an empty catalog (fail closed)
+    wf = change.get("workflow")
+    wid = wf.get("id") if isinstance(wf, dict) else None
+    wid = wid if isinstance(wid, str) else "development"
+    try:
+        catalog = load_catalog(workflows_path, wid)
+    except Exception:  # noqa: BLE001
+        catalog = {}
+    rollup = None
+    if rollup_path and os.path.exists(rollup_path):
+        try:
+            rollup = yaml.safe_load(open(rollup_path))
+        except Exception:  # noqa: BLE001
+            rollup = {"entries": []}
+    try:
+        return lint_catalog(catalog) + check(change, catalog, tier=tier, rollup=rollup,
                                              change_dir=os.path.dirname(os.path.abspath(change_path)))
-    return findings
+    except Exception as e:  # noqa: BLE001 — fail CLOSED, never traceback
+        return [_f("MALFORMED", f"validation crashed on malformed input: {e.__class__.__name__}: {e}")]
 
 
 if __name__ == "__main__":
