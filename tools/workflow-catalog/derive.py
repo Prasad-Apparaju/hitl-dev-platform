@@ -74,7 +74,7 @@ def derive_steps(steps: list[dict]) -> list[dict]:
             num = str(n)
             phase_counts[phase] = phase_counts.get(phase, 0) + 1
             pstep = f"{phase}.{phase_counts[phase]}"
-        out.append({
+        step = {
             "n": num,
             "key": s["key"],
             "name": s.get("name", ""),
@@ -83,7 +83,12 @@ def derive_steps(steps: list[dict]) -> list[dict]:
             "phase_step": pstep,
             "command": s.get("command", ""),
             "role": s.get("role", ""),
-        })
+        }
+        # First Pass (FR-29): criticality metadata passes through untouched (like name/command/role).
+        for f in ("crit", "crit_by_tier", "no_omit"):
+            if f in s:
+                step[f] = s[f]
+        out.append(step)
     return out
 
 
@@ -184,6 +189,15 @@ def verify(catalog: dict, runtime: dict) -> list[str]:
             if d["phase"] != r.get("phase"):
                 problems.append(
                     f"{name}->{rid}: phase '{d['phase']}' != runtime '{r.get('phase')}' (key {d['key']})")
+            # First Pass criticality must stay in sync where the catalog defines it (FR-29).
+            for f in ("crit", "no_omit", "crit_by_tier"):
+                if f in d:
+                    dv, rv = d.get(f), r.get(f)
+                    if f == "no_omit":
+                        dv, rv = bool(dv), bool(rv)
+                    if dv != rv:
+                        problems.append(
+                            f"{name}->{rid}: {f} {dv!r} != runtime {rv!r} (key {d['key']})")
         derived_total = total_of(derived)
         rt_total = rt_workflows[rid].get("total")
         if rt_total is not None and derived_total != rt_total:

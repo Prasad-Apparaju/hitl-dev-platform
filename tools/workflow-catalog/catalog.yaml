@@ -28,48 +28,48 @@ spine:
   phases: [Requirements, Design, Build, Verify, Assess, Ship, Post-Ship]
   steps:
     # ── Requirements ──────────────────────────────────────────────
-    - { key: issue,              name: "GitHub Issue",                 label: "Issue",    phase: "Requirements", command: manual,                       role: PM }
-    - { key: figma,              name: "Figma Review",                 label: "Figma",    phase: "Requirements", command: manual,                       role: PM }
+    - { key: issue,              name: "GitHub Issue",                 label: "Issue",    phase: "Requirements", command: manual,                       role: PM, crit: standard }
+    - { key: figma,              name: "Figma Review",                 label: "Figma",    phase: "Requirements", command: manual,                       role: PM, crit: ceremony }
     # ── Design ────────────────────────────────────────────────────
-    - { key: impact,             name: "Impact Analysis",              label: "Impact",   phase: "Design", command: dev-apply-change,             role: Dev }
-    - { key: roi,                name: "ROI Estimate",                 label: "ROI",      phase: "Design", command: guided,                       role: PM }
-    - { key: docs,               name: "Update Docs",                  label: "Docs",     phase: "Design", command: dev-generate-docs,            role: Architect }
-    - { key: iac,                name: "Update IaC",                   label: "IaC",      phase: "Design", command: ops-apply-iac,                role: Ops }
-    - { key: test_plan,          name: "Test Case Planning",           label: "Tests",    phase: "Design", command: qa-plan-tests,                role: QA }
-    - { key: training,           name: "Training Plan Stub",           label: "Train",    phase: "Design", command: guided,                       role: PM }
-    - { key: packet,             name: "Package Decision Packet",      label: "Packet",   phase: "Design", command: manual,                       role: Architect }
-    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf,     command: ops-measure-baseline,         role: Ops }
-    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security, command: dev-review-security,          role: Architect }
-    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade,  command: ops-audit-dependencies,       role: Ops }
+    - { key: impact,             name: "Impact Analysis",              label: "Impact",   phase: "Design", command: dev-apply-change,             role: Dev, crit: standard, crit_by_tier: { 3: floor } }
+    - { key: roi,                name: "ROI Estimate",                 label: "ROI",      phase: "Design", command: guided,                       role: PM, crit: ceremony }
+    - { key: docs,               name: "Update Docs",                  label: "Docs",     phase: "Design", command: dev-generate-docs,            role: Architect, crit: standard }
+    - { key: iac,                name: "Update IaC",                   label: "IaC",      phase: "Design", command: ops-apply-iac,                role: Ops, crit: standard }
+    - { key: test_plan,          name: "Test Case Planning",           label: "Tests",    phase: "Design", command: qa-plan-tests,                role: QA, crit: standard }
+    - { key: training,           name: "Training Plan Stub",           label: "Train",    phase: "Design", command: guided,                       role: PM, crit: ceremony }
+    - { key: packet,             name: "Package Decision Packet",      label: "Packet",   phase: "Design", command: manual,                       role: Architect, crit: standard, crit_by_tier: { 3: floor } }
+    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf,     command: ops-measure-baseline,         role: Ops, crit: standard }
+    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security, command: dev-review-security,          role: Architect, crit: standard, crit_by_tier: { 3: floor } }
+    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade,  command: ops-audit-dependencies,       role: Ops, crit: standard, crit_by_tier: { 3: floor } }
     # ── Build (TDD cycle) ─────────────────────────────────────────
-    - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build", command: dev-tdd,                      role: Dev }
-    - { key: test_review,        name: "Human Reviews Tests",          label: "TstRvw",   phase: "Build", command: qa-review-tests,              role: QA }
-    - { key: design_plus,        name: "Tests Improve the Design",     label: "Dsn+",     phase: "Build", command: dev-tdd,                      role: Dev }
-    - { key: verify_red,         name: "Verify RED",                   label: "VfyRED",   phase: "Build", command: manual,                       role: Dev }
-    - { key: green,              name: "Generate Code (GREEN)",        label: "GREEN",    phase: "Build", command: dev-tdd,                      role: Dev }
-    - { key: verify_green,       name: "Verify GREEN",                 label: "VfyGRN",   phase: "Build", command: manual,                       role: Dev }
-    - { key: refactor,           name: "Refactor",                     label: "Refact",   phase: "Build", command: manual,                       role: Dev }
-    - { key: conventions,        name: "Convention Checks",            label: "Conv",     phase: "Build", command: dev-check-conventions,        role: Dev }
+    - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build", command: dev-tdd,                      role: Dev, crit: standard, no_omit: true }
+    - { key: test_review,        name: "Human Reviews Tests",          label: "TstRvw",   phase: "Build", command: qa-review-tests,              role: QA, crit: ceremony }
+    - { key: design_plus,        name: "Tests Improve the Design",     label: "Dsn+",     phase: "Build", command: dev-tdd,                      role: Dev, crit: standard }
+    - { key: verify_red,         name: "Verify RED",                   label: "VfyRED",   phase: "Build", command: manual,                       role: Dev, crit: standard }
+    - { key: green,              name: "Generate Code (GREEN)",        label: "GREEN",    phase: "Build", command: dev-tdd,                      role: Dev, crit: standard, no_omit: true }
+    - { key: verify_green,       name: "Verify GREEN",                 label: "VfyGRN",   phase: "Build", command: manual,                       role: Dev, crit: standard }
+    - { key: refactor,           name: "Refactor",                     label: "Refact",   phase: "Build", command: manual,                       role: Dev, crit: ceremony }
+    - { key: conventions,        name: "Convention Checks",            label: "Conv",     phase: "Build", command: dev-check-conventions,        role: Dev, crit: standard }
     # ── Verify ────────────────────────────────────────────────────
-    - { key: review1,            name: "Code Review Round 1",          label: "Rvw1",     phase: "Verify", command: dev-review-lld-adherence,     role: Dev }
-    - { key: review2,            name: "Code Review Round 2",          label: "Rvw2",     phase: "Verify", command: dev-review-security,          role: Dev }
-    - { key: arch_review,        name: "Architect Code Review",        label: "ArchRvw",  phase: "Verify", substep: true, parent: review2, command: architect-review-code, role: Architect }
-    - { key: rerun,              name: "Rerun Tests",                  label: "Rerun",    phase: "Verify", command: manual,                       role: Dev }
-    - { key: reconcile,          name: "Reconcile Docs",               label: "Recncl",   phase: "Verify", command: dev-generate-docs,            role: Dev }
-    - { key: qa_verify,          name: "QA Post-Handoff Verification", label: "QAVfy",    phase: "Verify", command: qa-verify-quality,            role: QA }
+    - { key: review1,            name: "Code Review Round 1",          label: "Rvw1",     phase: "Verify", command: dev-review-lld-adherence,     role: Dev, crit: standard }
+    - { key: review2,            name: "Code Review Round 2",          label: "Rvw2",     phase: "Verify", command: dev-review-security,          role: Dev, crit: standard }
+    - { key: arch_review,        name: "Architect Code Review",        label: "ArchRvw",  phase: "Verify", substep: true, parent: review2, command: architect-review-code, role: Architect, crit: standard, crit_by_tier: { 3: floor } }
+    - { key: rerun,              name: "Rerun Tests",                  label: "Rerun",    phase: "Verify", command: manual,                       role: Dev, crit: standard }
+    - { key: reconcile,          name: "Reconcile Docs",               label: "Recncl",   phase: "Verify", command: dev-generate-docs,            role: Dev, crit: standard }
+    - { key: qa_verify,          name: "QA Post-Handoff Verification", label: "QAVfy",    phase: "Verify", command: qa-verify-quality,            role: QA, crit: standard, crit_by_tier: { 3: floor } }
     # ── Assess ────────────────────────────────────────────────────
-    - { key: impact_brief,       name: "Downstream Impact Brief",      label: "ImpBrf",   phase: "Assess", command: dev-impact-brief,             role: Dev }
-    - { key: rollout,            name: "Risk-Rated Rollout Plan",      label: "Rollout",  phase: "Assess", command: ops-review-release,           role: Ops }
+    - { key: impact_brief,       name: "Downstream Impact Brief",      label: "ImpBrf",   phase: "Assess", command: dev-impact-brief,             role: Dev, crit: ceremony }
+    - { key: rollout,            name: "Risk-Rated Rollout Plan",      label: "Rollout",  phase: "Assess", command: ops-review-release,           role: Ops, crit: standard, crit_by_tier: { 3: floor } }
     # ── Ship ──────────────────────────────────────────────────────
-    - { key: verify_pr,          name: "Verify PR Completeness",       label: "VfyPR",    phase: "Ship", command: manual,                       role: Dev }
-    - { key: integration_verify, name: "Integration Verification",     label: "IntVfy",   phase: "Ship", command: architect-verify-traceability, role: Architect }
-    - { key: figma_compare,      name: "Figma Comparison",             label: "Figma2",   phase: "Ship", command: manual,                       role: QA }
-    - { key: deploy,             name: "Build, Migrate, Apply, Deploy",label: "Deploy",   phase: "Ship", command: ops-deploy,                   role: Ops }
-    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security, command: ops-pentest,                 role: Ops }
-    - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship", command: ops-post-deploy-monitor,      role: Ops }
+    - { key: verify_pr,          name: "Verify PR Completeness",       label: "VfyPR",    phase: "Ship", command: manual,                       role: Dev, crit: standard }
+    - { key: integration_verify, name: "Integration Verification",     label: "IntVfy",   phase: "Ship", command: architect-verify-traceability, role: Architect, crit: standard, crit_by_tier: { 2: floor } }
+    - { key: figma_compare,      name: "Figma Comparison",             label: "Figma2",   phase: "Ship", command: manual,                       role: QA, crit: ceremony }
+    - { key: deploy,             name: "Build, Migrate, Apply, Deploy",label: "Deploy",   phase: "Ship", command: ops-deploy,                   role: Ops, crit: floor }
+    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security, command: ops-pentest,                 role: Ops, crit: floor }
+    - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship", command: ops-post-deploy-monitor,      role: Ops, crit: floor }
     # ── Post-Ship ─────────────────────────────────────────────────
-    - { key: roi_30,             name: "30-Day ROI Check",             label: "30dROI",   phase: "Post-Ship", command: guided,                       role: PM }
-    - { key: roi_90,             name: "90-Day ROI Check",             label: "90dROI",   phase: "Post-Ship", command: guided,                       role: PM }
+    - { key: roi_30,             name: "30-Day ROI Check",             label: "30dROI",   phase: "Post-Ship", command: guided,                       role: PM, crit: ceremony }
+    - { key: roi_90,             name: "90-Day ROI Check",             label: "90dROI",   phase: "Post-Ship", command: guided,                       role: PM, crit: ceremony }
 
 workflows:
 

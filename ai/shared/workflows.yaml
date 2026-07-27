@@ -34,38 +34,38 @@ workflows:
     title: "Development — deliver a change"
     total: 31
     steps:
-      - { n: 1,   key: issue,              label: "Issue",    phase: "Requirements" }
-      - { n: 2,   key: figma,              label: "Figma",    phase: "Requirements" }
-      - { n: 3,   key: impact,             label: "Impact",   phase: "Design" }
-      - { n: 4,   key: roi,                label: "ROI",      phase: "Design" }
-      - { n: 5,   key: docs,               label: "Docs",     phase: "Design" }
-      - { n: 6,   key: iac,                label: "IaC",      phase: "Design" }
-      - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design" }
-      - { n: 8,   key: training,           label: "Train",    phase: "Design" }
-      - { n: 9,   key: packet,             label: "Packet",   phase: "Design" }
-      - { n: 10,  key: red,                label: "RED",      phase: "Build" }
-      - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build" }
-      - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build" }
-      - { n: 13,  key: verify_red,         label: "VfyRED",   phase: "Build" }
-      - { n: 14,  key: green,              label: "GREEN",    phase: "Build" }
-      - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build" }
-      - { n: 16,  key: refactor,           label: "Refact",   phase: "Build" }
-      - { n: 17,  key: conventions,        label: "Conv",     phase: "Build" }
-      - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify" }
-      - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify" }
-      - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify" }
-      - { n: 20,  key: rerun,              label: "Rerun",    phase: "Verify" }
-      - { n: 21,  key: reconcile,          label: "Recncl",   phase: "Verify" }
-      - { n: 22,  key: qa_verify,          label: "QAVfy",    phase: "Verify" }
-      - { n: 23,  key: impact_brief,       label: "ImpBrf",   phase: "Assess" }
-      - { n: 24,  key: rollout,            label: "Rollout",  phase: "Assess" }
-      - { n: 25,  key: verify_pr,          label: "VfyPR",    phase: "Ship" }
-      - { n: 26,  key: integration_verify, label: "IntVfy",   phase: "Ship" }
-      - { n: 27,  key: figma_compare,      label: "Figma2",   phase: "Ship" }
-      - { n: 28,  key: deploy,             label: "Deploy",   phase: "Ship" }
-      - { n: 29,  key: promote,            label: "Promote",  phase: "Ship" }
-      - { n: 30,  key: roi_30,             label: "30dROI",   phase: "Post-Ship" }
-      - { n: 31,  key: roi_90,             label: "90dROI",   phase: "Post-Ship" }
+      - { n: 1,   key: issue,              label: "Issue",    phase: "Requirements", crit: standard }
+      - { n: 2,   key: figma,              label: "Figma",    phase: "Requirements", crit: ceremony }
+      - { n: 3,   key: impact,             label: "Impact",   phase: "Design", crit: standard, crit_by_tier: { 3: floor } }
+      - { n: 4,   key: roi,                label: "ROI",      phase: "Design", crit: ceremony }
+      - { n: 5,   key: docs,               label: "Docs",     phase: "Design", crit: standard }
+      - { n: 6,   key: iac,                label: "IaC",      phase: "Design", crit: standard }
+      - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design", crit: standard }
+      - { n: 8,   key: training,           label: "Train",    phase: "Design", crit: ceremony }
+      - { n: 9,   key: packet,             label: "Packet",   phase: "Design", crit: standard, crit_by_tier: { 3: floor } }
+      - { n: 10,  key: red,                label: "RED",      phase: "Build", crit: standard, no_omit: true }
+      - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build", crit: ceremony }
+      - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build", crit: standard }
+      - { n: 13,  key: verify_red,         label: "VfyRED",   phase: "Build", crit: standard }
+      - { n: 14,  key: green,              label: "GREEN",    phase: "Build", crit: standard, no_omit: true }
+      - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build", crit: standard }
+      - { n: 16,  key: refactor,           label: "Refact",   phase: "Build", crit: ceremony }
+      - { n: 17,  key: conventions,        label: "Conv",     phase: "Build", crit: standard }
+      - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify", crit: standard }
+      - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify", crit: standard }
+      - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify", crit: standard, crit_by_tier: { 3: floor } }
+      - { n: 20,  key: rerun,              label: "Rerun",    phase: "Verify", crit: standard }
+      - { n: 21,  key: reconcile,          label: "Recncl",   phase: "Verify", crit: standard }
+      - { n: 22,  key: qa_verify,          label: "QAVfy",    phase: "Verify", crit: standard, crit_by_tier: { 3: floor } }
+      - { n: 23,  key: impact_brief,       label: "ImpBrf",   phase: "Assess", crit: ceremony }
+      - { n: 24,  key: rollout,            label: "Rollout",  phase: "Assess", crit: standard, crit_by_tier: { 3: floor } }
+      - { n: 25,  key: verify_pr,          label: "VfyPR",    phase: "Ship", crit: standard }
+      - { n: 26,  key: integration_verify, label: "IntVfy",   phase: "Ship", crit: standard, crit_by_tier: { 2: floor } }
+      - { n: 27,  key: figma_compare,      label: "Figma2",   phase: "Ship", crit: ceremony }
+      - { n: 28,  key: deploy,             label: "Deploy",   phase: "Ship", crit: floor }
+      - { n: 29,  key: promote,            label: "Promote",  phase: "Ship", crit: floor }
+      - { n: 30,  key: roi_30,             label: "30dROI",   phase: "Post-Ship", crit: ceremony }
+      - { n: 31,  key: roi_90,             label: "90dROI",   phase: "Post-Ship", crit: ceremony }
 
   # ── Brownfield setup: onboard an existing codebase (11 steps) ──────────────────────────────
   # Canonical source: ai/claude/start-brownfield/SKILL.md

@@ -238,8 +238,12 @@ workflow:
         example: "Tests"
       status:
         type: string
-        enum: [done, current, open]
-        description: "Completion state. Renders as ✓ (done) · ▶ (current) · · (open)."
+        enum: [done, current, open, skipped, starter]
+        description: |
+          Completion state. Renders as ✓ (done) · ▶ (current) · · (open) ·
+          ⊘ (skipped — First Pass defer/decline) · ◐ (starter — First Pass minimal, needs-enhancement).
+          `skipped`/`starter` are set by the First Pass driver (FR-29); each has a matching `skips[]`
+          entry (never silent). The current pointer never lands on a skipped/starter step.
       phase:
         type: string
         description: |
@@ -329,3 +333,67 @@ token_tracking:
         cost_usd:
           type: number
           description: "Session cost from Claude Code session summary"
+
+# --- First Pass (FR-29) ---
+
+first_pass:
+  type: boolean
+  description: |
+    When true, this change is running in First Pass — the thin-whole-first, skip-with-record mode.
+    The driver may set a step's `workflow.steps[].status` to `skipped` or `starter`, and every such
+    step MUST have a matching entry in `skips` below (never silent). Absent/false ⇒ the full plan runs
+    as today (back-compat). Optional; default false.
+  example: true
+
+skips:
+  type: array
+  description: |
+    The skip ledger for this change (FR-29). One entry per lightened step; the record is never silent.
+    Shared skip-record schema (also used by the Agentic Advisor, FR-28). Each per-change skip is also
+    appended to the project roll-up `.hitl/skip-ledger.yaml` (with domains/paths) for cross-change recall.
+  items:
+    step:
+      type: string
+      description: "The lightened workflow step's stable `key` (matches a workflow.steps[] entry)."
+      example: "roi"
+    crit:
+      type: string
+      enum: [ceremony, standard, floor]
+      description: "The step's tier-resolved criticality at skip time."
+    actor:
+      type: string
+      description: "Who chose to lighten this step (CR-11). Required, non-empty."
+      example: "pm@team"
+    reason:
+      type: string
+      description: "Why, in neutral language (CR-3). Required, non-empty."
+      example: "internal tool; ROI self-evident for v1"
+    ts:
+      type: string
+      description: "ISO-8601 timestamp of the decision."
+      example: "2026-07-27T10:00:00Z"
+    disposition:
+      type: string
+      enum: [defer, decline, starter]
+      description: |
+        defer = come back later (seeds a follow-up ticket); decline = deliberately not doing it;
+        starter = an honest-minimal artifact produced now, marked needs-enhancement (CR-6/CR-13).
+    followup_ref:
+      type: string
+      description: "Issue ref for the fast-follow, set when disposition=defer (CR-7). Optional otherwise."
+      example: "GH-456"
+    starter_artifact:
+      type: string
+      description: "Path to the needs-enhancement artifact, set when disposition=starter (CR-13)."
+      example: "docs/02-design/technical/lld/refund/test-plan.md"
+    waiver_ref:
+      type: string
+      description: "Waiver id, REQUIRED when crit=floor and the step maps to a fail-closed gate (CR-4). Skip != waiver."
+    ack_by:
+      type: string
+      description: "Accountable role that risk-accepted the skip, REQUIRED when crit=floor (CR-5)."
+      example: "security-lead"
+    resolved:
+      type: boolean
+      description: "True once the follow-up/enhancement has landed. Flips the breadcrumb glyph to ✓."
+      example: false
