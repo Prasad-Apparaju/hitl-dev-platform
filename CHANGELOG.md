@@ -4,6 +4,21 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.0] — 2026-07-27
+
+### Added
+
+**First Pass (EPIC #FR-29).** A right-sized, **thin-whole-first, skip-with-record** way to run any workflow, for teams (PMs especially) who want to ship a basic version fast and iterate. It is a mode *overlay* on the existing 31-step workflow (not a new workflow), extending the tier system — it leverages HITL's "think holistically, implement incrementally" philosophy: a thin pass through the whole, then deepen.
+
+- **Criticality on every step.** Each `development` step carries a tier-resolved `crit` (`ceremony | standard | floor`) in the workflow catalog, with `crit_by_tier` and `no_omit`. After HITL determines the plan, the team answers a single disposition **menu** (one pass, brief mode) per step: *do-now / starter / defer / decline*, constrained by criticality (`floor` → risk-accept only; TDD RED/GREEN → `no_omit`, starter-only).
+- **Never silent, floor protected.** Every skip is recorded (`{step, crit, actor, reason, ts, disposition}`) in a `skips[]` ledger + a project roll-up, in neutral language. The fail-closed validator `ci/first-pass/check_skips.py` blocks a silent skip, an unauthorized floor skip (needs the accountable role's `ack_by`, and a linked waiver for a hard-gate step — a skip ≠ a waiver), or a TDD omission — all non-waivable. Hardened across **4 clean-context adversarial rounds (converged)**.
+- **Give a starter, not a gap.** For an artifact-producing step, First Pass offers an *honest-minimal* starter marked `needs-enhancement` — e.g. the acceptance-criteria starter is simply *"a working version of the system exists and runs"* — never a fabricated full artifact.
+- **The record has teeth.** Deferred steps seed fast-follow tickets; recorded skips resurface politely (escalating by criticality, never blaming) at the follow-up, the next change touching the same area, and incident review.
+- **Breadcrumb + friction.** The trail shows the shape at a glance (`⊘` skipped, `◐` starter, distinct from open `·`); routine in-scope reads/edits proceed without permission prompts while critical/irreversible/outward actions still prompt (never "bypass all safety").
+- Generalizes the FR-28 Advisor skip pattern to the whole workflow; reuses tiers, #10 waivers, and the issue model. Requirements: `docs/01-product/first-pass/requirements.md`; design: `docs/design/first-pass/`; worked example: `docs/examples/first-pass/`; product-repo CI template: `ci/workflows/first-pass-check.yml`.
+
+---
+
 ## [2.3.0] — 2026-07-24
 
 ### Added

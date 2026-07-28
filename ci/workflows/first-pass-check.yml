@@ -1,0 +1,35 @@
+name: First Pass skip ledger
+
+# Gates a First Pass change (FR-29): on any PR that touches the change record, run the fail-closed
+# skip-ledger validator. It exits 0 when clean and 2 on any non-waivable finding (a silent skip, an
+# unauthorized floor skip, a TDD omission, a malformed ledger, ...) — failing the build. A change that
+# is not running First Pass (`first_pass` absent/false) passes unchanged.
+#
+# Copy to .github/workflows/ in your product repo (init-project.sh does this). Requires ci/first-pass/
+# and ai/shared/workflows.yaml to be present (copied by onboarding, like ci/manifest-agentic).
+
+on:
+  pull_request:
+    paths:
+      - '.hitl/current-change.yaml'
+      - '.hitl/skip-ledger.yaml'
+      - 'ci/first-pass/**'
+
+jobs:
+  first-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyyaml
+      - name: Validate the skip ledger (fail-closed)
+        run: |
+          if [ -f .hitl/current-change.yaml ]; then
+            rollup=""
+            [ -f .hitl/skip-ledger.yaml ] && rollup="--rollup .hitl/skip-ledger.yaml"
+            python3 ci/first-pass/check_skips.py .hitl/current-change.yaml $rollup
+          else
+            echo "No .hitl/current-change.yaml — nothing to validate."
+          fi
