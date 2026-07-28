@@ -56,7 +56,11 @@ HARD_GATE_STEPS = {"conventions", "qa_verify", "arch_review", "integration_verif
                    "security_review", "sec_design", "cve_audit", "pentest", "manifest_validate"}
 # Non-waivable finding codes — the framework's guarantee under First Pass. A mismatch fails CLOSED.
 NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
-                "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC"}
+                "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC",
+                # a load-bearing step DELETED from the plan (not skipped, no record) is a bypass (codex-1)
+                "INCOMPLETE_PLAN",
+                # an unmarked starter presented as complete is the "fabricated full artifact" ADR-6 forbids (codex-4)
+                "STARTER_MARK"}
 STARTER_MARKER = "needs-enhancement"
 
 
@@ -141,8 +145,14 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     findings = []
     if not isinstance(change, dict):
         return [_f("SILENT_SKIP", "change record is not a mapping")]
-    if not change.get("first_pass"):
+    # `first_pass` gates enforcement, so its type is load-bearing: a falsey non-bool ([], {}, 0, "") must NOT
+    # be read as an intentional `false` and disable the whole guarantee (codex-2). Enforce unless it is the
+    # literal boolean False or genuinely absent; a present-but-non-bool value is MALFORMED *and* enforced.
+    fp = change.get("first_pass")
+    if fp is None or fp is False:
         return findings  # not a First Pass change — nothing to enforce (back-compat)
+    if type(fp) is not bool:
+        findings.append(_f("MALFORMED", f"first_pass is present but not a boolean ({fp!r}) — enforcing at strictest"))
 
     # tier must be a real int in range — a string "3" or bool True must NOT silently default to 2 and let
     # a tier-3 floor escape (round-1 HIGH-3). Fail closed AND evaluate at the strictest tier so no floor hides.
@@ -184,12 +194,24 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     for s in skips:
         skip_by_step.setdefault(_str(s.get("step")), []).append(s)
 
-    # 0) every step status must be recognized — an unknown status (e.g. "declined") is a fail-open vector
-    #    that hides a lightened floor step with no record (round-1 CRIT-2). Non-waivable.
+    # 0) every step must carry a recognized string status — a missing/null status (codex-3) or an unknown
+    #    one (e.g. "declined", round-1 CRIT-2) is a fail-open vector that leaves a floor step in the plan
+    #    with no state and no record. Every present step must be explicit. Non-waivable.
     for key, st in steps.items():
         status = st.get("status")
-        if status is not None and (not isinstance(status, str) or status not in VALID_STATUSES):
-            findings.append(_f("INVALID_STATUS", f"step '{key}' has unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
+        if not isinstance(status, str) or status not in VALID_STATUSES:
+            findings.append(_f("INVALID_STATUS", f"step '{key}' has missing/unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
+
+    # 0.5) PLAN COMPLETENESS (codex-1): a load-bearing step DELETED from the plan entirely leaves no status
+    #    and no record to inspect — silently omitting it. Every catalog step that is `floor` (at this tier) or
+    #    `no_omit` MUST be present in steps[]; a missing one is a non-waivable INCOMPLETE_PLAN. (Ceremony/
+    #    standard steps may be absent — they're freely skippable — but a floor/TDD step can't just vanish.)
+    for ckey, cmeta in (catalog.items() if isinstance(catalog, dict) else []):
+        if not isinstance(cmeta, dict):
+            continue
+        must_be_present = resolve_crit(cmeta, tier) == "floor" or bool(cmeta.get("no_omit"))
+        if must_be_present and ckey not in steps:
+            findings.append(_f("INCOMPLETE_PLAN", f"load-bearing step '{ckey}' is missing from the plan (floor/no_omit steps cannot be omitted)"))
 
     # 1) LEDGER_STEPS both ways (NEG-7): every skipped/starter step has a record; every record maps to such a step.
     for key, st in steps.items():

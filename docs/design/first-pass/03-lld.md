@@ -283,11 +283,16 @@ adversarial rounds: **a mismatched/typo'd/wrong-type input must fail closed, nev
 | `INVALID_TIER` | `tier` is not an int in 0..4 (a string/bool must not default to 2 and dodge a tier-3 floor); criticality is then evaluated at the strictest tier | — |
 | `MALFORMED` | a present-but-wrong-type `workflow`/`steps`/`skips`, a non-string/duplicate step key, a duplicate YAML key, or any parse/validation crash | — |
 | `CRIT_MONOTONIC` | a catalog `crit_by_tier` lowers criticality as tier rises (`resolve_crit` is also monotonic-safe by construction, so a bad catalog can never lower a floor at runtime) | — |
+| `INCOMPLETE_PLAN` | a load-bearing step (`floor` at this tier, or `no_omit`) is **missing from the plan entirely** — deleting it instead of skipping it left no status/record to inspect (codex-1) | — |
+| `STARTER_MARK` | a `starter` artifact is missing / unreadable / not marked `needs-enhancement` on its own line — an unmarked stub presented as complete is the fabricated-artifact ADR-6 forbids (codex-4) | CR-13 |
 
-**Waivable (surfaced, not blocking):** `LEDGER_STEPS` (ledger↔steps inconsistency), `STARTER_MARK` (a starter
-artifact must carry the `needs-enhancement` marker on its own line), `ROLLUP` (a per-change skip missing from
-the auxiliary `.hitl/skip-ledger.yaml`, or a malformed roll-up — resurfacing degraded, change not blocked),
-`DEFER_NO_FOLLOWUP` (a deferred step with no linked fast-follow).
+**`first_pass` is type-strict:** a present-but-non-bool value (`[]`, `0`, `""`) is `MALFORMED` **and** enforces —
+it is never read as an intentional `false` (codex-2). Every step must carry a **recognized string status**;
+missing/null is `INVALID_STATUS` (codex-3).
+
+**Waivable (surfaced, not blocking):** `LEDGER_STEPS` (ledger↔steps inconsistency), `ROLLUP` (a per-change skip
+missing from the auxiliary `.hitl/skip-ledger.yaml`, or a malformed roll-up — resurfacing degraded, change not
+blocked), `DEFER_NO_FOLLOWUP` (a deferred step with no linked fast-follow).
 
 **Permission classifier** (`ci/first-pass/permissions.py`, §9) and the **resurfacing voice**
 (`ci/first-pass/resurface.py`, §6) were hardened in the same rounds: reads/edits auto-allow only within the

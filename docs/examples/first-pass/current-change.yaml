@@ -10,12 +10,18 @@ allowed_paths: ["src/billing/**", "tests/billing/**"]
 workflow:
   id: development
   total: 31
+  # A real change carries the whole plan; a floor/no_omit step can never just be omitted (INCOMPLETE_PLAN).
+  # Here impact is done, ROI declined, the test plan is a starter, RED is current, and deploy is declined;
+  # the remaining load-bearing steps (green, integration_verify, promote) are still open.
   steps:
-    - { n: 3,  key: impact,    label: "Impact", status: done,    phase: "Design" }
-    - { n: 4,  key: roi,       label: "ROI",    status: skipped, phase: "Design" }
-    - { n: 7,  key: test_plan, label: "Tests",  status: starter, phase: "Design" }
-    - { n: 10, key: red,       label: "RED",    status: current, phase: "Build" }
-    - { n: 28, key: deploy,    label: "Deploy", status: skipped, phase: "Ship" }
+    - { n: 3,  key: impact,             label: "Impact",  status: done,    phase: "Design" }
+    - { n: 4,  key: roi,                label: "ROI",     status: skipped, phase: "Design" }
+    - { n: 7,  key: test_plan,          label: "Tests",   status: starter, phase: "Design" }
+    - { n: 10, key: red,                label: "RED",     status: current, phase: "Build" }
+    - { n: 14, key: green,              label: "GREEN",   status: open,    phase: "Build" }
+    - { n: 26, key: integration_verify, label: "IntVfy",  status: open,    phase: "Ship" }
+    - { n: 28, key: deploy,             label: "Deploy",  status: skipped, phase: "Ship" }
+    - { n: 29, key: promote,            label: "Promote", status: open,    phase: "Ship" }
 skips:
   - { step: roi,       crit: ceremony, actor: "pm@acme",  reason: "internal ops tool; ROI self-evident for v1", ts: "2026-07-27T10:00:00Z", disposition: decline }
   - { step: test_plan, crit: standard, actor: "dev@acme", reason: "thin v1; happy path only for now",           ts: "2026-07-27T10:01:00Z", disposition: starter, starter_artifact: "test-plan.starter.md" }

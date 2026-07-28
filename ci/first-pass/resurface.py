@@ -12,8 +12,11 @@ CRIT_RANK = {"ceremony": 0, "standard": 1, "floor": 2}
 BLAME_WORDS = {"failed", "negligent", "careless", "fault", "blame", "lazy", "should have", "sloppy"}
 # Redaction stems — catch inflections (failing, negligence, carelessly), hyphen/space variants
 # (care-less), and flexible whitespace (should  have / should\nhave).
-_BLAME_STEMS = [r"fail\w*", r"neglig\w*", r"care[\s-]?less\w*", r"fault\w*", r"blam\w*",
-                r"laz\w*", r"should\s+have", r"sloppy", r"sloppily"]
+# separators between phrase words — spaces, hyphens, and unicode dashes (codex-10: "should-have" leaked)
+_SEP = r"[\s\-‐-―]+"           # one-or-more (required between should/have)
+_SEPOPT = r"(?:[\s\-‐-―]+)?"   # optional (careless / care-less / care less)
+_BLAME_STEMS = [r"fail\w*", r"neglig\w*", r"care" + _SEPOPT + r"less\w*", r"fault\w*", r"blam\w*",
+                r"laz\w*", r"should" + _SEP + r"have", r"sloppy", r"sloppil\w*"]
 _BLAME_RE = re.compile(r"\b(?:" + "|".join(_BLAME_STEMS) + r")\b", re.I | re.S)
 
 
@@ -25,28 +28,40 @@ def _paths_overlap(a, b):
     return False
 
 
+def _strs(x):
+    """The hashable string members of a would-be list — tolerates a non-list or exotic members without
+    crashing on set() construction (codex-11: crit as [], domains as [[]])."""
+    return {v for v in (x if isinstance(x, list) else []) if isinstance(v, str)}
+
+
 def overlaps(entry, new_domains, new_paths):
     """Does a ledger entry's area intersect the new change's? (domain OR path-prefix intersection.)"""
     if not isinstance(entry, dict):
         return False
-    ed = set(entry.get("domains") or [])
-    if ed & set(new_domains or []):
+    if _strs(entry.get("domains")) & _strs(new_domains):
         return True
-    return _paths_overlap(entry.get("paths") or [], new_paths or [])
+    return _paths_overlap(_strs(entry.get("paths")), _strs(new_paths))
+
+
+def _rank(e):
+    c = e.get("crit") if isinstance(e, dict) else None
+    return -CRIT_RANK.get(c if isinstance(c, str) else "", 1)   # non-string crit → standard rank, no crash
 
 
 def surface(rollup, new_domains, new_paths):
     """The unresolved skips to raise at a new overlapping change. A `ceremony` skip is NOT resurfaced
-    here (only at its own follow-up); `standard`/`floor` are, escalating by rank (CR-8)."""
+    here (only at its own follow-up); `standard`/`floor` are, escalating by rank (CR-8). Tolerates a
+    malformed roll-up / entries without crashing (codex-11)."""
+    rollup = rollup if isinstance(rollup, dict) else {}
     out = []
-    for e in ((rollup or {}).get("entries") or []):
+    for e in (rollup.get("entries") if isinstance(rollup.get("entries"), list) else []):
         if not isinstance(e, dict) or e.get("resolved"):
             continue
         if e.get("crit") == "ceremony":
             continue
         if overlaps(e, new_domains, new_paths):
             out.append(e)
-    out.sort(key=lambda e: -CRIT_RANK.get(e.get("crit"), 1))   # floor first
+    out.sort(key=_rank)   # floor first
     return out
 
 

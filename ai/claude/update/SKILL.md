@@ -275,7 +275,11 @@ else
     cp "$ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/ 2>/dev/null
     echo "  ✓ ci/manifest-drift/ refreshed"
   fi
-  git add ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift .github/workflows/first-pass-check.yml 2>/dev/null || true
+  # stage ONLY the paths that exist — a single `git add` over an absent optional path errors on the whole
+  # pathspec and (with `|| true`) would silently stage NOTHING (codex-7).
+  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift .github/workflows/first-pass-check.yml; do
+    [[ -e "$p" ]] && git add "$p"
+  done
 fi
 ```
 

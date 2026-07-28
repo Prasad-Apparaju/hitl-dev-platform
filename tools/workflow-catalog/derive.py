@@ -189,15 +189,15 @@ def verify(catalog: dict, runtime: dict) -> list[str]:
             if d["phase"] != r.get("phase"):
                 problems.append(
                     f"{name}->{rid}: phase '{d['phase']}' != runtime '{r.get('phase')}' (key {d['key']})")
-            # First Pass criticality must stay in sync where the catalog defines it (FR-29).
+            # First Pass criticality must stay in sync BOTH WAYS — comparing only `if f in d` let a DELETED
+            # source field disappear the check (codex-5). Compare presence+value regardless of which side has it.
             for f in ("crit", "no_omit", "crit_by_tier"):
-                if f in d:
-                    dv, rv = d.get(f), r.get(f)
-                    if f == "no_omit":
-                        dv, rv = bool(dv), bool(rv)
-                    if dv != rv:
-                        problems.append(
-                            f"{name}->{rid}: {f} {dv!r} != runtime {rv!r} (key {d['key']})")
+                dv, rv = d.get(f), r.get(f)
+                if f == "no_omit":
+                    dv, rv = bool(dv), bool(rv)
+                if dv != rv:
+                    problems.append(
+                        f"{name}->{rid}: {f} {dv!r} != runtime {rv!r} (key {d['key']})")
         derived_total = total_of(derived)
         rt_total = rt_workflows[rid].get("total")
         if rt_total is not None and derived_total != rt_total:

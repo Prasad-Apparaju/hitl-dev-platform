@@ -138,6 +138,22 @@ def test_r2_windows_abs_paths_escape_project():
         assert P.decide("read", p)[0] is True, p
 
 
+def test_codex8_malformed_permission_inputs_fail_safe():
+    # a scalar scope_paths must NOT be iterated char-by-char into scopes 's','r','c' (auto-allowing 's/...')
+    assert P.decide("edit", "s/secrets.txt", "src")[0] is True
+    assert P.decide("read", None, ["src/**"])[0] is True        # missing read path prompts
+    assert P.decide([], "x", ["src"])[0] is True                # non-string action prompts (no crash)
+    assert P.decide("edit", 5, ["src"])[0] is True              # non-string path prompts
+
+
+def test_codex11_resurface_helpers_do_not_crash_on_malformed():
+    for bad in ([{"x": 1}],
+                {"entries": [{"crit": [], "paths": ["src"], "resolved": False}]},
+                {"entries": [{"crit": "standard", "domains": [[]], "resolved": False}]},
+                {"entries": "nope"}, None):
+        assert isinstance(R.surface(bad, ["api"], ["src/x"]), list)   # returns a list, never raises
+
+
 def test_r2_blame_redaction_covers_inflections():
     # round-2 LOW: stems + hyphen/space variants + flexible whitespace
     msg = R.message({"reason": "careless, negligence, care-less, should  have, failing, sloppily"}).lower()

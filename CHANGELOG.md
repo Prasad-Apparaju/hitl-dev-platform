@@ -4,6 +4,22 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.3] — 2026-07-27
+
+### Fixed
+
+**First Pass — closes a Codex adversarial review (2 CRITICAL + 6 HIGH + 2 MED + 1 LOW).** An independent clean-context review found gaps the four Fable rounds missed, chiefly in *plan completeness* and the *onboarding copy flows*:
+
+- **Completeness bypass (CRITICAL):** deleting a load-bearing step (a `floor` step at tier, or `no_omit`) from the plan entirely — rather than marking it skipped — left no record to inspect and passed clean. Now `INCOMPLETE_PLAN` (non-waivable): every floor/no_omit catalog step must be present in the plan.
+- **`first_pass` type (CRITICAL):** a falsey non-boolean (`[]`, `0`, `""`) disabled all enforcement. Now type-strict — a present-but-non-bool value is `MALFORMED` and still enforces; only literal `false`/absent is back-compat clean.
+- Missing/null step status now blocks (`INVALID_STATUS`); an unmarked starter artifact now blocks (`STARTER_MARK` is non-waivable) and the CI gate runs on every PR so an artifact-only edit can't bypass it.
+- `derive.py verify` now catches a *deleted* crit/no_omit/crit_by_tier field (was only compared when present); the permission classifier fails safe on malformed inputs (a string `scope_paths`, a null read path); resurfacing redacts hyphenated blame variants and no longer crashes on malformed roll-up entries.
+- Onboarding is convergent: `init-project.sh` no longer lets a stale `ci/first-pass` dir suppress the install, and the `dev-update` re-sync stages copied files even when an optional path is absent.
+
+Hardened across five clean-context adversarial passes (four Fable + one Codex); each finding fixed by mutation and regression-tested.
+
+---
+
 ## [2.4.2] — 2026-07-27
 
 ### Added

@@ -169,7 +169,9 @@ setup_tools() {
 
   # First Pass (FR-29): the fail-closed validator + its criticality catalog (co-located = the CI-trusted
   # source) + the CI gate template. check_skips runs via project-relative paths, so it lives in the repo.
-  if [[ -d "$PLATFORM_ROOT/ci/first-pass" && ! -d "$TARGET_DIR/ci/first-pass" ]]; then
+  # Idempotent / convergent: copy each file independently (do NOT gate on the target dir existing — a stale
+  # or partial dir must still converge to a complete install; codex-6), then assert the validator + catalog.
+  if [[ -d "$PLATFORM_ROOT/ci/first-pass" ]]; then
     mkdir -p "$TARGET_DIR/ci/first-pass"
     cp "$PLATFORM_ROOT/ci/first-pass/"*.py "$TARGET_DIR/ci/first-pass/" 2>/dev/null || true
     [[ -f "$PLATFORM_ROOT/ai/shared/workflows.yaml" ]] && cp "$PLATFORM_ROOT/ai/shared/workflows.yaml" "$TARGET_DIR/ci/first-pass/workflows.yaml"
@@ -177,19 +179,22 @@ setup_tools() {
       mkdir -p "$TARGET_DIR/.github/workflows"
       [[ ! -f "$TARGET_DIR/.github/workflows/first-pass-check.yml" ]] && cp "$PLATFORM_ROOT/ci/workflows/first-pass-check.yml" "$TARGET_DIR/.github/workflows/"
     fi
-    echo "✓ ci/first-pass/ (First Pass validator + catalog) + .github/workflows/first-pass-check.yml"
-    (( copied++ )) || true
+    if [[ -f "$TARGET_DIR/ci/first-pass/check_skips.py" && -f "$TARGET_DIR/ci/first-pass/workflows.yaml" ]]; then
+      echo "✓ ci/first-pass/ (First Pass validator + catalog) + .github/workflows/first-pass-check.yml"
+      (( copied++ )) || true
+    else
+      echo "✗ ci/first-pass/ install incomplete (check_skips.py / workflows.yaml missing)" >&2
+    fi
   fi
 
   # Compound-agentic surface (#10): the system-manifest validator + posture-view generator, invoked
-  # repo-relative by pm-design-feature. Self-contained; preserve the repo's manifest-waivers.yaml.
-  if [[ -d "$PLATFORM_ROOT/ci/manifest-agentic" && ! -d "$TARGET_DIR/ci/manifest-agentic" ]]; then
+  # repo-relative by pm-design-feature. Self-contained; PRESERVE the repo's manifest-waivers.yaml.
+  if [[ -d "$PLATFORM_ROOT/ci/manifest-agentic" ]]; then
     mkdir -p "$TARGET_DIR/ci/manifest-agentic" "$TARGET_DIR/tools/manifest-agentic"
     cp "$PLATFORM_ROOT/ci/manifest-agentic/"*.py "$TARGET_DIR/ci/manifest-agentic/" 2>/dev/null || true
-    [[ -f "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" "$TARGET_DIR/ci/manifest-agentic/"
+    [[ ! -f "$TARGET_DIR/ci/manifest-agentic/manifest-waivers.yaml" && -f "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" "$TARGET_DIR/ci/manifest-agentic/"
     cp "$PLATFORM_ROOT/tools/manifest-agentic/"*.py "$TARGET_DIR/tools/manifest-agentic/" 2>/dev/null || true
-    echo "✓ ci/manifest-agentic/ (compound-agentic validator) + tools/manifest-agentic/"
-    (( copied++ )) || true
+    [[ -f "$TARGET_DIR/ci/manifest-agentic/check_manifest_agentic.py" ]] && { echo "✓ ci/manifest-agentic/ (compound-agentic validator) + tools/manifest-agentic/"; (( copied++ )) || true; }
   fi
 
   if [[ -f "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" && ! -f "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" ]]; then

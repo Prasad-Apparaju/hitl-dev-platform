@@ -116,3 +116,17 @@ def test_tags_compose_evidence():
     assert "regression_test" in ev          # from fix
     assert "behavior_unchanged" in ev        # from refactor
     assert "perf_budget_met" in ev           # from perf
+
+
+def test_verify_catches_deleted_crit_field():
+    # codex-5: deleting a source crit/no_omit/crit_by_tier must FAIL verify (was masked by `if f in d`)
+    import derive, yaml, os
+    HERE = os.path.dirname(__file__)
+    cat = yaml.safe_load(open(os.path.join(HERE, "catalog.yaml")))
+    rt = yaml.safe_load(open(os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml")))
+    assert derive.verify(cat, rt) == []                      # baseline clean
+    for st in cat["spine"]["steps"]:
+        if st["key"] == "deploy":
+            st.pop("crit")                                   # delete the floor crit from the source
+    probs = derive.verify(cat, rt)
+    assert any("deploy" in p and "crit" in p for p in probs)

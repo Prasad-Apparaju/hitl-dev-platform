@@ -24,16 +24,27 @@ def blockers(findings):
 
 def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1"):
     """Build a change record whose steps[] statuses match the skips (skipped/starter) unless overridden."""
-    steps = []
+# every load-bearing (floor OR no_omit) step across all tiers — seed them `done` by default so a partial
+# test plan doesn't spuriously trip INCOMPLETE_PLAN (codex-1); a test that WANTS to omit one overrides it.
+LOADBEARING = ["deploy", "promote", "integration_verify", "red", "green",
+               "impact", "packet", "arch_review", "qa_verify", "rollout"]
+
+
+def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1", omit=()):
     over = step_over or {}
+    by_key = {}
+    for k in LOADBEARING:
+        if k not in omit:
+            by_key[k] = {"n": 1, "key": k, "label": k, "status": "done", "phase": "X"}
     for s in skips:
         k = s["step"]
         status = over.get(k, "starter" if s.get("disposition") == "starter" else "skipped")
-        steps.append({"n": 1, "key": k, "label": k, "status": status, "phase": "X"})
-    # a couple of normal steps too
-    steps += [{"n": 2, "key": "green", "label": "GREEN", "status": "done", "phase": "Build"}]
+        by_key[k] = {"n": 1, "key": k, "label": k, "status": status, "phase": "X"}
+    for k, v in over.items():                      # allow overriding a load-bearing step's status directly
+        if k in by_key:
+            by_key[k]["status"] = v
     return {"first_pass": first_pass, "tier": tier, "change_id": change_id,
-            "workflow": {"id": "development", "steps": steps}, "skips": skips}
+            "workflow": {"id": "development", "steps": list(by_key.values())}, "skips": skips}
 
 
 def base_skip(step, **kw):
@@ -198,12 +209,10 @@ def test_r1_non_int_tier_blocks_and_fails_safe_high():
 
 def test_r1_hard_gate_set_is_accurate():
     # dead entries do no harm; deploy/promote are ack-only (no waiver); real gates need a waiver (HIGH-4)
-    deploy = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "deploy", "status": "skipped"}]},
-              "skips": [base_skip("deploy", disposition="decline", ack_by="ops")]}
+    deploy = make_change([base_skip("deploy", disposition="decline", ack_by="ops")], tier=2)
     assert C.check(deploy, CATALOG) == []          # deploy floor: ack is the control, no waiver gate
     for gate in ("qa_verify", "arch_review"):      # floor gates at tier 3 need a waiver
-        ch = {"first_pass": True, "tier": 3, "workflow": {"steps": [{"key": gate, "status": "skipped"}]},
-              "skips": [base_skip(gate, disposition="decline", ack_by="lead")]}
+        ch = make_change([base_skip(gate, disposition="decline", ack_by="lead")], tier=3)
         assert "FLOOR_NO_WAIVER" in blockers(C.check(ch, CATALOG)), gate
 
 
@@ -284,8 +293,7 @@ def test_r4_unhashable_crit_and_status_do_not_crash():
 
 def test_r4_malformed_rollup_warns_not_blocks():
     # round-4 LOW-3: a malformed AUXILIARY roll-up warns (waivable), it does not block the change
-    ch = {"first_pass": True, "tier": 2, "workflow": {"steps": [{"key": "roi", "status": "skipped"}]},
-          "skips": [base_skip("roi", disposition="decline")]}
+    ch = make_change([base_skip("roi", disposition="decline")], tier=2)
     fs = C.check(ch, CATALOG, rollup=[1, 2])
     assert [f for f in fs if not f["waivable"]] == []      # no blocker
     assert any(f["code"] == "ROLLUP" for f in fs)          # but a warning
@@ -299,6 +307,43 @@ def test_r4_duplicate_yaml_key_rejected(tmp_path):
                  "workflow:\n  steps: []\nskips: []\n")
     fs = C.run(str(p), os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml"))
     assert any(not f["waivable"] for f in fs)              # MALFORMED, blocks
+
+
+def test_codex1_omitting_a_floor_step_is_incomplete_plan():
+    # a load-bearing step DELETED from the plan (not skipped, no record) must BLOCK — the completeness bypass
+    ch = make_change([], omit=("deploy",))            # deploy floor step removed from steps[]
+    assert "INCOMPLETE_PLAN" in blockers(C.check(ch, CATALOG, tier=2))
+    ch2 = make_change([], omit=("red",))              # a no_omit (TDD) step removed
+    assert "INCOMPLETE_PLAN" in blockers(C.check(ch2, CATALOG, tier=2))
+    # the reviewer's exact case: only a ceremony step present, everything load-bearing gone
+    bare = {"first_pass": True, "tier": 4, "workflow": {"id": "development",
+            "steps": [{"key": "roi", "status": "done"}]}, "skips": []}
+    assert "INCOMPLETE_PLAN" in blockers(C.check(bare, CATALOG))
+
+
+def test_codex2_falsey_non_bool_first_pass_still_enforces():
+    # `first_pass: []` / 0 / "" must NOT be read as false and disable enforcement
+    for val in ([], {}, 0, ""):
+        ch = {"first_pass": val, "tier": 4, "workflow": {"id": "development",
+              "steps": [{"key": "deploy", "status": "skipped"}]}, "skips": []}
+        b = blockers(C.check(ch, CATALOG))
+        assert "MALFORMED" in b and b, val       # malformed + full enforcement (not clean)
+    assert C.check({"first_pass": False, "tier": 2}, CATALOG) == []   # literal false = back-compat clean
+
+
+def test_codex3_missing_or_null_status_blocks():
+    # deploy (floor) present in the plan but with NO status / explicit null must not pass as clean
+    steps = [{"key": k, "status": "done"} for k in LOADBEARING if k != "deploy"]
+    for bad_deploy in ({"key": "deploy"}, {"key": "deploy", "status": None}):
+        ch = {"first_pass": True, "tier": 2, "workflow": {"id": "development", "steps": steps + [bad_deploy]}, "skips": []}
+        assert "INVALID_STATUS" in blockers(C.check(ch, CATALOG, tier=2)), bad_deploy
+
+
+def test_codex4_starter_mark_is_non_waivable(tmp_path):
+    bad = tmp_path / "s.md"; bad.write_text("# complete, no marker\n")
+    ch = make_change([base_skip("test_plan", disposition="starter", starter_artifact="s.md")], tier=2)
+    assert "STARTER_MARK" in blockers(C.check(ch, CATALOG, change_dir=str(tmp_path)))   # now blocks (exit 2)
+    assert "STARTER_MARK" in C.NON_WAIVABLE
 
 
 def test_r1_starter_marker_must_head_a_line(tmp_path):

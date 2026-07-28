@@ -8,12 +8,11 @@ name: First Pass skip ledger
 # Copy to .github/workflows/ in your product repo (init-project.sh does this). Requires ci/first-pass/
 # and ai/shared/workflows.yaml to be present (copied by onboarding, like ci/manifest-agentic).
 
+# Runs on EVERY PR — not path-filtered — so an edit that only touches a starter artifact (referenced by the
+# ledger but not under a watched path) cannot bypass the gate (codex-4). The check no-ops (exit 0) when the
+# change is not running First Pass, so an always-on gate is cheap.
 on:
   pull_request:
-    paths:
-      - '.hitl/current-change.yaml'
-      - '.hitl/skip-ledger.yaml'
-      - 'ci/first-pass/**'
 
 jobs:
   first-pass:

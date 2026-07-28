@@ -28,9 +28,11 @@ These are the load-bearing negatives — each must be **caught**, not silently a
 
 ### 0.1 The fail-closed set as HARDENED (four adversarial rounds — the actual implemented guarantee)
 
-The design's negatives above were necessary but not sufficient. Four clean-context adversarial passes (r1 found
-**2 CRITICAL exit-0 bypasses** → r4 converged clean) established that a *mismatched/typo'd/wrong-type* input must
-**fail closed, never coerce to a safe default**. The implemented non-waivable set (`ci/first-pass/check_skips.py`,
+The design's negatives above were necessary but not sufficient. **Five clean-context adversarial passes** (four
+Fable + one Codex) established that a *mismatched/typo'd/wrong-type* input must **fail closed, never coerce to a
+safe default** — and the Codex pass added the **completeness** class: a load-bearing step *deleted* from the
+plan (INCOMPLETE_PLAN), a falsey non-bool `first_pass`, a missing status, a waivable STARTER_MARK, and onboarding
+copy-flow gaps. Fixes verified by mutation; the fail-closed set (LLD §11) is the enforced guarantee. The implemented non-waivable set (`ci/first-pass/check_skips.py`,
 regression-tested in `ci/first-pass/test_check_skips.py`) therefore adds:
 
 | ID | Adversarial input | Required outcome |

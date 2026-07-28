@@ -52,14 +52,24 @@ def decide(action, path=None, scope_paths=None):
     """Return (prompt: bool, reason: str). prompt=True ⇒ First Pass still asks the human.
 
     First Pass never means 'bypass all safety': ALWAYS_PROMPT actions prompt even in scope; a scoped
-    read/edit/write auto-proceeds only inside the declared scope; anything else fails safe to a prompt."""
+    read/edit/write auto-proceeds only inside the declared scope; anything MALFORMED or unrecognized fails
+    safe to a prompt (codex-8: a string scope_paths was iterated char-by-char, a None read path auto-allowed)."""
+    # inputs must be well-typed or we fail safe (prompt). action must be a string; scope must be a list of
+    # non-empty strings; a path, when given, must be a non-empty string.
+    if not isinstance(action, str):
+        return True, f"malformed action {action!r} — prompts"
+    if scope_paths is not None and (not isinstance(scope_paths, (list, tuple))
+                                    or not all(isinstance(s, str) and s.strip() for s in scope_paths)):
+        return True, "malformed scope_paths (must be a list of non-empty strings) — prompts"
+    if path is not None and not (isinstance(path, str) and path.strip()):
+        return True, f"malformed path {path!r} — prompts"
     if action in ALWAYS_PROMPT:
         return True, f"{action}: critical/irreversible/outward — prompts even under First Pass"
     if action == "read":
-        # reads auto-allow only WITHIN the project — an absolute path or a `..`-escape (e.g. /etc/passwd,
-        # ../secrets.env) still prompts (round-1 MED-5: reads were ungated, an exfil surface).
-        if path is not None and _escapes_project(path):
-            return True, f"read outside the project ({path}) — prompts"
+        # reads auto-allow only WITHIN the project, and only with an explicit path — a None/absent path or an
+        # absolute/`..`-escape (/etc/passwd, ../secrets.env) prompts (round-1 MED-5 + codex-8).
+        if path is None or _escapes_project(path):
+            return True, f"read with no/out-of-project path ({path!r}) — prompts"
         return False, "in-project read — auto-allowed"
     if action in ("edit", "write"):
         if _in_scope(path, scope_paths):
