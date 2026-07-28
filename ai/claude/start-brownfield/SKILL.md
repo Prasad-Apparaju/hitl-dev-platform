@@ -222,6 +222,13 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
     [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
   fi
 fi
+# Compound-agentic surface (#10): validator + posture-view generator; preserve the repo's manifest-waivers.yaml.
+if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
+  mkdir -p ci/manifest-agentic tools/manifest-agentic
+  cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/"*.py ci/manifest-agentic/ 2>/dev/null
+  [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
+  cp "$PLUGIN_ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
+fi
 ```
 
 The checker derives its scan roots from the manifest's listed files, so it needs no per-project configuration. If `$PLUGIN_ROOT` is empty, skip; `/hitl:dev-check-conventions` reports the checker as absent rather than passing.

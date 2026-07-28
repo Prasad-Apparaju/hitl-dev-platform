@@ -181,6 +181,17 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
+  # Compound-agentic surface (#10): the system-manifest validator + posture-view generator, invoked
+  # repo-relative by pm-design-feature. Self-contained; preserve the repo's manifest-waivers.yaml.
+  if [[ -d "$PLATFORM_ROOT/ci/manifest-agentic" && ! -d "$TARGET_DIR/ci/manifest-agentic" ]]; then
+    mkdir -p "$TARGET_DIR/ci/manifest-agentic" "$TARGET_DIR/tools/manifest-agentic"
+    cp "$PLATFORM_ROOT/ci/manifest-agentic/"*.py "$TARGET_DIR/ci/manifest-agentic/" 2>/dev/null || true
+    [[ -f "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" "$TARGET_DIR/ci/manifest-agentic/"
+    cp "$PLATFORM_ROOT/tools/manifest-agentic/"*.py "$TARGET_DIR/tools/manifest-agentic/" 2>/dev/null || true
+    echo "✓ ci/manifest-agentic/ (compound-agentic validator) + tools/manifest-agentic/"
+    (( copied++ )) || true
+  fi
+
   if [[ -f "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" && ! -f "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" ]]; then
     mkdir -p "$TARGET_DIR/scripts"
     cp "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"

@@ -202,6 +202,17 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
   fi
   echo "First Pass installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
 fi
+
+# Compound-agentic surface (#10): the fail-closed system-manifest validator + posture-view generator,
+# invoked repo-relative by pm-design-feature. Self-contained (FIELD_SPEC lives in the .py). Preserve the
+# repo's own manifest-waivers.yaml (copy it only when absent).
+if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
+  mkdir -p ci/manifest-agentic tools/manifest-agentic
+  cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/"*.py ci/manifest-agentic/ 2>/dev/null
+  [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
+  cp "$PLUGIN_ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
+  echo "Compound-agentic validator installed: ci/manifest-agentic/ + tools/manifest-agentic/."
+fi
 ```
 
 ---

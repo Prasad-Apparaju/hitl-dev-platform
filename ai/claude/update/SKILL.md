@@ -261,18 +261,26 @@ else
     fi
     echo "  ✓ ci/first-pass/ (First Pass validator + catalog) synced"
   fi
+  # Compound-agentic surface (#10): the system-manifest validator + posture-view generator, invoked
+  # repo-relative by pm-design-feature. Self-contained; PRESERVE the repo's own manifest-waivers.yaml.
+  if [[ -d "$ROOT/shared/ci/manifest-agentic" ]]; then
+    mkdir -p ci/manifest-agentic tools/manifest-agentic
+    cp "$ROOT/shared/ci/manifest-agentic/"*.py ci/manifest-agentic/ 2>/dev/null
+    [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
+    cp "$ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
+    echo "  ✓ ci/manifest-agentic/ (compound-agentic validator) synced — kept your manifest-waivers.yaml"
+  fi
   # Manifest drift (already onboarded in most repos): refresh the checker code only if present.
   if [[ -d "$ROOT/shared/ci/manifest-drift" && -d ci/manifest-drift ]]; then
     cp "$ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/ 2>/dev/null
     echo "  ✓ ci/manifest-drift/ refreshed"
   fi
-  git add ci/first-pass ci/manifest-drift .github/workflows/first-pass-check.yml 2>/dev/null || true
+  git add ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift .github/workflows/first-pass-check.yml 2>/dev/null || true
 fi
 ```
 
 If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`.
-Say which tools were synced (or "CI validators already current"). **Note:** the compound-agentic validator
-(`ci/manifest-agentic`, #10) is NOT yet in this re-sync — it has the same install gap and is a pending follow-up.
+Say which tools were synced (or "CI validators already current").
 
 ---
 
