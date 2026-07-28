@@ -310,11 +310,23 @@ def run(change_path, workflows_path, rollup_path=None, tier=None):
         return [_f("MALFORMED", f"validation crashed on malformed input: {e.__class__.__name__}: {e}")]
 
 
+def _default_workflows():
+    """Locate the criticality catalog. In an onboarded product repo it is co-located with this validator
+    (`ci/first-pass/workflows.yaml`); in the source platform repo it is `ai/shared/workflows.yaml`. Try
+    both so the CLI needs no `--workflows` in either layout."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for cand in (os.path.join(here, "workflows.yaml"),
+                 os.path.join(here, "..", "..", "ai", "shared", "workflows.yaml")):
+        if os.path.exists(cand):
+            return cand
+    return "ai/shared/workflows.yaml"
+
+
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(description="First Pass skip-ledger validator (fail-closed)")
     ap.add_argument("change", help="path to .hitl/current-change.yaml")
-    ap.add_argument("--workflows", default="ai/shared/workflows.yaml")
+    ap.add_argument("--workflows", default=_default_workflows())
     ap.add_argument("--rollup", default=None, help="path to .hitl/skip-ledger.yaml")
     ap.add_argument("--tier", type=int, default=None)
     a = ap.parse_args()

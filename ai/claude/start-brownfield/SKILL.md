@@ -212,6 +212,16 @@ if [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/ci/manifest-drift/check_manif
   mkdir -p ci/manifest-drift
   [[ ! -f ci/manifest-drift/check_manifest_drift.py ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/
 fi
+# First Pass (FR-29): validator + its criticality catalog (co-located = the trusted CI source) + CI gate.
+if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
+  mkdir -p ci/first-pass
+  cp "$PLUGIN_ROOT/shared/ci/first-pass/"*.py ci/first-pass/ 2>/dev/null
+  [[ -f "$PLUGIN_ROOT/shared/workflows.yaml" ]] && cp "$PLUGIN_ROOT/shared/workflows.yaml" ci/first-pass/workflows.yaml
+  if [[ -f "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" ]]; then
+    mkdir -p .github/workflows
+    [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
+  fi
+fi
 ```
 
 The checker derives its scan roots from the manifest's listed files, so it needs no per-project configuration. If `$PLUGIN_ROOT` is empty, skip; `/hitl:dev-check-conventions` reports the checker as absent rather than passing.

@@ -188,6 +188,20 @@ if [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/ci/manifest-drift/check_manif
 else
   echo "Drift checker not found in the plugin — skip; /hitl:dev-check-conventions will note it is absent."
 fi
+
+# First Pass (FR-29): the fail-closed skip-ledger validator + its criticality catalog + the CI gate,
+# so a product repo can run and enforce First Pass. Idempotent; skips if the plugin copy is absent.
+if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
+  mkdir -p ci/first-pass
+  cp "$PLUGIN_ROOT/shared/ci/first-pass/"*.py ci/first-pass/ 2>/dev/null
+  # co-locate the criticality catalog WITH the validator — it is the validator's trusted source in CI
+  [[ -f "$PLUGIN_ROOT/shared/workflows.yaml" ]] && cp "$PLUGIN_ROOT/shared/workflows.yaml" ci/first-pass/workflows.yaml
+  if [[ -f "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" ]]; then
+    mkdir -p .github/workflows
+    [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
+  fi
+  echo "First Pass installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
+fi
 ```
 
 ---

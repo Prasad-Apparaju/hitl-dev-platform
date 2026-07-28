@@ -167,6 +167,20 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
+  # First Pass (FR-29): the fail-closed validator + its criticality catalog (co-located = the CI-trusted
+  # source) + the CI gate template. check_skips runs via project-relative paths, so it lives in the repo.
+  if [[ -d "$PLATFORM_ROOT/ci/first-pass" && ! -d "$TARGET_DIR/ci/first-pass" ]]; then
+    mkdir -p "$TARGET_DIR/ci/first-pass"
+    cp "$PLATFORM_ROOT/ci/first-pass/"*.py "$TARGET_DIR/ci/first-pass/" 2>/dev/null || true
+    [[ -f "$PLATFORM_ROOT/ai/shared/workflows.yaml" ]] && cp "$PLATFORM_ROOT/ai/shared/workflows.yaml" "$TARGET_DIR/ci/first-pass/workflows.yaml"
+    if [[ -f "$PLATFORM_ROOT/ci/workflows/first-pass-check.yml" ]]; then
+      mkdir -p "$TARGET_DIR/.github/workflows"
+      [[ ! -f "$TARGET_DIR/.github/workflows/first-pass-check.yml" ]] && cp "$PLATFORM_ROOT/ci/workflows/first-pass-check.yml" "$TARGET_DIR/.github/workflows/"
+    fi
+    echo "✓ ci/first-pass/ (First Pass validator + catalog) + .github/workflows/first-pass-check.yml"
+    (( copied++ )) || true
+  fi
+
   if [[ -f "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" && ! -f "$TARGET_DIR/scripts/fix_mermaid_br_tags.py" ]]; then
     mkdir -p "$TARGET_DIR/scripts"
     cp "$PLATFORM_ROOT/tools/scripts/fix_mermaid_br_tags.py" "$TARGET_DIR/scripts/fix_mermaid_br_tags.py"

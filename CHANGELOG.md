@@ -4,6 +4,14 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.1] — 2026-07-27
+
+### Added
+
+**First Pass — onboarding auto-copy.** The First Pass validator now installs into a product repo automatically, closing the "ships to `shared/` but nothing copies it in" gap. `/hitl:dev-start-from-prd`, `/hitl:dev-start-brownfield`, and `tools/scripts/init-project.sh` now copy `ci/first-pass/` (the fail-closed validator), its criticality **catalog** co-located as `ci/first-pass/workflows.yaml` (the CI-trusted source), and the `.github/workflows/first-pass-check.yml` gate into the repo. `check_skips.py` resolves the co-located catalog automatically (no `--workflows` needed), so a First Pass PR is enforced in CI end-to-end. Verified by running the validator from a simulated onboarded repo (clean → exit 0, unauthorized floor skip → exit 2).
+
+---
+
 ## [2.4.0] — 2026-07-27
 
 ### Added
