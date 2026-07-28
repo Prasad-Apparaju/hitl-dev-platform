@@ -237,6 +237,45 @@ version, skip this step and say "Change file already on the current workflow sch
 
 ---
 
+## Step 4.6 — Re-sync the copied-in CI validators
+
+Some validators run via **project-relative paths**, so the repo carries its own copy of the plugin's CI
+tools (the plugin isn't present in CI). On upgrade, refresh them so an existing repo picks up new or fixed
+validators without re-onboarding — and **install** ones added after this repo was first onboarded (e.g. First
+Pass, FR-29, added in 2.4.x). Tool **code** is refreshed (plugin-owned); repo-owned files (waivers, the change
+ledger, customized `.github/workflows/*`) are preserved.
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+if [[ -z "$ROOT" ]]; then
+  echo "Plugin root not found — skipping CI-tool re-sync."
+else
+  # First Pass (FR-29): fail-closed skip-ledger validator + its co-located crit catalog + CI gate.
+  if [[ -d "$ROOT/shared/ci/first-pass" ]]; then
+    mkdir -p ci/first-pass
+    cp "$ROOT/shared/ci/first-pass/"*.py ci/first-pass/ 2>/dev/null
+    [[ -f "$ROOT/shared/workflows.yaml" ]] && cp "$ROOT/shared/workflows.yaml" ci/first-pass/workflows.yaml   # plugin-canonical crit; safe to refresh
+    if [[ -f "$ROOT/shared/ci-workflows/first-pass-check.yml" && ! -f .github/workflows/first-pass-check.yml ]]; then
+      mkdir -p .github/workflows && cp "$ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
+    fi
+    echo "  ✓ ci/first-pass/ (First Pass validator + catalog) synced"
+  fi
+  # Manifest drift (already onboarded in most repos): refresh the checker code only if present.
+  if [[ -d "$ROOT/shared/ci/manifest-drift" && -d ci/manifest-drift ]]; then
+    cp "$ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/ 2>/dev/null
+    echo "  ✓ ci/manifest-drift/ refreshed"
+  fi
+  git add ci/first-pass ci/manifest-drift .github/workflows/first-pass-check.yml 2>/dev/null || true
+fi
+```
+
+If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`.
+Say which tools were synced (or "CI validators already current"). **Note:** the compound-agentic validator
+(`ci/manifest-agentic`, #10) is NOT yet in this re-sync — it has the same install gap and is a pending follow-up.
+
+---
+
 ## Step 5 — Confirm
 
 Output this exactly:
