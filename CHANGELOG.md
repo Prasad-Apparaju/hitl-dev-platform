@@ -4,6 +4,17 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.2] — 2026-07-27
+
+### Added
+
+**CI-validator install gap closed for existing repos + the compound-agentic validator.**
+
+- **`/hitl:dev-update` now re-syncs the copied-in CI validators.** On plugin upgrade it refreshes the repo's CI tool code (plugin-owned) and **installs** validators added after the repo was onboarded — so a repo onboarded before 2.4.x retroactively gets `ci/first-pass/` (validator + co-located catalog + CI gate) without re-onboarding. Repo-owned files (waivers, the change ledger, customized workflows) are preserved.
+- **Compound-agentic validator (#10) is now auto-installed.** `dev-start-from-prd`, `dev-start-brownfield`, `init-project.sh`, and the `dev-update` re-sync copy `ci/manifest-agentic/` (the fail-closed system-manifest validator) + `tools/manifest-agentic/` into a product repo — closing the same install gap First Pass had. `pm-design-feature`'s repo-relative validator call now works out of the box. Self-contained; the repo's own `manifest-waivers.yaml` is preserved (a fresh repo gets the empty `waivers: []` template).
+
+---
+
 ## [2.4.1] — 2026-07-27
 
 ### Added
