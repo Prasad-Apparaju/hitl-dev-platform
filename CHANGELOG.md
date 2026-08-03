@@ -4,6 +4,23 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.4] — 2026-08-03
+
+### Fixed
+
+**`dev-update` change-file migration no longer destroys project-authored content (issue #22).** Step 4.5 regenerated the entire `workflow:` block from the catalog, silently dropping data the catalog cannot represent — on the exact path a user hits when upgrading. The printed table showed every step as `keep`, so the loss was invisible unless you diffed the `.migrated` file by hand.
+
+- **Per-step `owner:` (and any other user-added field) is preserved.** The generator emitted only `n, key, label, status`; it now rewrites each step *line in place* and carries every non-core key across by `key`. `phase`/`substep` are refreshed from the catalog (they were being dropped too).
+- **In-block comments survive.** Trailing per-step comments and standalone comment blocks — including out-of-catalog steps recorded there (e.g. tier-3 security gates the catalog can't hold) — are left byte-for-byte. The migration is now line-level surgical, not a whole-block replace.
+- **Duplicate `current` is repaired.** The single-`current` guard only fired when *no* step was current; two `current` steps now resolve to one (linear-progress).
+- **No-op short-circuit.** When the catalog is unchanged the `workflow:` block is left byte-for-byte intact and only the version stamps move.
+- **The actual unified diff is printed** at the confirmation prompt, so any change is visible before you apply.
+- The version-probe blocks used a bare `except:` that caught the `sys.exit(0)` success path (`SystemExit`) and printed a spurious `NOT_FOUND` after the correct version — now `except Exception:`.
+
+Verified by reproducing every loss on a multi-owner tier-3 fixture, then confirming the fixed generator (extracted verbatim from the skill) preserves all of it, the migrated file parses, and the real breadcrumb parser reads it.
+
+---
+
 ## [2.4.3] — 2026-07-27
 
 ### Fixed
