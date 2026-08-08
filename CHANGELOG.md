@@ -4,6 +4,23 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.8] — 2026-08-08
+
+### Fixed
+
+**The reference guard shipped in 2.4.7 was porous — a second independent audit broke it with fixtures.** The user-facing defect it was written for stayed fixed, but the check meant to stop it recurring was measuring the wrong thing. Rewritten around path resolution:
+
+- **`../` substring counting replaced with real resolution against the packaged tree.** Counting was wrong in both directions: `foo/../bar.md` climbs nowhere yet counted 1, `a/../../../b.md` climbs two yet counted 3, and a two-level escape into `docs/` — which the build never packages — passed clean. Worse, the threshold could not be right for both trees at once, because a skill sits one level deep once built and one *or two* in source. The rule is now "does the resolved target stay inside `ai/`", which is the actual question, since `ai/` is what the build packages.
+- **Existence is checked for any local target, file or directory.** Gating it behind `endswith(".md")` was half of why the original defect was invisible — it pointed at a directory. A directory link that merely doesn't exist used to sail through untouched.
+- **Reference-style links (`[label]: path`) are now checked.** The inline-only pattern never saw them, so an escape written that way was silently exempt.
+- **Link titles and angle brackets are parsed.** `[x](file.md "Title")` and `[x](<spaced name.md>)` previously failed the `.md` test on the raw string and were skipped entirely.
+- **Fence tracking records the opening delimiter length.** A naive boolean toggle turned inside-out on nested fences: a ```` fence containing an odd number of ``` fences leaked emitted-template links back out as hard failures — exactly the false positive 2.4.7 added fence-stripping to prevent. An unterminated fence is now a hard error rather than silently blanking the rest of the file, which had re-created the "silently skipped" failure mode from a different direction.
+- **Findings report the line of the offending link.** Every reference finding used to report the frontmatter boundary, so a bad link on line 480 of a 497-line skill was reported at line 6. A check whose whole purpose is to point at one link could not locate it.
+
+Twelve regression tests cover each case, including the legitimate `../../shared/` hop and the emitted-template link that must stay silent. **Five fail against 2.4.7's linter.**
+
+---
+
 ## [2.4.7] — 2026-08-08
 
 ### Fixed
