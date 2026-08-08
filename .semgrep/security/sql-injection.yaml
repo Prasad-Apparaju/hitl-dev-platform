@@ -11,6 +11,13 @@ rules:
       - pattern: $CURSOR.execute("..." + $X, ...)
       - pattern: $SESSION.execute(f"...", ...)
       - pattern: $SESSION.execute(text(f"..."), ...)
+      # Implicit concatenation involving an f-string, both orders (issue #45). This is how long
+      # SQL gets written across lines without trailing-space bugs, and formatters produce it, so
+      # it is the shape most likely to appear in real code — and the one that used to slip past.
+      # Missing it is worse than a missed finding: a team fixes every flagged site, sees the scan
+      # return 0, and concludes the file is clean while the pattern is still there.
+      - pattern: $CURSOR.execute(f"..." "...", ...)
+      - pattern: $CURSOR.execute("..." f"...", ...)
     metadata:
       category: security
       confidence: HIGH
@@ -25,6 +32,9 @@ rules:
       - pattern: text(f"...")
       - pattern: text("...".format(...))
       - pattern: text("..." + ...)
+      # Same implicit-concatenation gap as the rule above (issue #45).
+      - pattern: text(f"..." "...")
+      - pattern: text("..." f"...")
     metadata:
       category: security
       confidence: HIGH
