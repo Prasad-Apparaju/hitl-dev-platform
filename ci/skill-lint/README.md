@@ -35,7 +35,19 @@ explicit `name`, disambiguate it (basename collisions exist, e.g. `pm/design-fea
 
 ## Wiring into CI
 
-Add a job that runs `python3 ci/skill-lint/check_skills.py` on PRs that touch `ai/claude/**`. It is
-not yet a blocking GitHub Actions workflow because two skills currently exceed the 500-line body gate
-(`architect/design-feature`, `architect/design-system`); split those into reference files first, then
-promote the linter to a required check.
+`ci/workflows/skill-lint.yml` runs `check_skills.py --root ai/claude` plus the linter's own tests on
+every PR touching `ai/claude/**/SKILL.md` or `ci/skill-lint/**`. The script exits 1 on any hard gate,
+so the job blocks the PR.
+
+**As of 2.4.6 every shipped skill passes: 54/54, 0 failures, 0 warnings.** The body-length backlog
+this section used to describe is cleared — the last offender (`dev-start-brownfield`, 521 lines) was
+split into `observability-survey.md` following the progressive-disclosure pattern. Nothing is
+grandfathered, so the gate can be made a *required* check without exceptions.
+
+Two scope limits worth knowing:
+
+- The workflow lints `--root ai/claude` only. `SKILL.md` files elsewhere in the repo — such as the
+  legacy command copy under `.claude/commands/skills/` — are covered by a local
+  `check_skills.py --root .` but not by the PR gate.
+- `dev-start-migration` sits at 497 body lines against the 500 limit. Anything added to it breaks
+  the gate; split a section out rather than trimming prose to fit.
