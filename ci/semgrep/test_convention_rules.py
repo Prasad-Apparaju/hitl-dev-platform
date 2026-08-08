@@ -30,23 +30,28 @@ FIXTURE = os.path.join(HERE, "tests", "fixtures", "convention_rule_cases.py")
 
 # (line, rule id) pairs that MUST be reported.
 MUST_FLAG = [
-    (19, "qdrant-must-filter-brand-id"),
-    (22, "qdrant-must-filter-brand-id"),
-    (36, "external-calls-must-use-retry-wrapper"),
-    (51, "controller-must-use-pydantic-models"),
-    (65, "mutating-tool-must-implement-describe-plan"),
-    (65, "mutating-tool-must-have-idempotency-key"),
+    (25, "vector-search-must-be-tenant-scoped"),          # Pinecone, unfiltered
+    (28, "vector-search-must-be-tenant-scoped"),          # Weaviate, unfiltered
+    (44, "external-calls-must-be-retried"),               # requests.get, no retry policy
+    (71, "controller-must-use-pydantic-models"),
+    (85, "side-effecting-tool-must-implement-describe-plan"),
+    (85, "side-effecting-tool-must-have-idempotency-key"),
 ]
 
 # Lines that MUST NOT be reported by any rule, and why.
 MUST_NOT_FLAG = {
-    25: "qdrant search WITH query_filter — compliant",
-    28: "re.search — not a vector query; the receiver constraint must exclude it",
-    29: "elasticsearch.search — not the vector store",
-    41: "external call wrapped in retry_external_call — compliant",
-    46: "db_session.get — not an external HTTP client",
-    57: "endpoint taking a pydantic model — compliant",
-    71: "MutatingTool implementing both contracts — compliant",
+    31: "Pinecone query WITH a filter — compliant (any tenant key, not just brand_id)",
+    32: "Weaviate search WITH where — compliant",
+    33: "Chroma similarity_search WITH filter — compliant",
+    36: "re.search — not a vector store; the receiver constraint must exclude it",
+    37: "elasticsearch.search — not a vector store",
+    49: "backoff-decorated caller — compliant",
+    55: "tenacity-decorated caller — a different retry library",
+    60: "call inside a retry-shaped helper — compliant",
+    65: "open() — not an HTTP call",
+    79: "endpoint taking a pydantic model — compliant",
+    92: "WritingTool satisfying both contracts under a third base name",
+    101: "ReadOnlyTool — no side effect, so neither contract applies",
 }
 
 pytestmark = pytest.mark.skipif(
@@ -107,6 +112,30 @@ def test_no_rule_is_scoped_to_a_repo_specific_path():
                 if not pattern.startswith("**/"):
                     offenders.append(f"{rel}: {rule.get('id')} -> paths.{key}: {pattern}")
     assert not offenders, "rules scoped to a project-specific path:\n  " + "\n  ".join(offenders)
+
+
+def test_no_rule_names_a_single_customers_identifiers():
+    """Shipped rules must encode concepts, not one customer's stack.
+
+    `brand_id` was one project's tenant key, `MutatingTool` its base class, and
+    `retry_external_call` / `httpx_client` its helper and variable names — none of which
+    appear anywhere in HITL's own schema or pattern docs. Every HITL customer received them.
+    Vendor names inside an *alternatives* list (qdrant | pinecone | weaviate | …) are fine:
+    those are ecosystem-level and plural. A bare identifier used as THE match is not.
+    """
+    banned = {
+        "brand_id": "a tenant key specific to one product",
+        "retry_external_call": "one project's retry helper name",
+        "httpx_client": "one project's variable naming",
+        "external_client": "one project's variable naming",
+    }
+    offenders = []
+    for rel, rule in _iter_rules():
+        blob = json.dumps(rule)
+        for token, why in banned.items():
+            if token in blob:
+                offenders.append(f"{rel}: {rule.get('id')} references {token!r} — {why}")
+    assert not offenders, "rules tied to one customer's stack:\n  " + "\n  ".join(offenders)
 
 
 def test_every_shipped_rule_is_exercised_by_a_fixture():

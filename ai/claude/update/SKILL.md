@@ -398,21 +398,32 @@ shipped ones for their stack. So this never blind-copies. Three cases, handled d
 | Shipped rule, byte-identical | leave alone, say nothing |
 | Shipped rule the repo has **modified** | show the diff and **ask** before overwriting |
 | Rule the repo added itself | never touched, never reported as drift |
+| Rule listed in `.semgrep/.hitl-optout` | never installed — a deliberate removal stays removed |
+
+The opt-out file matters: "install anything absent" would otherwise resurrect a rule the team
+deliberately deleted, on every single update. One path per line; `#` comments allowed. A
+single-tenant project dropping the vector-store rule writes `best-practices/tenant-isolation.yaml`.
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$ROOT}"
 if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
   echo "No shipped rule set found — skipping semgrep re-sync."
 else
-  new=(); changed=()
+  new=(); changed=(); skipped=()
   while IFS= read -r src; do
     rel="${src#"$ROOT"/shared/semgrep/}"
+    [[ "$rel" == "install.sh" ]] && continue
+    # Honour a deliberate removal — otherwise every update resurrects the deleted rule.
+    if [[ -f .semgrep/.hitl-optout ]] && grep -qxF "$rel" <(grep -v '^[[:space:]]*#' .semgrep/.hitl-optout); then
+      skipped+=("$rel"); continue
+    fi
     if [[ ! -f ".semgrep/$rel" ]]; then
       new+=("$rel")
     elif ! cmp -s "$src" ".semgrep/$rel"; then
       changed+=("$rel")
     fi
   done < <(find "$ROOT/shared/semgrep" -type f \( -name "*.yaml" -o -name "*.yml" -o -name ".semgrepignore" \))
+  [[ ${#skipped[@]} -gt 0 ]] && echo "  · opted out (.semgrep/.hitl-optout): ${skipped[*]}"
 
   # Install everything absent — nothing to lose, nothing to confirm.
   for rel in "${new[@]}"; do

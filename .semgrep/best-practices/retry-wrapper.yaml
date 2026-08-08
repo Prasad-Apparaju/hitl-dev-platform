@@ -1,23 +1,57 @@
 rules:
-  - id: external-calls-must-use-retry-wrapper
+  - id: external-calls-must-be-retried
     message: >
-      External API calls should be wrapped in retry_external_call()
-      for transient failure handling with exponential backoff.
-      See the transient failure retry policy convention.
+      External HTTP calls should go through a retry policy with backoff.
+      Wrap the call in your retry helper, or decorate the caller (@retry / @backoff.on_exception),
+      so a transient failure does not surface as a user-visible error.
     severity: WARNING
     languages: [python]
     patterns:
-      - pattern: await $CLIENT.$METHOD(...)
-      - pattern-not-inside: retry_external_call(...)
+      # Key on the HTTP LIBRARY, not on what a project happens to name its client. The old
+      # form matched variables called httpx_client / http_client / external_client — one
+      # project's naming, so the rule was inert for everyone else (issue #46).
+      - pattern-either:
+          - pattern: requests.$METHOD(...)
+          - pattern: httpx.$METHOD(...)
+          - pattern: aiohttp.ClientSession(...).$METHOD(...)
+          - pattern: urllib.request.urlopen(...)
       - metavariable-regex:
-          metavariable: $CLIENT
-          regex: "(httpx_client|http_client|external_client)"
-    # The `metavariable-regex` above already limits this to the project's HTTP client objects,
-    # so no directory scope is needed (issue #46). Only the resilience wrapper itself is exempt,
-    # matched unanchored so it is found wherever the project keeps it.
+          metavariable: $METHOD
+          regex: "^(get|post|put|patch|delete|head|options|request|send|stream)$"
+      # Compliant when the call sits inside anything retry-shaped. Matching by NAME rather
+      # than by one helper's identifier keeps this working across tenacity, backoff, a
+      # hand-rolled wrapper, or a project's own convention. The exemptions are constrained
+      # to retry-shaped names — an unconstrained `pattern-not-inside: $RETRY(...)` would
+      # exempt a call inside ANY function call and the rule would never fire.
+      - pattern-not-inside:
+          patterns:
+            - pattern: |
+                @$DECORATOR(...)
+                def $F(...):
+                    ...
+            - metavariable-regex:
+                metavariable: $DECORATOR
+                regex: "(?i).*(retry|backoff|resilien|circuit).*"
+      - pattern-not-inside:
+          patterns:
+            - pattern: |
+                @$DECORATOR(...)
+                async def $F(...):
+                    ...
+            - metavariable-regex:
+                metavariable: $DECORATOR
+                regex: "(?i).*(retry|backoff|resilien|circuit).*"
+      - pattern-not-inside:
+          patterns:
+            - pattern: $RETRY(...)
+            - metavariable-regex:
+                metavariable: $RETRY
+                regex: "(?i).*(retry|backoff|resilien|circuit).*"
     paths:
+      # Unanchored so it is found wherever the project keeps its retry helper.
       exclude:
         - "**/resilience.py"
+        - "**/retry.py"
     metadata:
       category: best-practice
-      confidence: MEDIUM
+      confidence: LOW

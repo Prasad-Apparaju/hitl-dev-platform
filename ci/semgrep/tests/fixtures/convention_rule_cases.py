@@ -1,49 +1,69 @@
-"""Fixture for the non-SQL convention rules (issue #46). NOT executable code.
+"""Fixture for the generalized convention rules (issues #46, #48-scope). NOT executable code.
 
-Each rule gets a violating case and a compliant case. Before #46 these five rules were scoped to
-`V2/app/**` — one product repo's layout — so in any other project they matched no files and always
-passed. The scope is gone; these fixtures are what keeps them honest instead.
+These rules used to encode ONE customer's stack: Qdrant with a `brand_id` tenant key, a helper
+named `retry_external_call` with clients named `httpx_client`, and a `MutatingTool` base class.
+None of that is a HITL concept — `qdrant` appears in zero HITL docs and `MutatingTool` only under
+docs/examples/. Shipping them to every customer meant rules that were either dead weight or, once
+the path scoping was removed, actively wrong for anyone with a different stack.
 
-Deliberately laid out under a conventional-but-different structure (no `V2/`, no `app/`) so a
-regression that reintroduces path scoping fails here.
+So the fixture deliberately uses vendors and names NO HITL customer is assumed to share: Pinecone
+and Weaviate rather than Qdrant, `tenacity`/`backoff` rather than a bespoke wrapper, and
+`SideEffectingTool` rather than `MutatingTool`. If a rule only passes here because it was written
+against one project's identifiers, it fails.
 
 Line numbers are asserted by ci/semgrep/test_convention_rules.py — update EXPECTED if you edit.
 """
 
+import re
+import requests
 from fastapi import Request
 
 
-# ── qdrant-must-filter-brand-id ───────────────────────────────────────────────────────────
+# ── vector-search-must-be-tenant-scoped ───────────────────────────────────────────────────
 
-# BAD: no query_filter, so nothing constrains the result set to one tenant
-hits = qdrant_client.search(collection_name="assets", query_vector=vec)
+# BAD: unfiltered similarity search returns every tenant's vectors
+hits = pinecone_index.query(vector=vec, top_k=10)
 
-# BAD: attribute access on self still binds the client
-more = self.vector_store.search(collection_name="assets", query_vector=vec)
+# BAD: a different vendor, same defect
+more = weaviate_client.search(query=q, limit=10)
 
-# OK: filtered by brand
-ok = qdrant_client.search(collection_name="assets", query_vector=vec, query_filter=brand_filter)
+# OK: filtered — the rule does not care WHICH key, only that the query is scoped
+ok1 = pinecone_index.query(vector=vec, top_k=10, filter={"org_id": org})
+ok2 = weaviate_client.search(query=q, where={"path": ["tenant"]})
+ok3 = chroma_collection.similarity_search(query=q, filter={"customer": cid})
 
-# OK: not a vector search at all — must never be flagged (this is why the receiver is constrained)
-match = re.search(r"\d+", line)
-found = elasticsearch.search(index="logs", body=q)
-
-
-# ── external-calls-must-use-retry-wrapper ─────────────────────────────────────────────────
-
-async def fetch_unwrapped(url):
-    # BAD: external call with no retry wrapper
-    return await httpx_client.get(url)
+# OK: not a vector store at all — must never be flagged
+m = re.search(r"\d+", line)
+rows = elasticsearch.search(index="logs", body=q)
 
 
-async def fetch_wrapped(url):
-    # OK: wrapped
-    return await retry_external_call(lambda: http_client.get(url))
+# ── external-calls-must-be-retried ────────────────────────────────────────────────────────
+
+def fetch_bare(url):
+    # BAD: library-level HTTP call with no retry policy anywhere
+    return requests.get(url)
 
 
-async def fetch_internal(url):
-    # OK: not one of the external client names
-    return await db_session.get(url)
+@backoff.on_exception(backoff.expo, Exception)
+def fetch_decorated(url):
+    # OK: retry-shaped decorator
+    return requests.get(url)
+
+
+@tenacity.retry(stop=tenacity.stop_after_attempt(3))
+def fetch_tenacity(url):
+    # OK: a different retry library
+    return requests.post(url, json={})
+
+
+def fetch_wrapped(url):
+    # OK: inside a retry-shaped helper call
+    return call_with_retry(lambda: requests.get(url))
+
+
+def read_local(path):
+    # OK: not an HTTP call
+    return open(path).read()
 
 
 # ── controller-must-use-pydantic-models ───────────────────────────────────────────────────
@@ -56,22 +76,28 @@ async def create_asset_bad(req: Request):
 
 @router.post("/assets/validated")
 async def create_asset_ok(body: AssetCreate):
-    # OK: pydantic model
+    # OK: validated by a pydantic model
     return await handle(body)
 
 
-# ── mutating-tool-must-implement-describe-plan / -must-have-idempotency-key ───────────────
+# ── side-effecting-tool contracts ─────────────────────────────────────────────────────────
 
-class DeleteAssetToolBad(MutatingTool):
-    # BAD: no _describe_plan, and execute() takes no idempotency_key
-    def execute(self, asset_id):
-        return self.repo.delete(asset_id)
+class PublishPostTool(SideEffectingTool):
+    # BAD: no idempotency_key, no _describe_plan — note the base is NOT `MutatingTool`
+    def execute(self, post_id):
+        return self.api.publish(post_id)
 
 
-class DeleteAssetToolOk(MutatingTool):
-    # OK: both contracts satisfied
-    def _describe_plan(self, asset_id):
-        return f"would delete {asset_id}"
+class DeleteRecordTool(WritingTool):
+    # OK: both contracts satisfied under a third base-class name
+    def _describe_plan(self, record_id):
+        return f"would delete {record_id}"
 
-    def execute(self, asset_id, idempotency_key=None):
-        return self.repo.delete(asset_id, key=idempotency_key)
+    def execute(self, record_id, idempotency_key=None):
+        return self.repo.delete(record_id, key=idempotency_key)
+
+
+class SearchTool(ReadOnlyTool):
+    # OK: read-only tools carry no side effect, so neither contract applies
+    def execute(self, query):
+        return self.index.lookup(query)

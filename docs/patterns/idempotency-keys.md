@@ -86,6 +86,32 @@ CREATE INDEX idx_side_effect_created ON external_side_effect_log(created_at);
 - [ ] The side effect log is written AFTER the external call succeeds, BEFORE returning
 - [ ] A monitoring alert fires if duplicate keys are seen within a short window (indicates a retry storm)
 
+## Naming Convention (what the convention check keys on)
+
+The shipped semgrep rules in `.semgrep/correctness/subclass-contracts.yaml` enforce the first
+checklist item automatically, but a static check cannot tell which of your classes cause external
+side effects. It infers it from the **base class name**: a base ending in `MutatingTool`,
+`SideEffectingTool`, or `WritingTool` is treated as side-effecting, and its subclasses are then
+required to accept an `idempotency_key`.
+
+```python
+class PublishPostTool(SideEffectingTool):       # checked
+    def _describe_plan(self, post_id): ...      # dry-run preview (advisory rule)
+    def execute(self, post_id, idempotency_key=None): ...
+
+class SearchTool(ReadOnlyTool):                 # not checked — no side effect
+    def execute(self, query): ...
+```
+
+Name your side-effecting base accordingly and the check applies itself. Projects that use a
+different taxonomy get no findings rather than wrong ones — the rule is inert, not noisy. The
+prefix is free (`BaseMutatingTool`, `ApiWritingTool`); only the suffix is matched.
+
+Two notes on scope. The check verifies the **parameter exists** — that the key is derived from
+business state rather than runtime state is a review question no static rule can answer. And the
+companion `_describe_plan()` rule is a HITL *convention* rather than a manifest concept, which is
+why it is advisory (`WARNING`) while the idempotency-key rule blocks (`ERROR`).
+
 ## What This Prevents
 
 | Scenario | Without idempotency | With idempotency |

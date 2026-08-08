@@ -21,6 +21,11 @@ installed=0
 while IFS= read -r src; do
   rel="${src#"$SRC"/}"
   [[ "$rel" == "install.sh" ]] && continue
+  # A rule the project deliberately opted out of stays out — otherwise re-running onboarding
+  # resurrects exactly what /hitl:dev-update was taught to leave alone.
+  if [[ -f .semgrep/.hitl-optout ]] && grep -v '^[[:space:]]*#' .semgrep/.hitl-optout | grep -qxF "$rel"; then
+    continue
+  fi
   if [[ ! -f ".semgrep/$rel" ]]; then
     mkdir -p ".semgrep/$(dirname "$rel")"
     cp "$src" ".semgrep/$rel"

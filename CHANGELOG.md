@@ -34,6 +34,18 @@ Removing the scope exposed a second defect underneath it: **`controller-must-use
 
 All seven rules now run, each covered by a fixture asserting both directions. A guard test parses `paths:` and fails if any rule is ever scoped to a project-specific path again.
 
+**The rules are now generic, not one customer's conventions.** Unscoping them exposed a deeper problem: three encoded a *specific* stack that HITL never documented and most customers do not use — Qdrant with a `brand_id` tenant key, a helper named `retry_external_call` with clients named `httpx_client`, and a `MutatingTool` base class. (`qdrant` appears in zero HITL docs; `MutatingTool` appears only under `docs/examples/`.) While path-scoped they were merely inert; once unscoped they would have fired wrongly in any repo with a different stack. Each now keys on something that generalizes:
+
+- **`qdrant-must-filter-brand-id` → `vector-search-must-be-tenant-scoped`.** Covers Qdrant, Pinecone, Weaviate, Chroma, Milvus, pgvector and generic vector-store/embedding-store receivers across `search` / `query` / `similarity_search`, and requires *any* filter (`query_filter` / `filter` / `where` / `filters`) rather than one named tenant column. Which key you scope by is your business; that the query is scoped at all is the convention.
+- **`external-calls-must-use-retry-wrapper` → `external-calls-must-be-retried`.** Keys on the HTTP *library* (`requests`, `httpx`, `aiohttp`, `urllib`) instead of a project's variable names, and accepts any retry-shaped decorator or wrapper — tenacity, backoff, or your own. Downgraded to `LOW` confidence to match its advisory nature.
+- **`mutating-tool-must-*` → `side-effecting-tool-must-*`.** Matches any base class ending in `MutatingTool` / `SideEffectingTool` / `WritingTool`, so a project is covered whatever it calls its own base, while a `ReadOnlyTool` never matches. The convention is now documented in `docs/patterns/idempotency-keys.md` — which the rules already cited despite that doc never mentioning the class name.
+
+`idempotency_key` stays an `ERROR`: it is HITL-canonical, appearing in the manifest schema (`idempotency_key`, `side_effect_key`, `side_effecting`) and in the pattern doc's checklist. `_describe_plan` is now a `WARNING`, because "PLAN mode" appears nowhere in HITL's schema or patterns — it is a convention, not a contract, and was previously blocking as if it were one.
+
+A second guard test fails if any shipped rule names one customer's identifiers again.
+
+**Rules can be opted out of.** Installing every absent rule on update would resurrect one a team deliberately deleted, every time. Both the onboarding installer and `dev-update` Step 4.7 honour `.semgrep/.hitl-optout` — one path per line, `#` comments allowed — so a single-tenant project can drop the vector-store rule and have it stay dropped.
+
 **Semgrep rules were never shipped to plugin-installed projects, and never updated after onboarding (issue #47).** `build.sh` did not package `.semgrep/` and no onboarding skill installed it — only `tools/scripts/init-project.sh`, which copies from a `hitl-dev-platform` checkout. A plugin-onboarded repo therefore had **no rules at all**, and `/hitl:dev-check-conventions` failed outright with `unable to find a config; path .semgrep does not exist` (exit 7). Nothing re-synced them either, so even where rules existed a fix like #45 above never arrived.
 
 - The build now ships them as `shared/semgrep/`, alongside an `install.sh` the three onboarding skills invoke.
