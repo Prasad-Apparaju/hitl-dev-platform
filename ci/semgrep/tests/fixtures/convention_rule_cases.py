@@ -1,4 +1,4 @@
-"""Fixture for the generalized convention rules (issues #46, #48-scope). NOT executable code.
+"""Fixture for the generalized convention rules (issue #46). NOT executable code.
 
 These rules used to encode ONE customer's stack: Qdrant with a `brand_id` tenant key, a helper
 named `retry_external_call` with clients named `httpx_client`, and a `MutatingTool` base class.
@@ -8,8 +8,8 @@ the path scoping was removed, actively wrong for anyone with a different stack.
 
 So the fixture deliberately uses vendors and names NO HITL customer is assumed to share: Pinecone
 and Weaviate rather than Qdrant, `tenacity`/`backoff` rather than a bespoke wrapper, and
-`SideEffectingTool` rather than `MutatingTool`. If a rule only passes here because it was written
-against one project's identifiers, it fails.
+`SideEffectingTool` rather than `MutatingTool`, and four web frameworks rather than FastAPI alone.
+If a rule only passes here because it was written against one project's identifiers, it fails.
 
 Line numbers are asserted by ci/semgrep/test_convention_rules.py — update EXPECTED if you edit.
 """
@@ -66,18 +66,54 @@ def read_local(path):
     return open(path).read()
 
 
-# ── controller-must-use-pydantic-models ───────────────────────────────────────────────────
+# ── request-body-must-be-validated (framework-neutral) ────────────────────────────────────
 
 @router.post("/assets")
-async def create_asset_bad(req: Request):
-    # BAD: raw Request reaches business logic unvalidated
-    return await handle(await req.json())
+async def fastapi_bad(request: Request):
+    # BAD: FastAPI/Starlette raw body straight into business logic
+    return await handle_asset(await request.json())
 
 
-@router.post("/assets/validated")
-async def create_asset_ok(body: AssetCreate):
-    # OK: validated by a pydantic model
-    return await handle(body)
+@app.route("/flask", methods=["POST"])
+def flask_bad():
+    # BAD: Flask
+    return create_thing(request.get_json())
+
+
+def django_bad(request):
+    # BAD: Django
+    return save_record(request.POST)
+
+
+async def aiohttp_bad(request):
+    # BAD: aiohttp
+    return await store(await request.json())
+
+
+@router.post("/ok/pydantic")
+async def ok_pydantic(request: Request):
+    # OK: validated by a pydantic model before use
+    return await handle_asset(AssetCreate.model_validate(await request.json()))
+
+
+def ok_marshmallow():
+    # OK: marshmallow schema
+    return create_thing(AssetSchema().load(request.get_json()))
+
+
+def ok_drf(request):
+    # OK: DRF serializer
+    return save_record(AssetSerializer(data=request.data))
+
+
+def ok_project_validator(request):
+    # OK: a project's own validator — matched by name, not by library
+    return save_record(validate_asset_payload(request.POST))
+
+
+def ok_not_a_request(cfg):
+    # OK: `cfg` is not a request object
+    return handle_asset(cfg.data)
 
 
 # ── side-effecting-tool contracts ─────────────────────────────────────────────────────────

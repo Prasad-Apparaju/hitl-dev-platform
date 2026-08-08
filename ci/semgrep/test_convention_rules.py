@@ -1,20 +1,27 @@
-"""Regression test for the non-SQL convention rules (issue #46).
+"""Regression test for the convention rules (issue #46).
 
-Five of the seven shipped rules were scoped to `V2/app/**` — one product repo's layout — via
-`paths.include`. `init-project.sh` copies `.semgrep/` into every onboarded project, so in any repo
-not using that structure the rules matched no files and always passed: the convention gate reported
-green because the rules never ran.
+Two defects, one on top of the other.
 
-Removing the scope exposed a second defect underneath it: `controller-must-use-pydantic-models`
-could never fire *at all*. Its `pattern-not` (`$BODY: $MODEL`) also bound the very parameter the
-positive pattern looks for (`req: Request`), cancelling every match. The path scope had hidden it —
-a rule that never runs is never noticed for also never matching.
+First, five of seven rules were scoped to `V2/app/**` — one product repo's layout. Since
+`init-project.sh` copies `.semgrep/` into every onboarded project, in any repo not using that
+structure they matched no files and always passed: the gate was green because the rules never ran.
 
-The fixture is laid out under a deliberately different structure (no `V2/`, no `app/`) so any
-regression that reintroduces path scoping fails here. Asserted in both directions: every violating
-line is flagged, and every compliant line is not — the `re.search` / `elasticsearch.search` cases
-exist because the unconstrained `$CLIENT.search(...)` pattern flags them, which is what the old
-path scope was really doing.
+Removing the scope exposed the deeper problem — three of them were not HITL conventions at all,
+but one customer's stack: Qdrant with a `brand_id` tenant key, a helper named `retry_external_call`,
+a `MutatingTool` base class, and a validation rule that assumed FastAPI plus pydantic. (`qdrant`
+appears in zero HITL docs; `MutatingTool` only under docs/examples/.) Path-scoped they were inert;
+unscoped they would have fired wrongly against any other stack. Each now keys on something
+ecosystem-level — vendor alternatives, HTTP libraries, a documented naming convention, the raw-body
+accessors of four web frameworks — rather than on one project's identifiers.
+
+A third defect surfaced along the way: `controller-must-use-pydantic-models` could never fire at
+all. Its `pattern-not` (`$BODY: $MODEL`) also bound the parameter the positive pattern looks for
+(`req: Request`), cancelling every match — invisible while the rule never ran.
+
+The fixture uses vendors and names no HITL customer is assumed to share, so a rule written against
+one project's identifiers fails here. Asserted in both directions: every violating line flagged,
+every compliant line not. The `re.search` and `cfg.data` cases exist because the unconstrained
+patterns flag them — that filtering is what the path scope was really doing.
 """
 
 import json
@@ -33,9 +40,12 @@ MUST_FLAG = [
     (25, "vector-search-must-be-tenant-scoped"),          # Pinecone, unfiltered
     (28, "vector-search-must-be-tenant-scoped"),          # Weaviate, unfiltered
     (44, "external-calls-must-be-retried"),               # requests.get, no retry policy
-    (71, "controller-must-use-pydantic-models"),
-    (85, "side-effecting-tool-must-implement-describe-plan"),
-    (85, "side-effecting-tool-must-have-idempotency-key"),
+    (74, "request-body-must-be-validated"),               # FastAPI / Starlette
+    (80, "request-body-must-be-validated"),               # Flask
+    (85, "request-body-must-be-validated"),               # Django
+    (90, "request-body-must-be-validated"),               # aiohttp
+    (121, "side-effecting-tool-must-implement-describe-plan"),
+    (121, "side-effecting-tool-must-have-idempotency-key"),
 ]
 
 # Lines that MUST NOT be reported by any rule, and why.
@@ -49,9 +59,13 @@ MUST_NOT_FLAG = {
     55: "tenacity-decorated caller — a different retry library",
     60: "call inside a retry-shaped helper — compliant",
     65: "open() — not an HTTP call",
-    79: "endpoint taking a pydantic model — compliant",
-    92: "WritingTool satisfying both contracts under a third base name",
-    101: "ReadOnlyTool — no side effect, so neither contract applies",
+    96: "pydantic model_validate before use — compliant",
+    101: "marshmallow schema load — a different validation library",
+    106: "DRF serializer — a third library",
+    111: "a project's own validate_* helper — matched by name, not by library",
+    116: "cfg.data — not a request object",
+    127: "WritingTool satisfying both contracts under a third base name",
+    136: "ReadOnlyTool — no side effect, so neither contract applies",
 }
 
 pytestmark = pytest.mark.skipif(

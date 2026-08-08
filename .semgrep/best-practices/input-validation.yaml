@@ -1,0 +1,43 @@
+rules:
+  - id: request-body-must-be-validated
+    message: >
+      Raw request input is being passed straight into business logic.
+      Validate it first with whatever your stack uses — a pydantic model, a marshmallow or
+      DRF schema, a dataclass validator — so shape and type errors surface at the boundary
+      instead of deep in the call stack.
+    severity: WARNING
+    languages: [python]
+    patterns:
+      # Framework-neutral by construction (issue #46). The previous form required a FastAPI
+      # route decorator plus a parameter annotated `Request`, so it said nothing about Flask,
+      # Django, aiohttp or anything else — and named pydantic as though it were the only
+      # validator. What generalizes is the SHAPE: raw body -> callee, with no validation in
+      # between. Each accessor below is the idiomatic raw-body read of a major framework:
+      #   await request.json()   FastAPI / Starlette / aiohttp
+      #   request.get_json()     Flask
+      #   request.POST / .body   Django
+      #   request.data / .form   DRF / Flask forms
+      - pattern-either:
+          - pattern: $F(await $REQ.json(), ...)
+          - pattern: $F($REQ.json(), ...)
+          - pattern: $F($REQ.get_json(...), ...)
+          - pattern: $F($REQ.body, ...)
+          - pattern: $F($REQ.POST, ...)
+          - pattern: $F($REQ.data, ...)
+          - pattern: $F($REQ.form, ...)
+      - metavariable-regex:
+          metavariable: $REQ
+          regex: "(?i)^(self\\.)?(request|req)$"
+      # Passing the raw body to a VALIDATOR is the point, not the violation. Excluded by
+      # callee name so it works for any library: Model.model_validate / parse_obj / parse_raw,
+      # schema.load, serializer(data=...), validate(...), or a project's own `validate_*`.
+      - metavariable-regex:
+          metavariable: $F
+          regex: "(?i)^(?!.*(valid|parse|load|schema|serializ|deserializ|model_|from_dict|marshal)).*$"
+    metadata:
+      category: best-practice
+      confidence: LOW
+      note: >
+        Deliberately narrow: it fires only when the raw body flows DIRECTLY into a call.
+        Reading it into a variable first is not tracked — a false negative, which is the
+        right trade for a rule that ships to every project.

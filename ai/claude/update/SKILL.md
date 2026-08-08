@@ -438,6 +438,16 @@ else
     diff -u ".semgrep/$rel" "$ROOT/shared/semgrep/$rel" | sed 's/^/      /'
   done
   [[ ${#changed[@]} -eq 0 && ${#new[@]} -eq 0 ]] && echo "  ✓ semgrep rules already current"
+
+  # Superseded files: a rule that was RENAMED upstream leaves its old file behind, and the
+  # loop above cannot tell that apart from a rule the project wrote itself, so it would sit
+  # there forever as dead config. Report, never auto-delete — the project may have edited it.
+  for old in best-practices/pydantic-validation.yaml; do
+    if [[ -f ".semgrep/$old" ]]; then
+      echo "  ! .semgrep/$old is superseded (v2.4.5 renamed it and made it framework-neutral)."
+      echo "    Its rule could never fire — delete it once you are happy with the replacement."
+    fi
+  done
 fi
 ```
 
