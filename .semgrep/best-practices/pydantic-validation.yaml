@@ -10,13 +10,24 @@ rules:
           @$ROUTER.$METHOD("...")
           async def $FUNC(..., $REQ: Request, ...):
               ...
-      - pattern-not: |
-          @$ROUTER.$METHOD("...")
-          async def $FUNC(..., $BODY: $MODEL, ...):
-              ...
-    paths:
-      include:
-        - "V2/app/controllers/**"
+      # The exclusion must not match the very parameter the rule is looking for. `$BODY: $MODEL`
+      # on its own also binds `req: Request`, so the pattern-not cancelled EVERY match and the
+      # rule could never fire for anyone (issue #46). Path scoping hid that — the rule never ran,
+      # so nobody noticed it also never matched. $MODEL is now constrained to real body models,
+      # which lets a handler legitimately take both a Request and a validated body.
+      - pattern-not:
+          patterns:
+            - pattern: |
+                @$ROUTER.$METHOD("...")
+                async def $FUNC(..., $BODY: $MODEL, ...):
+                    ...
+            - metavariable-regex:
+                metavariable: $MODEL
+                regex: "^(?!Request$|Response$|BackgroundTasks$|WebSocket$).*"
+    # No `paths:` scope (issue #46). The pattern requires a route decorator AND a parameter
+    # annotated `Request`, which only occurs in endpoint code — the directory name it lives
+    # under (controllers/ · routers/ · api/ · endpoints/) varies per project and must not
+    # decide whether the rule runs.
     metadata:
       category: best-practice
       confidence: MEDIUM

@@ -213,6 +213,10 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
   cp "$PLUGIN_ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
   echo "Compound-agentic validator installed: ci/manifest-agentic/ + tools/manifest-agentic/."
 fi
+
+# Semgrep convention rules (issue #47): the rule set /hitl:dev-check-conventions scans with.
+# Installs only what is absent — .semgrep/ is co-owned; /hitl:dev-update updates it with a diff.
+[[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/semgrep/install.sh" ]] && bash "$PLUGIN_ROOT/shared/semgrep/install.sh"
 ```
 
 ---

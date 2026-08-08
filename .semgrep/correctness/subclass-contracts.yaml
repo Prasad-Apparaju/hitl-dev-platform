@@ -15,9 +15,10 @@ rules:
               ...
               def _describe_plan(self, ...):
                   ...
-    paths:
-      include:
-        - "V2/app/**"
+    # No `paths:` scope (issue #46). The pattern keys off `class X(MutatingTool)`, which is
+    # already self-limiting — it cannot match anything that is not a MutatingTool subclass.
+    # A path scope here would only make the rule silently inert in projects that lay their
+    # code out differently, which is exactly how it shipped hardcoded to one repo's layout.
     metadata:
       category: correctness
       confidence: HIGH
@@ -40,9 +41,7 @@ rules:
               ...
               def execute(self, ..., idempotency_key=..., ...):
                   ...
-    paths:
-      include:
-        - "V2/app/**"
+    # No `paths:` scope — see the note on the rule above (issue #46).
     metadata:
       category: correctness
       confidence: HIGH

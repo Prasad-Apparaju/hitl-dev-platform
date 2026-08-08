@@ -115,7 +115,12 @@ If not:
    fi
    ```
 
-7. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, and the First Pass validator in `ci/first-pass/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
+7. Install the semgrep convention rules (issue #47) — the rule set `/hitl:dev-check-conventions` scans with. Without them that command fails outright (`unable to find a config; path .semgrep does not exist`). Only absent files are copied; `/hitl:dev-update` updates installed rules with a diff.
+   ```bash
+   [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/semgrep/install.sh" ]] && bash "$PLUGIN_ROOT/shared/semgrep/install.sh"
+   ```
+
+8. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, the First Pass validator in `ci/first-pass/`, and the semgrep rules in `.semgrep/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
 ---
 

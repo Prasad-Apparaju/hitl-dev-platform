@@ -8,9 +8,13 @@ rules:
     patterns:
       - pattern: $CLIENT.search(...)
       - pattern-not: $CLIENT.search(..., query_filter=..., ...)
-    paths:
-      include:
-        - "V2/app/services/rag*.py"
+      # Constrain the receiver instead of the directory (issue #46). `$CLIENT.search(...)` alone
+      # is far too broad — it matches `re.search(...)` and every other `.search()` in the codebase,
+      # so the old `V2/app/services/rag*.py` include was doing the filtering. Binding the client
+      # name keeps that precision without hardcoding one project's layout.
+      - metavariable-regex:
+          metavariable: $CLIENT
+          regex: "(?i).*(qdrant|vector_?store|vector_?client|vec_?db).*"
     metadata:
       category: security
       confidence: MEDIUM

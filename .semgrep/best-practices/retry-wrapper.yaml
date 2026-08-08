@@ -12,12 +12,12 @@ rules:
       - metavariable-regex:
           metavariable: $CLIENT
           regex: "(httpx_client|http_client|external_client)"
+    # The `metavariable-regex` above already limits this to the project's HTTP client objects,
+    # so no directory scope is needed (issue #46). Only the resilience wrapper itself is exempt,
+    # matched unanchored so it is found wherever the project keeps it.
     paths:
-      include:
-        - "V2/app/services/**"
-        - "V2/app/agents/**"
       exclude:
-        - "V2/app/services/resilience.py"
+        - "**/resilience.py"
     metadata:
       category: best-practice
       confidence: MEDIUM

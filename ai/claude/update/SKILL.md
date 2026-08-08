@@ -383,6 +383,75 @@ Say which tools were synced (or "CI validators already current").
 
 ---
 
+## Step 4.7 — Re-sync the semgrep convention rules
+
+`.semgrep/` is what `/hitl:dev-check-conventions` scans with, and until 2.4.5 **nothing ever updated it** —
+`init-project.sh` copied it once at onboarding, so a rule fix (e.g. the #45 f-string gap) never reached an
+existing project (issue #47).
+
+Unlike `ci/` validators, a product repo's rule set is **co-owned**: teams add their own rules and tune the
+shipped ones for their stack. So this never blind-copies. Three cases, handled differently:
+
+| Case | Action |
+|---|---|
+| Shipped rule the repo does **not** have | install it (a rule added after this repo was onboarded) |
+| Shipped rule, byte-identical | leave alone, say nothing |
+| Shipped rule the repo has **modified** | show the diff and **ask** before overwriting |
+| Rule the repo added itself | never touched, never reported as drift |
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$ROOT}"
+if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
+  echo "No shipped rule set found — skipping semgrep re-sync."
+else
+  new=(); changed=()
+  while IFS= read -r src; do
+    rel="${src#"$ROOT"/shared/semgrep/}"
+    if [[ ! -f ".semgrep/$rel" ]]; then
+      new+=("$rel")
+    elif ! cmp -s "$src" ".semgrep/$rel"; then
+      changed+=("$rel")
+    fi
+  done < <(find "$ROOT/shared/semgrep" -type f \( -name "*.yaml" -o -name "*.yml" -o -name ".semgrepignore" \))
+
+  # Install everything absent — nothing to lose, nothing to confirm.
+  for rel in "${new[@]}"; do
+    mkdir -p ".semgrep/$(dirname "$rel")"
+    cp "$ROOT/shared/semgrep/$rel" ".semgrep/$rel"
+    echo "  + installed .semgrep/$rel"
+  done
+
+  # Locally modified files are reported with a diff and left untouched for now.
+  for rel in "${changed[@]}"; do
+    echo "  ~ .semgrep/$rel differs from the shipped version:"
+    diff -u ".semgrep/$rel" "$ROOT/shared/semgrep/$rel" | sed 's/^/      /'
+  done
+  [[ ${#changed[@]} -eq 0 && ${#new[@]} -eq 0 ]] && echo "  ✓ semgrep rules already current"
+fi
+```
+
+**If any file is listed as differing, STOP and ask** — show the diff above and ask, per file:
+
+> `.semgrep/<rel>` differs from the version shipped with v$NEW_VER. Overwrite it with the shipped rule, or
+> keep yours? (Your edits are lost if you overwrite; keeping yours means you miss any upstream rule fix.)
+
+Only on an explicit yes, copy that one file:
+```bash
+cp "$ROOT/shared/semgrep/<rel>" ".semgrep/<rel>"
+```
+
+Then stage what changed and verify the rule set still loads:
+```bash
+[[ -d .semgrep ]] && git add .semgrep
+command -v semgrep >/dev/null 2>&1 && semgrep scan --config .semgrep/ --error . >/dev/null 2>&1 \
+  && echo "  ✓ rule set loads and the repo is clean" \
+  || echo "  (semgrep not installed, or findings exist — run /hitl:dev-check-conventions)"
+```
+
+Commit with `git commit -m "chore(hitl): sync semgrep rules to v$NEW_VER"`.
+
+---
+
 ## Step 5 — Confirm
 
 Output this exactly:
