@@ -206,80 +206,137 @@ def check_file(path: Path, root: Path, rep: Report, require_name: bool = False,
     _check_references(path, rel, body, body_start, rep)
 
 
-def _strip_fenced(body: str) -> str:
-    """Blank out fenced code blocks, preserving line numbers.
+def _iter_unfenced_lines(body: str):
+    """Yield (line_no, text) for lines outside fenced code blocks, and report unterminated fences.
 
-    A link inside a fence is usually content the skill *emits* — e.g. the HLD index template in
-    architect/review-existing writes `[Deployment View](deployment-view.md)` into the user's
-    docs/02-design/technical/hld/index.md, where that target is a correct sibling. Resolving it
-    against the skill directory reports a defect that does not exist, and "fixing" it would
-    corrupt the emitted output.
+    A link inside a fence is usually content the skill *emits* — architect/review-existing writes
+    an HLD index template containing `[Deployment View](deployment-view.md)`, correct in the user's
+    docs directory and meaningless relative to the skill. Resolving those reports a defect that
+    does not exist, and "fixing" it would corrupt the emitted template.
+
+    Fence tracking records the OPENING delimiter length and closes only on a fence at least that
+    long, because a naive boolean toggle gets nested fences inside-out: a ```` fence containing an
+    odd number of ``` fences flips the state and leaks template content back out as findings — at
+    FAIL severity. Returns the open-fence line (or None) so an unterminated fence is an error
+    rather than silently blanking the rest of the file.
     """
-    out, fenced = [], False
-    for line in body.splitlines():
-        if line.lstrip().startswith("```"):
-            fenced = not fenced
-            out.append("")
+    lines = body.splitlines()
+    kept, fence_len, opened_at = [], 0, None
+    for i, line in enumerate(lines, start=1):
+        stripped = line.lstrip()
+        m = re.match(r"(`{3,}|~{3,})", stripped)
+        if m:
+            delim = m.group(1)
+            if fence_len == 0:
+                fence_len, opened_at = len(delim), i
+            elif len(delim) >= fence_len and stripped[len(delim):].strip() == "":
+                fence_len, opened_at = 0, None
             continue
-        out.append("" if fenced else line)
-    return "\n".join(out)
+        if fence_len == 0:
+            kept.append((i, line))
+    return kept, opened_at
+
+
+def _clean_target(raw: str) -> str:
+    """Normalize a markdown link target: drop anchors, <angle brackets>, and a "title"."""
+    t = raw.strip()
+    if t.startswith("<") and ">" in t:
+        t = t[1:t.index(">")]
+    else:
+        # `path.md "Some Title"` — the title is not part of the path.
+        t = re.split(r'\s+["\'(]', t, maxsplit=1)[0]
+    return t.split("#")[0].strip()
+
+
+def _ship_root(path: Path) -> Path:
+    """The directory beyond which a relative link cannot survive packaging.
+
+    The build packages `ai/` (skills, commands, agents, hooks, shared) and nothing else — no
+    `docs/`, no `ci/`, no repo root. So the real question for any relative link is "does the
+    resolved target stay inside `ai/`", NOT "how many `../` does it contain". Counting substrings
+    answers the wrong question in both directions: `foo/../bar.md` climbs nowhere yet counts 1,
+    and `a/../../../b.md` climbs two yet counts 3. It also cannot be calibrated for both trees at
+    once, because a skill sits one level deep in the built layout and one OR two in source.
+    """
+    for parent in path.parents:
+        if parent.name == "ai":
+            return parent
+    return path.parent
 
 
 def _check_references(path: Path, rel: str, body: str, body_start: int, rep: Report) -> None:
-    for m in MD_LINK_RE.finditer(_strip_fenced(body)):
-        target = m.group(1).split("#")[0].strip()
-        if not target or target.startswith(("http://", "https://", "mailto:")):
-            continue
+    kept, unterminated = _iter_unfenced_lines(body)
+    if unterminated is not None:
+        rep.add(rel, body_start + unterminated - 1, "FAIL", "fence",
+                f"unterminated code fence opened at body line {unterminated} — everything after it "
+                "is skipped, which hides real findings")
 
-        # The escape check runs BEFORE the .md filter, deliberately. The reference that shipped
-        # broken in 2.4.6 pointed at a DIRECTORY (`../../../docs/examples/first-pass/`), so an
-        # `endswith(".md")` guard skipped it entirely — the filter, not the rule, is what let it
-        # through. Escaping is a property of the path, not of the file type it happens to name.
-        # A link that climbs above the skill's own directory cannot survive packaging: the build
-        # flattens ai/claude/<skill>/ to skills/<skill>/ and ships no docs/, so `../../../docs/...`
-        # resolves inside the source repo and points at nothing in an installed plugin. Checked
-        # BEFORE existence, because that is exactly the case existence cannot catch — the target is
-        # right there in the source tree while the shipped link is broken (found by an independent
-        # audit of the 2.4.6 release; ai/claude/start-change/SKILL.md pointed at a worked example
-        # that no installed user could reach). Two levels up is the legitimate skill -> shared/ hop.
-        depth_up = target.count("../")
-        if depth_up > 2:
-            rep.add(rel, body_start, "FAIL", "ref-escapes",
-                    f"{target} climbs {depth_up} levels — above the plugin root once packaged; "
-                    "link to a URL or ship the target under shared/")
-            continue
+    ship_root = _ship_root(path)
+    seen: set[tuple[str, int]] = set()
+    for lineno, line in kept:
+        # Inline [text](target) AND reference-style [label]: target — the latter was invisible
+        # to the old inline-only pattern, so a 3-level escape written that way was never reported.
+        targets = [m.group(1) for m in MD_LINK_RE.finditer(line)]
+        ref_def = re.match(r"^\s*\[[^\]]+\]:\s*(\S+)", line)
+        if ref_def:
+            targets.append(ref_def.group(1))
 
-        # Existence and the checks below are meaningful only for markdown files.
-        if not target.endswith(".md"):
-            continue
+        for raw in targets:
+            target = _clean_target(raw)
+            if not target or target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            if (target, lineno) in seen:
+                continue
+            seen.add((target, lineno))
 
-        ref = (path.parent / target).resolve()
-        if not ref.is_file():
-            # Do NOT skip silently. Skipping is why a dangling reference passed a clean 53/53 run:
-            # the depth and TOC checks below only ever ran on links that already resolved.
-            rep.add(rel, body_start, "FAIL", "ref-missing",
-                    f"{target} does not resolve from {path.parent.name}/")
-            continue
-        ref_text = ref.read_text(encoding="utf-8", errors="replace")
-        ref_lines = ref_text.splitlines()
-        # depth: a reference file that itself links onward to another local .md
-        for m2 in MD_LINK_RE.finditer(ref_text):
-            t2 = m2.group(1).split("#")[0].strip()
-            if t2.endswith(".md") and (ref.parent / t2).resolve().is_file():
-                rep.add(rel, body_start, "WARN", "ref-depth",
-                        f"{target} links onward to {t2} (keep refs one level deep)")
-                break
-        # TOC on large reference files. A heading is NOT a table of contents: the point is that
-        # Claude can see the file's full scope from a partial read (`head -100`), which only an
-        # actual list of the sections provides. The check used to accept any `## ` in the first
-        # 15 lines, so a file that merely started with a section passed while giving a previewer
-        # nothing. Now it wants a real contents list — a "contents" heading or a link list.
-        if len(ref_lines) > REF_TOC_MIN_LINES:
-            head = "\n".join(ref_lines[:25]).lower()
-            has_toc = ("contents" in head) or head.count("- [") >= 3
-            if not has_toc:
-                rep.add(rel, body_start, "WARN", "ref-toc",
-                        f"{target} is {len(ref_lines)} lines with no table of contents")
+            abs_line = body_start + lineno - 1
+            resolved = (path.parent / target).resolve()
+
+            # Escapes the packaged tree -> broken for every installed user, even though it
+            # resolves perfectly here in the source repo. This is the class the source tree
+            # cannot reveal, and it is what shipped broken in 2.4.6.
+            try:
+                resolved.relative_to(ship_root.resolve())
+            except ValueError:
+                rep.add(rel, abs_line, "FAIL", "ref-escapes",
+                        f"{target} resolves outside {ship_root.name}/ — the build packages ai/ "
+                        "only, so this points at nothing once installed; use a URL or ship the "
+                        "target under ai/shared/")
+                continue
+
+            # Existence is checked for ANY local target, file or directory. Gating this behind
+            # endswith('.md') is half of why the 2.4.6 defect was invisible: it pointed at a
+            # directory, so the filter skipped it before any check ran.
+            if not resolved.exists():
+                rep.add(rel, abs_line, "FAIL", "ref-missing",
+                        f"{target} does not resolve from {path.parent.name}/")
+                continue
+
+            if not target.endswith(".md") or not resolved.is_file():
+                continue
+            ref = resolved
+            ref_text = ref.read_text(encoding="utf-8", errors="replace")
+            ref_lines = ref_text.splitlines()
+
+            # depth: a reference file that itself links onward to another local .md
+            for m2 in MD_LINK_RE.finditer(ref_text):
+                t2 = _clean_target(m2.group(1))
+                if t2.endswith(".md") and (ref.parent / t2).resolve().is_file():
+                    rep.add(rel, abs_line, "WARN", "ref-depth",
+                            f"{target} links onward to {t2} (keep refs one level deep)")
+                    break
+
+            # TOC on large reference files. A heading is NOT a table of contents: the point is
+            # that Claude can see the file's full scope from a partial read (`head -100`), which
+            # only an actual list of the sections provides. This check used to accept any `## `
+            # in the first 15 lines, so a file that merely started with a section passed while
+            # giving a previewer nothing. Now it wants a real contents list.
+            if len(ref_lines) > REF_TOC_MIN_LINES:
+                head = "\n".join(ref_lines[:25]).lower()
+                has_toc = ("contents" in head) or head.count("- [") >= 3
+                if not has_toc:
+                    rep.add(rel, abs_line, "WARN", "ref-toc",
+                            f"{target} is {len(ref_lines)} lines with no table of contents")
 
 
 # ---------------------------------------------------------------------------
