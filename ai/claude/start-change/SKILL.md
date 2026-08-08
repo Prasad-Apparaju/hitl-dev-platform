@@ -130,9 +130,21 @@ For each lightened step:
    version of the system"), mark it `needs-enhancement`, record its path; seed a fast-follow to *enhance* it.
 4. **Defer** — seed a linked fast-follow ticket.
 
-Then **certify before proceeding**: run `python3 ci/first-pass/check_skips.py .hitl/current-change.yaml
---rollup .hitl/skip-ledger.yaml` — it must exit 0 (a silent skip, an unauthorized floor skip, or a TDD
-omission exits 2, non-waivable). Run the change under **brief mode** and the **reduced-friction permission
+Then **certify before proceeding**. Resolve the validator repo-relative first, then fall back to the
+plugin's own copy — a project onboarded before the validator shipped (or via an onboarding path that
+never installed it) has no `ci/first-pass/`, and an unresolvable path must never be read as
+"First Pass is unavailable on this project" (plugin issue #27):
+
+```bash
+CHK="ci/first-pass/check_skips.py"
+[[ -f "$CHK" ]] || CHK="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/check_skips.py"
+[[ -f "$CHK" ]] || echo "⚠ First Pass validator not found — run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
+python3 "$CHK" .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml
+```
+
+It must exit 0 (a silent skip, an unauthorized floor skip, or a TDD omission exits 2, non-waivable).
+If `ci/first-pass/` is absent, say so plainly and tell the user to run `/hitl:dev-update` — that state
+means the skip ledger is uncertified for **every** change on the project, not just this one. Run the change under **brief mode** and the **reduced-friction permission
 policy** ([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
 respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
 
@@ -147,7 +159,9 @@ respectful language in [`shared/first-pass/language.md`](../../shared/first-pass
 ```bash
 N=<issue-number>
 TITLE=$(gh issue view "$N" --json title -q .title \
-  | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c1-50)
+  | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | cut -c1-50 | sed 's/^-//;s/-$//')
+# cut BEFORE sed: truncating after the trim re-introduces the trailing hyphen the trim
+# just removed, so every title over 50 chars yields `issue/N-…-` (plugin issue #26).
 BRANCH="issue/${N}-${TITLE}"
 git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
 ```
@@ -213,7 +227,8 @@ PY
 
 Show the resulting file to the user. Then complete the remaining required fields for the change
 (`source_artifacts.issue`, `manifest.domain`, `allowed_paths`, approvals) per the
-`change-context.schema.yaml`, or note they will be filled by the workflow's own steps.
+`ai/shared/templates/change-context.schema.yaml`, or note they will be filled by the
+workflow's own steps.
 
 ---
 

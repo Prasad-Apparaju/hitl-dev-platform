@@ -4,6 +4,59 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.5] — 2026-08-08
+
+### Fixed
+
+**YAML comments no longer change hook behaviour (plugin issues #25, #23 item 3).** `hitl_scalar()` returned the whole remainder of a line, comments included. Three of its call sites are load-bearing *comparisons*, not display, so annotating a field — the natural thing to write — silently changed what the hooks did:
+
+- **`status: merged   # PR #42 merged 2026-08-07` never deactivated the change.** It stayed nominally active forever; because it was also merged its branch was gone, so it then failed branch reconciliation on *every* subsequent branch — a permanent mismatch banner plus `check-hitl-context.sh` blocking source edits, pointing at `/hitl:dev-switch-context`, which cannot fix a change that is already finished.
+- **`expected_branch: "issue/100-x"   # created …` reconciled as `mismatch` on the correct branch** — the false positive of exactly the check issue #12 added.
+- `tier` / `change_id` comments rendered verbatim into the status line.
+
+Both helpers now share one awk cleaner (`_HITL_AWK_CLEAN`); the ordering is load-bearing and documented at the definition — **comment first, then quotes**, because stripping quotes first leaves the closing quote stranded once a comment follows it. A `#` inside a quoted value is preserved (YAML treats `#` as a comment only when preceded by whitespace). Note `hitl_workflow_field()` was cited in the report as already correct; it was not — it stripped quotes before comments too, and is fixed here as well. 16 regression tests in `ci/hooks/test_steps_scalar.py`, 7 of which fail against 2.4.4.
+
+**The status line exited 1 on the common path (issue #23 item 2).** Both trailing segment prints are short-circuit `&&` tests, so with no platform segment — a normal project — the last test was the script's exit status and it exited 1 having printed a correct line. A host may read that as failure and suppress the line, and a project wrapper that `exec`s the script adopts the status too. Now ends with an explicit `exit 0`.
+
+**`dev-update` checked that `statusLine` existed, not what it pointed at (issue #23 item 1).** A repo onboarded before the `.hitl/hooks/` layout carries a pre-plugin `.hitl/statusline.sh` that hardcodes the 32-step development flow. `grep "statusLine"` matched it happily, so the stale script survived every upgrade and rendered `Step 3/32` for a 6-step `docs` change — while `welcome.sh` rendered the same change correctly, leaving the human and the model reading two disagreeing status lines. Step 4 now asserts the *target* (`hooks/statusline-hitl.sh`) and deletes a legacy `.hitl/statusline.sh` during re-sync.
+
+**`dev-start-migration` never installed the First Pass validator (issue #27).** It was the only onboarding entry point without the install block, so migration-onboarded projects had no `ci/first-pass/`, no `.github/workflows/first-pass-check.yml`, and therefore **no enforcement of the skip ledger** — skips could be recorded on every change with nothing to certify them. The block now matches `dev-start-brownfield`. Separately, `dev-start-change` Step 4b resolved the validator by a repo-relative path with no fallback, so its absence read as *"First Pass is unavailable on this project"* rather than *"the tooling was never installed"*; it now falls back to the plugin's own copy and says plainly what to run.
+
+**The change-context schema and its worked example were never shipped (issue #28).** Three skills instruct the model to write `.hitl/current-change.yaml` "using the schema at `docs/changes/change-context.schema.yaml`", but `build.sh` packages `ai/` only — `docs/` never reaches an installed project, so the reference dangled everywhere the plugin was actually used. Both files moved to `ai/shared/templates/`, which the build already syncs, and now ship as `shared/templates/change-context.schema.yaml` and `GH-000-example.yaml`. All five references updated (the issue named three). The typed, load-bearing fields are now called out at the point of writing: `first_pass` must be a literal boolean, `status` is an enum whose `merged` value deactivates the change, `expected_branch` is matched exactly.
+
+**The semgrep SQL-injection rules missed implicitly-concatenated f-strings (issue #45).** `.semgrep/security/sql-injection.yaml` matched `f"..."`, `f"""..."""`, `"..." + x` and `"...".format(...)`, but not `execute(f"..." "...")` or `execute("..." f"...")` — the shape you get writing long SQL across lines without trailing-space bugs, which formatters produce. The same hole existed in `no-fstring-in-sqlalchemy-text`. The failure mode is worse than a missed finding: a team fixes every flagged site, sees `semgrep --error` return 0, and concludes a file is clean while the interpolation is still there. Found via `dilipkpoluru/PSR-Works#382`, where a migration containing three f-string `op.execute()` calls reported two — the unreported one being a destructive `DELETE`. Both rules gain the two implicit-concatenation patterns, with a seven-shape regression fixture under `ci/semgrep/` asserting in both directions (every interpolated form flagged, every plain literal not). Four of the twelve assertions fail against the previous rule.
+
+**Five of seven convention rules were scoped to one repo's directory layout (issue #46).** `pydantic-validation`, `tenant-isolation`, `retry-wrapper` and both `subclass-contracts` rules pinned `paths.include` to `V2/app/**` — a single product repo's structure. `init-project.sh` copies `.semgrep/` into every onboarded project, so in any repo not using that layout those rules matched no files and always passed: the gate reported green because the rules never ran. A scan of this repo ran 2 of 7 rules.
+
+The scoping is gone. Rules whose patterns are self-limiting (`class X(MutatingTool)`, an HTTP client bound by `metavariable-regex`, a route decorator plus a `Request` parameter) need no directory filter at all. `qdrant-must-filter-brand-id` did need one — bare `$CLIENT.search(...)` also matches `re.search(...)` — so the receiver is now constrained by name instead of by folder, which is layout-independent and more precise.
+
+Removing the scope exposed a second defect underneath it: **`controller-must-use-pydantic-models` could never fire at all.** Its `pattern-not` (`$BODY: $MODEL`) also bound the very parameter the positive pattern looks for (`req: Request`), cancelling every match. Path scoping had hidden it — a rule that never runs is never noticed for also never matching. `$MODEL` is now constrained so a handler can legitimately take both a `Request` and a validated body.
+
+All seven rules now run, each covered by a fixture asserting both directions. A guard test parses `paths:` and fails if any rule is ever scoped to a project-specific path again.
+
+**The rules are now generic, not one customer's conventions.** Unscoping them exposed a deeper problem: three encoded a *specific* stack that HITL never documented and most customers do not use — Qdrant with a `brand_id` tenant key, a helper named `retry_external_call` with clients named `httpx_client`, and a `MutatingTool` base class. (`qdrant` appears in zero HITL docs; `MutatingTool` appears only under `docs/examples/`.) While path-scoped they were merely inert; once unscoped they would have fired wrongly in any repo with a different stack. Each now keys on something that generalizes:
+
+- **`qdrant-must-filter-brand-id` → `vector-search-must-be-tenant-scoped`.** Covers Qdrant, Pinecone, Weaviate, Chroma, Milvus, pgvector and generic vector-store/embedding-store receivers across `search` / `query` / `similarity_search`, and requires *any* filter (`query_filter` / `filter` / `where` / `filters`) rather than one named tenant column. Which key you scope by is your business; that the query is scoped at all is the convention.
+- **`external-calls-must-use-retry-wrapper` → `external-calls-must-be-retried`.** Keys on the HTTP *library* (`requests`, `httpx`, `aiohttp`, `urllib`) instead of a project's variable names, and accepts any retry-shaped decorator or wrapper — tenacity, backoff, or your own. Downgraded to `LOW` confidence to match its advisory nature.
+- **`controller-must-use-pydantic-models` → `request-body-must-be-validated`** (file renamed `pydantic-validation.yaml` → `input-validation.yaml`). The old rule required a FastAPI route decorator plus a parameter annotated `Request`, and named pydantic as though it were the only validator — so it said nothing about Flask, Django or aiohttp. It now matches the *shape* the message always described: a raw body flowing directly into a call. Covers `await request.json()` (FastAPI/Starlette/aiohttp), `request.get_json()` (Flask), `request.POST` / `.body` (Django) and `.data` / `.form` (DRF), and treats a validator as compliant by callee name — pydantic, marshmallow, DRF serializers or a project's own `validate_*` all satisfy it.
+- **`mutating-tool-must-*` → `side-effecting-tool-must-*`.** Matches any base class ending in `MutatingTool` / `SideEffectingTool` / `WritingTool`, so a project is covered whatever it calls its own base, while a `ReadOnlyTool` never matches. The convention is now documented in `docs/patterns/idempotency-keys.md` — which the rules already cited despite that doc never mentioning the class name.
+
+`idempotency_key` stays an `ERROR`: it is HITL-canonical, appearing in the manifest schema (`idempotency_key`, `side_effect_key`, `side_effecting`) and in the pattern doc's checklist. `_describe_plan` is now a `WARNING`, because "PLAN mode" appears nowhere in HITL's schema or patterns — it is a convention, not a contract, and was previously blocking as if it were one.
+
+A second guard test fails if any shipped rule names one customer's identifiers again.
+
+**Rules can be opted out of.** Installing every absent rule on update would resurrect one a team deliberately deleted, every time. Both the onboarding installer and `dev-update` Step 4.7 honour `.semgrep/.hitl-optout` — one path per line, `#` comments allowed — so a single-tenant project can drop the vector-store rule and have it stay dropped.
+
+**Semgrep rules were never shipped to plugin-installed projects, and never updated after onboarding (issue #47).** `build.sh` did not package `.semgrep/` and no onboarding skill installed it — only `tools/scripts/init-project.sh`, which copies from a `hitl-dev-platform` checkout. A plugin-onboarded repo therefore had **no rules at all**, and `/hitl:dev-check-conventions` failed outright with `unable to find a config; path .semgrep does not exist` (exit 7). Nothing re-synced them either, so even where rules existed a fix like #45 above never arrived.
+
+- The build now ships them as `shared/semgrep/`, alongside an `install.sh` the three onboarding skills invoke.
+- **Onboarding installs only what is absent.** A product repo's `.semgrep/` is co-owned — teams add their own rules and tune the shipped ones — so onboarding never overwrites.
+- **`dev-update` Step 4.7 re-syncs**, treating the three cases differently: a rule the repo lacks is installed; an unmodified rule is refreshed silently; a **locally modified** rule is shown as a unified diff and requires explicit confirmation before it is overwritten. Rules the project added itself are never touched and never reported as drift. This is the lesson of the 2.4.4 Step 4.5 fix applied before the damage, not after.
+
+**Branch slugs no longer end in a hyphen (issue #26).** The slug snippet piped `cut -c1-50` *after* the `sed` that trims leading/trailing hyphens, so the `cut` re-introduced the trailing hyphen the `sed` had just removed and every issue title over 50 characters produced `issue/N-…-`. `cut` now runs before `sed`, in both `dev-start-change` and `dev-apply-change` (the report named one).
+
+---
+
 ## [2.4.4] — 2026-08-03
 
 ### Fixed

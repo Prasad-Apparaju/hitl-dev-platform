@@ -20,6 +20,31 @@
 #
 # Status values: done (✓) · current (▶) · open (·).
 
+# _HITL_AWK_CLEAN — awk source for the ONE scalar-cleaning rule, prepended to every awk
+# program that reads a scalar out of the change file. It exists as a shared string because
+# `hitl_scalar` and `hitl_workflow_field` each had their own copy and they drifted: one
+# stripped comments and the other didn't, and BOTH stripped quotes before comments, which
+# leaves the closing quote stranded once a comment follows it (plugin issues #25, #23 item 3).
+#
+# Order is load-bearing — comment first, then quotes:
+#   expected_branch: "issue/100-x"   # created 2026-08-07
+#   quotes-first → [issue/100-x"   # created…] → compares as a mismatch, forever
+#
+# A quoted value keeps any `#` inside it (a `#` is only a comment when preceded by
+# whitespace, per YAML), so quoted values are cut at their closing quote instead.
+_HITL_AWK_CLEAN='
+function hitl_clean(line) {
+  if (line ~ /^"/) {                     # quoted: content runs to the closing quote
+    sub(/^"/, "", line)
+    sub(/".*$/, "", line)
+    return line
+  }
+  sub(/[ \t]+#.*$/, "", line)            # unquoted: drop a trailing comment
+  sub(/[ \t]+$/, "", line)
+  return line
+}
+'
+
 # hitl_python → echo the first working Python interpreter, or return 1 if none (issue #14).
 # On Windows, `python3` is usually the Microsoft Store stub: it's on PATH but exits non-zero and
 # runs nothing, so a hard-coded `python3` makes every hook silently no-op. The `import sys` smoke
@@ -44,18 +69,15 @@ hitl_has_workflow() {
 # workflow block. Reads only the indented lines inside `workflow:` (before `steps:`).
 hitl_workflow_field() {
   local f="$1" field="$2"
-  awk -v key="$field" '
+  awk -v key="$field" "$_HITL_AWK_CLEAN"'
     /^workflow:/        { w=1; next }
     w && /^[^ ]/        { exit }                       # left the workflow block
     w && /^[ ]+steps:/  { exit }                       # stop at the steps list
     w {
       line=$0
       if (line ~ "^[ ]+" key ":") {
-        sub("^[ ]+" key ":[ ]*", "", line)
-        gsub(/^"|"$/, "", line)                        # strip surrounding quotes
-        sub(/[ ]+#.*/, "", line)                       # strip trailing comment
-        gsub(/[ ]+$/, "", line)
-        print line; exit
+        sub("^[ ]+" key ":[ \t]*", "", line)
+        print hitl_clean(line); exit
       }
     }
   ' "$f"
@@ -165,8 +187,14 @@ hitl_change_active() {
 }
 
 # hitl_scalar <yaml> <field> → top-level scalar (e.g. change_id, expected_branch, tier).
+# Three of its call sites are load-bearing COMPARISONS, not display: `status` decides whether a
+# change is still active, `expected_branch` decides branch reconciliation, and `change_id` feeds
+# the issue-number fallback. A leaked trailing comment there changes behaviour — a merged change
+# never deactivates and a correct branch reconciles as a permanent mismatch (issue #25).
 hitl_scalar() {
-  awk -v k="$2" '$0 ~ "^" k ":" { sub("^" k ":[ ]*","",$0); gsub(/^"|"$/,"",$0); print; exit }' "$1"
+  awk -v k="$2" "$_HITL_AWK_CLEAN"'
+    $0 ~ "^" k ":" { sub("^" k ":[ \t]*","",$0); print hitl_clean($0); exit }
+  ' "$1"
 }
 
 # hitl_branch_reconcile <yaml> <current_branch> → echoes one of:

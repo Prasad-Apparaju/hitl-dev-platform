@@ -1,48 +1,63 @@
+# Contracts for side-effecting tool classes.
+#
+# These key on a NAMING CONVENTION rather than one project's base class (issue #46): any base
+# whose name ends in MutatingTool / SideEffectingTool / WritingTool. That keeps them generic —
+# a project adopting the convention is covered whatever it calls its own base — while staying
+# inert and false-positive-free for projects that do not, since a read-only `BaseTool` or
+# `ReadOnlyTool` never matches.
+#
+# `idempotency_key` is HITL-canonical: it appears in the system manifest (`idempotency_key`,
+# `side_effect_key`, `side_effecting`) and in the implementation checklist of
+# docs/patterns/idempotency-keys.md — "every tool that calls an external API accepts an
+# idempotency_key parameter".
 rules:
-  - id: mutating-tool-must-implement-describe-plan
+  - id: side-effecting-tool-must-have-idempotency-key
     message: >
-      All MutatingTool subclasses must implement _describe_plan().
-      This method returns a dry-run preview for PLAN mode.
-      See docs/patterns/idempotency-keys.md.
+      A side-effecting tool's execute() must accept an idempotency_key derived from business
+      state, not runtime state — otherwise a retry, a double-click or a duplicate scheduler
+      fire repeats the side effect. See docs/patterns/idempotency-keys.md.
     severity: ERROR
     languages: [python]
     patterns:
       - pattern: |
-          class $CLASS(MutatingTool):
-              ...
-      - pattern-not: |
-          class $CLASS(MutatingTool):
-              ...
-              def _describe_plan(self, ...):
-                  ...
-    paths:
-      include:
-        - "V2/app/**"
-    metadata:
-      category: correctness
-      confidence: HIGH
-
-  - id: mutating-tool-must-have-idempotency-key
-    message: >
-      MutatingTool.execute() must accept an idempotency_key parameter
-      derived from business state, not runtime state.
-      See docs/patterns/idempotency-keys.md.
-    severity: ERROR
-    languages: [python]
-    patterns:
-      - pattern: |
-          class $CLASS(MutatingTool):
+          class $CLASS($BASE):
               ...
               def execute(self, ...):
                   ...
       - pattern-not: |
-          class $CLASS(MutatingTool):
+          class $CLASS($BASE):
               ...
               def execute(self, ..., idempotency_key=..., ...):
                   ...
-    paths:
-      include:
-        - "V2/app/**"
+      - metavariable-regex:
+          metavariable: $BASE
+          regex: ".*(Mutating|SideEffecting|Writing)Tool$"
     metadata:
       category: correctness
       confidence: HIGH
+
+  - id: side-effecting-tool-must-implement-describe-plan
+    message: >
+      A side-effecting tool should implement _describe_plan() returning a dry-run preview,
+      so the effect can be reviewed before it is applied.
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern: |
+          class $CLASS($BASE):
+              ...
+      - pattern-not: |
+          class $CLASS($BASE):
+              ...
+              def _describe_plan(self, ...):
+                  ...
+      - metavariable-regex:
+          metavariable: $BASE
+          regex: ".*(Mutating|SideEffecting|Writing)Tool$"
+    metadata:
+      category: correctness
+      confidence: MEDIUM
+      note: >
+        Unlike the idempotency-key contract above, the dry-run preview is a convention rather
+        than a HITL-canonical concept — `_describe_plan` and "PLAN mode" appear nowhere in
+        HITL's manifest schema or pattern docs. Advisory (WARNING) for that reason.

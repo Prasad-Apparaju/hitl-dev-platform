@@ -116,14 +116,29 @@ If the wrappers do NOT contain `installed_plugins.json`, they are stale — usin
 
 Delete `.hitl/hooks/` and re-create all **eight** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
 
-Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook:
+Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook. Assert what `statusLine` **points at**, not merely that the key is present:
 ```bash
 grep "CLAUDE_PROJECT_DIR" .claude/settings.json
-grep "statusLine" .claude/settings.json
+grep -q 'hooks/statusline-hitl.sh' .claude/settings.json \
+  || echo "statusLine missing or pointing at a stale script — re-create settings.json"
 grep "hitl-gate" .claude/settings.json
 ```
 
-If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent, the persistent HITL breadcrumb is missing. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
+A repo onboarded before the `.hitl/hooks/` layout has a `statusLine` that runs a **pre-plugin standalone script**:
+
+```json
+"statusLine": { "type": "command",
+  "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/statusline.sh\"" }
+```
+
+A `grep "statusLine"` matches that happily, so the check passes and the stale script survives every subsequent upgrade. It hardcodes the 32-step development flow and cannot render any other workflow, so on a 6-step `docs` change it reports `Step 3/32` with a trail of steps the change does not contain — while the `UserPromptSubmit` breadcrumb from `welcome.sh` renders correctly. The human and the model then read two disagreeing status lines, which is very hard to diagnose from inside a session (plugin issue #23 item 1).
+
+If a legacy `.hitl/statusline.sh` is present, delete it during re-sync so nothing can be re-pointed at it:
+```bash
+[ -f .hitl/statusline.sh ] && rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (superseded by .hitl/hooks/statusline-hitl.sh)"
+```
+
+If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent **or points anywhere other than `hooks/statusline-hitl.sh`**, the persistent HITL breadcrumb is missing or wrong. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
 
 Say:
 
@@ -365,6 +380,96 @@ fi
 
 If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`.
 Say which tools were synced (or "CI validators already current").
+
+---
+
+## Step 4.7 — Re-sync the semgrep convention rules
+
+`.semgrep/` is what `/hitl:dev-check-conventions` scans with, and until 2.4.5 **nothing ever updated it** —
+`init-project.sh` copied it once at onboarding, so a rule fix (e.g. the #45 f-string gap) never reached an
+existing project (issue #47).
+
+Unlike `ci/` validators, a product repo's rule set is **co-owned**: teams add their own rules and tune the
+shipped ones for their stack. So this never blind-copies. Three cases, handled differently:
+
+| Case | Action |
+|---|---|
+| Shipped rule the repo does **not** have | install it (a rule added after this repo was onboarded) |
+| Shipped rule, byte-identical | leave alone, say nothing |
+| Shipped rule the repo has **modified** | show the diff and **ask** before overwriting |
+| Rule the repo added itself | never touched, never reported as drift |
+| Rule listed in `.semgrep/.hitl-optout` | never installed — a deliberate removal stays removed |
+
+The opt-out file matters: "install anything absent" would otherwise resurrect a rule the team
+deliberately deleted, on every single update. One path per line; `#` comments allowed. A
+single-tenant project dropping the vector-store rule writes `best-practices/tenant-isolation.yaml`.
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$ROOT}"
+if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
+  echo "No shipped rule set found — skipping semgrep re-sync."
+else
+  new=(); changed=(); skipped=()
+  while IFS= read -r src; do
+    rel="${src#"$ROOT"/shared/semgrep/}"
+    [[ "$rel" == "install.sh" ]] && continue
+    # Honour a deliberate removal — otherwise every update resurrects the deleted rule.
+    if [[ -f .semgrep/.hitl-optout ]] && grep -qxF "$rel" <(grep -v '^[[:space:]]*#' .semgrep/.hitl-optout); then
+      skipped+=("$rel"); continue
+    fi
+    if [[ ! -f ".semgrep/$rel" ]]; then
+      new+=("$rel")
+    elif ! cmp -s "$src" ".semgrep/$rel"; then
+      changed+=("$rel")
+    fi
+  done < <(find "$ROOT/shared/semgrep" -type f \( -name "*.yaml" -o -name "*.yml" -o -name ".semgrepignore" \))
+  [[ ${#skipped[@]} -gt 0 ]] && echo "  · opted out (.semgrep/.hitl-optout): ${skipped[*]}"
+
+  # Install everything absent — nothing to lose, nothing to confirm.
+  for rel in "${new[@]}"; do
+    mkdir -p ".semgrep/$(dirname "$rel")"
+    cp "$ROOT/shared/semgrep/$rel" ".semgrep/$rel"
+    echo "  + installed .semgrep/$rel"
+  done
+
+  # Locally modified files are reported with a diff and left untouched for now.
+  for rel in "${changed[@]}"; do
+    echo "  ~ .semgrep/$rel differs from the shipped version:"
+    diff -u ".semgrep/$rel" "$ROOT/shared/semgrep/$rel" | sed 's/^/      /'
+  done
+  [[ ${#changed[@]} -eq 0 && ${#new[@]} -eq 0 ]] && echo "  ✓ semgrep rules already current"
+
+  # Superseded files: a rule that was RENAMED upstream leaves its old file behind, and the
+  # loop above cannot tell that apart from a rule the project wrote itself, so it would sit
+  # there forever as dead config. Report, never auto-delete — the project may have edited it.
+  for old in best-practices/pydantic-validation.yaml; do
+    if [[ -f ".semgrep/$old" ]]; then
+      echo "  ! .semgrep/$old is superseded (v2.4.5 renamed it and made it framework-neutral)."
+      echo "    Its rule could never fire — delete it once you are happy with the replacement."
+    fi
+  done
+fi
+```
+
+**If any file is listed as differing, STOP and ask** — show the diff above and ask, per file:
+
+> `.semgrep/<rel>` differs from the version shipped with v$NEW_VER. Overwrite it with the shipped rule, or
+> keep yours? (Your edits are lost if you overwrite; keeping yours means you miss any upstream rule fix.)
+
+Only on an explicit yes, copy that one file:
+```bash
+cp "$ROOT/shared/semgrep/<rel>" ".semgrep/<rel>"
+```
+
+Then stage what changed and verify the rule set still loads:
+```bash
+[[ -d .semgrep ]] && git add .semgrep
+command -v semgrep >/dev/null 2>&1 && semgrep scan --config .semgrep/ --error . >/dev/null 2>&1 \
+  && echo "  ✓ rule set loads and the repo is clean" \
+  || echo "  (semgrep not installed, or findings exist — run /hitl:dev-check-conventions)"
+```
+
+Commit with `git commit -m "chore(hitl): sync semgrep rules to v$NEW_VER"`.
 
 ---
 

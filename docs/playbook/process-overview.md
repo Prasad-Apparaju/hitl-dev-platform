@@ -140,7 +140,7 @@ Not the same as impact analysis (which identifies affected code). This identifie
 
 `.hitl/current-change.yaml` is the runtime contract of the workflow — the handoff between human process decisions and AI enforcement. It is created by `/hitl:apply-change` (Impact Analysis) and updated at each phase gate. Hooks, skills, and commands read it to know: what change is in flight, which domain is approved, what evidence is complete, and whether the current action is permitted.
 
-Every field in the file has a purpose: `tier` determines which steps apply; `status` gates what AI is allowed to do next; `allowed_paths` constrains domain boundary enforcement; `required_evidence` tracks what must exist before a PR can be created. If this file is absent or stale, the process has no enforcement. See [`docs/changes/change-context.schema.yaml`](../../docs/changes/change-context.schema.yaml) for the full schema.
+Every field in the file has a purpose: `tier` determines which steps apply; `status` gates what AI is allowed to do next; `allowed_paths` constrains domain boundary enforcement; `required_evidence` tracks what must exist before a PR can be created. If this file is absent or stale, the process has no enforcement. See [`ai/shared/templates/change-context.schema.yaml`](../../ai/shared/templates/change-context.schema.yaml) for the full schema (it ships to installed projects as `shared/templates/change-context.schema.yaml`).
 
 ### Graph-First Retrieval
 

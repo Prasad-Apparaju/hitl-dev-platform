@@ -1,16 +1,42 @@
 rules:
-  - id: qdrant-must-filter-brand-id
+  - id: vector-search-must-be-tenant-scoped
     message: >
-      Qdrant queries must filter by brand_id for tenant isolation.
-      Every search call should include a brand_id filter condition.
+      Vector store queries must be scoped to the caller's tenant.
+      Pass a filter (query_filter / filter / where / filters) naming your tenant key —
+      an unfiltered similarity search returns every tenant's vectors.
     severity: ERROR
     languages: [python]
     patterns:
-      - pattern: $CLIENT.search(...)
+      - pattern-either:
+          - pattern: $CLIENT.search(...)
+          - pattern: $CLIENT.query(...)
+          - pattern: $CLIENT.similarity_search(...)
+      # Compliant if ANY filter argument is present. The rule deliberately does not name a
+      # tenant column: the old form required `brand_id`, one project's key, which is
+      # meaningless everywhere else (issue #46). What generalizes is "a tenant-scoped query
+      # carries a filter"; which key it filters on is the project's business and the
+      # reviewer's job.
       - pattern-not: $CLIENT.search(..., query_filter=..., ...)
-    paths:
-      include:
-        - "V2/app/services/rag*.py"
+      - pattern-not: $CLIENT.search(..., filter=..., ...)
+      - pattern-not: $CLIENT.search(..., where=..., ...)
+      - pattern-not: $CLIENT.search(..., filters=..., ...)
+      - pattern-not: $CLIENT.query(..., query_filter=..., ...)
+      - pattern-not: $CLIENT.query(..., filter=..., ...)
+      - pattern-not: $CLIENT.query(..., where=..., ...)
+      - pattern-not: $CLIENT.query(..., filters=..., ...)
+      - pattern-not: $CLIENT.similarity_search(..., filter=..., ...)
+      - pattern-not: $CLIENT.similarity_search(..., where=..., ...)
+      - pattern-not: $CLIENT.similarity_search(..., filters=..., ...)
+      # Bind the receiver to a vector store rather than to a directory (the old
+      # `V2/app/services/rag*.py` include) or to a single vendor. Ecosystem-level names are
+      # plural and change far more slowly than a project's variable names — and the bare
+      # `.search()` pattern would otherwise flag `re.search(...)`.
+      - metavariable-regex:
+          metavariable: $CLIENT
+          regex: "(?i).*(qdrant|pinecone|weaviate|chroma|milvus|pgvector|vector_?store|vector_?client|vector_?db|vec_?db|embeddings?_?store).*"
     metadata:
       category: security
       confidence: MEDIUM
+      note: >
+        Single-tenant projects can opt out: delete this file and add its path to
+        .semgrep/.hitl-optout, which dev-update honours so the rule is not reinstated.

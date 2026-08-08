@@ -65,8 +65,10 @@ N=<issue-number>
 TITLE=$(gh issue view $N --json title -q .title \
   | tr '[:upper:]' '[:lower:]' \
   | tr -cs 'a-z0-9' '-' \
-  | sed 's/^-//;s/-$//' \
-  | cut -c1-50)
+  | cut -c1-50 \
+  | sed 's/^-//;s/-$//')
+# cut BEFORE sed: truncating after the trim re-introduces the trailing hyphen the trim
+# just removed, so every title over 50 chars yields `issue/N-…-` (plugin issue #26).
 BRANCH="issue/${N}-${TITLE}"
 CURRENT=$(git branch --show-current)
 ```
@@ -147,7 +149,7 @@ If infrastructure is affected:
 - Does the local dev config need updating?
 
 ### Step 7: Initialize HITL Context File
-Create or update `.hitl/current-change.yaml` using the schema at `docs/changes/change-context.schema.yaml`. See `docs/changes/GH-000-example.yaml` for a filled-in example.
+Create or update `.hitl/current-change.yaml` using the schema at `ai/shared/templates/change-context.schema.yaml`. See `ai/shared/templates/GH-000-example.yaml` for a filled-in example. Several fields are **typed and load-bearing** — `first_pass` must be a literal boolean (a mapping or any non-bool makes the First Pass validator enforce at strictest), `status` is an enum whose `merged` value deactivates the change, and `expected_branch` is matched exactly against the current branch.
 
 Set from the impact analysis above:
 - `change_id`: `GH-<issue-number>`
