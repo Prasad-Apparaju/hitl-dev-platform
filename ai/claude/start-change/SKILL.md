@@ -150,7 +150,7 @@ respectful language in [`shared/first-pass/language.md`](../../shared/first-pass
 
 **At change start, also resurface** any unresolved skips whose area overlaps this change (read the roll-up;
 `ci/first-pass/resurface.py`) — politely, escalating by criticality. See the worked example at
-[`docs/examples/first-pass/`](../../../docs/examples/first-pass/).
+[`docs/examples/first-pass/`](https://github.com/Prasad-Apparaju/hitl-dev-platform/tree/main/docs/examples/first-pass).
 
 ---
 

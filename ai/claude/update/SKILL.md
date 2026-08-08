@@ -385,9 +385,9 @@ Say which tools were synced (or "CI validators already current").
 
 ## Step 4.7 — Re-sync the semgrep convention rules
 
-`.semgrep/` is what `/hitl:dev-check-conventions` scans with, and until 2.4.5 **nothing ever updated it** —
-`init-project.sh` copied it once at onboarding, so a rule fix (e.g. the #45 f-string gap) never reached an
-existing project (issue #47).
+`.semgrep/` is what `/hitl:dev-check-conventions` scans with. `init-project.sh` copies it once at
+onboarding, so without this step a rule fix never reaches a project that is already set up — the
+rule set stays frozen at whatever shipped the day it was onboarded (issue #47).
 
 Unlike `ci/` validators, a product repo's rule set is **co-owned**: teams add their own rules and tune the
 shipped ones for their stack. So this never blind-copies. Three cases, handled differently:
@@ -444,7 +444,7 @@ else
   # there forever as dead config. Report, never auto-delete — the project may have edited it.
   for old in best-practices/pydantic-validation.yaml; do
     if [[ -f ".semgrep/$old" ]]; then
-      echo "  ! .semgrep/$old is superseded (v2.4.5 renamed it and made it framework-neutral)."
+      echo "  ! .semgrep/$old is superseded — it was renamed upstream and made framework-neutral."
       echo "    Its rule could never fire — delete it once you are happy with the replacement."
     fi
   done

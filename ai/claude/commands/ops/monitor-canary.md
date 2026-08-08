@@ -1,5 +1,5 @@
 ---
-description: Canary monitoring — read observability dashboards for an active canary deployment and produce a go/no-go recommendation for the next promotion step
+description: Canary monitoring — read observability dashboards for an active canary deployment and produce a go/no-go recommendation for the next promotion step. Use while a canary is soaking, before promoting it to a wider percentage.
 argument-hint: "[change ID, canary percentage, and soak time elapsed]"
 ---
 
