@@ -277,9 +277,14 @@ def _check_references(path: Path, rel: str, body: str, body_start: int, rep: Rep
         # Inline [text](target) AND reference-style [label]: target — the latter was invisible
         # to the old inline-only pattern, so a 3-level escape written that way was never reported.
         targets = [m.group(1) for m in MD_LINK_RE.finditer(line)]
-        ref_def = re.match(r"^\s*\[[^\]]+\]:\s*(\S+)", line)
-        if ref_def:
-            targets.append(ref_def.group(1))
+        # Reference-style link definitions. The label must not be a footnote (`[^1]:`) and the
+        # target must look like a path — otherwise ordinary prose (`[Note]: see below`) and
+        # footnote text are parsed as links, and their first WORD is reported as a missing file.
+        ref_def = re.match(r"^\s*\[([^\]]+)\]:\s*(\S+)", line)
+        if ref_def and not ref_def.group(1).startswith("^"):
+            candidate = ref_def.group(2)
+            if "/" in candidate or re.search(r"\.[A-Za-z0-9]{1,5}$", candidate):
+                targets.append(candidate)
 
         for raw in targets:
             target = _clean_target(raw)
