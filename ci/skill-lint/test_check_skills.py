@@ -167,7 +167,10 @@ def test_link_inside_a_fence_is_ignored(tmp_path: Path):
 def test_nested_fences_do_not_leak(tmp_path: Path):
     """A ```` fence holding an ODD number of ``` fences flipped a boolean toggle inside-out."""
     root = _tree(tmp_path)
-    body = FM + "````markdown\n```bash\necho hi\n```\n[Deployment View](deployment-view.md)\n````\n"
+    # ODD number of inner fence lines is what inverts a boolean toggle. With an EVEN
+    # number this test passes against the OLD buggy stripper — verified — which made it
+    # a false guard: it would not have caught the bug it exists to prevent.
+    body = FM + "````markdown\n```bash\necho hi\n[Deployment View](deployment-view.md)\n````\n"
     _skill(root, "claude/t", body)
     rep = cs.run(root)
     assert not [f for f in rep.fails if f.criterion.startswith("ref")]
@@ -188,3 +191,27 @@ def test_reference_findings_report_the_real_line(tmp_path: Path):
     rep = cs.run(root)
     f = next(f for f in rep.fails if f.criterion == "ref-escapes")
     assert f.line >= 7, f"expected the link's own line, got {f.line}"
+
+
+def test_footnote_definition_is_not_treated_as_a_link(tmp_path: Path):
+    """`[^1]: text` is a footnote. Parsing it as a link definition reported its first WORD
+    as a missing file — a hard FAIL naming no real path, from one footnote in one skill."""
+    root = _tree(tmp_path)
+    _skill(root, "claude/t", FM + "Some prose.[^1]\n\n[^1]: This is a footnote about the API.\n")
+    rep = cs.run(root)
+    assert not [f for f in rep.fails if f.criterion.startswith("ref")]
+
+
+def test_prose_label_is_not_treated_as_a_link(tmp_path: Path):
+    root = _tree(tmp_path)
+    _skill(root, "claude/t", FM + "[Note]: see the section below\n")
+    rep = cs.run(root)
+    assert not [f for f in rep.fails if f.criterion.startswith("ref")]
+
+
+def test_real_reference_style_link_is_still_checked(tmp_path: Path):
+    """The footnote guard must not disable the check it was added alongside."""
+    root = _tree(tmp_path)
+    _skill(root, "claude/t", FM + "[refstyle]: ../../../../way/up/high.md\n")
+    rep = cs.run(root)
+    assert any(f.criterion == "ref-escapes" for f in rep.fails)
