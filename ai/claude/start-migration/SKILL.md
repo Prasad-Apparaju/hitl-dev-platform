@@ -101,7 +101,21 @@ If not:
    ```
    Then fill in today's date in `adr-0001-hitl-adoption.md` and `adr-0002-documentation-first.md` (replace `[fill in: project start date]` with today's ISO date).
 
-6. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, and 8 baseline ADRs created in `docs/02-design/technical/adrs/`. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
+6. Install the First Pass validator (FR-29): the fail-closed skip-ledger validator + its criticality catalog (co-located = the trusted CI source) + the CI gate. Without this the skip ledger is **unenforced** — skips can be recorded on every change and nothing certifies them, which is the exact failure the ledger exists to prevent (plugin issue #27). Idempotent; skips if the plugin copy is absent.
+   ```bash
+   if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
+     mkdir -p ci/first-pass
+     cp "$PLUGIN_ROOT/shared/ci/first-pass/"*.py ci/first-pass/ 2>/dev/null
+     [[ -f "$PLUGIN_ROOT/shared/workflows.yaml" ]] && cp "$PLUGIN_ROOT/shared/workflows.yaml" ci/first-pass/workflows.yaml
+     if [[ -f "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" ]]; then
+       mkdir -p .github/workflows
+       [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
+     fi
+     echo "First Pass installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
+   fi
+   ```
+
+7. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, and the First Pass validator in `ci/first-pass/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
 ---
 

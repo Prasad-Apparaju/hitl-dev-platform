@@ -116,14 +116,29 @@ If the wrappers do NOT contain `installed_plugins.json`, they are stale — usin
 
 Delete `.hitl/hooks/` and re-create all **eight** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
 
-Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook:
+Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook. Assert what `statusLine` **points at**, not merely that the key is present:
 ```bash
 grep "CLAUDE_PROJECT_DIR" .claude/settings.json
-grep "statusLine" .claude/settings.json
+grep -q 'hooks/statusline-hitl.sh' .claude/settings.json \
+  || echo "statusLine missing or pointing at a stale script — re-create settings.json"
 grep "hitl-gate" .claude/settings.json
 ```
 
-If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent, the persistent HITL breadcrumb is missing. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
+A repo onboarded before the `.hitl/hooks/` layout has a `statusLine` that runs a **pre-plugin standalone script**:
+
+```json
+"statusLine": { "type": "command",
+  "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/statusline.sh\"" }
+```
+
+A `grep "statusLine"` matches that happily, so the check passes and the stale script survives every subsequent upgrade. It hardcodes the 32-step development flow and cannot render any other workflow, so on a 6-step `docs` change it reports `Step 3/32` with a trail of steps the change does not contain — while the `UserPromptSubmit` breadcrumb from `welcome.sh` renders correctly. The human and the model then read two disagreeing status lines, which is very hard to diagnose from inside a session (plugin issue #23 item 1).
+
+If a legacy `.hitl/statusline.sh` is present, delete it during re-sync so nothing can be re-pointed at it:
+```bash
+[ -f .hitl/statusline.sh ] && rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (superseded by .hitl/hooks/statusline-hitl.sh)"
+```
+
+If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent **or points anywhere other than `hooks/statusline-hitl.sh`**, the persistent HITL breadcrumb is missing or wrong. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
 
 Say:
 

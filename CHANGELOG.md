@@ -4,6 +4,30 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.5] — 2026-08-08
+
+### Fixed
+
+**YAML comments no longer change hook behaviour (plugin issues #25, #23 item 3).** `hitl_scalar()` returned the whole remainder of a line, comments included. Three of its call sites are load-bearing *comparisons*, not display, so annotating a field — the natural thing to write — silently changed what the hooks did:
+
+- **`status: merged   # PR #42 merged 2026-08-07` never deactivated the change.** It stayed nominally active forever; because it was also merged its branch was gone, so it then failed branch reconciliation on *every* subsequent branch — a permanent mismatch banner plus `check-hitl-context.sh` blocking source edits, pointing at `/hitl:dev-switch-context`, which cannot fix a change that is already finished.
+- **`expected_branch: "issue/100-x"   # created …` reconciled as `mismatch` on the correct branch** — the false positive of exactly the check issue #12 added.
+- `tier` / `change_id` comments rendered verbatim into the status line.
+
+Both helpers now share one awk cleaner (`_HITL_AWK_CLEAN`); the ordering is load-bearing and documented at the definition — **comment first, then quotes**, because stripping quotes first leaves the closing quote stranded once a comment follows it. A `#` inside a quoted value is preserved (YAML treats `#` as a comment only when preceded by whitespace). Note `hitl_workflow_field()` was cited in the report as already correct; it was not — it stripped quotes before comments too, and is fixed here as well. 16 regression tests in `ci/hooks/test_steps_scalar.py`, 7 of which fail against 2.4.4.
+
+**The status line exited 1 on the common path (issue #23 item 2).** Both trailing segment prints are short-circuit `&&` tests, so with no platform segment — a normal project — the last test was the script's exit status and it exited 1 having printed a correct line. A host may read that as failure and suppress the line, and a project wrapper that `exec`s the script adopts the status too. Now ends with an explicit `exit 0`.
+
+**`dev-update` checked that `statusLine` existed, not what it pointed at (issue #23 item 1).** A repo onboarded before the `.hitl/hooks/` layout carries a pre-plugin `.hitl/statusline.sh` that hardcodes the 32-step development flow. `grep "statusLine"` matched it happily, so the stale script survived every upgrade and rendered `Step 3/32` for a 6-step `docs` change — while `welcome.sh` rendered the same change correctly, leaving the human and the model reading two disagreeing status lines. Step 4 now asserts the *target* (`hooks/statusline-hitl.sh`) and deletes a legacy `.hitl/statusline.sh` during re-sync.
+
+**`dev-start-migration` never installed the First Pass validator (issue #27).** It was the only onboarding entry point without the install block, so migration-onboarded projects had no `ci/first-pass/`, no `.github/workflows/first-pass-check.yml`, and therefore **no enforcement of the skip ledger** — skips could be recorded on every change with nothing to certify them. The block now matches `dev-start-brownfield`. Separately, `dev-start-change` Step 4b resolved the validator by a repo-relative path with no fallback, so its absence read as *"First Pass is unavailable on this project"* rather than *"the tooling was never installed"*; it now falls back to the plugin's own copy and says plainly what to run.
+
+**The change-context schema and its worked example were never shipped (issue #28).** Three skills instruct the model to write `.hitl/current-change.yaml` "using the schema at `docs/changes/change-context.schema.yaml`", but `build.sh` packages `ai/` only — `docs/` never reaches an installed project, so the reference dangled everywhere the plugin was actually used. Both files moved to `ai/shared/templates/`, which the build already syncs, and now ship as `shared/templates/change-context.schema.yaml` and `GH-000-example.yaml`. All five references updated (the issue named three). The typed, load-bearing fields are now called out at the point of writing: `first_pass` must be a literal boolean, `status` is an enum whose `merged` value deactivates the change, `expected_branch` is matched exactly.
+
+**Branch slugs no longer end in a hyphen (issue #26).** The slug snippet piped `cut -c1-50` *after* the `sed` that trims leading/trailing hyphens, so the `cut` re-introduced the trailing hyphen the `sed` had just removed and every issue title over 50 characters produced `issue/N-…-`. `cut` now runs before `sed`, in both `dev-start-change` and `dev-apply-change` (the report named one).
+
+---
+
 ## [2.4.4] — 2026-08-03
 
 ### Fixed

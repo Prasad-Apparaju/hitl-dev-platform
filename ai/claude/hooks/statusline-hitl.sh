@@ -92,3 +92,9 @@ fi
 printf "%s  %s%b%b" "$cwd" "$model" "$ctx_segment" "$branch_segment"
 [ -n "$hitl_segment" ] && printf "\n%b" "$hitl_segment"
 [ -n "$platform_segment" ] && printf "%b" "$platform_segment"
+
+# Explicit success. Both trailing tests are short-circuit `&&`, so on the common path
+# (no platform segment) the last test is the script's exit status and it exits 1 having
+# printed a perfectly good status line — which a host may read as failure and suppress.
+# A project wrapper that `exec`s this script adopts that status too (plugin issue #23 item 2).
+exit 0

@@ -89,7 +89,7 @@ graph TD
 
 - **`ai/shared/workflows.yaml`** — add `crit` (and, where it differs by tier, a compact `crit_by_tier`) to each
   step. Additive; a step without `crit` defaults to `standard` (back-compat).
-- **`docs/changes/change-context.schema.yaml`** — add the `skips[]` ledger and a `first_pass: true` marker; add
+- **`ai/shared/templates/change-context.schema.yaml`** — add the `skips[]` ledger and a `first_pass: true` marker; add
   `skipped` to the step `status` enum. The awk breadcrumb parser only reads `status`, so it renders `skipped`
   with a new glyph and ignores the ledger (ADR-8).
 - **`dev-start-change` / `dev-practices` skills** — the driver behavior, brief mode, permission policy.
