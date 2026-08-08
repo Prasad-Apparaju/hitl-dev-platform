@@ -216,10 +216,15 @@ def _check_references(path: Path, rel: str, body: str, body_start: int, rep: Rep
                 rep.add(rel, body_start, "WARN", "ref-depth",
                         f"{target} links onward to {t2} (keep refs one level deep)")
                 break
-        # TOC on large reference files
+        # TOC on large reference files. A heading is NOT a table of contents: the point is that
+        # Claude can see the file's full scope from a partial read (`head -100`), which only an
+        # actual list of the sections provides. The check used to accept any `## ` in the first
+        # 15 lines, so a file that merely started with a section passed while giving a previewer
+        # nothing. Now it wants a real contents list — a "contents" heading or a link list.
         if len(ref_lines) > REF_TOC_MIN_LINES:
-            head = "\n".join(ref_lines[:15]).lower()
-            if "## " not in head and "table of contents" not in head and "- [" not in head:
+            head = "\n".join(ref_lines[:25]).lower()
+            has_toc = ("contents" in head) or head.count("- [") >= 3
+            if not has_toc:
                 rep.add(rel, body_start, "WARN", "ref-toc",
                         f"{target} is {len(ref_lines)} lines with no table of contents")
 

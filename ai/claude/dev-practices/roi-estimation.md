@@ -1,5 +1,17 @@
 # ROI Estimation Reference
 
+## Contents
+
+- [When it fires (ROI Estimate step — conditional)](#when-it-fires-roi-estimate-step--conditional)
+- [Issue Template Section](#issue-template-section)
+- [ROI Estimate](#roi-estimate)
+- [Value Dimension Reference](#value-dimension-reference)
+- [Verification Cadence](#verification-cadence)
+- [Actual Outcome (90-day verification, YYYY-MM-DD)](#actual-outcome-90-day-verification-yyyy-mm-dd)
+- [AI Token Cost Tracking](#ai-token-cost-tracking)
+- [Training Plan (Training Plan Stub step — conditional)](#training-plan-training-plan-stub-step--conditional)
+- [Training Plan](#training-plan)
+
 ## When it fires (ROI Estimate step — conditional)
 
 ROI estimation is required for any change costing more than ~1 day of effort. For smaller changes, state "ROI estimate not required — change is <1 day" explicitly so the skip is auditable.

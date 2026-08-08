@@ -4,6 +4,18 @@ Step-by-step reference for the 31-step HITL change workflow. The SKILL.md entryp
 
 ---
 
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Steps 1–2: Requirements](#steps-12-requirements)
+- [Steps 3–9: Design](#steps-39-design)
+- [Recording Token Costs (optional — for mature teams and pilots)](#recording-token-costs-optional--for-mature-teams-and-pilots)
+- [Steps 10–17: Build (TDD Cycle)](#steps-1017-build-tdd-cycle)
+- [Steps 18–22: Verify](#steps-1822-verify)
+- [Steps 23–24: Assess](#steps-2324-assess)
+- [Steps 25–30: Ship](#steps-2530-ship)
+- [Steps 30–31: Post-Ship](#steps-3031-post-ship)
+
 ## Prerequisites
 
 Before the GitHub Issue step, ensure these artifacts exist:

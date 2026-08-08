@@ -1,11 +1,14 @@
 ---
 name: agentic-intake
 description: >
-  The right-sizing front door to the compound-agentic surface (FR-28). ONE intake command
-  that elicits an agentic system's shape + risks, recommends a proportionate set of controls
-  (a recommendation report), records the decisions, renders an evolving map, and hands off a
-  NEUTRAL design handoff. It authors NO manifest field — a human authors the manifest, #10
-  validates it. Reached on the compound branch of pm-design-feature (≥2 components + ≥1 edge).
+  Right-sizes the controls for an agentic system before it is designed: elicits its shape and
+  risks across eight expert lenses, recommends a proportionate set of controls as a report,
+  records the decisions, and renders an evolving system map. Use when planning a system of two
+  or more components with at least one edge between them — multi-agent systems, tool-using
+  agents, orchestrator/worker graphs, agent-to-agent or agent-to-service calls — or when
+  reached from the compound branch of /hitl:pm-design-feature. Produces a neutral design
+  handoff and authors no manifest field: a human authors the manifest, and the compound-agentic
+  validators check it.
 ---
 
 # hitl:agentic-intake — recommend, record, hand off (never author)

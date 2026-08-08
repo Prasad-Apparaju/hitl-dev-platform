@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.6] — 2026-08-08
+
+### Fixed
+
+**Skill authoring brought into line with Anthropic's documented Agent Skill rules.** Audited all 53 shipped skills against the [skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). Most were already compliant — names, description lengths, third-person voice, forward-slash paths, one-level-deep references and reserved-word rules all passed untouched. Three real defects:
+
+- **`dev-start-brownfield` exceeded the 500-line body limit** (521). The observability survey — a self-contained sub-procedure with its own tables — moved to `observability-survey.md`, referenced one level deep from `SKILL.md` per the progressive-disclosure pattern. Body is now 461 lines.
+- **Two reference files over 100 lines had no table of contents** (`roi-estimation.md`, `workflow-steps.md`). The rule exists so a partial read still reveals a file's full scope; both now open with one.
+- **The `generate-docs` command copy under `.claude/` had no frontmatter at all**, so it failed the frontmatter gate.
+
+**`hitl:agentic-intake`'s description rewritten for discovery.** It is one of only two skills Claude may auto-select (the other 51 are `disable-model-invocation: true`), so its description is what decides whether it is ever chosen. It opened with internal jargon — "the right-sizing front door to the compound-agentic surface (FR-28)" — and buried the trigger in the last clause. It now leads with what it does, then names the triggering situations in terms a request would actually contain (multi-agent systems, tool-using agents, orchestrator/worker graphs, agent-to-agent calls).
+
+**`skill-lint`'s table-of-contents check was too permissive.** It accepted any `## ` heading in a reference file's first 15 lines as a table of contents, so a file that merely *started with a section* passed while giving a previewing reader nothing. It now requires an actual contents list. That is why the two files above were never flagged.
+
+With these, `skill-lint` reports **54/54 passing, 0 failures, 0 warnings** — it had been failing on `main`.
+
+**Note on portability:** HITL's skills use `argument-hint` and `disable-model-invocation`, which are Claude Code-only fields. They are correct for a Claude Code plugin, but uploading these skills to claude.ai or the Skills API would fail with `Unexpected key(s) in SKILL.md frontmatter`, which allows only `name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`. Distribution stays Claude-Code-only unless that changes.
+
+---
+
 ## [2.4.5] — 2026-08-08
 
 ### Fixed
