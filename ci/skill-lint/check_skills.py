@@ -128,15 +128,21 @@ def _parse_yaml(raw: str) -> dict | None:
 # Checks
 # ---------------------------------------------------------------------------
 
-def check_file(path: Path, root: Path, rep: Report, require_name: bool = False) -> None:
+def check_file(path: Path, root: Path, rep: Report, require_name: bool = False,
+               is_command: bool = False) -> None:
     rel = str(path.relative_to(root.parent if root.name else root))
     text = path.read_text(encoding="utf-8", errors="replace")
     fm, body, body_start = split_frontmatter(text)
 
     # --- Frontmatter structure (section 1, hard) ---
     if fm is None:
-        rep.add(rel, 1, "FAIL", "frontmatter",
-                "missing or malformed `---` fenced YAML frontmatter")
+        # For a command file every frontmatter field is optional per the Claude Code reference
+        # ("All fields are optional. Only `description` is recommended"); with none, Claude falls
+        # back to the first paragraph as the description. That is a degradation worth flagging,
+        # not a spec violation — so it is a WARN for commands and a hard gate for SKILL.md.
+        rep.add(rel, 1, "WARN" if is_command else "FAIL", "frontmatter",
+                "missing or malformed `---` fenced YAML frontmatter"
+                + (" (command falls back to its first paragraph)" if is_command else ""))
         return
     name = fm.get("name")
     desc = fm.get("description")
@@ -154,7 +160,8 @@ def check_file(path: Path, root: Path, rep: Report, require_name: bool = False) 
             # Legitimate for plugin skills (directory-name fallback); count, don't spam.
             rep.name_fallback += 1
     if not desc:
-        rep.add(rel, 1, "FAIL", "description", "missing or empty `description`")
+        rep.add(rel, 1, "WARN" if is_command else "FAIL", "description",
+                "missing or empty `description`")
 
     # --- name rules (section 1, hard) ---
     if name:
@@ -199,13 +206,59 @@ def check_file(path: Path, root: Path, rep: Report, require_name: bool = False) 
     _check_references(path, rel, body, body_start, rep)
 
 
+def _strip_fenced(body: str) -> str:
+    """Blank out fenced code blocks, preserving line numbers.
+
+    A link inside a fence is usually content the skill *emits* — e.g. the HLD index template in
+    architect/review-existing writes `[Deployment View](deployment-view.md)` into the user's
+    docs/02-design/technical/hld/index.md, where that target is a correct sibling. Resolving it
+    against the skill directory reports a defect that does not exist, and "fixing" it would
+    corrupt the emitted output.
+    """
+    out, fenced = [], False
+    for line in body.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            out.append("")
+            continue
+        out.append("" if fenced else line)
+    return "\n".join(out)
+
+
 def _check_references(path: Path, rel: str, body: str, body_start: int, rep: Report) -> None:
-    for m in MD_LINK_RE.finditer(body):
+    for m in MD_LINK_RE.finditer(_strip_fenced(body)):
         target = m.group(1).split("#")[0].strip()
+        if not target or target.startswith(("http://", "https://", "mailto:")):
+            continue
+
+        # The escape check runs BEFORE the .md filter, deliberately. The reference that shipped
+        # broken in 2.4.6 pointed at a DIRECTORY (`../../../docs/examples/first-pass/`), so an
+        # `endswith(".md")` guard skipped it entirely — the filter, not the rule, is what let it
+        # through. Escaping is a property of the path, not of the file type it happens to name.
+        # A link that climbs above the skill's own directory cannot survive packaging: the build
+        # flattens ai/claude/<skill>/ to skills/<skill>/ and ships no docs/, so `../../../docs/...`
+        # resolves inside the source repo and points at nothing in an installed plugin. Checked
+        # BEFORE existence, because that is exactly the case existence cannot catch — the target is
+        # right there in the source tree while the shipped link is broken (found by an independent
+        # audit of the 2.4.6 release; ai/claude/start-change/SKILL.md pointed at a worked example
+        # that no installed user could reach). Two levels up is the legitimate skill -> shared/ hop.
+        depth_up = target.count("../")
+        if depth_up > 2:
+            rep.add(rel, body_start, "FAIL", "ref-escapes",
+                    f"{target} climbs {depth_up} levels — above the plugin root once packaged; "
+                    "link to a URL or ship the target under shared/")
+            continue
+
+        # Existence and the checks below are meaningful only for markdown files.
         if not target.endswith(".md"):
             continue
+
         ref = (path.parent / target).resolve()
         if not ref.is_file():
+            # Do NOT skip silently. Skipping is why a dangling reference passed a clean 53/53 run:
+            # the depth and TOC checks below only ever ran on links that already resolved.
+            rep.add(rel, body_start, "FAIL", "ref-missing",
+                    f"{target} does not resolve from {path.parent.name}/")
             continue
         ref_text = ref.read_text(encoding="utf-8", errors="replace")
         ref_lines = ref_text.splitlines()
@@ -238,6 +291,23 @@ def run(root: Path, require_name: bool = False) -> Report:
     for skill in sorted(root.rglob("SKILL.md")):
         rep.files += 1
         check_file(skill, root, rep, require_name)
+
+    # Command files are skills too. Claude Code merged custom commands into skills — "a file at
+    # .claude/commands/deploy.md and a skill at .claude/skills/deploy/SKILL.md both create /deploy
+    # and work the same way" — and the plugin's commands/ files do NOT set
+    # disable-model-invocation, which makes them the model-invocable surface: the descriptions
+    # Claude actually chooses between. Globbing SKILL.md alone left exactly that surface unlinted
+    # (found by an independent audit of 2.4.6).
+    for cmd in sorted(root.rglob("commands/**/*.md")):
+        if cmd.name == "README.md":
+            continue
+        # docs/examples/ is a sample PROJECT — a fixture showing what an onboarded repo looks
+        # like. Its command files are illustrative content, not HITL's shipped surface, and
+        # linting them produces findings nobody should act on.
+        if "docs/examples/" in cmd.as_posix():
+            continue
+        rep.files += 1
+        check_file(cmd, root, rep, require_name, is_command=True)
     return rep
 
 

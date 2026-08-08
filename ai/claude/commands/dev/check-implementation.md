@@ -1,5 +1,5 @@
 ---
-description: Code review — compare implementation against the approved LLD and system manifest for spec adherence, edge case coverage, and convention compliance
+description: Code review — compare implementation against the approved LLD and system manifest for spec adherence, edge case coverage, and convention compliance. Use after the TDD cycle is complete and before opening a PR.
 argument-hint: "[LLD path or issue number]"
 ---
 

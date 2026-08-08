@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.4.7] — 2026-08-08
+
+### Fixed
+
+**A worked-example link was broken in every installed plugin.** `dev-start-change` pointed at `[docs/examples/first-pass/](../../../docs/examples/first-pass/)`. Three levels up from `skills/dev-start-change/` lands above the plugin root, and the build ships no `docs/` — so the link resolved in the source repo and pointed at nothing for every user. It now links to the file on GitHub. Found by an independent audit of the 2.4.6 release.
+
+**`skill-lint` could not have caught it — three ways.** All fixed:
+
+- **Unresolvable references were silently skipped.** `if not ref.is_file(): continue` meant the depth and table-of-contents checks only ever ran on links that already resolved, so a dangling reference passed a clean 53/53 run. Missing targets are now a hard failure.
+- **The `.md` filter ran before everything else.** The broken link pointed at a *directory*, so `endswith(".md")` skipped it outright — the filter, not the rule, is what let it through. Path escaping is now checked first, for any local link, because escaping is a property of the path rather than of the file type it names.
+- **No check existed for links that escape the skill directory.** This is the class the source tree cannot reveal: the target sits right there during development and disappears at packaging time. Anything climbing more than two levels now fails, with the fix named in the message.
+
+The reference scan also now ignores fenced code blocks. A link inside a fence is usually content the skill *emits* — `architect/review-existing` writes an HLD index template containing `[Deployment View](deployment-view.md)`, correct in the user's docs directory and meaningless relative to the skill. Resolving those reported a defect that did not exist, and "fixing" it would have corrupted the emitted template.
+
+**`commands/` is now linted.** Claude Code merged custom commands into skills, and the plugin's five command files do not set `disable-model-invocation` — which makes them the model-invocable surface, the descriptions Claude actually chooses between. Globbing `SKILL.md` alone left exactly that surface unaudited. Frontmatter and description are advisory rather than hard gates there, matching the Claude Code reference ("All fields are optional. Only `description` is recommended"), and `docs/examples/` is excluded as the sample project it is. `dev-check-implementation` and `ops-monitor-canary` gained explicit when-to-use triggers.
+
+**Version-pinned narrative removed from `dev-update`'s body**, per the standard's guidance against time-sensitive content: the step described what was true "until 2.4.5" rather than what the step does.
+
+---
+
 ## [2.4.6] — 2026-08-08
 
 ### Fixed
