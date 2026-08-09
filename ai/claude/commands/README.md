@@ -1,8 +1,12 @@
 # commands/
 
-**Lightweight Claude Code slash commands** — simpler than skills, no frontmatter.
+**Lightweight Claude Code slash commands** — simpler than skills.
 
-Commands are single `.md` files with a prompt. Unlike skills (which have structured frontmatter and multi-phase workflows), commands are short focused prompts for specific operations. Claude Code loads them as slash commands via the plugin manifest.
+Commands are single `.md` files: frontmatter (`description`, `argument-hint`) plus a short prompt. Unlike skills, which orchestrate multi-phase workflows, they are focused one-shot operations.
+
+**Every command here ships.** A command whose name matches a skill is excluded by the build (`skill_exists_for_cmd` in `scripts/build.sh`), because the skill supersedes it. 27 such stubs — each one a two-line "invoke the X skill" pointer left from before commands merged into skills — were removed in this directory's last cleanup. Anything added here must have no matching skill, or it will silently not ship.
+
+Note these are model-invocable: none set `disable-model-invocation`, so Claude may select them on its own. Their `description` is what that choice is made from.
 
 | Command | What it does |
 |---------|-------------|
@@ -10,7 +14,6 @@ Commands are single `.md` files with a prompt. Unlike skills (which have structu
 | `architect/verify-traceability.md` | Verify issue→design→code→tests→brief chain before merge |
 | `ops/review-release.md` | Assess rollout plan and canary criteria before release |
 | `ops/monitor-canary.md` | Read dashboards for active canary, produce go/no-go |
-| `check-implementation.md` | Two-round spec conformance review (invokes `spec-conformance-reviewer` agent) |
-| others | See subdirectories for PM, QA, and workflow commands |
+| `dev/check-implementation.md` | Compare implementation against the approved LLD and manifest |
 
 The distinction from `ai/claude/`: commands are stateless one-shot prompts; skills orchestrate multi-step workflows with approval gates and produce artifacts.
