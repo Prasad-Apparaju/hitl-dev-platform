@@ -163,6 +163,30 @@ Set from the impact analysis above:
 
 Ask the user to confirm the HITL context file before proceeding.
 
+### Step 7a: Fold skips into the ledger, and resurface what overlaps
+
+Run this **immediately after Step 7**, and only here. This is the first moment the change knows its own
+area, and both halves need it: a roll-up entry records the domains and paths a skip applies to, and
+resurfacing matches unresolved entries against those same domains and paths. Called at intake, before
+`manifest.domain` and `allowed_paths` exist, it matches nothing and silently says nothing.
+
+```bash
+RS="ci/first-pass/resurface.py"
+[[ -f "$RS" ]] || RS="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/resurface.py"
+python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
+```
+
+`--append` folds this change's own skips into `.hitl/skip-ledger.yaml`, stamped with the scope above. It
+is idempotent on `(change_id, step)`, so re-running the impact step cannot duplicate entries. The command
+then prints any unresolved skips from **earlier** changes whose area overlaps this one — floor first, the
+three most critical, with a count of the rest. A change is never reminded of its own decisions.
+
+Read what it prints to the user in the resurfacing voice
+([`shared/first-pass/language.md`](../../shared/first-pass/language.md)): surface the risk, respect the
+choice. Brief mode does not apply here — this is one of the boundaries where persuasion is allowed.
+Offer to fold the enhancement into this change; if the answer is no, that is a legitimate choice and the
+entry stays unresolved for next time.
+
 ### Step 8: Summary
 Present the full plan in this format:
 

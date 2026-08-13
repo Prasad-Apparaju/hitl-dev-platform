@@ -165,3 +165,126 @@ def test_r2_blame_redaction_covers_inflections():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+# ---------------------------------------------------------------- resurfacing digest (volume)
+
+def _entry(step, crit, domain, resolved=False):
+    return {"step": step, "crit": crit, "domains": [domain], "disposition": "decline",
+            "actor": "a@b", "reason": "x", "resolved": resolved}
+
+
+def test_digest_dedupes_by_step_and_area():
+    # The same step lightened repeatedly in one domain is one reminder, not one per occurrence.
+    dupes = [_entry("qa_verify", "floor", "billing")] * 4
+    shown, remaining = R.digest(dupes)
+    assert len(shown) == 1 and remaining == 0
+    # ...but the same step in a DIFFERENT area is a genuinely different reminder.
+    shown, _ = R.digest([_entry("qa_verify", "floor", "billing"), _entry("qa_verify", "floor", "payments")])
+    assert len(shown) == 2
+
+
+def test_digest_caps_and_counts_the_rest():
+    entries = [_entry(f"step{i}", "standard", "billing") for i in range(9)]
+    shown, remaining = R.digest(entries)
+    assert len(shown) == R.DEFAULT_CAP and remaining == 9 - R.DEFAULT_CAP
+
+
+def test_digest_keeps_the_most_critical_when_capping():
+    # surface() sorts floor-first; digest must not reorder it away.
+    entries = R.surface({"entries": [_entry("roi_std", "standard", "billing"),
+                                     _entry("qa_verify", "floor", "billing"),
+                                     _entry("conv", "standard", "billing"),
+                                     _entry("rvw", "standard", "billing")]}, ["billing"], [])
+    shown, remaining = R.digest(entries, cap=2)
+    assert shown[0]["crit"] == "floor" and remaining == 2
+
+
+def test_digest_tolerates_malformed_input():
+    assert R.digest("not a list") == ([], 0)
+    assert R.digest([None, 3, {"step": "x"}])[0] == [{"step": "x"}]
+    assert R.digest([_entry("a", "floor", "b")], cap=0)[0]      # a nonsense cap falls back, never empties
+
+
+def test_render_is_empty_when_nothing_to_raise():
+    assert R.render([]) == ""
+
+
+def test_render_appends_a_count_only_when_some_were_folded_away():
+    few = [_entry("a", "floor", "billing")]
+    assert "more unresolved" not in R.render(few)
+    many = [_entry(f"s{i}", "standard", "billing") for i in range(6)]
+    out = R.render(many)
+    assert "3 more unresolved entries" in out and ".hitl/skip-ledger.yaml" in out
+
+
+# ---------------------------------------------------------------- roll-up + CLI lifecycle
+
+def _write(p, text):
+    p.write_text(text, encoding="utf-8")
+    return str(p)
+
+
+_CHANGE = """change_id: GH-501
+tier: 2
+first_pass: true
+manifest:
+  domain: billing
+allowed_paths:
+  - src/billing/
+skips:
+  - { step: qa_verify, crit: floor, actor: "a@b", reason: "thin", disposition: decline, resolved: false }
+"""
+
+
+def test_to_rollup_stamps_scope_and_is_idempotent():
+    import yaml
+    change = yaml.safe_load(_CHANGE)
+    rollup, added = R.to_rollup(change, {})
+    assert added == 1
+    e = rollup["entries"][0]
+    assert e["domains"] == ["billing"] and e["paths"] == ["src/billing/"] and e["change_id"] == "GH-501"
+    # re-running the impact step must not duplicate
+    rollup, added = R.to_rollup(change, rollup)
+    assert added == 0 and len(rollup["entries"]) == 1
+
+
+def test_to_rollup_gives_each_entry_its_own_lists():
+    # Sharing one list object across entries makes yaml.safe_dump emit &id001/*id001 anchors into the
+    # ledger, which is valid YAML but hostile to anyone reading or diffing it.
+    import yaml
+    change = yaml.safe_load(_CHANGE)
+    change["skips"].append({"step": "test_plan", "crit": "standard", "actor": "a@b",
+                            "reason": "x", "disposition": "defer", "resolved": False})
+    rollup, _ = R.to_rollup(change, {})
+    a, b = rollup["entries"]
+    assert a["domains"] is not b["domains"] and a["paths"] is not b["paths"]
+    assert "&id" not in yaml.safe_dump(rollup, sort_keys=False)
+
+
+def test_cli_does_not_resurface_a_change_to_itself(tmp_path, capsys):
+    # After --append, a change's own skips overlap its own scope by construction. Reminding someone
+    # about a decision they made minutes earlier at intake reads as nagging, not care.
+    chg = _write(tmp_path / "c.yaml", _CHANGE)
+    led = str(tmp_path / "l.yaml")
+    assert R.main(["--change", chg, "--rollup", led, "--append"]) == 0
+    assert "No unresolved skips overlap this change." in capsys.readouterr().out
+
+
+def test_cli_resurfaces_to_a_later_change_in_the_same_area(tmp_path, capsys):
+    chg = _write(tmp_path / "c.yaml", _CHANGE)
+    led = str(tmp_path / "l.yaml")
+    R.main(["--change", chg, "--rollup", led, "--append"])
+    capsys.readouterr()
+    later = _write(tmp_path / "c2.yaml",
+                   "change_id: GH-502\nmanifest:\n  domain: billing\nallowed_paths:\n  - src/billing/\n")
+    R.main(["--change", later, "--rollup", led])
+    assert "qa_verify" in capsys.readouterr().out
+
+
+def test_cli_says_so_when_scope_is_not_known_yet(tmp_path, capsys):
+    # This is the state that made resurfacing silently dead at change start: called before the impact
+    # step, with no domain and no allowed_paths, it matched nothing and said nothing.
+    chg = _write(tmp_path / "c.yaml", "change_id: GH-504\n")
+    R.main(["--change", chg, "--rollup", str(tmp_path / "l.yaml")])
+    assert "needs the impact step first" in capsys.readouterr().out

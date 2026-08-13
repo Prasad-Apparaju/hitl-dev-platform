@@ -86,20 +86,29 @@ Wait for confirmation (or correction) before Step 4.
 
 ---
 
-## Step 4 — Show the full step plan
+## Step 4 — Show the step plan
 
 Read the chosen workflow's steps from the bundled workflow catalog — `workflows.yaml`, resolved
 as `$CLAUDE_PLUGIN_ROOT/shared/workflows.yaml` in the installed plugin (or `ai/shared/workflows.yaml`
-when running from source) — and print the complete ordered plan so the user sees the whole journey
-up front, e.g.:
+when running from source) — and print the whole journey **by phase**, e.g.:
 
 ```
-development workflow — 31 steps (+ 19a):
-  1 Issue · 2 Figma · 3 Impact · 4 ROI · 5 Docs · 6 IaC · 7 Tests · 8 Train · 9 Packet
-  10 RED · 11 TstRvw · 12 Dsn+ · 13 VfyRED · 14 GREEN · 15 VfyGRN · 16 Refact · 17 Conv
-  18 Rvw1 · 19 Rvw2 · 19a ArchRvw · 20 Rerun · 21 Recncl · 22 QAVfy · 23 ImpBrf
-  24 Rollout · 25 VfyPR · 26 IntVfy · 27 Figma2 · 28 Deploy · 29 Promote · 30 30dROI · 31 90dROI
+development workflow — 31 steps (+19a) across 7 phases:
+  Requirements  2   Issue → Figma
+  Design        7   Impact → Packet
+  Build         8   RED → Conv
+  Verify        6   Rvw1 → QAVfy
+  Assess        2   ImpBrf → Rollout
+  Ship          5   VfyPR → Promote
+  Post-Ship     2   30dROI → 90dROI
 ```
+
+This still shows the whole journey up front — that principle holds, and the shape of the work is what a
+person actually needs to decide whether the workflow fits. A thirty-one item list is the moment a small
+change starts to feel like the wrong tool, and position is carried by the breadcrumb from here on anyway.
+
+**Print the full ordered list on request** ("show me every step"), and always print it in full for a
+workflow of 10 steps or fewer, where the phase summary would be longer than the list it replaces.
 
 ---
 
@@ -155,7 +164,8 @@ CHK="ci/first-pass/check_skips.py"
 
 Certification happens in **Step 6b**, once the change file exists and there is something real to certify.
 
-Run the change under **brief mode** and the **reduced-friction permission policy**
+Run the change under **brief mode** ([`shared/first-pass/brief.md`](../../shared/first-pass/brief.md) —
+say less, ask less, never re-ask what intake already settled) and the **reduced-friction permission policy**
 ([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
 respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
 
