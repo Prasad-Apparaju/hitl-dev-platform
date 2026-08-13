@@ -120,37 +120,50 @@ thin-whole-first, skip-with-record way to run this same plan. It is opt-in; the 
 
 \*starter offered only for steps in the registry (`ci/first-pass/starters.py`); `keep` is the default.
 
-For each lightened step:
-1. **Record it, never silent** — append `{step, crit, actor, reason, ts, disposition}` to `skips[]` in
-   `.hitl/current-change.yaml` and to the roll-up `.hitl/skip-ledger.yaml` (with domains/paths). Set the
-   step's `status` to `skipped` (defer/decline) or `starter`.
-2. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
-   step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver.
-3. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
-   version of the system"), mark it `needs-enhancement`, record its path; seed a fast-follow to *enhance* it.
-4. **Defer** — seed a linked fast-follow ticket.
+**This step elicits choices; it does not write the ledger.** The change file does not exist yet — Step 6
+creates it — so recording here would write to a stale or absent file that Step 6 then overwrites. Capture
+the choices and let the generator apply them:
 
-Then **certify before proceeding**. Resolve the validator repo-relative first, then fall back to the
-plugin's own copy — a project onboarded before the validator shipped (or via an onboarding path that
-never installed it) has no `ci/first-pass/`, and an unresolvable path must never be read as
-"First Pass is unavailable on this project" (plugin issue #27):
+```bash
+# Only NON-keep steps go in. An absent step means keep. `actor` is the accountable human, not the agent.
+cat > .hitl/first-pass-choices.json <<'JSON'
+{
+  "actor": "name@team",
+  "choices": {
+    "roi":   { "disposition": "decline", "reason": "internal tool; ROI self-evident" },
+    "figma": { "disposition": "defer",   "reason": "no UI change", "followup_ref": "GH-123" },
+    "docs":  { "disposition": "starter", "reason": "thin first pass" }
+  }
+}
+JSON
+```
+
+Rules that still apply when collecting the choices:
+1. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
+   step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver. Put both in the entry.
+2. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
+   version of the system"), mark it `needs-enhancement`, record its path; seed a fast-follow to *enhance* it.
+3. **Defer** — seed a linked fast-follow ticket and put its ref in `followup_ref`.
+
+If the validator is missing, say so **before** collecting any choices — the ledger is unenforced without it:
 
 ```bash
 CHK="ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || CHK="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || echo "⚠ First Pass validator not found — run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
-python3 "$CHK" .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml
 ```
 
-It must exit 0 (a silent skip, an unauthorized floor skip, or a TDD omission exits 2, non-waivable).
-If `ci/first-pass/` is absent, say so plainly and tell the user to run `/hitl:dev-update` — that state
-means the skip ledger is uncertified for **every** change on the project, not just this one. Run the change under **brief mode** and the **reduced-friction permission
-policy** ([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
+Certification happens in **Step 6b**, once the change file exists and there is something real to certify.
+
+Run the change under **brief mode** and the **reduced-friction permission policy**
+([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
 respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
 
-**At change start, also resurface** any unresolved skips whose area overlaps this change (read the roll-up;
-`ci/first-pass/resurface.py`) — politely, escalating by criticality. See the worked example at
-[`docs/examples/first-pass/`](https://github.com/Prasad-Apparaju/hitl-dev-platform/tree/main/docs/examples/first-pass).
+> **Resurfacing does not happen here.** `resurface.surface()` matches unresolved skips against the new
+> change's domains and `allowed_paths`, and neither is known until the workflow's own impact step fills
+> them. Called at change start it always matches nothing. It belongs at the impact step, where scope
+> exists. See the worked example at
+> [`docs/examples/first-pass/`](https://github.com/Prasad-Apparaju/hitl-dev-platform/tree/main/docs/examples/first-pass).
 
 ---
 
@@ -184,27 +197,68 @@ PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c
 HITL_VERSION=$(cat "${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json" 2>/dev/null \
   | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 
-"$PY" - "$WF" "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" << 'PY' > .hitl/current-change.yaml
-import sys, yaml
-wf_id, change_id, branch, ver = sys.argv[1:5]
+TIER=2                       # confirm with the user — tier decides which steps may be lightened at all
+CHOICES=".hitl/first-pass-choices.json"   # written by Step 4b; absent ⇒ full plan, no First Pass
+
+# Write via a temp file: a generator that dies partway through `> file` leaves a truncated change
+# file behind, and a truncated change file reads as "no active change" to the gate.
+"$PY" - "$WF" "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" "$TIER" "$CHOICES" << 'PY' > .hitl/current-change.yaml.tmp
+import sys, os, json, yaml
+from datetime import datetime, timezone
+wf_id, change_id, branch, ver, tier_s, choices_path = sys.argv[1:7]
+tier = int(tier_s)
+
 # Catalog: prefer the plugin copy, fall back to the source path.
-import os
 for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),
           "ai/shared/workflows.yaml"):
     if os.path.isfile(p):
         cat = yaml.safe_load(open(p))["workflows"][wf_id]; break
 else:
     sys.exit("workflows.yaml not found")
+
+# Criticality must be resolved the SAME way the validator resolves it, so import it rather than
+# reimplement it here — two copies of this rule is how a floor step quietly becomes skippable.
+resolve_crit = None
+for d in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/ci/first-pass"), "ci/first-pass"):
+    if os.path.isfile(os.path.join(d, "check_skips.py")):
+        sys.path.insert(0, d)
+        try:
+            from check_skips import resolve_crit
+        except Exception:
+            resolve_crit = None
+        break
+if resolve_crit is None:
+    sys.exit("check_skips.py not found — cannot resolve step criticality. Run /hitl:dev-update.")
+
+choices, actor = {}, ""
+if os.path.isfile(choices_path):
+    doc = json.load(open(choices_path))
+    choices = doc.get("choices") or {}
+    actor = doc.get("actor") or ""
+    unknown = [k for k in choices if k not in {s["key"] for s in cat["steps"]}]
+    if unknown:
+        sys.exit(f"first-pass choices name steps not in the {wf_id} workflow: {unknown}")
+    if choices and not actor:
+        sys.exit("first-pass choices need an `actor` — a skip is accountable to a person, not the agent.")
+
+STATUS_FOR = {"defer": "skipped", "decline": "skipped", "starter": "starter"}
+ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+q = lambda v: json.dumps("" if v is None else str(v))   # JSON strings are valid YAML double-quoted scalars
+
 steps = cat["steps"]
-first = steps[0]
+first = next((s for s in steps if s["key"] not in choices), steps[0])   # never point `current` at a lightened step
 lines = [
     'schema_version: "2.0"',
     f'hitl_version: "{ver}"',
     '',
     f'change_id: {change_id}',
-    'tier: 2            # confirm/adjust during the workflow',
+    f'tier: {tier}',
     'status: planning',
     f'expected_branch: "{branch}"',
+]
+if choices:
+    lines += ['', 'first_pass: true   # dispositions were chosen at intake; the ledger below is enforced']
+lines += [
     '',
     'workflow:',
     f'  id: {cat["id"]}',
@@ -213,9 +267,24 @@ lines = [
     '  steps:',
 ]
 for s in steps:
-    st = "current" if s is first else "open"
+    ch = choices.get(s["key"])
+    st = STATUS_FOR[ch["disposition"]] if ch else ("current" if s is first else "open")
     lines.append(f'    - {{ n: {s["n"]}, key: {s["key"]}, label: "{s["label"]}", phase: "{s["phase"]}", status: {st} }}')
+
+if choices:
+    lines += ['', 'skips:']
+    by_key = {s["key"]: s for s in steps}
+    for key, ch in choices.items():
+        crit = resolve_crit(by_key[key], tier)
+        entry = (f'  - {{ step: {key}, crit: {crit}, actor: {q(actor)}, reason: {q(ch.get("reason"))}, '
+                 f'ts: "{ts}", disposition: {ch["disposition"]}, resolved: false')
+        for opt in ("followup_ref", "ack_by", "waiver_ref", "artifact_path"):
+            if ch.get(opt):
+                entry += f', {opt}: {q(ch[opt])}'
+        lines.append(entry + ' }')
+
 lines += [
+    '',
     'current_step:',
     f'  number: {first["n"] if str(first["n"]).isdigit() else str(first["n"])[:-1]}',
     f'  name: "{first["label"]}"',
@@ -223,12 +292,38 @@ lines += [
 ]
 print("\n".join(lines))
 PY
+
+mv .hitl/current-change.yaml.tmp .hitl/current-change.yaml
+rm -f .hitl/first-pass-choices.json      # consumed; the change file is now the record
 ```
 
 Show the resulting file to the user. Then complete the remaining required fields for the change
 (`source_artifacts.issue`, `manifest.domain`, `allowed_paths`, approvals) per the
 `ai/shared/templates/change-context.schema.yaml`, or note they will be filled by the
 workflow's own steps.
+
+> **The roll-up is not written here.** `.hitl/skip-ledger.yaml` entries carry the domains and paths a
+> skip applies to, and neither is known until the workflow's impact step declares them. Appending now
+> would write entries that resurfacing can never match. The impact step appends them, alongside the
+> resurfacing read.
+
+---
+
+## Step 6b — Certify the ledger
+
+Only meaningful once the change file exists. Run it **before** the Step 7 commit, so nothing
+uncertified is ever pushed:
+
+```bash
+CHK="ci/first-pass/check_skips.py"
+[[ -f "$CHK" ]] || CHK="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/check_skips.py"
+python3 "$CHK" .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml
+```
+
+It must exit 0. A silent skip, an unauthorized floor skip, a TDD omission, or a lightened step with no
+`first_pass` flag exits 2 and is non-waivable. If `ci/first-pass/` is absent, say so plainly and tell the
+user to run `/hitl:dev-update` — that state means the skip ledger is uncertified for **every** change on
+the project, not just this one.
 
 ---
 

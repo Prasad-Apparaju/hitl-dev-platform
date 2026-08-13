@@ -59,6 +59,10 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC",
                 # a load-bearing step DELETED from the plan (not skipped, no record) is a bypass (codex-1)
                 "INCOMPLETE_PLAN",
+                # steps lightened while `first_pass` is absent: enforcement never engaged, so every other
+                # check below was skipped and the ledger is uncertified. The bug this catches shipped
+                # because the driver never emitted the flag.
+                "FP_UNDECLARED",
                 # an unmarked starter presented as complete is the "fabricated full artifact" ADR-6 forbids (codex-4)
                 "STARTER_MARK"}
 STARTER_MARKER = "needs-enhancement"
@@ -150,7 +154,30 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     # literal boolean False or genuinely absent; a present-but-non-bool value is MALFORMED *and* enforced.
     fp = change.get("first_pass")
     if fp is None or fp is False:
-        return findings  # not a First Pass change — nothing to enforce (back-compat)
+        # Back-compat still holds for a genuinely untouched plan, but "no flag" must not become the way
+        # to lighten steps unchecked: every check below is gated on this early return, so an undeclared
+        # change with skips in it certifies clean while enforcing nothing. `skipped`/`starter` statuses
+        # post-date FR-29 and only the First Pass driver writes them, so their presence here means the
+        # flag was lost or omitted, not that the file is legacy.
+        evidence = []
+        if isinstance(change.get("skips"), list) and change["skips"]:
+            evidence.append(f"{len(change['skips'])} entr{'y' if len(change['skips']) == 1 else 'ies'} in skips[]")
+        wf = change.get("workflow")
+        lightened = [
+            s.get("key")
+            for s in (wf.get("steps") if isinstance(wf, dict) and isinstance(wf.get("steps"), list) else [])
+            if isinstance(s, dict) and s.get("status") in LIGHTENED_STATUSES
+        ]
+        if lightened:
+            evidence.append("step(s) " + ", ".join(repr(k) for k in lightened[:5] if k)
+                            + (" and more" if len(lightened) > 5 else "") + " lightened")
+        if evidence:
+            findings.append(_f(
+                "FP_UNDECLARED",
+                "first_pass is absent/false but the change has been lightened (" + "; ".join(evidence)
+                + "). Enforcement never engaged, so this ledger is uncertified. Set `first_pass: true` "
+                  "if the change is running First Pass, or restore the steps."))
+        return findings  # not a First Pass change — nothing further to enforce (back-compat)
     if type(fp) is not bool:
         findings.append(_f("MALFORMED", f"first_pass is present but not a boolean ({fp!r}) — enforcing at strictest"))
 

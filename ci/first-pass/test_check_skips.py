@@ -354,8 +354,38 @@ def test_r1_starter_marker_must_head_a_line(tmp_path):
 
 
 def test_back_compat_non_first_pass():
-    # a change without first_pass validates clean even with junk skip data
+    # A genuinely legacy change — no first_pass, nothing lightened — still validates clean.
+    # This is the back-compat guarantee: pre-FR-29 files must keep passing untouched.
+    change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "open"},
+                                                {"key": "red", "status": "done"}]}, "skips": []}
+    assert C.check(change, CATALOG) == []
+
+
+def test_lightened_without_first_pass_is_a_blocker():
+    # The inverse of back-compat, and the bug this check exists for: `skipped`/`starter` are written
+    # only by the First Pass driver (schema: change-context.schema.yaml), so a lightened step with no
+    # `first_pass` flag means enforcement silently never engaged and the ledger was never certified.
+    # Previously this returned [] — a clean bill of health on an unenforced change.
     change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "skipped"}]}, "skips": []}
+    fs = C.check(change, CATALOG)
+    assert "FP_UNDECLARED" in codes(fs)
+    assert "FP_UNDECLARED" in blockers(fs)
+
+
+def test_populated_skips_without_first_pass_is_a_blocker():
+    # The other half: records present, flag absent. Catches a change file whose flag was lost or
+    # clobbered after dispositions were recorded.
+    change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "open"}]},
+              "skips": [base_skip("roi")]}
+    fs = C.check(change, CATALOG)
+    assert "FP_UNDECLARED" in codes(fs)
+    assert "FP_UNDECLARED" in blockers(fs)
+
+
+def test_first_pass_false_with_clean_plan_still_passes():
+    # Explicit `first_pass: false` on an untouched plan is a legitimate, deliberate state.
+    change = {"tier": 2, "first_pass": False,
+              "workflow": {"steps": [{"key": "roi", "status": "open"}]}, "skips": []}
     assert C.check(change, CATALOG) == []
 
 
