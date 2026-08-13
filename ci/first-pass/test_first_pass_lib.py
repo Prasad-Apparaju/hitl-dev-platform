@@ -288,3 +288,53 @@ def test_cli_says_so_when_scope_is_not_known_yet(tmp_path, capsys):
     chg = _write(tmp_path / "c.yaml", "change_id: GH-504\n")
     R.main(["--change", chg, "--rollup", str(tmp_path / "l.yaml")])
     assert "needs the impact step first" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------- project migration
+
+import migrate_project as M  # noqa: E402
+
+
+def test_merge_permissions_never_clobbers_what_a_team_added():
+    before = {"statusLine": "x", "hooks": {"Stop": []},
+              "permissions": {"allow": ["Bash(theirtool *)"], "deny": ["Read(./private/**)"]}}
+    after, added = M.merge_permissions(before)
+    assert "Bash(theirtool *)" in after["permissions"]["allow"]
+    assert "Read(./private/**)" in after["permissions"]["deny"]
+    assert after["statusLine"] == "x" and after["hooks"] == {"Stop": []}
+    assert added["allow"] and added["deny"]
+
+
+def test_merge_permissions_is_idempotent():
+    merged, _ = M.merge_permissions({})
+    again, added = M.merge_permissions(merged)
+    assert added == {"allow": [], "deny": []}
+    assert again["permissions"] == merged["permissions"]
+
+
+def test_merge_permissions_handles_a_missing_or_junk_block():
+    for junk in ({}, {"permissions": None}, {"permissions": {"allow": "nope"}}):
+        merged, _ = M.merge_permissions(junk)
+        assert set(M.DENY) <= set(merged["permissions"]["deny"])
+
+
+def test_merge_permissions_never_adds_an_interpreter():
+    # The rule the whole allowlist design rests on: redirection rides along on a match, so an
+    # allowlisted interpreter is an unprompted arbitrary write.
+    banned = ("python", "python3", "node", "bun", "npx", "pip", "bash", "sh", "deno", "ruby")
+    for entry in M.ALLOW:
+        cmd = entry[len("Bash("):].split()[0]
+        assert cmd not in banned, f"{entry} allowlists an interpreter"
+
+
+def test_audit_flags_a_change_lightened_without_the_flag():
+    change = {"workflow": {"steps": [{"key": "roi", "status": "skipped"}]},
+              "skips": [{"step": "roi"}]}
+    reasons = M.audit_change_file(change)
+    assert len(reasons) == 2 and any("roi" in r for r in reasons)
+
+
+def test_audit_is_quiet_for_a_declared_or_untouched_change():
+    assert M.audit_change_file({"first_pass": True, "skips": [{"step": "roi"}]}) == []
+    assert M.audit_change_file({"workflow": {"steps": [{"key": "roi", "status": "open"}]}}) == []
+    assert M.audit_change_file("not a mapping") == []

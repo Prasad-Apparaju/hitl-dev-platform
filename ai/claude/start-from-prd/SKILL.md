@@ -90,7 +90,9 @@ If not:
          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/sync-step-to-issue.sh\"" }
        ]}],
        "Stop": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/write-session-summary.sh\"" }] }]
-     }
+     },
+     "permissions": { "allow": ["Bash(git checkout -b *)", "Bash(git add *)"],
+       "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./**/.env)", "Read(./secrets/**)"] }
    }
    ```
 
