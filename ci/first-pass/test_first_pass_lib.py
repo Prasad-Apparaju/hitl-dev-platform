@@ -240,12 +240,12 @@ skips:
 def test_to_rollup_stamps_scope_and_is_idempotent():
     import yaml
     change = yaml.safe_load(_CHANGE)
-    rollup, added = R.to_rollup(change, {})
+    rollup, added, _ = R.to_rollup(change, {})
     assert added == 1
     e = rollup["entries"][0]
     assert e["domains"] == ["billing"] and e["paths"] == ["src/billing/"] and e["change_id"] == "GH-501"
     # re-running the impact step must not duplicate
-    rollup, added = R.to_rollup(change, rollup)
+    rollup, added, _ = R.to_rollup(change, rollup)
     assert added == 0 and len(rollup["entries"]) == 1
 
 
@@ -256,7 +256,7 @@ def test_to_rollup_gives_each_entry_its_own_lists():
     change = yaml.safe_load(_CHANGE)
     change["skips"].append({"step": "test_plan", "crit": "standard", "actor": "a@b",
                             "reason": "x", "disposition": "defer", "resolved": False})
-    rollup, _ = R.to_rollup(change, {})
+    rollup, _, _ = R.to_rollup(change, {})
     a, b = rollup["entries"]
     assert a["domains"] is not b["domains"] and a["paths"] is not b["paths"]
     assert "&id" not in yaml.safe_dump(rollup, sort_keys=False)
@@ -287,7 +287,7 @@ def test_cli_says_so_when_scope_is_not_known_yet(tmp_path, capsys):
     # step, with no domain and no allowed_paths, it matched nothing and said nothing.
     chg = _write(tmp_path / "c.yaml", "change_id: GH-504\n")
     R.main(["--change", chg, "--rollup", str(tmp_path / "l.yaml")])
-    assert "needs the impact step first" in capsys.readouterr().out
+    assert "nothing to match against" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------- project migration
@@ -354,16 +354,47 @@ def test_audit_is_quiet_for_a_declared_or_untouched_change():
     assert M.audit_change_file("not a mapping") == []
 
 
-def test_append_refuses_when_the_change_has_no_area(tmp_path, capsys):
-    # An entry stamped with empty domains/paths can never overlap anything, so appending before the
-    # impact step writes skips that are permanently invisible to every future change — silently.
+def test_append_without_an_area_records_project_wide(tmp_path, capsys):
+    # Most routes (onboarding, migration, docs) never declare a manifest domain, and CR-10 makes the
+    # ledger durable for the PROJECT. Refusing there left their skips only in a change file the next
+    # intake overwrites. No area now means project-wide, which overlaps everything, rather than an
+    # empty area that could match nothing and was invisible forever.
+    import yaml
     chg = _write(tmp_path / "c.yaml",
-                 "change_id: GH-1\nskips:\n  - { step: roi, actor: a, reason: b, disposition: decline }\n")
+                 "change_id: GH-1\nskips:\n  - { step: qa_verify, crit: floor, actor: a, reason: b, disposition: decline }\n")
     led = tmp_path / "l.yaml"
-    rc = R.main(["--change", chg, "--rollup", str(led), "--append"])
-    assert rc == 1
-    assert not led.exists(), "nothing may be written without an area to stamp it with"
-    assert "Nothing appended" in capsys.readouterr().err
+    assert R.main(["--change", chg, "--rollup", str(led), "--append"]) == 0
+    assert "project-wide" in capsys.readouterr().out
+    entry = yaml.safe_load(led.read_text())["entries"][0]
+    assert entry["project_wide"] is True
+
+
+def test_a_project_wide_entry_resurfaces_at_any_later_change(tmp_path, capsys):
+    chg = _write(tmp_path / "c.yaml",
+                 "change_id: GH-1\nskips:\n  - { step: qa_verify, crit: floor, actor: a, reason: b, disposition: decline }\n")
+    led = str(tmp_path / "l.yaml")
+    R.main(["--change", chg, "--rollup", led, "--append"])
+    capsys.readouterr()
+    later = _write(tmp_path / "c2.yaml",
+                   "change_id: GH-2\nmanifest:\n  domain: anything\nallowed_paths:\n  - src/x/\n")
+    R.main(["--change", later, "--rollup", led])
+    assert "qa_verify" in capsys.readouterr().out
+
+
+def test_a_later_scoped_run_narrows_its_own_project_wide_entry(tmp_path, capsys):
+    # The development route appends at intake (no scope) and again at its impact step (scope known).
+    # The second run must persist the narrowing even though it adds nothing.
+    import yaml
+    skips = "skips:\n  - { step: qa_verify, crit: floor, actor: a, reason: b, disposition: decline }\n"
+    led = str(tmp_path / "l.yaml")
+    R.main(["--change", _write(tmp_path / "c.yaml", "change_id: GH-1\n" + skips),
+            "--rollup", led, "--append"])
+    R.main(["--change", _write(tmp_path / "c2.yaml",
+                               "change_id: GH-1\nmanifest:\n  domain: payments\n" + skips),
+            "--rollup", led, "--append"])
+    entries = yaml.safe_load(open(led, encoding="utf-8"))["entries"]
+    assert len(entries) == 1
+    assert entries[0].get("project_wide") is None and entries[0]["domains"] == ["payments"]
 
 
 def test_missing_change_id_shows_everything_and_says_why(tmp_path, capsys):
@@ -392,5 +423,5 @@ def test_to_rollup_dedupes_within_a_single_change_file(tmp_path):
     import yaml
     change = yaml.safe_load(_CHANGE)
     change["skips"].append(dict(change["skips"][0]))          # exact duplicate (change_id, step)
-    rollup, added = R.to_rollup(change, {})
+    rollup, added, _ = R.to_rollup(change, {})
     assert added == 1 and len(rollup["entries"]) == 1

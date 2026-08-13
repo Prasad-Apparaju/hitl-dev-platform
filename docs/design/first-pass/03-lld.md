@@ -232,8 +232,16 @@ First Pass presents the whole plan **once**, as a single **menu**, and collects 
 | `standard` + `no_omit` (TDD) | **keep** · starter — *no defer/decline* |
 | `floor` | **keep** · *request risk-accepted skip* → routes to §7 (accountable-role ack + waiver) |
 
-*starter offered only when the step is in the starter registry (§5). `keep` is always the pre-selected default,
+*starter offered only when the step is in the starter registry (§5). `keep` is the pre-selected default,
 so doing nothing runs the full plan (CR-1).*
+
+**Exception — tier-gated batch decline (CR-1 as amended 2026-08-13).** At tier 0 or 1 only, `ceremony`
+steps may be presented pre-marked `decline` with a reason filled in, so one confirmation records the
+set. `standard`, `floor` and `no_omit` steps keep `keep` as their pre-selected default at every tier.
+The exception still writes nothing before a human confirms — declining to answer runs the full plan —
+and the confirming person is the `actor` on every resulting record. It exists because the tier-0/1
+ceremony set is identical every time, and nine manual declines per bug fix drove teams out of the
+process altogether.
 
 Example (Tier 2), grouped by criticality so the floor is visually set apart:
 

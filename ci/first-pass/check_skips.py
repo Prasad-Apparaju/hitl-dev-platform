@@ -255,6 +255,14 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         must_be_present = resolve_crit(cmeta, tier) == "floor" or bool(cmeta.get("no_omit"))
         if must_be_present and ckey not in steps:
             findings.append(_f("INCOMPLETE_PLAN", f"load-bearing step '{ckey}' is missing from the plan (floor/no_omit steps cannot be omitted)"))
+        # CR-3 says a step cannot be skipped without producing a record, and CR-16 says the plan shows
+        # the WHOLE journey with lightened steps visible. Deleting a ceremony/standard step satisfied
+        # neither: no record, and invisible in the trail. "Freely skippable" is about who may decide,
+        # not about whether the decision is written down — and deletion was strictly cheaper than the
+        # honest path (no actor, no reason, no resurfacing), which inverted the incentive CR-3 creates.
+        # Waivable: pruning can be legitimate, it just may not be silent.
+        elif not must_be_present and ckey not in steps and not skip_by_step.get(ckey):
+            findings.append(_f("PLAN_PRUNED", f"catalog step '{ckey}' is absent from the plan with no skip record — record it as a skip (CR-3), or waive if the step cannot apply to this change"))
 
     # 1) LEDGER_STEPS both ways (NEG-7): every skipped/starter step has a record; every record maps to such a step.
     for key, st in steps.items():

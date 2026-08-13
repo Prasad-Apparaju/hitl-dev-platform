@@ -453,7 +453,21 @@ check that always warns teaches people to ignore it, and this is the check that 
 a genuinely missing ledger entry later.
 
 It must exit 0. A silent skip, an unauthorized floor skip, a TDD omission, or a lightened step with no
-`first_pass` flag exits 2 and is non-waivable. If `ci/first-pass/` is absent, say so plainly and tell the
+`first_pass` flag exits 2 and is non-waivable.
+
+Then fold the skips into the durable roll-up so they survive the next intake replacing this file.
+**Every workflow does this** (CR-10 is project-wide, and the onboarding and docs routes never declare
+a manifest domain at all):
+
+```bash
+RS="ci/first-pass/resurface.py"
+[[ -f "$RS" ]] || RS="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/resurface.py"
+python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
+```
+
+With no area declared yet, entries record as **project-wide** and resurface at any later change until
+resolved. The `development` route re-runs this at its impact step, narrowing them to the real scope.
+Both runs are idempotent on `(change_id, step)`. If `ci/first-pass/` is absent, say so plainly and tell the
 user to run `/hitl:dev-update` — that state means the skip ledger is uncertified for **every** change on
 the project, not just this one.
 

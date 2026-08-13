@@ -22,10 +22,10 @@ def blockers(findings):
     return [f["code"] for f in findings if not f["waivable"]]
 
 
-def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1"):
-    """Build a change record whose steps[] statuses match the skips (skipped/starter) unless overridden."""
-# every load-bearing (floor OR no_omit) step across all tiers — seed them `done` by default so a partial
-# test plan doesn't spuriously trip INCOMPLETE_PLAN (codex-1); a test that WANTS to omit one overrides it.
+# A real change file is seeded from the catalog and carries EVERY step, so the fixture does too.
+# It used to seed only the load-bearing ones, which made every other catalog step look deliberately
+# deleted — fine while only floor/no_omit absence was checked, wrong once PLAN_PRUNED (CR-3) landed.
+# `omit=(...)` is how a test deliberately deletes a step.
 LOADBEARING = ["deploy", "promote", "integration_verify", "red", "green",
                "impact", "packet", "arch_review", "qa_verify", "rollout"]
 
@@ -33,7 +33,7 @@ LOADBEARING = ["deploy", "promote", "integration_verify", "red", "green",
 def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1", omit=()):
     over = step_over or {}
     by_key = {}
-    for k in LOADBEARING:
+    for k in CATALOG:
         if k not in omit:
             by_key[k] = {"n": 1, "key": k, "label": k, "status": "done", "phase": "X"}
     for s in skips:
@@ -445,3 +445,34 @@ def test_deploy_and_promote_never_demote():
     for t in range(5):
         assert C.resolve_crit(CATALOG["deploy"], t) == "floor"
         assert C.resolve_crit(CATALOG["promote"], t) == "floor"
+
+
+# ── PLAN_PRUNED (CR-3 / CR-16): deleting a step is not a way to skip it silently ──
+
+def test_deleting_a_ceremony_step_warns():
+    # Previously certified clean: no record, no actor, no reason, and invisible in the trail.
+    fs = C.check(make_change([], omit=("roi",)), CATALOG)
+    assert "PLAN_PRUNED" in codes(fs)
+    assert "PLAN_PRUNED" not in blockers(fs)      # waivable — pruning can be legitimate, not silent
+
+
+def test_deleting_a_standard_step_warns():
+    fs = C.check(make_change([], omit=("conventions",)), CATALOG)
+    assert "PLAN_PRUNED" in codes(fs) and "conventions" in str(fs)
+
+
+def test_a_deleted_step_with_a_skip_record_does_not_warn():
+    # The honest path stays cheaper than deletion: record it and the warning goes away.
+    fs = C.check(make_change([base_skip("roi")], omit=()), CATALOG)
+    assert "PLAN_PRUNED" not in codes(fs)
+
+
+def test_deleting_a_load_bearing_step_still_blocks_not_warns():
+    # floor/no_omit keep the stronger, non-waivable finding — PLAN_PRUNED must not soften it.
+    fs = C.check(make_change([], omit=("deploy",)), CATALOG)
+    assert "INCOMPLETE_PLAN" in blockers(fs)
+    assert "deploy" not in [f["message"] for f in fs if f["code"] == "PLAN_PRUNED"]
+
+
+def test_a_complete_plan_warns_about_nothing():
+    assert C.check(make_change([]), CATALOG) == []

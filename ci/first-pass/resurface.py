@@ -36,9 +36,16 @@ def _strs(x):
 
 
 def overlaps(entry, new_domains, new_paths):
-    """Does a ledger entry's area intersect the new change's? (domain OR path-prefix intersection.)"""
+    """Does a ledger entry's area intersect the new change's? (domain OR path-prefix intersection.)
+
+    An entry recorded with no area is `project_wide`: it came from a route that has no manifest scope
+    yet (onboarding, migration, docs), and the honest reading of "we skipped this while standing the
+    project up" is that it applies everywhere rather than nowhere. Before this, an empty area matched
+    nothing and the skip was invisible forever."""
     if not isinstance(entry, dict):
         return False
+    if entry.get("project_wide"):
+        return True
     if _strs(entry.get("domains")) & _strs(new_domains):
         return True
     return _paths_overlap(_strs(entry.get("paths")), _strs(new_paths))
@@ -150,29 +157,47 @@ def scope(change):
 def to_rollup(change, rollup):
     """Fold this change's skips into the roll-up, stamped with the area they apply to.
 
-    Idempotent on (change_id, step) so re-running the impact step cannot duplicate entries."""
+    Idempotent on (change_id, step) so re-running the impact step cannot duplicate entries.
+    Returns `(rollup, added, narrowed)` — `narrowed` counts entries whose project-wide area was
+    replaced with a real one, which is a write the caller must persist even when nothing was added."""
     rollup = rollup if isinstance(rollup, dict) else {}
     entries = rollup.get("entries") if isinstance(rollup.get("entries"), list) else []
     doms, paths = scope(change)
     cid = change.get("change_id") if isinstance(change.get("change_id"), str) else ""
-    have = {(e.get("change_id"), e.get("step")) for e in entries if isinstance(e, dict)}
-    added = 0
+    by_key = {(e.get("change_id"), e.get("step")): e for e in entries if isinstance(e, dict)}
+    have = set(by_key)
+    added = narrowed = 0
     for s in (change.get("skips") if isinstance(change.get("skips"), list) else []):
-        if not isinstance(s, dict) or (cid, s.get("step")) in have:
+        if not isinstance(s, dict):
+            continue
+        key = (cid, s.get("step"))
+        if key in have:
+            # Already recorded. If we now know the area and the stored entry was project-wide, narrow
+            # it: intake records before scope exists, the impact step records after.
+            prior = by_key[key]
+            if (doms or paths) and prior.get("project_wide"):
+                prior["domains"], prior["paths"] = list(doms), list(paths)
+                prior.pop("project_wide", None)
+                narrowed += 1
             continue
         e = dict(s)
         e["change_id"] = cid
+        if not doms and not paths:
+            e["project_wide"] = True
         # Per-entry copies: sharing one list object makes safe_dump emit YAML anchors (&id001/*id001)
         # into a file humans read and other tools parse.
         e["domains"] = list(doms)
         e["paths"] = list(paths)
         e.setdefault("resolved", False)
         entries.append(e)
-        have.add((cid, s.get("step")))   # a change file can carry two records for one step; the
-        added += 1                       # dedupe must see what this loop just appended, not only
-                                         # what was already in the roll-up
+        # A change file can carry two records for one step, so the dedupe must see what this loop
+        # just appended — in BOTH structures, or the second duplicate finds the key present in
+        # `have` and absent from `by_key`.
+        have.add(key)
+        by_key[key] = e
+        added += 1
     rollup["entries"] = entries
-    return rollup, added
+    return rollup, added, narrowed
 
 
 def main(argv=None):
@@ -195,22 +220,28 @@ def main(argv=None):
     change, rollup = load(a.change), load(a.rollup)
     doms, paths = scope(change)
 
-    # Scope is checked BEFORE appending, not after. An entry stamped with empty domains and paths
-    # can never overlap anything, so appending without scope writes skips that are permanently
-    # invisible to every future change — silently, and worse than not recording them at all.
-    if not doms and not paths:
-        print("No domain or allowed_paths on this change yet — resurfacing needs the impact step first.")
-        if a.append:
-            print("Nothing appended: entries with no area could never be resurfaced. Re-run after "
-                  "the impact step sets manifest.domain / allowed_paths.", file=sys.stderr)
-            return 1
-        return 0
-
+    # Append regardless of scope. CR-10 makes the ledger durable for a PROJECT, and most routes
+    # (onboarding, migration, docs) never declare a manifest domain at all — refusing there left
+    # their skips recorded only in a change file the next intake overwrites. Without an area the
+    # entry is marked project_wide and overlaps everything; the development route re-runs this after
+    # its impact step and narrows the entry to the real scope.
     if a.append:
-        rollup, added = to_rollup(change, rollup)
-        if added:
+        rollup, added, narrowed = to_rollup(change, rollup)
+        if added or narrowed:
             with io.open(a.rollup, "w", encoding="utf-8") as fh:
                 yaml.safe_dump(rollup, fh, sort_keys=False, allow_unicode=True)
+        if narrowed:
+            print(f"Narrowed {narrowed} project-wide entr{'y' if narrowed == 1 else 'ies'} to this "
+                  f"change's declared area.")
+        if added:
+            if not doms and not paths:
+                print(f"Recorded {added} skip(s) as project-wide — this change has no manifest domain "
+                      f"or allowed_paths. They will resurface at any later change until resolved.")
+
+    if not doms and not paths:
+        print("No domain or allowed_paths on this change — nothing to match against, so no "
+              "resurfacing read here. The development route re-runs this after its impact step.")
+        return 0
     # Never resurface a change's own decisions back at it. Once --append has folded this change's skips
     # into the roll-up, they overlap its own scope by construction, and reminding someone about a choice
     # they made minutes ago at intake reads as nagging rather than care.
