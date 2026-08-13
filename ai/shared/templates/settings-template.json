@@ -56,11 +56,20 @@
     "   (which includes `gh api --method POST`). It was never installed by anything, which is the only",
     "   reason that did no harm.",
     "Most read-only commands (cat, ls, grep, head, tail, find, and every read-only git and gh",
-    "subcommand) are auto-allowed by Claude Code already and need no entry here."
+    "subcommand) are auto-allowed by Claude Code already and need no entry here.",
+    "",
+    "Residual channels this does NOT close, so nobody mistakes a short list for a boundary:",
+    "- The deny rules govern the Read TOOL. `cat .env` through Bash is a different path and is",
+    "  auto-allowed, so these rules reduce accidents, not a determined read.",
+    "- Only stdout `>` and `>>` were measured. stderr redirection (`2>`) and command substitution",
+    "  were not. Assume they behave the same until someone measures them.",
+    "- Rules 1 and 2 are observed behaviour of a particular Claude Code version, not a spec. Re-measure",
+    "  before relying on them after an upgrade.",
+    "- Bash-mediated writes bypass the HITL change gate entirely (its matcher is Edit|Write), so an",
+    "  allowlist entry is not backstopped by the gate the way a tool-based edit is."
   ],
   "permissions": {
     "allow": [
-      "Bash(git checkout -b *)",
       "Bash(git add *)"
     ],
     "deny": [

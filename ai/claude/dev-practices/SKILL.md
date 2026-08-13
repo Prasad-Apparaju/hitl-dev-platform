@@ -33,7 +33,7 @@ This skill defines the HITL change workflow. Apply it based on the change tier:
 | Tier | Change type | Process |
 |------|-------------|---------|
 | 0 — Trivial | Typo, config value, log message | Intake, then the lightest plan: ceremony steps offered pre-declined, one confirmation |
-| 1 — Bug fix | Regression fix, minor behavioral correction | Same as tier 0, and the TDD steps are kept — a fix without a failing test first is not a fix |
+| 1 — Bug fix | Regression fix, minor behavioral correction | Same as tier 0. The TDD steps can never be omitted, though they may be thinned to a starter — a fix without a failing test first is not a fix |
 | 2 — Normal feature | Bounded, well-understood change within one domain | Full workflow |
 | 3 — Non-trivial / cross-domain | Migrations, cross-domain, AI systems, security, data model | Full workflow + HLD review gate |
 | 4 — Incident / P0 | Active production problem | Fix first, full docs within 48 hours |
@@ -41,13 +41,23 @@ This skill defines the HITL change workflow. Apply it based on the change tier:
 When in doubt, use the heavier process. If you are touching more than one domain or writing more than a few dozen lines, treat it as Tier 2 or above.
 
 **Every tier goes through `/hitl:dev-start-change`.** There is no tier that skips intake: the session
-gate blocks edits until a change is active, and it does not read the tier. What a low tier buys is a
-*shorter plan*, not an exemption — and the steps it drops are recorded in the skip ledger rather than
-silently absent, so the next change touching the same area can pick them back up.
+gate blocks edits made through the Edit and Write tools until a change is active, and it does not read
+the tier. (Writes made through the shell are not covered by that gate — a known gap, tracked
+separately.) What a low tier buys is a *shorter plan*, not an exemption.
 
-Tier 0 and 1 also require `tier_set_by` and `tier_reason` in the change file. A low tier demotes
-`impact`, `packet`, `arch_review`, `qa_verify` and `rollout` from `floor` to `standard`, so the
-declaration carries real weight and is accountable to a named person.
+Dropped steps are recorded in the change file for every workflow. They reach the durable roll-up
+(`.hitl/skip-ledger.yaml`), which is what lets a later change in the same area pick them back up, at
+the impact step of `/hitl:dev-apply-change` — so today that durability applies to the **development**
+workflow. On other routes the record lives in the change file only, which the next intake replaces.
+
+Tier 0 and 1 require `tier_set_by` and `tier_reason` in the change file, because those tiers unlock
+the batch-decline path at intake.
+
+**The consequential tier call is 3 versus 2, not 1 versus 2.** Dropping from 3 to 2 takes `impact`,
+`packet`, `arch_review`, `qa_verify` and `rollout` off the protected floor in one move; dropping from
+2 to 1 only affects `integration_verify`. `deploy` and `promote` are floor at every tier. Tier 2 is
+also the default and asks for no justification, so the boundary that matters is the one with the
+least ceremony around it. Slow down on it deliberately.
 
 ## Core Rules
 

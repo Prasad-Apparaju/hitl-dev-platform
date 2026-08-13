@@ -89,14 +89,25 @@ Wait for confirmation (or correction) before Step 4.
 ## Step 3b — Confirm the tier (a human's call, always)
 
 Propose a tier from the issue and say why, then **wait for a human to confirm or correct it**. Do not
-seed a change without one. Tier is the single most consequential field in the file: it decides which
-steps may be lightened at all, and at tier ≤ 1 it demotes `impact`, `packet`, `arch_review`,
-`qa_verify` and `rollout` from `floor` to `standard`, dissolving the ack-and-waiver machinery. Nothing
-downstream re-checks the declaration against what the change actually touches.
+seed a change without one. Tier decides which steps may be lightened at all, and nothing downstream
+re-checks the declaration against what the change actually touches.
+
+Where the protection actually changes, from the catalog:
+
+| Boundary | What stops being `floor` |
+|---|---|
+| **3 → 2** | `impact`, `packet`, `arch_review`, `qa_verify`, `rollout` — five steps at once |
+| **2 → 1** | `integration_verify` |
+| any tier | `deploy` and `promote` stay `floor` — they never demote |
+
+So **declaring 2 instead of 3 is the consequential call**, and it is the one the tooling does not
+guard: tier 2 is the generator's default and needs no attribution. Treat the 3 → 2 decision as the
+one to slow down on, whatever the paperwork asks for. Default up.
 
 Tiers are defined in [`/hitl:dev-practices`](../dev-practices/SKILL.md). At **tier 0 or 1** the change
-file must also record `tier_set_by` and `tier_reason` — the same accountability a skip carries, for the
-same reason. The generator in Step 6 refuses to write the file without them.
+file must record `tier_set_by` and `tier_reason`, and the generator refuses without them. That
+attribution exists because tier 0/1 unlocks the batch-decline path in Step 4b, not because of floor
+demotion — be honest about which lock is on which door.
 
 > Default up. If a change could plausibly be tier 2 or tier 3, it is tier 3. The cost of extra process
 > is lower than the cost of an under-reviewed change, and a wrong tier is not caught later.
@@ -410,8 +421,13 @@ uncertified is ever pushed:
 ```bash
 CHK="ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || CHK="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/check_skips.py"
-python3 "$CHK" .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml
+python3 "$CHK" .hitl/current-change.yaml
 ```
+
+**No `--rollup` here, deliberately.** The roll-up is written at the impact step, once the change knows
+its own area — so at intake every skip would warn as missing from a ledger it cannot be in yet. A
+check that always warns teaches people to ignore it, and this is the check that would otherwise catch
+a genuinely missing ledger entry later.
 
 It must exit 0. A silent skip, an unauthorized floor skip, a TDD omission, or a lightened step with no
 `first_pass` flag exits 2 and is non-waivable. If `ci/first-pass/` is absent, say so plainly and tell the

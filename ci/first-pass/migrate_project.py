@@ -37,7 +37,7 @@ import sys
 # redirection rides along on a permission match (`cmd > file` is permitted by a rule for `cmd`,
 # and an exact entry does not help), so every entry grants "write this command's stdout
 # anywhere". Never add an interpreter, shell, or package manager.
-ALLOW = ["Bash(git checkout -b *)", "Bash(git add *)"]
+ALLOW = ["Bash(git add *)"]
 DENY = ["Read(./.env)", "Read(./.env.*)", "Read(./**/.env)", "Read(./secrets/**)"]
 
 LIGHTENED = {"skipped", "starter"}

@@ -418,3 +418,29 @@ def test_low_tier_with_attribution_is_clean():
 def test_tier_two_and_above_needs_no_attribution():
     # The default path is unchanged — attribution is the price of the LIGHT path, not of every change.
     assert C.check(make_change([], tier=2), CATALOG, tier=2) == []
+
+
+# ── the tier facts the doctrine asserts, pinned to the catalog ────────────────
+# Five shipped files stated "a low tier demotes impact/packet/arch_review/qa_verify/rollout from
+# floor to standard". That was false: those five are crit_by_tier {3: floor}, so they are already
+# standard at tier 2 and the 2->1 boundary does not move them. Prose drifted from the catalog and
+# nothing caught it. These tests make the catalog the arbiter.
+
+def test_the_big_floor_demotion_is_three_to_two():
+    five = ["impact", "packet", "arch_review", "qa_verify", "rollout"]
+    for k in five:
+        assert C.resolve_crit(CATALOG[k], 3) == "floor", f"{k} should be floor at tier 3"
+        assert C.resolve_crit(CATALOG[k], 2) == "standard", f"{k} should be standard at tier 2"
+
+
+def test_two_to_one_moves_only_integration_verify():
+    moved = {k for k, m in CATALOG.items()
+             if C.resolve_crit(m, 2) == "floor" and C.resolve_crit(m, 1) != "floor"}
+    assert moved == {"integration_verify"}, (
+        "the 2->1 demotion set changed; every doctrine sentence naming it must be updated too")
+
+
+def test_deploy_and_promote_never_demote():
+    for t in range(5):
+        assert C.resolve_crit(CATALOG["deploy"], t) == "floor"
+        assert C.resolve_crit(CATALOG["promote"], t) == "floor"

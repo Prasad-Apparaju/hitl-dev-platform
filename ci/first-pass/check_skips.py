@@ -232,11 +232,13 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         if not isinstance(status, str) or status not in VALID_STATUSES:
             findings.append(_f("INVALID_STATUS", f"step '{key}' has missing/unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
 
-    # 0.4) TIER ACCOUNTABILITY. Tier is self-declared and nothing else validates it, yet a low tier
-    #    demotes impact/packet/arch_review/qa_verify/rollout from `floor` to `standard` via crit_by_tier —
-    #    so declaring tier 1 on a tier-3 change dissolves the ack/waiver machinery without tripping any
-    #    other check. At tier <= 1 the declaration must name a person and a reason, the same standard a
-    #    skip is held to. Waivable: a genuinely trivial change should not be blocked, only accounted for.
+    # 0.4) TIER ACCOUNTABILITY. Tier is self-declared and nothing validates it against what the change
+    #    actually touches. Note where the protection really moves: 3 -> 2 takes impact, packet,
+    #    arch_review, qa_verify and rollout off `floor` in one step; 2 -> 1 only moves
+    #    integration_verify. So the demotion that matters is NOT the boundary guarded here — tier 2 is
+    #    the default and asks for nothing. This check is the accountability price of the tier 0/1
+    #    batch-decline path, not a floor guard; do not let its presence imply the floor is covered.
+    #    Waivable: a genuinely trivial change should not be blocked, only accounted for.
     if isinstance(tier, int) and tier <= 1:
         if not _str(change.get("tier_set_by")).strip():
             findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_set_by` — a light path is a human's call, not the agent's"))

@@ -20,11 +20,14 @@ The generic HITL tier definitions (in `/hitl:dev-practices`) are a starting poin
 
 Apply the following tier definitions for this project:
 
-> **How tiers actually work.** No tier skips `/hitl:dev-start-change` — the session gate blocks edits
-> until a change is active and it does not read the tier. A low tier buys a *shorter plan*, not an
-> exemption, and the steps it drops are recorded in the skip ledger rather than silently absent. Tier 0
-> and 1 additionally require `tier_set_by` and `tier_reason`, because a low tier demotes several steps
-> from `floor` to `standard`. Fill in the examples below; do not change that mechanism.
+> **How tiers actually work.** No tier skips `/hitl:dev-start-change` — the session-start gate blocks
+> edits made through the Edit and Write tools until a change is active, and it does not read the tier.
+> (Writes made through the shell are not covered; that gap is tracked separately.) A low tier buys a
+> *shorter plan*, not an exemption, and the steps it drops are recorded rather than silently absent.
+> Tier 0 and 1 additionally require `tier_set_by` and `tier_reason`, because those tiers unlock the
+> batch-decline path at intake. Note the floor demotion that matters is **3 → 2**, which takes five
+> steps off the protected floor and requires no justification. Fill in the examples below; do not
+> change that mechanism.
 
 ### Tier 0 — Trivial (intake, then the lightest plan: ceremony steps pre-declined)
 
