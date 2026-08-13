@@ -265,29 +265,35 @@ if not 0 <= tier <= 4:
     sys.exit(f"tier must be 0-4, got {tier}")
 if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
     sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
-             "and it demotes several steps from floor to standard.")
+             "and it unlocks the batch-decline path at intake.")
 
 # Catalog: prefer the plugin copy, fall back to the source path.
 for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),
           "ai/shared/workflows.yaml"):
     if os.path.isfile(p):
-        cat = yaml.safe_load(open(p))["workflows"][wf_id]; break
+        _all = yaml.safe_load(open(p))["workflows"]
+        if wf_id not in _all:
+            sys.exit(f"unknown workflow {wf_id!r}; the catalog defines: {sorted(_all)}")
+        cat = _all[wf_id]
+        break
 else:
     sys.exit("workflows.yaml not found")
 
 # Criticality must be resolved the SAME way the validator resolves it, so import it rather than
 # reimplement it here — two copies of this rule is how a floor step quietly becomes skippable.
-resolve_crit = None
+resolve_crit = has_starter = None
 for d in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/ci/first-pass"), "ci/first-pass"):
     if os.path.isfile(os.path.join(d, "check_skips.py")):
         sys.path.insert(0, d)
         try:
             from check_skips import resolve_crit
+            from starters import has_starter
         except Exception:
-            resolve_crit = None
+            resolve_crit = has_starter = None
         break
-if resolve_crit is None:
-    sys.exit("check_skips.py not found — cannot resolve step criticality. Run /hitl:dev-update.")
+if resolve_crit is None or has_starter is None:
+    sys.exit("ci/first-pass not found — cannot resolve criticality or the starter registry. "
+             "Run /hitl:dev-update.")
 
 STATUS_FOR = {"defer": "skipped", "decline": "skipped", "starter": "starter"}
 
@@ -322,6 +328,12 @@ if os.path.isfile(choices_path):
             sys.exit(f"choice for '{key}' needs a `reason` — a skip without one is a silent skip.")
         if key not in known:
             sys.exit(f"first-pass choices name steps not in the {wf_id} workflow: {key}")
+        # `starter` is only offered for steps with a registered honest-minimal artifact. The menu says
+        # so, but a menu is not an enforcement boundary — a hand-written choices file could otherwise
+        # invent a starter for any step and certify clean.
+        if ch["disposition"] == "starter" and not has_starter(key):
+            sys.exit(f"'{key}' has no registered starter (see ci/first-pass/starters.py); "
+                     f"use defer or decline instead.")
         choices[key] = ch
     if choices and not actor.strip():
         sys.exit("first-pass choices need an `actor` — a skip is accountable to a person, not the agent.")
@@ -335,33 +347,37 @@ steps = cat["steps"]
 first = next((s for s in steps if s["key"] not in choices), None)
 if first is None:
     sys.exit("every step in the plan was lightened — there is no change left to run. Keep at least one.")
+# Every interpolated scalar goes through q(). A branch name or change id containing a quote used to
+# produce a file that was non-empty and exited 0 but did not parse — and the shell guard checks status
+# and emptiness, not validity, so it installed the broken file over the live one.
 lines = [
     'schema_version: "2.0"',
-    f'hitl_version: "{ver}"',
+    f'hitl_version: {q(ver)}',
     '',
-    f'change_id: {change_id}',
+    f'change_id: {q(change_id)}',
     f'tier: {tier}',
 ]
 if tier <= 1:
     lines += [f'tier_set_by: {q(tier_set_by)}', f'tier_reason: {q(tier_reason)}']
 lines += [
     'status: planning',
-    f'expected_branch: "{branch}"',
+    f'expected_branch: {q(branch)}',
 ]
 if choices:
     lines += ['', 'first_pass: true   # dispositions were chosen at intake; the ledger below is enforced']
 lines += [
     '',
     'workflow:',
-    f'  id: {cat["id"]}',
-    f'  version: "{ver}"',
+    f'  id: {q(cat["id"])}',
+    f'  version: {q(ver)}',
     f'  total: {cat["total"]}',
     '  steps:',
 ]
 for s in steps:
     ch = choices.get(s["key"])
     st = STATUS_FOR[ch["disposition"]] if ch else ("current" if s is first else "open")
-    lines.append(f'    - {{ n: {s["n"]}, key: {s["key"]}, label: "{s["label"]}", phase: "{s["phase"]}", status: {st} }}')
+    lines.append(f'    - {{ n: {q(s["n"])}, key: {q(s["key"])}, label: {q(s["label"])}, '
+                 f'phase: {q(s["phase"])}, status: {st} }}')
 
 if choices:
     lines += ['', 'skips:']
@@ -379,10 +395,17 @@ lines += [
     '',
     'current_step:',
     f'  number: {first["n"] if str(first["n"]).isdigit() else str(first["n"])[:-1]}',
-    f'  name: "{first["label"]}"',
-    f'  phase: "{first["phase"]}"',
+    f'  name: {q(first["label"])}',
+    f'  phase: {q(first["phase"])}',
 ]
-print("\n".join(lines))
+out = "\n".join(lines)
+# Refuse to hand the wrapper something it cannot parse. The guard downstream checks exit status and
+# non-emptiness; only this check can catch a file that is both and still invalid.
+try:
+    yaml.safe_load(out)
+except yaml.YAMLError as e:
+    sys.exit(f"generated change file is not valid YAML ({e.__class__.__name__}) — refusing to emit it.")
+print(out)
 PY
 rc=$?
 

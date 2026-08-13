@@ -384,3 +384,13 @@ def yaml_dump_entries():
         {"step": "qa_verify", "crit": "floor", "actor": "a@b", "reason": "x",
          "disposition": "decline", "resolved": False, "change_id": "GH-OTHER",
          "domains": ["billing"], "paths": ["src/billing/"]}]}, sort_keys=False)
+
+
+def test_to_rollup_dedupes_within_a_single_change_file(tmp_path):
+    # A change file can legitimately carry two records for one step (migrated or hand-edited). The
+    # dedupe set must see what this loop just appended, not only what was already in the roll-up.
+    import yaml
+    change = yaml.safe_load(_CHANGE)
+    change["skips"].append(dict(change["skips"][0]))          # exact duplicate (change_id, step)
+    rollup, added = R.to_rollup(change, {})
+    assert added == 1 and len(rollup["entries"]) == 1

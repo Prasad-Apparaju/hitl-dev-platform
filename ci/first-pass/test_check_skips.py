@@ -400,9 +400,10 @@ if __name__ == "__main__":
 
 
 def test_low_tier_must_name_a_person_and_a_reason():
-    # Tier is self-declared and nothing validates it against the change's actual shape, yet tier <= 1
-    # demotes several steps from floor to standard. So the declaration is held to the same standard
-    # as a skip: accountable to a human, with a reason.
+    # Tier is self-declared and nothing validates it against the change's actual shape. Tier <= 1 is
+    # what unlocks the batch-decline path at intake, so the declaration is held to the same standard
+    # as a skip: accountable to a human, with a reason. (The floor demotion that matters is 3 -> 2 —
+    # see test_the_big_floor_demotion_is_three_to_two — and it requires no attribution at all.)
     fs = C.check(make_change([], tier=1), CATALOG, tier=1)
     assert "TIER_UNATTRIBUTED" in codes(fs)
     assert "TIER_UNATTRIBUTED" not in blockers(fs)      # accounted for, not blocked

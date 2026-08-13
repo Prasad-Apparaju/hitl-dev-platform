@@ -168,7 +168,9 @@ def to_rollup(change, rollup):
         e["paths"] = list(paths)
         e.setdefault("resolved", False)
         entries.append(e)
-        added += 1
+        have.add((cid, s.get("step")))   # a change file can carry two records for one step; the
+        added += 1                       # dedupe must see what this loop just appended, not only
+                                         # what was already in the roll-up
     rollup["entries"] = entries
     return rollup, added
 

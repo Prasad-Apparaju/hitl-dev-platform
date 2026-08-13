@@ -228,3 +228,29 @@ def test_the_wrapper_only_replaces_the_change_file_on_success():
         "mv must be guarded by both a zero exit and a non-empty temp file"
     assert "rm -f .hitl/first-pass-choices.json" in tail.split(mv_line, 1)[1], \
         "choices may only be consumed after a successful mv"
+
+
+def test_unknown_workflow_refuses_without_a_traceback(gen, tmp_path):
+    rc, _, err = run_gen(gen, tmp_path, choices=None, wf="not-a-workflow")
+    assert rc != 0 and "unknown workflow" in err and "Traceback" not in err
+
+
+def test_a_quote_in_the_branch_name_cannot_produce_unparsable_yaml(gen, tmp_path):
+    """This exited 0 with non-empty output and broken YAML. The shell guard checks status and
+    emptiness, not validity, so it installed the unparsable file over the live change file."""
+    cpath = str(tmp_path / "absent.json")
+    r = subprocess.run([sys.executable, gen, "development", "GH-1", 'issue/1-a"b', "9.9.9",
+                        "2", cpath, "", ""], capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode == 0, r.stderr
+    doc = yaml.safe_load(r.stdout)          # must not raise
+    assert doc["expected_branch"] == 'issue/1-a"b'
+
+
+def test_a_starter_outside_the_registry_refuses(gen, tmp_path):
+    """The menu only offers `starter` for registered steps, but a menu is not an enforcement
+    boundary — a hand-written choices file could otherwise certify an invented starter."""
+    rc, _, err = run_gen(gen, tmp_path, choices={
+        "actor": "a@b",
+        "choices": {"roi": {"disposition": "starter", "reason": "thin",
+                            "starter_artifact": "roi.md"}}})
+    assert rc != 0 and "no registered starter" in err
