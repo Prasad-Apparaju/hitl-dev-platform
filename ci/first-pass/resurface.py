@@ -21,10 +21,33 @@ _BLAME_STEMS = [r"fail\w*", r"neglig\w*", r"care" + _SEPOPT + r"less\w*", r"faul
 _BLAME_RE = re.compile(r"\b(?:" + "|".join(_BLAME_STEMS) + r")\b", re.I | re.S)
 
 
+def _norm(p):
+    """Path as a tuple of segments, with any glob tail dropped. `src/payments/**` -> ('src','payments')."""
+    parts = []
+    for seg in str(p).replace("\\", "/").strip("/").split("/"):
+        if not seg or seg == ".":
+            continue
+        if any(ch in seg for ch in "*?["):
+            break                      # a glob segment ends the literal prefix we can compare
+        parts.append(seg)
+    return tuple(parts)
+
+
 def _paths_overlap(a, b):
-    for p in a:
-        for q in b:
-            if p and q and (str(p).startswith(str(q)) or str(q).startswith(str(p))):
+    """Do two path sets touch? Compared by SEGMENT, not by raw string.
+
+    A raw `startswith` was wrong in both directions: `src/pay` "matched" `src/payments` (a sibling
+    that merely shares a character prefix), while a declared `src/payments/**` failed to match
+    `src/payments/api.py` because the literal glob characters broke the comparison — and the schema
+    explicitly describes allowed_paths as glob patterns. One direction nagged about unrelated work,
+    the other stayed silent on exactly the change that should have been reminded.
+    """
+    A = [_norm(p) for p in a if str(p).strip()]
+    B = [_norm(q) for q in b if str(q).strip()]
+    for p in A:
+        for q in B:
+            n = min(len(p), len(q))
+            if p[:n] == q[:n]:         # one is a directory ancestor of the other (or the same path)
                 return True
     return False
 
@@ -168,6 +191,28 @@ def to_rollup(change, rollup):
     entries = rollup.get("entries") if isinstance(rollup.get("entries"), list) else []
     doms, paths = scope(change)
     cid = change.get("change_id") if isinstance(change.get("change_id"), str) else ""
+
+    # Normalise duplicates already in the ledger before doing anything else. An earlier version of
+    # this function deduped against the roll-up but not against its own appends, so it could write
+    # two entries for one (change_id, step). Preventing new ones does not repair the old: with two,
+    # `by_key` keeps only the last, so a later narrowing fixes that one and leaves the other
+    # project-wide forever. Collapse them here, keeping the first and preferring any that already
+    # carry a real area.
+    deduped, seen_keys, merged = [], {}, 0
+    for e in entries:
+        if not isinstance(e, dict):
+            deduped.append(e)
+            continue
+        k = (e.get("change_id"), e.get("step"))
+        if k not in seen_keys:
+            seen_keys[k] = len(deduped)
+            deduped.append(e)
+            continue
+        kept = deduped[seen_keys[k]]
+        if kept.get("project_wide") and not e.get("project_wide"):
+            deduped[seen_keys[k]] = e          # the scoped copy is the better record
+        merged += 1
+    entries = deduped
     by_key = {(e.get("change_id"), e.get("step")): e for e in entries if isinstance(e, dict)}
     have = set(by_key)
     added = narrowed = 0
@@ -204,7 +249,7 @@ def to_rollup(change, rollup):
         by_key[key] = e
         added += 1
     rollup["entries"] = entries
-    return rollup, added, narrowed
+    return rollup, added, narrowed + merged
 
 
 def main(argv=None):

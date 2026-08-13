@@ -453,3 +453,46 @@ def test_digest_keeps_distinct_project_wide_records_apart():
                 "actor": "a", "reason": c} for c in ("GH-1", "GH-2", "GH-3")]
     shown, remaining = R.digest(entries, cap=2)
     assert len(shown) == 2 and remaining == 1
+
+
+# ── path overlap by segment, not by raw string ────────────────────────────────
+
+def test_a_sibling_sharing_a_character_prefix_does_not_overlap():
+    # `src/pay`.startswith-matched `src/payments`, so an unrelated change got nagged.
+    assert not R._paths_overlap({"src/pay"}, {"src/payments"})
+
+
+def test_a_declared_glob_overlaps_the_files_it_covers():
+    # The literal `**` broke the comparison, so the change that SHOULD have been reminded was not.
+    assert R._paths_overlap({"src/payments/**"}, {"src/payments/api.py"})
+
+
+def test_directory_and_file_relationships_overlap_either_way():
+    assert R._paths_overlap({"src/payments"}, {"src/payments/api.py"})
+    assert R._paths_overlap({"src/payments/api.py"}, {"src/payments"})
+    assert R._paths_overlap({"src/"}, {"src/anything/deep.py"})
+    assert not R._paths_overlap({"src/billing"}, {"src/shipping"})
+
+
+def test_historical_duplicate_entries_are_normalised_then_narrowed():
+    # The earlier dedupe bug could write two entries for one (change_id, step). Preventing new ones
+    # does not repair the old: `by_key` keeps only the last, so a later narrowing fixed that one and
+    # left the other project-wide forever.
+    dup = {"entries": [
+        {"change_id": "GH-DUP", "step": "qa_verify", "crit": "floor", "project_wide": True, "resolved": False},
+        {"change_id": "GH-DUP", "step": "qa_verify", "crit": "floor", "project_wide": True, "resolved": False}]}
+    change = {"change_id": "GH-DUP", "manifest": {"domain": "billing"},
+              "skips": [{"step": "qa_verify", "crit": "floor", "actor": "a", "reason": "b",
+                         "disposition": "decline"}]}
+    rollup, added, changed = R.to_rollup(change, dup)
+    assert len(rollup["entries"]) == 1 and added == 0 and changed >= 1
+    assert not rollup["entries"][0].get("project_wide")
+    assert rollup["entries"][0]["domains"] == ["billing"]
+
+
+def test_normalisation_prefers_the_scoped_copy_of_a_duplicate():
+    dup = {"entries": [
+        {"change_id": "GH-D", "step": "roi", "project_wide": True},
+        {"change_id": "GH-D", "step": "roi", "domains": ["billing"]}]}
+    rollup, _, _ = R.to_rollup({"change_id": "GH-D", "skips": []}, dup)
+    assert len(rollup["entries"]) == 1 and rollup["entries"][0].get("domains") == ["billing"]
