@@ -20,6 +20,14 @@ To get started, run one of these commands in your project directory:
 
 # Development Practices
 
+## Contents
+
+- [Change tiers](#development-practices) — this section: which process a change gets, and why
+- [Core Rules](#core-rules)
+- [Workflow Summary (Tier 2)](#workflow-summary-tier-2)
+- [Reference Files](#reference-files)
+- [Standards Quick Reference](#standards-quick-reference)
+
 This skill defines the HITL change workflow. Apply it based on the change tier:
 
 | Tier | Change type | Process |
