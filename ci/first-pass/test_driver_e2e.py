@@ -150,3 +150,81 @@ def test_every_workflow_seeds(gen, tmp_path, wf):
     assert rc == 0, f"{wf}: {err}"
     assert doc["workflow"]["id"] == wf and doc["workflow"]["steps"]
     assert sum(1 for s in doc["workflow"]["steps"] if s["status"] == "current") == 1
+
+
+# ── the starter path: absent from this file's first version, which is how B1 shipped ──
+
+def test_starter_emits_the_key_the_validator_actually_reads(gen, tmp_path):
+    """The generator wrote `artifact_path`; the validator and schema both read `starter_artifact`.
+    Every starter disposition therefore failed certification — the one seam this file exists to
+    guard, broken for one of the three dispositions, because no test used a starter."""
+    art = tmp_path / "test-plan.md"
+    art.write_text("# starter\nneeds-enhancement: edge cases\n", encoding="utf-8")
+    rc, doc, err = run_gen(gen, tmp_path, choices={
+        "actor": "qa@team",
+        "choices": {"test_plan": {"disposition": "starter", "reason": "thin first pass",
+                                  "starter_artifact": "test-plan.md"}}})
+    assert rc == 0, err
+    entry = doc["skips"][0]
+    assert "starter_artifact" in entry and "artifact_path" not in entry
+    assert [s for s in doc["workflow"]["steps"] if s["key"] == "test_plan"][0]["status"] == "starter"
+    assert C.check(doc, CATALOG, tier=2, change_dir=str(tmp_path)) == []
+
+
+def test_keep_is_not_a_record_and_not_a_crash(gen, tmp_path):
+    """`keep` is on the user-facing menu, so it is a plausible entry in the choices file. It means
+    'leave the step alone' — not a KeyError."""
+    rc, doc, err = run_gen(gen, tmp_path, choices={
+        "actor": "a@b", "choices": {"roi": {"disposition": "keep", "reason": "n/a"}}})
+    assert rc == 0, err
+    assert "first_pass" not in doc and "skips" not in doc
+    assert [s for s in doc["workflow"]["steps"] if s["key"] == "roi"][0]["status"] in ("open", "current")
+
+
+@pytest.mark.parametrize("bad,expect", [
+    ({"actor": "a", "choices": {"roi": {"disposition": "nope", "reason": "x"}}}, "disposition"),
+    ({"actor": "a", "choices": {"roi": {"disposition": "decline"}}}, "reason"),
+    ({"actor": "a", "choices": {"roi": "decline"}}, "must be an object"),
+    ({"actor": "a", "choices": ["roi"]}, "must be an object"),
+    (["not", "a", "dict"], "must be a JSON object"),
+    ({"actor": 5, "choices": {}}, "must be a string"),
+])
+def test_malformed_choices_refuse_clearly_rather_than_traceback(gen, tmp_path, bad, expect):
+    rc, doc, err = run_gen(gen, tmp_path, choices=bad)
+    assert rc != 0 and doc is None
+    assert expect in err, err
+    assert "Traceback" not in err, "a malformed input must produce a message, not a stack trace"
+
+
+def test_a_non_numeric_tier_refuses(gen, tmp_path):
+    rc, _, err = run_gen(gen, tmp_path, tier="19a", choices=None)
+    assert rc != 0 and "tier must be an integer" in err
+
+
+def test_lightening_every_step_refuses(gen, tmp_path):
+    """`current` must never point at a lightened step. With nothing kept there is no honest
+    pointer and no change left to run."""
+    steps = yaml.safe_load(io.open(os.path.join(ROOT, "ai", "shared", "workflows.yaml"),
+                                   encoding="utf-8"))["workflows"]["docs"]["steps"]
+    rc, _, err = run_gen(gen, tmp_path, wf="docs", choices={
+        "actor": "a@b",
+        "choices": {s["key"]: {"disposition": "decline", "reason": "x"} for s in steps}})
+    assert rc != 0 and "no change left to run" in err
+
+
+# ── the bash wrapper around the generator (untested by the subprocess harness above) ──
+
+def test_the_wrapper_only_replaces_the_change_file_on_success():
+    """Every generator refusal writes nothing to stdout, so an unconditional `mv` drops an EMPTY
+    file over the live change file — re-creating the clobber the temp file exists to prevent, and
+    deleting the user's choices on the way. The subprocess harness above cannot see this: it runs
+    the Python directly and never executes the shell around it."""
+    text = io.open(SKILL, encoding="utf-8").read()
+    tail = text.split("current-change.yaml.tmp", 1)[1]
+    assert "rc=$?" in tail, "the generator's exit status must be captured"
+    mv_line = [ln for ln in tail.splitlines() if ln.strip().startswith("mv ")][0]
+    guard = tail[:tail.index(mv_line)]
+    assert "$rc -eq 0" in guard and "-s .hitl/current-change.yaml.tmp" in guard, \
+        "mv must be guarded by both a zero exit and a non-empty temp file"
+    assert "rm -f .hitl/first-pass-choices.json" in tail.split(mv_line, 1)[1], \
+        "choices may only be consumed after a successful mv"

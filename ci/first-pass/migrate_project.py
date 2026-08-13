@@ -43,15 +43,29 @@ DENY = ["Read(./.env)", "Read(./.env.*)", "Read(./**/.env)", "Read(./secrets/**)
 LIGHTENED = {"skipped", "starter"}
 
 
+class Unmergeable(Exception):
+    """The file is valid JSON but not shaped like settings — refuse rather than guess."""
+
+
 def merge_permissions(settings):
-    """Return (settings, added) with our entries folded in. Never removes or reorders."""
-    settings = settings if isinstance(settings, dict) else {}
+    """Return (settings, added) with our entries folded in. Never removes or reorders.
+
+    Raises Unmergeable when the existing shape cannot be merged without discarding something. A
+    silent replace here would delete a team's configuration to add ours, which is the opposite of
+    what a migration is for — and worse than the invalid-JSON path, which already refuses.
+    """
+    if not isinstance(settings, dict):
+        raise Unmergeable(f"top level is {type(settings).__name__}, expected an object")
     perms = settings.get("permissions")
-    if not isinstance(perms, dict):
+    if perms is None:
         perms = {}
+    if not isinstance(perms, dict):
+        raise Unmergeable(f"`permissions` is {type(perms).__name__}, expected an object")
     added = {"allow": [], "deny": []}
     for key, wanted in (("allow", ALLOW), ("deny", DENY)):
         have = perms.get(key)
+        if have is not None and not isinstance(have, list):
+            raise Unmergeable(f"`permissions.{key}` is {type(have).__name__}, expected a list")
         have = list(have) if isinstance(have, list) else []
         for entry in wanted:
             if entry not in have:
@@ -74,7 +88,10 @@ def audit_change_file(change):
         reasons.append(f"{len(skips)} skip record(s)")
     wf = change.get("workflow")
     steps = wf.get("steps") if isinstance(wf, dict) and isinstance(wf.get("steps"), list) else []
-    lightened = [s.get("key") for s in steps if isinstance(s, dict) and s.get("status") in LIGHTENED]
+    # isinstance guard before the membership test: a non-string status is unhashable and `in set()`
+    # raises on it, which would turn an advisory audit into a traceback mid-migration.
+    lightened = [s.get("key") for s in steps
+                 if isinstance(s, dict) and isinstance(s.get("status"), str) and s["status"] in LIGHTENED]
     if lightened:
         reasons.append("lightened step(s): " + ", ".join(str(k) for k in lightened if k))
     return reasons
@@ -100,7 +117,11 @@ def main(argv=None):
         except ValueError as e:
             print(f"! {spath} is not valid JSON ({e}) — fix it by hand; refusing to touch it.")
             return 1
-        merged, added = merge_permissions(settings)
+        try:
+            merged, added = merge_permissions(settings)
+        except Unmergeable as e:
+            print(f"! {spath}: {e} — fix it by hand; refusing to touch it.")
+            return 1
         n = len(added["allow"]) + len(added["deny"])
         if n == 0:
             print("= permissions already current")

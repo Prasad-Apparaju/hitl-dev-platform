@@ -246,7 +246,12 @@ import sys, os, json, yaml
 from datetime import datetime, timezone
 wf_id, change_id, branch, ver, tier_s, choices_path = sys.argv[1:7]
 tier_set_by, tier_reason = (sys.argv[7:9] + ["", ""])[:2]
-tier = int(tier_s)
+try:
+    tier = int(tier_s)
+except ValueError:
+    sys.exit(f"tier must be an integer 0-4, got {tier_s!r}")
+if not 0 <= tier <= 4:
+    sys.exit(f"tier must be 0-4, got {tier}")
 if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
     sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
              "and it demotes several steps from floor to standard.")
@@ -273,23 +278,52 @@ for d in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/ci/first
 if resolve_crit is None:
     sys.exit("check_skips.py not found — cannot resolve step criticality. Run /hitl:dev-update.")
 
+STATUS_FOR = {"defer": "skipped", "decline": "skipped", "starter": "starter"}
+
+# Validate the whole choices document before touching anything. A malformed file must produce a
+# clear refusal, not a traceback: the caller replaces the live change file with our stdout, so an
+# ambiguous failure is worse here than anywhere else in the pipeline.
 choices, actor = {}, ""
 if os.path.isfile(choices_path):
-    doc = json.load(open(choices_path))
-    choices = doc.get("choices") or {}
+    try:
+        doc = json.load(open(choices_path))
+    except ValueError as e:
+        sys.exit(f"{choices_path} is not valid JSON: {e}")
+    if not isinstance(doc, dict):
+        sys.exit(f"{choices_path} must be a JSON object with `actor` and `choices`.")
+    raw = doc.get("choices") or {}
+    if not isinstance(raw, dict):
+        sys.exit("`choices` must be an object keyed by step, e.g. {\"roi\": {\"disposition\": \"decline\", ...}}")
     actor = doc.get("actor") or ""
-    unknown = [k for k in choices if k not in {s["key"] for s in cat["steps"]}]
-    if unknown:
-        sys.exit(f"first-pass choices name steps not in the {wf_id} workflow: {unknown}")
-    if choices and not actor:
+    if not isinstance(actor, str):
+        sys.exit("`actor` must be a string.")
+    known = {s["key"] for s in cat["steps"]}
+    for key, ch in raw.items():
+        if not isinstance(ch, dict):
+            sys.exit(f"choice for '{key}' must be an object, got {type(ch).__name__}.")
+        disp = ch.get("disposition")
+        if disp == "keep":
+            continue          # `keep` is the default and the menu offers it; it is simply not a record
+        if disp not in STATUS_FOR:
+            sys.exit(f"choice for '{key}' has disposition {disp!r}; expected one of "
+                     f"{sorted(STATUS_FOR)} (or 'keep' to leave the step alone).")
+        if not str(ch.get("reason") or "").strip():
+            sys.exit(f"choice for '{key}' needs a `reason` — a skip without one is a silent skip.")
+        if key not in known:
+            sys.exit(f"first-pass choices name steps not in the {wf_id} workflow: {key}")
+        choices[key] = ch
+    if choices and not actor.strip():
         sys.exit("first-pass choices need an `actor` — a skip is accountable to a person, not the agent.")
-
-STATUS_FOR = {"defer": "skipped", "decline": "skipped", "starter": "starter"}
 ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
 q = lambda v: json.dumps("" if v is None else str(v))   # JSON strings are valid YAML double-quoted scalars
 
 steps = cat["steps"]
-first = next((s for s in steps if s["key"] not in choices), steps[0])   # never point `current` at a lightened step
+# `current` must never land on a lightened step (schema: the pointer never points at skipped/starter).
+# If every step was lightened there is no honest pointer and no change left to run, so refuse rather
+# than emit a file that contradicts its own schema.
+first = next((s for s in steps if s["key"] not in choices), None)
+if first is None:
+    sys.exit("every step in the plan was lightened — there is no change left to run. Keep at least one.")
 lines = [
     'schema_version: "2.0"',
     f'hitl_version: "{ver}"',
@@ -325,7 +359,7 @@ if choices:
         crit = resolve_crit(by_key[key], tier)
         entry = (f'  - {{ step: {key}, crit: {crit}, actor: {q(actor)}, reason: {q(ch.get("reason"))}, '
                  f'ts: "{ts}", disposition: {ch["disposition"]}, resolved: false')
-        for opt in ("followup_ref", "ack_by", "waiver_ref", "artifact_path"):
+        for opt in ("followup_ref", "ack_by", "waiver_ref", "starter_artifact"):
             if ch.get(opt):
                 entry += f', {opt}: {q(ch[opt])}'
         lines.append(entry + ' }')
@@ -339,9 +373,21 @@ lines += [
 ]
 print("\n".join(lines))
 PY
+rc=$?
 
-mv .hitl/current-change.yaml.tmp .hitl/current-change.yaml
-rm -f .hitl/first-pass-choices.json      # consumed; the change file is now the record
+# Replace the live file ONLY on success. The generator refuses on several paths (tier attribution,
+# malformed choices, catalog not found), and every refusal writes nothing to stdout — so an
+# unconditional mv would drop an EMPTY file over the real change file, which is precisely the
+# clobber this temp file exists to prevent. The choices are the user's input; do not delete them
+# on a failure they will want to retry.
+if [[ $rc -eq 0 && -s .hitl/current-change.yaml.tmp ]]; then
+  mv .hitl/current-change.yaml.tmp .hitl/current-change.yaml
+  rm -f .hitl/first-pass-choices.json     # consumed; the change file is now the record
+else
+  rm -f .hitl/current-change.yaml.tmp
+  echo "Change file NOT written (generator exit $rc). Existing change file and your First Pass choices are untouched." >&2
+  exit 1
+fi
 ```
 
 Show the resulting file to the user. Then complete the remaining required fields for the change

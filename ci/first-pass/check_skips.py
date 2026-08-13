@@ -166,7 +166,10 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         lightened = [
             s.get("key")
             for s in (wf.get("steps") if isinstance(wf, dict) and isinstance(wf.get("steps"), list) else [])
-            if isinstance(s, dict) and s.get("status") in LIGHTENED_STATUSES
+            # a non-string status is unhashable, and `x in set()` RAISES on those — guard the membership
+            # the same way every other test in this file does (round-4 LOW-2). Without this, a legacy
+            # file with `status: [done]` turns check() from "returns findings" into "throws".
+            if isinstance(s, dict) and isinstance(s.get("status"), str) and s["status"] in LIGHTENED_STATUSES
         ]
         if lightened:
             evidence.append("step(s) " + ", ".join(repr(k) for k in lightened[:5] if k)

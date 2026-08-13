@@ -312,10 +312,24 @@ def test_merge_permissions_is_idempotent():
     assert again["permissions"] == merged["permissions"]
 
 
-def test_merge_permissions_handles_a_missing_or_junk_block():
-    for junk in ({}, {"permissions": None}, {"permissions": {"allow": "nope"}}):
-        merged, _ = M.merge_permissions(junk)
+def test_merge_permissions_adds_a_missing_block():
+    for ok in ({}, {"permissions": None}, {"permissions": {}}):
+        merged, _ = M.merge_permissions(ok)
         assert set(M.DENY) <= set(merged["permissions"]["deny"])
+
+
+def test_merge_permissions_refuses_shapes_it_cannot_merge():
+    # Valid JSON, wrong shape. Silently replacing it would delete a team's configuration in order
+    # to add ours — worse than the invalid-JSON path, which already refuses.
+    import pytest
+    for junk in (["not", "an", "object"], {"permissions": ["a"]}, {"permissions": {"allow": {"a": 1}}}):
+        with pytest.raises(M.Unmergeable):
+            M.merge_permissions(junk)
+
+
+def test_audit_tolerates_an_unhashable_status():
+    # `x in set()` raises on an unhashable value; an advisory audit must not traceback mid-migration.
+    assert M.audit_change_file({"workflow": {"steps": [{"key": "roi", "status": ["done"]}]}}) == []
 
 
 def test_merge_permissions_never_adds_an_interpreter():
@@ -338,3 +352,35 @@ def test_audit_is_quiet_for_a_declared_or_untouched_change():
     assert M.audit_change_file({"first_pass": True, "skips": [{"step": "roi"}]}) == []
     assert M.audit_change_file({"workflow": {"steps": [{"key": "roi", "status": "open"}]}}) == []
     assert M.audit_change_file("not a mapping") == []
+
+
+def test_append_refuses_when_the_change_has_no_area(tmp_path, capsys):
+    # An entry stamped with empty domains/paths can never overlap anything, so appending before the
+    # impact step writes skips that are permanently invisible to every future change — silently.
+    chg = _write(tmp_path / "c.yaml",
+                 "change_id: GH-1\nskips:\n  - { step: roi, actor: a, reason: b, disposition: decline }\n")
+    led = tmp_path / "l.yaml"
+    rc = R.main(["--change", chg, "--rollup", str(led), "--append"])
+    assert rc == 1
+    assert not led.exists(), "nothing may be written without an area to stamp it with"
+    assert "Nothing appended" in capsys.readouterr().err
+
+
+def test_missing_change_id_shows_everything_and_says_why(tmp_path, capsys):
+    # We cannot tell our own entries from anyone else's without an id. Suppressing entries we cannot
+    # identify would hide real risk to avoid a nuisance, so show them and explain.
+    led = _write(tmp_path / "l.yaml", yaml_dump_entries())
+    chg = _write(tmp_path / "c.yaml",
+                 "manifest:\n  domain: billing\nallowed_paths:\n  - src/billing/\n")
+    R.main(["--change", chg, "--rollup", led])
+    out = capsys.readouterr()
+    assert "qa_verify" in out.out
+    assert "change_id missing" in out.err
+
+
+def yaml_dump_entries():
+    import yaml
+    return yaml.safe_dump({"entries": [
+        {"step": "qa_verify", "crit": "floor", "actor": "a@b", "reason": "x",
+         "disposition": "decline", "resolved": False, "change_id": "GH-OTHER",
+         "domains": ["billing"], "paths": ["src/billing/"]}]}, sort_keys=False)

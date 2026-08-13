@@ -6,6 +6,7 @@ in respectful-persuasive language (never blaming). Persuade at boundaries only �
 call this mid-build (ADR-5). v1 overlap = manifest-domain or path-prefix intersection."""
 from __future__ import annotations
 import re
+import sys
 
 CRIT_RANK = {"ceremony": 0, "standard": 1, "floor": 2}
 # Words/phrases the resurfacing voice must never use (CR-9). Lint target.
@@ -190,22 +191,38 @@ def main(argv=None):
             return {}
 
     change, rollup = load(a.change), load(a.rollup)
+    doms, paths = scope(change)
+
+    # Scope is checked BEFORE appending, not after. An entry stamped with empty domains and paths
+    # can never overlap anything, so appending without scope writes skips that are permanently
+    # invisible to every future change — silently, and worse than not recording them at all.
+    if not doms and not paths:
+        print("No domain or allowed_paths on this change yet — resurfacing needs the impact step first.")
+        if a.append:
+            print("Nothing appended: entries with no area could never be resurfaced. Re-run after "
+                  "the impact step sets manifest.domain / allowed_paths.", file=sys.stderr)
+            return 1
+        return 0
+
     if a.append:
         rollup, added = to_rollup(change, rollup)
         if added:
             with io.open(a.rollup, "w", encoding="utf-8") as fh:
                 yaml.safe_dump(rollup, fh, sort_keys=False, allow_unicode=True)
-
-    doms, paths = scope(change)
-    if not doms and not paths:
-        print("No domain or allowed_paths on this change yet — resurfacing needs the impact step first.")
-        return 0
     # Never resurface a change's own decisions back at it. Once --append has folded this change's skips
     # into the roll-up, they overlap its own scope by construction, and reminding someone about a choice
     # they made minutes ago at intake reads as nagging rather than care.
-    cid = change.get("change_id") if isinstance(change.get("change_id"), str) else None
+    # Exclude this change's own entries — with --append they are in the roll-up by now, and
+    # reminding someone of a decision they made minutes ago reads as nagging. Only exclude on a real
+    # id: if change_id is missing we cannot tell ours from anyone's, and suppressing entries we
+    # cannot identify would hide real risk to avoid a nuisance. Say so instead.
+    cid = change.get("change_id")
+    cid = cid.strip() if isinstance(cid, str) else ""
+    if not cid:
+        print("(change_id missing — cannot separate this change's own entries; showing all)",
+              file=sys.stderr)
     hits = [e for e in surface(rollup, doms, paths)
-            if not (cid and isinstance(e, dict) and e.get("change_id") == cid)]
+            if not (cid and isinstance(e, dict) and str(e.get("change_id") or "").strip() == cid)]
     out = render(hits, cap=a.cap, ledger_path=a.rollup)
     print(out if out else "No unresolved skips overlap this change.")
     return 0
