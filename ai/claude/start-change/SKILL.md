@@ -429,10 +429,9 @@ Show the resulting file to the user. Then complete the remaining required fields
 `ai/shared/templates/change-context.schema.yaml`, or note they will be filled by the
 workflow's own steps.
 
-> **The roll-up is not written here.** `.hitl/skip-ledger.yaml` entries carry the domains and paths a
-> skip applies to, and neither is known until the workflow's impact step declares them. Appending now
-> would write entries that resurfacing can never match. The impact step appends them, alongside the
-> resurfacing read.
+> **The roll-up is written at Step 6b, below**, not here — the change file has to exist first. Entries
+> recorded before the workflow declares its area are marked project-wide; the `development` route
+> narrows them at its impact step.
 
 ---
 

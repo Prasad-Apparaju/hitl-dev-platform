@@ -112,7 +112,11 @@ def digest(entries, cap=DEFAULT_CAP):
         if not isinstance(e, dict):
             continue
         area = tuple(sorted(_strs(e.get("domains")))) or tuple(sorted(_strs(e.get("paths"))))
-        key = (e.get("step") if isinstance(e.get("step"), str) else "", area)
+        # Project-wide entries all have an empty area, so keying on (step, area) alone collapsed
+        # every change that lightened the same step into one — silently, and without counting the
+        # rest as folded away. Distinguish them by change so distinct decisions stay visible.
+        ident = e.get("change_id") if not area else ""
+        key = (e.get("step") if isinstance(e.get("step"), str) else "", area, ident)
         if key in seen:
             continue
         seen.add(key)
@@ -175,7 +179,10 @@ def to_rollup(change, rollup):
             # Already recorded. If we now know the area and the stored entry was project-wide, narrow
             # it: intake records before scope exists, the impact step records after.
             prior = by_key[key]
-            if (doms or paths) and prior.get("project_wide"):
+            # Only narrow when we can actually identify the entry as ours. With no change_id every
+            # record collapses onto the key ("", step), so narrowing would rewrite a DIFFERENT
+            # change's area with this change's scope.
+            if cid and (doms or paths) and prior.get("project_wide"):
                 prior["domains"], prior["paths"] = list(doms), list(paths)
                 prior.pop("project_wide", None)
                 narrowed += 1
@@ -238,10 +245,10 @@ def main(argv=None):
                 print(f"Recorded {added} skip(s) as project-wide — this change has no manifest domain "
                       f"or allowed_paths. They will resurface at any later change until resolved.")
 
-    if not doms and not paths:
-        print("No domain or allowed_paths on this change — nothing to match against, so no "
-              "resurfacing read here. The development route re-runs this after its impact step.")
-        return 0
+    # No early return when this change lacks scope. A project-wide entry overlaps everything, so a
+    # scope-less change is exactly where those need to be read — the onboarding and docs routes that
+    # justified project-wide scope in the first place are precisely the ones that never get scope.
+    # Returning here made the read dead for them, which is the bug project-wide was meant to fix.
     # Never resurface a change's own decisions back at it. Once --append has folded this change's skips
     # into the roll-up, they overlap its own scope by construction, and reminding someone about a choice
     # they made minutes ago at intake reads as nagging rather than care.

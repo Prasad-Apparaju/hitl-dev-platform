@@ -38,6 +38,8 @@ def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1"
             by_key[k] = {"n": 1, "key": k, "label": k, "status": "done", "phase": "X"}
     for s in skips:
         k = s["step"]
+        if k in omit:                       # omit wins, so "deleted AND recorded" is expressible
+            continue
         status = over.get(k, "starter" if s.get("disposition") == "starter" else "skipped")
         by_key[k] = {"n": 1, "key": k, "label": k, "status": status, "phase": "X"}
     for k, v in over.items():                      # allow overriding a load-bearing step's status directly
@@ -461,9 +463,19 @@ def test_deleting_a_standard_step_warns():
     assert "PLAN_PRUNED" in codes(fs) and "conventions" in str(fs)
 
 
-def test_a_deleted_step_with_a_skip_record_does_not_warn():
-    # The honest path stays cheaper than deletion: record it and the warning goes away.
-    fs = C.check(make_change([base_skip("roi")], omit=()), CATALOG)
+def test_recording_a_skip_instead_of_deleting_avoids_the_warning():
+    # The honest path stays cheaper than deletion: keep the step, mark it skipped, record it.
+    assert "PLAN_PRUNED" not in codes(C.check(make_change([base_skip("roi")]), CATALOG))
+
+
+def test_a_step_both_deleted_and_recorded_is_a_ledger_mismatch_not_a_prune():
+    # Deleting the step while keeping its record is not "pruned with a record" — the record now points
+    # at a step the plan does not contain, which is the stronger LEDGER_STEPS finding. PLAN_PRUNED is
+    # for the case with no record at all, so it must not fire here and mask the mismatch.
+    change = make_change([base_skip("roi")], omit=("roi",))
+    assert "roi" not in {s["key"] for s in change["workflow"]["steps"]}
+    fs = C.check(change, CATALOG)
+    assert "LEDGER_STEPS" in codes(fs)
     assert "PLAN_PRUNED" not in codes(fs)
 
 

@@ -311,6 +311,15 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
 
         # starter quality (NEG-6): artifact set + marked needs-enhancement
         if disp == "starter":
+            # A starter is only meaningful where an honest-minimal version is DEFINED. The driver
+            # refuses unregistered starters, but certification is the boundary that has to hold for
+            # hand-authored and migrated records too — a menu is not an enforcement boundary.
+            try:
+                from starters import has_starter as _has_starter
+            except Exception:
+                _has_starter = None
+            if _has_starter is not None and not _has_starter(key):
+                findings.append(_f("STARTER_MARK", f"starter '{key}': no registered starter exists for this step — use defer or decline"))
             art = _str(s.get("starter_artifact")).strip()
             if not art:
                 findings.append(_f("STARTER_MARK", f"starter '{key}': no starter_artifact path"))

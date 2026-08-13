@@ -282,12 +282,18 @@ def test_cli_resurfaces_to_a_later_change_in_the_same_area(tmp_path, capsys):
     assert "qa_verify" in capsys.readouterr().out
 
 
-def test_cli_says_so_when_scope_is_not_known_yet(tmp_path, capsys):
-    # This is the state that made resurfacing silently dead at change start: called before the impact
-    # step, with no domain and no allowed_paths, it matched nothing and said nothing.
-    chg = _write(tmp_path / "c.yaml", "change_id: GH-504\n")
-    R.main(["--change", chg, "--rollup", str(tmp_path / "l.yaml")])
-    assert "nothing to match against" in capsys.readouterr().out
+def test_a_scope_less_change_still_reads_project_wide_entries(tmp_path, capsys):
+    # The onboarding and docs routes that justified project-wide scope are exactly the ones that never
+    # acquire scope. Returning early for them made the read dead precisely where it was needed.
+    led = str(tmp_path / "l.yaml")
+    first = _write(tmp_path / "a.yaml",
+                   "change_id: GH-A\nskips:\n  - { step: qa_verify, crit: floor, actor: a, reason: b, disposition: decline }\n")
+    R.main(["--change", first, "--rollup", led, "--append"])
+    capsys.readouterr()
+    second = _write(tmp_path / "b.yaml",
+                    "change_id: GH-B\nskips:\n  - { step: rollout, crit: standard, actor: a, reason: b, disposition: decline }\n")
+    R.main(["--change", second, "--rollup", led, "--append"])
+    assert "qa_verify" in capsys.readouterr().out, "GH-A's project-wide skip must reach GH-B"
 
 
 # ---------------------------------------------------------------- project migration
@@ -425,3 +431,25 @@ def test_to_rollup_dedupes_within_a_single_change_file(tmp_path):
     change["skips"].append(dict(change["skips"][0]))          # exact duplicate (change_id, step)
     rollup, added, _ = R.to_rollup(change, {})
     assert added == 1 and len(rollup["entries"]) == 1
+
+
+def test_a_missing_change_id_never_narrows_someone_elses_entry(tmp_path):
+    # Without an id every record collapses onto ("", step), so narrowing would rewrite a DIFFERENT
+    # change's area with this change's scope.
+    import yaml
+    skips = "skips:\n  - { step: qa_verify, crit: floor, actor: a, reason: b, disposition: decline }\n"
+    led = str(tmp_path / "l.yaml")
+    R.main(["--change", _write(tmp_path / "a.yaml", skips), "--rollup", led, "--append"])
+    R.main(["--change", _write(tmp_path / "b.yaml", "manifest:\n  domain: other\n" + skips),
+            "--rollup", led, "--append"])
+    e = yaml.safe_load(open(led, encoding="utf-8"))["entries"][0]
+    assert e.get("project_wide") is True and e.get("domains") in (None, [])
+
+
+def test_digest_keeps_distinct_project_wide_records_apart():
+    # All project-wide entries share an empty area, so keying on (step, area) alone collapsed every
+    # change that lightened the same step into one — and counted the rest as zero.
+    entries = [{"step": "qa_verify", "crit": "floor", "change_id": c, "project_wide": True,
+                "actor": "a", "reason": c} for c in ("GH-1", "GH-2", "GH-3")]
+    shown, remaining = R.digest(entries, cap=2)
+    assert len(shown) == 2 and remaining == 1
