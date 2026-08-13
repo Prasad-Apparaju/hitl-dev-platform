@@ -397,3 +397,24 @@ def test_defer_without_followup_warns_not_blocks():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_low_tier_must_name_a_person_and_a_reason():
+    # Tier is self-declared and nothing validates it against the change's actual shape, yet tier <= 1
+    # demotes several steps from floor to standard. So the declaration is held to the same standard
+    # as a skip: accountable to a human, with a reason.
+    fs = C.check(make_change([], tier=1), CATALOG, tier=1)
+    assert "TIER_UNATTRIBUTED" in codes(fs)
+    assert "TIER_UNATTRIBUTED" not in blockers(fs)      # accounted for, not blocked
+
+
+def test_low_tier_with_attribution_is_clean():
+    change = make_change([], tier=1)
+    change["tier_set_by"] = "arch@team"
+    change["tier_reason"] = "single-function regression, no interface change"
+    assert C.check(change, CATALOG, tier=1) == []
+
+
+def test_tier_two_and_above_needs_no_attribution():
+    # The default path is unchanged — attribution is the price of the LIGHT path, not of every change.
+    assert C.check(make_change([], tier=2), CATALOG, tier=2) == []

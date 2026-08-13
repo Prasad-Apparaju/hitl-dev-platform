@@ -24,13 +24,22 @@ This skill defines the HITL change workflow. Apply it based on the change tier:
 
 | Tier | Change type | Process |
 |------|-------------|---------|
-| 0 — Trivial | Typo, config value, log message | Standard PR only |
-| 1 — Bug fix | Regression fix, minor behavioral correction | GitHub Issue and Figma Review + code/test steps; skip training plan |
+| 0 — Trivial | Typo, config value, log message | Intake, then the lightest plan: ceremony steps offered pre-declined, one confirmation |
+| 1 — Bug fix | Regression fix, minor behavioral correction | Same as tier 0, and the TDD steps are kept — a fix without a failing test first is not a fix |
 | 2 — Normal feature | Bounded, well-understood change within one domain | Full workflow |
 | 3 — Non-trivial / cross-domain | Migrations, cross-domain, AI systems, security, data model | Full workflow + HLD review gate |
 | 4 — Incident / P0 | Active production problem | Fix first, full docs within 48 hours |
 
 When in doubt, use the heavier process. If you are touching more than one domain or writing more than a few dozen lines, treat it as Tier 2 or above.
+
+**Every tier goes through `/hitl:dev-start-change`.** There is no tier that skips intake: the session
+gate blocks edits until a change is active, and it does not read the tier. What a low tier buys is a
+*shorter plan*, not an exemption — and the steps it drops are recorded in the skip ledger rather than
+silently absent, so the next change touching the same area can pick them back up.
+
+Tier 0 and 1 also require `tier_set_by` and `tier_reason` in the change file. A low tier demotes
+`impact`, `packet`, `arch_review`, `qa_verify` and `rollout` from `floor` to `standard`, so the
+declaration carries real weight and is accountable to a named person.
 
 ## Core Rules
 

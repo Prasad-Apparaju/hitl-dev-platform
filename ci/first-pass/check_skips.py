@@ -229,6 +229,17 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         if not isinstance(status, str) or status not in VALID_STATUSES:
             findings.append(_f("INVALID_STATUS", f"step '{key}' has missing/unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
 
+    # 0.4) TIER ACCOUNTABILITY. Tier is self-declared and nothing else validates it, yet a low tier
+    #    demotes impact/packet/arch_review/qa_verify/rollout from `floor` to `standard` via crit_by_tier —
+    #    so declaring tier 1 on a tier-3 change dissolves the ack/waiver machinery without tripping any
+    #    other check. At tier <= 1 the declaration must name a person and a reason, the same standard a
+    #    skip is held to. Waivable: a genuinely trivial change should not be blocked, only accounted for.
+    if isinstance(tier, int) and tier <= 1:
+        if not _str(change.get("tier_set_by")).strip():
+            findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_set_by` — a light path is a human's call, not the agent's"))
+        if not _str(change.get("tier_reason")).strip():
+            findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_reason` — record why this change qualifies"))
+
     # 0.5) PLAN COMPLETENESS (codex-1): a load-bearing step DELETED from the plan entirely leaves no status
     #    and no record to inspect — silently omitting it. Every catalog step that is `floor` (at this tier) or
     #    `no_omit` MUST be present in steps[]; a missing one is a non-waivable INCOMPLETE_PLAN. (Ceremony/

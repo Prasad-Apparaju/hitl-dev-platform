@@ -86,6 +86,23 @@ Wait for confirmation (or correction) before Step 4.
 
 ---
 
+## Step 3b — Confirm the tier (a human's call, always)
+
+Propose a tier from the issue and say why, then **wait for a human to confirm or correct it**. Do not
+seed a change without one. Tier is the single most consequential field in the file: it decides which
+steps may be lightened at all, and at tier ≤ 1 it demotes `impact`, `packet`, `arch_review`,
+`qa_verify` and `rollout` from `floor` to `standard`, dissolving the ack-and-waiver machinery. Nothing
+downstream re-checks the declaration against what the change actually touches.
+
+Tiers are defined in [`/hitl:dev-practices`](../dev-practices/SKILL.md). At **tier 0 or 1** the change
+file must also record `tier_set_by` and `tier_reason` — the same accountability a skip carries, for the
+same reason. The generator in Step 6 refuses to write the file without them.
+
+> Default up. If a change could plausibly be tier 2 or tier 3, it is tier 3. The cost of extra process
+> is lower than the cost of an under-reviewed change, and a wrong tier is not caught later.
+
+---
+
 ## Step 4 — Show the step plan
 
 Read the chosen workflow's steps from the bundled workflow catalog — `workflows.yaml`, resolved
@@ -114,8 +131,18 @@ workflow of 10 steps or fewer, where the phase summary would be longer than the 
 
 ## Step 4b — Offer First Pass (optional, FR-29)
 
-If the team wants to ship a basic version fast and iterate (PMs especially), offer **First Pass** — a
-thin-whole-first, skip-with-record way to run this same plan. It is opt-in; the default is the full plan.
+**First Pass** is the skip-with-record way to run this same plan: lighten what does not apply, on the
+record, and keep going. It is for anyone right-sizing a change — a developer on a one-line regression as
+much as a PM shipping a thin first version. It is opt-in; the default is the full plan.
+
+**At tier 0 or 1, offer the ceremony steps pre-selected as declined.** A bug fix does not need a Figma
+review, an ROI model, a training plan, or two ROI checkpoints, and making someone decline each one by
+hand is the friction that pushes people out of the process entirely. Present them ticked, with a
+one-line reason filled in ("tier 1: not required at this tier"), and let one confirmation record the lot.
+
+Pre-selected is not pre-recorded. **Nothing is written until the human confirms**, and doing nothing
+still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
+record is the person who confirmed, never the agent.
 
 **Present the disposition menu ONCE** (brief mode — not a step-by-step interview). Each step's `crit`
 (from the catalog, resolved against this change's `tier`) constrains its options:
@@ -207,16 +234,22 @@ PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c
 HITL_VERSION=$(cat "${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json" 2>/dev/null \
   | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 
-TIER=2                       # confirm with the user — tier decides which steps may be lightened at all
+TIER=2                       # from Step 3b — never assume it
+TIER_SET_BY=""               # required when TIER <= 1: the human who made the call
+TIER_REASON=""               # required when TIER <= 1: one line on why it qualifies
 CHOICES=".hitl/first-pass-choices.json"   # written by Step 4b; absent ⇒ full plan, no First Pass
 
 # Write via a temp file: a generator that dies partway through `> file` leaves a truncated change
 # file behind, and a truncated change file reads as "no active change" to the gate.
-"$PY" - "$WF" "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" "$TIER" "$CHOICES" << 'PY' > .hitl/current-change.yaml.tmp
+"$PY" - "$WF" "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" "$TIER" "$CHOICES" "$TIER_SET_BY" "$TIER_REASON" << 'PY' > .hitl/current-change.yaml.tmp
 import sys, os, json, yaml
 from datetime import datetime, timezone
 wf_id, change_id, branch, ver, tier_s, choices_path = sys.argv[1:7]
+tier_set_by, tier_reason = (sys.argv[7:9] + ["", ""])[:2]
 tier = int(tier_s)
+if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
+    sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
+             "and it demotes several steps from floor to standard.")
 
 # Catalog: prefer the plugin copy, fall back to the source path.
 for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),
@@ -263,6 +296,10 @@ lines = [
     '',
     f'change_id: {change_id}',
     f'tier: {tier}',
+]
+if tier <= 1:
+    lines += [f'tier_set_by: {q(tier_set_by)}', f'tier_reason: {q(tier_reason)}']
+lines += [
     'status: planning',
     f'expected_branch: "{branch}"',
 ]

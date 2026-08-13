@@ -51,6 +51,22 @@ tier:
     4 = Incident / P0
   required: true
 
+tier_set_by:
+  type: string
+  description: |
+    Who declared the tier. Tier decides which steps may be lightened at all, and a low tier demotes
+    several steps from `floor` to `standard` — so the declaration is the single most consequential
+    input to the whole ledger, and it is accountable to a person the same way a skip is. The agent
+    proposes; a human confirms. Required when `tier <= 1`.
+  example: "arch@team"
+
+tier_reason:
+  type: string
+  description: |
+    Why this tier. One line. Required when `tier <= 1`, where it is the record that a light path was
+    a considered choice rather than the default.
+  example: "single-function regression, no schema or interface change"
+
 status:
   type: string
   enum:
