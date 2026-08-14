@@ -18,6 +18,12 @@ Output this exactly:
 
 ## HITL Command Directory
 
+> **New to HITL?** You don't need to memorise any of this. Start work the way you normally would
+> and Claude will walk you through it. If you want the tour first, read the getting-started guide:
+> `${CLAUDE_PLUGIN_ROOT}/shared/getting-started.md` (or on the web:
+> https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md). Offer to
+> read it to the user rather than only linking it.
+
 ### Getting started
 
 | Command | When to use |
