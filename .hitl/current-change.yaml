@@ -1,0 +1,31 @@
+schema_version: "2.0"
+change_id: "GH-29"
+tier: 1
+status: "implementation-approved"
+expected_branch: "fix/29-dont-ship-dev-tests"
+first_pass: false
+source_artifacts:
+  issue: "https://github.com/pappar/hitl-claude-plugin/issues/29"
+  hld: "n/a"
+  lld: "n/a"
+allowed_paths:
+  - "tools/scripts/"
+  - "ci/wiring/"
+  - "ai/claude/update/"
+manifest:
+  domains:
+    - name: "onboarding-sync"
+      paths:
+        - "tools/scripts/"
+        - "ci/wiring/"
+        - "ai/claude/update/"
+workflow:
+  id: development
+  steps:
+    - {n: 1, key: "issue", name: "Issue", phase: "Requirements", status: "done"}
+    - {n: 2, key: "impact", name: "Impact Analysis", phase: "Design", status: "done"}
+    - {n: 3, key: "red", name: "Write Failing Test", phase: "Build", status: "done"}
+    - {n: 4, key: "green", name: "Make It Pass", phase: "Build", status: "done"}
+    - {n: 5, key: "conventions", name: "Conventions Check", phase: "Build", status: "current"}
+    - {n: 6, key: "deploy", name: "Deploy", phase: "Ship", status: "open"}
+    - {n: 7, key: "promote", name: "Promote", phase: "Ship", status: "open"}

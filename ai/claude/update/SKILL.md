@@ -217,6 +217,27 @@ else
     cp "$ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/ 2>/dev/null
     echo "  ✓ ci/manifest-drift/ refreshed"
   fi
+  # Remove dev-repo test suites that earlier versions synced in (plugin issue #29). They resolve
+  # paths like ai/shared/workflows.yaml that exist only in the platform repo, so in a product repo
+  # they fail on collection and block the consumer's CI. Deleting by EXACT shipped filename, never
+  # a test_*.py glob — a team's own tests in these directories must survive.
+  removed=0
+  for stale in \
+    ci/first-pass/test_check_skips.py ci/first-pass/test_driver_e2e.py ci/first-pass/test_first_pass_lib.py \
+    ci/manifest-agentic/test_check_manifest_agentic.py ci/manifest-agentic/test_schema_and_examples.py \
+    tools/manifest-agentic/test_gen_baseline_evals.py tools/manifest-agentic/test_generate_views.py \
+    ci/manifest-drift/test_check_manifest_drift.py \
+    ci/agentic-advisor/test_advisor_e2e.py ci/agentic-advisor/test_catalog_lint.py \
+    ci/agentic-advisor/test_compose.py ci/agentic-advisor/test_records.py \
+    ci/agentic-advisor/test_render_map.py; do
+    if [[ -f "$stale" ]]; then
+      git rm -q --cached "$stale" 2>/dev/null || true
+      rm -f "$stale"
+      removed=$((removed + 1))
+    fi
+  done
+  [[ $removed -gt 0 ]] && echo "  ✓ removed $removed stale HITL test file(s) that could not run in this repo"
+
   # stage ONLY the paths that exist — a single `git add` over an absent optional path errors on the whole
   # pathspec and (with `|| true`) would silently stage NOTHING (codex-7).
   for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift .github/workflows/first-pass-check.yml; do
@@ -224,6 +245,11 @@ else
   done
 fi
 ```
+
+**Why removal and not a fix:** these suites test HITL's own internals against the platform's source
+layout. One of them (`test_driver_e2e.py`) extracts the Step 6 generator from `start-change/SKILL.md`,
+a file no product repo has or should have — so it cannot be made to pass outside this repo. CI in a
+product repo runs the **validators**; the validators' tests belong with the validators' source.
 
 If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`.
 Say which tools were synced (or "CI validators already current").

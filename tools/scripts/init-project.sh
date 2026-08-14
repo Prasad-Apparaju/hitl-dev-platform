@@ -95,6 +95,17 @@ if [[ ! -d "$TARGET_DIR/.git" ]]; then
   echo "✓ git init"
 fi
 
+# Copy validator code into a product repo WITHOUT its dev-repo test suite. Those tests resolve
+# paths like ai/shared/workflows.yaml and ai/claude/start-change/SKILL.md, which exist only in this
+# platform repo — synced into a product repo they fail on collection and block the consumer's CI
+# (plugin issue #29). The validators themselves are self-contained and are what CI actually runs.
+hitl_copy_tools() {
+  local src="$1" dest="$2"
+  [[ -d "$src" ]] || return 0
+  mkdir -p "$dest"
+  find "$src" -maxdepth 1 -name "*.py" ! -name "test_*" -exec cp {} "$dest/" \; 2>/dev/null || true
+}
+
 # ---- Shared: CLAUDE.md ----
 
 CLAUDE_DEST="$TARGET_DIR/CLAUDE.md"
@@ -188,7 +199,7 @@ setup_tools() {
   # or partial dir must still converge to a complete install; codex-6), then assert the validator + catalog.
   if [[ -d "$PLATFORM_ROOT/ci/first-pass" ]]; then
     mkdir -p "$TARGET_DIR/ci/first-pass"
-    cp "$PLATFORM_ROOT/ci/first-pass/"*.py "$TARGET_DIR/ci/first-pass/" 2>/dev/null || true
+    hitl_copy_tools "$PLATFORM_ROOT/ci/first-pass" "$TARGET_DIR/ci/first-pass"
     [[ -f "$PLATFORM_ROOT/ai/shared/workflows.yaml" ]] && cp "$PLATFORM_ROOT/ai/shared/workflows.yaml" "$TARGET_DIR/ci/first-pass/workflows.yaml"
     if [[ -f "$PLATFORM_ROOT/ci/workflows/first-pass-check.yml" ]]; then
       mkdir -p "$TARGET_DIR/.github/workflows"
@@ -206,9 +217,9 @@ setup_tools() {
   # repo-relative by pm-design-feature. Self-contained; PRESERVE the repo's manifest-waivers.yaml.
   if [[ -d "$PLATFORM_ROOT/ci/manifest-agentic" ]]; then
     mkdir -p "$TARGET_DIR/ci/manifest-agentic" "$TARGET_DIR/tools/manifest-agentic"
-    cp "$PLATFORM_ROOT/ci/manifest-agentic/"*.py "$TARGET_DIR/ci/manifest-agentic/" 2>/dev/null || true
+    hitl_copy_tools "$PLATFORM_ROOT/ci/manifest-agentic" "$TARGET_DIR/ci/manifest-agentic"
     [[ ! -f "$TARGET_DIR/ci/manifest-agentic/manifest-waivers.yaml" && -f "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLATFORM_ROOT/ci/manifest-agentic/manifest-waivers.yaml" "$TARGET_DIR/ci/manifest-agentic/"
-    cp "$PLATFORM_ROOT/tools/manifest-agentic/"*.py "$TARGET_DIR/tools/manifest-agentic/" 2>/dev/null || true
+    hitl_copy_tools "$PLATFORM_ROOT/tools/manifest-agentic" "$TARGET_DIR/tools/manifest-agentic"
     [[ -f "$TARGET_DIR/ci/manifest-agentic/check_manifest_agentic.py" ]] && { echo "✓ ci/manifest-agentic/ (compound-agentic validator) + tools/manifest-agentic/"; (( copied++ )) || true; }
   fi
 
