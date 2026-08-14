@@ -4,6 +4,38 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.6.5] — 2026-08-14
+
+**If you are on 2.6.4, update before running `/hitl:dev-update` again.** It could leave your change file unusable.
+
+### Fixed
+
+- **The upgrade could destroy your change file, and tell you nothing was wrong.** If your `.hitl/current-change.yaml` wrote its steps in the indented block style rather than on single lines, the migration rewrote none of them, appended every step again at the wrong indentation, and produced a file that is not valid YAML — while its summary table reported all of your steps as kept, and its one warning said the lines *had* been updated. Applying it left the file unreadable: the First Pass check then blocks every pull request with `MALFORMED`, the session gate cannot read your position, and there is no way out but editing the file by hand.
+
+  The migration now parses its own output before writing anything, refuses outright on a file shape it cannot rewrite, and says plainly when it has not updated something. Nothing is written unless it is valid.
+
+- **The upgrade deleted steps your team had added to its own workflow.** Any step whose key HITL does not recognise was dropped from the proposal — leaving your comment about it stranded above the gap — despite the documentation promising that nothing you add is silently dropped. Those steps are now carried through untouched and listed by name so you can see them.
+
+- **`/hitl:dev-update` told you to delete `.claude/settings.json` and rebuild it from a template.** That template is a whole file, not a merge: your permissions, environment, MCP wiring, and every hook that is not HITL's would have gone with it. Any project that sets its own status line triggered this on the first upgrade. It now backs the file up and changes only the specific keys that are wrong, showing you the diff first.
+
+- **`.hitl/statusline.sh` was deleted whether or not it was yours.** If you keep your own script at that path and it is not committed, it was gone with no way back. It is now removed only when git is tracking it — otherwise you are told about it and it is left alone.
+
+- **The upgrade's summary said "keep" for statuses it had just changed.** When a change file had more than one step marked current, the repair rewrote the others and reported every one as unchanged — the same misreading that let a corrupted position get confirmed past in 2.6.1. Changed statuses are now marked.
+
+- **`owner:` was documented as a valid way to name who owns a skip, and rejected by the check.** Accepted now.
+
+- **The release gate could report a review as both present and missing in the same run**, if the record file was named differently from the change. It now identifies records by their contents rather than their filename.
+
+### Changed
+
+- **Skipping the release review now requires a linked waiver, not just a name.** The framework's own rule is that a skip is not a waiver: a required step that maps to a fail-closed check needs someone to have signed for the exception. The release review was the one such step the rule did not cover. Skipping it at 2am is still possible — doing it with nobody signing for it is not.
+
+### On the release workflow added in 2.6.4
+
+Two independent reviews of it, from the perspectives that had condemned it earlier, found nothing further. That is the first clean result it has had, and the reason this release exists is that the same reviews found the problems above in the upgrade path instead — which had not been looked at.
+
+---
+
 ## [2.6.4] — 2026-08-14
 
 Four fixes for problems found in real upgrades of a live project, and a new release workflow that is **not yet proven** — read the note at the end before relying on it.
