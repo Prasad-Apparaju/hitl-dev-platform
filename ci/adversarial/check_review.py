@@ -155,9 +155,11 @@ def _adverse_verdict(reviews_dir, change_id):
         return None
     best = None
     for name in sorted(os.listdir(reviews_dir)):
-        if not name.startswith(change_id + "-") or not name.endswith((".yaml", ".yml")):
+        if not name.endswith((".yaml", ".yml")):
             continue
         doc, err = _load(os.path.join(reviews_dir, name))
+        if not err and isinstance(doc, dict) and str(doc.get("change_id", "")).strip() != change_id:
+            continue
         if err or not isinstance(doc, dict):
             continue
         v = str(doc.get("verdict", "")).strip().lower()
@@ -204,8 +206,18 @@ def check(change_path, reviews_dir, sha=None, root="."):
     # The floor path: a release CAN go out without a review, but only on a recorded, attributed
     # acknowledgement. Without this the gate had no honest escape at all, and a gate with no escape
     # is one that gets deleted from the process the first time it is inconvenient at 2am.
+    dirty = _dirty(root)
+
     ack = _acknowledged_skip(change)
     if ack:
+        if dirty:
+            head = ", ".join(dirty[:3])
+            more = "" if len(dirty) <= 3 else " (+%d more)" % (len(dirty) - 3)
+            _fail(out, "UNCOMMITTED_CHANGES",
+                  "%s%s modified but not committed. A waiver covers the review, not this: the "
+                  "build packages the working tree, so this would ship unseen by anyone."
+                  % (head, more))
+            return out, []
         adverse = _adverse_verdict(reviews_dir, change_id)
         extra = ""
         if adverse:
@@ -273,7 +285,6 @@ def check(change_path, reviews_dir, sha=None, root="."):
               "round %s has more than one record (%s) — which one governs is decided by filename, "
               "so a second record can silently override a do-not-ship verdict" % (n, ", ".join(seen[n])))
 
-    dirty = _dirty(root)
     if dirty:
         head = ", ".join(dirty[:3])
         more = "" if len(dirty) <= 3 else " (+%d more)" % (len(dirty) - 3)
@@ -368,6 +379,11 @@ def main(argv=None):
         sys.stderr.write("[BLOCK] MALFORMED: unexpected error verifying the review gate: %s\n" % exc)
         return 2
 
+    if args.sha:
+        head = _head_sha(args.root)
+        if head and not (head.startswith(args.sha) or args.sha.startswith(head)):
+            print("[warn] TARGET_NOT_HEAD: checked %s, but HEAD is %s. This is NOT a verdict on "
+                  "what would ship." % (args.sha[:12], head[:12]))
     for w in warns:
         print(w)
     for b in blocks:
