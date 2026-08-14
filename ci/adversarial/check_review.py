@@ -168,10 +168,16 @@ def _claimed_without_record(change, reviews_dir, change_id):
     steps = wf.get("steps") if isinstance(wf, dict) else None
     if not isinstance(steps, list):
         return []
-    if os.path.isdir(reviews_dir) and any(
-            n.startswith(change_id + "-") and n.endswith((".yaml", ".yml"))
-            for n in os.listdir(reviews_dir)):
-        return []
+    if os.path.isdir(reviews_dir):
+        for n in os.listdir(reviews_dir):
+            if not n.endswith((".yaml", ".yml")):
+                continue
+            doc, err = _load(os.path.join(reviews_dir, n))
+            # Match the change_id FIELD, as every other lookup here does. Matching the filename
+            # let a valid record be honoured and reported missing in the same run.
+            if not err and isinstance(doc, dict) and \
+                    str(doc.get("change_id", "")).strip() == change_id:
+                return []
     return [str(s.get("key")) for s in steps
             if isinstance(s, dict) and str(s.get("key", "")).startswith("adv_")
             and str(s.get("status", "")).strip() == "done"]

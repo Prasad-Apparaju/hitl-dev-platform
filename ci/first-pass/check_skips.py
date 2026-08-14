@@ -53,7 +53,11 @@ LIGHTENED_STATUSES = {"skipped", "starter"}
 # ack_by is their control, there is no CI gate to waive. (round-1 HIGH-4: real dev-workflow keys, no
 # dead entries.)
 HARD_GATE_STEPS = {"conventions", "qa_verify", "arch_review", "integration_verify", "iac",
-                   "security_review", "sec_design", "cve_audit", "pentest", "manifest_validate"}
+                   "security_review", "sec_design", "cve_audit", "pentest", "manifest_validate",
+                   # The release gate is itself fail-closed, so skipping it is exactly the case
+                   # invariant 2 describes. It was absent while the invariant shipped — the rule
+                   # unenforced for the gate that motivated the rule.
+                   "adversarial_review", "publish"}
 # Non-waivable finding codes — the framework's guarantee under First Pass. A mismatch fails CLOSED.
 NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC",
