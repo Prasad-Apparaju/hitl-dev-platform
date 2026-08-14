@@ -82,13 +82,28 @@ for s in cat["steps"]:
 
 # 2) Enforce EXACTLY ONE 'current' — repairs BOTH zero-current and duplicate-current (issue #22).
 order = [s["key"] for s in cat["steps"]]
+repaired = set()
 curr = [k for k in order if status_by_key[k] == "current"]
 if len(curr) != 1:
     if curr:
         canon = old_cur_key if old_cur_key in curr else max(curr, key=order.index)
     else:
-        canon = old_cur_key if old_cur_key in status_by_key else \
-                next((k for k in order if status_by_key[k] != "done"), order[0])
+        # Prefer the pointer the old file actually carried. current_step.number is authoritative
+        # in the pre-2.x format this migration exists to serve, where no step line says "current".
+        by_n = {}
+        for st in cat["steps"]:
+            if n_int(st["n"]):
+                by_n[n_int(st["n"])] = st["key"]
+        canon = None
+        if old_cur_key in status_by_key:
+            canon = old_cur_key
+        elif isinstance(old_cur_n, int) and by_n.get(old_cur_n) in status_by_key:
+            canon = by_n[old_cur_n]
+        else:
+            # Never resume ON a skip. skipped/starter are recorded decisions, not next actions.
+            canon = next((k for k in order if status_by_key[k] not in ("done", "skipped", "starter")),
+                         order[0])
+        repaired.add(canon)
     ci = order.index(canon)
     for k in curr:
         if k != canon: status_by_key[k] = "done" if order.index(k) < ci else "open"
@@ -114,7 +129,8 @@ def step_line(cstep, trailing=""):
 
 # 4) SURGICAL splice: rewrite step LINES in place inside `steps:`; leave comments/blank lines verbatim.
 step_re = re.compile(r"^\s*-\s*\{.*\}\s*(#.*)?$")
-key_re  = re.compile(r"[{,]\s*key:\s*([^,}\s]+)")
+key_re  = re.compile(r"[{,]\s*key:\s*[\"']?([A-Za-z0-9_]+)[\"']?")  # keys are QUOTED by the generator;
+                                                          # capturing the quotes matched nothing
 block_m = re.search(r"(?ms)^workflow:.*?(?=^\S|\Z)", text)
 block_changed, diff = False, []
 
@@ -144,7 +160,10 @@ if block_m:
             last = max((i for i, l in enumerate(out_region) if step_re.match(l)), default=len(out_region)-1)
             out_region = out_region[:last+1] + [step_line(cat_by_key[k]) for k in new_keys] + out_region[last+1:]
         for s in cat["steps"]:
-            k = s["key"]; tag = "+ added" if is_new[k] else "  keep"
+            k = s["key"]
+            # "keep" on a status the repair CHANGED reads as if it came from the old file,
+            # which is how a corrupted pointer gets confirmed past (#81).
+            tag = "+ added" if is_new[k] else ("~ repair" if k in repaired else "  keep")
             diff.append(f"  {tag:7} {str(s['n']):>3} {k:<18} {status_by_key[k]}")
         def up_head(hl, key, val):
             for i, l in enumerate(hl):

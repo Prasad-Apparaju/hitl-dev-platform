@@ -411,6 +411,12 @@ SCRIPT="$ROOT/shared/tools/hitl-onboarding/ensure_claude_block.py"
 if [[ -f "$BLOCK" && -f "$SCRIPT" ]]; then
   python3 "$SCRIPT" CLAUDE.md "$BLOCK" || true   # exit 3 is a warning, not a failure
   [[ -f CLAUDE.md ]] && git add CLAUDE.md
+elif [[ -f "$ROOT/.claude-plugin/plugin.json" ]]; then
+  # A real plugin is installed, so the template SHOULD be here. Saying "not in this build" would
+  # dress a path defect up as a legitimate absence — which is exactly how the doubled-root bug
+  # hid for a whole release (#82).
+  echo "UNEXPECTED: plugin found at $ROOT but no block template at $BLOCK." >&2
+  echo "  The CLAUDE.md section was NOT installed. Report this — do not ignore it." >&2
 else
   echo "No HITL block template in this plugin build — skipping."
 fi

@@ -68,15 +68,27 @@ gate still blocks — an unattributed waiver is the absence of a decision, writt
 There is deliberately a path here. A gate with no escape is one that gets deleted from the process
 the first time it is inconvenient at 2am, and then it protects nothing.
 
-## The first `gates` run on a release is expected to block
+## Where the gate actually binds
 
-`gates` comes before `adversarial_review` in the workflow, so on a fresh release the gate reports
-`REVIEW_MISSING` the first time — by construction, not because anything is wrong. Run the review,
-resolve what it finds, then **run `gates` again**. Treat the second run as the real one.
+**The gate binds on whatever script actually publishes your project** — and it has to be wired
+there, in your repo, by you. For HITL itself that is `scripts/release.sh` in the plugin repo, which
+runs the gate and refuses on a non-zero exit, on no active change, and on an active change whose
+workflow is not `release`. You have no such script unless you add the same call to yours:
 
-This ordering is deliberate: the other gates (tests, lint) should fail fast, before anyone spends
-ten minutes on a review of code that does not build. But do not let the first red turn into "gates
-are red on releases, carry on" — the last thing to run before `publish` must be a green gate.
+```bash
+python3 ci/adversarial/check_review.py || exit 2
+```
+
+That placement is the point. Everything else here is advisory: the workflow steps are instructions a
+model follows, `/hitl:dev-validate` only checks when a release change happens to be active, and the
+edit hook does not cover Bash. An operator who finishes work under an ordinary development change,
+bumps the version and publishes gets green from every one of them. **The only thing that binds is a
+check on the action that publishes.**
+
+`gates` (step 4) runs before `adversarial_review` (step 5), so its release-gate section will report
+`REVIEW_MISSING` on a fresh release. That is sequencing, not a fault — but do not let it become
+"gates are red on releases, carry on". The check that decides is the one in `release.sh`, and it
+runs at publish time with no opportunity to be waved past.
 
 ## Declining is recorded, not resisted
 

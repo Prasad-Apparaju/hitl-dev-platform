@@ -10,24 +10,34 @@
 schema_version: "1.0"
 change_id: "GH-000"          # must match .hitl/current-change.yaml
 round: 1                     # highest round decides; earlier rounds are history
-reviewed_sha: ""             # the commit reviewed. MUST equal HEAD at the gate, or it blocks.
+lens: ""                     # correctness | consequence | bypass | ... — the skill mandates two
+                             # reviewers per round, so each needs its own record and its own lens.
+                             # If ANY lens in a round says do-not-ship, the round says do-not-ship.
+reviewed_sha: ""             # the commit reviewed. MUST match what ships, or it blocks.
+reviewed_tree: ""            # git rev-parse HEAD^{tree} — lets a squash-merged review still
+                             # count when the content is byte-identical and the commit is gone.
 scope: ""                    # what was put in front of the reviewer, e.g. "diff v2.6.2..HEAD"
 
 reviewer:
   model: ""                  # which model ran it
-  context: clean             # clean | inherited. 'inherited' blocks — it is not an independent check.
+  context: ""                 # clean | inherited. MUST be typed. 'clean' means a reviewer with no
+                             # history of building this. If that was you, in this session, it is
+                             # 'inherited' and the gate will refuse it — correctly.
   spawned_by: ""             # what launched it
   brief: ""                  # what it was told to attack
 
-stance: refute               # must be 'refute'. A reviewer setting out to confirm finds confirmation.
+stance: ""                   # must be 'refute'. Type it deliberately: a reviewer set to confirm
+                             # finds confirmation, and a pre-filled field is not an attestation.
 
-findings:
-  - id: F1
-    severity: CRITICAL       # CRITICAL | HIGH | MEDIUM | LOW
-    claim: ""                # what is broken
-    reproduction: ""         # the command and observed output. A finding nobody reproduced is a guess.
-    status: open             # open | fixed | accepted
-    resolved_by: ""          # commit that fixed it
-    accepted_by: ""          # required when status is 'accepted' — accepting risk is someone's decision
+# DELETE this example block before use. The validator reads it as a real finding, so leaving it
+# in on a clean round blocks with an empty CRITICAL. An empty list is the correct clean value.
+findings: []
+#  - id: F1
+#   severity: CRITICAL       # CRITICAL | HIGH | MEDIUM | LOW
+#   claim: ""                # what is broken
+#   reproduction: ""         # the command and observed output. A finding nobody reproduced is a guess.
+#   status: open             # open | fixed | accepted
+#   resolved_by: ""          # commit that fixed it
+#   accepted_by: ""          # required when status is 'accepted' — accepting risk is someone's decision
 
 verdict: do-not-ship         # ship | do-not-ship. Anything but 'ship' blocks the release.

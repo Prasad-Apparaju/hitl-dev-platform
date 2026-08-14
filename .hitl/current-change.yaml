@@ -1,0 +1,195 @@
+schema_version: '2.0'
+change_id: GH-86
+tier: 2
+status: implementation-approved
+expected_branch: fix/81-82-83-dev-update
+first_pass: false
+source_artifacts:
+  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/81
+  hld: n/a
+  lld: n/a
+allowed_paths:
+- ai/
+- ci/
+- tools/
+manifest:
+  domains:
+  - name: dev-update-and-gate
+    paths:
+    - ai/
+    - ci/
+    - tools/
+workflow:
+  id: development
+  total: 31
+  steps:
+  - n: 1
+    key: issue
+    name: Issue
+    phase: Requirements
+    status: done
+  - n: 2
+    key: figma
+    name: Figma
+    phase: Requirements
+    status: done
+  - n: 3
+    key: impact
+    name: Impact
+    phase: Design
+    status: done
+  - n: 4
+    key: roi
+    name: ROI
+    phase: Design
+    status: done
+  - n: 5
+    key: docs
+    name: Docs
+    phase: Design
+    status: done
+  - n: 6
+    key: iac
+    name: IaC
+    phase: Design
+    status: done
+  - n: 7
+    key: test_plan
+    name: Tests
+    phase: Design
+    status: done
+  - n: 8
+    key: training
+    name: Train
+    phase: Design
+    status: done
+  - n: 9
+    key: packet
+    name: Packet
+    phase: Design
+    status: done
+  - n: 9a
+    key: adv_design
+    name: AdvDsgn
+    phase: Design
+    status: done
+  - n: 10
+    key: red
+    name: RED
+    phase: Build
+    status: done
+  - n: 11
+    key: test_review
+    name: TstRvw
+    phase: Build
+    status: done
+  - n: 12
+    key: design_plus
+    name: Dsn+
+    phase: Build
+    status: done
+  - n: 13
+    key: verify_red
+    name: VfyRED
+    phase: Build
+    status: done
+  - n: 14
+    key: green
+    name: GREEN
+    phase: Build
+    status: done
+  - n: 15
+    key: verify_green
+    name: VfyGRN
+    phase: Build
+    status: done
+  - n: 16
+    key: refactor
+    name: Refact
+    phase: Build
+    status: done
+  - n: 17
+    key: conventions
+    name: Conv
+    phase: Build
+    status: current
+  - n: 17a
+    key: adv_code
+    name: AdvCode
+    phase: Build
+    status: open
+  - n: 18
+    key: review1
+    name: Rvw1
+    phase: Verify
+    status: open
+  - n: 19
+    key: review2
+    name: Rvw2
+    phase: Verify
+    status: open
+  - n: 19a
+    key: arch_review
+    name: ArchRvw
+    phase: Verify
+    status: open
+  - n: 20
+    key: rerun
+    name: Rerun
+    phase: Verify
+    status: open
+  - n: 21
+    key: reconcile
+    name: Recncl
+    phase: Verify
+    status: open
+  - n: 22
+    key: qa_verify
+    name: QAVfy
+    phase: Verify
+    status: open
+  - n: 23
+    key: impact_brief
+    name: ImpBrf
+    phase: Assess
+    status: open
+  - n: 24
+    key: rollout
+    name: Rollout
+    phase: Assess
+    status: open
+  - n: 25
+    key: verify_pr
+    name: VfyPR
+    phase: Ship
+    status: open
+  - n: 26
+    key: integration_verify
+    name: IntVfy
+    phase: Ship
+    status: open
+  - n: 27
+    key: figma_compare
+    name: Figma2
+    phase: Ship
+    status: open
+  - n: 28
+    key: deploy
+    name: Deploy
+    phase: Ship
+    status: open
+  - n: 29
+    key: promote
+    name: Promote
+    phase: Ship
+    status: open
+  - n: 30
+    key: roi_30
+    name: 30dROI
+    phase: Post-Ship
+    status: open
+  - n: 31
+    key: roi_90
+    name: 90dROI
+    phase: Post-Ship
+    status: open

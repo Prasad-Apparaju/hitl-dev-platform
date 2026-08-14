@@ -129,6 +129,23 @@ Run `semgrep scan --config .semgrep/ --error` and manifest drift check against `
 
 ---
 
+### 9a / 17a: offer an adversarial review (optional)
+
+At the end of Design (`9a`, after the decision packet) and at the end of Build (`17a`, after the
+convention checks), **offer** an independent adversarial review before moving on. These are
+`ceremony` steps: ask once, accept the answer, do not ask again in the same step.
+
+> Design's done — want an adversarial review before we build? About ten minutes, runs in the
+> background while you keep working, and it looks for reasons this is wrong rather than reasons
+> it's right. Or skip it and I'll note that we did.
+
+Say one extra sentence when the change is destructive, irreversible, touches data the user cannot
+recover, or rests on an assumption about someone else's behaviour — that last class is where this
+pays best. Then drop it.
+
+Accepted → `/hitl:dev-adversarial-review`. Declined → record it as an ordinary skip with a name and
+the reason in their words. Detail in `shared/adversarial-review.md`.
+
 ## Steps 18–22: Verify
 
 **18. Code Review Round 1** — use `/hitl:dev-review-lld-adherence`
@@ -235,3 +252,40 @@ Only if the ROI Estimate step was done. Reads expected outcome and baseline metr
 
 **31. 90-Day ROI Check (conditional)**
 Only if the ROI Estimate step was done. Reads `roi_estimate` from `.hitl/current-change.yaml` and 30-day findings from the 30-Day ROI Check. Lead + PM compare actual vs estimated ROI. Update ADR at `docs/02-design/technical/adrs/` with an Actual Outcome section. Review `docs/03-engineering/costs/token-cost-registry.yaml` aggregate block — if 5+ entries exist, apply the optimization signals from the registry template. See `roi-estimation.md`.
+
+---
+
+## The `release` workflow — publishing a version to users
+
+A different workflow from the one above. Use it when the change **is** the act of shipping, not
+building. Twelve steps; the ones with teeth are marked.
+
+| # | Step | What it means |
+|---|---|---|
+| 1 | `rc_scope` | What is in this release. `git log <last-tag>..HEAD` — read it, do not guess from memory |
+| 2 | `changelog` | Write the notes from that scope. Verify every claim against the tree; a release note is a promise |
+| 3 | `version_bump` | Patch for fixes, minor for new capability. Bump in one place only |
+| 4 | `gates` | **floor** — `/hitl:dev-validate`. Tests, lint, and anything else that fails fast, before anyone spends time reviewing |
+| 5 | `adversarial_review` | **floor** — `/hitl:dev-adversarial-review`. Independent, refuting, against the exact code being shipped |
+| 6 | `resolve_findings` | **floor** — fix every CRITICAL and HIGH, or accept it with a name against it. Fixing moves the code, so re-review: that is a new round |
+| 7 | `build` | Package it. Keep build output out of the tree, or `.gitignore` it before you start |
+| 8 | `publish` | **floor** — the irreversible one. Your publish script must run the gate and refuse on a non-zero exit; nothing else in HITL can stop you here |
+| 9 | `tag` | Tag the source at the published commit |
+| 10 | `install_verify` | **floor** — install the published artifact clean and exercise its *behaviour*. "The version number is right" is not verification |
+| 11 | `announce` | Tell the people affected, in their terms, not yours |
+| 12 | `retire` | Retire the change file. A finished change left active blocks the next person |
+
+**The order matters and the first `gates` run will be red.** It runs before the review exists, by
+design — fail fast on tests before spending ten minutes on a review. Run it again after
+`resolve_findings`; the last thing before `publish` must be green.
+
+**What actually stops a bad release is step 8.** Everything above it is instructions a model
+follows; only a check wired into the script that publishes cannot be walked past. If your project
+publishes with a script, add the gate to it:
+
+```bash
+python3 ci/adversarial/check_review.py || exit 2
+```
+
+If it publishes some other way, the gate has to go there instead. A gate that is not on the
+publishing path is documentation.

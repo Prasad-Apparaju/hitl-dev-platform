@@ -72,6 +72,13 @@ def _exempt(p):
 MIN_SHA = 7
 
 
+BUILD_OUTPUT = ("dist/", "build/", "out/", "target/", "node_modules/", ".venv/", "__pycache__/")
+
+
+def _looks_like_build_output(path):
+    return any(path == d.rstrip("/") or path.startswith(d) for d in BUILD_OUTPUT)
+
+
 def _dirty(root):
     """Paths modified in the working tree that would ship but were never reviewed."""
     r = subprocess.run(["git", "-C", root, "status", "--porcelain"], capture_output=True, text=True)
@@ -79,13 +86,25 @@ def _dirty(root):
         return []
     out = []
     for line in r.stdout.splitlines():
-        path = line[3:].strip()
-        if path and not _exempt(path):
-            out.append(path)
+        status, path = line[:2], line[3:].strip()
+        if not path or _exempt(path):
+            continue
+        # Untracked build output is not unreviewed source. Telling someone to commit dist/ is wrong
+        # advice, and the loop it creates (ignore it -> .gitignore is dirty -> commit -> stale)
+        # ends at sed-ing the sha.
+        if status == "??" and _looks_like_build_output(path):
+            continue
+        out.append(path)
     return out
 
 
-def _is_fresh(root, reviewed, target):
+def _tree(root, ref):
+    r = subprocess.run(["git", "-C", root, "rev-parse", "%s^{tree}" % ref],
+                       capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _is_fresh(root, reviewed, target, reviewed_tree=""):
     """(fresh, reason). Fail closed: anything we cannot determine is stale."""
     # It must be a commit id, not any ref git will accept. A branch name resolves to whatever the
     # branch points at TODAY, so a record naming one is permanently fresh no matter how far the code
@@ -98,8 +117,17 @@ def _is_fresh(root, reviewed, target):
     r = subprocess.run(["git", "-C", root, "diff", "--name-only", reviewed, target],
                        capture_output=True, text=True)
     if r.returncode != 0:
-        # Unknown commit, shallow clone, rewritten history — never assume freshness.
-        return False, "cannot compare them in this repo"
+        # The reviewed commit is unreachable here — squash-merged, branch deleted, fresh clone.
+        # If the record captured the tree it reviewed and that tree is what is about to ship, the
+        # content is identical and re-reviewing it would be theatre. Without a tree, fail closed.
+        if reviewed_tree:
+            here = _tree(root, target)
+            if here and here == reviewed_tree:
+                return True, ""
+            return False, ("the reviewed commit is unreachable here and the reviewed tree does not "
+                           "match what would ship")
+        return False, ("cannot compare them in this repo (record has no reviewed_tree; if this was "
+                       "squash-merged, re-review at the merge commit)")
     changed = [l.strip() for l in r.stdout.splitlines() if l.strip()]
     substantive = [c for c in changed if not _exempt(c)]
     if substantive:
@@ -155,9 +183,11 @@ def _adverse_verdict(reviews_dir, change_id):
         return None
     best = None
     for name in sorted(os.listdir(reviews_dir)):
-        if not name.startswith(change_id + "-") or not name.endswith((".yaml", ".yml")):
+        if not name.endswith((".yaml", ".yml")):
             continue
         doc, err = _load(os.path.join(reviews_dir, name))
+        if not err and isinstance(doc, dict) and str(doc.get("change_id", "")).strip() != change_id:
+            continue
         if err or not isinstance(doc, dict):
             continue
         v = str(doc.get("verdict", "")).strip().lower()
@@ -204,8 +234,18 @@ def check(change_path, reviews_dir, sha=None, root="."):
     # The floor path: a release CAN go out without a review, but only on a recorded, attributed
     # acknowledgement. Without this the gate had no honest escape at all, and a gate with no escape
     # is one that gets deleted from the process the first time it is inconvenient at 2am.
+    dirty = _dirty(root)
+
     ack = _acknowledged_skip(change)
     if ack:
+        if dirty:
+            head = ", ".join(dirty[:3])
+            more = "" if len(dirty) <= 3 else " (+%d more)" % (len(dirty) - 3)
+            _fail(out, "UNCOMMITTED_CHANGES",
+                  "%s%s modified but not committed. A waiver covers the review, not this: the "
+                  "build packages the working tree, so this would ship unseen by anyone."
+                  % (head, more))
+            return out, []
         adverse = _adverse_verdict(reviews_dir, change_id)
         extra = ""
         if adverse:
@@ -261,19 +301,27 @@ def check(change_path, reviews_dir, sha=None, root="."):
     seen = {}
     for pth, doc in records:
         n = _round((pth, doc))
-        seen.setdefault(n, []).append(pth)
-    dupes = sorted(n for n, paths in seen.items() if len(paths) > 1)
+        lens = str(doc.get("lens", "")).strip().lower()
+        seen.setdefault((n, lens), []).append(pth)
+    dupes = sorted((n, l) for (n, l), paths in seen.items() if len(paths) > 1)
     records.sort(key=_round)
-    path, rec = records[-1]
+    top = _round(records[-1])
+    latest = [r for r in records if _round(r) == top]
+    # Any lens saying do-not-ship decides the round. A second opinion is not a veto override.
+    adverse_in_round = [r for r in latest
+                        if str(r[1].get("verdict", "")).strip().lower() != "ship"]
+    path, rec = (adverse_in_round[0] if adverse_in_round else latest[-1])
     warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed (not this change — ignored)" % u
                 for u in warn_unreadable]
 
-    for n in dupes:
+    for key in dupes:
+        n, lens = key
         _fail(out, "DUPLICATE_ROUND",
-              "round %s has more than one record (%s) — which one governs is decided by filename, "
-              "so a second record can silently override a do-not-ship verdict" % (n, ", ".join(seen[n])))
+              "round %s has more than one record for lens %r (%s) — which governs is decided by "
+              "filename, so a second record can silently override a do-not-ship verdict. Two "
+              "reviewers in one round is expected: give each a distinct `lens:`."
+              % (n, lens or "(unset)", ", ".join(seen[key])))
 
-    dirty = _dirty(root)
     if dirty:
         head = ", ".join(dirty[:3])
         more = "" if len(dirty) <= 3 else " (+%d more)" % (len(dirty) - 3)
@@ -285,7 +333,8 @@ def check(change_path, reviews_dir, sha=None, root="."):
     if not reviewed:
         _fail(out, "REVIEW_MALFORMED", "%s: reviewed_sha is missing" % path)
     else:
-        fresh, why = _is_fresh(root, reviewed, target)
+        fresh, why = _is_fresh(root, reviewed, target,
+                                str(rec.get("reviewed_tree", "")).strip())
         if not fresh:
             # THE load-bearing rule.
             _fail(out, "REVIEW_STALE",
@@ -368,6 +417,11 @@ def main(argv=None):
         sys.stderr.write("[BLOCK] MALFORMED: unexpected error verifying the review gate: %s\n" % exc)
         return 2
 
+    if args.sha:
+        head = _head_sha(args.root)
+        if head and not (head.startswith(args.sha) or args.sha.startswith(head)):
+            print("[warn] TARGET_NOT_HEAD: checked %s, but HEAD is %s. This is NOT a verdict on "
+                  "what would ship." % (args.sha[:12], head[:12]))
     for w in warns:
         print(w)
     for b in blocks:
