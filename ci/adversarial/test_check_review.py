@@ -216,14 +216,21 @@ def test_offer_steps_exist_at_the_phase_boundaries():
         assert in_phase[-1] == key, "%s should be last in %s, order is %s" % (key, phase, in_phase)
 
 
-def test_release_review_stays_mandatory():
-    """Offering early must not quietly downgrade the one place it is required."""
+def test_release_review_is_floor_with_a_real_escape_path():
+    """Floor, not no_omit.
+
+    no_omit admits NO path at all, while the prose promised one "through the explicit
+    acknowledgement path". Shipping both is shipping two truths, and the one people meet at 2am is
+    the one that says no — at which point the gate gets deleted from the process. Floor keeps it
+    mandatory-by-default and survivable.
+    """
     import yaml as _y
     rt = _y.safe_load(io.open(
         os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml"), encoding="utf-8"))
     rel = {s["key"]: s for s in rt["workflows"]["release"]["steps"]}
     assert rel["adversarial_review"]["crit"] == "floor"
-    assert rel["adversarial_review"].get("no_omit") is True
+    assert not rel["adversarial_review"].get("no_omit"), (
+        "no_omit leaves no escape, contradicting the documented acknowledgement path")
 
 
 def test_the_driver_skill_exists_and_ships_what_it_references():
@@ -261,3 +268,75 @@ def test_the_driver_skill_exists_and_ships_what_it_references():
                                    os.path.basename(tail))]
         assert any(os.path.exists(c) for c in candidates), (
             "%s is referenced by the skill but no source file maps to it" % ref)
+
+
+
+def test_acknowledged_skip_lets_a_release_through_but_says_so_loudly(tmp_path):
+    c, r = _setup(tmp_path, None, change={
+        "change_id": "GH-80", "tier": 2,
+        "skips": [{"step": "adversarial_review", "disposition": "decline",
+                   "reason": "sev-1 hotfix", "ack_by": "lead"}]})
+    blocks, warns = check(c, r, sha=SHA)
+    assert blocks == [], blocks
+    assert any("REVIEW_WAIVED" in w for w in warns)
+    assert any("lead" in w and "sev-1 hotfix" in w for w in warns), warns
+
+
+def test_an_unattributed_acknowledgement_is_not_one(tmp_path):
+    c, r = _setup(tmp_path, None, change={
+        "change_id": "GH-80", "tier": 2,
+        "skips": [{"step": "adversarial_review", "disposition": "decline", "reason": "busy"}]})
+    blocks, _ = check(c, r, sha=SHA)
+    assert "REVIEW_MISSING" in _codes(blocks), "a skip with nobody's name on it must not clear the gate"
+
+
+def test_committing_the_record_does_not_stale_it(tmp_path):
+    """The gate must be passable by its own documented procedure.
+
+    Comparing raw shas made it impossible: the skill says commit the record, and committing it
+    moved HEAD. The only ways through were --sha or editing reviewed_sha — the exact faked record
+    the gate exists to prevent, taught on the first release.
+    """
+    repo = tmp_path / "repo"
+    (repo / ".hitl" / "reviews").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=str(repo), check=True)
+    for k, v in (("user.email", "t@t"), ("user.name", "t")):
+        subprocess.run(["git", "config", k, v], cwd=str(repo), check=True)
+    (repo / "code.py").write_text("x = 1\n", encoding="utf-8")
+    _write(repo / ".hitl" / "current-change.yaml", {"change_id": "GH-80", "tier": 2})
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
+    subprocess.run(["git", "commit", "-qm", "code"], cwd=str(repo), check=True)
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo),
+                          capture_output=True, text=True).stdout.strip()
+
+    _write(repo / ".hitl" / "reviews" / "GH-80-round1.yaml", _record(reviewed_sha=head))
+    c = str(repo / ".hitl" / "current-change.yaml")
+    r = str(repo / ".hitl" / "reviews")
+    assert check(c, r, root=str(repo))[0] == [], "should pass before the record is committed"
+
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
+    subprocess.run(["git", "commit", "-qm", "record the review"], cwd=str(repo), check=True)
+    assert check(c, r, root=str(repo))[0] == [], "committing the record must not invalidate it"
+
+    # ...but touching real code must.
+    (repo / "code.py").write_text("x = 2\n", encoding="utf-8")
+    subprocess.run(["git", "commit", "-qam", "change code"], cwd=str(repo), check=True)
+    blocks = check(c, r, root=str(repo))[0]
+    assert "REVIEW_STALE" in _codes(blocks), "freshness must still bite on a code change"
+    assert any("code.py" in b for b in blocks), "the block should name what changed"
+
+
+def test_debris_from_another_change_does_not_block_forever(tmp_path):
+    """Records are kept forever, so one corrupt old file must not block every future release."""
+    c, r = _setup(tmp_path, _record())
+    io.open(os.path.join(r, "GH-11-round1.yaml"), "w", encoding="utf-8").write("{[not yaml")
+    blocks, warns = check(c, r, sha=SHA)
+    assert blocks == [], blocks
+    assert any("UNREADABLE_RECORD" in w for w in warns)
+
+
+def test_our_own_corrupt_record_still_blocks(tmp_path):
+    c, r = _setup(tmp_path, _record())
+    io.open(os.path.join(r, "GH-80-round2.yaml"), "w", encoding="utf-8").write("{[not yaml")
+    blocks, _ = check(c, r, sha=SHA)
+    assert "MALFORMED" in _codes(blocks)

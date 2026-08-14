@@ -193,6 +193,12 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
+  if [[ -d "$PLATFORM_ROOT/ci/adversarial" ]]; then
+    hitl_copy_tools "$PLATFORM_ROOT/ci/adversarial" "$TARGET_DIR/ci/adversarial"
+    echo "✓ ci/adversarial/ (release review gate)"
+    (( copied++ )) || true
+  fi
+
   if [[ -d "$PLATFORM_ROOT/ci/manifest-drift" && ! -d "$TARGET_DIR/ci/manifest-drift" ]]; then
     hitl_copy_tools "$PLATFORM_ROOT/ci/manifest-drift" "$TARGET_DIR/ci/manifest-drift"
     find "$PLATFORM_ROOT/ci/manifest-drift" -maxdepth 1 -name "*.md" -exec cp {} "$TARGET_DIR/ci/manifest-drift/" \; 2>/dev/null || true

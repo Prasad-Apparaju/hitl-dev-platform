@@ -213,7 +213,6 @@ workflows:
       command: manual
       role: Architect
       crit: floor
-      no_omit: true
     - key: resolve_findings
       name: Resolve or Accept Findings
       label: Resolve

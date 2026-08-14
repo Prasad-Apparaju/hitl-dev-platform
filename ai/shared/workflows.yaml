@@ -182,7 +182,7 @@ workflows:
       - { n: 2,  key: changelog,           label: "Notes",       phase: "Prepare" , crit: standard }
       - { n: 3,  key: version_bump,        label: "Bump",        phase: "Prepare" , crit: standard }
       - { n: 4,  key: gates,               label: "Gates",       phase: "Verify"  , crit: floor, no_omit: true }
-      - { n: 5,  key: adversarial_review,  label: "Adversarial", phase: "Gate"    , crit: floor, no_omit: true }
+      - { n: 5,  key: adversarial_review,  label: "Adversarial", phase: "Gate"    , crit: floor }
       - { n: 6,  key: resolve_findings,    label: "Resolve",     phase: "Gate"    , crit: floor }
       - { n: 7,  key: build,               label: "Build",       phase: "Publish" , crit: standard }
       - { n: 8,  key: publish,             label: "Publish",     phase: "Publish" , crit: floor, no_omit: true }

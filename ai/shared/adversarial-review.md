@@ -50,9 +50,23 @@ learn to dismiss.
 
 ## When it is required rather than offered
 
-At `release`, `adversarial_review` is a **floor** step. A release can still proceed without one, but
-only through the explicit acknowledgement path — never silently. See
-`ci/adversarial/check_review.py`, which the `publish` step runs.
+At `release`, `adversarial_review` is a **floor** step: required by default, and skippable only by
+recording an acknowledgement with a name against it. In the change file:
+
+```yaml
+skips:
+  - step: adversarial_review
+    disposition: decline
+    reason: "sev-1 hotfix, restoring a known-good build"
+    ack_by: "who decided this"
+```
+
+`ci/adversarial/check_review.py` honours that and lets the release through, printing
+`REVIEW_WAIVED` with the name and reason. Without `ack_by` it is not an acknowledgement and the
+gate still blocks — an unattributed waiver is the absence of a decision, written down.
+
+There is deliberately a path here. A gate with no escape is one that gets deleted from the process
+the first time it is inconvenient at 2am, and then it protects nothing.
 
 ## Declining is recorded, not resisted
 

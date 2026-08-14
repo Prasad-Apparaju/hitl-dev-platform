@@ -233,6 +233,12 @@ else
     cp "$ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
     echo "  ✓ ci/manifest-agentic/ (compound-agentic validator) synced — kept your manifest-waivers.yaml"
   fi
+  # Release gate (#80): the adversarial-review validator, so a repo's own CI can run it.
+  if [[ -d "$ROOT/shared/ci/adversarial" ]]; then
+    mkdir -p ci/adversarial
+    cp "$ROOT/shared/ci/adversarial/"*.py ci/adversarial/ 2>/dev/null
+    echo "  ✓ ci/adversarial/ (release review gate) synced"
+  fi
   # Manifest drift (already onboarded in most repos): refresh the checker code only if present.
   if [[ -d "$ROOT/shared/ci/manifest-drift" && -d ci/manifest-drift ]]; then
     cp "$ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/ 2>/dev/null
@@ -285,7 +291,7 @@ else
 
   # stage ONLY the paths that exist — a single `git add` over an absent optional path errors on the whole
   # pathspec and (with `|| true`) would silently stage NOTHING (codex-7).
-  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift .github/workflows/first-pass-check.yml; do
+  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift ci/adversarial .github/workflows/first-pass-check.yml; do
     [[ -e "$p" ]] && git add "$p"
   done
 fi

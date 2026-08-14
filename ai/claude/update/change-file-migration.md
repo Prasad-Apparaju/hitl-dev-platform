@@ -75,10 +75,10 @@ for s in cat["steps"]:
     if key in old_steps:
         status_by_key[key] = old_steps[key].get("status", "open"); is_new[key] = False
     else:
-        st = "open"
-        if isinstance(old_cur_n, int) and n_int(s["n"]) and n_int(s["n"]) < old_cur_n:
-            st = "done"
-        status_by_key[key] = st; is_new[key] = True
+        # A step that did not exist when this change started was never offered and never done.
+        # Inferring "done" from its position fabricates a record — and for a governance step such
+        # as an adversarial review, it fabricates evidence that a review happened. Always open.
+        status_by_key[key] = "open"; is_new[key] = True
 
 # 2) Enforce EXACTLY ONE 'current' — repairs BOTH zero-current and duplicate-current (issue #22).
 order = [s["key"] for s in cat["steps"]]
@@ -186,6 +186,12 @@ if not block_changed:
     print("\nCatalog unchanged — only version stamps updated; workflow block left byte-for-byte intact.")
 ud = list(difflib.unified_diff(text.splitlines(), out.splitlines(),
                                F, F + ".migrated", lineterm=""))
+newly = [k for k, v in is_new.items() if v]
+if newly:
+    print("\n--- steps added by this upgrade (all left OPEN — not done) ---")
+    for k in newly:
+        print("    %s" % k)
+    print("    These were never offered on this change. Do them, or record a skip.")
 print("\n--- actual diff (review before confirming) ---")
 print("\n".join(ud) if ud else "(no changes)")
 PY

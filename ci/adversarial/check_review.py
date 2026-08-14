@@ -51,6 +51,64 @@ def _head_sha(root):
         return ""
 
 
+# Writing the review down is part of the procedure, and it necessarily changes the repo. Comparing
+# raw commit shas made the gate impossible to pass honestly: record the review, commit it as the
+# skill instructs, and the record you just wrote is stale. The only escapes were --sha or editing
+# reviewed_sha — i.e. the gate trained people to fake exactly what it exists to prevent.
+#
+# So freshness is about the CODE, not the commit. These paths are governance bookkeeping, not
+# shippable content, and a difference confined to them does not invalidate a review.
+EXEMPT_PREFIXES = (".hitl/reviews/",)
+EXEMPT_PATHS = (".hitl/current-change.yaml",)
+
+
+def _exempt(p):
+    return p in EXEMPT_PATHS or any(p.startswith(x) for x in EXEMPT_PREFIXES)
+
+
+def _is_fresh(root, reviewed, target):
+    """(fresh, reason). Fail closed: anything we cannot determine is stale."""
+    if target.startswith(reviewed) or reviewed.startswith(target):
+        return True, ""
+    r = subprocess.run(["git", "-C", root, "diff", "--name-only", reviewed, target],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        # Unknown commit, shallow clone, rewritten history — never assume freshness.
+        return False, "cannot compare them in this repo"
+    changed = [l.strip() for l in r.stdout.splitlines() if l.strip()]
+    substantive = [c for c in changed if not _exempt(c)]
+    if substantive:
+        head = ", ".join(substantive[:3])
+        more = "" if len(substantive) <= 3 else " (+%d more)" % (len(substantive) - 3)
+        return False, "%s changed since%s" % (head, more)
+    return True, ""
+
+
+def _acknowledged_skip(change):
+    """The skip record that lets a release proceed with no review, or None.
+
+    Requires an owner. An unattributed acknowledgement is not an acknowledgement — it is the
+    absence of one, written down.
+    """
+    skips = change.get("skips")
+    if not isinstance(skips, list):
+        return None
+    for s in skips:
+        if not isinstance(s, dict):
+            continue
+        if str(s.get("step", "")).strip() != "adversarial_review":
+            continue
+        by = ""
+        for field in ("ack_by", "accepted_by", "authorized_by", "acknowledged_by"):
+            if str(s.get(field, "")).strip():
+                by = str(s.get(field)).strip()
+                break
+        if not by:
+            continue
+        return {"by": by, "reason": str(s.get("reason", "")).strip()}
+    return None
+
+
 def _load(path):
     """Return (doc, error). A file we cannot parse blocks — it is never treated as absent."""
     try:
@@ -81,20 +139,38 @@ def check(change_path, reviews_dir, sha=None, root="."):
         _fail(out, "NO_SHA", "cannot determine the commit under review (not a git repo?)")
         return out, []
 
+    # The floor path: a release CAN go out without a review, but only on a recorded, attributed
+    # acknowledgement. Without this the gate had no honest escape at all, and a gate with no escape
+    # is one that gets deleted from the process the first time it is inconvenient at 2am.
+    ack = _acknowledged_skip(change)
+    if ack:
+        return [], ["[warn] REVIEW_WAIVED: %s is shipping WITHOUT an adversarial review.\n"
+                    "        Acknowledged by %s: %s\n"
+                    "        Recorded in the change file, and it stays there."
+                    % (change_id, ack.get("by") or "?", ack.get("reason") or "no reason given")]
+
     if not os.path.isdir(reviews_dir):
         _fail(out, "REVIEW_MISSING",
-              "no %s/ — an adversarial review is required before publishing %s" % (reviews_dir, change_id))
+              "no %s/ — an adversarial review is required before publishing %s.\n"
+              "        Run /hitl:dev-adversarial-review, or record an explicit acknowledgement "
+              "to ship without one." % (reviews_dir, change_id))
         return out, []
 
     records = []
+    warn_unreadable = []
     for name in sorted(os.listdir(reviews_dir)):
         if not name.endswith((".yaml", ".yml")):
             continue
         path = os.path.join(reviews_dir, name)
         doc, err = _load(path)
         if err:
-            # A record we cannot read is not a record we can trust.
-            _fail(out, "MALFORMED", "%s: %s" % (path, err))
+            # A record we cannot read is not a record we can trust — but only if it is OURS.
+            # Records are kept forever, so unrelated debris from a long-closed change must not
+            # block every future release.
+            if os.path.basename(path).startswith(change_id):
+                _fail(out, "MALFORMED", "%s: %s" % (path, err))
+            else:
+                warn_unreadable.append(path)
             continue
         if str(doc.get("change_id", "")).strip() == change_id:
             records.append((path, doc))
@@ -112,16 +188,19 @@ def check(change_path, reviews_dir, sha=None, root="."):
             return 0
     records.sort(key=_round)
     path, rec = records[-1]
-    warnings = []
+    warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed (not this change — ignored)" % u
+                for u in warn_unreadable]
 
     reviewed = str(rec.get("reviewed_sha", "")).strip()
     if not reviewed:
         _fail(out, "REVIEW_MALFORMED", "%s: reviewed_sha is missing" % path)
-    elif not (target.startswith(reviewed) or reviewed.startswith(target)):
-        # THE load-bearing rule.
-        _fail(out, "REVIEW_STALE",
-              "%s reviewed %s but %s is about to ship — re-review the current code"
-              % (path, reviewed[:12], target[:12]))
+    else:
+        fresh, why = _is_fresh(root, reviewed, target)
+        if not fresh:
+            # THE load-bearing rule.
+            _fail(out, "REVIEW_STALE",
+                  "%s reviewed %s but %s is about to ship — %s. Re-review the current code."
+                  % (path, reviewed[:12], target[:12], why))
 
     reviewer = rec.get("reviewer")
     if not isinstance(reviewer, dict):
