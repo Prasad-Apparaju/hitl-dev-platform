@@ -101,6 +101,28 @@ Then show the relevant `## [<new-version>]` section from `CHANGELOG.md` in the p
 
 ---
 
+## Step 3b — Migrate settings and audit the active change
+
+Onboarding writes `.claude/settings.json` **only if absent**, so a repo onboarded before a release
+keeps its old file and misses what shipped since. Dry-run the migrator, show the user what it
+proposes, then apply. Also refresh the validator copies — they are snapshots, not references, so
+without this new checks never reach the project they protect.
+
+```bash
+MIG="ci/first-pass/migrate_project.py"
+[[ -f "$MIG" ]] || MIG="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/migrate_project.py"
+python3 "$MIG" --root .                    # review, then:
+python3 "$MIG" --root . --apply
+[[ -d "$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass" ]] && mkdir -p ci/first-pass \
+  && cp "$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/"*.py ci/first-pass/
+```
+
+Permissions merge additively. The migrator also reports any active change lightened without
+declaring `first_pass`: those certified clean before because enforcement never engaged and will now
+fail. That is intended — say so, so it is not read as a regression.
+
+---
+
 ## Step 4 — Re-wire hooks if needed
 
 Check whether `.hitl/hooks/` exists in the current project.

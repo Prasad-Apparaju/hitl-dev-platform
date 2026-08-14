@@ -20,14 +20,23 @@ The generic HITL tier definitions (in `/hitl:dev-practices`) are a starting poin
 
 Apply the following tier definitions for this project:
 
-### Tier 0 — Trivial (standard PR only, no HITL workflow)
+> **How tiers actually work.** No tier skips `/hitl:dev-start-change` — the session-start gate blocks
+> edits made through the Edit and Write tools until a change is active, and it does not read the tier.
+> (Writes made through the shell are not covered; that gap is tracked separately.) A low tier buys a
+> *shorter plan*, not an exemption, and the steps it drops are recorded rather than silently absent.
+> Tier 0 and 1 additionally require `tier_set_by` and `tier_reason`, because those tiers unlock the
+> batch-decline path at intake. Note the floor demotion that matters is **3 → 2**, which takes five
+> steps off the protected floor and requires no justification. Fill in the examples below; do not
+> change that mechanism.
+
+### Tier 0 — Trivial (intake, then the lightest plan: ceremony steps pre-declined)
 
 [fill in — examples of what qualifies as trivial for this project:]
 - Typo or comment fix
 - Config value change with no behavioral impact
 - Log message or error string wording
 
-### Tier 1 — Bug fix (abbreviated workflow: issue + code/test steps; skip training plan)
+### Tier 1 — Bug fix (lightest plan, TDD steps kept)
 
 [fill in — examples:]
 - Regression fix for a specific reported and reproducible bug

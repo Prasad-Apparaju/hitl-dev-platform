@@ -42,19 +42,35 @@
 
   "_hook_path_note": "Hook commands use \"$CLAUDE_PROJECT_DIR\" so they resolve regardless of the hook's working directory. Never use bare repo-relative paths like 'bash .claude/hooks/X.sh' — they throw 'No such file or directory' when the hook cwd is not the project root.",
 
+  "_permissions_note": [
+    "Keep this list SHORT. Three rules, the first two measured against a live session:",
+    "1. Output redirection rides along on a match. `cmd > file` and `cmd >> file` are permitted by a",
+    "   rule for `cmd`, and an EXACT entry with no wildcard does not help. So every entry grants",
+    "   'write this command's stdout to any path'. Never allowlist a command whose output is",
+    "   attacker-controlled — `gh issue view` is the sharp one: issue bodies are untrusted, and",
+    "   `gh issue view N -q .body > .git/hooks/pre-commit` is a working chain.",
+    "2. Command chaining (`&&`) and each segment of a pipe ARE checked, so those are not the risk.",
+    "3. Never allowlist an interpreter, shell, or package manager. `python`, `python3`, `node`, `bun`,",
+    "   `npx`, `pip`, `bash` and friends are arbitrary code execution. A previous version of this file",
+    "   allowed python, python3, pip, semgrep, `git *` (which includes `push --force`) and `gh *`",
+    "   (which includes `gh api --method POST`). It was never installed by anything, which is the only",
+    "   reason that did no harm.",
+    "Most read-only commands (cat, ls, grep, head, tail, find, and every read-only git and gh",
+    "subcommand) are auto-allowed by Claude Code already and need no entry here.",
+    "",
+    "Residual channels this does NOT close, so nobody mistakes a short list for a boundary:",
+    "- The deny rules govern the Read TOOL. `cat .env` through Bash is a different path and is",
+    "  auto-allowed, so these rules reduce accidents, not a determined read.",
+    "- Only stdout `>` and `>>` were measured. stderr redirection (`2>`) and command substitution",
+    "  were not. Assume they behave the same until someone measures them.",
+    "- Rules 1 and 2 are observed behaviour of a particular Claude Code version, not a spec. Re-measure",
+    "  before relying on them after an upgrade.",
+    "- Bash-mediated writes bypass the HITL change gate entirely (its matcher is Edit|Write), so an",
+    "  allowlist entry is not backstopped by the gate the way a tool-based edit is."
+  ],
   "permissions": {
     "allow": [
-      "Bash(git *)",
-      "Bash(gh *)",
-      "Bash(semgrep *)",
-      "Bash(python *)",
-      "Bash(python3 *)",
-      "Bash(pip *)",
-      "Bash(pytest *)",
-      "Bash(ruff *)",
-      "Bash(black *)",
-      "Bash(find docs/*)",
-      "Bash(cat docs/*)"
+      "Bash(git add *)"
     ],
     "deny": [
       "Read(./.env)",

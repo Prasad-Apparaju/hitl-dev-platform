@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """First Pass (FR-29) — the disposition menu constraints (Phase C, LLD §10.1, CR-6/CR-14).
 
-Given a step's criticality + no_omit, which menu options may the team pick. `keep` is always the
-pre-selected default (CR-1: doing nothing runs the full plan). The floor routes to a risk-accept path
-(ack + waiver, §7). A no_omit step (TDD) may be thinned to a starter but never deferred/declined."""
+Given a step's criticality + no_omit, which menu options may the team pick. `keep` is the pre-selected
+default (CR-1: doing nothing runs the full plan), with one bounded exception: at tier 0/1 a `ceremony`
+step may be presented pre-marked `decline` (CR-1 as amended 2026-08-13). `standard`, `floor` and
+`no_omit` keep `keep` as the default at every tier, and nothing is written before a human confirms.
+The floor routes to a risk-accept path (ack + waiver, §7). A no_omit step (TDD) may be thinned to a
+starter but never deferred/declined."""
 from __future__ import annotations
 import os
 import sys

@@ -51,6 +51,23 @@ tier:
     4 = Incident / P0
   required: true
 
+tier_set_by:
+  type: string
+  description: |
+    Who declared the tier. Required when `tier <= 1`, which is what unlocks the batch-decline path
+    at intake. The agent proposes and a human is expected to confirm, but this is an unauthenticated
+    string — the same trust model as a skip's `actor`. It is a record of accountability, not proof of
+    it. Note the floor demotion that matters is 3 -> 2 (five steps), not 2 -> 1 (one step), and that
+    boundary requires no attribution at all.
+  example: "arch@team"
+
+tier_reason:
+  type: string
+  description: |
+    Why this tier. One line. Required when `tier <= 1`, where it is the record that a light path was
+    a considered choice rather than the default.
+  example: "single-function regression, no schema or interface change"
+
 status:
   type: string
   enum:

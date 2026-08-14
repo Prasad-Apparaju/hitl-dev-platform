@@ -66,7 +66,7 @@ Check whether `.hitl/hooks/` already exists.
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these eight hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
+2. Create `.hitl/hooks/` and write a wrapper for each of these nine hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
    ```bash
    #!/usr/bin/env bash
    PLUGIN_ROOT=$(python3 -c "
@@ -98,14 +98,19 @@ Check whether `.hitl/hooks/` already exists.
      "hooks": {
        "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/hitl-gate.sh\"" }] }],
        "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/welcome.sh\"" }] }],
-       "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" }] }],
+       "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [
+         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" },
+         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/first-pass-permissions.sh\"" }
+       ]}, { "matcher": "Read|Grep|Glob", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/first-pass-permissions.sh\"" }] }],
        "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [
          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-domain-boundary.sh\"" },
          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/rebuild-graph.sh\"" },
          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/sync-step-to-issue.sh\"" }
        ]}],
        "Stop": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/write-session-summary.sh\"" }] }]
-     }
+     },
+     "permissions": { "allow": ["Bash(git add *)"],
+       "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./**/.env)", "Read(./secrets/**)"] }
    }
    ```
 

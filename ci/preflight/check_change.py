@@ -453,7 +453,11 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    changed = args.changed_files if args.changed_files else _git_changed_files(args.base_ref)
+    # `--changed-files` with no values is an explicit "nothing changed", not "work it out yourself".
+    # Truthiness conflated the two, so an empty list fell through to `git diff` — which on any feature
+    # branch returns that branch's whole diff and runs traceability checks against files the caller
+    # never asked about. Distinguish absent (None) from empty ([]).
+    changed = args.changed_files if args.changed_files is not None else _git_changed_files(args.base_ref)
     if not changed:
         print("[INFO] No changed files detected — nothing to check.")
         return 0

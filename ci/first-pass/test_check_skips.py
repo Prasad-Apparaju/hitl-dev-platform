@@ -22,10 +22,10 @@ def blockers(findings):
     return [f["code"] for f in findings if not f["waivable"]]
 
 
-def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1"):
-    """Build a change record whose steps[] statuses match the skips (skipped/starter) unless overridden."""
-# every load-bearing (floor OR no_omit) step across all tiers — seed them `done` by default so a partial
-# test plan doesn't spuriously trip INCOMPLETE_PLAN (codex-1); a test that WANTS to omit one overrides it.
+# A real change file is seeded from the catalog and carries EVERY step, so the fixture does too.
+# It used to seed only the load-bearing ones, which made every other catalog step look deliberately
+# deleted — fine while only floor/no_omit absence was checked, wrong once PLAN_PRUNED (CR-3) landed.
+# `omit=(...)` is how a test deliberately deletes a step.
 LOADBEARING = ["deploy", "promote", "integration_verify", "red", "green",
                "impact", "packet", "arch_review", "qa_verify", "rollout"]
 
@@ -33,11 +33,13 @@ LOADBEARING = ["deploy", "promote", "integration_verify", "red", "green",
 def make_change(skips, step_over=None, tier=2, first_pass=True, change_id="GH-1", omit=()):
     over = step_over or {}
     by_key = {}
-    for k in LOADBEARING:
+    for k in CATALOG:
         if k not in omit:
             by_key[k] = {"n": 1, "key": k, "label": k, "status": "done", "phase": "X"}
     for s in skips:
         k = s["step"]
+        if k in omit:                       # omit wins, so "deleted AND recorded" is expressible
+            continue
         status = over.get(k, "starter" if s.get("disposition") == "starter" else "skipped")
         by_key[k] = {"n": 1, "key": k, "label": k, "status": status, "phase": "X"}
     for k, v in over.items():                      # allow overriding a load-bearing step's status directly
@@ -354,8 +356,38 @@ def test_r1_starter_marker_must_head_a_line(tmp_path):
 
 
 def test_back_compat_non_first_pass():
-    # a change without first_pass validates clean even with junk skip data
+    # A genuinely legacy change — no first_pass, nothing lightened — still validates clean.
+    # This is the back-compat guarantee: pre-FR-29 files must keep passing untouched.
+    change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "open"},
+                                                {"key": "red", "status": "done"}]}, "skips": []}
+    assert C.check(change, CATALOG) == []
+
+
+def test_lightened_without_first_pass_is_a_blocker():
+    # The inverse of back-compat, and the bug this check exists for: `skipped`/`starter` are written
+    # only by the First Pass driver (schema: change-context.schema.yaml), so a lightened step with no
+    # `first_pass` flag means enforcement silently never engaged and the ledger was never certified.
+    # Previously this returned [] — a clean bill of health on an unenforced change.
     change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "skipped"}]}, "skips": []}
+    fs = C.check(change, CATALOG)
+    assert "FP_UNDECLARED" in codes(fs)
+    assert "FP_UNDECLARED" in blockers(fs)
+
+
+def test_populated_skips_without_first_pass_is_a_blocker():
+    # The other half: records present, flag absent. Catches a change file whose flag was lost or
+    # clobbered after dispositions were recorded.
+    change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "open"}]},
+              "skips": [base_skip("roi")]}
+    fs = C.check(change, CATALOG)
+    assert "FP_UNDECLARED" in codes(fs)
+    assert "FP_UNDECLARED" in blockers(fs)
+
+
+def test_first_pass_false_with_clean_plan_still_passes():
+    # Explicit `first_pass: false` on an untouched plan is a legitimate, deliberate state.
+    change = {"tier": 2, "first_pass": False,
+              "workflow": {"steps": [{"key": "roi", "status": "open"}]}, "skips": []}
     assert C.check(change, CATALOG) == []
 
 
@@ -367,3 +399,92 @@ def test_defer_without_followup_warns_not_blocks():
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_low_tier_must_name_a_person_and_a_reason():
+    # Tier is self-declared and nothing validates it against the change's actual shape. Tier <= 1 is
+    # what unlocks the batch-decline path at intake, so the declaration is held to the same standard
+    # as a skip: accountable to a human, with a reason. (The floor demotion that matters is 3 -> 2 —
+    # see test_the_big_floor_demotion_is_three_to_two — and it requires no attribution at all.)
+    fs = C.check(make_change([], tier=1), CATALOG, tier=1)
+    assert "TIER_UNATTRIBUTED" in codes(fs)
+    assert "TIER_UNATTRIBUTED" not in blockers(fs)      # accounted for, not blocked
+
+
+def test_low_tier_with_attribution_is_clean():
+    change = make_change([], tier=1)
+    change["tier_set_by"] = "arch@team"
+    change["tier_reason"] = "single-function regression, no interface change"
+    assert C.check(change, CATALOG, tier=1) == []
+
+
+def test_tier_two_and_above_needs_no_attribution():
+    # The default path is unchanged — attribution is the price of the LIGHT path, not of every change.
+    assert C.check(make_change([], tier=2), CATALOG, tier=2) == []
+
+
+# ── the tier facts the doctrine asserts, pinned to the catalog ────────────────
+# Five shipped files stated "a low tier demotes impact/packet/arch_review/qa_verify/rollout from
+# floor to standard". That was false: those five are crit_by_tier {3: floor}, so they are already
+# standard at tier 2 and the 2->1 boundary does not move them. Prose drifted from the catalog and
+# nothing caught it. These tests make the catalog the arbiter.
+
+def test_the_big_floor_demotion_is_three_to_two():
+    five = ["impact", "packet", "arch_review", "qa_verify", "rollout"]
+    for k in five:
+        assert C.resolve_crit(CATALOG[k], 3) == "floor", f"{k} should be floor at tier 3"
+        assert C.resolve_crit(CATALOG[k], 2) == "standard", f"{k} should be standard at tier 2"
+
+
+def test_two_to_one_moves_only_integration_verify():
+    moved = {k for k, m in CATALOG.items()
+             if C.resolve_crit(m, 2) == "floor" and C.resolve_crit(m, 1) != "floor"}
+    assert moved == {"integration_verify"}, (
+        "the 2->1 demotion set changed; every doctrine sentence naming it must be updated too")
+
+
+def test_deploy_and_promote_never_demote():
+    for t in range(5):
+        assert C.resolve_crit(CATALOG["deploy"], t) == "floor"
+        assert C.resolve_crit(CATALOG["promote"], t) == "floor"
+
+
+# ── PLAN_PRUNED (CR-3 / CR-16): deleting a step is not a way to skip it silently ──
+
+def test_deleting_a_ceremony_step_warns():
+    # Previously certified clean: no record, no actor, no reason, and invisible in the trail.
+    fs = C.check(make_change([], omit=("roi",)), CATALOG)
+    assert "PLAN_PRUNED" in codes(fs)
+    assert "PLAN_PRUNED" not in blockers(fs)      # waivable — pruning can be legitimate, not silent
+
+
+def test_deleting_a_standard_step_warns():
+    fs = C.check(make_change([], omit=("conventions",)), CATALOG)
+    assert "PLAN_PRUNED" in codes(fs) and "conventions" in str(fs)
+
+
+def test_recording_a_skip_instead_of_deleting_avoids_the_warning():
+    # The honest path stays cheaper than deletion: keep the step, mark it skipped, record it.
+    assert "PLAN_PRUNED" not in codes(C.check(make_change([base_skip("roi")]), CATALOG))
+
+
+def test_a_step_both_deleted_and_recorded_is_a_ledger_mismatch_not_a_prune():
+    # Deleting the step while keeping its record is not "pruned with a record" — the record now points
+    # at a step the plan does not contain, which is the stronger LEDGER_STEPS finding. PLAN_PRUNED is
+    # for the case with no record at all, so it must not fire here and mask the mismatch.
+    change = make_change([base_skip("roi")], omit=("roi",))
+    assert "roi" not in {s["key"] for s in change["workflow"]["steps"]}
+    fs = C.check(change, CATALOG)
+    assert "LEDGER_STEPS" in codes(fs)
+    assert "PLAN_PRUNED" not in codes(fs)
+
+
+def test_deleting_a_load_bearing_step_still_blocks_not_warns():
+    # floor/no_omit keep the stronger, non-waivable finding — PLAN_PRUNED must not soften it.
+    fs = C.check(make_change([], omit=("deploy",)), CATALOG)
+    assert "INCOMPLETE_PLAN" in blockers(fs)
+    assert "deploy" not in [f["message"] for f in fs if f["code"] == "PLAN_PRUNED"]
+
+
+def test_a_complete_plan_warns_about_nothing():
+    assert C.check(make_change([]), CATALOG) == []

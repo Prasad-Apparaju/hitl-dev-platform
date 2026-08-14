@@ -59,6 +59,10 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC",
                 # a load-bearing step DELETED from the plan (not skipped, no record) is a bypass (codex-1)
                 "INCOMPLETE_PLAN",
+                # steps lightened while `first_pass` is absent: enforcement never engaged, so every other
+                # check below was skipped and the ledger is uncertified. The bug this catches shipped
+                # because the driver never emitted the flag.
+                "FP_UNDECLARED",
                 # an unmarked starter presented as complete is the "fabricated full artifact" ADR-6 forbids (codex-4)
                 "STARTER_MARK"}
 STARTER_MARKER = "needs-enhancement"
@@ -150,7 +154,33 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     # literal boolean False or genuinely absent; a present-but-non-bool value is MALFORMED *and* enforced.
     fp = change.get("first_pass")
     if fp is None or fp is False:
-        return findings  # not a First Pass change — nothing to enforce (back-compat)
+        # Back-compat still holds for a genuinely untouched plan, but "no flag" must not become the way
+        # to lighten steps unchecked: every check below is gated on this early return, so an undeclared
+        # change with skips in it certifies clean while enforcing nothing. `skipped`/`starter` statuses
+        # post-date FR-29 and only the First Pass driver writes them, so their presence here means the
+        # flag was lost or omitted, not that the file is legacy.
+        evidence = []
+        if isinstance(change.get("skips"), list) and change["skips"]:
+            evidence.append(f"{len(change['skips'])} entr{'y' if len(change['skips']) == 1 else 'ies'} in skips[]")
+        wf = change.get("workflow")
+        lightened = [
+            s.get("key")
+            for s in (wf.get("steps") if isinstance(wf, dict) and isinstance(wf.get("steps"), list) else [])
+            # a non-string status is unhashable, and `x in set()` RAISES on those — guard the membership
+            # the same way every other test in this file does (round-4 LOW-2). Without this, a legacy
+            # file with `status: [done]` turns check() from "returns findings" into "throws".
+            if isinstance(s, dict) and isinstance(s.get("status"), str) and s["status"] in LIGHTENED_STATUSES
+        ]
+        if lightened:
+            evidence.append("step(s) " + ", ".join(repr(k) for k in lightened[:5] if k)
+                            + (" and more" if len(lightened) > 5 else "") + " lightened")
+        if evidence:
+            findings.append(_f(
+                "FP_UNDECLARED",
+                "first_pass is absent/false but the change has been lightened (" + "; ".join(evidence)
+                + "). Enforcement never engaged, so this ledger is uncertified. Set `first_pass: true` "
+                  "if the change is running First Pass, or restore the steps."))
+        return findings  # not a First Pass change — nothing further to enforce (back-compat)
     if type(fp) is not bool:
         findings.append(_f("MALFORMED", f"first_pass is present but not a boolean ({fp!r}) — enforcing at strictest"))
 
@@ -202,6 +232,19 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         if not isinstance(status, str) or status not in VALID_STATUSES:
             findings.append(_f("INVALID_STATUS", f"step '{key}' has missing/unrecognized status {status!r} (expected {sorted(VALID_STATUSES)})"))
 
+    # 0.4) TIER ACCOUNTABILITY. Tier is self-declared and nothing validates it against what the change
+    #    actually touches. Note where the protection really moves: 3 -> 2 takes impact, packet,
+    #    arch_review, qa_verify and rollout off `floor` in one step; 2 -> 1 only moves
+    #    integration_verify. So the demotion that matters is NOT the boundary guarded here — tier 2 is
+    #    the default and asks for nothing. This check is the accountability price of the tier 0/1
+    #    batch-decline path, not a floor guard; do not let its presence imply the floor is covered.
+    #    Waivable: a genuinely trivial change should not be blocked, only accounted for.
+    if isinstance(tier, int) and tier <= 1:
+        if not _str(change.get("tier_set_by")).strip():
+            findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_set_by` — a light path is a human's call, not the agent's"))
+        if not _str(change.get("tier_reason")).strip():
+            findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_reason` — record why this change qualifies"))
+
     # 0.5) PLAN COMPLETENESS (codex-1): a load-bearing step DELETED from the plan entirely leaves no status
     #    and no record to inspect — silently omitting it. Every catalog step that is `floor` (at this tier) or
     #    `no_omit` MUST be present in steps[]; a missing one is a non-waivable INCOMPLETE_PLAN. (Ceremony/
@@ -212,6 +255,14 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         must_be_present = resolve_crit(cmeta, tier) == "floor" or bool(cmeta.get("no_omit"))
         if must_be_present and ckey not in steps:
             findings.append(_f("INCOMPLETE_PLAN", f"load-bearing step '{ckey}' is missing from the plan (floor/no_omit steps cannot be omitted)"))
+        # CR-3 says a step cannot be skipped without producing a record, and CR-16 says the plan shows
+        # the WHOLE journey with lightened steps visible. Deleting a ceremony/standard step satisfied
+        # neither: no record, and invisible in the trail. "Freely skippable" is about who may decide,
+        # not about whether the decision is written down — and deletion was strictly cheaper than the
+        # honest path (no actor, no reason, no resurfacing), which inverted the incentive CR-3 creates.
+        # Waivable: pruning can be legitimate, it just may not be silent.
+        elif not must_be_present and ckey not in steps and not skip_by_step.get(ckey):
+            findings.append(_f("PLAN_PRUNED", f"catalog step '{ckey}' is absent from the plan with no skip record — record it as a skip (CR-3), or waive if the step cannot apply to this change"))
 
     # 1) LEDGER_STEPS both ways (NEG-7): every skipped/starter step has a record; every record maps to such a step.
     for key, st in steps.items():
@@ -260,6 +311,15 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
 
         # starter quality (NEG-6): artifact set + marked needs-enhancement
         if disp == "starter":
+            # A starter is only meaningful where an honest-minimal version is DEFINED. The driver
+            # refuses unregistered starters, but certification is the boundary that has to hold for
+            # hand-authored and migrated records too — a menu is not an enforcement boundary.
+            try:
+                from starters import has_starter as _has_starter
+            except Exception:
+                _has_starter = None
+            if _has_starter is not None and not _has_starter(key):
+                findings.append(_f("STARTER_MARK", f"starter '{key}': no registered starter exists for this step — use defer or decline"))
             art = _str(s.get("starter_artifact")).strip()
             if not art:
                 findings.append(_f("STARTER_MARK", f"starter '{key}': no starter_artifact path"))
