@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.6.2] — 2026-08-14
+
+### Fixed
+
+**Onboarded projects received test suites that could not run there, and they failed the moment anyone ran `pytest`.** The CI-validator sync copied `*.py` wholesale, which dragged each validator's own development test suite into the product repo. Those tests resolve paths that exist only in the HITL platform repo, so a freshly synced project got 3 collection errors under `ci/first-pass/` and 68 failures across `ci/manifest-agentic/` and `tools/manifest-agentic/` — before the team had written anything. Reported as plugin issue #29, and blocking a merge in a downstream project.
+
+The validators themselves were always fine. It is their tests that were never portable, and one of them never could be: it reads the change-file generator out of `start-change/SKILL.md`, a file no product repo has or should have. These exercise HITL's internals, so they now stay with HITL's source.
+
+- **Onboarding ships validators without their tests.** Three bare `cp <dir>/*.py` copies are replaced by a filtered copy.
+- **`/hitl:dev-update` removes the test files earlier versions already installed.** Fixing the sync forward does nothing for a project that already has the files, and those are the projects that are blocked. Removal is by exact shipped filename, never a `test_*.py` glob, so tests your team wrote in those directories are left alone.
+- **The plugin build never pruned.** Files removed from the source stayed in the packaged plugin from earlier builds, which is how these kept shipping after the filter existed. Cleared.
+
+**If your project has these files, run `/hitl:dev-update` — it cleans them up.**
+
+### Why it lasted
+
+Nothing asserted what the sync actually delivers. Six guard tests now do: the copy sites cannot use a bare `*.py` glob, the cleanup list must cover every test file living in a synced directory, and a repo assembled the way onboarding assembles one must both collect cleanly and still run its validator.
+
+---
+
 ## [2.6.1] — 2026-08-14
 
 ### Fixed
