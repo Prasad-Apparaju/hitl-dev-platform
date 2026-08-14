@@ -103,7 +103,8 @@ hitl_copy_tools() {
   local src="$1" dest="$2"
   [[ -d "$src" ]] || return 0
   mkdir -p "$dest"
-  find "$src" -maxdepth 1 -name "*.py" ! -name "test_*" -exec cp {} "$dest/" \; 2>/dev/null || true
+  rm -rf "$dest/__pycache__"
+  find "$src" -maxdepth 1 -name "*.py" ! -name "test_*" ! -name "conftest.py" -exec cp {} "$dest/" \; 2>/dev/null || true
 }
 
 # ---- Shared: CLAUDE.md ----
@@ -151,6 +152,12 @@ if ! grep -q "docs/session-logs" "$GITIGNORE" 2>/dev/null; then
   printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> "$GITIGNORE"
   echo "✓ .gitignore — docs/session-logs/ excluded"
 fi
+# HITL copies Python validators in, so pytest/import will produce bytecode next to them. Without
+# this the consumer commits __pycache__ built on whichever machine ran onboarding.
+if ! grep -q "__pycache__" "$GITIGNORE" 2>/dev/null; then
+  printf '\n# Python bytecode\n__pycache__/\n*.pyc\n' >> "$GITIGNORE"
+  echo "✓ .gitignore — __pycache__/ excluded"
+fi
 
 if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
   MANIFEST_TMPL="$PLATFORM_ROOT/ai/shared/templates/system-manifest-template.yaml"
@@ -187,8 +194,8 @@ setup_tools() {
   fi
 
   if [[ -d "$PLATFORM_ROOT/ci/manifest-drift" && ! -d "$TARGET_DIR/ci/manifest-drift" ]]; then
-    mkdir -p "$TARGET_DIR/ci"
-    cp -r "$PLATFORM_ROOT/ci/manifest-drift" "$TARGET_DIR/ci/manifest-drift"
+    hitl_copy_tools "$PLATFORM_ROOT/ci/manifest-drift" "$TARGET_DIR/ci/manifest-drift"
+    find "$PLATFORM_ROOT/ci/manifest-drift" -maxdepth 1 -name "*.md" -exec cp {} "$TARGET_DIR/ci/manifest-drift/" \; 2>/dev/null || true
     echo "✓ ci/manifest-drift/"
     (( copied++ )) || true
   fi
