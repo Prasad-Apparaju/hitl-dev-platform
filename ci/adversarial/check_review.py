@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Fail-closed gate: a release must carry a fresh, independent adversarial review.
+
+    check_review.py [--change .hitl/current-change.yaml] [--reviews .hitl/reviews] [--sha <sha>]
+
+Exit 0 = clean, 2 = blocked, 1 = usage error.
+
+WHAT THIS CAN AND CANNOT DO — read before trusting it.
+
+It cannot verify that a review was genuinely adversarial, or that the reviewer was genuinely
+independent. Those are properties of an LLM's behaviour, and a record asserting them is an
+attestation, not proof. Anyone determined to fake this can.
+
+What it CAN verify is freshness, and that is the load-bearing rule: the record names the commit it
+reviewed, and the gate fails unless that matches what is about to ship. You cannot review an early
+draft, keep editing, and still pass — the record goes stale the moment the code moves. Everything
+else here is bookkeeping around that one fact.
+
+The failure this exists to prevent is specific and observed: a release was published on the
+author's own verification, and shipped a defect that destroyed user data. The point is not to prove
+a review happened; it is to make skipping one impossible to do silently.
+"""
+import argparse
+import io
+import os
+import subprocess
+import sys
+
+try:
+    import yaml
+except Exception:  # pragma: no cover - environment without PyYAML
+    sys.stderr.write("[BLOCK] MALFORMED: PyYAML is required to verify the review gate\n")
+    sys.exit(2)
+
+BLOCKING = ("CRITICAL", "HIGH")
+SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
+OPEN_STATES = ("open",)
+RESOLVED_STATES = ("fixed", "accepted")
+
+
+def _fail(findings, code, msg):
+    findings.append("[BLOCK] %s: %s" % (code, msg))
+
+
+def _head_sha(root):
+    try:
+        out = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"],
+                             capture_output=True, text=True)
+        return out.stdout.strip() if out.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def _load(path):
+    """Return (doc, error). A file we cannot parse blocks — it is never treated as absent."""
+    try:
+        with io.open(path, encoding="utf-8") as fh:
+            doc = yaml.safe_load(fh)
+    except Exception as exc:
+        return None, str(exc)
+    if doc is None:
+        return None, "file is empty"
+    if not isinstance(doc, dict):
+        return None, "expected a mapping, got %s" % type(doc).__name__
+    return doc, None
+
+
+def check(change_path, reviews_dir, sha=None, root="."):
+    out = []
+    change, err = _load(change_path)
+    if err:
+        _fail(out, "MALFORMED", "%s: %s" % (change_path, err))
+        return out, []
+    change_id = str(change.get("change_id") or change.get("id") or "").strip()
+    if not change_id:
+        _fail(out, "MALFORMED", "change file has no change_id")
+        return out, []
+
+    target = (sha or _head_sha(root)).strip()
+    if not target:
+        _fail(out, "NO_SHA", "cannot determine the commit under review (not a git repo?)")
+        return out, []
+
+    if not os.path.isdir(reviews_dir):
+        _fail(out, "REVIEW_MISSING",
+              "no %s/ — an adversarial review is required before publishing %s" % (reviews_dir, change_id))
+        return out, []
+
+    records = []
+    for name in sorted(os.listdir(reviews_dir)):
+        if not name.endswith((".yaml", ".yml")):
+            continue
+        path = os.path.join(reviews_dir, name)
+        doc, err = _load(path)
+        if err:
+            # A record we cannot read is not a record we can trust.
+            _fail(out, "MALFORMED", "%s: %s" % (path, err))
+            continue
+        if str(doc.get("change_id", "")).strip() == change_id:
+            records.append((path, doc))
+
+    if not records:
+        _fail(out, "REVIEW_MISSING",
+              "no review record for %s in %s/" % (change_id, reviews_dir))
+        return out, []
+
+    # The newest round is the one that decides. Earlier rounds are history.
+    def _round(item):
+        try:
+            return int(item[1].get("round", 0))
+        except Exception:
+            return 0
+    records.sort(key=_round)
+    path, rec = records[-1]
+    warnings = []
+
+    reviewed = str(rec.get("reviewed_sha", "")).strip()
+    if not reviewed:
+        _fail(out, "REVIEW_MALFORMED", "%s: reviewed_sha is missing" % path)
+    elif not (target.startswith(reviewed) or reviewed.startswith(target)):
+        # THE load-bearing rule.
+        _fail(out, "REVIEW_STALE",
+              "%s reviewed %s but %s is about to ship — re-review the current code"
+              % (path, reviewed[:12], target[:12]))
+
+    reviewer = rec.get("reviewer")
+    if not isinstance(reviewer, dict):
+        _fail(out, "REVIEW_MALFORMED", "%s: reviewer must be a mapping" % path)
+        reviewer = {}
+    if str(reviewer.get("context", "")).strip().lower() != "clean":
+        _fail(out, "NOT_INDEPENDENT",
+              "%s: reviewer.context must be 'clean' — a reviewer that shares the author's context "
+              "is not an independent check" % path)
+
+    if str(rec.get("stance", "")).strip().lower() != "refute":
+        _fail(out, "WRONG_STANCE",
+              "%s: stance must be 'refute'. A reviewer setting out to confirm a design finds it "
+              "confirmed" % path)
+
+    findings = rec.get("findings")
+    if findings is None:
+        findings = []
+    if not isinstance(findings, list):
+        _fail(out, "REVIEW_MALFORMED", "%s: findings must be a list" % path)
+        findings = []
+
+    unresolved = []
+    for i, f in enumerate(findings):
+        if not isinstance(f, dict):
+            _fail(out, "REVIEW_MALFORMED", "%s: findings[%d] is not a mapping" % (path, i))
+            continue
+        sev = str(f.get("severity", "")).strip().upper()
+        if sev not in SEVERITIES:
+            _fail(out, "REVIEW_MALFORMED",
+                  "%s: findings[%d] severity %r is not one of %s" % (path, i, f.get("severity"), ", ".join(SEVERITIES)))
+            continue
+        state = str(f.get("status", "open")).strip().lower()
+        if state not in OPEN_STATES + RESOLVED_STATES:
+            _fail(out, "REVIEW_MALFORMED",
+                  "%s: findings[%d] status %r is not open/fixed/accepted" % (path, i, f.get("status")))
+            continue
+        if sev in BLOCKING and state in OPEN_STATES:
+            unresolved.append("%s: %s" % (sev, str(f.get("claim", "?"))[:80]))
+        if state == "accepted" and not str(f.get("accepted_by", "")).strip():
+            _fail(out, "UNSIGNED_ACCEPTANCE",
+                  "%s: findings[%d] is accepted with no accepted_by — accepting a finding is a "
+                  "decision someone owns" % (path, i))
+
+    for u in unresolved:
+        _fail(out, "FINDING_OPEN", "%s — fix it, or accept it explicitly with accepted_by" % u)
+
+    verdict = str(rec.get("verdict", "")).strip().lower()
+    if verdict != "ship":
+        _fail(out, "VERDICT_NOT_SHIP",
+              "%s: verdict is %r — the reviewer did not clear this for release"
+              % (path, rec.get("verdict")))
+
+    # Not a block: a genuinely clean change exists. But one round that found nothing, on a large
+    # diff, is more often a shallow review than a flawless one — so say so.
+    if _round((path, rec)) <= 1 and not findings:
+        warnings.append(
+            "[warn] SHALLOW_REVIEW: %s is round 1 with zero findings. That happens, but it is also "
+            "what a review that did not really run looks like." % path)
+
+    return out, warnings
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--change", default=".hitl/current-change.yaml")
+    ap.add_argument("--reviews", default=".hitl/reviews")
+    ap.add_argument("--sha", default=None, help="commit under review (default: HEAD)")
+    ap.add_argument("--root", default=".")
+    args = ap.parse_args(argv)
+
+    try:
+        blocks, warns = check(args.change, args.reviews, args.sha, args.root)
+    except Exception as exc:  # never fail open on an unexpected error
+        sys.stderr.write("[BLOCK] MALFORMED: unexpected error verifying the review gate: %s\n" % exc)
+        return 2
+
+    for w in warns:
+        print(w)
+    for b in blocks:
+        print(b)
+    if blocks:
+        print("\nRelease gate: BLOCKED. An adversarial review of the exact code being shipped is "
+              "required before publishing.")
+        return 2
+    print("Release gate: adversarial review present, fresh, and cleared.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

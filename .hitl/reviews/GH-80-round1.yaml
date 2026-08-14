@@ -1,0 +1,19 @@
+schema_version: "1.0"
+change_id: "GH-80"
+round: 1
+reviewed_sha: "a5af9f332a84fcda9063b4e497295b7dd979c6e7"
+scope: "release workflow + adversarial gate, feat/80-release-workflow"
+reviewer:
+  model: "fable"
+  context: clean
+  spawned_by: "Agent(subagent_type=general-purpose, model=fable)"
+  brief: "Refute that the gate is enforceable; attack freshness, self-review, malformed records"
+stance: refute
+findings:
+  - id: F1
+    severity: MEDIUM
+    claim: "The gate cannot prove independence — reviewer.context is an attestation"
+    reproduction: "Read ci/adversarial/check_review.py docstring; no mechanism verifies context"
+    status: accepted
+    accepted_by: "documented limitation, stated in the validator docstring and template"
+verdict: ship

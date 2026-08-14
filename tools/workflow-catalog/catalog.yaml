@@ -166,6 +166,104 @@ workflows:
   # Its own short spine (no code, no TDD) with a domain-routed reviewer gate.
   # Chosen only when a change touches nothing but docs; mixed changes use the
   # delivery spine. See docs/design/workflow-model/01-design.md §4.
+  release:
+    title: "Release — publish a version to users"
+    phases:
+    - Prepare
+    - Verify
+    - Gate
+    - Publish
+    - Confirm
+    steps:
+    - key: rc_scope
+      name: Determine Release Scope
+      label: Scope
+      phase: Prepare
+      command: manual
+      role: Dev
+      crit: standard
+    - key: changelog
+      name: Write Release Notes
+      label: Notes
+      phase: Prepare
+      command: manual
+      role: Dev
+      crit: standard
+    - key: version_bump
+      name: Bump Version
+      label: Bump
+      phase: Prepare
+      command: manual
+      role: Dev
+      crit: standard
+    - key: gates
+      name: Run Test and Lint Gates
+      label: Gates
+      phase: Verify
+      command: dev-validate
+      role: Dev
+      crit: floor
+      no_omit: true
+    - key: adversarial_review
+      name: Independent Adversarial Review
+      label: Adversarial
+      phase: Gate
+      command: manual
+      role: Architect
+      crit: floor
+      no_omit: true
+    - key: resolve_findings
+      name: Resolve or Accept Findings
+      label: Resolve
+      phase: Gate
+      command: manual
+      role: Dev
+      crit: floor
+    - key: build
+      name: Build the Package
+      label: Build
+      phase: Publish
+      command: manual
+      role: Ops
+      crit: standard
+    - key: publish
+      name: Publish to Users
+      label: Publish
+      phase: Publish
+      command: manual
+      role: Ops
+      crit: floor
+      no_omit: true
+    - key: tag
+      name: Tag the Source
+      label: Tag
+      phase: Publish
+      command: manual
+      role: Ops
+      crit: standard
+    - key: install_verify
+      name: Verify the Published Artifact
+      label: Verify
+      phase: Confirm
+      command: manual
+      role: Ops
+      crit: floor
+      no_omit: true
+    - key: announce
+      name: Announce
+      label: Announce
+      phase: Confirm
+      command: manual
+      role: PM
+      crit: ceremony
+    - key: retire
+      name: Retire Change Artifacts
+      label: Retire
+      phase: Confirm
+      command: manual
+      role: Dev
+      crit: standard
+
   docs:
     title: "Docs — a documentation-only change"
     phases: [Docs Change]

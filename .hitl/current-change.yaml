@@ -1,0 +1,34 @@
+schema_version: "2.0"
+change_id: "GH-80"
+tier: 2
+status: "implementation-approved"
+expected_branch: "feat/80-release-workflow"
+first_pass: false
+source_artifacts:
+  issue: "https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/80"
+  hld: "n/a"
+  lld: "n/a"
+allowed_paths:
+  - "tools/workflow-catalog/"
+  - "ci/adversarial/"
+  - "ai/shared/"
+  - "ai/claude/"
+  - "docs/"
+manifest:
+  domains:
+    - name: "release-governance"
+      paths:
+        - "tools/workflow-catalog/"
+        - "ci/adversarial/"
+        - "ai/shared/"
+        - "ai/claude/"
+workflow:
+  id: development
+  steps:
+    - {n: 1, key: "issue", name: "GitHub Issue", phase: "Requirements", status: "done"}
+    - {n: 2, key: "impact", name: "Impact Analysis", phase: "Design", status: "done"}
+    - {n: 3, key: "red", name: "Write Failing Test", phase: "Build", status: "current"}
+    - {n: 4, key: "green", name: "Make It Pass", phase: "Build", status: "open"}
+    - {n: 5, key: "conventions", name: "Conventions Check", phase: "Build", status: "open"}
+    - {n: 6, key: "deploy", name: "Deploy", phase: "Ship", status: "open"}
+    - {n: 7, key: "promote", name: "Promote", phase: "Ship", status: "open"}
