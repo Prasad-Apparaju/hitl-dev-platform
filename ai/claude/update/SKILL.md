@@ -53,6 +53,28 @@ claude plugin update hitl@hitl
 
 ---
 
+## Step 2.5 — Re-read this skill from the version you just installed
+
+**Do this before anything else, unconditionally.** You are executing the `SKILL.md` that was loaded
+when the command started — the version you are updating *from*. Step 2 has just installed a
+different one, whose `dev-update` may fix or change every step below. If you continue from the copy
+in your context, a fix that ships **inside** `dev-update` never runs on the update that delivers it;
+it waits for the next release. Worse, a step that was later found to be *unsafe* still runs.
+
+This step is deliberately placed before the version comparison, because both of its outcomes jump
+onward and would skip anything after them.
+
+```bash
+NEW_SKILL=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(os.path.join(i['installPath'],'skills/dev-update/SKILL.md')) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+echo "$NEW_SKILL"
+```
+
+**Read that file now, and execute its steps from Step 3 onward instead of the ones in your
+context.** Where the two differ, the file wins — it is the version the user just chose to install.
+If the path is empty or unreadable, say so and continue with the steps you have.
+
+---
+
 ## Step 3 — Read the new version
 
 Run:
@@ -97,22 +119,6 @@ Stopping here was a real defect. Steps 3b and 4.x do not update the plugin; they
 
 If it changed after the cache bust, continue to Step 4.
 
-### Re-read the rest of this skill from the version you just installed
-
-**This matters whenever the update changed this skill.** You are executing the SKILL.md that was loaded when the command started — the *old* one. Step 2 has since installed a new plugin, whose `dev-update` may add or change the steps below. Left alone, a fix that ships **in** dev-update never runs on the update that delivers it; it waits for the next one.
-
-So before continuing, read the newly installed copy and follow **its** Steps 3b onward instead of the ones in your context:
-
-```bash
-NEW_ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
-echo "$NEW_ROOT/skills/dev-update/SKILL.md"
-```
-
-Read that file. If its steps differ from what you have, **follow the file, not your context.** If it cannot be read, say so and continue with the steps you have.
-
-Show: "Updated: **v\<old\>** → **v\<new\>**"
-
-Then show the relevant `## [<new-version>]` section from `CHANGELOG.md` in the plugin directory. If `CHANGELOG.md` is not present, say: "Full release notes: https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/CHANGELOG.md"
 
 ---
 
@@ -251,9 +257,12 @@ else
     while IFS= read -r stale; do
       [[ -f "$stale" && ! -L "$stale" ]] || continue
       git ls-files --error-unmatch "$stale" >/dev/null 2>&1 || continue   # untracked => not ours
-      h=$(shasum -a 256 "$stale" 2>/dev/null | awk '{print $1}')
-      [[ -n "$h" ]] || continue
-      if grep -qi "^$h  " "$HASHES"; then
+      if command -v shasum >/dev/null 2>&1; then h=$(shasum -a 256 "$stale" | awk '{print $1}')
+      elif command -v sha256sum >/dev/null 2>&1; then h=$(sha256sum "$stale" | awk '{print $1}')
+      else echo "  (no sha256 tool — skipping stale-test cleanup; nothing was deleted)"; break; fi
+      # Match hash AND basename: the manifest is hash->basename, so hash alone would let content
+      # shipped as file A delete a file at path B.
+      if grep -qi "^$h  $(basename "$stale")$" "$HASHES"; then
         git rm -q --cached "$stale" 2>/dev/null || true
         if rm -f "$stale" 2>/dev/null && [[ ! -e "$stale" ]]; then removed+=("$stale"); fi
       else

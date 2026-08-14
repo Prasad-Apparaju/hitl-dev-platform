@@ -16,6 +16,7 @@ So these now execute the real `hitl_copy_tools` out of init-project.sh, in bash,
 actually lands on disk. A guard that cannot fail is worse than no guard.
 """
 import io
+import re
 import os
 import subprocess
 import sys
@@ -124,12 +125,24 @@ def test_dev_update_cleanup_is_reachable_when_already_on_the_latest_version():
     assert "do not stop" in text.lower(), "Step 3 must continue to the re-sync steps"
 
 
-def test_dev_update_rereads_itself_after_updating():
-    """A fix shipped IN dev-update must run on the update that delivers it, not the next one."""
+def test_dev_update_rereads_itself_before_any_jump_instruction():
+    """A fix shipped IN dev-update must run on the update that delivers it, not the next one.
+
+    Placement is the whole property. The re-read first sat inside Step 3, *after* both
+    "continue to Step 4" sentences — so a model following instructions literally jumps past it and
+    keeps executing the old, in-context steps. Asserting the text exists is not enough; assert it
+    comes before anything that jumps.
+    """
     text = io.open(UPDATE_SKILL, encoding="utf-8").read()
     assert "skills/dev-update/SKILL.md" in text, (
-        "dev-update must re-read its own newly installed copy after Step 2")
-    assert "follow the file, not your context" in text.lower()
+        "dev-update must re-read its own newly installed copy after updating")
+
+    reread = text.find("Re-read this skill from the version you just installed")
+    assert reread != -1, "the re-read step is missing"
+    for jump in re.finditer(r"continue to Step \d", text):
+        assert jump.start() > reread, (
+            "a 'continue to Step N' jump at offset %d precedes the re-read at %d — the re-read "
+            "would be skipped" % (jump.start(), reread))
 
 
 def test_removal_list_covers_every_test_in_a_synced_directory():
@@ -174,3 +187,36 @@ def test_synced_validator_still_runs_in_a_consumer_repo(tmp_path):
                          capture_output=True, text=True)
     assert run.returncode == 2, "the synced validator must still fail closed:\n%s" % (
         run.stdout + run.stderr)
+
+
+def test_real_onboarding_end_to_end_delivers_nothing_unrunnable(tmp_path):
+    """Run the actual onboarding script and scan the WHOLE target.
+
+    Every string- and shape-based guard above is evadable: a reviewer reintroduced #29 by writing
+    `cp -R` (which the `cp -r` check missed) plus a comment containing the literal
+    `hitl_copy_tools "$PLATFORM_ROOT/ci/manifest-drift"` (which satisfied the routing check) — and
+    all 61 wiring tests stayed green. Only running the real script and looking at what lands on
+    disk closes that, so this is the guard of last resort: no source inspection, just the result.
+    """
+    init = os.path.join(ROOT, "tools", "scripts", "init-project.sh")
+    target = tmp_path / "proj"
+    target.mkdir()
+    p = subprocess.run(["bash", init, str(target), "--tool", "claude"],
+                       capture_output=True, text=True)
+    assert p.returncode == 0, "onboarding failed:\n%s" % (p.stdout + p.stderr)[-3000:]
+
+    offenders = []
+    for base, dirs, files in os.walk(str(target)):
+        if ".git" in base.split(os.sep):
+            continue
+        if os.path.basename(base) == "__pycache__":
+            offenders.append(os.path.relpath(base, str(target)))
+            continue
+        for f in files:
+            if f.startswith("test_") or f == "conftest.py" or f.endswith(".pyc"):
+                offenders.append(os.path.relpath(os.path.join(base, f), str(target)))
+    assert not offenders, "onboarding delivered files a consumer cannot run: %s" % sorted(offenders)
+
+    # And it must still have delivered something — "copy nothing" would pass the check above.
+    assert (target / "ci" / "first-pass" / "check_skips.py").is_file(), \
+        "onboarding delivered no validator at all"
