@@ -11,7 +11,7 @@ docs/session-logs/
 # wholesale — as this repo used to — disables handoff, the ledger, and that gate in one line.
 # Only transient working files belong here:
 .hitl/*.tmp
-.hitl/current-change.yaml.migrated
+.hitl/*.migrated
 .hitl/first-pass-choices.json
 .hitl/backups/
 

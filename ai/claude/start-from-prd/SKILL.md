@@ -105,7 +105,7 @@ If not:
    # `.hitl/` itself is COMMITTED — current-change.yaml is the handoff record and the first-pass CI
    # gate reads it from the checkout. Only transient working files are ignored (note `.hitl/backups/`
    # is where ops-backup-database writes database dumps).
-   grep -q "first-pass-choices" .gitignore 2>/dev/null || printf '\n# HITL transient working state — the change file and skip ledger ARE committed\n.hitl/*.tmp\n.hitl/current-change.yaml.migrated\n.hitl/first-pass-choices.json\n.hitl/backups/\n' >> .gitignore
+   grep -q "first-pass-choices" .gitignore 2>/dev/null || printf '\n# HITL transient working state — the change file and skip ledger ARE committed\n.hitl/*.tmp\n.hitl/*.migrated\n.hitl/first-pass-choices.json\n.hitl/backups/\n' >> .gitignore
    ```
 
 5. Copy default ADR stubs into `docs/02-design/technical/adrs/` — skip any file that already exists (never overwrite existing ADRs):
