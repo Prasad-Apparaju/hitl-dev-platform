@@ -245,6 +245,13 @@ hitl_intake_directive() {
 
   Run  /hitl:dev-start-change  to do all of this. You may freely discuss and create
   the issue first — just don't start editing files until a change is active.
+
+  If the user seems unfamiliar with HITL, say this to them in your own words before
+  anything else — everything above is addressed to you, not to them:
+
+    This project uses HITL, so work starts by agreeing what we're changing and how
+    far to take it. Run /hitl:dev-start-change and I'll walk you through it. For
+    the tour, see /hitl:help or the getting-started guide.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DIRECTIVE
 }

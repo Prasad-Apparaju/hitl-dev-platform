@@ -98,12 +98,27 @@ fi
 # ---- Shared: CLAUDE.md ----
 
 CLAUDE_DEST="$TARGET_DIR/CLAUDE.md"
+HITL_BLOCK="$PLATFORM_ROOT/ai/shared/templates/claude-md-hitl-block.md"
+
+# An existing CLAUDE.md used to be skipped outright, which meant every real project — they all
+# already have one — ended up with NOTHING in the repo saying HITL was in use. A developer who had
+# not installed the plugin then had no way to find out it existed. So: never overwrite their file,
+# but always ensure the managed block is present and current.
+hitl_upsert_claude_block() {
+  local dest="$1" block="$2"
+  local script="$PLATFORM_ROOT/tools/hitl-onboarding/ensure_claude_block.py"
+  [[ -f "$script" ]] || { echo "  WARNING: ensure_claude_block.py not found — skipping"; return 0; }
+  python3 "$script" "$dest" "$block" || true   # exit 3 (truncated block) is a warning, not a failure
+}
+
 if [[ -f "$CLAUDE_DEST" ]]; then
-  echo "  CLAUDE.md already exists — skipping"
+  echo "  CLAUDE.md already exists — keeping it"
+  hitl_upsert_claude_block "$CLAUDE_DEST" "$HITL_BLOCK"
 else
   TMPL="$PLATFORM_ROOT/ai/claude/generate-docs/templates/CLAUDE.md.template"
   if [[ -f "$TMPL" ]]; then
     cp "$TMPL" "$CLAUDE_DEST"
+    hitl_upsert_claude_block "$CLAUDE_DEST" "$HITL_BLOCK"
     echo "✓ CLAUDE.md — customize with your project's coding standards"
   else
     echo "  WARNING: CLAUDE.md template not found at $TMPL"
