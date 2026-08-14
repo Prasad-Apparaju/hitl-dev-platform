@@ -13,7 +13,9 @@
 | `announcements/` | Release announcements written for users, not contributors: what shipped, what it changes, how to use it |
 | `images/` | SVG and PNG assets used by the docs |
 | `validation-guide.md` | Independent-reviewer / Codex guide to verifying a release: requirement→design→test map plus the exact checks to run |
-| `quick-start.md` | Step-by-step setup for new and existing projects |
+| `getting-started.md` | **Start here if you're a developer on a project that uses HITL.** One change walked end to end: the one command you need, what the breadcrumb means, and how to run a lighter process on small work |
+| `usage-guide.md` | Scenario reference: new project, brownfield, migration, enhancement, bug fix, incident |
+| `quick-start.md` | Setup for a *new* project, from the platform repo (see the note at its top — if you installed via `claude plugin install`, use `getting-started.md`) |
 | `customization-guide.md` | Full command-to-file map — where to edit every skill, agent, hook, and template |
 | `reference.md` | Quick reference card for commands and workflow steps |
 

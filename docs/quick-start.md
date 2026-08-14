@@ -1,6 +1,13 @@
 # HITL Quick Start
 
-> **AI tool note:** This guide uses Claude Code as the primary example. Codex CLI is fully supported — pass `--tool codex` or `--tool both` to `init-project.sh`.
+> **Are you in the right place?** This page covers **setting up a project from a clone of the platform repo**. Two other pages are probably what you want:
+>
+> - **A developer working on a project that already uses HITL** → [getting-started.md](getting-started.md)
+> - **Installing HITL as a plugin** (the normal route) → `claude plugin marketplace add pappar/hitl-claude-plugin` then `claude plugin install hitl@hitl`, and see [getting-started.md](getting-started.md)
+>
+> The fork-and-clone flow below is for platform contributors and for teams vendoring HITL, not for everyday use.
+
+> **AI tool note:** This guide uses Claude Code as the primary example. Codex CLI support exists but is **not currently maintained** — prefer `--tool claude`.
 
 > **Language note:** Convention enforcement (semgrep rules, manifest drift checker) currently targets Python codebases. The process and doc workflow are language-agnostic.
 

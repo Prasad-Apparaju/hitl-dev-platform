@@ -16,20 +16,24 @@ Do not assume Developer mode by default.
 
 ## Getting Started
 
-If this is the first time working in this project (no `docs/02-design/` content, no `.hitl/current-change.yaml`, or the user asks "where do I start" / "what should I do first"), proactively offer the right start command based on the project situation:
+**This project uses HITL.** Delivery follows a defined, recorded process rather than an improvised one. `/hitl:dev-start-change` is the front door for every piece of work — features, bug fixes, refactors, spikes.
+
+If the user seems new to HITL, has not stated a role, or asks any form of "where do I start" / "what should I do first" / "what is this", tell them plainly that the project uses HITL, point them at `/hitl:dev-start-change`, and mention `/hitl:help` for the full command directory and [the getting-started guide](https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md) if they want the walkthrough. Do not wait to be asked — a developer who does not know HITL is here will work around it without meaning to.
+
+For **project-level** setup (as opposed to starting a change), offer the right one:
 
 - `/hitl:dev-start-from-prd` — new project, no source code yet, starting from a PRD
 - `/hitl:dev-start-brownfield` — existing codebase to onboard into HITL
 - `/hitl:dev-start-migration` — migrating from one system to another
 
-Do not wait for the user to discover these on their own. Assess the project state and recommend the right one immediately if the project appears unconfigured.
+Assess the project state and recommend the right one immediately if the project appears unconfigured.
 
 ## Preflight Check (MANDATORY)
 
 Before making ANY code or doc change, output these 7 lines in the chat BEFORE the first state-modifying tool call:
 
 1. **Issue**: Is there a GitHub issue? If no → `gh issue create` now.
-2. **Workflow**: Have I run `/hitl:apply-change`? If no → run it now.
+2. **Workflow**: Have I run `/hitl:dev-start-change`? If no → run it now.
 3. **Docs**: Does HLD/LLD/ADR cover this change? If no → update BEFORE code.
 4. **ROI estimate**: Change costs >1 day? If yes → record in `.hitl/current-change.yaml` under `roi_estimate`; post a pointer comment on the issue.
 5. **Training plan**: Introduces a new capability? If yes → stub required. If no → say so explicitly.
@@ -40,7 +44,7 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 ## Development Practices
 
-Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev-practices` and follow its 31-step workflow. For structured impact analysis and test planning, use `/hitl:apply-change`.
+Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev-practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/hitl:dev-apply-change`.
 
 ## Validation (Mandatory — no exceptions)
 
