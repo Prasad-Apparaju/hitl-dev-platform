@@ -218,25 +218,46 @@ else
     echo "  ✓ ci/manifest-drift/ refreshed"
   fi
   # Remove dev-repo test suites that earlier versions synced in (plugin issue #29). They resolve
-  # paths like ai/shared/workflows.yaml that exist only in the platform repo, so in a product repo
-  # they fail on collection and block the consumer's CI. Deleting by EXACT shipped filename, never
-  # a test_*.py glob — a team's own tests in these directories must survive.
-  removed=0
-  for stale in \
-    ci/first-pass/test_check_skips.py ci/first-pass/test_driver_e2e.py ci/first-pass/test_first_pass_lib.py \
-    ci/manifest-agentic/test_check_manifest_agentic.py ci/manifest-agentic/test_schema_and_examples.py \
-    tools/manifest-agentic/test_gen_baseline_evals.py tools/manifest-agentic/test_generate_views.py \
-    ci/manifest-drift/test_check_manifest_drift.py \
-    ci/agentic-advisor/test_advisor_e2e.py ci/agentic-advisor/test_catalog_lint.py \
-    ci/agentic-advisor/test_compose.py ci/agentic-advisor/test_records.py \
-    ci/agentic-advisor/test_render_map.py; do
-    if [[ -f "$stale" ]]; then
-      git rm -q --cached "$stale" 2>/dev/null || true
-      rm -f "$stale"
-      removed=$((removed + 1))
-    fi
-  done
-  [[ $removed -gt 0 ]] && echo "  ✓ removed $removed stale HITL test file(s) that could not run in this repo"
+  # paths that exist only in the platform repo, so in a product repo they fail on collection and
+  # block the consumer's CI.
+  #
+  # A filename is NOT evidence of authorship. A team writing tests for the shipped validator
+  # check_skips.py names theirs test_check_skips.py — pytest convention — and this very step, by
+  # removing the shipped tests, invites them to. Deleting on name alone destroys that file with no
+  # recovery path when it is untracked. So a file is removed only when it is BOTH tracked in this
+  # repo AND hashes to a version HITL actually shipped. Anything else is reported, never deleted.
+  HASHES="$ROOT/shared/ci/retired-tests.sha256"
+  if [[ -f "ai/claude/start-change/SKILL.md" ]]; then
+    :  # This is the HITL platform repo itself, where these tests are the real suite. Never touch them.
+  elif [[ ! -f "$HASHES" ]]; then
+    echo "  (no retired-test manifest in this plugin build — skipping stale-test cleanup)"
+  else
+    removed=(); kept=()
+    while IFS= read -r stale; do
+      [[ -f "$stale" && ! -L "$stale" ]] || continue
+      git ls-files --error-unmatch "$stale" >/dev/null 2>&1 || continue   # untracked => not ours
+      h=$(shasum -a 256 "$stale" 2>/dev/null | awk '{print $1}')
+      [[ -n "$h" ]] || continue
+      if grep -qi "^$h  " "$HASHES"; then
+        git rm -q --cached "$stale" 2>/dev/null || true
+        if rm -f "$stale" 2>/dev/null && [[ ! -e "$stale" ]]; then removed+=("$stale"); fi
+      else
+        kept+=("$stale")
+      fi
+    done < <(printf '%s\n' \
+      ci/first-pass/test_check_skips.py ci/first-pass/test_driver_e2e.py ci/first-pass/test_first_pass_lib.py \
+      ci/manifest-agentic/test_check_manifest_agentic.py ci/manifest-agentic/test_schema_and_examples.py \
+      tools/manifest-agentic/test_gen_baseline_evals.py tools/manifest-agentic/test_generate_views.py \
+      ci/manifest-drift/test_check_manifest_drift.py \
+      ci/agentic-advisor/test_advisor_e2e.py ci/agentic-advisor/test_catalog_lint.py \
+      ci/agentic-advisor/test_compose.py ci/agentic-advisor/test_records.py \
+      ci/agentic-advisor/test_render_map.py)
+    for f in ${removed[@]+"${removed[@]}"}; do echo "  ✓ removed $f (HITL test that cannot run in this repo)"; done
+    for f in ${kept[@]+"${kept[@]}"}; do
+      echo "  • kept $f — same name as a HITL test but different content, so it is yours or you edited it." >&2
+      echo "    If it is a leftover HITL test it will fail here; delete it yourself once you have looked." >&2
+    done
+  fi
 
   # stage ONLY the paths that exist — a single `git add` over an absent optional path errors on the whole
   # pathspec and (with `|| true`) would silently stage NOTHING (codex-7).

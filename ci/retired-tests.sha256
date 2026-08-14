@@ -1,0 +1,29 @@
+# sha256 of every version of every test file HITL has ever synced into a product repo.
+#
+# dev-update deletes a stale synced test ONLY when the file is tracked in the repo AND its content
+# hashes to one of these. Name alone is not evidence of authorship: a team writing tests for the
+# shipped validator `check_skips.py` will name theirs `test_check_skips.py` by pytest convention,
+# and deleting that would destroy their work with no recovery path when it is untracked.
+#
+# A tracked file whose name matches but whose hash does not is reported, never deleted — it is
+# either a team's own file or a HITL test they have edited. Both are theirs.
+#
+# Generated from the plugin repo's history; append a line when a synced test file changes or is
+# retired. Format: <sha256>  <basename>
+eb5c23423684879aa549a06e337f22b0266c2e77387277b4d4fec6b8f5119b01  test_advisor_e2e.py
+d364a8a95ccf080e80206e8fc45ed6d3aa294db439a110cfe6c2d2e5f211fb0e  test_catalog_lint.py
+fa22f84bd91b4cbb1427c08124c639e484c0d83ad27bb22c83a0688d2f9fd266  test_check_manifest_agentic.py
+8594a332b7321ed89b1c8ed75854050db901773451a5b9e16a0157eeb61ad332  test_check_manifest_drift.py
+1fe039c2ef92e9ab8f30d0441fec7bf1fe8c1161836b06a9b57161d829db6dbb  test_check_skips.py
+6d901ad6536ac76f3be15decf2162b26f368eabd3a5ef6e62caa34c1b1cd95ca  test_check_skips.py
+adfb434cb513d3b652ac1df426618ae5792f3d60e49b6128c27bf4840fd59a57  test_check_skips.py
+b591f26c288919772d256e22c20348afe49454872789dd68504dcecf3634201a  test_compose.py
+baa8240b3900c4c152bccde0bcc57e0c783168477fc0bc19d28c735e6eafcf27  test_driver_e2e.py
+c24c87dfee41c350189e707b1f4cad948defbbd493f0d3fe389c7556c5bb25b9  test_first_pass_lib.py
+3e129c922d8e97fd093f05cde38e81889cace091f3281aef518cd2c74368d873  test_first_pass_lib.py
+d1890adfe69e7ec8abbfd9041b1f91000a3554d845fd537faa130a1df6146e78  test_first_pass_lib.py
+c64d020b01d5a7cd806dcef768f7b80d2c31173c128314f865ecff0f75717c02  test_gen_baseline_evals.py
+327709e178face88cd76c04c07476a9b4958d2b26e8f87090a307977cf0dda21  test_generate_views.py
+215d9384050f3e5a2b5cab3ce7e848ccfb75cd94d7c168c6df42e10c5e21fc0e  test_records.py
+fb10ccc5a342b9a27d614e572afbb9584bfefba633e028ac1ab943d86c1cb5d0  test_render_map.py
+769bc458619c5c01c64265fec47a317c42899fc5fd86bcc2d1a189ad5fb7405d  test_schema_and_examples.py
