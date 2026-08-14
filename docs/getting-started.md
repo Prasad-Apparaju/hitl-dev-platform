@@ -89,10 +89,10 @@ HITL shows the whole plan up front. The development workflow is 32 steps across 
 Requirements → Design → Build → Verify → Assess → Ship → Post-Ship
 ```
 
-Seeing 32 steps for a one-line bug fix is alarming the first time. Two things make it fine:
+A 32-step plan for a one-line bug fix reads heavier than it is:
 
-- Most steps are quick, and many don't apply to your change
-- You can lighten the plan before you start — see [First Pass](#first-pass-going-light) below
+- Most steps are quick, and many won't apply to your change
+- You can right-size the plan before you start — see [First Pass](#first-pass-going-light) below
 
 ### 4. Watch the breadcrumb
 
@@ -133,7 +133,7 @@ Two steps in the Build phase can never be dropped: writing the failing test (`re
 
 ## First Pass — going light
 
-The most common complaint about HITL is that it's overkill for small work. First Pass is the answer.
+A one-line fix shouldn't carry the same process as a payments migration. First Pass is how you right-size the plan, before you start rather than by quietly abandoning it halfway.
 
 When you start a change, you can lighten the plan in one pass. For each step you choose:
 
@@ -198,7 +198,7 @@ It's committed because the plan is shared. Your reviewer, your CI, and the next 
 | Switching to a different issue | `/hitl:dev-switch-context` |
 | You don't know which command | `/hitl:help` |
 | Picking up someone's half-finished change | Open the branch — the breadcrumb tells you where they stopped |
-| The plan is too heavy | Restart intake and lighten it with First Pass |
+| You want a lighter plan for this change | Restart intake and right-size it with First Pass |
 | HITL feels wrong about your change | Say so. Tier and workflow are proposals, and it records that you overrode it |
 | Plugin seems out of date | `/hitl:dev-update` |
 
