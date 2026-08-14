@@ -344,3 +344,23 @@ def test_our_own_corrupt_record_still_blocks(tmp_path):
     io.open(os.path.join(r, "GH-80-round2.yaml"), "w", encoding="utf-8").write("{[not yaml")
     blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "MALFORMED" in _codes(blocks)
+
+
+def test_built_plugin_resolves_the_skill_references(tmp_path):
+    """The defect this guards is invisible in source: paths resolve here and nowhere for a user.
+
+    Skipped when the plugin repo is not checked out beside this one.
+    """
+    plugin = os.path.abspath(os.path.join(HERE, "..", "..", "..", "hitl-claude-plugin"))
+    skill = os.path.join(plugin, "skills", "dev-adversarial-review", "SKILL.md")
+    if not os.path.isfile(skill):
+        pytest.skip("plugin repo not present")
+    body = io.open(skill, encoding="utf-8").read()
+    import re
+    bare = re.findall(r"(?<![}/\w])shared/[a-z0-9/._-]+", body)
+    assert not bare, (
+        "the built skill carries bare shared/ paths, which resolve against the user's project "
+        "rather than the plugin: %s" % sorted(set(bare)))
+    for ref in sorted(set(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/(shared/[a-z0-9/._-]+)", body))):
+        assert os.path.exists(os.path.join(plugin, ref)), (
+            "%s is referenced by the built skill but is not packaged" % ref)

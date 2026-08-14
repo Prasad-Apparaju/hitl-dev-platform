@@ -220,3 +220,22 @@ def test_real_onboarding_end_to_end_delivers_nothing_unrunnable(tmp_path):
     # And it must still have delivered something — "copy nothing" would pass the check above.
     assert (target / "ci" / "first-pass" / "check_skips.py").is_file(), \
         "onboarding delivered no validator at all"
+
+
+def test_onboarding_exposes_every_flat_skill_it_should(tmp_path):
+    """A skill onboarding never symlinks is unreachable in a dev-mode repo.
+
+    Source-tree checks miss this entirely: the skill exists, is registered, and still cannot be
+    invoked. Run the real script and look for the command.
+    """
+    init = os.path.join(ROOT, "tools", "scripts", "init-project.sh")
+    target = tmp_path / "proj"
+    target.mkdir()
+    p = subprocess.run(["bash", init, str(target), "--tool", "claude"],
+                       capture_output=True, text=True)
+    assert p.returncode == 0, (p.stdout + p.stderr)[-2000:]
+    cmds = target / ".claude" / "commands"
+    assert (cmds / "adversarial-review.md").exists(), (
+        "the adversarial-review command is not exposed; onboarded repos cannot run it")
+    assert (target / "ci" / "adversarial" / "check_review.py").is_file(), (
+        "the release gate validator was not installed")
