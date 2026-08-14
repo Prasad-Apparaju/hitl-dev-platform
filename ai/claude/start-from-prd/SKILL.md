@@ -6,6 +6,15 @@ disable-model-invocation: true
 
 # Start a New Project (PRD)
 
+## Contents
+
+- [Step 0 — Wire up HITL hooks](#step-0--wire-up-hitl-hooks-once-per-project) — also the single definition of the hook-wrapper body, referenced by the other onboarding skills
+- [Step 1 — Customize CLAUDE.md](#step-1--customize-claudemd)
+- [Step 2 — Initialize the system manifest](#step-2--initialize-the-system-manifest)
+- [Step 3 — Create your first GitHub issue](#step-3--create-your-first-github-issue)
+- [Step 4 — Confirm ready](#step-4--confirm-ready)
+- [Step 5 — Generate the platform roadmap](#step-5--generate-the-platform-roadmap)
+
 Setting up a new greenfield project for HITL AI-Driven Development. Work through these steps in order — pause after each and wait for confirmation before proceeding.
 
 **Quick sanity check:** If this codebase already has substantial source code, you likely want `/hitl:dev-start-brownfield` instead. If you are migrating from one system to another, use `/hitl:dev-start-migration`. Say so if either applies.

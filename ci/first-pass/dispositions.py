@@ -6,7 +6,15 @@ default (CR-1: doing nothing runs the full plan), with one bounded exception: at
 step may be presented pre-marked `decline` (CR-1 as amended 2026-08-13). `standard`, `floor` and
 `no_omit` keep `keep` as the default at every tier, and nothing is written before a human confirms.
 The floor routes to a risk-accept path (ack + waiver, §7). A no_omit step (TDD) may be thinned to a
-starter but never deferred/declined."""
+starter but never deferred/declined.
+
+TWO VOCABULARIES — read this before using either function. `allowed_dispositions()` returns MENU
+options, which include `risk_accept` (what a human REQUESTS for a floor step). `is_allowed()`
+validates LEDGER dispositions, which are only defer/decline/starter — a floor skip is RECORDED as a
+decline carrying `ack_by`, and check_skips enforces that ack. So `is_allowed(deploy, 2, "decline")`
+is True while `"decline"` is absent from that step's menu, and `is_allowed(..., "risk_accept")` is
+False while it IS on the menu. Both are correct; they answer different questions. Validate a written
+record with `is_allowed`, present choices with `allowed_dispositions`."""
 from __future__ import annotations
 import os
 import sys
