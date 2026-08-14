@@ -210,6 +210,18 @@ At each canary step, verify all go/no-go criteria from the approved plan (Risk-R
 - **To roll back:** run `/hitl:ops-rollback` — assesses side effects (including data written since deployment), presents rollback plan, requires `ROLLBACK` confirmation. If a database migration ran and has no rollback migration, it delegates to `/hitl:ops-backup-database restore` to restore from the pre-migration snapshot.
 - **After final promotion — required for all Tier 2+ changes:** run `/hitl:ops-post-deploy-monitor <change-ID>`. Soak duration is risk-scaled: Low 1h (check every 30m), Medium 4h (every 1h), High 12h (every 2h), Critical 24h (every 4h). The change is **not complete** until this produces a STABLE verdict. A WATCH verdict requires a follow-up check. A ROLLBACK verdict triggers `/hitl:ops-rollback`.
 
+**Retire the change's working artifacts here**, once the soak returns STABLE. This is the last step that needs them, and nothing after it does — the 30- and 90-day ROI checks read `roi_estimate`, which lives in the ADR's Actual Outcome by then.
+
+```bash
+git rm -q --cached .hitl/current-change.yaml 2>/dev/null || true
+rm -f .hitl/current-change.yaml
+git rm -q --cached .hitl/*.md 2>/dev/null || true      # handoff notes, next-steps, review briefs
+```
+
+**Do not touch `.hitl/skip-ledger.yaml`.** It is the durable cross-change record (CR-10) and must survive every change — it is what lets a later change in the same area resurface what this one lightened.
+
+Why retire rather than archive: the change file is one-per-active-change and the next intake overwrites it, so keeping copies on `main` accumulates state nobody reads while the real history is already in git. Handoff prose is working material for the branch it was written on. Leaving both behind is how a `.hitl/` directory fills with a project's worth of dead context — and how two in-flight branches end up conflicting on a file neither developer edited by hand.
+
 If rollback was performed: re-open the issue, investigate root cause, and re-run from the Verify PR Completeness step.
 
 > **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect — open a GitHub issue, fix it, and re-run from the Verify PR Completeness step.

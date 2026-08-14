@@ -66,29 +66,7 @@ Check whether `.hitl/hooks/` already exists.
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these nine hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — survives plugin updates, reinstalls, and version bumps:
-   ```bash
-   #!/usr/bin/env bash
-   PLUGIN_ROOT=$(python3 -c "
-   import json,os,sys
-   try:
-     d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
-     for inst in d.get('plugins',{}).get('hitl@hitl',[]):
-       p=inst.get('installPath','')
-       if os.path.isfile(os.path.join(p,'.claude-plugin/plugin.json')):
-         print(p);sys.exit(0)
-   except:pass
-   try:
-     d=json.load(open(os.path.expanduser('~/.claude/settings.json')))
-     for p in d.get('plugins',[]):
-       path=p if isinstance(p,str) else p.get('path','')
-       if os.path.isfile(os.path.join(path,'.claude-plugin/plugin.json')):
-         print(path);sys.exit(0)
-   except:pass
-   " 2>/dev/null)
-   [[ -z "$PLUGIN_ROOT" ]] && exit 0
-   exec bash "$PLUGIN_ROOT/hooks/<name>.sh" "$@"
-   ```
+2. Create `.hitl/hooks/` and write a wrapper for each of these nine hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — surviving plugin updates, reinstalls and version bumps. **Use the wrapper body from Step 0 of [`/hitl:dev-start-from-prd`](../start-from-prd/SKILL.md) verbatim; it is the single definition.** It resolves a working interpreter before use (on Windows `python3` is the Microsoft Store stub — on PATH, runs nothing), exports `HITL_PY`/`PYTHONUTF8` so hooks do not re-probe or crash on the breadcrumb glyphs, then execs the real hook from the plugin. Copying it into this skill is how it drifted before: three copies, two of them stale, shipping hooks that silently no-op.
    Replace `<name>` with the hook name for each file. Run `chmod 750` on each file.
 
 3. Create `.claude/settings.json` only if it does not already exist:

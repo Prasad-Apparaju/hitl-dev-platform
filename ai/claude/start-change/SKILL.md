@@ -92,13 +92,9 @@ Propose a tier from the issue and say why, then **wait for a human to confirm or
 seed a change without one. Tier decides which steps may be lightened at all, and nothing downstream
 re-checks the declaration against what the change actually touches.
 
-Where the protection actually changes, from the catalog:
-
-| Boundary | What stops being `floor` |
-|---|---|
-| **3 → 2** | `impact`, `packet`, `arch_review`, `qa_verify`, `rollout` — five steps at once |
-| **2 → 1** | `integration_verify` |
-| any tier | `deploy` and `promote` stay `floor` — they never demote |
+Where protection actually changes, from the catalog: **3 → 2** takes `impact`, `packet`,
+`arch_review`, `qa_verify` and `rollout` off `floor` in one move; **2 → 1** moves only
+`integration_verify`; `deploy` and `promote` never demote.
 
 So **declaring 2 instead of 3 is the consequential call**, and it is the one the tooling does not
 guard: tier 2 is the generator's default and needs no attribution. Treat the 3 → 2 decision as the
@@ -281,17 +277,17 @@ else:
 
 # Criticality must be resolved the SAME way the validator resolves it, so import it rather than
 # reimplement it here — two copies of this rule is how a floor step quietly becomes skippable.
-resolve_crit = has_starter = None
+resolve_crit = has_starter = is_allowed = None
 for d in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/ci/first-pass"), "ci/first-pass"):
     if os.path.isfile(os.path.join(d, "check_skips.py")):
         sys.path.insert(0, d)
         try:
-            from check_skips import resolve_crit
-            from starters import has_starter
+            from check_skips import resolve_crit; from starters import has_starter
+            from dispositions import is_allowed
         except Exception:
-            resolve_crit = has_starter = None
+            resolve_crit = has_starter = is_allowed = None
         break
-if resolve_crit is None or has_starter is None:
+if resolve_crit is None or has_starter is None or is_allowed is None:
     sys.exit("ci/first-pass not found — cannot resolve criticality or the starter registry. "
              "Run /hitl:dev-update.")
 
@@ -331,9 +327,12 @@ if os.path.isfile(choices_path):
         # `starter` is only offered for steps with a registered honest-minimal artifact. The menu says
         # so, but a menu is not an enforcement boundary — a hand-written choices file could otherwise
         # invent a starter for any step and certify clean.
+        # Registry check first — `is_allowed` subsumes it but cannot say what to do instead.
         if ch["disposition"] == "starter" and not has_starter(key):
-            sys.exit(f"'{key}' has no registered starter (see ci/first-pass/starters.py); "
-                     f"use defer or decline instead.")
+            sys.exit(f"'{key}' has no registered starter (ci/first-pass/starters.py); use defer or decline.")
+        if not is_allowed({s["key"]: s for s in cat["steps"]}[key], tier, ch["disposition"]):
+            sys.exit(f"'{ch['disposition']}' is not allowed for '{key}' at tier {tier} (see the Step 4b "
+                     f"menu; a no_omit step may only be thinned to a starter).")
         choices[key] = ch
     if choices and not actor.strip():
         sys.exit("first-pass choices need an `actor` — a skip is accountable to a person, not the agent.")
