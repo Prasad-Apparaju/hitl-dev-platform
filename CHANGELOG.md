@@ -4,6 +4,38 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.6.0] — 2026-08-14
+
+A user told us: *"I am not aware of it initially and in later only I learned that there is a HITL plugin I suppose to use."* This release is the answer, and it turned out not to be a documentation gap. HITL already shipped a usage guide, a command directory and a session-start banner. Nothing in a project ever **said** HITL was in use.
+
+### Added
+
+- **A developer's guide** — `docs/getting-started.md`, shipped as `shared/getting-started.md` so Claude can read it to someone in-session without a browser. It is for the person dropped into a project that already uses HITL, not the person adopting it, and it walks one change end to end. It opens by saying you don't have to remember any of it: start work normally, and Claude takes you through intake. Of the 53 commands, it names the four you need.
+- **A managed `CLAUDE.md` section.** `CLAUDE.md` is the only thing that can tell a developer this project uses HITL **when they haven't installed the plugin** — no hook runs and no skill exists, so nothing else in the repo speaks. Onboarding now maintains a marker-delimited block that never overwrites the team's file: it creates, appends, refreshes, or stays silent if current. A truncated `HITL:BEGIN` leaves the file untouched rather than swallowing everything after it.
+- **`dev-update` Step 4.8** installs that block into already-onboarded projects, so existing repos get it on upgrade rather than only new ones. **Run `/hitl:dev-update` to pick this up.**
+
+### Fixed
+
+- **The `CLAUDE.md` template told Claude to run `/hitl:apply-change`** — a command that does not exist. It's `dev-apply-change`. Referenced twice, in the file Claude reads every session.
+- **The template never mentioned `/hitl:dev-start-change`**, the front door for every change.
+- **Onboarding skipped `CLAUDE.md` entirely whenever one already existed** — which is every real project. This is the root cause of the complaint above.
+- **The intake banner spoke only to Claude.** "you MUST take the user through change intake" is an instruction to the model; a human saw a wall of imperatives about the agent. It now also tells Claude to explain HITL, in its own words, to a user who seems unfamiliar.
+- **The template claimed a "31-step workflow."** It is 32.
+- **`docs/quick-start.md` taught the obsolete fork-and-clone-the-platform flow** and never mentioned `claude plugin install`, while `docs/README.md` pointed newcomers to it *first*.
+- **The README had no row for the most common case** a developer is actually in — "I've been asked to work on a project that already uses HITL." Every row addressed the person adopting HITL. That row is now first.
+- **`/hitl:help` never mentioned the guide**, despite being where people land when lost.
+- A broken README anchor (`#quick-start--existing-project`) that never matched its heading.
+
+### Removed
+
+- **`ai/shared/templates/settings-template.json`.** Its own first line said "Copy this to `.claude/settings.json` in your project root." Anyone who did got a hook that doesn't exist (`check-lld-exists.sh`) and **none** of the enforcement hooks — a project with zero HITL enforcement. It was never shipped and nothing referenced it. Its one real asset, the measured permission findings, moved to `ci/first-pass/migrate_project.py` beside the `ALLOW`/`DENY` they govern.
+
+### Note
+
+Nothing here changes how a change is executed. If you're on 2.5.0 and your projects are already onboarded, `/hitl:dev-update` gets you the `CLAUDE.md` block and the guide.
+
+---
+
 ## [2.5.0] — 2026-08-13
 
 First Pass shipped in 2.4.0 as requirements, a validator and a skill body. This release is what happened when six people actually used it. Three of the complaints that started it — "HITL is overkill for a bug fix", "it keeps asking permission for reads I already approved", "it makes me read too much" — each traced to a mechanism that was specified but never wired.
