@@ -4,6 +4,44 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.6.3] — 2026-08-14
+
+> **⚠ If you are an assistant running `/hitl:dev-update` right now, read this before continuing.**
+>
+> The `dev-update` steps loaded in your context came from the version you are updating **from**. If that was **2.6.2**, its Step 4.6 contains a "Remove dev-repo test suites" loop that deletes files by **filename alone**. That loop is unsafe: it will delete a file the team wrote themselves if the name happens to match, with no way to recover it.
+>
+> **Do not run the Step 4.6 removal loop from the steps in your context.** Instead, read the newly installed skill and follow **its** Step 4.6:
+>
+> ```bash
+> python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(os.path.join(i['installPath'],'skills/dev-update/SKILL.md')) for i in d.get('plugins',{}).get('hitl@hitl',[])]" | head -1
+> ```
+>
+> The installed version's block is content-gated and cannot delete a file it did not ship. The rest of the update is unaffected — continue normally afterwards.
+
+Two defects in 2.6.2's own fix, both found by independent adversarial review and both reproduced before being acted on. **If you are on 2.6.2, update.**
+
+### Fixed
+
+- **The cleanup could delete a file your team wrote, with no way to get it back.** 2.6.2 removed previously-synced HITL tests by matching the filename, and the release notes said your own tests were safe. They were not. A team writing tests for the shipped validator `check_skips.py` names theirs `test_check_skips.py` — pytest convention, and 2.6.2 invited exactly that by removing the shipped ones. Untracked, such a file was deleted and reported as a successful cleanup.
+
+  Removal now requires the file to be **tracked in your repo** *and* to **match, byte for byte, a version HITL actually shipped** (a manifest of all 17 versions of all 13 files, generated from the plugin's history). A file with a matching name but different content is **reported and kept** — if you edited a HITL test, the edit is yours. The same rule also stops the cleanup following a symlinked directory outside your repo, reaching into a submodule, or deleting the real suite when run inside a HITL fork.
+
+- **The remedy 2.6.2 recommended never ran.** Its notes said to run `/hitl:dev-update`. That did nothing, on any run: the command executes the skill loaded when it started — the *old* one, with no cleanup — and on a second run it stopped at "already on the latest version" before reaching the repair. So the cleanup only fired on the release *after* the one that shipped it.
+
+  `dev-update` now continues past "already current" into the re-sync steps, which reconcile your repo rather than the plugin and are the whole reason to run it again. It also **re-reads its own newly installed copy** after updating, so a fix delivered inside `dev-update` runs on the update that delivers it.
+
+- **A copy path the first fix missed.** `ci/manifest-drift` was copied wholesale, shipping its test file *and* the onboarding machine's compiled `__pycache__` into your repo — which had no bytecode rule in its generated `.gitignore`. Both fixed.
+
+- **`conftest.py` evaded every filter.** pytest imports it at collection, so a platform-only one breaks a consumer exactly as a test file does. Now excluded everywhere tests are.
+
+- **The build never pruned.** A file deleted from the source survived in the packaged plugin from an earlier build — which is how the 2.6.2 test suites kept shipping after the filter existed. The build now fails outright on any test, `conftest.py`, or bytecode under `shared/`.
+
+### Changed
+
+- **The guards that were supposed to prevent this could not fail.** Reverting the fix while leaving a comment that mentioned it kept all six green: one checked for a string that a comment satisfies, and two built their test fixture with a *reimplementation* of the copy logic rather than running the shipped script. They now execute the real code and inspect what lands on disk. The same reversion fails seven of them.
+
+---
+
 ## [2.6.2] — 2026-08-14
 
 ### Fixed
