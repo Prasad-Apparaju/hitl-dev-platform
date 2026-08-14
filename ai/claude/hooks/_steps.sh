@@ -186,6 +186,27 @@ hitl_change_active() {
   grep -q "^current_step:" "$f" 2>/dev/null || hitl_has_workflow "$f"
 }
 
+# hitl_branch_gone <yaml> → exit 0 when the change's expected_branch no longer exists.
+#
+# The standard GitHub flow deletes the branch on merge, so a change file left behind on main
+# points at a branch that is gone. That is a CONCLUDED change, not a context mismatch — and the
+# difference matters, because "run /hitl:dev-switch-context" is useless advice for a branch nobody
+# can switch to. Without this, a merged-and-deleted change silently blocks every edit in the repo
+# with a message that cannot be acted on.
+#
+# Deliberately conservative: it must find no local branch AND no remote-tracking ref before
+# calling it gone. A branch that merely has not been fetched still counts as present, because
+# wrongly declaring a live change concluded would push someone into re-intake and lose their
+# step progress.
+hitl_branch_gone() {
+  local f="$1" expected
+  expected=$(hitl_scalar "$f" expected_branch)
+  [[ -n "$expected" ]] || return 1
+  git show-ref --verify --quiet "refs/heads/$expected" 2>/dev/null && return 1
+  git show-ref --quiet "refs/remotes/origin/$expected" 2>/dev/null && return 1
+  return 0
+}
+
 # hitl_scalar <yaml> <field> → top-level scalar (e.g. change_id, expected_branch, tier).
 # Three of its call sites are load-bearing COMPARISONS, not display: `status` decides whether a
 # change is still active, `expected_branch` decides branch reconciliation, and `change_id` feeds

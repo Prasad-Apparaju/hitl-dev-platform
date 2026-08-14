@@ -133,10 +133,20 @@ done
 CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
 if [[ "$(hitl_branch_reconcile "$CONTEXT_FILE" "$CURRENT_BRANCH")" == "mismatch" ]]; then
   CHANGE_ID=$(hitl_scalar "$CONTEXT_FILE" change_id)
-  echo "HITL CONTEXT MISMATCH: branch '${CURRENT_BRANCH}' does not match active change ${CHANGE_ID}." >&2
-  echo "All edits are blocked until the context is realigned." >&2
-  echo "  • Run /hitl:dev-switch-context to reload context for this branch." >&2
-  echo "  • Or run /hitl:dev-start-change to select the correct change." >&2
+  EXPECTED=$(hitl_scalar "$CONTEXT_FILE" expected_branch)
+  if hitl_branch_gone "$CONTEXT_FILE"; then
+    # Branch deleted on merge: the change is over, and telling someone to switch to a branch that
+    # no longer exists is advice they cannot follow. Name the real remedy instead.
+    echo "HITL: change ${CHANGE_ID} looks complete — its branch '${EXPECTED}' no longer exists." >&2
+    echo "A finished change left active blocks every edit, so close it out:" >&2
+    echo "  • Set  status: \"merged\"  in .hitl/current-change.yaml to retire it, then commit." >&2
+    echo "  • Then run /hitl:dev-start-change to begin the next piece of work." >&2
+  else
+    echo "HITL CONTEXT MISMATCH: branch '${CURRENT_BRANCH}' does not match active change ${CHANGE_ID}." >&2
+    echo "All edits are blocked until the context is realigned." >&2
+    echo "  • Run /hitl:dev-switch-context to reload context for this branch." >&2
+    echo "  • Or run /hitl:dev-start-change to select the correct change." >&2
+  fi
   exit 2
 fi
 
