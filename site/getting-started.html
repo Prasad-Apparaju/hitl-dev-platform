@@ -1,0 +1,364 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
+<title>HITL — getting started for developers</title>
+<style>
+  :root {
+    --ground: #F5F8F6;
+    --panel: #FFFFFF;
+    --ink: #1F2823;
+    --ink-soft: #52645B;
+    --line: #D6E0DA;
+    --pine: #17453B;
+    --leaf: #2E7D64;
+    --leaf-wash: #E8F0EC;
+    --gate: #A66B1F;
+    --gate-wash: #F7EEDD;
+    --code-bg: #16211C;
+    --code-ink: #DDE7E1;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115;
+      --code-bg: #0A100D; --code-ink: #D8E3DC;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+    --code-bg: #0A100D; --code-ink: #D8E3DC;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+    --code-bg: #16211C; --code-ink: #DDE7E1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.55; font-size: 15px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  .sitenav { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px; }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+
+  .brand {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--leaf); margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--display); font-size: 34px; font-weight: 600; margin: 0 0 12px;
+    letter-spacing: -0.01em; text-wrap: balance; max-width: 22ch;
+  }
+  .thesis { font-family: var(--display); font-size: 18px; color: var(--pine); margin: 0 0 14px; max-width: 60ch; }
+  .sub { color: var(--ink-soft); margin: 0 0 30px; max-width: 62ch; }
+
+  .group-label {
+    font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--leaf); margin: 40px 0 12px;
+  }
+
+  h2 { font-family: var(--display); font-size: 21px; font-weight: 600; margin: 0 0 10px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 24px 0 6px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol { max-width: 66ch; padding-left: 20px; margin: 0 0 14px; }
+  li { margin: 0 0 6px; }
+  a { color: var(--pine); }
+
+  section { scroll-margin-top: 20px; margin: 0 0 40px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px; border-top: 3px solid var(--leaf); margin: 0 0 20px;
+  }
+  .panel.attention { border-top-color: var(--gate); background: var(--gate-wash); }
+  .panel h2, .panel h3 { margin-top: 0; }
+  .panel p:last-child { margin-bottom: 0; }
+
+  .lead-cmd {
+    background: var(--leaf-wash); border: 1px solid var(--leaf); border-radius: 8px;
+    padding: 16px 18px; margin: 0 0 18px;
+  }
+  .lead-cmd code {
+    font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--pine);
+    background: none; border: 0; padding: 0;
+  }
+  .lead-cmd p { margin: 8px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  code {
+    font-family: var(--mono); font-size: 12.5px; background: var(--leaf-wash);
+    border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink); border-radius: 7px;
+    padding: 14px 16px; overflow-x: auto; margin: 0 0 16px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; color: inherit; }
+
+  .tablewrap { overflow-x: auto; margin: 0 0 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 440px; }
+  th, td { text-align: left; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700;
+  }
+  td code { white-space: nowrap; }
+
+  .trailbox {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; margin: 0 0 10px; overflow-x: auto;
+  }
+  .trailline { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; display: flex; gap: 16px; align-items: center; }
+  .trailbox a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid transparent; }
+  .trailbox a:hover { color: var(--ink); border-bottom-color: var(--leaf); }
+  .trailbox .is-here a { color: var(--ink); font-weight: 700; }
+  .g { font-weight: 700; margin-right: 4px; }
+  .g-done { color: var(--leaf); }
+  .g-here { color: var(--gate); }
+  .g-open { color: var(--ink-soft); }
+  .g-skip { color: var(--gate); }
+  .trailnote { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin: 0 0 34px; }
+  .glyphcell { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); border-top: 1px solid var(--line); padding-top: 18px; }
+  footer a { color: var(--leaf); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="getting-started.html" class="here">Getting started</a><a href="going-ai-native.html">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a><a href="https://github.com/Prasad-Apparaju/hitl-dev-platform" style="margin-left:auto" target="_blank" rel="noopener">GitHub &#8599;</a></nav>
+
+  <header>
+    <div class="brand">HITL &middot; FOR DEVELOPERS</div>
+    <h1>Your first change</h1>
+    <p class="thesis">HITL makes Claude follow your team's delivery process instead of improvising one.</p>
+    <p class="sub">You work in Claude Code exactly as before. The difference is that Claude now knows what step you're on, what has to happen before code gets written, and what can't be skipped. This page walks one change end to end.</p>
+
+    <div class="trailbox" role="img" aria-label="This guide's sections drawn as a HITL breadcrumb trail: setup done, the one command current, the rest ahead.">
+      <div class="trailline">
+        <span><span class="g g-done">&#10003;</span><a href="#setup">Setup</a></span>
+        <span class="is-here"><span class="g g-here">&#9654;</span><a href="#command">The one command</a></span>
+        <span><span class="g g-open">&middot;</span><a href="#first">First change</a></span>
+        <span><span class="g g-open">&middot;</span><a href="#light">First Pass</a></span>
+        <span><span class="g g-skip">&#8856;</span><a href="#stops">When it stops you</a></span>
+        <span><span class="g g-open">&middot;</span><a href="#keeps">What it keeps</a></span>
+      </div>
+    </div>
+    <p class="trailnote">That bar is a real HITL breadcrumb &mdash; the same one you'll see above every prompt. You already know the notation now.</p>
+  </header>
+
+  <div class="panel attention">
+    <h2>You don't have to remember any of this</h2>
+    <p>Start the way you always do. Say <em>"fix the login bug"</em> and Claude takes it from there &mdash; it already knows this project uses HITL, because the project tells it at the start of every session.</p>
+    <p>What you'll see is Claude proposing an issue and a plan before it writes code, rather than editing files immediately. Agree, and work proceeds normally. If Claude tries to edit code with no agreed change, the edit is <strong>blocked</strong>, not merely discouraged &mdash; that's the system working, not an error.</p>
+  </div>
+
+  <div class="group-label">Setup</div>
+  <section id="setup">
+    <h2>Before anything else</h2>
+    <p>Check whether the plugin is installed:</p>
+    <pre><code>/hitl:help</code></pre>
+    <p>If you get a command directory, you're set. If nothing happens, install it once per machine:</p>
+    <pre><code>claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl</code></pre>
+    <p>Restart Claude Code. That's the whole setup &mdash; it applies to every project on your machine, and the project itself needs no changes from you.</p>
+  </section>
+
+  <div class="group-label">The command worth knowing</div>
+  <section id="command">
+    <div class="lead-cmd">
+      <code>/hitl:dev-start-change</code>
+      <p>Claude offers this itself when you start work. Run it directly when you'd rather begin there &mdash; it's the front door for every piece of work: features, bug fixes, refactors, spikes.</p>
+    </div>
+
+    <p>It does four things:</p>
+    <ol>
+      <li>Helps you pick or create the issue you're working on</li>
+      <li>Picks the right workflow and sizes it &mdash; a <strong>tier</strong>, 1 to 3</li>
+      <li>Shows you the full ordered plan before anything is written</li>
+      <li>Writes <code>.hitl/current-change.yaml</code>, which is what makes Claude follow it</li>
+    </ol>
+    <p>You don't need to know which workflow or tier is right. It asks, and explains its reasoning.</p>
+
+    <h3>There are 53 HITL commands. You need four.</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Command</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td><code>/hitl:dev-start-change</code></td><td>Starting any piece of work</td></tr>
+          <tr><td><code>/hitl:help</code></td><td>You don't know which command to use</td></tr>
+          <tr><td><code>/hitl:dev-switch-context</code></td><td>Moving between issues or branches</td></tr>
+          <tr><td><code>/hitl:dev-update</code></td><td>Updating the plugin</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The other 49 are for specific roles and moments. HITL invokes what it needs. Don't memorise them &mdash; the <a href="catalog.html">full catalog</a> is there when you're curious.</p>
+  </section>
+
+  <div class="group-label">Walkthrough</div>
+  <section id="first">
+    <h2>Your first change</h2>
+    <p>Say you're fixing a bug: the invoice total is wrong when a discount applies.</p>
+
+    <h3>1. Start it</h3>
+    <p>Describe the work in your own words, or give Claude an issue number. If no issue exists, it helps you write one &mdash; that conversation is normal chat, and nothing is blocked while you have it.</p>
+
+    <h3>2. Agree on the size</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Tier</th><th>Roughly</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Contained. One area, reversible, low blast radius</td></tr>
+          <tr><td>2</td><td>Normal feature work. Crosses a boundary or touches shared code</td></tr>
+          <tr><td>3</td><td>High-stakes. Security, data migration, anything hard to undo</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>If it guesses wrong, say so &mdash; you can set the tier yourself, and HITL records that you set it and why.</p>
+
+    <h3>3. Read the plan</h3>
+    <p>HITL shows the whole plan up front. The development workflow is 32 steps across 7 phases: Requirements, Design, Build, Verify, Assess, Ship, Post-Ship.</p>
+    <p>A 32-step plan for a one-line bug fix reads heavier than it is: most steps are quick, many won't apply to your change, and you can right-size the plan before you start.</p>
+
+    <h3>4. Watch the breadcrumb</h3>
+    <pre><code>&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;
+  HITL development &#9654; BUG-412 &#9654; Requirements &#10003;  Design &#9680;  Build &#9680;  Verify &middot;
+  &#9654; Build: Write Failing Test   &middot;   tier 1
+
+  &#10003;Issue &#10003;Impact &#9680;TestPlan &#9654; Write Failing Test &middot;Green &middot;Conv &middot;Rvw1
+&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;</code></pre>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Glyph</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="glyphcell g-done">&#10003;</td><td>Done</td></tr>
+          <tr><td class="glyphcell g-here">&#9654;</td><td>You are here</td></tr>
+          <tr><td class="glyphcell g-open">&middot;</td><td>Still ahead</td></tr>
+          <tr><td class="glyphcell g-skip">&#8856;</td><td>Skipped, and recorded</td></tr>
+          <tr><td class="glyphcell g-skip">&#9680;</td><td>Started thin, needs enhancement later</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>5. Work</h3>
+    <p>Just work. Ask Claude to write the test, fix the bug, run the suite &mdash; normally. HITL advances the breadcrumb and tells you when something needs to happen first.</p>
+    <p>Two Build steps can never be dropped: writing the failing test and making it pass. You can make them thin, but not absent. That's the TDD spine.</p>
+
+    <h3>6. Ship</h3>
+    <p><code>deploy</code> and <code>promote</code> are <strong>floor</strong> steps at every tier &mdash; they can't be skipped silently. Everything before them can be lightened.</p>
+  </section>
+
+  <div class="group-label">Right-sizing</div>
+  <section id="light">
+    <h2>First Pass: going light</h2>
+    <p>A one-line fix shouldn't carry the same process as a payments migration. First Pass is how you right-size the plan &mdash; before you start, rather than by quietly abandoning it halfway.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Choice</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Do now</strong></td><td>Normal</td></tr>
+          <tr><td><strong>Starter</strong> <span class="g-skip">&#9680;</span></td><td>HITL drafts an honest minimal version now; you enhance it later</td></tr>
+          <tr><td><strong>Defer</strong></td><td>Skipped now, becomes a fast-follow ticket</td></tr>
+          <tr><td><strong>Decline</strong></td><td>Skipped deliberately, not coming back</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Three rules make this safe rather than a loophole:</p>
+    <ol>
+      <li><strong>A skip is recorded, never silent.</strong> HITL can always tell you exactly what was skipped, by whom, when, and why.</li>
+      <li><strong>There's a floor.</strong> Load-bearing steps &mdash; irreversible operations, security work at higher tiers &mdash; need an explicit acknowledgement from the accountable person. You can still proceed; you just can't do it quietly.</li>
+      <li><strong>Skips come back politely.</strong> When a later change touches the same area, HITL reminds you what was skipped there. A reminder, not a lecture.</li>
+    </ol>
+    <p>In a First Pass change Claude also talks less, and stops asking permission for routine in-scope reads and edits. Irreversible, out-of-scope and outward-facing actions still ask.</p>
+    <div class="panel">
+      <p><strong>Think of it as a thin pass through the whole thing, which you then deepen</strong> &mdash; not a faster, worse method.</p>
+    </div>
+  </section>
+
+  <div class="group-label">When it stops you</div>
+  <section id="stops">
+    <h2>Blocks are the system working</h2>
+    <p>You'll hit this at least once:</p>
+    <pre><code>HITL BLOCKED: no active change for this project/branch.</code></pre>
+    <p>It means Claude is about to edit files with no active change. Run <code>/hitl:dev-start-change</code>.</p>
+    <div class="panel attention">
+      <p>You are <strong>not</strong> blocked from talking. Discussing the problem, reading code, exploring, shaping an issue &mdash; all fine. The gate is specifically about writing code with no agreed plan.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Message</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td>Branch doesn't match the active change</td><td><code>/hitl:dev-switch-context</code></td></tr>
+          <tr><td>A change "looks complete &mdash; its branch no longer exists"</td><td>It's finished. Retire it, then start the next change</td></tr>
+          <tr><td>A step won't advance</td><td>Something the step requires hasn't happened. Claude will say what</td></tr>
+          <tr><td>A skip needs acknowledgement</td><td>You're skipping a floor step. Confirm explicitly, or pick a lighter option</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="group-label">Where it lives</div>
+  <section id="keeps">
+    <h2>What HITL keeps, and where</h2>
+    <p>Everything lives in <code>.hitl/</code> in the repo, and it is committed on purpose:</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>File</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><code>current-change.yaml</code></td><td>The active change: issue, tier, workflow, step plan, position</td></tr>
+          <tr><td><code>skip-ledger.yaml</code></td><td>The durable record of what's been skipped across changes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>It's committed because the plan is shared. Your reviewer, your CI, and the next person to touch that code can all see what was decided. Working files and scratch are ignored &mdash; only the record is kept.</p>
+
+    <h3>Common situations</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Situation</th><th>Do this</th></tr></thead>
+        <tbody>
+          <tr><td>Switching to a different issue</td><td><code>/hitl:dev-switch-context</code></td></tr>
+          <tr><td>You don't know which command</td><td><code>/hitl:help</code></td></tr>
+          <tr><td>Picking up someone's half-finished change</td><td>Open the branch &mdash; the breadcrumb shows where they stopped</td></tr>
+          <tr><td>You want a lighter plan for this change</td><td>Restart intake and right-size it with First Pass</td></tr>
+          <tr><td>HITL feels wrong about your change</td><td>Say so. Tier and workflow are proposals, and it records the override</td></tr>
+          <tr><td>Plugin seems out of date</td><td><code>/hitl:dev-update</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="group-label">In short</div>
+  <section id="honest">
+    <h2>The honest summary</h2>
+    <p>HITL is a process your team agreed to, made legible to the AI so it stops improvising a different one each session.</p>
+    <p>The cost is real: intake takes a few minutes, and some steps feel like overhead on small work. The return is that changes arrive with their requirements, design decisions, tests and review evidence attached &mdash; and that six months later, the reasoning is still there.</p>
+    <p>If it's too heavy for the work in front of you, that's what First Pass is for. Use it. Being honest about what you skipped is the point; skipping silently is the thing HITL exists to prevent.</p>
+  </section>
+
+  <footer>
+    Next: <a href="going-ai-native.html">the full walkthrough</a> &middot; <a href="architecture.html">architecture</a> &middot; <a href="catalog.html">every command</a><br>
+    Source: <a href="https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md" target="_blank" rel="noopener">docs/getting-started.md</a>
+  </footer>
+</div>
