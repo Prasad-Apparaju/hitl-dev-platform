@@ -4,6 +4,32 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.6.4] — 2026-08-14
+
+Four fixes for problems found in real upgrades of a live project, and a new release workflow that is **not yet proven** — read the note at the end before relying on it.
+
+### Fixed
+
+- **The `CLAUDE.md` section 2.6.0 introduced has never actually installed.** Its template path was built with the plugin root doubled, so it resolved nowhere — and the step reported that as *"No HITL block template in this plugin build"*, which reads like a legitimate absence rather than a broken path. Every upgrade since 2.6.0 has silently skipped it. If you upgraded and never saw the section appear, this is why. Run `/hitl:dev-update` again and it will install.
+
+- **`/hitl:dev-update` could move your change back to an earlier step and un-skip work you had deliberately skipped.** When a change file tracked its position only in the `current_step` block — the older format the migration exists to serve — the "repair" picked the first step that was not marked done, which matched *skipped* steps too. On a real project it moved a change from step 18 back to step 2 and reopened a step the team had recorded a decision about. It now trusts the position the file already recorded, and never resumes on a step you skipped. The per-step table also labelled such a change `keep`, as though the value came from your file; a changed status now reads `~ repair`.
+
+- **The same migration silently dropped steps your team had added.** Its step-matching expression never matched anything the current generator writes, so a project-authored step could vanish from the proposal and trailing comments were lost — both of which the migration explicitly promises to preserve. Statuses survived by another path, which is why this looked cosmetic.
+
+- **`statusLine` was written as a string**, which Claude Code rejects, so upgraded projects showed a settings warning in every session — and a hand-correction was overwritten on the next update.
+
+### Added — new, and not yet proven
+
+A **`release` workflow** for publishing a version to users: twelve steps, with an independent adversarial review required before publishing, and a validator that binds a review record to the exact code being shipped. Two optional review offers now appear in the development workflow at the end of Design and Build; both are the lightest class of step and declining one is recorded like any other skip.
+
+**Please treat this as new.** It has been through three rounds of independent review, each of which found real defects that have been fixed — but no round has yet come back clean, and one lens of the final round did not complete. What is unverified is whether the gate protects as thoroughly as it claims, not whether it is safe to have installed: for a project that does not use the release workflow, this adds two optional steps to the breadcrumb and one file under `ci/`. Nothing here changes how an existing change is executed.
+
+### Changed
+
+A skip that names who is accountable is now accepted whether or not the change is running First Pass, in both validators and the docs — previously an honest decline outside First Pass failed CI, and the failure message advised setting `first_pass: true`, which would have recorded something untrue. Accepting the record does not relax what is checked: such a change is now put through the full ruleset rather than exempted from it. Verified across 1,500 generated change files: nothing that passed before fails now.
+
+---
+
 ## [2.6.3] — 2026-08-14
 
 > **⚠ If you are an assistant running `/hitl:dev-update` right now, read this before continuing.**
