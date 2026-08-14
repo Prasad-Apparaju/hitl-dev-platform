@@ -1,0 +1,388 @@
+#!/usr/bin/env python3
+"""Fail-closed gate: a release must carry a fresh, independent adversarial review.
+
+    check_review.py [--change .hitl/current-change.yaml] [--reviews .hitl/reviews] [--sha <sha>]
+
+Exit 0 = clean, 2 = blocked, 1 = usage error.
+
+WHAT THIS CAN AND CANNOT DO — read before trusting it.
+
+It cannot verify that a review was genuinely adversarial, or that the reviewer was genuinely
+independent. Those are properties of an LLM's behaviour, and a record asserting them is an
+attestation, not proof. Anyone determined to fake this can.
+
+What it CAN verify is freshness, and that is the load-bearing rule: the record names the commit it
+reviewed, and the gate fails unless that matches what is about to ship. You cannot review an early
+draft, keep editing, and still pass — the record goes stale the moment the code moves. Everything
+else here is bookkeeping around that one fact.
+
+The failure this exists to prevent is specific and observed: a release was published on the
+author's own verification, and shipped a defect that destroyed user data. The point is not to prove
+a review happened; it is to make skipping one impossible to do silently.
+"""
+import argparse
+import io
+import os
+import re
+import subprocess
+import sys
+
+try:
+    import yaml
+except Exception:  # pragma: no cover - environment without PyYAML
+    sys.stderr.write("[BLOCK] MALFORMED: PyYAML is required to verify the review gate\n")
+    sys.exit(2)
+
+BLOCKING = ("CRITICAL", "HIGH")
+SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
+OPEN_STATES = ("open",)
+RESOLVED_STATES = ("fixed", "accepted")
+
+
+def _fail(findings, code, msg):
+    findings.append("[BLOCK] %s: %s" % (code, msg))
+
+
+def _head_sha(root):
+    try:
+        out = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"],
+                             capture_output=True, text=True)
+        return out.stdout.strip() if out.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+# Writing the review down is part of the procedure, and it necessarily changes the repo. Comparing
+# raw commit shas made the gate impossible to pass honestly: record the review, commit it as the
+# skill instructs, and the record you just wrote is stale. The only escapes were --sha or editing
+# reviewed_sha — i.e. the gate trained people to fake exactly what it exists to prevent.
+#
+# So freshness is about the CODE, not the commit. These paths are governance bookkeeping, not
+# shippable content, and a difference confined to them does not invalidate a review.
+# `.hitl/` is governance state, never shipped code, and `git status` reports an untracked
+# directory as `.hitl/` rather than its files — so the prefix has to cover the directory too.
+EXEMPT_PREFIXES = (".hitl/",)
+EXEMPT_PATHS = (".hitl",)
+
+
+def _exempt(p):
+    return p in EXEMPT_PATHS or any(p.startswith(x) for x in EXEMPT_PREFIXES)
+
+
+MIN_SHA = 7
+
+
+def _dirty(root):
+    """Paths modified in the working tree that would ship but were never reviewed."""
+    r = subprocess.run(["git", "-C", root, "status", "--porcelain"], capture_output=True, text=True)
+    if r.returncode != 0:
+        return []
+    out = []
+    for line in r.stdout.splitlines():
+        path = line[3:].strip()
+        if path and not _exempt(path):
+            out.append(path)
+    return out
+
+
+def _is_fresh(root, reviewed, target):
+    """(fresh, reason). Fail closed: anything we cannot determine is stale."""
+    # It must be a commit id, not any ref git will accept. A branch name resolves to whatever the
+    # branch points at TODAY, so a record naming one is permanently fresh no matter how far the code
+    # moves — and a leading dash is an option, not a ref.
+    if not re.fullmatch(r"[0-9a-fA-F]{%d,40}" % MIN_SHA, reviewed):
+        return False, ("reviewed_sha %r is not a commit id (need %d-40 hex chars). A branch or tag "
+                       "name would never go stale, which is the whole guarantee" % (reviewed, MIN_SHA))
+    if target.startswith(reviewed) or reviewed.startswith(target):
+        return True, ""
+    r = subprocess.run(["git", "-C", root, "diff", "--name-only", reviewed, target],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        # Unknown commit, shallow clone, rewritten history — never assume freshness.
+        return False, "cannot compare them in this repo"
+    changed = [l.strip() for l in r.stdout.splitlines() if l.strip()]
+    substantive = [c for c in changed if not _exempt(c)]
+    if substantive:
+        head = ", ".join(substantive[:3])
+        more = "" if len(substantive) <= 3 else " (+%d more)" % (len(substantive) - 3)
+        return False, "%s changed since%s" % (head, more)
+    return True, ""
+
+
+def _acknowledged_skip(change):
+    """The skip record that lets a release proceed with no review, or None.
+
+    Requires an owner. An unattributed acknowledgement is not an acknowledgement — it is the
+    absence of one, written down.
+    """
+    skips = change.get("skips")
+    if not isinstance(skips, list):
+        return None
+    for s in skips:
+        if not isinstance(s, dict):
+            continue
+        if str(s.get("step", "")).strip() != "adversarial_review":
+            continue
+        by = ""
+        for field in ("ack_by", "accepted_by", "authorized_by", "acknowledged_by"):
+            if str(s.get(field, "")).strip():
+                by = str(s.get(field)).strip()
+                break
+        if not by:
+            continue
+        return {"by": by, "reason": str(s.get("reason", "")).strip()}
+    return None
+
+
+def _claimed_without_record(change, reviews_dir, change_id):
+    """adv_* steps marked done while nothing was written down."""
+    wf = change.get("workflow")
+    steps = wf.get("steps") if isinstance(wf, dict) else None
+    if not isinstance(steps, list):
+        return []
+    if os.path.isdir(reviews_dir) and any(
+            n.startswith(change_id + "-") and n.endswith((".yaml", ".yml"))
+            for n in os.listdir(reviews_dir)):
+        return []
+    return [str(s.get("key")) for s in steps
+            if isinstance(s, dict) and str(s.get("key", "")).startswith("adv_")
+            and str(s.get("status", "")).strip() == "done"]
+
+
+def _adverse_verdict(reviews_dir, change_id):
+    """(path, verdict) of the newest record for this change whose verdict is not 'ship'."""
+    if not os.path.isdir(reviews_dir):
+        return None
+    best = None
+    for name in sorted(os.listdir(reviews_dir)):
+        if not name.startswith(change_id + "-") or not name.endswith((".yaml", ".yml")):
+            continue
+        doc, err = _load(os.path.join(reviews_dir, name))
+        if err or not isinstance(doc, dict):
+            continue
+        v = str(doc.get("verdict", "")).strip().lower()
+        if v and v != "ship":
+            try:
+                n = int(doc.get("round", 0))
+            except Exception:
+                n = 0
+            if best is None or n >= best[0]:
+                best = (n, os.path.join(reviews_dir, name), doc.get("verdict"))
+    return (best[1], best[2]) if best else None
+
+
+def _load(path):
+    """Return (doc, error). A file we cannot parse blocks — it is never treated as absent."""
+    try:
+        with io.open(path, encoding="utf-8") as fh:
+            doc = yaml.safe_load(fh)
+    except Exception as exc:
+        return None, str(exc)
+    if doc is None:
+        return None, "file is empty"
+    if not isinstance(doc, dict):
+        return None, "expected a mapping, got %s" % type(doc).__name__
+    return doc, None
+
+
+def check(change_path, reviews_dir, sha=None, root="."):
+    out = []
+    change, err = _load(change_path)
+    if err:
+        _fail(out, "MALFORMED", "%s: %s" % (change_path, err))
+        return out, []
+    change_id = str(change.get("change_id") or change.get("id") or "").strip()
+    if not change_id:
+        _fail(out, "MALFORMED", "change file has no change_id")
+        return out, []
+
+    target = (sha or _head_sha(root)).strip()
+    if not target:
+        _fail(out, "NO_SHA", "cannot determine the commit under review (not a git repo?)")
+        return out, []
+
+    # The floor path: a release CAN go out without a review, but only on a recorded, attributed
+    # acknowledgement. Without this the gate had no honest escape at all, and a gate with no escape
+    # is one that gets deleted from the process the first time it is inconvenient at 2am.
+    ack = _acknowledged_skip(change)
+    if ack:
+        adverse = _adverse_verdict(reviews_dir, change_id)
+        extra = ""
+        if adverse:
+            extra = ("\n        NOTE: a review of this change exists and its verdict is %r (%s). "
+                     "The waiver is overriding it." % (adverse[1], os.path.basename(adverse[0])))
+        return [], ["[warn] REVIEW_WAIVED: %s is shipping WITHOUT an adversarial review.\n"
+                    "        Acknowledged by %s: %s%s\n"
+                    "        Recorded in the change file, and it stays there."
+                    % (change_id, ack.get("by") or "?", ack.get("reason") or "no reason given", extra)]
+
+    for step in _claimed_without_record(change, reviews_dir, change_id):
+        _fail(out, "UNBACKED_REVIEW",
+              "step '%s' is marked done but no review record exists for %s. A review with nothing "
+              "written down is the silent skip this gate exists to catch." % (step, change_id))
+
+    if not os.path.isdir(reviews_dir):
+        _fail(out, "REVIEW_MISSING",
+              "no %s/ — an adversarial review is required before publishing %s.\n"
+              "        Run /hitl:dev-adversarial-review, or record an explicit acknowledgement "
+              "to ship without one." % (reviews_dir, change_id))
+        return out, []
+
+    records = []
+    warn_unreadable = []
+    for name in sorted(os.listdir(reviews_dir)):
+        if not name.endswith((".yaml", ".yml")):
+            continue
+        path = os.path.join(reviews_dir, name)
+        doc, err = _load(path)
+        if err:
+            # A record we cannot read is not a record we can trust — but only if it is OURS.
+            # Records are kept forever, so unrelated debris from a long-closed change must not
+            # block every future release.
+            if os.path.basename(path).startswith(change_id + "-"):
+                _fail(out, "MALFORMED", "%s: %s" % (path, err))
+            else:
+                warn_unreadable.append(path)
+            continue
+        if str(doc.get("change_id", "")).strip() == change_id:
+            records.append((path, doc))
+
+    if not records:
+        _fail(out, "REVIEW_MISSING",
+              "no review record for %s in %s/" % (change_id, reviews_dir))
+        return out, []
+
+    # The newest round is the one that decides. Earlier rounds are history.
+    def _round(item):
+        try:
+            return int(item[1].get("round", 0))
+        except Exception:
+            return 0
+    seen = {}
+    for pth, doc in records:
+        n = _round((pth, doc))
+        seen.setdefault(n, []).append(pth)
+    dupes = sorted(n for n, paths in seen.items() if len(paths) > 1)
+    records.sort(key=_round)
+    path, rec = records[-1]
+    warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed (not this change — ignored)" % u
+                for u in warn_unreadable]
+
+    for n in dupes:
+        _fail(out, "DUPLICATE_ROUND",
+              "round %s has more than one record (%s) — which one governs is decided by filename, "
+              "so a second record can silently override a do-not-ship verdict" % (n, ", ".join(seen[n])))
+
+    dirty = _dirty(root)
+    if dirty:
+        head = ", ".join(dirty[:3])
+        more = "" if len(dirty) <= 3 else " (+%d more)" % (len(dirty) - 3)
+        _fail(out, "UNCOMMITTED_CHANGES",
+              "%s%s modified but not committed. The build packages the working tree, so this would "
+              "ship unreviewed. Commit it and re-review." % (head, more))
+
+    reviewed = str(rec.get("reviewed_sha", "")).strip()
+    if not reviewed:
+        _fail(out, "REVIEW_MALFORMED", "%s: reviewed_sha is missing" % path)
+    else:
+        fresh, why = _is_fresh(root, reviewed, target)
+        if not fresh:
+            # THE load-bearing rule.
+            _fail(out, "REVIEW_STALE",
+                  "%s reviewed %s but %s is about to ship — %s. Re-review the current code."
+                  % (path, reviewed[:12], target[:12], why))
+
+    reviewer = rec.get("reviewer")
+    if not isinstance(reviewer, dict):
+        _fail(out, "REVIEW_MALFORMED", "%s: reviewer must be a mapping" % path)
+        reviewer = {}
+    if str(reviewer.get("context", "")).strip().lower() != "clean":
+        _fail(out, "NOT_INDEPENDENT",
+              "%s: reviewer.context must be 'clean' — a reviewer that shares the author's context "
+              "is not an independent check" % path)
+
+    if str(rec.get("stance", "")).strip().lower() != "refute":
+        _fail(out, "WRONG_STANCE",
+              "%s: stance must be 'refute'. A reviewer setting out to confirm a design finds it "
+              "confirmed" % path)
+
+    findings = rec.get("findings")
+    if findings is None:
+        findings = []
+    if not isinstance(findings, list):
+        _fail(out, "REVIEW_MALFORMED", "%s: findings must be a list" % path)
+        findings = []
+
+    unresolved = []
+    for i, f in enumerate(findings):
+        if not isinstance(f, dict):
+            _fail(out, "REVIEW_MALFORMED", "%s: findings[%d] is not a mapping" % (path, i))
+            continue
+        sev = str(f.get("severity", "")).strip().upper()
+        if sev not in SEVERITIES:
+            _fail(out, "REVIEW_MALFORMED",
+                  "%s: findings[%d] severity %r is not one of %s" % (path, i, f.get("severity"), ", ".join(SEVERITIES)))
+            continue
+        state = str(f.get("status", "open")).strip().lower()
+        if state not in OPEN_STATES + RESOLVED_STATES:
+            _fail(out, "REVIEW_MALFORMED",
+                  "%s: findings[%d] status %r is not open/fixed/accepted" % (path, i, f.get("status")))
+            continue
+        if sev in BLOCKING and state in OPEN_STATES:
+            unresolved.append("%s: %s" % (sev, str(f.get("claim", "?"))[:80]))
+        if state == "accepted" and not str(f.get("accepted_by", "")).strip():
+            _fail(out, "UNSIGNED_ACCEPTANCE",
+                  "%s: findings[%d] is accepted with no accepted_by — accepting a finding is a "
+                  "decision someone owns" % (path, i))
+
+    for u in unresolved:
+        _fail(out, "FINDING_OPEN", "%s — fix it, or accept it explicitly with accepted_by" % u)
+
+    verdict = str(rec.get("verdict", "")).strip().lower()
+    if verdict != "ship":
+        _fail(out, "VERDICT_NOT_SHIP",
+              "%s: verdict is %r — the reviewer did not clear this for release"
+              % (path, rec.get("verdict")))
+
+    # Not a block: a genuinely clean change exists. But one round that found nothing, on a large
+    # diff, is more often a shallow review than a flawless one — so say so.
+    if _round((path, rec)) <= 1 and not findings:
+        warnings.append(
+            "[warn] SHALLOW_REVIEW: %s is round 1 with zero findings. That happens, but it is also "
+            "what a review that did not really run looks like." % path)
+
+    return out, warnings
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--change", default=".hitl/current-change.yaml")
+    ap.add_argument("--reviews", default=".hitl/reviews")
+    ap.add_argument("--sha", default=None, help="commit under review (default: HEAD)")
+    ap.add_argument("--root", default=".")
+    args = ap.parse_args(argv)
+
+    try:
+        blocks, warns = check(args.change, args.reviews, args.sha, args.root)
+    except Exception as exc:  # never fail open on an unexpected error
+        sys.stderr.write("[BLOCK] MALFORMED: unexpected error verifying the review gate: %s\n" % exc)
+        return 2
+
+    for w in warns:
+        print(w)
+    for b in blocks:
+        print(b)
+    if blocks:
+        print("\nRelease gate: BLOCKED. An adversarial review of the exact code being shipped is "
+              "required before publishing.")
+        return 2
+    if any("REVIEW_WAIVED" in w for w in warns):
+        print("Release gate: PASSED ON A WAIVER — no adversarial review was honoured.")
+    else:
+        print("Release gate: adversarial review present, fresh, and cleared.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

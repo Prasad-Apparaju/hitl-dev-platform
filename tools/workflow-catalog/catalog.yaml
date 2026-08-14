@@ -41,6 +41,7 @@ spine:
     - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf,     command: ops-measure-baseline,         role: Ops, crit: standard }
     - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security, command: dev-review-security,          role: Architect, crit: standard, crit_by_tier: { 3: floor } }
     - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade,  command: ops-audit-dependencies,       role: Ops, crit: standard, crit_by_tier: { 3: floor } }
+    - { key: adv_design,         name: "Adversarial Design Review",    label: "AdvDsgn",  phase: "Design", substep: true, parent: packet, command: dev-adversarial-review, role: Architect, crit: ceremony }
     # ── Build (TDD cycle) ─────────────────────────────────────────
     - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build", command: dev-tdd,                      role: Dev, crit: standard, no_omit: true }
     - { key: test_review,        name: "Human Reviews Tests",          label: "TstRvw",   phase: "Build", command: qa-review-tests,              role: QA, crit: ceremony }
@@ -50,6 +51,7 @@ spine:
     - { key: verify_green,       name: "Verify GREEN",                 label: "VfyGRN",   phase: "Build", command: manual,                       role: Dev, crit: standard }
     - { key: refactor,           name: "Refactor",                     label: "Refact",   phase: "Build", command: manual,                       role: Dev, crit: ceremony }
     - { key: conventions,        name: "Convention Checks",            label: "Conv",     phase: "Build", command: dev-check-conventions,        role: Dev, crit: standard }
+    - { key: adv_code,           name: "Adversarial Code Review",      label: "AdvCode",  phase: "Build", substep: true, parent: conventions, command: dev-adversarial-review, role: Architect, crit: ceremony }
     # ── Verify ────────────────────────────────────────────────────
     - { key: review1,            name: "Code Review Round 1",          label: "Rvw1",     phase: "Verify", command: dev-review-lld-adherence,     role: Dev, crit: standard }
     - { key: review2,            name: "Code Review Round 2",          label: "Rvw2",     phase: "Verify", command: dev-review-security,          role: Dev, crit: standard }
@@ -166,6 +168,103 @@ workflows:
   # Its own short spine (no code, no TDD) with a domain-routed reviewer gate.
   # Chosen only when a change touches nothing but docs; mixed changes use the
   # delivery spine. See docs/design/workflow-model/01-design.md §4.
+  release:
+    title: "Release — publish a version to users"
+    phases:
+    - Prepare
+    - Verify
+    - Gate
+    - Publish
+    - Confirm
+    steps:
+    - key: rc_scope
+      name: Determine Release Scope
+      label: Scope
+      phase: Prepare
+      command: manual
+      role: Dev
+      crit: standard
+    - key: changelog
+      name: Write Release Notes
+      label: Notes
+      phase: Prepare
+      command: manual
+      role: Dev
+      crit: standard
+    - key: version_bump
+      name: Bump Version
+      label: Bump
+      phase: Prepare
+      command: manual
+      role: Dev
+      crit: standard
+    - key: gates
+      name: Run Test and Lint Gates
+      label: Gates
+      phase: Verify
+      command: dev-validate
+      role: Dev
+      crit: floor
+      no_omit: true
+    - key: adversarial_review
+      name: Independent Adversarial Review
+      label: Adversarial
+      phase: Gate
+      command: manual
+      role: Architect
+      crit: floor
+    - key: resolve_findings
+      name: Resolve or Accept Findings
+      label: Resolve
+      phase: Gate
+      command: manual
+      role: Dev
+      crit: floor
+    - key: build
+      name: Build the Package
+      label: Build
+      phase: Publish
+      command: manual
+      role: Ops
+      crit: standard
+    - key: publish
+      name: Publish to Users
+      label: Publish
+      phase: Publish
+      command: manual
+      role: Ops
+      crit: floor
+      no_omit: true
+    - key: tag
+      name: Tag the Source
+      label: Tag
+      phase: Publish
+      command: manual
+      role: Ops
+      crit: standard
+    - key: install_verify
+      name: Verify the Published Artifact
+      label: Verify
+      phase: Confirm
+      command: manual
+      role: Ops
+      crit: floor
+      no_omit: true
+    - key: announce
+      name: Announce
+      label: Announce
+      phase: Confirm
+      command: manual
+      role: PM
+      crit: ceremony
+    - key: retire
+      name: Retire Change Artifacts
+      label: Retire
+      phase: Confirm
+      command: manual
+      role: Dev
+      crit: standard
+
   docs:
     title: "Docs — a documentation-only change"
     phases: [Docs Change]

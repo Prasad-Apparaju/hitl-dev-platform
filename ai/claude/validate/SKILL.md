@@ -77,6 +77,27 @@ Run every applicable check below for each group. Record each result as **PASS** 
 - Shebang line present on line 1.
 - For hook scripts: `.hitl/` guard is present (`[[ -d ".hitl" ]] || exit 0`).
 
+### Release gate (only when the active change is a `release`)
+
+A release must carry an adversarial review of the code being shipped. This is the check that makes
+that real rather than stated — without it the requirement is prose and a release proceeds exactly as
+it did before.
+
+```bash
+# PARSE it. A grep for `id: release` does not match the change file, because the generator writes
+# every scalar through json.dumps and emits `id: "release"` — so the whole gate silently never ran.
+WF=$(python3 -c "import yaml;d=yaml.safe_load(open('.hitl/current-change.yaml'));print((d.get('workflow') or {}).get('id',''))" 2>/dev/null)
+if [[ "$WF" == "release" ]]; then
+  GATE="ci/adversarial/check_review.py"
+  [[ -f "$GATE" ]] || GATE="$CLAUDE_PLUGIN_ROOT/shared/ci/adversarial/check_review.py"
+  if [[ -f "$GATE" ]]; then python3 "$GATE"; else echo "release gate script not found — do not publish"; fi
+fi
+```
+
+Exit 2 is a **failure of this validation**: report it and do not let `publish` proceed. Exit 0 with
+a `REVIEW_WAIVED` warning means someone accepted the risk by name — surface that line verbatim, do
+not summarise it away.
+
 ### Skill / agent instruction files (`.md` in `ai/` or `.claude/`)
 - YAML frontmatter parses: `python3 -c "import yaml; yaml.safe_load(open('<f>').read().split('---')[1])"`
 - Every `/hitl:*` command name referenced exists in `ai/claude/plugin/plugin.json` skills list.

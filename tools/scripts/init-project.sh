@@ -193,6 +193,12 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
+  if [[ -d "$PLATFORM_ROOT/ci/adversarial" ]]; then
+    hitl_copy_tools "$PLATFORM_ROOT/ci/adversarial" "$TARGET_DIR/ci/adversarial"
+    echo "✓ ci/adversarial/ (release review gate)"
+    (( copied++ )) || true
+  fi
+
   if [[ -d "$PLATFORM_ROOT/ci/manifest-drift" && ! -d "$TARGET_DIR/ci/manifest-drift" ]]; then
     hitl_copy_tools "$PLATFORM_ROOT/ci/manifest-drift" "$TARGET_DIR/ci/manifest-drift"
     find "$PLATFORM_ROOT/ci/manifest-drift" -maxdepth 1 -name "*.md" -exec cp {} "$TARGET_DIR/ci/manifest-drift/" \; 2>/dev/null || true
@@ -319,7 +325,8 @@ JSON
 
     # Flat skills
     for skill in start-from-prd start-brownfield start-migration dev-practices apply-change \
-                 check-conventions impact-brief tdd generate-docs conclude review-lld-adherence; do
+                 check-conventions impact-brief tdd generate-docs conclude review-lld-adherence \
+                 adversarial-review; do
       local src="$PLATFORM_ROOT/ai/claude/$skill/SKILL.md"
       [[ -f "$src" ]] && ln -sf "$src" "$CMDS_DIR/$skill.md"
     done

@@ -220,3 +220,65 @@ def test_real_onboarding_end_to_end_delivers_nothing_unrunnable(tmp_path):
     # And it must still have delivered something — "copy nothing" would pass the check above.
     assert (target / "ci" / "first-pass" / "check_skips.py").is_file(), \
         "onboarding delivered no validator at all"
+
+
+def test_onboarding_exposes_every_flat_skill_it_should(tmp_path):
+    """A skill onboarding never symlinks is unreachable in a dev-mode repo.
+
+    Source-tree checks miss this entirely: the skill exists, is registered, and still cannot be
+    invoked. Run the real script and look for the command.
+    """
+    init = os.path.join(ROOT, "tools", "scripts", "init-project.sh")
+    target = tmp_path / "proj"
+    target.mkdir()
+    p = subprocess.run(["bash", init, str(target), "--tool", "claude"],
+                       capture_output=True, text=True)
+    assert p.returncode == 0, (p.stdout + p.stderr)[-2000:]
+    cmds = target / ".claude" / "commands"
+    assert (cmds / "adversarial-review.md").exists(), (
+        "the adversarial-review command is not exposed; onboarded repos cannot run it")
+    assert (target / "ci" / "adversarial" / "check_review.py").is_file(), (
+        "the release gate validator was not installed")
+
+
+def _generator_source():
+    """The Step 6 change-file generator, lifted out of start-change's SKILL.md."""
+    skill = os.path.join(ROOT, "ai", "claude", "start-change", "SKILL.md")
+    text = io.open(skill, encoding="utf-8").read()
+    m = re.search(r"<< 'PY'\n(.*?)\nPY\n", text, re.S)
+    assert m, "Step 6 generator not found"
+    return m.group(1)
+
+
+def test_release_detection_matches_what_the_generator_actually_writes(tmp_path):
+    """The gate invocation must fire on the file the sanctioned path produces.
+
+    It did not. dev-validate grepped for `id: release`; the generator writes every scalar through
+    json.dumps and emits `id: "release"`. The whole release-gate section silently never ran — round
+    one's "the validator is never invoked" defect, alive behind a quoting detail. Checking that both
+    files exist could never see this; only running one against the other can.
+    """
+    validate = io.open(os.path.join(ROOT, "ai", "claude", "validate", "SKILL.md"),
+                       encoding="utf-8").read()
+    assert "grep -q 'id: release" not in validate, (
+        "detection is a bare grep again; it will not match the generator's quoted output")
+
+    # Emit a change file the way the generator does, then run the detection the skill specifies.
+    import json
+    cc = tmp_path / "current-change.yaml"
+    cc.write_text("workflow:\n  id: %s\n" % json.dumps("release"), encoding="utf-8")
+    probe = ('import yaml;d=yaml.safe_load(open(%r));'
+             'print((d.get("workflow") or {}).get("id",""))' % str(cc))
+    got = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True).stdout.strip()
+    assert got == "release", (
+        "the release workflow is not detectable in the generator's own output (%r)" % got)
+
+
+def test_start_change_can_actually_seed_a_release():
+    """Routing to a workflow the generator will not accept is a route to nowhere."""
+    s = io.open(os.path.join(ROOT, "ai", "claude", "start-change", "SKILL.md"),
+                encoding="utf-8").read()
+    m = re.search(r"WF=<([^>]+)>", s)
+    assert m, "the WF enumeration is missing from Step 6"
+    assert "release" in m.group(1).split("|"), (
+        "Step 3 offers `release` but Step 6 will not seed it: %s" % m.group(1))

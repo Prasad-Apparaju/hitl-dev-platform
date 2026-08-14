@@ -43,6 +43,7 @@ workflows:
       - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design", crit: standard }
       - { n: 8,   key: training,           label: "Train",    phase: "Design", crit: ceremony }
       - { n: 9,   key: packet,             label: "Packet",   phase: "Design", crit: standard, crit_by_tier: { 3: floor } }
+      - { n: 9a,  key: adv_design,        label: "AdvDsgn",  phase: "Design",   crit: ceremony }
       - { n: 10,  key: red,                label: "RED",      phase: "Build", crit: standard, no_omit: true }
       - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build", crit: ceremony }
       - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build", crit: standard }
@@ -51,6 +52,7 @@ workflows:
       - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build", crit: standard }
       - { n: 16,  key: refactor,           label: "Refact",   phase: "Build", crit: ceremony }
       - { n: 17,  key: conventions,        label: "Conv",     phase: "Build", crit: standard }
+      - { n: 17a, key: adv_code,          label: "AdvCode",  phase: "Build",    crit: ceremony }
       - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify", crit: standard }
       - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify", crit: standard }
       - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify", crit: standard, crit_by_tier: { 3: floor } }
@@ -171,3 +173,20 @@ workflows:
       - { n: 15, key: dual_run,         label: "DualRun",  phase: "Cutover", cond: migration }
       - { n: 16, key: decommission,     label: "Sunset",   phase: "Cutover", cond: migration }
       - { n: 17, key: delivery_ready,   label: "Ready",    phase: "Ready" }
+  release:
+    id: release
+    title: "Release — publish a version to users"
+    total: 12
+    steps:
+      - { n: 1,  key: rc_scope,            label: "Scope",       phase: "Prepare" , crit: standard }
+      - { n: 2,  key: changelog,           label: "Notes",       phase: "Prepare" , crit: standard }
+      - { n: 3,  key: version_bump,        label: "Bump",        phase: "Prepare" , crit: standard }
+      - { n: 4,  key: gates,               label: "Gates",       phase: "Verify"  , crit: floor, no_omit: true }
+      - { n: 5,  key: adversarial_review,  label: "Adversarial", phase: "Gate"    , crit: floor }
+      - { n: 6,  key: resolve_findings,    label: "Resolve",     phase: "Gate"    , crit: floor }
+      - { n: 7,  key: build,               label: "Build",       phase: "Publish" , crit: standard }
+      - { n: 8,  key: publish,             label: "Publish",     phase: "Publish" , crit: floor, no_omit: true }
+      - { n: 9,  key: tag,                 label: "Tag",         phase: "Publish" , crit: standard }
+      - { n: 10, key: install_verify,      label: "Verify",      phase: "Confirm" , crit: floor, no_omit: true }
+      - { n: 11, key: announce,            label: "Announce",    phase: "Confirm" , crit: ceremony }
+      - { n: 12, key: retire,              label: "Retire",      phase: "Confirm" , crit: standard }

@@ -74,6 +74,7 @@ before writing anything:
 | `migration`  | Porting or consolidating a system from a source codebase into this target | `/hitl:dev-start-migration` |
 | `development`| **Most issues** — a feature, bug fix, or refactor in an already-documented component | `/hitl:dev-apply-change` |
 | `docs`       | The change touches **nothing but documentation** — no source, tests, or IaC | `/hitl:dev-generate-docs` |
+| `release`    | Publishing a version to users — the change *is* shipping, not building. `adversarial_review` is `floor`: skippable only via a recorded acknowledgement with a name on it, and `publish` must not proceed while `/hitl:dev-validate` reports the gate blocked | `/hitl:dev-adversarial-review` |
 
 Heuristics from the issue: labels (`bug`/`enhancement` → development; `documentation`/`docs` → docs), wording ("migrate",
 "port", "consolidate" → migration; "onboard", "adopt HITL", "no docs yet" → brownfield), and
@@ -232,7 +233,7 @@ is how drift starts). Run this generator, which copies the chosen workflow's ste
 first step `current` and the rest `open`, and stamps the versions:
 
 ```bash
-WF=<development|brownfield|migration|migration_review|prd>
+WF=<development|brownfield|migration|migration_review|prd|release|docs>
 CHANGE_ID="GH-<N>"
 BRANCH=$(git branch --show-current)
 # Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.

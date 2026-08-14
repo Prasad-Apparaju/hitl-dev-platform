@@ -1,0 +1,33 @@
+# Adversarial review record — .hitl/reviews/<change-id>-round<N>.yaml
+#
+# Verified by ci/adversarial/check_review.py. The release workflow's `gates` step runs it via
+# /hitl:dev-validate; `publish` must not proceed while it reports a block.
+#
+# Honest scope: the gate cannot prove a review was adversarial or independent. Those are
+# attestations. What it CAN enforce is that the record names the commit it reviewed and that the
+# commit still matches what is shipping — so you cannot review an early draft, keep editing, and
+# still pass. Everything else is bookkeeping around that.
+schema_version: "1.0"
+change_id: "GH-000"          # must match .hitl/current-change.yaml
+round: 1                     # highest round decides; earlier rounds are history
+reviewed_sha: ""             # the commit reviewed. MUST equal HEAD at the gate, or it blocks.
+scope: ""                    # what was put in front of the reviewer, e.g. "diff v2.6.2..HEAD"
+
+reviewer:
+  model: ""                  # which model ran it
+  context: clean             # clean | inherited. 'inherited' blocks — it is not an independent check.
+  spawned_by: ""             # what launched it
+  brief: ""                  # what it was told to attack
+
+stance: refute               # must be 'refute'. A reviewer setting out to confirm finds confirmation.
+
+findings:
+  - id: F1
+    severity: CRITICAL       # CRITICAL | HIGH | MEDIUM | LOW
+    claim: ""                # what is broken
+    reproduction: ""         # the command and observed output. A finding nobody reproduced is a guess.
+    status: open             # open | fixed | accepted
+    resolved_by: ""          # commit that fixed it
+    accepted_by: ""          # required when status is 'accepted' — accepting risk is someone's decision
+
+verdict: do-not-ship         # ship | do-not-ship. Anything but 'ship' blocks the release.
