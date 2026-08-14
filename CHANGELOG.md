@@ -4,6 +4,31 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.6.1] — 2026-08-14
+
+### Fixed
+
+**A finished change could block every edit in a repo, with advice nobody could follow.** The standard GitHub flow deletes a branch on merge. If the change file outlived the change — which it does whenever the workflow stops short of step 30, as real changes often do — `check-hitl-context.sh` saw the branch mismatch and refused every guarded edit with:
+
+```
+HITL CONTEXT MISMATCH: branch 'main' does not match active change GH-58.
+  • Run /hitl:dev-switch-context to reload context for this branch.
+```
+
+There is no switching to a branch that no longer exists. To anyone who did not know the history, HITL simply looked broken. Found on HITL's own repo, where a change merged weeks earlier would have blocked the next session outright.
+
+A **concluded** change is now distinguished from a **context mismatch**: when the change's `expected_branch` has neither a local branch nor a remote-tracking ref, the hook reports that the change looks complete and names the real remedy — retire it, then start the next one. It still exits 2, so the gate is as closed as it was; only the diagnosis and the advice changed.
+
+The detection is deliberately conservative. **Both** refs must be absent before a change is called concluded, so a branch that has merely not been fetched still counts as present — wrongly declaring a live change finished would push someone into re-intake and lose their step progress.
+
+Five tests, run as real processes against real git repos, since the defect was in how the shell hooks read git state.
+
+### Known gap
+
+`status` is documented as an enum whose `merged` value deactivates a change, and it is set to `planning` at creation — but **nothing transitions it**. Retirement at step 30 only fires if the workflow is walked that far. This release makes the resulting failure self-explaining rather than silent; it does not add an automatic driver, which needs a merge-time trigger.
+
+---
+
 ## [2.6.0] — 2026-08-14
 
 A user told us: *"I am not aware of it initially and in later only I learned that there is a HITL plugin I suppose to use."* This release is the answer, and it turned out not to be a documentation gap. HITL already shipped a usage guide, a command directory and a session-start banner. Nothing in a project ever **said** HITL was in use.
