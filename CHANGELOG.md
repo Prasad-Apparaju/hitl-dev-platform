@@ -4,6 +4,42 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.5.0] — 2026-08-13
+
+First Pass shipped in 2.4.0 as requirements, a validator and a skill body. This release is what happened when six people actually used it. Three of the complaints that started it — "HITL is overkill for a bug fix", "it keeps asking permission for reads I already approved", "it makes me read too much" — each traced to a mechanism that was specified but never wired.
+
+### Fixed
+
+- **The driver never set `first_pass`.** Every mechanism gated on that flag — the skip ledger, brief mode, the permission policy — was unreachable in a real run. The Step 6 generator now emits it, along with `skips[]` and the tier attribution.
+- **Step 6 clobbered the skip ledger it had just written.** The change file was moved into place unconditionally, so a generator that failed still overwrote good state with a truncated file. The write is now guarded on exit status and a non-empty temp file, and refuses to publish otherwise.
+- **`starter` dispositions never certified.** The generator emitted `artifact_path` where the validator reads `starter_artifact`, so every starter step failed the gate. The e2e test that should have caught it only covered `skip`.
+- **A false tier claim shipped in five files.** The docs said tier ≤1 demotes impact, packet, arch_review, qa_verify and rollout from `floor` to `standard`. Those five are `crit_by_tier: {3: floor}` — the demotion is 3→2, and 2→1 moves only `integration_verify`. Corrected in all five places, with three tests that pin the real matrix so the claim can't drift again.
+- **Resurfacing dropped narrowed scopes.** A recorded skip whose scope shrank was never written back, because the roll-up only persisted when something was *added*. Path overlap is now compared segment-wise, so `src/app` no longer matches `src/application`.
+- **Preflight skipped its own check on an empty file list.** `--changed-files` with no entries is falsey, not absent, so the guard read it as "no filter given" and passed everything.
+
+### Added
+
+- **Brief mode.** `first_pass: true` selects a directive that trims step output to what the reader has to act on. The intake dump — the single largest source of "too much reading" — collapses to a phase summary with the detail available on request.
+- **A reduced-friction permission policy (CR-15).** A `PreToolUse` hook that emits `allow` for reads already covered by the change's declared scope. It only ever emits `allow` and never `deny`, so it can widen what proceeds without becoming a new way to block.
+- **A real light path for tier 1.** Previously the tier was recorded and then largely ignored. Step 3b confirms it, records who set it and why (`tier_set_by` / `tier_reason`), and the light path is now materially shorter rather than nominally so.
+- **Artifact retirement at step 29.** Promotion clears per-change working files while protecting `skip-ledger.yaml`, so `.hitl/` stops accumulating handoff and review-request scratch on `main`.
+- **An adversarial stance for the five reviewer agents.** Each now opens with "try to refute, not to confirm". Reviewers that set out to confirm a design find it confirmed.
+- **`ci/wiring/test_wiring.py`** — 34 tests over reachability, consistency and completeness. Every defect above is a wiring defect: a mechanism that exists, a mechanism that's referenced, and nothing connecting them. Unit tests could not see that class, because each end passed on its own.
+- **`ci/first-pass/migrate_project.py`** — migrates an existing project's permission block and audits its change file, failing loud on an unmergeable block rather than guessing.
+
+### Changed
+
+- **The permission allowlist template shrank to one entry.** Measured against a live session: output redirection (`>`, `>>`) rides along on any match, including an exact entry with no wildcard, so *every* allowlist entry grants "write this command's stdout anywhere". `&&` and each pipe segment are checked, so those aren't the risk. The template now carries what's defensible plus the residual channels it does not close.
+- **CR-1 amended** to permit a tier-gated batch decline, and roll-up append extended to the remaining four routes.
+- **`.hitl/` is committed again**, with the scratch ignored: `*.tmp`, `*.migrated`, `first-pass-choices.json`, `backups/`. The prior rule ignored the whole directory, which discarded the handoff record the next step reads.
+- **`init-project.sh` emitted pre-#14 hook wrappers** that `dev-update` could not detect, so affected projects were never offered the migration. Existing projects are reached by `dev-update`.
+
+### Note for existing projects
+
+Run `/hitl:dev-update`. Projects onboarded before this release carry the old hook wrappers and the wide permission block; the update detects and migrates both.
+
+---
+
 ## [2.4.8] — 2026-08-08
 
 ### Fixed
