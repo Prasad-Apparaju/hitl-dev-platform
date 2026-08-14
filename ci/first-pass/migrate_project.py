@@ -33,10 +33,30 @@ import json
 import os
 import sys
 
-# Kept in step with ai/shared/templates/settings-template.json. Short on purpose: output
-# redirection rides along on a permission match (`cmd > file` is permitted by a rule for `cmd`,
-# and an exact entry does not help), so every entry grants "write this command's stdout
-# anywhere". Never add an interpreter, shell, or package manager.
+# This list is the source of truth for what HITL adds to a project's permissions. Short on
+# purpose. Three rules, the first two measured against a live session:
+#
+#   1. Output redirection rides along on a match. `cmd > file` and `cmd >> file` are permitted by
+#      a rule for `cmd`, and an EXACT entry with no wildcard does not help. So every entry grants
+#      "write this command's stdout to any path". Never allowlist a command whose output is
+#      attacker-controlled -- `gh issue view` is the sharp one: issue bodies are untrusted, and
+#      `gh issue view N -q .body > .git/hooks/pre-commit` is a working chain.
+#   2. Command chaining (`&&`) and each segment of a pipe ARE checked, so those are not the risk.
+#   3. Never allowlist an interpreter, shell, or package manager -- python, node, npx, pip, bash
+#      and friends are arbitrary code execution.
+#
+# Most read-only commands (cat, ls, grep, find, and every read-only git/gh subcommand) are
+# auto-allowed by Claude Code already and need no entry.
+#
+# Residual channels this does NOT close, so nobody mistakes a short list for a boundary:
+#   - DENY governs the Read TOOL. `cat .env` through Bash is a different path and is auto-allowed,
+#     so these rules reduce accidents, not a determined read.
+#   - Only stdout `>` and `>>` were measured. stderr (`2>`) and command substitution were not;
+#     assume they behave the same until someone measures them.
+#   - Rules 1 and 2 are observed behaviour of a particular Claude Code version, not a spec.
+#     Re-measure after an upgrade.
+#   - Bash-mediated writes bypass the HITL change gate entirely (its matcher is Edit|Write), so an
+#     allowlist entry is not backstopped the way a tool-based edit is.
 ALLOW = ["Bash(git add *)"]
 DENY = ["Read(./.env)", "Read(./.env.*)", "Read(./**/.env)", "Read(./secrets/**)"]
 
