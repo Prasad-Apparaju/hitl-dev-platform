@@ -70,8 +70,14 @@ the first time it is inconvenient at 2am, and then it protects nothing.
 
 ## Where the gate actually binds
 
-`scripts/release.sh` is the act of publishing, and it runs the gate itself — refusing on a non-zero
-exit, on no active change, and on an active change whose workflow is not `release`.
+**The gate binds on whatever script actually publishes your project** — and it has to be wired
+there, in your repo, by you. For HITL itself that is `scripts/release.sh` in the plugin repo, which
+runs the gate and refuses on a non-zero exit, on no active change, and on an active change whose
+workflow is not `release`. You have no such script unless you add the same call to yours:
+
+```bash
+python3 ci/adversarial/check_review.py || exit 2
+```
 
 That placement is the point. Everything else here is advisory: the workflow steps are instructions a
 model follows, `/hitl:dev-validate` only checks when a release change happens to be active, and the

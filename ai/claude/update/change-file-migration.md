@@ -129,7 +129,8 @@ def step_line(cstep, trailing=""):
 
 # 4) SURGICAL splice: rewrite step LINES in place inside `steps:`; leave comments/blank lines verbatim.
 step_re = re.compile(r"^\s*-\s*\{.*\}\s*(#.*)?$")
-key_re  = re.compile(r"[{,]\s*key:\s*([^,}\s]+)")
+key_re  = re.compile(r"[{,]\s*key:\s*[\"']?([A-Za-z0-9_]+)[\"']?")  # keys are QUOTED by the generator;
+                                                          # capturing the quotes matched nothing
 block_m = re.search(r"(?ms)^workflow:.*?(?=^\S|\Z)", text)
 block_changed, diff = False, []
 
