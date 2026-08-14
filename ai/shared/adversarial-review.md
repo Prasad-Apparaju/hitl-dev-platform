@@ -68,7 +68,9 @@ down as such, not editorialised.
 
 ## Running one
 
-Spawn a **clean-context** reviewer — a fresh agent with no history of building the thing. Give it:
+Run `/hitl:dev-adversarial-review`. It does everything below.
+
+If you are doing it by hand: spawn a **clean-context** reviewer — a fresh agent with no history of building the thing. Give it:
 
 1. **What changed**, as a diff or a set of paths, and the commit sha.
 2. **A refuting brief.** Tell it to assume the work is broken and find how. Name the specific things

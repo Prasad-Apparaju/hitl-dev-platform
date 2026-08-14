@@ -224,3 +224,40 @@ def test_release_review_stays_mandatory():
     rel = {s["key"]: s for s in rt["workflows"]["release"]["steps"]}
     assert rel["adversarial_review"]["crit"] == "floor"
     assert rel["adversarial_review"].get("no_omit") is True
+
+
+def test_the_driver_skill_exists_and_ships_what_it_references():
+    """A gate with no driver does not run — the failure mode behind first_pass and CLAUDE.md.
+
+    Also guards the 2.4.7 defect class: a skill that references a shared file which the build does
+    not package resolves in the source repo and points at nothing for every user.
+    """
+    root = os.path.join(HERE, "..", "..")
+    skill = os.path.join(root, "ai", "claude", "adversarial-review", "SKILL.md")
+    assert os.path.isfile(skill), "the adversarial-review skill is missing"
+    body = io.open(skill, encoding="utf-8").read()
+
+    # It must actually spawn independent reviewers, not just describe the idea.
+    assert "clean-context" in body or "clean context" in body
+    assert "refute" in body.lower()
+    assert "reproduc" in body.lower(), "the reproduction rule is what keeps this from being theatre"
+    assert "reviewed_sha" in body, "the driver must write the field the gate binds to"
+
+    # The anti-bias rule is the difference between a review and an echo.
+    assert "conclusions" in body.lower()
+
+    # Registered, or the plugin never exposes it.
+    import json
+    reg = json.load(io.open(os.path.join(root, "ai", "claude", "plugin", "plugin.json"),
+                            encoding="utf-8"))
+    assert "ai/claude/adversarial-review" in reg["skills"], "skill not registered in plugin.json"
+
+    # Every shared/ file it points at must exist in the source tree that the build packages.
+    import re
+    for ref in sorted(set(re.findall(r"`(shared/[a-z0-9/._-]+)`", body))):
+        tail = ref[len("shared/"):]
+        candidates = [os.path.join(root, "ai", "shared", tail),
+                      os.path.join(root, "ai", "claude", "generate-docs", "templates",
+                                   os.path.basename(tail))]
+        assert any(os.path.exists(c) for c in candidates), (
+            "%s is referenced by the skill but no source file maps to it" % ref)
