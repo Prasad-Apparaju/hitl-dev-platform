@@ -91,9 +91,24 @@ claude plugin marketplace update hitl
 claude plugin update hitl@hitl
 ```
 
-Then re-read the version (repeat the python3 block above). If it still hasn't changed, the installed commit SHA already matches what the marketplace advertises — the user is genuinely on the latest. Say: "Already on the latest version — no changes." and stop.
+Then re-read the version (repeat the python3 block above). If it still hasn't changed, the installed commit SHA already matches what the marketplace advertises — the user is genuinely on the latest. Say: "Already on the latest version." Then **continue to Step 3b anyway — do not stop.**
+
+Stopping here was a real defect. Steps 3b and 4.x do not update the plugin; they reconcile *this repo* with the installed plugin — hooks, validators, `CLAUDE.md`, and the cleanup of files an earlier version installed. Every one is idempotent. Skipping them on "already latest" meant a repo could never be repaired once its version matched, which is exactly the state a user is in when they run the command a second time to fix something.
 
 If it changed after the cache bust, continue to Step 4.
+
+### Re-read the rest of this skill from the version you just installed
+
+**This matters whenever the update changed this skill.** You are executing the SKILL.md that was loaded when the command started — the *old* one. Step 2 has since installed a new plugin, whose `dev-update` may add or change the steps below. Left alone, a fix that ships **in** dev-update never runs on the update that delivers it; it waits for the next one.
+
+So before continuing, read the newly installed copy and follow **its** Steps 3b onward instead of the ones in your context:
+
+```bash
+NEW_ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+echo "$NEW_ROOT/skills/dev-update/SKILL.md"
+```
+
+Read that file. If its steps differ from what you have, **follow the file, not your context.** If it cannot be read, say so and continue with the steps you have.
 
 Show: "Updated: **v\<old\>** → **v\<new\>**"
 
