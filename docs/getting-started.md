@@ -4,7 +4,21 @@ You've opened a project that uses HITL. Something told you to read this. Here's 
 
 **HITL makes Claude follow your team's delivery process instead of improvising one.** You still work in Claude Code exactly as before. The difference is that Claude now knows what step you're on, what has to happen before code gets written, and what can't be skipped.
 
-You need **one command** to start. This guide walks one change end to end so you know what to expect.
+## You don't have to remember any of this
+
+Start the way you always do. Say *"fix the login bug"* and Claude takes it from there — it already knows this project uses HITL, because the project tells it at the start of every session.
+
+What you'll see is Claude proposing an issue and a plan before it writes code, rather than editing files immediately. Agree, and work proceeds normally.
+
+There's a backstop underneath. If Claude tries to edit code with no agreed change, the edit is **blocked**, not merely discouraged. You'll see:
+
+```
+HITL BLOCKED: no active change for this project/branch.
+```
+
+That's the system working. Run `/hitl:dev-start-change` and carry on.
+
+So the commands below are for when you want to drive rather than be walked. This guide walks one change end to end so you know what to expect.
 
 ---
 
@@ -29,13 +43,13 @@ Restart Claude Code. That's the whole setup — it applies to every project on y
 
 ---
 
-## The one command
+## The one command worth knowing
 
 ```
 /hitl:dev-start-change
 ```
 
-That is the front door for every piece of work: features, bug fixes, refactors, spikes. It does four things:
+Claude will offer this itself when you start work. Run it directly when you'd rather begin there — it's the front door for every piece of work: features, bug fixes, refactors, spikes. It does four things:
 
 1. Helps you pick or create the issue you're working on
 2. Picks the right workflow for that issue and sizes it (a **tier**, 1–3)
@@ -131,7 +145,7 @@ Two steps in the Build phase can never be dropped: writing the failing test (`re
 
 ---
 
-## First Pass — going light
+## First Pass: going light
 
 A one-line fix shouldn't carry the same process as a payments migration. First Pass is how you right-size the plan, before you start rather than by quietly abandoning it halfway.
 
