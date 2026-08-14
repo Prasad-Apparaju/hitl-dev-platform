@@ -8,20 +8,17 @@ source_artifacts:
   issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/80
   hld: n/a
   lld: n/a
-allowed_paths:
+allowed_paths: &id001
 - tools/workflow-catalog/
 - ci/adversarial/
+- ci/wiring/
 - ai/shared/
 - ai/claude/
 - docs/
 manifest:
   domains:
   - name: release-governance
-    paths:
-    - tools/workflow-catalog/
-    - ci/adversarial/
-    - ai/shared/
-    - ai/claude/
+    paths: *id001
 workflow:
   id: development
   total: 31
