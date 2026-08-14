@@ -85,6 +85,19 @@ Read the `cross_cutting` section of `docs/system-manifest.yaml`. Verify each con
 
 ---
 
+## Step 5b — Check the prose the change added
+
+Every factual assertion this change adds to a doc, skill, ADR or comment must be verifiable against
+the code it describes. Manifest drift is already detected; prose drift is not, and prose is what
+people act on.
+
+For each added claim of the form "X does Y" / "at tier N, Z happens" / "the gate blocks W": find the
+code and confirm it. A claim you cannot confirm is a finding, not a rounding error.
+
+This exists because one false sentence about tier behaviour — that a low tier demoted five named
+steps — was written once, copied into five shipped files, and survived review. It was wrong in a way
+anyone could have checked in thirty seconds against the catalog. Nobody did, because nothing asked.
+
 ## Step 6 — Report
 
 Present a structured report:
@@ -136,6 +149,7 @@ Do NOT silently normalize divergence. Every deviation is either an intentional d
 ## Important Rules
 
 - This skill uses model judgment to assess adherence. It will miss subtle behavioral divergence. It catches structural divergence (missing classes, wrong signatures, extra public interfaces).
+- **Run what you can rather than reading it.** Structural review is a paper exercise and reads clean against code that does not work. Execute the changed unit with a real input — the happy path and one edge — before reporting ✅, and say which items you only read. Defects found in this framework's own review rounds were repeatedly invisible on the page and obvious on execution.
 - Flag every ❌ item as a merge blocker. The developer cannot mark the PR ready until all ❌ items are resolved or explicitly approved by the architect.
 - ⚠️ items require architect acknowledgment but do not block merge on their own.
 - If the LLD was written at a high level of abstraction (method names only, no signatures), say so and note which checks were skipped due to insufficient LLD detail. This is feedback to the architect to improve the LLD.

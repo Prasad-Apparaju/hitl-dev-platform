@@ -202,3 +202,33 @@ def test_the_onboarding_paths_agree_on_the_hook_list():
         lists[f] = sorted(re.findall(r"`([a-z0-9-]+)`", m.group(1)))
     first = next(iter(lists.values()))
     assert all(v == first for v in lists.values()), f"onboarding paths disagree on hooks: {lists}"
+
+
+def test_every_reviewer_agent_carries_the_adversarial_stance():
+    """A reviewer asked to confirm will confirm.
+
+    Every HITL reviewer opened with "ensure X is sound" / "verify Y is sufficient" — questions
+    shaped to be answered yes. In this framework's own review rounds, the same model on the same
+    code returned clean when asked to verify and returned blockers when asked to refute. The stance
+    is duplicated across five agent files by necessity (they ship standalone); this makes the
+    duplication a checked invariant instead of drift bait.
+    """
+    reviewers = [f for f in os.listdir(os.path.join(AI, "claude", "agents"))
+                 if f.endswith("-reviewer.md")]
+    assert reviewers, "no reviewer agents found — this check went blind"
+    missing = [f for f in reviewers
+               if "Try to refute, not to confirm" not in _read(os.path.join(AI, "claude", "agents", f))]
+    assert not missing, f"reviewer agents without the adversarial stance: {sorted(missing)}"
+
+
+def test_the_skip_ledger_is_never_retired_with_the_change_file():
+    """CR-10 makes the ledger durable across changes. The retirement step removes the change file
+    and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish
+    and resurfacing would only ever see the current change."""
+    txt = _read(os.path.join(AI, "claude", "dev-practices", "workflow-steps.md"))
+    assert "Retire the change's working artifacts" in txt, "the retirement step is gone"
+    retire = txt[txt.index("Retire the change's working artifacts"):][:1200]
+    assert "skip-ledger.yaml" in retire and "Do not touch" in retire, (
+        "the retirement step must explicitly protect .hitl/skip-ledger.yaml")
+    assert not re.search(r"rm\b[^\n]*skip-ledger", retire), (
+        "the retirement step deletes the durable ledger — CR-10 violation")
