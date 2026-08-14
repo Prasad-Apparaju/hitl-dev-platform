@@ -22,5 +22,82 @@
       "Bash(cat docs/*)",
       "Bash(cat ai/*)"
     ]
-  }
+  },
+  "statusLine": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/statusline-hitl.sh\"",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/hitl-gate.sh\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/welcome.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/check-hitl-context.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/first-pass-permissions.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/first-pass-permissions.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/check-domain-boundary.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/rebuild-graph.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/sync-step-to-issue.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/write-session-summary.sh\""
+          }
+        ]
+      }
+    ]
+  },
+  "_hooks_note": "This repo IS the plugin source, so the hooks run from ai/claude/hooks/ directly. A product repo gets .hitl/hooks/ wrappers that discover an installed plugin at runtime; copying them here would only create a second copy to drift."
 }

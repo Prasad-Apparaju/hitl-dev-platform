@@ -312,11 +312,19 @@ JSON
   local HOOKS_DIR="$TARGET_DIR/.hitl/hooks"
   if [[ ! -d "$HOOKS_DIR" ]]; then
     mkdir -p "$HOOKS_DIR"
-    for hook in welcome hitl-gate check-hitl-context check-domain-boundary rebuild-graph \
+    for hook in welcome hitl-gate check-hitl-context first-pass-permissions \
+                check-domain-boundary rebuild-graph \
                 write-session-summary sync-step-to-issue statusline-hitl; do
       cat > "$HOOKS_DIR/$hook.sh" <<WRAPPER
 #!/usr/bin/env bash
-PLUGIN_ROOT=\$(python3 -c "
+# Resolve a working Python. On Windows \`python3\` is the Microsoft Store stub (on PATH but
+# runs nothing), so probe candidates and smoke-test each; the stub fails \`import sys\`. Issue #14.
+PY=""
+for _c in python3 python py; do
+  if command -v "\$_c" >/dev/null 2>&1 && "\$_c" -c "import sys" >/dev/null 2>&1; then PY="\$_c"; break; fi
+done
+[[ -z "\$PY" ]] && exit 0
+PLUGIN_ROOT=\$("\$PY" -c "
 import json,os,sys
 try:
   d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
@@ -334,6 +342,9 @@ try:
 except:pass
 " 2>/dev/null)
 [[ -z "\$PLUGIN_ROOT" ]] && exit 0
+# Pass the resolved interpreter + force UTF-8 stdout so hooks don't re-probe or crash on the
+# breadcrumb glyphs (Windows Python defaults to cp1252). See issue #14.
+export HITL_PY="\$PY" PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 exec bash "\$PLUGIN_ROOT/hooks/$hook.sh" "\$@"
 WRAPPER
       chmod 750 "$HOOKS_DIR/$hook.sh"

@@ -1,0 +1,59 @@
+schema_version: "2.0"
+hitl_version: "2.4.8"
+
+change_id: "GH-58"
+tier: 2
+status: implementation-approved
+expected_branch: "issue/58-dogfood-hooks"
+
+source_artifacts:
+  issue: "https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/58"
+
+manifest:
+  domain: hitl-runtime
+allowed_paths:
+  - .claude/
+  - ai/claude/hooks/
+
+workflow:
+  id: "development"
+  version: "2.4.8"
+  total: 31
+  steps:
+    - { n: "1", key: "issue", label: "Issue", phase: "Requirements", status: current }
+    - { n: "2", key: "figma", label: "Figma", phase: "Requirements", status: open }
+    - { n: "3", key: "impact", label: "Impact", phase: "Design", status: open }
+    - { n: "4", key: "roi", label: "ROI", phase: "Design", status: open }
+    - { n: "5", key: "docs", label: "Docs", phase: "Design", status: open }
+    - { n: "6", key: "iac", label: "IaC", phase: "Design", status: open }
+    - { n: "7", key: "test_plan", label: "Tests", phase: "Design", status: open }
+    - { n: "8", key: "training", label: "Train", phase: "Design", status: open }
+    - { n: "9", key: "packet", label: "Packet", phase: "Design", status: open }
+    - { n: "10", key: "red", label: "RED", phase: "Build", status: open }
+    - { n: "11", key: "test_review", label: "TstRvw", phase: "Build", status: open }
+    - { n: "12", key: "design_plus", label: "Dsn+", phase: "Build", status: open }
+    - { n: "13", key: "verify_red", label: "VfyRED", phase: "Build", status: open }
+    - { n: "14", key: "green", label: "GREEN", phase: "Build", status: open }
+    - { n: "15", key: "verify_green", label: "VfyGRN", phase: "Build", status: open }
+    - { n: "16", key: "refactor", label: "Refact", phase: "Build", status: open }
+    - { n: "17", key: "conventions", label: "Conv", phase: "Build", status: open }
+    - { n: "18", key: "review1", label: "Rvw1", phase: "Verify", status: open }
+    - { n: "19", key: "review2", label: "Rvw2", phase: "Verify", status: open }
+    - { n: "19a", key: "arch_review", label: "ArchRvw", phase: "Verify", status: open }
+    - { n: "20", key: "rerun", label: "Rerun", phase: "Verify", status: open }
+    - { n: "21", key: "reconcile", label: "Recncl", phase: "Verify", status: open }
+    - { n: "22", key: "qa_verify", label: "QAVfy", phase: "Verify", status: open }
+    - { n: "23", key: "impact_brief", label: "ImpBrf", phase: "Assess", status: open }
+    - { n: "24", key: "rollout", label: "Rollout", phase: "Assess", status: open }
+    - { n: "25", key: "verify_pr", label: "VfyPR", phase: "Ship", status: open }
+    - { n: "26", key: "integration_verify", label: "IntVfy", phase: "Ship", status: open }
+    - { n: "27", key: "figma_compare", label: "Figma2", phase: "Ship", status: open }
+    - { n: "28", key: "deploy", label: "Deploy", phase: "Ship", status: open }
+    - { n: "29", key: "promote", label: "Promote", phase: "Ship", status: open }
+    - { n: "30", key: "roi_30", label: "30dROI", phase: "Post-Ship", status: open }
+    - { n: "31", key: "roi_90", label: "90dROI", phase: "Post-Ship", status: open }
+
+current_step:
+  number: 1
+  name: "Issue"
+  phase: "Requirements"

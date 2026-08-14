@@ -2,8 +2,18 @@
 Claude-feeedback/
 __pycache__/
 docs/session-logs/
-.hitl/
 **/~$*
+
+# HITL working state. The handoff artifacts ARE committed, deliberately: current-change.yaml
+# anchors the change to its branch so whoever picks it up resumes from the right context
+# (dev-start-change Step 7), skip-ledger.yaml is the durable cross-change ledger (CR-10), and the
+# shipped first-pass CI gate reads current-change.yaml out of the checkout. Ignoring the folder
+# wholesale — as this repo used to — disables handoff, the ledger, and that gate in one line.
+# Only transient working files belong here:
+.hitl/*.tmp
+.hitl/*.migrated
+.hitl/first-pass-choices.json
+.hitl/backups/
 
 # Internal / confidential — never publish to the public repo
 docs/business/
