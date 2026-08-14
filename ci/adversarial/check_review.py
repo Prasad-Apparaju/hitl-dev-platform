@@ -58,16 +58,37 @@ def _head_sha(root):
 #
 # So freshness is about the CODE, not the commit. These paths are governance bookkeeping, not
 # shippable content, and a difference confined to them does not invalidate a review.
-EXEMPT_PREFIXES = (".hitl/reviews/",)
-EXEMPT_PATHS = (".hitl/current-change.yaml",)
+# `.hitl/` is governance state, never shipped code, and `git status` reports an untracked
+# directory as `.hitl/` rather than its files — so the prefix has to cover the directory too.
+EXEMPT_PREFIXES = (".hitl/",)
+EXEMPT_PATHS = (".hitl",)
 
 
 def _exempt(p):
     return p in EXEMPT_PATHS or any(p.startswith(x) for x in EXEMPT_PREFIXES)
 
 
+MIN_SHA = 7
+
+
+def _dirty(root):
+    """Paths modified in the working tree that would ship but were never reviewed."""
+    r = subprocess.run(["git", "-C", root, "status", "--porcelain"], capture_output=True, text=True)
+    if r.returncode != 0:
+        return []
+    out = []
+    for line in r.stdout.splitlines():
+        path = line[3:].strip()
+        if path and not _exempt(path):
+            out.append(path)
+    return out
+
+
 def _is_fresh(root, reviewed, target):
     """(fresh, reason). Fail closed: anything we cannot determine is stale."""
+    # A truncated sha is not evidence. One character matched every commit in the repo.
+    if len(reviewed) < MIN_SHA:
+        return False, "reviewed_sha is too short to identify a commit (need %d+ chars)" % MIN_SHA
     if target.startswith(reviewed) or reviewed.startswith(target):
         return True, ""
     r = subprocess.run(["git", "-C", root, "diff", "--name-only", reviewed, target],
@@ -186,10 +207,28 @@ def check(change_path, reviews_dir, sha=None, root="."):
             return int(item[1].get("round", 0))
         except Exception:
             return 0
+    seen = {}
+    for pth, doc in records:
+        n = _round((pth, doc))
+        seen.setdefault(n, []).append(pth)
+    dupes = sorted(n for n, paths in seen.items() if len(paths) > 1)
     records.sort(key=_round)
     path, rec = records[-1]
     warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed (not this change — ignored)" % u
                 for u in warn_unreadable]
+
+    for n in dupes:
+        _fail(out, "DUPLICATE_ROUND",
+              "round %s has more than one record (%s) — which one governs is decided by filename, "
+              "so a second record can silently override a do-not-ship verdict" % (n, ", ".join(seen[n])))
+
+    dirty = _dirty(root)
+    if dirty:
+        head = ", ".join(dirty[:3])
+        more = "" if len(dirty) <= 3 else " (+%d more)" % (len(dirty) - 3)
+        _fail(out, "UNCOMMITTED_CHANGES",
+              "%s%s modified but not committed. The build packages the working tree, so this would "
+              "ship unreviewed. Commit it and re-review." % (head, more))
 
     reviewed = str(rec.get("reviewed_sha", "")).strip()
     if not reviewed:

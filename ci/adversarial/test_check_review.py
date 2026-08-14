@@ -26,6 +26,8 @@ def _write(p, doc):
 
 
 def _setup(tmp_path, record=None, change=None):
+    """Returns (change_path, reviews_dir). Pass root=str(tmp_path) so the gate never
+    inspects the developer's real repository."""
     root = tmp_path
     _write(root / ".hitl" / "current-change.yaml",
            change if change is not None else {"change_id": "GH-80", "tier": 2})
@@ -57,64 +59,64 @@ def _codes(blocks):
 
 def test_a_clean_fresh_review_passes(tmp_path):
     c, r = _setup(tmp_path, _record())
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
 
 
 def test_no_review_at_all_blocks(tmp_path):
     c, r = _setup(tmp_path, None)
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "REVIEW_MISSING" in _codes(blocks)
 
 
 def test_review_of_different_code_blocks(tmp_path):
     """THE rule. Review an early draft, keep editing, and the gate must still stop you."""
     c, r = _setup(tmp_path, _record(reviewed_sha="b" * 40))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "REVIEW_STALE" in _codes(blocks), blocks
 
 
 def test_open_critical_finding_blocks(tmp_path):
     c, r = _setup(tmp_path, _record(findings=[
         {"id": "F1", "severity": "CRITICAL", "claim": "deletes user data", "status": "open"}]))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "FINDING_OPEN" in _codes(blocks)
 
 
 def test_open_low_finding_does_not_block(tmp_path):
     c, r = _setup(tmp_path, _record(findings=[
         {"id": "F1", "severity": "LOW", "claim": "typo", "status": "open"}]))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == []
 
 
 def test_accepted_finding_needs_an_owner(tmp_path):
     c, r = _setup(tmp_path, _record(findings=[
         {"id": "F1", "severity": "CRITICAL", "claim": "x", "status": "accepted"}]))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "UNSIGNED_ACCEPTANCE" in _codes(blocks)
     c, r = _setup(tmp_path, _record(findings=[
         {"id": "F1", "severity": "CRITICAL", "claim": "x", "status": "accepted",
          "accepted_by": "someone"}]))
-    assert check(c, r, sha=SHA)[0] == []
+    assert check(c, r, sha=SHA, root=str(tmp_path))[0] == []
 
 
 def test_verdict_must_be_ship(tmp_path):
     c, r = _setup(tmp_path, _record(verdict="do-not-ship"))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "VERDICT_NOT_SHIP" in _codes(blocks)
 
 
 def test_reviewer_sharing_the_authors_context_blocks(tmp_path):
     c, r = _setup(tmp_path, _record(
         reviewer={"model": "fable", "context": "inherited"}))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "NOT_INDEPENDENT" in _codes(blocks)
 
 
 def test_confirming_stance_blocks(tmp_path):
     c, r = _setup(tmp_path, _record(stance="confirm"))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "WRONG_STANCE" in _codes(blocks)
 
 
@@ -127,20 +129,20 @@ def test_confirming_stance_blocks(tmp_path):
 ])
 def test_malformed_records_block_rather_than_pass(tmp_path, bad):
     c, r = _setup(tmp_path, _record(**bad))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks, "malformed record %r passed the gate" % bad
 
 
 def test_unparseable_record_blocks(tmp_path):
     c, r = _setup(tmp_path, _record())
     io.open(os.path.join(r, "GH-80-round1.yaml"), "w", encoding="utf-8").write("{[not yaml")
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "MALFORMED" in _codes(blocks)
 
 
 def test_a_review_of_a_different_change_does_not_count(tmp_path):
     c, r = _setup(tmp_path, _record(change_id="GH-79"))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "REVIEW_MISSING" in _codes(blocks)
 
 
@@ -151,25 +153,27 @@ def test_latest_round_decides(tmp_path):
     _write(os.path.join(r, "GH-80-round2.yaml"),
            _record(round=2, findings=[{"id": "F1", "severity": "CRITICAL", "claim": "x",
                                        "status": "fixed"}]))
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
 
 
 def test_round_one_with_no_findings_warns_but_does_not_block(tmp_path):
     c, r = _setup(tmp_path, _record(findings=[]))
-    blocks, warns = check(c, r, sha=SHA)
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == []
     assert any("SHALLOW_REVIEW" in w for w in warns)
 
 
 def test_cli_exit_codes(tmp_path):
     c, r = _setup(tmp_path, _record())
-    ok = subprocess.run([sys.executable, SCRIPT, "--change", c, "--reviews", r, "--sha", SHA],
+    ok = subprocess.run([sys.executable, SCRIPT, "--change", c, "--reviews", r, "--sha", SHA,
+                         "--root", str(tmp_path)],
                         capture_output=True, text=True)
     assert ok.returncode == 0, ok.stdout + ok.stderr
 
     c2, r2 = _setup(tmp_path / "b", _record(reviewed_sha="c" * 40))
-    bad = subprocess.run([sys.executable, SCRIPT, "--change", c2, "--reviews", r2, "--sha", SHA],
+    bad = subprocess.run([sys.executable, SCRIPT, "--change", c2, "--reviews", r2, "--sha", SHA,
+                          "--root", str(tmp_path)],
                          capture_output=True, text=True)
     assert bad.returncode == 2
     assert "REVIEW_STALE" in bad.stdout
@@ -276,7 +280,7 @@ def test_acknowledged_skip_lets_a_release_through_but_says_so_loudly(tmp_path):
         "change_id": "GH-80", "tier": 2,
         "skips": [{"step": "adversarial_review", "disposition": "decline",
                    "reason": "sev-1 hotfix", "ack_by": "lead"}]})
-    blocks, warns = check(c, r, sha=SHA)
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
     assert any("REVIEW_WAIVED" in w for w in warns)
     assert any("lead" in w and "sev-1 hotfix" in w for w in warns), warns
@@ -286,7 +290,7 @@ def test_an_unattributed_acknowledgement_is_not_one(tmp_path):
     c, r = _setup(tmp_path, None, change={
         "change_id": "GH-80", "tier": 2,
         "skips": [{"step": "adversarial_review", "disposition": "decline", "reason": "busy"}]})
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "REVIEW_MISSING" in _codes(blocks), "a skip with nobody's name on it must not clear the gate"
 
 
@@ -330,7 +334,7 @@ def test_debris_from_another_change_does_not_block_forever(tmp_path):
     """Records are kept forever, so one corrupt old file must not block every future release."""
     c, r = _setup(tmp_path, _record())
     io.open(os.path.join(r, "GH-11-round1.yaml"), "w", encoding="utf-8").write("{[not yaml")
-    blocks, warns = check(c, r, sha=SHA)
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
     assert any("UNREADABLE_RECORD" in w for w in warns)
 
@@ -338,5 +342,5 @@ def test_debris_from_another_change_does_not_block_forever(tmp_path):
 def test_our_own_corrupt_record_still_blocks(tmp_path):
     c, r = _setup(tmp_path, _record())
     io.open(os.path.join(r, "GH-80-round2.yaml"), "w", encoding="utf-8").write("{[not yaml")
-    blocks, _ = check(c, r, sha=SHA)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "MALFORMED" in _codes(blocks)

@@ -61,7 +61,7 @@ skips:
     ack_by: "who decided this"
 ```
 
-`ci/adversarial/check_review.py` honours that and lets the release through, printing
+`ci/adversarial/check_review.py` — run by the `gates` step via `/hitl:dev-validate` — honours that and lets the release through, printing
 `REVIEW_WAIVED` with the name and reason. Without `ack_by` it is not an acknowledgement and the
 gate still blocks — an unattributed waiver is the absence of a decision, written down.
 
