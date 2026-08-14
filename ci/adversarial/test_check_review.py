@@ -193,3 +193,34 @@ def test_gate_defaults_to_head_when_no_sha_given(tmp_path):
 
     c, r = _setup(repo, _record(reviewed_sha="d" * 40))
     assert "REVIEW_STALE" in _codes(check(c, r, root=str(repo))[0])
+
+
+def test_offer_steps_exist_at_the_phase_boundaries():
+    """The offers must be real steps, or declining them cannot be recorded or resurfaced."""
+    import yaml as _y
+    rt = _y.safe_load(io.open(
+        os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml"), encoding="utf-8"))
+    dev = rt["workflows"]["development"]["steps"]
+    by_key = {s["key"]: s for s in dev}
+    for key, phase in (("adv_design", "Design"), ("adv_code", "Build")):
+        assert key in by_key, "%s is not in the development workflow" % key
+        s = by_key[key]
+        assert s["phase"] == phase
+        # ceremony = freely declined. Anything heavier turns an offer into an obstacle.
+        assert s.get("crit") == "ceremony", "%s must be freely declinable, got %r" % (key, s.get("crit"))
+        assert not s.get("no_omit"), "%s must not be mandatory" % key
+
+    # Each offer sits at the END of its phase — the point where the work is actually finished.
+    for key, phase in (("adv_design", "Design"), ("adv_code", "Build")):
+        in_phase = [s["key"] for s in dev if s["phase"] == phase]
+        assert in_phase[-1] == key, "%s should be last in %s, order is %s" % (key, phase, in_phase)
+
+
+def test_release_review_stays_mandatory():
+    """Offering early must not quietly downgrade the one place it is required."""
+    import yaml as _y
+    rt = _y.safe_load(io.open(
+        os.path.join(HERE, "..", "..", "ai", "shared", "workflows.yaml"), encoding="utf-8"))
+    rel = {s["key"]: s for s in rt["workflows"]["release"]["steps"]}
+    assert rel["adversarial_review"]["crit"] == "floor"
+    assert rel["adversarial_review"].get("no_omit") is True
