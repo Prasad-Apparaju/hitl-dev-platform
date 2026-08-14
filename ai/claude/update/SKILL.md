@@ -129,14 +129,14 @@ Check whether `.hitl/hooks/` exists in the current project.
 
 If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:dev-start-from-prd`: create the wrapper scripts and `.claude/settings.json`.
 
-If it already exists, check whether the wrappers use current path discovery (checks `installed_plugins.json` first):
+If it already exists, check **every** marker the current template carries, not just plugin discovery — a wrapper can have current discovery and still be stale, and testing one marker is how that goes unnoticed:
+
 ```bash
-grep "installed_plugins.json" .hitl/hooks/welcome.sh
+for m in installed_plugins.json "command -v" HITL_PY; do grep -q "$m" .hitl/hooks/welcome.sh || echo "STALE: missing $m"; done
+[[ -f .hitl/hooks/first-pass-permissions.sh ]] || echo "STALE: first-pass-permissions.sh absent"
 ```
 
-If the wrappers do NOT contain `installed_plugins.json`, they are stale — using `HITL_PLATFORM_ROOT` (very old), a hardcoded path, or the old `settings.json["plugins"]` discovery from v1.0.5–1.0.8. All break on current Claude Code which stores plugin records in `~/.claude/plugins/installed_plugins.json`.
-
-Delete `.hitl/hooks/` and re-create all **eight** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) using the dynamic discovery template from Step 0 in `/hitl:dev-start-from-prd`.
+No `installed_plugins.json` = pre-v1.0.9 discovery, broken on current Claude Code. No `command -v` probe or `HITL_PY` = pre-issue-#14: a bare `python3` is the Microsoft Store stub on Windows, on PATH but running nothing, so every hook silently no-ops — and a lone `installed_plugins.json` grep passes straight over it. No `first-pass-permissions.sh` = pre-CR-15, so the permission policy never engages. On any of those, delete `.hitl/hooks/` and re-create all **nine** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) from the template in Step 0 of `/hitl:dev-start-from-prd`, which is the single source of truth for wrapper contents.
 
 Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook. Assert what `statusLine` **points at**, not merely that the key is present:
 ```bash
