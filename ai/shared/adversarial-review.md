@@ -68,6 +68,16 @@ gate still blocks — an unattributed waiver is the absence of a decision, writt
 There is deliberately a path here. A gate with no escape is one that gets deleted from the process
 the first time it is inconvenient at 2am, and then it protects nothing.
 
+## The first `gates` run on a release is expected to block
+
+`gates` comes before `adversarial_review` in the workflow, so on a fresh release the gate reports
+`REVIEW_MISSING` the first time — by construction, not because anything is wrong. Run the review,
+resolve what it finds, then **run `gates` again**. Treat the second run as the real one.
+
+This ordering is deliberate: the other gates (tests, lint) should fail fast, before anyone spends
+ten minutes on a review of code that does not build. But do not let the first red turn into "gates
+are red on releases, carry on" — the last thing to run before `publish` must be a green gate.
+
 ## Declining is recorded, not resisted
 
 `adv_design` and `adv_code` are `ceremony` steps, so declining them is an ordinary skip: recorded in

@@ -75,7 +75,7 @@ workflow:
     key: adv_design
     name: AdvDsgn
     phase: Design
-    status: done
+    status: open
   - n: 10
     key: red
     name: RED

@@ -364,3 +364,33 @@ def test_built_plugin_resolves_the_skill_references(tmp_path):
     for ref in sorted(set(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/(shared/[a-z0-9/._-]+)", body))):
         assert os.path.exists(os.path.join(plugin, ref)), (
             "%s is referenced by the built skill but is not packaged" % ref)
+
+
+def test_a_review_step_marked_done_with_no_record_is_caught(tmp_path):
+    """"Done" with nothing written down is the silent skip this whole feature exists to kill —
+    and the branch that built it had exactly that in its own change file."""
+    c, r = _setup(tmp_path, None, change={
+        "change_id": "GH-80", "tier": 2,
+        "workflow": {"id": "development", "steps": [
+            {"n": "9a", "key": "adv_design", "status": "done"}]}})
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "UNBACKED_REVIEW" in _codes(blocks), blocks
+
+
+def test_a_branch_name_as_reviewed_sha_is_refused(tmp_path):
+    """A ref that moves with the branch is permanently fresh — the opposite of the guarantee."""
+    for bad in ("myfeature", "--cached", "HEAD~1"):
+        c, r = _setup(tmp_path, _record(reviewed_sha=bad))
+        blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+        assert "REVIEW_STALE" in _codes(blocks), "%r accepted as a commit id" % bad
+
+
+def test_a_waiver_surfaces_an_existing_adverse_verdict(tmp_path):
+    """Waiving is allowed. Hiding a do-not-ship verdict behind the waiver is not."""
+    c, r = _setup(tmp_path, _record(verdict="do-not-ship"), change={
+        "change_id": "GH-80", "tier": 2,
+        "skips": [{"step": "adversarial_review", "reason": "hurry", "ack_by": "someone"}]})
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert blocks == []
+    joined = " ".join(warns)
+    assert "do-not-ship" in joined, "the waiver hid an adverse verdict: %s" % warns

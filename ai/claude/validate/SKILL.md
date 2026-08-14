@@ -84,7 +84,10 @@ that real rather than stated — without it the requirement is prose and a relea
 it did before.
 
 ```bash
-if grep -q 'id: release\|name: release' .hitl/current-change.yaml 2>/dev/null; then
+# PARSE it. A grep for `id: release` does not match the change file, because the generator writes
+# every scalar through json.dumps and emits `id: "release"` — so the whole gate silently never ran.
+WF=$(python3 -c "import yaml;d=yaml.safe_load(open('.hitl/current-change.yaml'));print((d.get('workflow') or {}).get('id',''))" 2>/dev/null)
+if [[ "$WF" == "release" ]]; then
   GATE="ci/adversarial/check_review.py"
   [[ -f "$GATE" ]] || GATE="$CLAUDE_PLUGIN_ROOT/shared/ci/adversarial/check_review.py"
   if [[ -f "$GATE" ]]; then python3 "$GATE"; else echo "release gate script not found — do not publish"; fi

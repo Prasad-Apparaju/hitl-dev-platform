@@ -233,7 +233,7 @@ is how drift starts). Run this generator, which copies the chosen workflow's ste
 first step `current` and the rest `open`, and stamps the versions:
 
 ```bash
-WF=<development|brownfield|migration|migration_review|prd>
+WF=<development|brownfield|migration|migration_review|prd|release|docs>
 CHANGE_ID="GH-<N>"
 BRANCH=$(git branch --show-current)
 # Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.

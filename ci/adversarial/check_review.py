@@ -23,6 +23,7 @@ a review happened; it is to make skipping one impossible to do silently.
 import argparse
 import io
 import os
+import re
 import subprocess
 import sys
 
@@ -86,9 +87,12 @@ def _dirty(root):
 
 def _is_fresh(root, reviewed, target):
     """(fresh, reason). Fail closed: anything we cannot determine is stale."""
-    # A truncated sha is not evidence. One character matched every commit in the repo.
-    if len(reviewed) < MIN_SHA:
-        return False, "reviewed_sha is too short to identify a commit (need %d+ chars)" % MIN_SHA
+    # It must be a commit id, not any ref git will accept. A branch name resolves to whatever the
+    # branch points at TODAY, so a record naming one is permanently fresh no matter how far the code
+    # moves — and a leading dash is an option, not a ref.
+    if not re.fullmatch(r"[0-9a-fA-F]{%d,40}" % MIN_SHA, reviewed):
+        return False, ("reviewed_sha %r is not a commit id (need %d-40 hex chars). A branch or tag "
+                       "name would never go stale, which is the whole guarantee" % (reviewed, MIN_SHA))
     if target.startswith(reviewed) or reviewed.startswith(target):
         return True, ""
     r = subprocess.run(["git", "-C", root, "diff", "--name-only", reviewed, target],
@@ -130,6 +134,43 @@ def _acknowledged_skip(change):
     return None
 
 
+def _claimed_without_record(change, reviews_dir, change_id):
+    """adv_* steps marked done while nothing was written down."""
+    wf = change.get("workflow")
+    steps = wf.get("steps") if isinstance(wf, dict) else None
+    if not isinstance(steps, list):
+        return []
+    if os.path.isdir(reviews_dir) and any(
+            n.startswith(change_id + "-") and n.endswith((".yaml", ".yml"))
+            for n in os.listdir(reviews_dir)):
+        return []
+    return [str(s.get("key")) for s in steps
+            if isinstance(s, dict) and str(s.get("key", "")).startswith("adv_")
+            and str(s.get("status", "")).strip() == "done"]
+
+
+def _adverse_verdict(reviews_dir, change_id):
+    """(path, verdict) of the newest record for this change whose verdict is not 'ship'."""
+    if not os.path.isdir(reviews_dir):
+        return None
+    best = None
+    for name in sorted(os.listdir(reviews_dir)):
+        if not name.startswith(change_id + "-") or not name.endswith((".yaml", ".yml")):
+            continue
+        doc, err = _load(os.path.join(reviews_dir, name))
+        if err or not isinstance(doc, dict):
+            continue
+        v = str(doc.get("verdict", "")).strip().lower()
+        if v and v != "ship":
+            try:
+                n = int(doc.get("round", 0))
+            except Exception:
+                n = 0
+            if best is None or n >= best[0]:
+                best = (n, os.path.join(reviews_dir, name), doc.get("verdict"))
+    return (best[1], best[2]) if best else None
+
+
 def _load(path):
     """Return (doc, error). A file we cannot parse blocks — it is never treated as absent."""
     try:
@@ -165,10 +206,20 @@ def check(change_path, reviews_dir, sha=None, root="."):
     # is one that gets deleted from the process the first time it is inconvenient at 2am.
     ack = _acknowledged_skip(change)
     if ack:
+        adverse = _adverse_verdict(reviews_dir, change_id)
+        extra = ""
+        if adverse:
+            extra = ("\n        NOTE: a review of this change exists and its verdict is %r (%s). "
+                     "The waiver is overriding it." % (adverse[1], os.path.basename(adverse[0])))
         return [], ["[warn] REVIEW_WAIVED: %s is shipping WITHOUT an adversarial review.\n"
-                    "        Acknowledged by %s: %s\n"
+                    "        Acknowledged by %s: %s%s\n"
                     "        Recorded in the change file, and it stays there."
-                    % (change_id, ack.get("by") or "?", ack.get("reason") or "no reason given")]
+                    % (change_id, ack.get("by") or "?", ack.get("reason") or "no reason given", extra)]
+
+    for step in _claimed_without_record(change, reviews_dir, change_id):
+        _fail(out, "UNBACKED_REVIEW",
+              "step '%s' is marked done but no review record exists for %s. A review with nothing "
+              "written down is the silent skip this gate exists to catch." % (step, change_id))
 
     if not os.path.isdir(reviews_dir):
         _fail(out, "REVIEW_MISSING",
@@ -188,7 +239,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
             # A record we cannot read is not a record we can trust — but only if it is OURS.
             # Records are kept forever, so unrelated debris from a long-closed change must not
             # block every future release.
-            if os.path.basename(path).startswith(change_id):
+            if os.path.basename(path).startswith(change_id + "-"):
                 _fail(out, "MALFORMED", "%s: %s" % (path, err))
             else:
                 warn_unreadable.append(path)
@@ -325,7 +376,10 @@ def main(argv=None):
         print("\nRelease gate: BLOCKED. An adversarial review of the exact code being shipped is "
               "required before publishing.")
         return 2
-    print("Release gate: adversarial review present, fresh, and cleared.")
+    if any("REVIEW_WAIVED" in w for w in warns):
+        print("Release gate: PASSED ON A WAIVER — no adversarial review was honoured.")
+    else:
+        print("Release gate: adversarial review present, fresh, and cleared.")
     return 0
 
 

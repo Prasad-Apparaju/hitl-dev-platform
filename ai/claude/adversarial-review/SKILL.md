@@ -152,8 +152,9 @@ signal, not a single clean pass.
 Check where you stand:
 
 ```bash
-python3 ci/adversarial/check_review.py 2>/dev/null \
-  || python3 "$CLAUDE_PLUGIN_ROOT/shared/ci/adversarial/check_review.py"
+GATE="ci/adversarial/check_review.py"
+[[ -f "$GATE" ]] || GATE="$CLAUDE_PLUGIN_ROOT/shared/ci/adversarial/check_review.py"
+python3 "$GATE"
 ```
 
 Exit 0 means the gate is satisfied for the current commit. Exit 2 prints what is missing.
