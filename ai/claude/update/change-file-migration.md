@@ -106,7 +106,9 @@ if len(curr) != 1:
         repaired.add(canon)
     ci = order.index(canon)
     for k in curr:
-        if k != canon: status_by_key[k] = "done" if order.index(k) < ci else "open"
+        if k != canon:
+            status_by_key[k] = "done" if order.index(k) < ci else "open"
+            repaired.add(k)   # this branch changes the most statuses; it must not report them "keep"
     status_by_key[canon] = "current"
 
 # 3) Emit ONE flow-map step line, carrying every non-core key across (catalog wins for phase/substep).

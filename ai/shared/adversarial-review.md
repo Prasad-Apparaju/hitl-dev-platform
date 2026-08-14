@@ -59,7 +59,13 @@ skips:
     disposition: decline
     reason: "sev-1 hotfix, restoring a known-good build"
     ack_by: "who decided this"
+    waiver_ref: "GH-123"        # required: this gate is fail-closed, so a name alone is not enough
 ```
+
+`waiver_ref` points at wherever your team records accepted risk — an issue, a waiver file, an
+incident. The rule is the framework's own: a floor skip that maps to a fail-closed gate needs a
+linked waiver, because a skip is not a waiver. Skipping the release review at 2am is allowed; doing
+it without anyone signing for it is not.
 
 `ci/adversarial/check_review.py` — run by the `gates` step via `/hitl:dev-validate` — honours that and lets the release through, printing
 `REVIEW_WAIVED` with the name and reason. Without `ack_by` it is not an acknowledgement and the
