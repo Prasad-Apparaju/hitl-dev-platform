@@ -178,10 +178,29 @@ A `grep "statusLine"` matches that happily, so the check passes and the stale sc
 
 If a legacy `.hitl/statusline.sh` is present, delete it during re-sync so nothing can be re-pointed at it:
 ```bash
-[ -f .hitl/statusline.sh ] && rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (superseded by .hitl/hooks/statusline-hitl.sh)"
+if [ -f .hitl/statusline.sh ]; then
+  if git ls-files --error-unmatch .hitl/statusline.sh >/dev/null 2>&1; then
+    rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (tracked — recoverable from git)"
+  else
+    echo "  .hitl/statusline.sh is UNTRACKED — leaving it alone. If it is HITL's legacy script," >&2
+    echo "  delete it yourself; if it is yours, move it out of .hitl/." >&2
+  fi
+fi
 ```
 
-If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent **or points anywhere other than `hooks/statusline-hitl.sh`**, the persistent HITL breadcrumb is missing or wrong. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases, delete `.claude/settings.json` and re-create it from the template in Step 0 of `/hitl:dev-start-from-prd`.
+If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent **or points anywhere other than `hooks/statusline-hitl.sh`**, the persistent HITL breadcrumb is missing or wrong. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases the file needs repair — but **do not delete it**. That template is a
+complete file, not a merge: deleting takes the team's `permissions`, `env`, MCP wiring and every
+non-HITL hook with it, and the trigger is common (any project with its own `statusLine` matches on
+first upgrade).
+
+Back it up, then add or correct only the specific keys that are wrong:
+
+```bash
+cp .claude/settings.json .claude/settings.json.bak && echo "backed up to .claude/settings.json.bak"
+```
+
+Show the user the diff of what you propose to change before writing. Only if the file is absent or
+unparseable should you write the template wholesale — and say so when you do.
 
 Say:
 

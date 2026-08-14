@@ -282,3 +282,66 @@ def test_start_change_can_actually_seed_a_release():
     assert m, "the WF enumeration is missing from Step 6"
     assert "release" in m.group(1).split("|"), (
         "Step 3 offers `release` but Step 6 will not seed it: %s" % m.group(1))
+
+
+def _migrator():
+    """The migration script, lifted out of the skill so the test cannot drift from what ships."""
+    text = io.open(os.path.join(ROOT, "ai", "claude", "update", "change-file-migration.md"),
+                   encoding="utf-8").read()
+    m = re.search(r"<< 'PY'\n(.*?)\nPY\n", text, re.S)
+    assert m, "migration script not found"
+    return m.group(1)
+
+
+def test_migration_never_writes_a_file_it_cannot_parse(tmp_path):
+    """It wrote invalid YAML over a user's change file and reported every step as kept.
+
+    The change file is the repo's governance state; unparseable means their CI blocks every PR
+    with MALFORMED and they must hand-edit to escape. start-change already refuses to emit YAML it
+    cannot load — this had no such check.
+    """
+    src = _migrator()
+    assert "yaml.safe_load(out)" in src, "the output is written without a parse check"
+    assert "MIGRATION ABORTED" in src, "a failed parse must abort, not warn"
+
+
+def test_migration_refuses_block_style_rather_than_corrupting_it(tmp_path):
+    """Splicing flow-map lines into a block-style list is what produced the invalid YAML."""
+    mig = tmp_path / "mig.py"
+    mig.write_text(_migrator(), encoding="utf-8")
+    repo = tmp_path / "repo"
+    (repo / ".hitl").mkdir(parents=True)
+    import yaml as _y
+    rt = _y.safe_load(io.open(os.path.join(ROOT, "ai", "shared", "workflows.yaml"),
+                              encoding="utf-8"))["workflows"]["development"]
+    doc = {"schema_version": "2.0", "change_id": "T-1", "tier": 2, "status": "pr-ready",
+           "workflow": {"id": "development", "version": "2.0.0", "total": rt["total"],
+                        "steps": [{"n": s["n"], "key": s["key"], "label": s.get("label"),
+                                   "phase": s["phase"], "status": "open"} for s in rt["steps"][:3]]}}
+    # safe_dump produces BLOCK style — the shape that corrupted.
+    (repo / ".hitl" / "current-change.yaml").write_text(_y.safe_dump(doc, sort_keys=False),
+                                                        encoding="utf-8")
+    p = subprocess.run([sys.executable, str(mig),
+                        os.path.join(ROOT, "ai", "shared", "workflows.yaml"), "9.9.9"],
+                       cwd=str(repo), capture_output=True, text=True)
+    assert not (repo / ".hitl" / "current-change.yaml.migrated").exists(), (
+        "wrote a proposal for a shape it cannot rewrite:\n%s" % p.stdout)
+    assert "ABORTED" in (p.stdout + p.stderr)
+    _y.safe_load((repo / ".hitl" / "current-change.yaml").read_text(encoding="utf-8"))
+
+
+def test_migration_keeps_a_teams_own_step():
+    """An unknown key is the team's own step, not debris. Dropping it deletes their record."""
+    src = _migrator()
+    assert "kept_foreign" in src, "unknown-key steps are still dropped"
+    assert 'diff.append(f"  - removed  {k}")' not in src
+
+
+def test_dev_update_does_not_delete_settings_or_unowned_files():
+    """Step 4.6 was hardened because a filename is not evidence of authorship. Ninety lines above
+    it, the same skill deleted the team's whole settings file and an untracked script."""
+    s = io.open(UPDATE_SKILL, encoding="utf-8").read()
+    assert "delete `.claude/settings.json` and re-create it" not in s
+    assert "settings.json.bak" in s, "the settings file must be backed up before repair"
+    assert "git ls-files --error-unmatch .hitl/statusline.sh" in s, (
+        "an untracked statusline.sh must not be deleted on name alone")

@@ -140,7 +140,7 @@ def lint_catalog(catalog):
     return findings
 
 
-ACTOR_FIELDS = ("actor", "ack_by", "accepted_by", "authorized_by", "acknowledged_by")
+ACTOR_FIELDS = ("actor", "owner", "ack_by", "accepted_by", "authorized_by", "acknowledged_by")
 
 
 def _actor_of(entry):

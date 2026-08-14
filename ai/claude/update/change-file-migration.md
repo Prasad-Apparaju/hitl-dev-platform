@@ -139,7 +139,7 @@ if block_m:
     si = next((i for i, l in enumerate(lines) if re.match(r"^\s+steps:\s*$", l)), None)
     if si is not None:
         head, region = lines[:si+1], lines[si+1:]
-        out_region, seen, block_style = [], set(), False
+        out_region, seen, block_style, kept_foreign = [], set(), False, []
         for l in region:
             if step_re.match(l) and "{" in l:                        # a flow-map step line
                 km = key_re.search(l); k = km.group(1) if km else None
@@ -149,12 +149,20 @@ if block_m:
                     if new_l != l: block_changed = True
                     out_region.append(new_l); seen.add(k)
                 else:
-                    block_changed = True; diff.append(f"  - removed  {k}")
+                    # A key the catalog does not know is the TEAM'S OWN step. Keep the line
+                    # verbatim: dropping it silently deletes part of their governance record,
+                    # against a doc that promises nothing they added is dropped.
+                    out_region.append(l); kept_foreign.append(k)
             elif re.match(r"^\s*-\s", l) and "{" not in l:
                 block_style = True; out_region.append(l)             # rare hand-authored multi-line step
             else:
                 out_region.append(l)                                 # comment / blank — verbatim
         new_keys = [s["key"] for s in cat["steps"] if s["key"] not in seen]
+        if new_keys and block_style:
+            sys.exit("MIGRATION ABORTED: this file uses block-style steps, which cannot be "
+                     "rewritten in place, and %d step(s) would need adding. Nothing was written.\n"
+                     "Re-seed with /hitl:dev-start-change, or convert steps to flow maps first."
+                     % len(new_keys))
         if new_keys:                                                 # append genuinely-new steps after last step line
             block_changed = True
             last = max((i for i, l in enumerate(out_region) if step_re.match(l)), default=len(out_region)-1)
@@ -173,7 +181,7 @@ if block_m:
         oh = list(head)
         up_head(head, "id", wf_id); up_head(head, "version", f'"{new_ver}"'); up_head(head, "total", str(cat["total"]))
         if head != oh: block_changed = True
-        if block_style: print("  ⚠ block-style step(s) detected — lines updated; verify comments by the diff below.")
+        if block_style: print("  ⚠ block-style step(s) detected — those lines were NOT rewritten (numbering and status left as-is). Migration is incomplete; check the diff.")
         nb = "\n".join(head + out_region);  nb += "" if nb.endswith("\n") else "\n"
         out = text[:block_m.start()] + nb + text[block_m.end():]
     else:
@@ -198,6 +206,11 @@ def upsert(t, key, val):
 out = upsert(out, "schema_version", "2.0")
 out = upsert(out, "hitl_version", new_ver)
 
+try:
+    yaml.safe_load(out)
+except Exception as _e:
+    sys.exit("MIGRATION ABORTED: the result would not be valid YAML (%s).\n"
+             "Nothing was written; your change file is untouched." % type(_e).__name__)
 open(F + ".migrated", "w").write(out)
 print(f"Workflow: {wf_id}  →  {cat['total']} steps (was {wf.get('total','?')})")
 print("Step migration (remapped by key):"); print("\n".join(diff))
@@ -211,6 +224,10 @@ if newly:
     for k in newly:
         print("    %s" % k)
     print("    These were never offered on this change. Do them, or record a skip.")
+if kept_foreign:
+    print("\n--- your own steps, carried through (not in the HITL catalog) ---")
+    for k in kept_foreign:
+        print("    %s" % k)
 print("\n--- actual diff (review before confirming) ---")
 print("\n".join(ud) if ud else "(no changes)")
 PY
