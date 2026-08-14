@@ -374,14 +374,45 @@ def test_lightened_without_first_pass_is_a_blocker():
     assert "FP_UNDECLARED" in blockers(fs)
 
 
-def test_populated_skips_without_first_pass_is_a_blocker():
-    # The other half: records present, flag absent. Catches a change file whose flag was lost or
-    # clobbered after dispositions were recorded.
+def test_unattributed_skips_without_first_pass_is_a_blocker():
+    # Records present, flag absent, and nobody's name on them: still uncertified.
+    bare = {k: v for k, v in base_skip("roi").items() if k != "actor"}
     change = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "open"}]},
-              "skips": [base_skip("roi")]}
+              "skips": [bare]}
     fs = C.check(change, CATALOG)
     assert "FP_UNDECLARED" in codes(fs)
     assert "FP_UNDECLARED" in blockers(fs)
+
+
+def test_the_message_never_prescribes_falsifying_the_flag():
+    """It used to say "Set `first_pass: true`" — on a change that never ran First Pass.
+
+    Following your own validator's advice should not require recording something untrue. That
+    instruction is why an honest decline was more expensive than a silent one.
+    """
+    bare = {k: v for k, v in base_skip("roi").items() if k != "actor"}
+    fs = C.check({"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "open"}]},
+                  "skips": [bare]}, CATALOG)
+    msg = " ".join(f["message"] for f in fs if f["code"] == "FP_UNDECLARED")
+    assert "Set `first_pass: true` if the change is running First Pass" not in msg
+    assert "ack_by" in msg or "actor" in msg, msg
+
+
+def test_an_attributed_skip_outside_first_pass_is_accepted_and_still_enforced():
+    """The 2am path. Declining with a name on it must not turn CI red...
+
+    ...but accepting it must not mean skipping enforcement either: a floor step declined with a
+    name and no waiver has to still block, or this trade would be worse than the red PR it removes.
+    """
+    ok = {"tier": 2, "workflow": {"steps": [{"key": "roi", "status": "skipped"}]},
+          "skips": [base_skip("roi")]}
+    fs = C.check(ok, CATALOG)
+    assert "FP_UNDECLARED" not in codes(fs), "an attributed decline should not be refused"
+
+    floor = {"tier": 2, "workflow": {"steps": [{"key": "deploy", "status": "skipped"}]},
+             "skips": [dict(base_skip("deploy"), disposition="decline")]}
+    fs2 = C.check(floor, CATALOG)
+    assert blockers(fs2), "a floor step declined with only a name must still block"
 
 
 def test_first_pass_false_with_clean_plan_still_passes():

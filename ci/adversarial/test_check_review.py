@@ -394,3 +394,90 @@ def test_a_waiver_surfaces_an_existing_adverse_verdict(tmp_path):
     assert blocks == []
     joined = " ".join(warns)
     assert "do-not-ship" in joined, "the waiver hid an adverse verdict: %s" % warns
+
+
+def test_two_lenses_in_one_round_is_the_practice_not_a_duplicate(tmp_path):
+    """The skill mandates two reviewers per round. Recording both must be possible.
+
+    DUPLICATE_ROUND was right about the danger — a second record silently overriding a verdict —
+    and wrong to conflate it with the two-lens practice it also mandates. I found this by trying to
+    file my own round-3 paperwork and being blocked by my own check.
+    """
+    c, r = _setup(tmp_path, _record(lens="correctness"))
+    _write(os.path.join(r, "GH-80-round1-consequence.yaml"), _record(lens="consequence"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert blocks == [], blocks
+
+
+def test_same_lens_twice_in_a_round_still_blocks(tmp_path):
+    c, r = _setup(tmp_path, _record(lens="correctness"))
+    _write(os.path.join(r, "GH-80-round1-again.yaml"), _record(lens="correctness", verdict="ship"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "DUPLICATE_ROUND" in _codes(blocks)
+
+
+def test_one_adverse_lens_decides_the_round(tmp_path):
+    """A clean second opinion is not a veto override."""
+    c, r = _setup(tmp_path, _record(lens="correctness", verdict="ship"))
+    _write(os.path.join(r, "GH-80-round1-bypass.yaml"),
+           _record(lens="bypass", verdict="do-not-ship"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "VERDICT_NOT_SHIP" in _codes(blocks), blocks
+
+
+def test_a_squash_merged_review_counts_when_the_tree_is_identical(tmp_path):
+    """Two-person release: reviewer on a branch, publisher on a fresh clone.
+
+    The commit is unreachable after a squash-merge, so an identical tree reported STALE and the
+    two-minute exit was to sed reviewed_sha — the forgery the gate exists to refuse.
+    """
+    repo = tmp_path / "repo"
+    (repo / ".hitl" / "reviews").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=str(repo), check=True)
+    for k, v in (("user.email", "t@t"), ("user.name", "t")):
+        subprocess.run(["git", "config", k, v], cwd=str(repo), check=True)
+    (repo / "code.py").write_text("x = 1\n", encoding="utf-8")
+    _write(repo / ".hitl" / "current-change.yaml", {"change_id": "GH-80", "tier": 2})
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
+    subprocess.run(["git", "commit", "-qm", "work"], cwd=str(repo), check=True)
+    tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=str(repo),
+                          capture_output=True, text=True).stdout.strip()
+
+    c = str(repo / ".hitl" / "current-change.yaml")
+    r = str(repo / ".hitl" / "reviews")
+    _write(repo / ".hitl" / "reviews" / "GH-80-round1.yaml",
+           _record(reviewed_sha="f" * 40, reviewed_tree=tree))
+    blocks, _ = check(c, r, root=str(repo))
+    assert blocks == [], "an unreachable commit with an identical tree must still count:\n%s" % blocks
+
+    # A different tree must not.
+    _write(repo / ".hitl" / "reviews" / "GH-80-round1.yaml",
+           _record(reviewed_sha="f" * 40, reviewed_tree="e" * 40))
+    assert "REVIEW_STALE" in _codes(check(c, r, root=str(repo))[0])
+
+
+def test_untracked_build_output_does_not_trap_the_gate(tmp_path):
+    """`build` creates dist/, then re-running the gate said 'commit it' — wrong advice, and the
+    loop it starts ends at sed-ing the sha."""
+    repo = tmp_path / "repo"
+    (repo / ".hitl" / "reviews").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=str(repo), check=True)
+    for k, v in (("user.email", "t@t"), ("user.name", "t")):
+        subprocess.run(["git", "config", k, v], cwd=str(repo), check=True)
+    (repo / "code.py").write_text("x = 1\n", encoding="utf-8")
+    _write(repo / ".hitl" / "current-change.yaml", {"change_id": "GH-80", "tier": 2})
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
+    subprocess.run(["git", "commit", "-qm", "work"], cwd=str(repo), check=True)
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo),
+                          capture_output=True, text=True).stdout.strip()
+    _write(repo / ".hitl" / "reviews" / "GH-80-round1.yaml", _record(reviewed_sha=head))
+
+    (repo / "dist").mkdir()
+    (repo / "dist" / "bundle.js").write_text("built\n", encoding="utf-8")
+    c = str(repo / ".hitl" / "current-change.yaml")
+    r = str(repo / ".hitl" / "reviews")
+    assert check(c, r, root=str(repo))[0] == [], "build output must not block the gate"
+
+    # ...but unreviewed SOURCE still must.
+    (repo / "code.py").write_text("x = 2\n", encoding="utf-8")
+    assert "UNCOMMITTED_CHANGES" in _codes(check(c, r, root=str(repo))[0])

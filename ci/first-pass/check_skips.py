@@ -140,6 +140,20 @@ def lint_catalog(catalog):
     return findings
 
 
+ACTOR_FIELDS = ("actor", "ack_by", "accepted_by", "authorized_by", "acknowledged_by")
+
+
+def _actor_of(entry):
+    """Who owns this skip. One dialect: check_review, skip-record.md and this file all accept these."""
+    if not isinstance(entry, dict):
+        return ""
+    for f in ACTOR_FIELDS:
+        v = _str(entry.get(f)).strip()
+        if v:
+            return v
+    return ""
+
+
 def _f(code, msg):
     return {"code": code, "message": msg, "waivable": code not in NON_WAIVABLE}
 
@@ -159,9 +173,20 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         # change with skips in it certifies clean while enforcing nothing. `skipped`/`starter` statuses
         # post-date FR-29 and only the First Pass driver writes them, so their presence here means the
         # flag was lost or omitted, not that the file is legacy.
+        # An entry carrying an accountable name is a decision someone owns. That is the record we
+        # want to exist; refusing it teaches people not to write it.
+        def _attributed(e):
+            if not isinstance(e, dict):
+                return False
+            return bool(_actor_of(e))
+
+        raw_skips = change.get("skips") if isinstance(change.get("skips"), list) else []
+        unattributed = [e for e in raw_skips if not _attributed(e)]
+
         evidence = []
-        if isinstance(change.get("skips"), list) and change["skips"]:
-            evidence.append(f"{len(change['skips'])} entr{'y' if len(change['skips']) == 1 else 'ies'} in skips[]")
+        if unattributed:
+            evidence.append(f"{len(unattributed)} unattributed entr"
+                            f"{'y' if len(unattributed) == 1 else 'ies'} in skips[]")
         wf = change.get("workflow")
         lightened = [
             s.get("key")
@@ -171,17 +196,32 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
             # file with `status: [done]` turns check() from "returns findings" into "throws".
             if isinstance(s, dict) and isinstance(s.get("status"), str) and s["status"] in LIGHTENED_STATUSES
         ]
+        accounted = {_str(e.get("step")).strip() for e in raw_skips if _attributed(e)}
+        lightened = [k for k in lightened if k not in accounted]
         if lightened:
             evidence.append("step(s) " + ", ".join(repr(k) for k in lightened[:5] if k)
                             + (" and more" if len(lightened) > 5 else "") + " lightened")
         if evidence:
             findings.append(_f(
                 "FP_UNDECLARED",
-                "first_pass is absent/false but the change has been lightened (" + "; ".join(evidence)
-                + "). Enforcement never engaged, so this ledger is uncertified. Set `first_pass: true` "
-                  "if the change is running First Pass, or restore the steps."))
-        return findings  # not a First Pass change — nothing further to enforce (back-compat)
-    if type(fp) is not bool:
+                "first_pass is absent/false and the change has been lightened with nothing "
+                "accountable behind it (" + "; ".join(evidence)
+                + "). Give each skip an owner (`ack_by:` or `actor:`) and a reason, or restore the "
+                  "steps. Do NOT set `first_pass: true` to clear this unless the change really is "
+                  "running First Pass — that records something untrue to silence a check."))
+        # Accepting an attributed skip must NOT mean skipping enforcement on it. Returning here
+        # would let a floor step be declined with a name and no waiver, checked by nothing — worse
+        # than the red PR this fix removes. So: legacy files with no skips still return (back-compat),
+        # but a change carrying attributed skips falls through to the full ruleset below.
+        if not any(_attributed(e) for e in raw_skips):
+            return findings  # genuinely not a First Pass change — nothing further to enforce
+    if fp is None:
+        # Reached only via the attributed-skip fall-through above: the flag is legitimately absent
+        # and we are enforcing anyway. Saying "present but not a boolean" would be untrue.
+        findings.append(_f("FP_ABSENT_ENFORCED",
+                           "first_pass is absent, but this change carries attributed skips — "
+                           "enforcing the full ruleset on them."))
+    elif type(fp) is not bool:
         findings.append(_f("MALFORMED", f"first_pass is present but not a boolean ({fp!r}) — enforcing at strictest"))
 
     # tier must be a real int in range — a string "3" or bool True must NOT silently default to 2 and let
@@ -280,8 +320,10 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     for s in skips:
         key = _str(s.get("step"))
         # never silent (NEG-1/2): actor + reason non-empty, valid disposition
-        if not _str(s.get("actor")).strip():
-            findings.append(_f("SILENT_SKIP", f"skip '{key}': actor is empty"))
+        if not _actor_of(s):
+            findings.append(_f("SILENT_SKIP",
+                               f"skip '{key}': nobody is accountable for it — set `actor:` "
+                               f"(or `ack_by:`) to a person or role"))
         if not _str(s.get("reason")).strip():
             findings.append(_f("SILENT_SKIP", f"skip '{key}': reason is empty"))
         disp = _str(s.get("disposition"))

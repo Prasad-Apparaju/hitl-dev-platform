@@ -25,8 +25,12 @@ git status --porcelain | head -20
 git diff --stat HEAD~1 2>/dev/null | tail -3
 ```
 
-**If the working tree is dirty, stop and say so.** A review of uncommitted work cannot be recorded:
-the gate binds a record to a commit, and there is no commit yet. Offer to commit first.
+**If source files are uncommitted, stop and say so.** A review of uncommitted work cannot be
+recorded: the gate binds a record to a commit, and there is no commit yet. Offer to commit first.
+
+Changes under `.hitl/` do not count — advancing the workflow edits the change file, so the tree is
+almost always "dirty" in that sense, and the gate exempts it for the same reason. Untracked build
+output (`dist/`, `build/`) does not count either.
 
 Establish the scope from `$ARGUMENTS`, or infer it:
 

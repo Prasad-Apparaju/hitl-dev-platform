@@ -88,11 +88,22 @@ def test_a_plain_change_does_not_claim_first_pass(gen, tmp_path):
 
 
 def test_the_original_defect_is_caught_if_it_returns(gen, tmp_path):
-    """Regression guard for the exact shipped bug: a lightened plan with the flag missing."""
+    """Regression guard for the exact shipped bug: a lightened plan with the flag missing.
+
+    The bug was that a lost `first_pass` silently DISABLED enforcement. What matters is therefore
+    that the ruleset still runs, not which code announces it — and since these skips carry an
+    accountable actor, the honest response is to enforce rather than refuse the record.
+    """
     rc, doc, _ = run_gen(gen, tmp_path, choices=CHOICES)
     assert rc == 0
     del doc["first_pass"]
-    assert "FP_UNDECLARED" in [f["code"] for f in C.check(doc, CATALOG, tier=2) if not f["waivable"]]
+    codes = [f["code"] for f in C.check(doc, CATALOG, tier=2)]
+    assert "FP_ABSENT_ENFORCED" in codes, "a lost flag must not silently switch enforcement off"
+
+    # And enforcement must have teeth: break a rule and it still blocks with the flag gone.
+    doc["skips"] = [dict(e, actor="") for e in doc["skips"]]
+    bad = [f["code"] for f in C.check(doc, CATALOG, tier=2) if not f["waivable"]]
+    assert bad, "with the flag absent, an unattributed ledger must still block"
 
 
 def test_ledger_survives_seeding(gen, tmp_path):
