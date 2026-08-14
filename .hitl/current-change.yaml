@@ -2,7 +2,7 @@ schema_version: '2.0'
 change_id: GH-29
 tier: 1
 status: implementation-approved
-expected_branch: fix/29-reachability-and-guards
+expected_branch: release/2.6.3
 first_pass: false
 source_artifacts:
   issue: https://github.com/pappar/hitl-claude-plugin/issues/29
@@ -13,6 +13,8 @@ allowed_paths: &id001
 - ci/wiring/
 - ci/retired-tests.sha256
 - ai/claude/update/
+- ai/claude/plugin/
+- CHANGELOG.md
 manifest:
   domains:
   - name: onboarding-sync
