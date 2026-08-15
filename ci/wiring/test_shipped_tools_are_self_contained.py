@@ -348,23 +348,38 @@ def test_dev_update_does_not_delete_settings_or_unowned_files():
 
 
 def test_personas_are_wired_at_both_ends():
-    """A persona system nobody is offered and nothing reads is inert — the defect of the day.
+    """A mechanism nobody is offered and nothing reads is inert — the defect of the week.
 
-    Inbound: the session-start instructions must actually look for a profile.
-    Outbound: the drafting skill must exist and be registered.
+    Inbound is deliberately NOT a HITL-owned store: `~/.claude/CLAUDE.md` already applies to every
+    project and is the user's own, so HITL drives that rather than shadowing it. What must exist is
+    the command that sets it up and the instruction to offer it.
     """
     tmpl = io.open(os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
                                 "CLAUDE.md.template"), encoding="utf-8").read()
-    assert ".hitl/people/" in tmpl, "session start never looks for a profile"
-    assert "git config user.email" in tmpl, "nothing matches the person to their profile"
-    assert "offer once" in tmpl.lower(), "the profile is never offered, so nobody creates one"
+    assert "/hitl:dev-preferences" in tmpl, "nothing ever offers the preferences command"
+    assert "~/.claude/CLAUDE.md" in tmpl, "the session instructions must point at the native file"
+    assert ".hitl/people/" not in tmpl, (
+        "inbound preferences must NOT be a repo-scoped HITL store — that duplicates the native "
+        "mechanism and only works in HITL projects")
 
-    skill = os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md")
-    assert os.path.isfile(skill), "the outbound drafting skill is missing"
     import json
     reg = json.load(io.open(os.path.join(ROOT, "ai", "claude", "plugin", "plugin.json"),
                             encoding="utf-8"))
-    assert "ai/claude/draft-for" in reg["skills"], "draft-for is not registered in plugin.json"
+    for skill in ("ai/claude/preferences", "ai/claude/draft-for"):
+        assert skill in reg["skills"], "%s is not registered in plugin.json" % skill
+        assert os.path.isfile(os.path.join(ROOT, skill.replace("ai/claude/", "ai/claude/"),
+                                           "SKILL.md")), "%s has no SKILL.md" % skill
+
+
+def test_preferences_writes_to_the_users_own_config_not_the_repo():
+    """The point of the command is to drive the native mechanism, not to invent a parallel one."""
+    s = io.open(os.path.join(ROOT, "ai", "claude", "preferences", "SKILL.md"),
+                encoding="utf-8").read()
+    assert "~/.claude/CLAUDE.md" in s
+    assert "HITL:PREFS:BEGIN" in s, "the block must be marker-delimited so it can be re-run or removed"
+    assert "reset" in s, "there must be a way to remove it"
+    assert "ask before writing" in s.lower() or "ask them before" in s.lower(), (
+        "editing a file in the user's home directory must be confirmed, not silent")
 
 
 def test_the_persona_floor_is_stated_everywhere_it_could_be_forgotten():

@@ -1,13 +1,14 @@
-# Personas — how HITL talks to you, and how it helps you talk to others
+# Personas — writing to someone else
 
-One profile, two directions:
+**How HITL helps you write to someone else.** A PR comment for your CEO reads differently from the
+same update to the engineer who will implement it.
 
-- **Inbound** — how HITL talks to *you*. Length, whether it narrates its process, what it leads with.
-- **Outbound** — how HITL helps you write *to someone else*. A PR comment for your CEO reads
-  differently from the same update to the engineer who will implement it.
+Profiles live in `.hitl/people/<slug>.yaml`.
 
-Profiles live in `.hitl/people/<slug>.yaml`. The inbound one is matched to `git config user.email`,
-so nobody has to declare who they are.
+**This is not about how HITL talks to you.** That belongs in your own `~/.claude/CLAUDE.md`, which
+already applies to every project; `/hitl:dev-preferences` sets it up in four questions. HITL drives
+that native mechanism rather than shadowing it — two places to set your preferences means neither
+is authoritative, and a repo-scoped copy would only work in HITL projects.
 
 ---
 
@@ -39,23 +40,20 @@ rather than what they need to *know*, stop.
 
 ## Offering it
 
-Most people will never know this exists unless HITL says so. Offer once, at a natural moment — not
-mid-task:
+Never advertise it, and never build one in the background. Offer once, at the moment it would
+obviously have helped:
 
-- The first session where `git config user.email` matches no profile, **after** something useful has
-  happened. Not as a greeting.
-- When someone tells you how they want things: *"too long"*, *"just give me the answer"*, *"skip the
-  detail"*. That is the moment — they have already written the profile, they just said it out loud.
+- You just drafted something for a named person and there was no profile — ask *after* the draft,
+  not before, so they are agreeing to something they have seen.
+- They react to a draft: *"too long for him"*, *"he'll want the numbers"*. That is the profile,
+  said out loud.
 
-> Noticed you'd rather have the short version. Want me to remember that? One file in
-> `.hitl/people/`, and I'll keep it that way in future sessions — you can edit or delete it whenever.
+> Want me to save that for Kishor? Next time I'd draft it that way without asking.
 
-Ask once. If they decline, do not ask again in that session. Record nothing.
+Once. If they decline, drop it and store nothing.
 
-**Never infer a profile silently.** A stored characterization of a person that they never agreed to
-is the thing to avoid here, and inferring one from a few terse messages is how that happens.
-
----
+**Never infer a profile silently.** A stored description of how a colleague thinks, written from a
+couple of offhand remarks and never seen by them, is the thing to avoid here.
 
 ## Whose profile is it
 
@@ -76,30 +74,6 @@ sitting in version control where they can find it.
 A profile for someone who did not write it sets `authored_by:` to whoever did. When you use it
 outbound, say so — *"drafted using the profile for Kishor, written by you"* — so the person driving
 knows what it is based on.
-
----
-
-## Inbound
-
-At session start, match `git config user.email` against `.hitl/people/*.yaml`. On a match, apply the
-`style` block for the session. On no match, behave exactly as HITL does today; consider the offer
-above once the session has done something useful.
-
-`style` fields, all optional:
-
-| Field | Values | Effect |
-|---|---|---|
-| `length` | `short` \| `standard` \| `full` | Default verbosity. `short` means bullets and no preamble |
-| `process_narrative` | `on-request` \| `brief` \| `full` | Whether to say what you did and how you got there |
-| `lead_with` | `decision` \| `result` \| `context` | The first line of a substantive reply |
-| `pushback` | `direct` \| `softened` | How to open a disagreement — never whether to have one |
-| `formats` | list | e.g. `bullets`, `tables`, `no-emoji` |
-
-Domain fluency (`domain:`) means skip the primer, not skip the reasoning. Someone fluent in supply
-chain still needs to know *why* you chose a design, just not what a purchase order is.
-
-An explicit instruction in the conversation beats the profile, always. If they ask for the long
-version, give the long version and do not argue from the file.
 
 ---
 

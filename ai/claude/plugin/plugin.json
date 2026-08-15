@@ -39,6 +39,7 @@
     "ai/claude/pm/review-progress",
     "ai/claude/pm/review-scope-change",
     "ai/claude/pm/update-requirement",
+    "ai/claude/preferences",
     "ai/claude/qa/plan-tests",
     "ai/claude/qa/report-defect",
     "ai/claude/qa/review-tests",
