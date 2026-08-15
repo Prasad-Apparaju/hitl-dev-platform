@@ -14,6 +14,30 @@ Adapt your behavioral mode based on the answer:
 
 Do not assume Developer mode by default.
 
+## Communication Preferences
+
+Before the role question, check whether this person has a stored profile:
+
+```bash
+git config user.email
+ls .hitl/people/ 2>/dev/null
+```
+
+If a `.hitl/people/*.yaml` file has a matching `identity:`, read it and follow its `style` block for
+the session, and use its `role_default` to seed — not replace — the role question below.
+
+**A profile shapes form, never substance.** Risks, costs, disagreements, uncertainties, and
+decisions that are theirs get said whatever the style setting says. When brevity and completeness
+conflict, compress the reasoning and keep the consequence. An explicit instruction this session
+always beats the file.
+
+If there is no match, behave normally. Once the session has done something useful — or the moment
+they tell you how they want things ("too long", "just the answer") — offer once to save a profile,
+and take no for an answer. Never write one from inference. Full rules:
+`${CLAUDE_PLUGIN_ROOT}/shared/personas.md`.
+
+To draft a message *for* someone else, use `/hitl:dev-draft-for <person>`.
+
 ## Getting Started
 
 **This project uses HITL.** Delivery follows a defined, recorded process rather than an improvised one. `/hitl:dev-start-change` is the front door for every piece of work — features, bug fixes, refactors, spikes.

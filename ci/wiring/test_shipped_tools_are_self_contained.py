@@ -345,3 +345,54 @@ def test_dev_update_does_not_delete_settings_or_unowned_files():
     assert "settings.json.bak" in s, "the settings file must be backed up before repair"
     assert "git ls-files --error-unmatch .hitl/statusline.sh" in s, (
         "an untracked statusline.sh must not be deleted on name alone")
+
+
+def test_personas_are_wired_at_both_ends():
+    """A persona system nobody is offered and nothing reads is inert — the defect of the day.
+
+    Inbound: the session-start instructions must actually look for a profile.
+    Outbound: the drafting skill must exist and be registered.
+    """
+    tmpl = io.open(os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
+                                "CLAUDE.md.template"), encoding="utf-8").read()
+    assert ".hitl/people/" in tmpl, "session start never looks for a profile"
+    assert "git config user.email" in tmpl, "nothing matches the person to their profile"
+    assert "offer once" in tmpl.lower(), "the profile is never offered, so nobody creates one"
+
+    skill = os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md")
+    assert os.path.isfile(skill), "the outbound drafting skill is missing"
+    import json
+    reg = json.load(io.open(os.path.join(ROOT, "ai", "claude", "plugin", "plugin.json"),
+                            encoding="utf-8"))
+    assert "ai/claude/draft-for" in reg["skills"], "draft-for is not registered in plugin.json"
+
+
+def test_the_persona_floor_is_stated_everywhere_it_could_be_forgotten():
+    """Style is negotiable; consequence is not.
+
+    A profile saying "keep it short" must never suppress "this deletes your files" — the exact
+    trade a personalisation feature makes easy to get wrong. The rule has to be present wherever
+    someone acts on a profile, not only in the doctrine nobody re-reads.
+    """
+    doctrine = io.open(os.path.join(ROOT, "ai", "shared", "personas.md"), encoding="utf-8").read()
+    skill = io.open(os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md"), encoding="utf-8").read()
+    tmpl = io.open(os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
+                                "CLAUDE.md.template"), encoding="utf-8").read()
+    for name, text in (("personas.md", doctrine), ("draft-for", skill), ("CLAUDE.md.template", tmpl)):
+        assert "form" in text and "substance" in text, (
+            "%s does not state that a persona shapes form, not substance" % name)
+    assert "never sends" in skill.lower() or "Never send it" in skill, (
+        "the drafting skill must not send anything on the user's behalf")
+    assert "invent one" in skill or "guessed persona" in skill, (
+        "drafting for someone with no profile must ask, not infer one from their name")
+
+
+def test_persona_template_is_valid_and_teaches_preferences_not_assessments():
+    import yaml as _y
+    p = os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml")
+    d = _y.safe_load(io.open(p, encoding="utf-8"))
+    assert set(d["style"]) >= {"length", "process_narrative", "lead_with"}
+    assert d.get("authored_by") == "self", "profiles should default to self-authored"
+    text = io.open(p, encoding="utf-8").read()
+    assert "preferences, not assessments" in text, (
+        "the template must steer away from characterising a colleague in version control")

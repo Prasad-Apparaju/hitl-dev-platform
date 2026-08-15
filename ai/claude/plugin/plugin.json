@@ -12,6 +12,7 @@
     "ai/claude/check-conventions",
     "ai/claude/conclude",
     "ai/claude/dev-practices",
+    "ai/claude/draft-for",
     "ai/claude/generate-docs",
     "ai/claude/help",
     "ai/claude/impact-brief",

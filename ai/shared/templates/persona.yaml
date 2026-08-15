@@ -1,0 +1,51 @@
+# A person's communication profile — .hitl/people/<slug>.yaml
+#
+# Two uses: how HITL talks to this person (matched on git config user.email), and how HITL drafts
+# messages TO them when someone asks (/hitl:dev-draft-for <slug>).
+#
+# Write preferences, not assessments. "Wants the decision first" and "doesn't read long text" carry
+# the same instruction; only one is a characterization of a colleague sitting in version control
+# where they can find it. Ideally the subject writes their own.
+#
+# A persona shapes FORM, never SUBSTANCE. Risks, costs, disagreements, uncertainties and decisions
+# that are theirs survive every style setting. See shared/personas.md.
+
+schema_version: "1.0"
+
+name: ""                       # how they are addressed
+identity: ""                   # git config user.email — how inbound matching finds this file.
+                               # Omit for someone who does not work in this repo (outbound only).
+authored_by: "self"            # "self", or whoever wrote it. If not self, HITL says so when using it.
+
+role_default: ""               # pm | technical-advisor | architect | developer | qa | ops |
+                               # product-owner | exec | mixed. Seeds the session-role question;
+                               # never overrides what they say this session.
+
+domain: ""                     # e.g. "supply-chain". Means skip the domain primer — NOT skip the
+                               # reasoning. Fluent readers still need to know why, just not what a
+                               # purchase order is.
+
+style:
+  length: standard             # short | standard | full
+  process_narrative: brief     # on-request | brief | full — whether to recount what you did
+  lead_with: result            # decision | result | context — the first line of a substantive reply
+  pushback: direct             # direct | softened — HOW to open a disagreement, never whether to
+  formats: []                  # bullets | tables | code-first | no-emoji | prose
+
+notes: ""                      # anything that does not fit above, in their own words if possible.
+                               # e.g. "hands-on — happy to read a diff, not a design doc"
+
+# Example, filled in:
+#
+# name: "Kishor"
+# identity: "kishor@example.com"
+# authored_by: "self"
+# role_default: product-owner
+# domain: supply-chain
+# style:
+#   length: short
+#   process_narrative: on-request
+#   lead_with: decision
+#   pushback: direct
+#   formats: [bullets]
+# notes: "Hands-on. Give me the call to make and what it costs; I'll ask if I want the workings."
