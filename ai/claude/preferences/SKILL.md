@@ -38,49 +38,64 @@ the escape exists.
 ## `show`
 
 ```bash
-sed -n '/<!-- HITL:PREFS:BEGIN/,/<!-- HITL:PREFS:END -->/p' CLAUDE.md 2>/dev/null \
-  || echo "No HITL preferences set in this project."
+if grep -q '<!-- HITL:PREFS:BEGIN' CLAUDE.md 2>/dev/null; then
+  sed -n '/<!-- HITL:PREFS:BEGIN/,/<!-- HITL:PREFS:END -->/p' CLAUDE.md
+else
+  echo "No HITL preferences set in this project."   # sed exits 0 on no match, so test first
+fi
 ```
 
 ## `off` / `on`
 
-Flip one line in the block; do not delete anything.
+Flip one marker. Nothing is deleted and nothing is re-asked.
 
 ```bash
-python3 - "$1" <<'PY'
+MODE=off            # or: MODE=on
+python3 - "$MODE" <<'PY'
 import io, os, re, sys
-mode = sys.argv[1]                       # "off" or "on"
+mode = (sys.argv[1] if len(sys.argv) > 1 else "").strip().lower()
+if mode not in ("off", "on"):
+    raise SystemExit("Pass exactly 'off' or 'on'. Nothing changed.")   # guessing here turned it ON
 p = "CLAUDE.md"
-if not os.path.isfile(p):
-    raise SystemExit("No CLAUDE.md in this project.")
+if not os.path.isfile(p) or os.path.islink(p):
+    raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s = io.open(p, encoding="utf-8").read()
-if "<!-- HITL:PREFS:BEGIN" not in s:
-    raise SystemExit("No preferences block here — run /hitl:dev-preferences to set one up.")
+nb, ne = s.count("<!-- HITL:PREFS:BEGIN"), s.count("<!-- HITL:PREFS:END -->")
+if nb != 1 or ne != 1:
+    raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
+                     "Fix by hand - nothing changed." % (nb, ne))
 want = "PAUSED" if mode == "off" else "ACTIVE"
-s2 = re.sub(r"(<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", r"\g<1>" + want, s, count=1)
-if s2 == s:
-    raise SystemExit("Could not find the status marker — check the block by hand.")
+s2, n = re.subn(r"(<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", r"\g<1>" + want, s, count=1)
+if not n:
+    raise SystemExit("No status marker in the block - check it by hand; nothing changed.")
 io.open(p, "w", encoding="utf-8").write(s2)
 print("Preferences are now %s." % want)
 PY
 ```
 
-When the marker reads `PAUSED`, ignore the block's contents entirely and behave as default HITL.
-
 ## `reset`
 
-Confirm, then remove the block and leave the rest of `CLAUDE.md` untouched:
+Confirm first. This **refuses** when the markers are duplicated or orphaned rather than guessing
+which span is yours — a plain `BEGIN...END` match spans from a stale marker to a later block's END
+and deletes everything between, including content HITL does not own.
 
 ```bash
 python3 - <<'PY'
 import io, os, re
 p = "CLAUDE.md"
-if not os.path.isfile(p):
-    raise SystemExit("No CLAUDE.md in this project.")
+if not os.path.isfile(p) or os.path.islink(p):
+    raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s = io.open(p, encoding="utf-8").read()
-new, n = re.subn(r"\n?<!-- HITL:PREFS:BEGIN.*?<!-- HITL:PREFS:END -->\n?", "\n", s, flags=re.S)
+nb, ne = s.count("<!-- HITL:PREFS:BEGIN"), s.count("<!-- HITL:PREFS:END -->")
+if nb == 0:
+    raise SystemExit("No preferences block here - nothing to remove.")
+if nb != 1 or ne != 1:
+    raise SystemExit("Found %d begin / %d end markers. Refusing to guess which is mine - remove it "
+                     "by hand. Nothing changed." % (nb, ne))
+span = re.compile(r"\n?<!-- HITL:PREFS:BEGIN(?:(?!<!-- HITL:PREFS:BEGIN).)*?<!-- HITL:PREFS:END -->\n?", re.S)
+new, n = span.subn("\n", s)
 if not n:
-    raise SystemExit("No preferences block found — nothing removed.")
+    raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
 io.open(p, "w", encoding="utf-8").write(new)
 print("Removed. The rest of CLAUDE.md is untouched.")
 PY
@@ -110,6 +125,21 @@ for brevity would be self-defeating.
 Take partial answers; default the rest and say which you assumed. Then **show the block you are
 about to write and ask before writing.**
 
+**Do not record an answer that would suppress substance.** The person running this command is often
+running it *because* HITL felt too cautious, so answers like *"no caveats"*, *"skip the warnings"*,
+*"no hedging"*, or *"assume I'm senior, don't warn me"* are entirely likely — and entirely
+reasonable as a complaint about **tone**. Written into the block verbatim they would sit three lines
+above a floor that contradicts them, and the contradiction is permanent.
+
+Reflect it back, record the part that is style, and say what you kept:
+
+> Taking that as: no hedging language, no "you may want to", no restating what you already know.
+> I'll still tell you when something is risky or is yours to decide — just plainly, without the
+> cushioning. Fair?
+
+If they genuinely want risks suppressed, that is not a preference this command can store. Say so
+once, plainly, and record nothing on that point.
+
 Expect to iterate. Say so:
 
 > Try it for a bit. Run `/hitl:dev-preferences` again to adjust, `off` to pause it, or just say
@@ -125,6 +155,8 @@ import io, os, re
 BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
 ## How I like responses (this project)
 
+**If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
+
 - **Length:** short — lead with the answer, bullets over paragraphs
 - **Your workings:** only when I ask
 - **Open with:** the decision I need to make
@@ -135,11 +167,20 @@ that is the setting, but never left out. If brevity and completeness conflict, c
 keep the consequence. Ignore this block for one session if I say "default mode".
 <!-- HITL:PREFS:END -->"""
 p = "CLAUDE.md"
+if os.path.islink(p):
+    raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. Nothing written.")
 cur = io.open(p, encoding="utf-8").read() if os.path.isfile(p) else ""
-if "<!-- HITL:PREFS:BEGIN" in cur:
-    if "<!-- HITL:PREFS:END -->" not in cur:
-        raise SystemExit("Your preferences block is truncated — fix or delete it by hand; nothing written.")
-    out = re.sub(r"<!-- HITL:PREFS:BEGIN.*?<!-- HITL:PREFS:END -->", BLOCK, cur, flags=re.S)
+nb, ne = cur.count("<!-- HITL:PREFS:BEGIN"), cur.count("<!-- HITL:PREFS:END -->")
+if nb > 1 or ne > 1 or (nb == 1 and ne == 0):
+    # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
+    # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
+    raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "
+                     "Fix them by hand; nothing written." % (nb, ne))
+if nb == 1:
+    span = re.compile(r"<!-- HITL:PREFS:BEGIN(?:(?!<!-- HITL:PREFS:BEGIN).)*?<!-- HITL:PREFS:END -->", re.S)
+    out, n = span.subn(lambda _: BLOCK, cur, count=1)
+    if not n:
+        raise SystemExit("Could not match the block cleanly - fix by hand; nothing written.")
 else:
     out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
 io.open(p, "w", encoding="utf-8").write(out)
@@ -147,8 +188,9 @@ print("Saved to CLAUDE.md in this project.")
 PY
 ```
 
-Replace the bullets with their actual answers. Keep the closing paragraph and the `status:` marker
-**verbatim** — one is the floor, the other is how `off` works.
+Replace the bullets with their actual answers. Keep the `status:` marker, the PAUSED sentence, and
+the closing paragraph **verbatim** — the marker is how `off` works, and the other two are what make
+the block safe to leave in place.
 
 ---
 

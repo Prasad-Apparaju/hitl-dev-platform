@@ -152,6 +152,12 @@ if ! grep -q "docs/session-logs" "$GITIGNORE" 2>/dev/null; then
   printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> "$GITIGNORE"
   echo "✓ .gitignore — docs/session-logs/ excluded"
 fi
+# Persona profiles describe real colleagues. Committed, they land in PR diffs and stay in git
+# history after deletion. Local by default; sharing one is a deliberate act.
+if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
+  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
+  echo "✓ .gitignore — .hitl/people/ excluded"
+fi
 # HITL copies Python validators in, so pytest/import will produce bytecode next to them. Without
 # this the consumer commits __pycache__ built on whichever machine ran onboarding.
 if ! grep -q "__pycache__" "$GITIGNORE" 2>/dev/null; then

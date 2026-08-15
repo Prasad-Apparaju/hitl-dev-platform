@@ -13,9 +13,13 @@
 schema_version: "1.0"
 
 name: ""                       # how they are addressed
-identity: ""                   # git config user.email — how inbound matching finds this file.
-                               # Omit for someone who does not work in this repo (outbound only).
-authored_by: "self"            # "self", or whoever wrote it. If not self, HITL says so when using it.
+# No email or other identifier: nothing reads one, and collecting a colleague's contact details
+# for a feature that does not use them is worth avoiding. Match on the filename and `name`.
+authored_by: ""                # REQUIRED, no default. "self" only if the subject wrote or approved
+                               # this. Otherwise the name of whoever did — the person saving a
+                               # profile of a colleague is not that colleague. draft-for discloses
+                               # third-party authorship from this field, so a wrong value here
+                               # silently turns the disclosure off.
 
 role_default: ""               # pm | technical-advisor | architect | developer | qa | ops |
                                # product-owner | exec | mixed. Seeds the session-role question;
@@ -38,8 +42,7 @@ notes: ""                      # anything that does not fit above, in their own 
 # Example, filled in:
 #
 # name: "Kishor"
-# identity: "kishor@example.com"
-# authored_by: "self"
+# authored_by: "self"        # he wrote this one
 # role_default: product-owner
 # domain: supply-chain
 # style:

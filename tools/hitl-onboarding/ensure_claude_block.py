@@ -20,32 +20,52 @@ import os
 import re
 import sys
 
-BEGIN = "<!-- HITL:BEGIN"
-END = "<!-- HITL:END -->"
-# Non-greedy so two blocks (shouldn't happen, but a hand-edited file can) collapse one at a time
-# rather than swallowing everything between the first BEGIN and the last END.
-_SPAN = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.S)
+DEFAULT_BEGIN = "<!-- HITL:BEGIN"
+DEFAULT_END = "<!-- HITL:END -->"
 
 
-def apply(current, block):
+def _span(begin, end):
+    """A block that cannot cross a second BEGIN.
+
+    A plain non-greedy `BEGIN.*?END` is NOT enough: with an orphaned BEGIN above a complete block,
+    it matches from the orphan to the later END and eats everything in between — which on a real
+    CLAUDE.md meant deleting the team's own rules while reporting that nothing was touched. The
+    tempered repetition below refuses to pass a second BEGIN.
+    """
+    return re.compile(re.escape(begin) + r"(?:(?!" + re.escape(begin) + r").)*?" + re.escape(end),
+                      re.S)
+
+
+def apply(current, block, begin=DEFAULT_BEGIN, end=DEFAULT_END):
     """Return (new_text, action). Pure -- no I/O, so the cases are directly testable.
 
-    action is one of: created, appended, refreshed, current, unterminated
+    action is one of: created, appended, refreshed, current, unterminated, malformed
     """
     block = block.rstrip("\n")
     if current is None:
         return block + "\n", "created"
-    if BEGIN in current:
-        if END not in current:
+    if begin in current:
+        n_begin, n_end = current.count(begin), current.count(end)
+        if n_end == 0:
             # Truncated block. Replacing to end-of-file would eat the team's real content.
             return current, "unterminated"
-        new = _SPAN.sub(lambda _: block, current, count=1)
+        if n_begin != 1 or n_end != 1:
+            # Duplicated or orphaned markers: the file's structure is not what we wrote, so we
+            # cannot know which span is ours. Refusing is the only safe answer — a wrong guess
+            # deletes content we do not own.
+            return current, "malformed"
+        new = _span(begin, end).sub(lambda _: block, current, count=1)
+        if new == current and end not in _span(begin, end).findall(current or "") and \
+                not _span(begin, end).search(current):
+            return current, "malformed"
         return (new, "current") if new == current else (new, "refreshed")
     sep = "" if current.endswith("\n\n") else ("\n" if current.endswith("\n") else "\n\n")
     return current + sep + block + "\n", "appended"
 
 
 MESSAGES = {
+    "malformed": ("  WARNING: CLAUDE.md has duplicated or orphaned HITL markers - refusing to "
+                  "touch it. Fix them by hand; nothing was written."),
     "created": "  CLAUDE.md created with the HITL section",
     "appended": "  CLAUDE.md - HITL section added (existing content untouched)",
     "refreshed": "  CLAUDE.md HITL section refreshed",
@@ -73,7 +93,7 @@ def main(argv):
             return 1
 
     new, action = apply(current, block)
-    if action == "unterminated":
+    if action in ("unterminated", "malformed"):
         sys.stderr.write(MESSAGES[action] + "\n")
         return 3
     if action != "current":

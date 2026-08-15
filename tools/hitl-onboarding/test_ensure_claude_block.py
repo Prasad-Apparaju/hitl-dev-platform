@@ -113,3 +113,44 @@ def test_shipped_block_is_well_formed():
     assert action == "appended"
     again, action = apply(new, text)
     assert action == "current" and again.count("HITL:BEGIN") == 1
+
+
+def test_an_orphaned_begin_above_a_real_block_refuses_rather_than_swallowing():
+    """The C-1 data loss: `BEGIN.*?END` spans from an orphan to the LATER block's END and eats the
+    team's own content in between — while reporting that nothing was touched.
+
+    A stale marker someone pasted in is ordinary. Refusing is the only safe answer: we cannot know
+    which span is ours, and a wrong guess deletes content we do not own.
+    """
+    cur = (
+        "# Acme Payments\n\n"
+        "<!-- HITL:BEGIN stale copy someone pasted -->\n"
+        "- Length: short\n\n"
+        "## OUR TEAM'S RULES — do not delete\n\n"
+        "- PCI: never log a PAN\n"
+        "- Migrations reviewed by @dba-oncall\n\n"
+        "<!-- HITL:BEGIN -->\nreal block\n<!-- HITL:END -->\n")
+    new, action = apply(cur, BLOCK)
+    assert action == "malformed", action
+    assert new == cur, "the file must be left exactly as found"
+    assert "PCI: never log a PAN" in new
+    assert "OUR TEAM'S RULES" in new
+
+
+def test_two_complete_blocks_refuse_rather_than_guessing():
+    cur = ("# P\n\n<!-- HITL:BEGIN -->\nfirst\n<!-- HITL:END -->\n\n"
+           "## mine\nkeep me\n\n<!-- HITL:BEGIN -->\nsecond\n<!-- HITL:END -->\n")
+    new, action = apply(cur, BLOCK)
+    assert action == "malformed"
+    assert new == cur and "keep me" in new
+
+
+def test_a_custom_marker_pair_is_honoured():
+    """The preferences block uses its own markers in the same file as the project block."""
+    cur = ("<!-- HITL:BEGIN -->\nproject\n<!-- HITL:END -->\n\n"
+           "<!-- HITL:PREFS:BEGIN status: ACTIVE -->\nold prefs\n<!-- HITL:PREFS:END -->\n")
+    new, action = apply(cur, "<!-- HITL:PREFS:BEGIN status: ACTIVE -->\nnew prefs\n<!-- HITL:PREFS:END -->",
+                        begin="<!-- HITL:PREFS:BEGIN", end="<!-- HITL:PREFS:END -->")
+    assert action == "refreshed", action
+    assert "new prefs" in new and "old prefs" not in new
+    assert "project" in new, "the project block must be untouched"

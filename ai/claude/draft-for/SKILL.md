@@ -72,9 +72,18 @@ If the profile was written *about* the person rather than by them, say that expl
 should know the draft is shaped by someone's reading of the recipient, not the recipient's own
 stated preference.
 
-**Never send it.** No `gh pr comment`, no `gh issue comment`, no email, no Slack. The person whose
-name is on it reads it first and posts it themselves. If they ask you to post it, that is a separate
-instruction and it is theirs to give.
+**Never send it in the same turn you wrote it.** No `gh pr comment`, no `gh issue comment`, no
+email, no Slack — not even when the request was *"draft this and post it"*. That instruction is
+permission to post *a message*, given before anyone had seen this one.
+
+The rule is not "never post"; it is **never post text the sender has not read**. So: show the draft,
+stop, and let them respond to it. If they then say post it, post it — they are approving the words,
+which is the only approval that means anything. A combined instruction gets the draft and a question,
+never a fait accompli.
+
+This matters more here than in ordinary drafting, because the whole point of this command is that
+the message is shaped by a profile the sender may not have re-read. They should see what their name
+is about to be attached to.
 
 ---
 

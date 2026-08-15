@@ -418,7 +418,53 @@ def test_persona_template_is_valid_and_teaches_preferences_not_assessments():
     p = os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml")
     d = _y.safe_load(io.open(p, encoding="utf-8"))
     assert set(d["style"]) >= {"length", "process_narrative", "lead_with"}
-    assert d.get("authored_by") == "self", "profiles should default to self-authored"
+    assert d.get("authored_by") == "", (
+        "authored_by must have NO default. 'self' as a default is wrong on the only path that "
+        "creates a profile ABOUT someone else, and it silently disables draft-for's disclosure")
+    assert "identity" not in d, (
+        "the template must not collect a colleague's email — nothing reads it since inbound "
+        "matching was removed")
     text = io.open(p, encoding="utf-8").read()
     assert "preferences, not assessments" in text, (
         "the template must steer away from characterising a colleague in version control")
+
+
+def test_persona_profiles_are_local_by_default_and_removable():
+    """A description of how a colleague thinks must not land in a PR diff and git history.
+
+    Deleting the file later does not remove it from history, and the subject is not in the room
+    when it is written. Local by default; sharing is a deliberate act.
+    """
+    init = io.open(INIT, encoding="utf-8").read()
+    assert ".hitl/people/" in init, "onboarding must gitignore persona profiles"
+    doc = " ".join(io.open(os.path.join(ROOT, "ai", "shared", "personas.md"),
+                           encoding="utf-8").read().split())
+    assert "Local by default" in doc
+    assert "rm .hitl/people/" in doc, "the subject needs a stated way to remove theirs"
+    assert "Tell them it exists" in doc, (
+        "a stored account of how a colleague thinks that they do not know about is the failure mode")
+
+
+def test_the_save_path_reads_the_template_rather_than_inventing_a_file():
+    """Every wording safeguard lives in the template. If nothing points at it on the save path,
+    the discipline applies only when the model happens to have it in context."""
+    doc = io.open(os.path.join(ROOT, "ai", "shared", "personas.md"), encoding="utf-8").read()
+    assert "templates/persona.yaml" in doc, "the save path never opens the template"
+    assert "do not invent a file" in " ".join(doc.split()).lower()
+
+
+def test_preferences_will_not_record_a_preference_that_suppresses_substance():
+    """"No caveats, assume I'm senior" is a reasonable complaint about tone and an unreasonable
+    instruction to omit risk. Recorded verbatim it contradicts the floor three lines below it."""
+    s = " ".join(io.open(os.path.join(ROOT, "ai", "claude", "preferences", "SKILL.md"),
+                         encoding="utf-8").read().split())
+    assert "Do not record an answer that would suppress substance" in s
+    assert "not a preference this command can store" in s
+
+
+def test_draft_for_will_not_post_text_the_sender_has_not_read():
+    """"Draft this and post it" is permission to post a message, given before anyone saw this one."""
+    s = " ".join(io.open(os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md"),
+                         encoding="utf-8").read().split())
+    assert "never post text the sender has not read" in s.lower()
+    assert "same turn" in s, "the rule must name the combined draft-and-post instruction"
