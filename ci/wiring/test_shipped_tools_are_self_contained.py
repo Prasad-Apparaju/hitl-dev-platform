@@ -347,14 +347,40 @@ def test_dev_update_does_not_delete_settings_or_unowned_files():
         "an untracked statusline.sh must not be deleted on name alone")
 
 
+PREFS_SKILL = os.path.join(ROOT, "ai", "claude", "preferences", "SKILL.md")
+DRAFT_SKILL = os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md")
+CLAUDE_TMPL = os.path.join(ROOT, "ai", "claude", "generate-docs", "templates", "CLAUDE.md.template")
+
+
+def _markers_written_by(path):
+    """The exact BEGIN/END literals the PRODUCER emits, taken from its own BLOCK definition."""
+    text = io.open(path, encoding="utf-8").read()
+    begins = set(re.findall(r"<!--\s*HITL:[A-Z:]*BEGIN", text))
+    ends = set(re.findall(r"<!--\s*HITL:[A-Z:]*END\s*-->", text))
+    return begins, ends
+
+
+def test_the_marker_the_producer_writes_is_the_marker_the_consumer_reads():
+    """Producer against consumer, not substrings.
+
+    Renaming the marker in the skill alone leaves every token-based guard green while the session
+    instructions grep for a string nothing writes any more. That is exactly how a release gate died
+    earlier this week (`grep 'id: release'` versus `id: "release"`).
+    """
+    begins, ends = _markers_written_by(PREFS_SKILL)
+    assert begins and ends, "could not find the markers the preferences skill writes"
+    consumer = io.open(CLAUDE_TMPL, encoding="utf-8").read()
+    for m in begins | ends:
+        stem = m.split("BEGIN")[0].split("END")[0].replace("<!--", "").strip()
+        assert stem in consumer, (
+            "the skill writes %r but the session instructions never mention %r — nothing will read "
+            "what it produces" % (m, stem))
+
+
 def test_personas_are_wired_at_both_ends():
     """A mechanism nobody is offered and nothing reads is inert — the defect of the week."""
-    tmpl = io.open(os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
-                                "CLAUDE.md.template"), encoding="utf-8").read()
+    tmpl = io.open(CLAUDE_TMPL, encoding="utf-8").read()
     assert "/hitl:dev-preferences" in tmpl, "nothing ever offers the preferences command"
-    assert "HITL:PREFS" in tmpl, "the session instructions never read the block"
-    assert "PAUSED" in tmpl, "the pause state is settable but nothing honours it"
-    assert "default mode" in tmpl, "the one-session escape is documented nowhere that reads it"
 
     import json
     reg = json.load(io.open(os.path.join(ROOT, "ai", "claude", "plugin", "plugin.json"),
@@ -362,6 +388,31 @@ def test_personas_are_wired_at_both_ends():
     for skill in ("ai/claude/preferences", "ai/claude/draft-for"):
         assert skill in reg["skills"], "%s is not registered in plugin.json" % skill
         assert os.path.isfile(os.path.join(ROOT, skill, "SKILL.md")), "%s has no SKILL.md" % skill
+
+
+def test_the_session_instructions_actually_honour_the_pause():
+    """Keeping the word PAUSED while changing the rule to "follow it always" left guards green.
+
+    Assert the whole instruction, not the token — a token survives an inversion, a sentence does not.
+    """
+    t = " ".join(io.open(CLAUDE_TMPL, encoding="utf-8").read().split())
+    assert "unless its marker reads `status: PAUSED`, ignore it entirely and behave as default HITL" in t, (
+        "the pause instruction is missing or reworded; PAUSED may be settable but unhonoured")
+    assert "follow it always" not in t.lower()
+    assert 'If they say "default mode"' in t, "the one-session escape is not instructed"
+
+
+def test_no_persona_field_is_advertised_without_a_reader():
+    """A schema field nothing consumes is the same defect in miniature: it looks like a setting,
+    it is documented, and changing it does nothing."""
+    import yaml as _y
+    tmpl = _y.safe_load(io.open(os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml"),
+                                encoding="utf-8").read())
+    consumers = io.open(DRAFT_SKILL, encoding="utf-8").read() + \
+        io.open(os.path.join(ROOT, "ai", "shared", "personas.md"), encoding="utf-8").read()
+    fields = [k for k in tmpl if k != "schema_version"] + list((tmpl.get("style") or {}).keys())
+    dead = [f for f in fields if f not in consumers]
+    assert not dead, "persona fields with no reader anywhere: %s" % sorted(dead)
 
 
 def test_preferences_are_project_scoped_by_default():
@@ -409,8 +460,14 @@ def test_the_persona_floor_is_stated_everywhere_it_could_be_forgotten():
             "%s does not state that a persona shapes form, not substance" % name)
     assert "never sends" in skill.lower() or "Never send it" in skill, (
         "the drafting skill must not send anything on the user's behalf")
-    assert "invent one" in skill or "guessed persona" in skill, (
-        "drafting for someone with no profile must ask, not infer one from their name")
+    # Assert the INSTRUCTION, not a token. Inverting the rule to "infer one and proceed" while
+    # leaving the words "invent one" in a comment kept every token-based guard green.
+    flat = " ".join(skill.split())
+    assert "If there is no profile, stop and ask." in flat, (
+        "the no-profile path must stop and ask; a guessed persona is a stereotype with a filename")
+    assert "Do not invent one from their name, their title" in flat
+    for bad in ("infer a reasonable one", "infer one from their name", "and proceed."):
+        assert bad not in flat, "the no-profile path was inverted to infer-and-proceed: %r" % bad
 
 
 def test_persona_template_is_valid_and_teaches_preferences_not_assessments():

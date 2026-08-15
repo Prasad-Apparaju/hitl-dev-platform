@@ -54,6 +54,7 @@ Item 3 survives every style setting. That is the floor.
 | `lead_with: decision` | First line is the call they need to make, or that you made and why |
 | `domain: <x>` | Assume fluency in the vocabulary. Still explain your *reasoning* — fluency is not telepathy |
 | `formats: [bullets]` | Bullets, not paragraphs pretending to be bullets |
+| `notes` | Free text in their own words — read it last and let it override the rows above |
 
 **Compress the reasoning, never the consequence.** If it will not fit, the reasoning goes and the
 risk stays. There is always a short way to say something important.

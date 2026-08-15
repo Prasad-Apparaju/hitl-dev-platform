@@ -1,9 +1,8 @@
 # Worked example — see shared/personas.md. Written as preferences the subject would recognise
-# as his own, not as an assessment of him. `authored_by: self` because he wrote it.
+# as his own. authored_by: self because he wrote it.
 schema_version: '1.0'
 name: Kishor
 authored_by: self
-role_default: product-owner
 domain: supply-chain
 style:
   length: short

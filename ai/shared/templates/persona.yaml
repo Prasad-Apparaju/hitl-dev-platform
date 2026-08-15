@@ -21,10 +21,6 @@ authored_by: ""                # REQUIRED, no default. "self" only if the subjec
                                # third-party authorship from this field, so a wrong value here
                                # silently turns the disclosure off.
 
-role_default: ""               # pm | technical-advisor | architect | developer | qa | ops |
-                               # product-owner | exec | mixed. Seeds the session-role question;
-                               # never overrides what they say this session.
-
 domain: ""                     # e.g. "supply-chain". Means skip the domain primer — NOT skip the
                                # reasoning. Fluent readers still need to know why, just not what a
                                # purchase order is.
@@ -43,7 +39,6 @@ notes: ""                      # anything that does not fit above, in their own 
 #
 # name: "Kishor"
 # authored_by: "self"        # he wrote this one
-# role_default: product-owner
 # domain: supply-chain
 # style:
 #   length: short
