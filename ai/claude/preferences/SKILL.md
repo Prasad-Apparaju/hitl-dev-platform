@@ -1,6 +1,6 @@
 ---
-description: Set up how HITL talks to you — length, whether it narrates its process, how it opens a disagreement. Asks a few questions and writes the answers into your own user-level CLAUDE.md, so they apply in every project, not just this one. Run it when HITL feels too verbose, too terse, or too cautious.
-argument-hint: "optional — 'show' to see current settings, 'reset' to remove them"
+description: Tune how HITL talks to you in this project — length, whether it narrates its process, how it opens a disagreement. Re-run any time to adjust. Also turns the tuning off for one session, or off for good. Run it when HITL feels too verbose, too terse, or too cautious.
+argument-hint: "nothing to set up or adjust — or 'show', 'off', 'on', 'reset'"
 disable-model-invocation: true
 ---
 
@@ -8,77 +8,122 @@ disable-model-invocation: true
 
 **Input:** $ARGUMENTS
 
-HITL is wordy by default because it does not know you. This fixes that in about a minute.
+HITL is wordy by default because it does not know you. This fixes that, and you can keep adjusting
+it until it feels right.
 
-Your answers go into **your own** `~/.claude/CLAUDE.md`, not into this repo. That file already
-applies to every project you work in, so the settings follow you — and they are yours to edit or
-delete by hand at any time. HITL is doing the setup, not owning the result.
+**Scope: this project.** The settings go in a marked block in this repo's `CLAUDE.md`, alongside the
+other HITL block. HITL manages projects; it does not reach into your machine-wide config. If you
+want the same preferences everywhere, that is your `~/.claude/CLAUDE.md` and your decision — this
+command only offers it if you ask for it by name.
 
 ---
 
-## `show` — what is set now
+## Modes
+
+| Input | What happens |
+|---|---|
+| *(nothing)* | Set up, or adjust what is already there — the normal path |
+| `show` | Print the current settings and stop |
+| `off` | Stop applying them, keep them on file. Reversible with `on` |
+| `on` | Start applying them again |
+| `reset` | Delete the block entirely |
+
+**Turning it off for one session only** needs no command — say *"default mode"* or *"ignore my
+preferences"* and behave as HITL does out of the box for the rest of the session. Do not edit the
+file for a temporary request. Mention this once when you first set the preferences up, so they know
+the escape exists.
+
+---
+
+## `show`
 
 ```bash
-sed -n '/<!-- HITL:PREFS:BEGIN/,/<!-- HITL:PREFS:END -->/p' ~/.claude/CLAUDE.md 2>/dev/null \
-  || echo "No HITL preferences set."
+sed -n '/<!-- HITL:PREFS:BEGIN/,/<!-- HITL:PREFS:END -->/p' CLAUDE.md 2>/dev/null \
+  || echo "No HITL preferences set in this project."
 ```
 
-Print it and stop.
+## `off` / `on`
 
-## `reset` — remove them
+Flip one line in the block; do not delete anything.
 
-Confirm first, then strip the marked block and leave the rest of the file untouched:
+```bash
+python3 - "$1" <<'PY'
+import io, os, re, sys
+mode = sys.argv[1]                       # "off" or "on"
+p = "CLAUDE.md"
+if not os.path.isfile(p):
+    raise SystemExit("No CLAUDE.md in this project.")
+s = io.open(p, encoding="utf-8").read()
+if "<!-- HITL:PREFS:BEGIN" not in s:
+    raise SystemExit("No preferences block here — run /hitl:dev-preferences to set one up.")
+want = "PAUSED" if mode == "off" else "ACTIVE"
+s2 = re.sub(r"(<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", r"\g<1>" + want, s, count=1)
+if s2 == s:
+    raise SystemExit("Could not find the status marker — check the block by hand.")
+io.open(p, "w", encoding="utf-8").write(s2)
+print("Preferences are now %s." % want)
+PY
+```
+
+When the marker reads `PAUSED`, ignore the block's contents entirely and behave as default HITL.
+
+## `reset`
+
+Confirm, then remove the block and leave the rest of `CLAUDE.md` untouched:
 
 ```bash
 python3 - <<'PY'
 import io, os, re
-p = os.path.expanduser("~/.claude/CLAUDE.md")
+p = "CLAUDE.md"
 if not os.path.isfile(p):
-    raise SystemExit("No ~/.claude/CLAUDE.md — nothing to reset.")
+    raise SystemExit("No CLAUDE.md in this project.")
 s = io.open(p, encoding="utf-8").read()
 new, n = re.subn(r"\n?<!-- HITL:PREFS:BEGIN.*?<!-- HITL:PREFS:END -->\n?", "\n", s, flags=re.S)
 if not n:
-    raise SystemExit("No HITL preferences block found — nothing removed.")
+    raise SystemExit("No preferences block found — nothing removed.")
 io.open(p, "w", encoding="utf-8").write(new)
-print("Removed. The rest of your CLAUDE.md is untouched.")
+print("Removed. The rest of CLAUDE.md is untouched.")
 PY
 ```
 
 ---
 
-## The interview
+## Setting up, and adjusting
 
-**Four questions. Ask them in one message, not one at a time** — it would be absurd to run a long
-interrogation about someone's preference for brevity. Offer the options, let them answer in any
-form, and accept "whatever" for any of them.
+**If a block already exists, this is an adjustment, not a fresh start.** Show them what is set,
+then ask what to change — do not re-run the whole interview at someone who has already answered it.
 
-> A few quick ones, and I'll remember the answers for every project:
+> Right now: short, no workings, decision first, direct. What would you change?
+
+**If there is nothing yet, ask all four at once.** A long interrogation about someone's preference
+for brevity would be self-defeating.
+
+> Four quick ones and I'll keep to them in this project:
 >
 > 1. **Length** — short (bullets, answer first) / standard / full?
-> 2. **My workings** — do you want what I did and how I got there? Only when you ask / a line or two / all of it
-> 3. **Opening line** — the decision you need to make, the result, or the context first?
-> 4. **Disagreements** — say it straight, or lead in gently? *(I'll still disagree either way — this is only how it opens.)*
+> 2. **My workings** — what I did and how I got there: only when you ask / a line or two / all of it
+> 3. **Open with** — the decision you need to make, the result, or the context?
+> 4. **Disagreements** — straight, or eased in? *(I'll still disagree either way — this is only how it opens.)*
 >
-> Anything else? e.g. "no emoji", "tables over prose", "I know this domain, skip the primer".
+> Anything else? "no emoji", "tables over prose", "I know this domain, skip the primer".
 
-If they answer only some, use the defaults for the rest and say which you assumed.
+Take partial answers; default the rest and say which you assumed. Then **show the block you are
+about to write and ask before writing.**
 
-**Then show them what you are about to write and ask before writing.** This edits a file in their
-home directory that governs every project — never do it silently, even though it is small.
+Expect to iterate. Say so:
+
+> Try it for a bit. Run `/hitl:dev-preferences` again to adjust, `off` to pause it, or just say
+> "default mode" to drop it for this session.
 
 ---
 
 ## Writing it
 
-Build the block from their answers and write it with the same upsert HITL uses for project
-`CLAUDE.md` files — it creates, appends, or refreshes in place, and never disturbs anything else in
-the file:
-
 ```bash
-BLOCK=$(mktemp)
-cat > "$BLOCK" <<'EOF'
-<!-- HITL:PREFS:BEGIN — written by /hitl:dev-preferences. Edit freely; re-running rewrites this block. -->
-## How I like responses
+python3 - <<'PY'
+import io, os, re
+BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
+## How I like responses (this project)
 
 - **Length:** short — lead with the answer, bullets over paragraphs
 - **Your workings:** only when I ask
@@ -86,45 +131,35 @@ cat > "$BLOCK" <<'EOF'
 - **Disagreements:** say it straight
 
 Style only. Always tell me a risk, a cost, an uncertainty, or a decision that is mine — briefly if
-that is the setting, but never omitted. If brevity and completeness conflict, cut the reasoning and
-keep the consequence.
-<!-- HITL:PREFS:END -->
-EOF
-
-SCRIPT="${CLAUDE_PLUGIN_ROOT}/shared/tools/hitl-onboarding/ensure_claude_block.py"
-python3 - "$SCRIPT" "$BLOCK" <<'PY'
-import io, os, re, subprocess, sys
-script, block = sys.argv[1], sys.argv[2]
-dest = os.path.expanduser("~/.claude/CLAUDE.md")
-body = io.open(block, encoding="utf-8").read()
-# Same marker-delimited upsert, different marker pair so it never collides with the project block.
-cur = io.open(dest, encoding="utf-8").read() if os.path.isfile(dest) else ""
+that is the setting, but never left out. If brevity and completeness conflict, cut the reasoning and
+keep the consequence. Ignore this block for one session if I say "default mode".
+<!-- HITL:PREFS:END -->"""
+p = "CLAUDE.md"
+cur = io.open(p, encoding="utf-8").read() if os.path.isfile(p) else ""
 if "<!-- HITL:PREFS:BEGIN" in cur:
     if "<!-- HITL:PREFS:END -->" not in cur:
         raise SystemExit("Your preferences block is truncated — fix or delete it by hand; nothing written.")
-    out = re.sub(r"<!-- HITL:PREFS:BEGIN.*?<!-- HITL:PREFS:END -->", body.rstrip("\n"), cur, flags=re.S)
+    out = re.sub(r"<!-- HITL:PREFS:BEGIN.*?<!-- HITL:PREFS:END -->", BLOCK, cur, flags=re.S)
 else:
-    out = (cur.rstrip("\n") + "\n\n" + body) if cur.strip() else body
-io.open(dest, "w", encoding="utf-8").write(out)
-print("Saved to ~/.claude/CLAUDE.md")
+    out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
+io.open(p, "w", encoding="utf-8").write(out)
+print("Saved to CLAUDE.md in this project.")
 PY
-rm -f "$BLOCK"
 ```
 
-Adjust the bullets to match their actual answers. Keep the closing paragraph **verbatim** — it is
-the floor, and it is the reason this is safe to set and forget.
+Replace the bullets with their actual answers. Keep the closing paragraph and the `status:` marker
+**verbatim** — one is the floor, the other is how `off` works.
 
 ---
 
-## The floor, and why it is in the file rather than here
+## The floor, and why it lives in the file
 
 A preference governs **form, never substance**. Someone who wants three bullets still needs to know
 that a migration can destroy their work, that a change is irreversible, that you are guessing, or
 that something is theirs to decide.
 
-That paragraph goes **into their CLAUDE.md**, not just into this skill, because the file is what
-future sessions read. A floor that lives only in the setup command is a floor that stops existing
-the moment setup finishes.
+That paragraph goes **into the block**, not just into this skill, because the block is what future
+sessions read. A floor that lives only in the setup command stops existing the moment setup finishes.
 
 ---
 
@@ -134,20 +169,28 @@ Do not advertise it. Offer once, when someone tells you something is wrong with 
 
 - "too long", "just give me the answer", "skip the detail"
 - "you don't need to explain all that"
-- they ask for more depth twice in a row
+- they ask for more depth twice running
 
-> Want me to remember that? `/hitl:dev-preferences` — four questions, applies everywhere, and you
-> can undo it with `reset`.
+> Want me to keep to that? `/hitl:dev-preferences` — four questions, this project only, and you can
+> pause or remove it whenever.
 
-Once per session. If they say no, drop it and store nothing.
+Once per session. If they decline, drop it and write nothing.
 
-**Never write preferences from inference.** Two terse messages are not consent to a stored profile
-of how someone likes to be spoken to.
+**Never write preferences from inference.** Two terse messages are not consent to a stored record of
+how someone likes to be spoken to.
+
+---
+
+## If they ask for it everywhere
+
+Only if they raise it: the same block in their own `~/.claude/CLAUDE.md` applies to every project
+they work in, HITL or not. Tell them that is theirs to edit and HITL will not manage it — then let
+them decide. Do not write there on HITL's initiative.
 
 ---
 
 ## Related
 
-- `/hitl:dev-draft-for <person>` — writing a message **to** someone else, using their profile.
-  Different thing: that is about your audience, this is about you.
+- `/hitl:dev-draft-for <person>` — a message written **to** someone else, using their profile.
+  Different thing: that is your audience, this is you.
 - `${CLAUDE_PLUGIN_ROOT}/shared/personas.md` — the rules both share.

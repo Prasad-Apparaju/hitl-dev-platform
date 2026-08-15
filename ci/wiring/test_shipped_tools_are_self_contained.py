@@ -348,38 +348,49 @@ def test_dev_update_does_not_delete_settings_or_unowned_files():
 
 
 def test_personas_are_wired_at_both_ends():
-    """A mechanism nobody is offered and nothing reads is inert — the defect of the week.
-
-    Inbound is deliberately NOT a HITL-owned store: `~/.claude/CLAUDE.md` already applies to every
-    project and is the user's own, so HITL drives that rather than shadowing it. What must exist is
-    the command that sets it up and the instruction to offer it.
-    """
+    """A mechanism nobody is offered and nothing reads is inert — the defect of the week."""
     tmpl = io.open(os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
                                 "CLAUDE.md.template"), encoding="utf-8").read()
     assert "/hitl:dev-preferences" in tmpl, "nothing ever offers the preferences command"
-    assert "~/.claude/CLAUDE.md" in tmpl, "the session instructions must point at the native file"
-    assert ".hitl/people/" not in tmpl, (
-        "inbound preferences must NOT be a repo-scoped HITL store — that duplicates the native "
-        "mechanism and only works in HITL projects")
+    assert "HITL:PREFS" in tmpl, "the session instructions never read the block"
+    assert "PAUSED" in tmpl, "the pause state is settable but nothing honours it"
+    assert "default mode" in tmpl, "the one-session escape is documented nowhere that reads it"
 
     import json
     reg = json.load(io.open(os.path.join(ROOT, "ai", "claude", "plugin", "plugin.json"),
                             encoding="utf-8"))
     for skill in ("ai/claude/preferences", "ai/claude/draft-for"):
         assert skill in reg["skills"], "%s is not registered in plugin.json" % skill
-        assert os.path.isfile(os.path.join(ROOT, skill.replace("ai/claude/", "ai/claude/"),
-                                           "SKILL.md")), "%s has no SKILL.md" % skill
+        assert os.path.isfile(os.path.join(ROOT, skill, "SKILL.md")), "%s has no SKILL.md" % skill
 
 
-def test_preferences_writes_to_the_users_own_config_not_the_repo():
-    """The point of the command is to drive the native mechanism, not to invent a parallel one."""
+def test_preferences_are_project_scoped_by_default():
+    """HITL manages projects. A HITL command must not reach into machine-wide config on its own
+    initiative — that changes behaviour in every unrelated project the person works in."""
     s = io.open(os.path.join(ROOT, "ai", "claude", "preferences", "SKILL.md"),
                 encoding="utf-8").read()
-    assert "~/.claude/CLAUDE.md" in s
-    assert "HITL:PREFS:BEGIN" in s, "the block must be marker-delimited so it can be re-run or removed"
-    assert "reset" in s, "there must be a way to remove it"
-    assert "ask before writing" in s.lower() or "ask them before" in s.lower(), (
-        "editing a file in the user's home directory must be confirmed, not silent")
+    write_section = s[s.index("## Writing it"):s.index("## The floor")]
+    assert "~/.claude" not in write_section, (
+        "the write path targets the user's global config; it must write to the project CLAUDE.md")
+    assert 'p = "CLAUDE.md"' in write_section, "the write target must be the project file"
+    assert "Do not write there on HITL's initiative" in s, (
+        "the global option must be explicitly opt-in, never HITL's default")
+
+
+def test_preferences_can_be_iterated_paused_and_removed():
+    """They asked for all three: keep adjusting, pause, and turn it off for good."""
+    raw = io.open(os.path.join(ROOT, "ai", "claude", "preferences", "SKILL.md"),
+                  encoding="utf-8").read()
+    # Prose in these files is hard-wrapped, so assert on collapsed whitespace — otherwise the test
+    # breaks on a reflow rather than on a missing rule.
+    s = " ".join(raw.split())
+    for mode in ("show", "off", "on", "reset"):
+        assert "`%s`" % mode in s, "mode %r is not documented" % mode
+    assert "this is an adjustment, not a fresh start" in s, (
+        "re-running must adjust, not re-interrogate someone who already answered")
+    assert "status: ACTIVE" in s and "PAUSED" in s, "pause must be a state in the file"
+    assert "Do not edit the file for a temporary request" in s, (
+        "a one-session change must not rewrite the file")
 
 
 def test_the_persona_floor_is_stated_everywhere_it_could_be_forgotten():

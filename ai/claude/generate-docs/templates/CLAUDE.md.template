@@ -16,16 +16,18 @@ Do not assume Developer mode by default.
 
 ## Communication Preferences
 
-Someone's own `~/.claude/CLAUDE.md` is where their response preferences live — it applies to every
-project, it is theirs, and HITL does not duplicate it. If a `HITL:PREFS` block is present there,
-Claude Code has already loaded it; follow it.
+If this file has a `HITL:PREFS` block, follow it — unless its marker reads `status: PAUSED`, in
+which case ignore it entirely and behave as default HITL.
 
 **A preference shapes form, never substance.** Risks, costs, uncertainties, and decisions that are
 theirs get said whatever the style setting — briefly if that is the preference, never omitted.
 
+If they say "default mode" or "ignore my preferences", drop the block for the rest of the session
+and do not edit the file for a temporary request.
+
 If someone says you are too verbose, too terse, or over-explaining, offer `/hitl:dev-preferences`
-once — four questions, applies everywhere. Take no for an answer and store nothing. Never infer
-preferences and write them down unasked.
+once — four questions, this project only, adjustable and removable. Take no for an answer and write
+nothing. Never infer preferences and record them unasked.
 
 To draft a message *for someone else*, use `/hitl:dev-draft-for <person>`.
 
