@@ -42,14 +42,17 @@ def _run_real_copy(src, dest):
     """Source hitl_copy_tools out of the SHIPPED script and run it. No reimplementation."""
     script = (
         'set -euo pipefail\n'
-        'sed -n "/^hitl_copy_tools()/,/^}/p" %s > /tmp/_hct.sh\n'
-        '. /tmp/_hct.sh\n'
+        'sed -n "/^hitl_copy_tools()/,/^}/p" %s > "$TMPDIR_HCT/_hct.sh"\n'
+        '. "$TMPDIR_HCT/_hct.sh"\n'
         'hitl_copy_tools %s %s\n' % (
             subprocess.list2cmdline([INIT]),
             subprocess.list2cmdline([src]),
             subprocess.list2cmdline([dest]))
     )
-    return subprocess.run(["bash", "-c", script], capture_output=True, text=True)
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        env = dict(os.environ, TMPDIR_HCT=td)
+        return subprocess.run(["bash", "-c", script], capture_output=True, text=True, env=env)
 
 
 def _offenders(d):
@@ -957,9 +960,15 @@ FLOOR_REGIONS = {
     "draft-for / write to the profile": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 3 — Write to the profile',
         "34478767bde804dce54a20d6ecf908648ef34853a175fca9ffb3a00c28510486"),
+    "personas.md / offering it": (
+        ('ai', 'shared', 'personas.md'), '## Offering it',
+        "cba3c5b499aa96d9716a6df7977a890e44aef0fee4d0ac55586cca0772f8789f"),
     "personas.md / the floor": (
         ('ai', 'shared', 'personas.md'), '## The floor — read this before anything else',
         "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
+    "preferences / when to offer this": (
+        ('ai', 'claude', 'preferences', 'SKILL.md'), '## When to offer this',
+        "dca62287136cccf5bbf55c9f0d25735288452896319f114dd38eecd221699b8d"),
 }
 
 
@@ -1010,3 +1019,202 @@ if __name__ == "__main__":
             _p, _h, _ = FLOOR_REGIONS[_n]
             print('    "%s": (\n        %r, %r,\n        "%s"),' % (_n, _p, _h, _floor_hash(_p, _h)))
         print('EMITTED_BLOCK_SHA = "%s"' % _emitted_block_hash())
+
+
+# --- refusals and anchoring, asserted by BEHAVIOUR ------------------------------------------------
+#
+# A mutation round deleted the symlink refusal, deleted the malformed-marker refusal, and un-anchored
+# the marker counting three different ways (single quotes, a built-up variable, re.escape). All
+# stayed green: the guards asserted the SHAPE of the source, so any other spelling evaded them, and
+# the one behavioural anchoring test used the generated template, which no longer mentions a marker
+# inline. These run each real script against a fixture built to trigger the thing being guarded.
+
+INLINE_MENTION = (
+    "# Team rules\n\n"
+    "Never force-push main.\n\n"
+    "The preferences block sits between `<!-- HITL:PREFS:BEGIN` and `<!-- HITL:PREFS:END -->`.\n\n"
+    "Run make test before every PR.\n"
+)
+
+
+def _prefs_bash(heading):
+    text = io.open(PREFS_SKILL, encoding="utf-8").read()
+    body = _section(text, heading)
+    m = re.search(r"```bash\n(.*?)\n```", body, re.S)
+    assert m, "no bash fence under %r" % heading
+    return m.group(1)
+
+
+def _proj(tmp_path, content):
+    d = tmp_path / "p"
+    d.mkdir()
+    (d / "CLAUDE.md").write_text(content, encoding="utf-8")
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada Lovelace"], cwd=str(d), check=True)
+    return d
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_a_marker_named_in_prose_is_not_treated_as_a_block(tmp_path, kind):
+    """Any file may DESCRIBE the markers. Only a line that starts with one is a block."""
+    d = _proj(tmp_path, INLINE_MENTION)
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    after = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    if kind == "write":
+        assert r.returncode == 0, "the writer refused on a file that merely mentions a marker"
+        assert after.startswith(before.rstrip("\n")), "the writer edited the prose instead of appending"
+    else:
+        assert r.returncode != 0, "%s acted on a file with no block" % kind
+        assert after == before, "%s modified a file that only mentions the markers" % kind
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_no_script_writes_through_a_symlink(tmp_path, kind):
+    """CLAUDE.md symlinked to ~/.claude/CLAUDE.md is a real setup, and that target is the one file
+    this feature promises never to touch on its own initiative."""
+    d = tmp_path / "p"
+    d.mkdir()
+    target = tmp_path / "machine-wide.md"
+    target.write_text("# my own global rules\n", encoding="utf-8")
+    (d / "CLAUDE.md").symlink_to(target)
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada Lovelace"], cwd=str(d), check=True)
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    assert r.returncode != 0, "%s wrote through a symlink" % kind
+    assert target.read_text(encoding="utf-8") == "# my own global rules\n", (
+        "%s edited the symlink target" % kind)
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+@pytest.mark.parametrize("label,body", [
+    ("duplicate", "# Rules\n\n<!-- HITL:PREFS:BEGIN status: ACTIVE -->\na\n<!-- HITL:PREFS:END -->\n"
+                  "\n<!-- HITL:PREFS:BEGIN status: ACTIVE -->\nb\n<!-- HITL:PREFS:END -->\n"),
+    ("orphan-begin", "# Rules\n\n<!-- HITL:PREFS:BEGIN status: ACTIVE -->\n\nour own rules\n"),
+])
+def test_malformed_markers_are_refused_not_guessed(tmp_path, kind, label, body):
+    """A wrong guess about which span is ours deletes content HITL does not own."""
+    d = _proj(tmp_path, body)
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    assert r.returncode != 0, "%s guessed on %s markers instead of refusing" % (kind, label)
+    assert (d / "CLAUDE.md").read_text(encoding="utf-8") == before, (
+        "%s modified a file with %s markers" % (kind, label))
+
+
+def test_show_reports_the_block_and_only_the_block(tmp_path):
+    """`show` was guarded by nothing at all. Unanchored, it opened a range at a prose mention and
+    printed to end of file, presenting most of CLAUDE.md as "your current settings"."""
+    script = _prefs_bash("## `show`")
+    d = _proj(tmp_path, INLINE_MENTION)
+    r = subprocess.run(["bash", "-c", script], cwd=str(d), capture_output=True, text=True)
+    assert "No HITL preferences set" in r.stdout, (
+        "show reported settings for a project that has none: %r" % r.stdout[:200])
+    assert "Never force-push main" not in r.stdout, "show dumped the team's own rules"
+
+    assert _run(_prefs_script("write"), d).returncode == 0
+    r2 = subprocess.run(["bash", "-c", script], cwd=str(d), capture_output=True, text=True)
+    assert "HITL:PREFS:BEGIN" in r2.stdout and "HITL:PREFS:END" in r2.stdout
+    assert "Never force-push main" not in r2.stdout, "show printed content outside the block"
+
+
+def test_onboarding_actually_ignores_persona_profiles(tmp_path):
+    """The guard asserted the path appeared in init-project.sh. A COMMENT satisfied that, while the
+    real grep and the real printf both carried a typo and the profiles stayed tracked."""
+    d = tmp_path / "proj"
+    d.mkdir()
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    r = subprocess.run(["bash", INIT, str(d), "--tool", "claude", "--name", "Acme"],
+                       capture_output=True, text=True, cwd=str(d))
+    gi = d / ".gitignore"
+    assert gi.is_file(), "onboarding produced no .gitignore (rc=%s) %s" % (r.returncode, r.stderr[-400:])
+    lines = [ln.strip() for ln in gi.read_text(encoding="utf-8").splitlines()
+             if ln.strip() and not ln.strip().startswith("#")]
+    assert ".hitl/people/" in lines, (
+        "a profile describing a colleague would be committed. .gitignore rules: %s" % lines)
+
+
+@pytest.mark.parametrize("kind", ["flip", "reset", "write"])
+def test_a_prose_mention_beside_a_real_block_does_not_weld_the_controls_shut(tmp_path, kind):
+    """The harm case for unanchored counting, which the prose-only fixture cannot reach.
+
+    With a mention AND a block present, unanchored counting sees two of each and every control
+    refuses at once: `off` (the safety valve), `on`, `reset`, and the writer. The only way out is
+    hand-editing markdown. A prose-only file still errors for an unrelated reason, so it passes
+    even while this is broken -- which is exactly how an un-anchored `flip` survived a mutation
+    round after the anchoring fix was supposedly in place.
+    """
+    d = _proj(tmp_path, INLINE_MENTION)
+    assert _run(_prefs_script("write"), d).returncode == 0, "setup: could not write the block"
+    p = d / "CLAUDE.md"
+    assert "<!-- HITL:PREFS:BEGIN" in p.read_text(encoding="utf-8").split("\n", 4)[4], "setup"
+
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    assert r.returncode == 0, (
+        "`%s` refused while a block was present, because a marker named in prose was counted as "
+        "one: %s%s" % (kind, r.stdout, r.stderr))
+    text = p.read_text(encoding="utf-8")
+    if kind == "flip":
+        assert "status: PAUSED" in text, "the pause did not take"
+    elif kind == "reset":
+        assert "<!-- HITL:PREFS:BEGIN" not in text.replace("`<!-- HITL:PREFS:BEGIN", ""), "block not removed"
+        assert "Never force-push main" in text, "reset took the team's rules with it"
+
+
+def test_the_persona_directory_agrees_across_every_file_that_names_it():
+    """S11: the read side was renamed to `.hitl/profiles/` and nothing noticed.
+
+    Onboarding gitignores one path, the doctrine documents one, and the skill lists another. Rename
+    any one of them and profiles are read from a directory that is not the ignored one, so they get
+    committed. Producer against consumer, not each file against itself.
+    """
+    files = {
+        "init-project.sh": io.open(INIT, encoding="utf-8").read(),
+        "personas.md": io.open(os.path.join(ROOT, "ai", "shared", "personas.md"),
+                               encoding="utf-8").read(),
+        "draft-for/SKILL.md": io.open(DRAFT_SKILL, encoding="utf-8").read(),
+        "persona.yaml": io.open(os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml"),
+                                encoding="utf-8").read(),
+    }
+    for name, text in files.items():
+        # Only lines that are ABOUT profiles. init-project.sh legitimately names .hitl/hooks/ and
+        # other unrelated directories.
+        lines = [ln for ln in text.splitlines()
+                 if re.search(r"\.hitl/[a-z-]+/", ln)
+                 and re.search(r"persona|profile|people|<slug>|kishor", ln, re.I)]
+        found = set()
+        for ln in lines:
+            found |= set(re.findall(r"\.hitl/[a-z-]+/", ln))
+        assert found, "%s names no persona directory at all" % name
+        assert found == {".hitl/people/"}, (
+            "%s refers to %s for profiles. Onboarding gitignores .hitl/people/, so a profile "
+            "describing a colleague would be read from a directory that is still tracked."
+            % (name, sorted(found)))
+
+
+def test_both_personal_commands_stay_user_initiated():
+    """S18: `disable-model-invocation` could be dropped from both skills, unguarded.
+
+    One writes a persistent block into the team's committed CLAUDE.md; the other composes a message
+    under the user's name from a colleague's stored profile. Neither is something to start on its
+    own initiative, and both docs say so in prose while nothing checked the frontmatter that
+    enforces it.
+    """
+    for path in (PREFS_SKILL, DRAFT_SKILL):
+        fm = re.match(r"---\n(.*?)\n---", io.open(path, encoding="utf-8").read(), re.S)
+        assert fm, "%s has no frontmatter" % path
+        assert re.search(r"^disable-model-invocation:\s*true\s*$", fm.group(1), re.M), (
+            "%s may be invoked by the model on its own initiative" % os.path.basename(
+                os.path.dirname(path)))
+
+
+def test_the_session_instructions_offer_both_commands():
+    """S17: draft-for could be dropped from the template entirely and stay green.
+
+    A registered, documented, tested command that nothing ever surfaces is the defect class this
+    whole file exists for: a mechanism nobody is offered.
+    """
+    t = io.open(CLAUDE_TMPL, encoding="utf-8").read()
+    for cmd in ("/hitl:dev-preferences", "/hitl:dev-draft-for"):
+        assert cmd in t, (
+            "the session instructions never mention %s, so nobody is told it exists" % cmd)
