@@ -476,9 +476,56 @@ def test_the_persona_floor_is_stated_everywhere_it_could_be_forgotten():
     skill = io.open(os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md"), encoding="utf-8").read()
     tmpl = io.open(os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
                                 "CLAUDE.md.template"), encoding="utf-8").read()
-    for name, text in (("personas.md", doctrine), ("draft-for", skill), ("CLAUDE.md.template", tmpl)):
-        assert "form" in text and "substance" in text, (
-            "%s does not state that a persona shapes form, not substance" % name)
+    # `"form" in text and "substance" in text` was the original assertion here, and it was
+    # vacuous: both are substrings of "platform", "information", "format", "perform". It passed
+    # with the entire floor deleted, and passed over a floor rewritten to permit omission when the
+    # length setting is short. Assert the SENTENCE, contiguously, on whitespace-collapsed text.
+    prefs = io.open(PREFS_SKILL, encoding="utf-8").read()
+    block = re.search(r'BLOCK = """(.*?)"""', prefs, re.S)
+    assert block, "could not find the block the preferences skill writes"
+
+    REQUIRED = {
+        "personas.md": (doctrine, [
+            "**A persona shapes form. It never changes substance.**",
+            "completeness wins and you compress the *rest*",
+        ]),
+        "draft-for": (skill, [
+            "**Compress the reasoning, never the consequence.** If it will not fit, the reasoning "
+            "goes and the risk stays.",
+            "Item 3 survives every style setting. That is the floor.",
+        ]),
+        "CLAUDE.md.template": (tmpl, [
+            "**A preference shapes form, never substance.** Risks, costs, uncertainties, and "
+            "decisions that are theirs get said whatever the style setting",
+        ]),
+        # The floor lives INSIDE the emitted block on purpose: the block is what future sessions
+        # read, and a floor that lives only in the setup command stops existing when setup ends.
+        # Nothing asserted a word of it there, so it could be rewritten to authorise omission and
+        # committed to every teammate's CLAUDE.md.
+        "the written block": (block.group(1), [
+            "Always state a risk, a cost, an uncertainty, or a decision that is the reader's to "
+            "make — briefly if that is the setting, but never left out.",
+            "cut the reasoning and keep the consequence",
+        ]),
+    }
+    for name, (text, sentences) in REQUIRED.items():
+        flat_text = " ".join(text.split())
+        for want in sentences:
+            assert " ".join(want.split()) in flat_text, (
+                "%s no longer states the floor: missing %r" % (name, want))
+
+    # An inversion can keep the required sentence and revoke it in the next one. These are the
+    # shapes that revocation takes; each was a surviving mutation in an adversarial round.
+    INVERSIONS = (
+        r"may be (?:left out|omitted)", r"cut the consequence", r"the risk list goes",
+        r"no longer applies", r"risks?,? costs? and uncertainties may", r"compress whatever",
+    )
+    for name, (text, _) in REQUIRED.items():
+        flat_text = " ".join(text.split())
+        for bad in INVERSIONS:
+            m = re.search(bad, flat_text, re.I)
+            assert not m, "%s contains language permitting omission: %r" % (name, m.group(0))
+
     assert "never sends" in skill.lower() or "Never send it" in skill, (
         "the drafting skill must not send anything on the user's behalf")
     # Assert the INSTRUCTION, not a token. Inverting the rule to "infer one and proceed" while
@@ -544,8 +591,20 @@ def test_draft_for_will_not_post_text_the_sender_has_not_read():
     """"Draft this and post it" is permission to post a message, given before anyone saw this one."""
     s = " ".join(io.open(os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md"),
                          encoding="utf-8").read().split())
-    assert "never post text the sender has not read" in s.lower()
-    assert "same turn" in s, "the rule must name the combined draft-and-post instruction"
+    # Both of the original substrings survive verbatim inside a sentence that REVOKES the rule
+    # ("The old rule was never post text the sender has not read; it no longer applies when they
+    # asked for a post"). Assert the operative sentences whole, then check for the revocation.
+    for want in (
+        "**Never send it in the same turn you wrote it.**",
+        "That instruction is permission to post *a message*, given before anyone had seen this one.",
+        'The rule is not "never post"; it is **never post text the sender has not read**. So: show '
+        "the draft, stop, and let them respond to it.",
+    ):
+        assert " ".join(want.split()) in s, "the no-unread-post rule is missing or reworded: %r" % want
+    for bad in (r"so post it", r"post it and show the draft afterwards", r"no longer applies",
+                r"standing instruction to post", r"are all fine"):
+        m = re.search(bad, s, re.I)
+        assert not m, "the rule was inverted while keeping its wording: %r" % m.group(0)
 
 
 # --- the writer, run against the file HITL itself generates -------------------------------------
