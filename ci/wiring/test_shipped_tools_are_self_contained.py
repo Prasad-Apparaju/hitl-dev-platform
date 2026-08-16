@@ -828,9 +828,12 @@ def test_the_writer_discloses_that_the_block_is_shared_and_names_who_set_it():
     block = re.search(r'BLOCK = """(.*?)"""', s, re.S)
     assert block and "set by %(who)s" in block.group(1), "the block does not record who set it"
     assert "git config user.name" in s, "nothing tells the writer where the name comes from"
-    assert "never pasted into it" in s, (
-        "the skill must say the name is read as data — instructing a model to substitute it into "
-        "the script is what let a name close the string literal and execute")
+    # Was "never pasted into it", which covered only the name. The same defect then turned up in
+    # the four answers, so the rule is now stated for both and the guard asserts the broader claim.
+    assert "Nothing the person said gets pasted into the script" in s, (
+        "the skill must say user text is passed as data — substituting it into the script is what "
+        "let a name close the string literal and a backslash in an answer become an escape code")
+    assert "Not their answers, not their name" in s
 
 
 def test_a_persona_note_cannot_authorize_an_omission():
@@ -1803,3 +1806,73 @@ def test_every_shared_file_a_skill_reads_is_actually_shipped():
     assert not missing, (
         "these are read via ${CLAUDE_PLUGIN_ROOT}/shared/ but build.sh never copies them, so the "
         "instruction points at nothing in an installed plugin: %s" % missing)
+
+
+@pytest.mark.parametrize("shape", [b"before\n<B>\nafter\n", b"<B>\nafter\n", b"before\n<B>\n"])
+@pytest.mark.parametrize("nl", [b"\n", b"\r\n"])
+def test_reset_is_byte_identical_wherever_the_block_sits(tmp_path, shape, nl):
+    """`reset` prints "The rest of CLAUDE.md is untouched". That has to be literally true.
+
+    It re-inserted a hard "\\n" separator and stripped only "\\n", so on CRLF it left stray blank
+    lines and a bare LF at byte 0 of an otherwise pure-CRLF file, and on LF it left one extra blank
+    line unless the block happened to sit at EOF.
+    """
+    d = tmp_path / "p"
+    d.mkdir()
+    body = shape.replace(b"<B>\n", b"").replace(b"\n", nl)
+    (d / "CLAUDE.md").write_bytes(body)
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada Lovelace"], cwd=str(d), check=True)
+    before = (d / "CLAUDE.md").read_bytes()
+    assert _run(_prefs_script("write"), d).returncode == 0
+    assert _run(_prefs_script("reset"), d).returncode == 0
+    assert (d / "CLAUDE.md").read_bytes() == before, "reset changed bytes it did not own"
+
+
+def test_cr_only_files_are_refused_rather_than_silently_duplicated(tmp_path):
+    """`re.M` anchors on \\n, so a CR-only file hid its own block: every mode said nothing was set
+    and `write` then appended a SECOND block, after which every mode refused."""
+    d = tmp_path / "p"
+    d.mkdir()
+    (d / "CLAUDE.md").write_bytes(b"# R\rteam rules\r")
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada"], cwd=str(d), check=True)
+    for kind in ("write", "show", "flip", "reset"):
+        r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+        assert r.returncode != 0, "%s acted on a CR-only file" % kind
+        assert "CR" in (r.stdout + r.stderr)
+
+
+def test_reversed_markers_are_refused_by_every_mode(tmp_path):
+    """`off` wrote to a file `reset` and `write` both call unparseable."""
+    d = _proj(tmp_path, "# R\n\n<!-- HITL:PREFS:END -->\n\n<!-- HITL:PREFS:BEGIN status: ACTIVE -->\n")
+    before = (d / "CLAUDE.md").read_bytes()
+    for kind in ("flip", "reset", "write"):
+        r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+        assert r.returncode != 0, "%s acted on reversed markers" % kind
+    assert (d / "CLAUDE.md").read_bytes() == before
+
+
+def test_a_name_cannot_reconstitute_a_comment_delimiter(tmp_path):
+    """The sanitiser was single-pass, so removal could CREATE what it removed: '---->>' collapsed
+    to '-->' and closed the BEGIN marker early, spilling the rest of the line into the document."""
+    d = tmp_path / "p"
+    d.mkdir()
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada ---->> Lovelace"], cwd=str(d), check=True)
+    (d / "CLAUDE.md").write_text("# R\n", encoding="utf-8")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    line = re.search(r"^<!-- HITL:PREFS:BEGIN.*$", (d / "CLAUDE.md").read_text(encoding="utf-8"),
+                     re.M).group(0)
+    assert line.count("-->") == 1 and line.endswith("-->"), "the name closed the marker early: %s" % line
+    assert _run(_prefs_script("flip"), d, ["off"]).returncode == 0
+
+
+def test_the_skill_never_tells_anyone_to_paste_answers_into_the_script():
+    """The mechanism moved to arguments and the prose still described the old path, so an agent had
+    a coin-flip between two contradictory instructions -- one of which silently mangles a backslash
+    in the user's own answer, in a committed file."""
+    s = " ".join(io.open(PREFS_SKILL, encoding="utf-8").read().split())
+    for bad in ("Fill in the four bullets", "Replace the four bullets"):
+        assert bad not in s, "the removed hand-edit path is still instructed: %r" % bad
+    assert "Do not edit the block literal to insert their answers" in s

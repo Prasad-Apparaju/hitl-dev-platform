@@ -55,7 +55,7 @@ the escape exists.
 
 ## The script
 
-One script, four modes: `show`, `off`, `on`, `reset`, `write`. It used to be three near-identical
+One script, five modes: `show`, `off`, `on`, `reset`, `write`. It used to be three near-identical
 copies, which is how the repo-root fix, the fence fix and the traceback fix each reached some
 commands and not others. Every fix now lands once.
 
@@ -72,7 +72,7 @@ MODE=show          # show | off | on | reset | write
 python3 - "$MODE" "$LENGTH" "$WORKINGS" "$OPEN_WITH" "$DISAGREEMENTS" "$TONE" <<'PY'
 import io, os, re, subprocess, sys
 
-# ONE script, four modes. These were three near-identical copies, and every copy was a place a fix
+# ONE script, five modes. These were three near-identical copies, and every copy was a place a fix
 # could fail to reach: the repo-root fix, the fence fix and the traceback fix each landed in some
 # copies and not others, and each gap was a separate reported defect. Shared logic lives here once.
 MODE = (sys.argv[1] if len(sys.argv) > 1 else "").strip().lower()
@@ -111,6 +111,9 @@ def read_text(p):
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
         raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
+    if "\r" in text and "\n" not in text:
+        raise SystemExit("CLAUDE.md uses classic-Mac (CR) line endings, which I cannot parse "
+                         "safely. Convert it to LF or CRLF first; nothing changed.")
     crlf = text.count("\r\n")
     nl = "\r\n" if crlf and crlf * 2 >= text.count("\n") else "\n"
     return text, nl
@@ -186,6 +189,9 @@ def owner_of(text):
 
 
 if MODE == "show":
+    if nb > 1 or ne > 1:
+        print("CLAUDE.md has %d begin / %d end markers — more than one preferences block. Showing "
+              "the first; fix the file by hand, the other modes refuse to touch it." % (nb, ne))
     hit = SPAN.search(m)
     if not hit:
         print("No HITL preferences set in this project.")
@@ -200,6 +206,9 @@ if MODE in ("off", "on"):
     if nb != 1 or ne != 1:
         raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
                          "Fix by hand - nothing changed." % (nb, ne))
+    if not SPAN.search(m):
+        raise SystemExit("The markers are present but not in order (END before BEGIN), so I cannot "
+                         "tell where the block is. Fix it by hand; nothing changed.")
     want = "PAUSED" if MODE == "off" else "ACTIVE"
     hit = re.search(r"(^<!-- HITL:PREFS:BEGIN status: )(ACTIVE|PAUSED)", m, re.M)
     if not hit:
@@ -222,11 +231,11 @@ if MODE == "reset":
     if not hit:
         raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
     who = owner_of(m)
-    out = cur[:hit.start()] + "\n" + cur[hit.end():]
+    out = cur[:hit.start()] + (nl if cur[:hit.start()] and cur[hit.end():] else "") + cur[hit.end():]
     # The span eats the newline on both sides and puts one back, which leaves a blank line behind
     # when the block sat at EOF, while the message claims the rest of the file is untouched.
     if not cur[hit.end():].strip():
-        out = out.rstrip("\n") + "\n"
+        out = out.rstrip("\r\n") + nl
     write_text(p, out, nl)
     print("Removed. The rest of CLAUDE.md is untouched.")
     if who:
@@ -243,7 +252,8 @@ def _who():
     except Exception:
         n = ""
     n = " ".join(n.split())              # newlines and tabs cannot survive into a comment line
-    n = n.replace("-->", "").replace("<!--", "")   # cannot close or open the marker around it
+    while "-->" in n or "<!--" in n:              # loop: one pass can CREATE what it removed
+        n = n.replace("-->", "").replace("<!--", "")   # ('---->>' collapses to '-->')
     n = n.replace("\u2014", "-")                    # the marker delimits the name with em dashes
     return n[:60].strip()
 
@@ -253,11 +263,6 @@ if not WHO:
                      "preferences. Ask them for a name, `git config user.name \"...\"`, and "
                      "re-run. Nothing written.")
 
-WHO = _who()
-if not WHO:
-    raise SystemExit("git config user.name is not set, so I cannot record who set these "
-                     "preferences. Ask them for a name, `git config user.name \"...\"`, and "
-                     "re-run. Nothing written.")
 
 BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
 ## Response preferences for this project — set by %(who)s
@@ -299,7 +304,7 @@ BLOCK = BLOCK.replace("\n", nl)   # the inserted text adopts the file's endings;
 if nb > 1 or ne > 1 or (nb == 1 and ne == 0) or (nb == 0 and ne == 1):
     # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
     # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
-    raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "
+    raise SystemExit("CLAUDE.md has %d begin / %d end preferences markers - expected one of each. "
                      "Fix them by hand; nothing written." % (nb, ne))
 notes = []
 if nb == 1:
@@ -387,26 +392,19 @@ Expect to iterate. Say so:
 
 ## Writing it
 
-The name is read by the script, **never pasted into it.** Substituting text you did not write into
-Python source is how a colleague's `git config user.name` — which can legitimately contain quotes,
-`"""`, newlines or `-->` — ends up executing, or breaking out of the marker it was meant to sit in.
-Fill in the four bullets and nothing else.
+**Nothing the person said gets pasted into the script. Not their answers, not their name.** Both are
+passed in as arguments, because text substituted into Python source is read as Python: a `%` used to
+crash the write, a Windows path used to save with its backslashes swallowed as escape codes, and a
+`git config user.name` containing quotes or `"""` could break out of the marker entirely.
 
+So: set `LENGTH`, `WORKINGS`, `OPEN_WITH`, `DISAGREEMENTS` and optionally `TONE` to what they told
+you, then run the script with `write`. Quotes, `%`, backslashes and braces all survive verbatim that
+way. **Do not edit the block literal to insert their answers** — that is the path all of the above
+came back through.
 
-Run the script with `write`.
-
-
-Replace the four bullets with their actual answers and change nothing else. Keep `%(who)s`, the
-`status:` marker, the PAUSED sentence, and the two closing paragraphs **verbatim** — the name is
-filled in by the script, the marker is how `off` works, and the rest is what makes the block safe to
+Everything else in the block stays **verbatim**: the `status:` marker is how `off` works, and the
+PAUSED sentence, the attribution and the two closing paragraphs are what make the block safe to
 leave in a file other people read.
-
-**Pass the four answers as shell variables, never by editing the script.** Set `LENGTH`,
-`WORKINGS`, `OPEN_WITH`, `DISAGREEMENTS` and optionally `TONE`, then run it. Nothing in an answer
-is hazardous that way: quotes, `%`, backslashes and braces all survive verbatim. Editing them into
-the block by hand reintroduces the two defects this shape exists to prevent — a `%` used to crash
-the write, and a Windows path in an answer used to save with its backslashes swallowed as
-escape codes.
 
 Print whatever the script prints. It reports when it kept an existing pause and when it has
 replaced someone else's name — both are things the person needs to hear, and neither is something
