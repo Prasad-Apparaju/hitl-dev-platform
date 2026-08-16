@@ -16,6 +16,19 @@ other HITL block. HITL manages projects; it does not reach into your machine-wid
 want the same preferences everywhere, that is your `~/.claude/CLAUDE.md` and your decision — this
 command only offers it if you ask for it by name.
 
+**Project scope is team scope, and they must be told.** `CLAUDE.md` is normally committed, so this
+block reaches every teammate who opens the repo — people who never ran the command and cannot tell
+whose settings are in force. Say so before writing, in the same breath as showing the block:
+
+> One thing first: `CLAUDE.md` is committed, so this applies to anyone on the team who opens the
+> repo, not just you. I'll put your name on it so they know whose it is and can change it. If you'd
+> rather it stayed yours alone, keep it out of git and set it in your own `~/.claude/CLAUDE.md`
+> instead — that one is yours and HITL will not touch it.
+
+Not a warning to recite and move past. If they would rather not impose it on the team, that is the
+end of it: write nothing here and tell them the machine-wide route. **Record who set it** in the
+block's marker so a teammate reading it later knows who to ask.
+
 ---
 
 ## Modes
@@ -38,12 +51,18 @@ the escape exists.
 ## `show`
 
 ```bash
-if grep -q '<!-- HITL:PREFS:BEGIN' CLAUDE.md 2>/dev/null; then
-  sed -n '/<!-- HITL:PREFS:BEGIN/,/<!-- HITL:PREFS:END -->/p' CLAUDE.md
+if grep -q '^<!-- HITL:PREFS:BEGIN' CLAUDE.md 2>/dev/null; then
+  sed -n '/^<!-- HITL:PREFS:BEGIN/,/^<!-- HITL:PREFS:END -->/p' CLAUDE.md
 else
   echo "No HITL preferences set in this project."   # sed exits 0 on no match, so test first
 fi
 ```
+
+**Every marker test below anchors to the start of a line, and this is load-bearing.** A real marker
+always begins its own line; a *mention* of one — in the generated `CLAUDE.md`'s own instructions, in
+a doc, in a code fence — is inline. Counting unanchored strings makes prose look like a block: the
+writer then edits the sentence instead of appending, and `off` refuses because it sees two of
+everything. Do not relax the `^`.
 
 ## `off` / `on`
 
@@ -60,12 +79,15 @@ p = "CLAUDE.md"
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s = io.open(p, encoding="utf-8").read()
-nb, ne = s.count("<!-- HITL:PREFS:BEGIN"), s.count("<!-- HITL:PREFS:END -->")
+# Anchored: a marker starts a line; a mention of one sits inside a sentence and must not count.
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", s, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", s, re.M))
 if nb != 1 or ne != 1:
     raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
                      "Fix by hand - nothing changed." % (nb, ne))
 want = "PAUSED" if mode == "off" else "ACTIVE"
-s2, n = re.subn(r"(<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", r"\g<1>" + want, s, count=1)
+s2, n = re.subn(r"(^<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)",
+                r"\g<1>" + want, s, count=1, flags=re.M)
 if not n:
     raise SystemExit("No status marker in the block - check it by hand; nothing changed.")
 io.open(p, "w", encoding="utf-8").write(s2)
@@ -86,13 +108,15 @@ p = "CLAUDE.md"
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s = io.open(p, encoding="utf-8").read()
-nb, ne = s.count("<!-- HITL:PREFS:BEGIN"), s.count("<!-- HITL:PREFS:END -->")
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", s, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", s, re.M))
 if nb == 0:
     raise SystemExit("No preferences block here - nothing to remove.")
 if nb != 1 or ne != 1:
     raise SystemExit("Found %d begin / %d end markers. Refusing to guess which is mine - remove it "
                      "by hand. Nothing changed." % (nb, ne))
-span = re.compile(r"\n?<!-- HITL:PREFS:BEGIN(?:(?!<!-- HITL:PREFS:BEGIN).)*?<!-- HITL:PREFS:END -->\n?", re.S)
+span = re.compile(r"\n?^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->\n?",
+                  re.S | re.M)
 new, n = span.subn("\n", s)
 if not n:
     raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
@@ -152,32 +176,39 @@ Expect to iterate. Say so:
 ```bash
 python3 - <<'PY'
 import io, os, re
-BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
-## How I like responses (this project)
+BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by NAME — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
+## Response preferences for this project — set by NAME
 
 **If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
 
 - **Length:** short — lead with the answer, bullets over paragraphs
-- **Your workings:** only when I ask
-- **Open with:** the decision I need to make
+- **Your workings:** only when asked
+- **Open with:** the decision the reader needs to make
 - **Disagreements:** say it straight
 
-Style only. Always tell me a risk, a cost, an uncertainty, or a decision that is mine — briefly if
-that is the setting, but never left out. If brevity and completeness conflict, cut the reasoning and
-keep the consequence. Ignore this block for one session if I say "default mode".
+Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
+— briefly if that is the setting, but never left out. If brevity and completeness conflict, cut the
+reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
+
+Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
+someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
+"default mode" ignores them for one session without changing anything for anyone else.
 <!-- HITL:PREFS:END -->"""
 p = "CLAUDE.md"
 if os.path.islink(p):
     raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. Nothing written.")
 cur = io.open(p, encoding="utf-8").read() if os.path.isfile(p) else ""
-nb, ne = cur.count("<!-- HITL:PREFS:BEGIN"), cur.count("<!-- HITL:PREFS:END -->")
+# Anchored, so the generated CLAUDE.md's own description of these markers is not mistaken for a block.
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", cur, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", cur, re.M))
 if nb > 1 or ne > 1 or (nb == 1 and ne == 0):
     # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
     # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
     raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "
                      "Fix them by hand; nothing written." % (nb, ne))
 if nb == 1:
-    span = re.compile(r"<!-- HITL:PREFS:BEGIN(?:(?!<!-- HITL:PREFS:BEGIN).)*?<!-- HITL:PREFS:END -->", re.S)
+    span = re.compile(r"^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->",
+                      re.S | re.M)
     out, n = span.subn(lambda _: BLOCK, cur, count=1)
     if not n:
         raise SystemExit("Could not match the block cleanly - fix by hand; nothing written.")
@@ -188,9 +219,11 @@ print("Saved to CLAUDE.md in this project.")
 PY
 ```
 
-Replace the bullets with their actual answers. Keep the `status:` marker, the PAUSED sentence, and
-the closing paragraph **verbatim** — the marker is how `off` works, and the other two are what make
-the block safe to leave in place.
+Replace the bullets with their actual answers, and **replace both `NAME`s** with the name from
+`git config user.name` (ask if it is unset — do not leave the placeholder, and do not guess from the
+email). Keep the `status:` marker, the PAUSED sentence, and the two closing paragraphs **verbatim** —
+the marker is how `off` works, and the rest is what makes the block safe to leave in a file other
+people read.
 
 ---
 

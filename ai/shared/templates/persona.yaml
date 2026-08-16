@@ -1,7 +1,8 @@
 # A person's communication profile — .hitl/people/<slug>.yaml
 #
-# Two uses: how HITL talks to this person (matched on git config user.email), and how HITL drafts
-# messages TO them when someone asks (/hitl:dev-draft-for <slug>).
+# One use: how HITL drafts a message TO this person when someone asks (/hitl:dev-draft-for <slug>).
+# It is about your AUDIENCE, never about you. Nothing here changes how HITL talks to the person
+# running the session — that is /hitl:dev-preferences, and it reads none of these fields.
 #
 # Write preferences, not assessments. "Wants the decision first" and "doesn't read long text" carry
 # the same instruction; only one is a characterization of a colleague sitting in version control
@@ -34,6 +35,10 @@ style:
 
 notes: ""                      # anything that does not fit above, in their own words if possible.
                                # e.g. "hands-on — happy to read a diff, not a design doc"
+                               # STYLE ONLY, and draft-for enforces that. A note asking for risks,
+                               # costs or decisions to be left out is read as "put them briefly and
+                               # last", never as permission to drop them - most of all here, where
+                               # the reader is a third party who agreed to nothing.
 
 # Example, filled in:
 #

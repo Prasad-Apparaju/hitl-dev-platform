@@ -66,9 +66,11 @@ colleague thinks does not belong in a PR diff, in code review, or in git history
 file later does not remove it. Sharing one with the team is a deliberate act: remove the ignore line,
 and tell the person whose profile it is.
 
-**The subject can see and remove theirs.** This is not symmetric otherwise — someone tuning their own
-preferences gets `show`, `off`, `on` and `reset`, while a person being *described* would get nothing.
-So, plainly:
+**The subject's file is on someone else's machine, and that is the whole problem.** Be honest about
+what this is: a profile is local, so the person it describes cannot list it, read it, or delete it.
+Everything below runs in the *sender's* session. So these are not rights the subject holds — they
+are obligations on whoever is holding the file, and they are only worth anything if that person
+acts on them. Say yes immediately when asked:
 
 ```bash
 ls .hitl/people/                      # what profiles exist

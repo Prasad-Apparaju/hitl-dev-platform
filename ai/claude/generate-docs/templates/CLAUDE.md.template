@@ -16,8 +16,9 @@ Do not assume Developer mode by default.
 
 ## Communication Preferences
 
-If this file contains a block delimited by `<!-- HITL:PREFS:BEGIN` and `<!-- HITL:PREFS:END -->`,
-follow it — unless its marker reads `status: PAUSED`, ignore it entirely and behave as default HITL.
+If this file contains a block delimited by the HITL:PREFS:BEGIN and HITL:PREFS:END markers (each on
+its own line), follow it — unless its marker reads `status: PAUSED`, ignore it entirely and behave
+as default HITL.
 
 **A preference shapes form, never substance.** Risks, costs, uncertainties, and decisions that are
 theirs get said whatever the style setting — briefly if that is the preference, never omitted.

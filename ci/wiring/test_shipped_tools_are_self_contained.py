@@ -525,3 +525,166 @@ def test_draft_for_will_not_post_text_the_sender_has_not_read():
                          encoding="utf-8").read().split())
     assert "never post text the sender has not read" in s.lower()
     assert "same turn" in s, "the rule must name the combined draft-and-post instruction"
+
+
+# --- the writer, run against the file HITL itself generates -------------------------------------
+#
+# Every guard above compares one file's text to another's. None of them ran the writer against a
+# real generated CLAUDE.md, and that is exactly where it broke: the template describes the PREFS
+# markers in prose, the writer counted marker strings anywhere in the file, so a stock new project
+# looked like it already had a block. First run replaced the sentence between the two quoted
+# markers -- destroying the instruction that makes the block work, and nesting the block inside it.
+# The rule these encode: run the producer against the artifact it actually writes into.
+
+MARK = "P" + "Y"
+
+
+def _prefs_script(kind):
+    """Lift one embedded script out of preferences/SKILL.md. kind: 'write' | 'flip' | 'reset'."""
+    text = io.open(PREFS_SKILL, encoding="utf-8").read()
+    blocks = re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK), text, re.S)
+    assert blocks, "no embedded python found in the preferences skill"
+    want = {"write": "BLOCK =", "flip": "sys.argv", "reset": "Removed."}[kind]
+    hits = [b for b in blocks if want in b]
+    assert len(hits) == 1, "expected exactly one %s script, found %d" % (kind, len(hits))
+    return hits[0]
+
+
+def _fresh_project(tmp_path):
+    """A CLAUDE.md exactly as onboarding generates it, from the shipped template."""
+    d = tmp_path / "proj"
+    d.mkdir()
+    (d / "CLAUDE.md").write_text(io.open(CLAUDE_TMPL, encoding="utf-8").read(), encoding="utf-8")
+    return d
+
+
+def _run(script, cwd, args=()):
+    return subprocess.run([sys.executable, "-c", script, *args], cwd=str(cwd),
+                          capture_output=True, text=True)
+
+
+def test_the_generated_claude_md_is_not_mistaken_for_a_preferences_block(tmp_path):
+    """First run on a stock project must APPEND, never edit the instructions around it."""
+    d = _fresh_project(tmp_path)
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script("write"), d)
+    assert r.returncode == 0, "writer refused on a stock generated project: %s" % r.stderr
+    after = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert after.startswith(before.rstrip("\n")), (
+        "the writer modified the generated instructions instead of appending after them")
+    for line in before.splitlines():
+        assert line in after.splitlines(), "generated line lost: %r" % line
+
+
+def test_the_pause_instruction_survives_the_first_write(tmp_path):
+    """The sentence telling Claude to obey the block is the thing the collision destroyed.
+
+    Assert CONTIGUITY, not presence. When the block was injected mid-sentence, the tail still read
+    "...behave as default HITL" further down the file, so a substring check stayed green over
+    output that had the whole block wedged inside the instruction.
+    """
+    d = _fresh_project(tmp_path)
+    instruction = " ".join(
+        re.search(r"If this file contains a block.*?default HITL\.",
+                  io.open(CLAUDE_TMPL, encoding="utf-8").read(), re.S).group(0).split())
+    _run(_prefs_script("write"), d)
+    after = " ".join((d / "CLAUDE.md").read_text(encoding="utf-8").split())
+    assert instruction in after, (
+        "the consumer instruction is no longer contiguous — the writer wrote into the middle of it")
+
+
+def test_regenerating_claude_md_over_an_existing_block_leaves_off_working(tmp_path):
+    """F1b's real path: dev-update regenerates the instructions above a block already in place.
+
+    That file holds the template's marker mentions AND a real block. Unanchored counting sees two
+    of each and refuses everything at once — `off`, `on`, `reset` and the writer — so the safety
+    valve is welded shut and hand-editing markdown is the only way out.
+    """
+    d = _fresh_project(tmp_path)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    p = d / "CLAUDE.md"
+    p.write_text(io.open(CLAUDE_TMPL, encoding="utf-8").read() + "\n" +
+                 p.read_text(encoding="utf-8"), encoding="utf-8")
+    r = _run(_prefs_script("flip"), d, ["off"])
+    assert r.returncode == 0, "`off` refused after a regeneration: %s%s" % (r.stdout, r.stderr)
+    assert "PAUSED" in p.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("mode", ["off", "on"])
+def test_the_escape_hatches_work_on_a_stock_project(tmp_path, mode):
+    """`off` is the safety valve. A second marker pair anywhere welds it shut."""
+    d = _fresh_project(tmp_path)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    r = _run(_prefs_script("flip"), d, [mode])
+    assert r.returncode == 0, "`%s` failed on a stock generated project: %s" % (mode, r.stderr)
+    assert ("PAUSED" if mode == "off" else "ACTIVE") in (d / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+def test_reset_removes_only_the_block_from_a_stock_project(tmp_path):
+    d = _fresh_project(tmp_path)
+    generated = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    r = _run(_prefs_script("reset"), d)
+    assert r.returncode == 0, "reset refused on a stock generated project: %s" % r.stderr
+    assert (d / "CLAUDE.md").read_text(encoding="utf-8").rstrip("\n") == generated.rstrip("\n"), (
+        "reset did not restore the file it started from")
+
+
+def test_marker_tests_are_anchored_to_line_start():
+    """The structural fix. Unanchored counting is what let prose impersonate a block."""
+    for kind in ("write", "flip", "reset"):
+        # Drop the BLOCK literal: it legitimately contains the bare marker it EMITS. Only the
+        # patterns used to MATCH markers have to be anchored.
+        src = re.sub(r'"""(?:.|\n)*?"""', '""', _prefs_script(kind))
+        for m in re.findall(r'r?"\^?<!-- HITL:PREFS:(?:BEGIN|END)[^"]*"', src):
+            assert m.lstrip("r").startswith('"^'), (
+                "%s script matches %s unanchored — prose mentioning a marker will count as one"
+                % (kind, m))
+
+
+def test_the_writer_discloses_that_the_block_is_shared_and_names_who_set_it():
+    """`CLAUDE.md` is committed, so "Scope: this project" reads as privacy but means the team.
+
+    The persona path — which describes someone else — got gitignoring, subject rights and authorship
+    disclosure. The artifact that is actually shared got none of it, and a teammate would receive a
+    colleague's settings with no way to tell whose they were.
+    """
+    s = " ".join(io.open(PREFS_SKILL, encoding="utf-8").read().split())
+    assert "committed" in s and "team" in s.lower(), "the sharing consequence is never stated"
+    assert "~/.claude/CLAUDE.md" in s, "no alternative offered for someone who wants it private"
+    block = re.search(r'BLOCK = """(.*?)"""', s, re.S)
+    assert block and "set by NAME" in block.group(1), "the block does not record who set it"
+    assert "git config user.name" in s, "nothing tells the writer where the name comes from"
+
+
+def test_a_persona_note_cannot_authorize_an_omission():
+    """`notes` was told to override the rows above, and the rows above include nothing but style.
+
+    Preferences refuses to store "no warnings"; a persona file can hold that same sentence in the
+    one field draft-for reads last and lets win — and can hold it in the voice of a third party who
+    never said it.
+    """
+    draft = " ".join(io.open(os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md"),
+                             encoding="utf-8").read().split())
+    assert "overrides the **style** rows above, and nothing else" in draft, (
+        "notes still claims blanket override authority")
+    assert "cannot authorize leaving something out" in draft.lower()
+    tmpl = io.open(os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml"),
+                   encoding="utf-8").read()
+    assert "STYLE ONLY" in tmpl, "the template invites free text without naming the limit"
+
+
+def test_unset_authorship_is_never_reported_as_self_authored():
+    """authored_by has no safe default, and the blank case is the one that most needs disclosing."""
+    draft = " ".join(io.open(os.path.join(ROOT, "ai", "claude", "draft-for", "SKILL.md"),
+                             encoding="utf-8").read().split())
+    assert "empty or missing" in draft, "the unset case has no defined behaviour"
+    assert "Never let an unset field read as self-authored" in draft
+
+
+def test_persona_subject_rights_are_stated_as_obligations_not_capabilities():
+    """The files are local, so the subject cannot run any of these commands; the holder can."""
+    s = " ".join(io.open(os.path.join(ROOT, "ai", "shared", "personas.md"),
+                         encoding="utf-8").read().split())
+    assert "cannot list it, read it, or delete it" in s, (
+        "the doc still presents these as rights the subject can exercise")
