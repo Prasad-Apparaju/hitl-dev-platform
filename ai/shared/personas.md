@@ -68,13 +68,34 @@ not have it, someone may have removed it, and this may not be a HITL project at 
 
 So **before writing a profile, confirm it is actually ignored**, and fix it if not:
 
+**Check the result, do not assume it.** `.gitignore` has no effect on a file git already tracks, and
+outside a repo `git check-ignore` fails in a way that looks like "not ignored" — so appending a rule
+and announcing success is exactly the false assurance the paragraph below warns about.
+
 ```bash
 mkdir -p .hitl/people
-if ! git check-ignore -q .hitl/people/ 2>/dev/null; then
-  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> .gitignore
-  echo "Added .hitl/people/ to .gitignore first — this file describes a person and should not be committed."
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "NOT A GIT REPO — nothing here can make this file local. Say so before writing it."
+else
+  git check-ignore -q .hitl/people/ 2>/dev/null || \
+    printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> .gitignore
+  # Re-check. This is the line that turns a claim into a fact.
+  if git check-ignore -q .hitl/people/ 2>/dev/null; then
+    echo "OK — .hitl/people/ is ignored; a profile written here stays local."
+  else
+    echo "COULD NOT make .hitl/people/ ignored. Do not tell them it is local."
+  fi
+  TRACKED=$(git ls-files '.hitl/people/' 2>/dev/null)
+  [ -n "$TRACKED" ] && {
+    echo "ALREADY TRACKED — the ignore rule does not cover these, and they are in git history:"
+    echo "$TRACKED" | sed 's/^/  /'
+  }
 fi
 ```
+
+Report what it actually printed. If it says NOT A GIT REPO, COULD NOT, or ALREADY TRACKED, **stop
+and tell the person before writing anything** — those are the cases where the promise of locality
+is false, and they are the cases most likely to matter.
 
 Telling someone a file is local when it is about to be committed is worse than not having said
 anything, because they will not check. If you cannot make it ignored — no `.gitignore`, not a git

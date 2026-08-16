@@ -1,5 +1,5 @@
 ---
-description: Tune how HITL talks to you in this project — length, whether it narrates its process, how it opens a disagreement. Re-run any time to adjust. Also turns the tuning off for one session, or off for good. Run it when HITL feels too verbose, too terse, or too cautious.
+description: Tune how HITL talks to you in this project — length, whether it narrates its process, how it opens a disagreement. Re-run any time to adjust. Also pauses it until you turn it back on, or removes it for good. Run it when HITL feels too verbose, too terse, or too cautious.
 argument-hint: "nothing to set up or adjust — or 'show', 'off', 'on', 'reset'"
 disable-model-invocation: true
 ---
@@ -95,6 +95,22 @@ def mask_fences(t):
     return "\n".join(out)
 
 
+def claude_md():
+    """The repo's CLAUDE.md, not the current directory's.
+
+    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
+    block. From the repo root, show/off/reset then all reported that nothing was set while the
+    preferences were live one directory down.
+    """
+    try:
+        import subprocess
+        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True).stdout.strip()
+    except Exception:
+        root = ""
+    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
+
+
 def read_text(p):
     """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
     raw = io.open(p, "rb").read()
@@ -112,7 +128,7 @@ def write_text(p, text, nl):
 mode = (sys.argv[1] if len(sys.argv) > 1 else "").strip().lower()
 if mode not in ("off", "on"):
     raise SystemExit("Pass exactly 'off' or 'on'. Nothing changed.")   # guessing here turned it ON
-p = "CLAUDE.md"
+p = claude_md()
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s, nl = read_text(p)
@@ -165,6 +181,22 @@ def mask_fences(t):
     return "\n".join(out)
 
 
+def claude_md():
+    """The repo's CLAUDE.md, not the current directory's.
+
+    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
+    block. From the repo root, show/off/reset then all reported that nothing was set while the
+    preferences were live one directory down.
+    """
+    try:
+        import subprocess
+        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True).stdout.strip()
+    except Exception:
+        root = ""
+    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
+
+
 def read_text(p):
     """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
     raw = io.open(p, "rb").read()
@@ -179,7 +211,7 @@ def write_text(p, text, nl):
         raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
 
 
-p = "CLAUDE.md"
+p = claude_md()
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s, nl = read_text(p)
@@ -281,6 +313,22 @@ def mask_fences(t):
     return "\n".join(out)
 
 
+def claude_md():
+    """The repo's CLAUDE.md, not the current directory's.
+
+    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
+    block. From the repo root, show/off/reset then all reported that nothing was set while the
+    preferences were live one directory down.
+    """
+    try:
+        import subprocess
+        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True).stdout.strip()
+    except Exception:
+        root = ""
+    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
+
+
 def read_text(p):
     """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
     raw = io.open(p, "rb").read()
@@ -329,8 +377,8 @@ reasoning and keep the consequence. Drop this block for one session if anyone sa
 Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
 someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
 "default mode" ignores them for one session without changing anything for anyone else.
-<!-- HITL:PREFS:END -->""" % {"who": WHO}
-p = "CLAUDE.md"
+<!-- HITL:PREFS:END -->""".replace("%(who)s", WHO)
+p = claude_md()
 if os.path.islink(p):
     raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. Nothing written.")
 cur, nl = read_text(p) if os.path.isfile(p) else ("", "\n")
@@ -382,7 +430,10 @@ filled in by the script, the marker is how `off` works, and the rest is what mak
 leave in a file other people read.
 
 Write the bullets as plain prose. They land inside a `"""` string, so a stray `"""` in an answer
-breaks the script for the same reason the name is no longer pasted in.
+breaks the script for the same reason the name is no longer pasted in. Nothing else in an answer is
+hazardous: `%`, backslashes and braces are all safe, because the name is substituted with
+`.replace()` rather than a format string. Someone answering *"cut preamble by 90%"* used to get a
+traceback and no saved preferences.
 
 Print whatever the script prints. It reports when it kept an existing pause and when it has
 replaced someone else's name — both are things the person needs to hear, and neither is something

@@ -447,7 +447,14 @@ def test_preferences_are_project_scoped_by_default():
     write_section = s[s.index("## Writing it"):s.index("## The floor")]
     assert "~/.claude" not in write_section, (
         "the write path targets the user's global config; it must write to the project CLAUDE.md")
-    assert 'p = "CLAUDE.md"' in write_section, "the write target must be the project file"
+    # Was `p = "CLAUDE.md"`, a bare relative path -- which meant "whatever directory the session
+    # started in", so a monorepo package got its own stray CLAUDE.md. The target is now resolved to
+    # the repo root. Still the project's file, never the machine-wide one.
+    assert "p = claude_md()" in write_section, "the write target must be the project file"
+    assert "--show-toplevel" in write_section, (
+        "the target must resolve to the repo root, not the current directory")
+    assert "expanduser" not in write_section, (
+        "the write path reaches into a home directory; it must write to the project CLAUDE.md")
     assert "Do not write there on HITL's initiative" in s, (
         "the global option must be explicitly opt-in, never HITL's default")
 
@@ -1015,7 +1022,7 @@ FLOOR_REGIONS = {
         "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
     "personas.md / where they live": (
         ('ai', 'shared', 'personas.md'), '## Where they live, and who can undo them',
-        "f6876fafee8462664bd29102ad3bf075cd089c84fdaf0cf4f9a148c74a4df969"),
+        "7cf2816abea9a69191b112bd94d534edf6c11fd3969afff5e7e521326ff4bc89"),
     "personas.md / whose profile is it": (
         ('ai', 'shared', 'personas.md'), '## Whose profile is it',
         "529deec65e92b6c5faf7836a755cb167fac7cf79cda0510e32dbb77a01b6efb6"),
@@ -1458,3 +1465,65 @@ def test_an_unwritable_file_is_reported_not_traced(tmp_path, kind):
     assert "Traceback" not in r.stderr, "%s dumped a traceback at the user: %s" % (kind, r.stderr[-300:])
     assert "Nothing changed" in (r.stdout + r.stderr), "%s did not say the file was untouched" % kind
     assert (d / "CLAUDE.md").read_bytes() == before
+
+
+def test_a_percent_in_an_answer_does_not_crash_the_write(tmp_path):
+    """Round 9 removed a `\"\"\"` hazard by switching to %-formatting, which added a % hazard on the
+    same line. "cut preamble by 90%" gave the user a traceback and no saved preferences after they
+    had just answered a four-question interview."""
+    src = _prefs_script("write").replace("**Length:** short", "**Length:** short - by 90%", 1)
+    d = _proj(tmp_path, "# Rules\n\nteam rules\n")
+    r = _run(src, d)
+    assert r.returncode == 0, "a %% in an answer crashed the write: %s" % r.stderr[-300:]
+    assert "90%" in (d / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_the_block_belongs_to_the_repo_not_the_current_directory(tmp_path, kind):
+    """A session started in a monorepo package wrote a second CLAUDE.md there containing only the
+    block. From the root, show/off/reset then all reported nothing was set while it was live."""
+    d = _proj(tmp_path, "# Monorepo\n\nTeam rules.\n")
+    sub = d / "packages" / "api"
+    sub.mkdir(parents=True)
+    assert _run(_prefs_script("write"), sub).returncode == 0
+    assert not (sub / "CLAUDE.md").exists(), "wrote a stray CLAUDE.md in the subdirectory"
+    assert "<!-- HITL:PREFS:BEGIN" in (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script(kind), sub, ["off"] if kind == "flip" else [])
+    assert r.returncode == 0, "%s run from a subdirectory could not see the block: %s" % (kind, r.stdout)
+
+
+def _ignore_script():
+    s = io.open(os.path.join(ROOT, "ai", "shared", "personas.md"), encoding="utf-8").read()
+    m = re.search(r"```bash\n(mkdir -p \.hitl/people.*?)\n```", s, re.S)
+    assert m, "the locality pre-check is gone from personas.md"
+    return m.group(1)
+
+
+@pytest.mark.parametrize("case,setup,expect", [
+    ("clean repo", "git init -q .", "OK"),
+    ("no repo", "true", "NOT A GIT REPO"),
+    ("already tracked",
+     "git init -q . && git config user.email a@b.c && git config user.name A && "
+     "mkdir -p .hitl/people && echo 'name: x' > .hitl/people/k.yaml && "
+     "git add -A >/dev/null && git commit -qm x",
+     "ALREADY TRACKED"),
+])
+def test_the_locality_check_verifies_instead_of_announcing(tmp_path, case, setup, expect):
+    """It appended a rule and declared success. .gitignore does not untrack a tracked file, and
+    outside a repo check-ignore fails in a way that looks like "not ignored" -- so it printed the
+    false assurance that the paragraph beneath it warns against."""
+    d = tmp_path / "p"
+    d.mkdir()
+    subprocess.run(["bash", "-c", setup], cwd=str(d), check=True, capture_output=True)
+    r = subprocess.run(["bash", "-c", _ignore_script()], cwd=str(d), capture_output=True, text=True)
+    assert expect in r.stdout, "%s: expected %r, got %r" % (case, expect, r.stdout)
+    if expect != "OK":
+        assert "OK —" not in r.stdout, "%s: claimed the profile would be local" % case
+
+
+def test_the_description_does_not_advertise_a_mode_that_does_not_exist():
+    """The picker text promised a one-session off. No mode does that; `off` persists, and being in
+    a committed file it applies to teammates until someone runs `on`."""
+    fm = re.match(r"---\n(.*?)\n---", io.open(PREFS_SKILL, encoding="utf-8").read(), re.S).group(1)
+    assert "for one session" not in fm, (
+        "the description steers people to `off` for a one-session pause, which persists")
