@@ -444,7 +444,7 @@ def test_preferences_are_project_scoped_by_default():
     initiative — that changes behaviour in every unrelated project the person works in."""
     s = io.open(os.path.join(ROOT, "ai", "claude", "preferences", "SKILL.md"),
                 encoding="utf-8").read()
-    write_section = s[s.index("## Writing it"):s.index("## The floor")]
+    write_section = _section(s, "## The script")
     assert "~/.claude" not in write_section, (
         "the write path targets the user's global config; it must write to the project CLAUDE.md")
     # Was `p = "CLAUDE.md"`, a bare relative path -- which meant "whatever directory the session
@@ -637,7 +637,10 @@ MARK = "P" + "Y"
 # behavioural guard then exercised the appendix -- a script explicitly labelled as not run -- while
 # the writer a user actually invokes destroyed their CLAUDE.md and the suite stayed green. Content-
 # addressing a script by a token it happens to contain is not a link to what a user runs.
-PREFS_SECTIONS = {"write": "## Writing it", "flip": "## `off` / `on`", "reset": "## `reset`"}
+# One script now, four modes. It was three near-identical copies, and that duplication was itself
+# the defect: the repo-root, fence and traceback fixes each reached some copies and not others.
+PREFS_SECTIONS = {k: "## The script" for k in ("write", "flip", "reset", "show")}
+PREFS_DEFAULT_MODE = {"write": "write", "reset": "reset", "show": "show"}   # flip always gets one
 
 
 def _fences(text):
@@ -675,7 +678,9 @@ def _prefs_script(kind):
     assert len(blocks) == 1, (
         "expected exactly one embedded script under %r, found %d — a second fence in the section "
         "makes it ambiguous which one a user runs" % (PREFS_SECTIONS[kind], len(blocks)))
-    return blocks[0]
+    mode = PREFS_DEFAULT_MODE.get(kind)
+    prefix = ("import sys\nif len(sys.argv) < 2: sys.argv.append(%r)\n" % mode) if mode else ""
+    return prefix + blocks[0]
 
 
 def _fresh_project(tmp_path):
@@ -1177,15 +1182,14 @@ def test_malformed_markers_are_refused_not_guessed(tmp_path, kind, label, body):
 def test_show_reports_the_block_and_only_the_block(tmp_path):
     """`show` was guarded by nothing at all. Unanchored, it opened a range at a prose mention and
     printed to end of file, presenting most of CLAUDE.md as "your current settings"."""
-    script = _prefs_bash("## `show`")
     d = _proj(tmp_path, INLINE_MENTION)
-    r = subprocess.run(["bash", "-c", script], cwd=str(d), capture_output=True, text=True)
+    r = _run(_prefs_script("show"), d)
     assert "No HITL preferences set" in r.stdout, (
         "show reported settings for a project that has none: %r" % r.stdout[:200])
     assert "Never force-push main" not in r.stdout, "show dumped the team's own rules"
 
     assert _run(_prefs_script("write"), d).returncode == 0
-    r2 = subprocess.run(["bash", "-c", script], cwd=str(d), capture_output=True, text=True)
+    r2 = _run(_prefs_script("show"), d)
     assert "HITL:PREFS:BEGIN" in r2.stdout and "HITL:PREFS:END" in r2.stdout
     assert "Never force-push main" not in r2.stdout, "show printed content outside the block"
 
@@ -1305,7 +1309,6 @@ def test_every_embedded_script_lives_in_a_section_we_test():
     for heading in PREFS_SECTIONS.values():
         known |= {b for b in re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK),
                                         _section(text, heading), re.S)}
-    known |= {b for b in re.findall(r"```bash\n(.*?)\n```", _section(text, "## `show`"), re.S)}
     every = set(re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK), text, re.S))
     every |= set(re.findall(r"```bash\n(.*?)\n```", text, re.S))
     # bash fences that merely wrap a python heredoc are represented by the heredoc body
@@ -1598,8 +1601,7 @@ def test_show_finds_the_block_from_a_subdirectory(tmp_path):
     sub = d / "sub" / "deep"
     sub.mkdir(parents=True)
     assert _run(_prefs_script("write"), d).returncode == 0
-    out = subprocess.run(["bash", "-c", _prefs_bash("## `show`")], cwd=str(sub),
-                         capture_output=True, text=True).stdout
+    out = _run(_prefs_script("show"), sub).stdout
     assert "HITL:PREFS:BEGIN" in out, "show from a subdirectory could not see the block: %r" % out
     assert "No HITL preferences set" not in out
 

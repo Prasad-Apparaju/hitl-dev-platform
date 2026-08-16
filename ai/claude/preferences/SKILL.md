@@ -53,254 +53,268 @@ the escape exists.
 
 ---
 
-## `show`
+## The script
+
+One script, four modes: `show`, `off`, `on`, `reset`, `write`. It used to be three near-identical
+copies, which is how the repo-root fix, the fence fix and the traceback fix each reached some
+commands and not others. Every fix now lands once.
+
+**Every marker test anchors to the start of a line and masks fenced regions first. Both are
+load-bearing.** A real marker begins its own line, so counting unanchored strings makes ordinary
+prose look like a block. And a marker inside a fence also begins its line, so a team documenting the
+block format would have that example treated as the real block. Do not relax either.
 
 ```bash
-# Same file the other three resolve to. Run from a subdirectory, a bare `CLAUDE.md` reported that
-# nothing was set while `off` in that same directory happily paused the real block.
-F="$(git rev-parse --show-toplevel 2>/dev/null)/CLAUDE.md"
-[ -f "$F" ] || F="CLAUDE.md"
-if grep -q '^<!-- HITL:PREFS:BEGIN' "$F" 2>/dev/null; then
-  sed -n '/^<!-- HITL:PREFS:BEGIN/,/^<!-- HITL:PREFS:END -->/p' "$F"
-else
-  echo "No HITL preferences set in this project."   # sed exits 0 on no match, so test first
-fi
+MODE=show          # show | off | on | reset | write
+python3 - "$MODE" <<'PY'
+import io, os, re, subprocess, sys
+
+# ONE script, four modes. These were three near-identical copies, and every copy was a place a fix
+# could fail to reach: the repo-root fix, the fence fix and the traceback fix each landed in some
+# copies and not others, and each gap was a separate reported defect. Shared logic lives here once.
+MODE = (sys.argv[1] if len(sys.argv) > 1 else "").strip().lower()
+if MODE not in ("show", "off", "on", "reset", "write"):
+    raise SystemExit("Pass one of: show, off, on, reset, write. Nothing changed.")
+
+def claude_md():
+    """The repo's CLAUDE.md, not the current directory's.
+
+    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
+    block. From the repo root, show/off/reset then all reported that nothing was set while the
+    preferences were live one directory down.
+    """
+    try:
+        import subprocess
+        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True).stdout.strip()
+    except Exception:
+        root = ""
+    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
+
+
+def read_text(p):
+    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
+    try:
+        raw = io.open(p, "rb").read()
+    except OSError as e:
+        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
+    nl = "\r\n" if b"\r\n" in raw else "\n"
+    try:
+        return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    except UnicodeDecodeError:
+        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
+
+
+def mask_fences(t):
+    """Blank the inside of fenced blocks, keeping every offset identical.
+
+    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
+    so anchoring alone cannot tell it from a real one.
+
+    The first version just toggled on any line opening a fence, which broke two ways: an odd
+    number of such lines inverted the whole file so the real block looked masked and a SECOND block
+    got written, and tilde fences were not recognised at all. Match the opening fence character and
+    length, close only on the same character at least as long, and report an unterminated fence
+    rather than guessing what the rest of the file is.
+    """
+    out, fence = [], None
+    unterminated = False
+    for ln in t.split("\n"):
+        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+            out.append(ln)
+        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
+                and not m.group(2).strip():
+            fence = None
+            out.append(ln)
+        else:
+            out.append(" " * len(ln))
+    if fence is not None:
+        unterminated = True
+    return "\n".join(out), unterminated
+
+
+def write_text(p, text, nl):
+    try:
+        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
+    except OSError as e:
+        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
+
+
+p = claude_md()
+if os.path.islink(p):
+    raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. "
+                     "Nothing changed.")
+if not os.path.isfile(p):
+    if MODE == "show":
+        print("No HITL preferences set in this project.")   # an answer, not an error
+        raise SystemExit(0)
+    if MODE != "write":
+        raise SystemExit("No regular CLAUDE.md here - nothing changed.")
+
+cur, nl = read_text(p) if os.path.isfile(p) else ("", "\n")
+m, unterminated = mask_fences(cur)
+if unterminated:
+    raise SystemExit("CLAUDE.md has an unterminated code fence, so I cannot tell which lines "
+                     "are real markers. Close the fence by hand; nothing changed.")
+
+# Anchored AND fence-masked: a real marker starts a line; a mention of one sits inside a sentence,
+# and an example of one sits inside a code fence. Neither is a block.
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
+SPAN = re.compile(r"^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->",
+                  re.S | re.M)
+
+
+def owner_of(text):
+    hit = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by (.*?) \u2014", text, re.M)
+    return hit.group(1).strip() if hit else ""
+
+
+if MODE == "show":
+    hit = SPAN.search(m)
+    if not hit:
+        print("No HITL preferences set in this project.")
+        raise SystemExit(0)
+    print(cur[hit.start():hit.end()])
+    raise SystemExit(0)
+
+if MODE in ("off", "on"):
+    if nb == 0 and ne == 0:
+        raise SystemExit("No preferences are set in this project, so there is nothing to %s. "
+                         "Run /hitl:dev-preferences to set them up." % MODE)
+    if nb != 1 or ne != 1:
+        raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
+                         "Fix by hand - nothing changed." % (nb, ne))
+    want = "PAUSED" if MODE == "off" else "ACTIVE"
+    hit = re.search(r"(^<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", m, re.M)
+    if not hit:
+        raise SystemExit("No status marker in the block - check it by hand; nothing changed.")
+    write_text(p, cur[:hit.start(2)] + want + cur[hit.end(2):], nl)
+    print("Preferences are now %s." % want)
+    who = owner_of(m)
+    if who:
+        print("These are %s's settings, and CLAUDE.md is committed - this changes them for the "
+              "whole team. To drop them just for yourself, say \"default mode\" instead." % who)
+    raise SystemExit(0)
+
+if MODE == "reset":
+    if nb == 0:
+        raise SystemExit("No preferences block here - nothing to remove.")
+    if nb != 1 or ne != 1:
+        raise SystemExit("Found %d begin / %d end markers. Refusing to guess which is mine - "
+                         "remove it by hand. Nothing changed." % (nb, ne))
+    hit = re.search(r"\n?" + SPAN.pattern + r"\n?", m, re.S | re.M)
+    if not hit:
+        raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
+    who = owner_of(m)
+    out = cur[:hit.start()] + "\n" + cur[hit.end():]
+    # The span eats the newline on both sides and puts one back, which leaves a blank line behind
+    # when the block sat at EOF, while the message claims the rest of the file is untouched.
+    if not cur[hit.end():].strip():
+        out = out.rstrip("\n") + "\n"
+    write_text(p, out, nl)
+    print("Removed. The rest of CLAUDE.md is untouched.")
+    if who:
+        print("Those were %s's settings and CLAUDE.md is committed, so they are gone for everyone. "
+              "Worth telling them." % who)
+    raise SystemExit(0)
+
+# MODE == "write"
+def _who():
+    """Whoever is setting this, as DATA. Never interpolated into source."""
+    try:
+        n = subprocess.run(["git", "config", "user.name"],
+                           capture_output=True, text=True).stdout
+    except Exception:
+        n = ""
+    n = " ".join(n.split())              # newlines and tabs cannot survive into a comment line
+    n = n.replace("-->", "").replace("<!--", "")   # cannot close or open the marker around it
+    return n[:60].strip()
+
+WHO = _who()
+if not WHO:
+    raise SystemExit("git config user.name is not set, so I cannot record who set these "
+                     "preferences. Ask them for a name, `git config user.name \"...\"`, and "
+                     "re-run. Nothing written.")
+
+WHO = _who()
+if not WHO:
+    raise SystemExit("git config user.name is not set, so I cannot record who set these "
+                     "preferences. Ask them for a name, `git config user.name \"...\"`, and "
+                     "re-run. Nothing written.")
+
+BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
+## Response preferences for this project — set by %(who)s
+
+**If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
+
+- **Length:** short — lead with the answer, bullets over paragraphs
+- **Your workings:** only when asked
+- **Open with:** the decision the reader needs to make
+- **Disagreements:** say it straight
+
+Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
+— briefly if that is the setting, but never left out. If brevity and completeness conflict, cut the
+reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
+
+**If the person in this session is not %(who)s, say so once, early, in your own words:** that you
+are following %(who)s's preferences from this repo's `CLAUDE.md`, and that `/hitl:dev-preferences`
+adjusts them, `off` pauses them, or "default mode" drops them for this session only. Say it once,
+briefly, then get on with the work. Someone wondering why you are suddenly terse should not have to
+open a file to find out.
+
+Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
+someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
+"default mode" ignores them for one session without changing anything for anyone else.
+<!-- HITL:PREFS:END -->""".replace("%(who)s", WHO)
+
+if nb > 1 or ne > 1 or (nb == 1 and ne == 0) or (nb == 0 and ne == 1):
+    # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
+    # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
+    raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "
+                     "Fix them by hand; nothing written." % (nb, ne))
+notes = []
+if nb == 1:
+    hit = SPAN.search(m)
+    if not hit:
+        raise SystemExit("Could not match the block cleanly - fix by hand; nothing written.")
+    old, new = cur[hit.start():hit.end()], BLOCK
+    # Editing your bullets is not un-pausing. Anchored to the MARKER: the block's own body explains
+    # what `status: PAUSED` means, so an unanchored test matched that sentence and paused a block
+    # nobody had paused, on the ordinary adjust path this skill tells people to use.
+    if re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?status: PAUSED", old, re.M):
+        new = new.replace("status: ACTIVE", "status: PAUSED", 1)
+        notes.append("Kept them PAUSED - run `/hitl:dev-preferences on` when you want them applied.")
+    prev = owner_of(old)
+    if prev and prev != WHO:
+        notes.append("These were set by %s; the block now records you. Worth telling them." % prev)
+    out = cur[:hit.start()] + new + cur[hit.end():]
+else:
+    out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
+write_text(p, out, nl)
+print("Saved to CLAUDE.md in this project.")
+for n in notes:
+    print(n)
+PY
 ```
 
-**Every marker test below anchors to the start of a line, and masks fenced regions first. Both are
-load-bearing.** A real marker begins its own line, so counting unanchored strings makes ordinary
-prose look like a block: the writer then edits the sentence describing the markers instead of
-appending after it, and `off` refuses because it sees two of everything.
+## `show`
 
-Anchoring alone is not enough. A marker inside a ``` fence *does* begin its line, so a team
-documenting the block format in their own `CLAUDE.md` would have that example treated as the real
-block: their text replaced, and the block written inside the fence where no session reads it.
-Fences are blanked before any marker test runs. Do not relax either.
+Run it with `show`. Prints the block and nothing else, or says none is set.
 
 ## `off` / `on`
 
-Flip one marker. Nothing is deleted and nothing is re-asked.
-
-```bash
-MODE=off            # or: MODE=on
-python3 - "$MODE" <<'PY'
-import io, os, re, sys
-
-def mask_fences(t):
-    """Blank the inside of fenced blocks, keeping every offset identical.
-
-    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
-    so anchoring alone cannot tell it from a real one.
-
-    The first version just toggled on any line starting with ```, which broke two ways: an odd
-    number of such lines inverted the whole file so the real block looked masked and a SECOND block
-    got written, and `~~~` fences were not recognised at all. Match the opening fence character and
-    length, close only on the same character at least as long, and report an unterminated fence
-    rather than guessing what the rest of the file is.
-    """
-    out, fence = [], None
-    unterminated = False
-    for ln in t.split("\n"):
-        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
-        if fence is None:
-            if m:
-                fence = m.group(1)
-            out.append(ln)
-        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
-                and not m.group(2).strip():
-            fence = None
-            out.append(ln)
-        else:
-            out.append(" " * len(ln))
-    if fence is not None:
-        unterminated = True
-    return "\n".join(out), unterminated
-
-
-def claude_md():
-    """The repo's CLAUDE.md, not the current directory's.
-
-    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
-    block. From the repo root, show/off/reset then all reported that nothing was set while the
-    preferences were live one directory down.
-    """
-    try:
-        import subprocess
-        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
-                              capture_output=True, text=True).stdout.strip()
-    except Exception:
-        root = ""
-    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
-
-
-def read_text(p):
-    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
-    try:
-        raw = io.open(p, "rb").read()
-    except OSError as e:
-        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
-    nl = "\r\n" if b"\r\n" in raw else "\n"
-    try:
-        return raw.decode("utf-8").replace("\r\n", "\n"), nl
-    except UnicodeDecodeError:
-        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
-
-
-def write_text(p, text, nl):
-    try:
-        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
-    except OSError as e:
-        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
-
-
-mode = (sys.argv[1] if len(sys.argv) > 1 else "").strip().lower()
-if mode not in ("off", "on"):
-    raise SystemExit("Pass exactly 'off' or 'on'. Nothing changed.")   # guessing here turned it ON
-p = claude_md()
-if not os.path.isfile(p) or os.path.islink(p):
-    raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
-s, nl = read_text(p)
-# Anchored AND fence-masked: a marker starts a line; a mention of one sits inside a sentence, and
-# an example of one sits inside a code fence. Neither is a block.
-m, unterminated = mask_fences(s)
-if unterminated:
-    raise SystemExit("CLAUDE.md has an unterminated ``` or ~~~ fence, so I cannot tell which lines "
-                     "are real markers. Close the fence by hand; nothing changed.")
-nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
-ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
-if nb == 0 and ne == 0:
-    raise SystemExit("No preferences are set in this project, so there is nothing to %s. "
-                     "Run /hitl:dev-preferences to set them up." % mode)
-if nb != 1 or ne != 1:
-    raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
-                     "Fix by hand - nothing changed." % (nb, ne))
-want = "PAUSED" if mode == "off" else "ACTIVE"
-hit = re.search(r"(^<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", m, re.M)
-if not hit:
-    raise SystemExit("No status marker in the block - check it by hand; nothing changed.")
-s2 = s[:hit.start(2)] + want + s[hit.end(2):]
-write_text(p, s2, nl)
-print("Preferences are now %s." % want)
-owner = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) \u2014", m, re.M)
-if owner and owner.group(1).strip():
-    print("These are %s's settings, and CLAUDE.md is committed - this changes them for the whole "
-          "team. To drop them just for yourself, say \"default mode\" instead and run `on`."
-          % owner.group(1).strip())
-PY
-```
+Run it with `off` or `on`. Flips one marker; nothing is deleted and nothing is re-asked. It names
+whose settings they are, because the file is committed and they may not be yours.
 
 ## `reset`
 
-Confirm first. This **refuses** when the markers are duplicated or orphaned rather than guessing
-which span is yours — a plain `BEGIN...END` match spans from a stale marker to a later block's END
-and deletes everything between, including content HITL does not own.
-
-```bash
-python3 - <<'PY'
-import io, os, re
-
-def mask_fences(t):
-    """Blank the inside of fenced blocks, keeping every offset identical.
-
-    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
-    so anchoring alone cannot tell it from a real one.
-
-    The first version just toggled on any line starting with ```, which broke two ways: an odd
-    number of such lines inverted the whole file so the real block looked masked and a SECOND block
-    got written, and `~~~` fences were not recognised at all. Match the opening fence character and
-    length, close only on the same character at least as long, and report an unterminated fence
-    rather than guessing what the rest of the file is.
-    """
-    out, fence = [], None
-    unterminated = False
-    for ln in t.split("\n"):
-        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
-        if fence is None:
-            if m:
-                fence = m.group(1)
-            out.append(ln)
-        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
-                and not m.group(2).strip():
-            fence = None
-            out.append(ln)
-        else:
-            out.append(" " * len(ln))
-    if fence is not None:
-        unterminated = True
-    return "\n".join(out), unterminated
-
-
-def claude_md():
-    """The repo's CLAUDE.md, not the current directory's.
-
-    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
-    block. From the repo root, show/off/reset then all reported that nothing was set while the
-    preferences were live one directory down.
-    """
-    try:
-        import subprocess
-        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
-                              capture_output=True, text=True).stdout.strip()
-    except Exception:
-        root = ""
-    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
-
-
-def read_text(p):
-    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
-    try:
-        raw = io.open(p, "rb").read()
-    except OSError as e:
-        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
-    nl = "\r\n" if b"\r\n" in raw else "\n"
-    try:
-        return raw.decode("utf-8").replace("\r\n", "\n"), nl
-    except UnicodeDecodeError:
-        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
-
-
-def write_text(p, text, nl):
-    try:
-        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
-    except OSError as e:
-        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
-
-
-p = claude_md()
-if not os.path.isfile(p) or os.path.islink(p):
-    raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
-s, nl = read_text(p)
-m, unterminated = mask_fences(s)
-if unterminated:
-    raise SystemExit("CLAUDE.md has an unterminated ``` or ~~~ fence, so I cannot tell which lines "
-                     "are real markers. Close the fence by hand; nothing changed.")
-nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
-ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
-if nb == 0:
-    raise SystemExit("No preferences block here - nothing to remove.")
-if nb != 1 or ne != 1:
-    raise SystemExit("Found %d begin / %d end markers. Refusing to guess which is mine - remove it "
-                     "by hand. Nothing changed." % (nb, ne))
-span = re.compile(r"\n?^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->\n?",
-                  re.S | re.M)
-hit = span.search(m)
-if not hit:
-    raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
-new = s[:hit.start()] + "\n" + s[hit.end():]
-# The span eats the newline on both sides and puts one back, which leaves a blank line behind when
-# the block sat at EOF. Small, but the message below claims the rest of the file is untouched.
-if not s[hit.end():].strip():
-    new = new.rstrip("\n") + "\n"
-owner = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) \u2014", m, re.M)
-write_text(p, new, nl)
-print("Removed. The rest of CLAUDE.md is untouched.")
-if owner and owner.group(1).strip():
-    print("Those were %s's settings and CLAUDE.md is committed, so they are gone for everyone. "
-          "Worth telling them." % owner.group(1).strip())
-PY
-```
-
----
+Confirm first, then run it with `reset`. It **refuses** when the markers are duplicated or orphaned
+rather than guessing which span is yours: a plain BEGIN...END match spans from a stale marker to a
+later block's END and deletes everything between, including content HITL does not own.
 
 ## Setting up, and adjusting
 
@@ -353,166 +367,9 @@ Python source is how a colleague's `git config user.name` — which can legitima
 `"""`, newlines or `-->` — ends up executing, or breaking out of the marker it was meant to sit in.
 Fill in the four bullets and nothing else.
 
-```bash
-python3 - <<'PY'
-import io, os, re, subprocess
 
-def mask_fences(t):
-    """Blank the inside of fenced blocks, keeping every offset identical.
+Run the script with `write`.
 
-    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
-    so anchoring alone cannot tell it from a real one.
-
-    The first version just toggled on any line starting with ```, which broke two ways: an odd
-    number of such lines inverted the whole file so the real block looked masked and a SECOND block
-    got written, and `~~~` fences were not recognised at all. Match the opening fence character and
-    length, close only on the same character at least as long, and report an unterminated fence
-    rather than guessing what the rest of the file is.
-    """
-    out, fence = [], None
-    unterminated = False
-    for ln in t.split("\n"):
-        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
-        if fence is None:
-            if m:
-                fence = m.group(1)
-            out.append(ln)
-        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
-                and not m.group(2).strip():
-            fence = None
-            out.append(ln)
-        else:
-            out.append(" " * len(ln))
-    if fence is not None:
-        unterminated = True
-    return "\n".join(out), unterminated
-
-
-def claude_md():
-    """The repo's CLAUDE.md, not the current directory's.
-
-    A session started in a monorepo package wrote a second CLAUDE.md there, containing only the
-    block. From the repo root, show/off/reset then all reported that nothing was set while the
-    preferences were live one directory down.
-    """
-    try:
-        import subprocess
-        root = subprocess.run(["git", "rev-parse", "--show-toplevel"],
-                              capture_output=True, text=True).stdout.strip()
-    except Exception:
-        root = ""
-    return os.path.join(root, "CLAUDE.md") if root else "CLAUDE.md"
-
-
-def read_text(p):
-    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
-    try:
-        raw = io.open(p, "rb").read()
-    except OSError as e:
-        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
-    nl = "\r\n" if b"\r\n" in raw else "\n"
-    try:
-        return raw.decode("utf-8").replace("\r\n", "\n"), nl
-    except UnicodeDecodeError:
-        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
-
-
-def write_text(p, text, nl):
-    try:
-        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
-    except OSError as e:
-        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
-
-
-def _who():
-    """Whoever is setting this, as DATA. Never interpolated into source."""
-    try:
-        n = subprocess.run(["git", "config", "user.name"],
-                           capture_output=True, text=True).stdout
-    except Exception:
-        n = ""
-    n = " ".join(n.split())              # newlines and tabs cannot survive into a comment line
-    n = n.replace("-->", "").replace("<!--", "")   # cannot close or open the marker around it
-    return n[:60].strip()
-
-WHO = _who()
-if not WHO:
-    raise SystemExit("git config user.name is not set, so I cannot record who set these "
-                     "preferences. Ask them for a name, `git config user.name \"...\"`, and "
-                     "re-run. Nothing written.")
-
-BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
-## Response preferences for this project — set by %(who)s
-
-**If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
-
-- **Length:** short — lead with the answer, bullets over paragraphs
-- **Your workings:** only when asked
-- **Open with:** the decision the reader needs to make
-- **Disagreements:** say it straight
-
-Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
-— briefly if that is the setting, but never left out. If brevity and completeness conflict, cut the
-reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
-
-**If the person in this session is not %(who)s, say so once, early, in your own words:** that you
-are following %(who)s's preferences from this repo's `CLAUDE.md`, and that `/hitl:dev-preferences`
-adjusts them, `off` pauses them, or "default mode" drops them for this session only. Say it once,
-briefly, then get on with the work. Someone wondering why you are suddenly terse should not have to
-open a file to find out.
-
-Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
-someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
-"default mode" ignores them for one session without changing anything for anyone else.
-<!-- HITL:PREFS:END -->""".replace("%(who)s", WHO)
-p = claude_md()
-if os.path.islink(p):
-    raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. Nothing written.")
-cur, nl = read_text(p) if os.path.isfile(p) else ("", "\n")
-# Anchored and fence-masked, so neither the generated CLAUDE.md's description of these markers nor
-# a team's fenced example of them is mistaken for a block.
-cm, unterminated = mask_fences(cur)
-if unterminated:
-    raise SystemExit("CLAUDE.md has an unterminated ``` or ~~~ fence, so I cannot tell which lines "
-                     "are real markers. Close the fence by hand; nothing written.")
-nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", cm, re.M))
-ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", cm, re.M))
-if nb > 1 or ne > 1 or (nb == 1 and ne == 0) or (nb == 0 and ne == 1):
-    # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
-    # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
-    raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "
-                     "Fix them by hand; nothing written." % (nb, ne))
-notes = []
-if nb == 1:
-    span = re.compile(r"^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->",
-                      re.S | re.M)
-    old = span.search(cm)
-    if not old:
-        raise SystemExit("Could not match the block cleanly - fix by hand; nothing written.")
-    at = old.span()
-    old = cur[at[0]:at[1]]
-    new = BLOCK
-    # Editing your bullets is not the same as un-pausing. Someone who ran `off` and then adjusted
-    # would have had it silently switched back on by the rewrite.
-    # Anchored to the MARKER, not the block. The block's own body explains what `status: PAUSED`
-    # means, so an unanchored test matched that sentence and paused a block nobody had paused --
-    # on the ordinary adjust path this skill tells people to use.
-    if re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?status: PAUSED", old, re.M):
-        new = new.replace("status: ACTIVE", "status: PAUSED", 1)
-        notes.append("Kept them PAUSED - run `/hitl:dev-preferences on` when you want them applied.")
-    prev = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) —", old, re.M)
-    if prev and prev.group(1).strip() and prev.group(1).strip() != WHO:
-        notes.append("These were set by %s; the block now records you. Worth telling them."
-                     % prev.group(1).strip())
-    out = cur[:at[0]] + new + cur[at[1]:]
-else:
-    out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
-write_text(p, out, nl)
-print("Saved to CLAUDE.md in this project.")
-for m in notes:
-    print(m)
-PY
-```
 
 Replace the four bullets with their actual answers and change nothing else. Keep `%(who)s`, the
 `status:` marker, the PAUSED sentence, and the two closing paragraphs **verbatim** — the name is
