@@ -206,7 +206,15 @@ This mode reads the existing codebase and generates the full documentation basel
 
 ### Phase R5 — Process Setup (Day 5 equivalent)
 
-1. **Generate `CLAUDE.md`** from the template at `ai/shared/templates/CLAUDE.md.template`:
+1. **Generate `CLAUDE.md`** from the template at
+   `${CLAUDE_PLUGIN_ROOT}/generate-docs/templates/CLAUDE.md.template`:
+
+   **If `CLAUDE.md` already exists, do not overwrite it.** It is a file teams edit, and it carries
+   two marked blocks that regenerating would silently delete: the `HITL:BEGIN`/`HITL:END` block
+   written by onboarding, and the `HITL:PREFS:BEGIN`/`HITL:PREFS:END` block written by
+   `/hitl:dev-preferences`. Show what you would add and let them merge it, or fill only the sections
+   that are still empty. Never write over their own rules.
+
    - Fill in the cross-cutting conventions discovered in Phase R1 (inline, not just links)
    - Fill in the coding standards detected from the codebase:
      - Language + framework (from imports / package.json / pyproject.toml)

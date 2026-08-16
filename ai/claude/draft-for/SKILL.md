@@ -20,6 +20,12 @@ ls .hitl/people/ 2>/dev/null
 
 Match `$ARGUMENTS`'s first token against the filenames and the `name:` field, case-insensitively.
 
+**The filename wins, and a disagreement is worth saying out loud.** If one file's slug matches and a
+*different* file's `name:` matches, take the filename and say which you took. If two profiles match
+equally, do not choose — list them and ask. Getting this wrong means drafting to one person's
+preferences while telling the sender it came from another's profile, which is worse than having no
+profile at all: the provenance line is what they check the draft against.
+
 **If there is no profile, stop and ask.** Do not invent one from their name, their title, or an
 assumption about seniority — a guessed persona is a stereotype with a filename. Offer instead:
 

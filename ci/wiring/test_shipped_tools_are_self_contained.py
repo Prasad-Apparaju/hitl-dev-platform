@@ -420,11 +420,20 @@ def test_no_persona_field_is_advertised_without_a_reader():
         "style fields with no row in draft-for's instruction table: %s — documented, settable, "
         "and inert" % sorted(dead))
 
+    # Same rule one level up. The first version of this half was the very substring test the
+    # comment above rejects: `f not in consumers` over concatenated prose, so any field whose name
+    # happens to be an English word already in the docs counted as wired. `email` passed that way.
+    # Every top-level field needs a named consumer, and `name` is the only one whose consumer is
+    # the lookup rather than a table row.
     top = [k for k in tmpl if k not in ("schema_version", "style")]
-    consumers = text + io.open(os.path.join(ROOT, "ai", "shared", "personas.md"),
-                               encoding="utf-8").read()
-    dead_top = [f for f in top if f not in consumers]
-    assert not dead_top, "persona fields with no reader anywhere: %s" % sorted(dead_top)
+    LOOKUP_KEY = "name"
+    for f in top:
+        if f == LOOKUP_KEY:
+            assert "`name:` field" in text, "nothing documents how a profile is matched"
+            continue
+        assert any(("`%s" % f) in ln for ln in rows), (
+            "persona field %r has no row in draft-for's instruction table — documented, settable, "
+            "and inert" % f)
 
 
 def test_preferences_are_project_scoped_by_default():
@@ -665,8 +674,11 @@ def test_the_writer_discloses_that_the_block_is_shared_and_names_who_set_it():
     assert "committed" in s and "team" in s.lower(), "the sharing consequence is never stated"
     assert "~/.claude/CLAUDE.md" in s, "no alternative offered for someone who wants it private"
     block = re.search(r'BLOCK = """(.*?)"""', s, re.S)
-    assert block and "set by NAME" in block.group(1), "the block does not record who set it"
+    assert block and "set by %(who)s" in block.group(1), "the block does not record who set it"
     assert "git config user.name" in s, "nothing tells the writer where the name comes from"
+    assert "never pasted into it" in s, (
+        "the skill must say the name is read as data — instructing a model to substitute it into "
+        "the script is what let a name close the string literal and execute")
 
 
 def test_a_persona_note_cannot_authorize_an_omission():
@@ -732,3 +744,87 @@ def test_documenting_the_markers_does_not_create_a_block():
     out, action = mod.apply(prose, "<!-- HITL:BEGIN -->\nx\n<!-- HITL:END -->")
     assert action == "appended", "a prose mention was treated as an existing block (%s)" % action
     assert prose.rstrip("\n") in out, "the sentence describing the markers was modified"
+
+
+def _proj_with_name(tmp_path, who):
+    d = _fresh_project(tmp_path)
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", who], cwd=str(d), check=True)
+    return d
+
+
+def test_the_authors_name_is_read_as_data_not_pasted_into_the_script(tmp_path):
+    """`git config user.name` accepts quotes, newlines and `-->`. The skill used to instruct a
+    model to substitute it into a `\"\"\"` literal, so a name could close the string and execute."""
+    payload = 'Ada """ + open("/etc/passwd").read() + """ X'
+    d = _proj_with_name(tmp_path, payload)
+    r = _run(_prefs_script("write"), d)
+    assert r.returncode == 0, r.stderr
+    text = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "root:" not in text, "the name was evaluated as code — /etc/passwd reached CLAUDE.md"
+    assert payload.split(" X")[0][:12] in text, "the name should survive as inert text"
+
+
+@pytest.mark.parametrize("who,why", [
+    ("Ada\nEve", "a newline would forge a second line inside the marker"),
+    ("Ada --> <!-- HITL:PREFS:BEGIN", "a name must not be able to close or open a marker"),
+])
+def test_a_hostile_name_cannot_break_the_marker(tmp_path, who, why):
+    d = _proj_with_name(tmp_path, who)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    text = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert len(re.findall(r"^<!-- HITL:PREFS:BEGIN", text, re.M)) == 1, why
+    assert len(re.findall(r"^<!-- HITL:PREFS:END -->", text, re.M)) == 1, why
+    assert _run(_prefs_script("flip"), d, ["off"]).returncode == 0, (
+        "the block is no longer operable after a hostile name: " + why)
+
+
+def test_an_unset_name_stops_rather_than_recording_nobody(tmp_path):
+    d = _fresh_project(tmp_path)
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", ""], cwd=str(d), check=True)
+    r = _run(_prefs_script("write"), d)
+    assert r.returncode != 0, "wrote a block attributed to nobody"
+    assert "user.name" in (r.stdout + r.stderr)
+
+
+def test_adjusting_a_paused_block_does_not_silently_reactivate_it(tmp_path):
+    """`off` then adjust rewrote the whole span from a template that hardcodes ACTIVE."""
+    d = _proj_with_name(tmp_path, "Ada Lovelace")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    assert _run(_prefs_script("flip"), d, ["off"]).returncode == 0
+    r = _run(_prefs_script("write"), d)
+    assert r.returncode == 0
+    assert "status: PAUSED" in (d / "CLAUDE.md").read_text(encoding="utf-8"), (
+        "adjusting the bullets turned the preferences back on")
+    assert "PAUSED" in r.stdout, "the user is not told their pause was kept"
+
+
+def test_replacing_someone_elses_name_is_reported(tmp_path):
+    d = _proj_with_name(tmp_path, "Ada Lovelace")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    subprocess.run(["git", "config", "user.name", "Bob Ross"], cwd=str(d), check=True)
+    r = _run(_prefs_script("write"), d)
+    assert "Ada Lovelace" in r.stdout, (
+        "silently took over a teammate's block: %s" % r.stdout)
+
+
+def test_reset_returns_the_file_byte_for_byte(tmp_path):
+    """The message claims the rest of the file is untouched, so make that literally true."""
+    d = _proj_with_name(tmp_path, "Ada Lovelace")
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    assert _run(_prefs_script("reset"), d).returncode == 0
+    assert (d / "CLAUDE.md").read_text(encoding="utf-8") == before, "reset left the file changed"
+
+
+def test_generate_docs_neither_mislocates_nor_clobbers_claude_md():
+    """It pointed at a path that does not exist, and said "generate" with no preserve rule — over a
+    project carrying both marked blocks that is a silent delete of onboarding AND preferences."""
+    p = os.path.join(ROOT, "ai", "claude", "generate-docs", "SKILL.md")
+    s = io.open(p, encoding="utf-8").read()
+    for m in re.findall(r"[\w${}/.-]*CLAUDE\.md\.template", s):
+        rel = m.replace("${CLAUDE_PLUGIN_ROOT}/", "ai/claude/")
+        assert os.path.isfile(os.path.join(ROOT, rel)), "points at a missing template: %s" % m
+    assert "do not overwrite it" in s.lower(), "no preserve rule on a file teams edit"
+    assert "HITL:PREFS:BEGIN" in s, "the preserve rule does not name the preferences block"

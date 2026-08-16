@@ -123,6 +123,10 @@ span = re.compile(r"\n?^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<
 new, n = span.subn("\n", s)
 if not n:
     raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
+# The span eats the newline on both sides and puts one back, which leaves a blank line behind when
+# the block sat at EOF. Small, but the message below claims the rest of the file is untouched.
+if not s[span.search(s).end():].strip():
+    new = new.rstrip("\n") + "\n"
 io.open(p, "w", encoding="utf-8").write(new)
 print("Removed. The rest of CLAUDE.md is untouched.")
 PY
@@ -176,11 +180,34 @@ Expect to iterate. Say so:
 
 ## Writing it
 
+The name is read by the script, **never pasted into it.** Substituting text you did not write into
+Python source is how a colleague's `git config user.name` — which can legitimately contain quotes,
+`"""`, newlines or `-->` — ends up executing, or breaking out of the marker it was meant to sit in.
+Fill in the four bullets and nothing else.
+
 ```bash
 python3 - <<'PY'
-import io, os, re
-BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by NAME — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
-## Response preferences for this project — set by NAME
+import io, os, re, subprocess
+
+def _who():
+    """Whoever is setting this, as DATA. Never interpolated into source."""
+    try:
+        n = subprocess.run(["git", "config", "user.name"],
+                           capture_output=True, text=True).stdout
+    except Exception:
+        n = ""
+    n = " ".join(n.split())              # newlines and tabs cannot survive into a comment line
+    n = n.replace("-->", "").replace("<!--", "")   # cannot close or open the marker around it
+    return n[:60].strip()
+
+WHO = _who()
+if not WHO:
+    raise SystemExit("git config user.name is not set, so I cannot record who set these "
+                     "preferences. Ask them for a name, `git config user.name \"...\"`, and "
+                     "re-run. Nothing written.")
+
+BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
+## Response preferences for this project — set by %(who)s
 
 **If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
 
@@ -196,7 +223,7 @@ reasoning and keep the consequence. Drop this block for one session if anyone sa
 Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
 someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
 "default mode" ignores them for one session without changing anything for anyone else.
-<!-- HITL:PREFS:END -->"""
+<!-- HITL:PREFS:END -->""" % {"who": WHO}
 p = "CLAUDE.md"
 if os.path.islink(p):
     raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. Nothing written.")
@@ -209,24 +236,45 @@ if nb > 1 or ne > 1 or (nb == 1 and ne == 0):
     # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
     raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "
                      "Fix them by hand; nothing written." % (nb, ne))
+notes = []
 if nb == 1:
     span = re.compile(r"^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->",
                       re.S | re.M)
-    out, n = span.subn(lambda _: BLOCK, cur, count=1)
-    if not n:
+    old = span.search(cur)
+    if not old:
         raise SystemExit("Could not match the block cleanly - fix by hand; nothing written.")
+    old = old.group(0)
+    new = BLOCK
+    # Editing your bullets is not the same as un-pausing. Someone who ran `off` and then adjusted
+    # would have had it silently switched back on by the rewrite.
+    if re.search(r"status: PAUSED", old):
+        new = new.replace("status: ACTIVE", "status: PAUSED", 1)
+        notes.append("Kept them PAUSED - run `/hitl:dev-preferences on` when you want them applied.")
+    prev = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) —", old, re.M)
+    if prev and prev.group(1).strip() and prev.group(1).strip() != WHO:
+        notes.append("These were set by %s; the block now records you. Worth telling them."
+                     % prev.group(1).strip())
+    out = span.sub(lambda _: new, cur, count=1)
 else:
     out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
 io.open(p, "w", encoding="utf-8").write(out)
 print("Saved to CLAUDE.md in this project.")
+for m in notes:
+    print(m)
 PY
 ```
 
-Replace the bullets with their actual answers, and **replace both `NAME`s** with the name from
-`git config user.name` (ask if it is unset — do not leave the placeholder, and do not guess from the
-email). Keep the `status:` marker, the PAUSED sentence, and the two closing paragraphs **verbatim** —
-the marker is how `off` works, and the rest is what makes the block safe to leave in a file other
-people read.
+Replace the four bullets with their actual answers and change nothing else. Keep `%(who)s`, the
+`status:` marker, the PAUSED sentence, and the two closing paragraphs **verbatim** — the name is
+filled in by the script, the marker is how `off` works, and the rest is what makes the block safe to
+leave in a file other people read.
+
+Write the bullets as plain prose. They land inside a `"""` string, so a stray `"""` in an answer
+breaks the script for the same reason the name is no longer pasted in.
+
+Print whatever the script prints. It reports when it kept an existing pause and when it has
+replaced someone else's name — both are things the person needs to hear, and neither is something
+you should discover for them by reading the file afterwards.
 
 ---
 
