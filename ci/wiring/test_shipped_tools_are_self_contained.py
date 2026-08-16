@@ -619,15 +619,51 @@ def test_draft_for_will_not_post_text_the_sender_has_not_read():
 MARK = "P" + "Y"
 
 
+# Which SECTION of the skill each script lives in. Selecting by position, not by content.
+#
+# This used to pick a block by a variable name it contained ("BLOCK =", "sys.argv"). An adversarial
+# round renamed that variable in the real writer, replaced its body with an unconditional
+# whole-file overwrite, and pasted a verbatim copy of the original into an appendix fence. Every
+# behavioural guard then exercised the appendix -- a script explicitly labelled as not run -- while
+# the writer a user actually invokes destroyed their CLAUDE.md and the suite stayed green. Content-
+# addressing a script by a token it happens to contain is not a link to what a user runs.
+PREFS_SECTIONS = {"write": "## Writing it", "flip": "## `off` / `on`", "reset": "## `reset`"}
+
+
+def _fences(text):
+    """Character spans covered by ``` fenced blocks."""
+    marks = [m.start() for m in re.finditer(r"^```", text, re.M)]
+    return list(zip(marks[0::2], marks[1::2]))
+
+
+def _section(text, heading):
+    """The body of one `## ` section, from its heading to the next heading OUTSIDE a code fence.
+
+    The fence check is load-bearing and was missing at first: the writer's own emitted block
+    contains a line starting `## `, inside the heredoc. Taking the next `\n## ` naively cut the
+    section in half, mid-fence, and the script could not be found at all. Same shape as the bug
+    these guards exist for — a piece of content being read as structure.
+    """
+    i = text.find("\n" + heading + "\n")
+    assert i != -1, "section %r not found" % heading
+    i += 1
+    spans = _fences(text)
+    for m in re.finditer(r"\n## ", text[i + len(heading):]):
+        pos = i + len(heading) + m.start()
+        if not any(a <= pos <= b for a, b in spans):
+            return text[i:pos]
+    return text[i:]
+
+
 def _prefs_script(kind):
-    """Lift one embedded script out of preferences/SKILL.md. kind: 'write' | 'flip' | 'reset'."""
+    """Lift the embedded script from the SECTION that documents it. kind: write | flip | reset."""
     text = io.open(PREFS_SKILL, encoding="utf-8").read()
-    blocks = re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK), text, re.S)
-    assert blocks, "no embedded python found in the preferences skill"
-    want = {"write": "BLOCK =", "flip": "sys.argv", "reset": "Removed."}[kind]
-    hits = [b for b in blocks if want in b]
-    assert len(hits) == 1, "expected exactly one %s script, found %d" % (kind, len(hits))
-    return hits[0]
+    body = _section(text, PREFS_SECTIONS[kind])
+    blocks = re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK), body, re.S)
+    assert len(blocks) == 1, (
+        "expected exactly one embedded script under %r, found %d — a second fence in the section "
+        "makes it ambiguous which one a user runs" % (PREFS_SECTIONS[kind], len(blocks)))
+    return blocks[0]
 
 
 def _fresh_project(tmp_path):
@@ -887,3 +923,90 @@ def test_generate_docs_neither_mislocates_nor_clobbers_claude_md():
         assert os.path.isfile(os.path.join(ROOT, rel)), "points at a missing template: %s" % m
     assert "do not overwrite it" in s.lower(), "no preserve rule on a file teams edit"
     assert "HITL:PREFS:BEGIN" in s, "the preserve rule does not name the preferences block"
+
+
+# --- the floor, pinned ---------------------------------------------------------------------------
+#
+# Two adversarial rounds established that a blacklist of revocation phrases cannot be completed.
+# Every required sentence stayed verbatim while a NEW sentence was added beside it:
+#
+#   "**One practical exception.** When a profile sets `length: short`, treat the four bullets above
+#    as guidance rather than requirements ... drop the risk and cost lines."
+#   "The sender can lower it. If they ask for just the summary, they have taken responsibility."
+#
+# Nothing that greps for approved wording can see those, because they add rather than change. So
+# pin the whole region instead: any edit inside it, of any shape, fails until someone updates the
+# hash here. Changing the floor becomes a deliberate, reviewable act rather than a silent one.
+#
+# WHEN THIS TEST FAILS: read the diff. If the change genuinely belongs in the floor, run
+#   python3 ci/wiring/test_shipped_tools_are_self_contained.py --print-floor-hashes
+# and paste the new value in. Do not update a hash you have not read the diff for.
+
+import hashlib
+
+FLOOR_REGIONS = {
+    "CLAUDE.md template / communication preferences": (
+        ('ai', 'claude', 'generate-docs', 'templates', 'CLAUDE.md.template'), '## Communication Preferences',
+        "d3f10e4c1ca94fb57273bb5421fd3a5c1e40bb8be240d8089d9c8b054dee9ca3"),
+    "draft-for / what this is not for": (
+        ('ai', 'claude', 'draft-for', 'SKILL.md'), '## What this is not for',
+        "0a764e69130523218f2a00fd66c5a5ad0197b7d4f1be70ceef61aa1e4d41adac"),
+    "draft-for / what you are writing": (
+        ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 2 — Establish what you are actually writing',
+        "25dddd4c827233f7f8d054fc03eee363bcc092bcd479c256a1e879c43a638802"),
+    "draft-for / write to the profile": (
+        ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 3 — Write to the profile',
+        "34478767bde804dce54a20d6ecf908648ef34853a175fca9ffb3a00c28510486"),
+    "personas.md / the floor": (
+        ('ai', 'shared', 'personas.md'), '## The floor — read this before anything else',
+        "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
+}
+
+
+def _floor_text(parts, heading):
+    text = io.open(os.path.join(ROOT, *parts), encoding="utf-8").read()
+    return " ".join(_section(text, heading).split())
+
+
+def _floor_hash(parts, heading):
+    return hashlib.sha256(_floor_text(parts, heading).encode("utf-8")).hexdigest()
+
+
+def _emitted_block_hash():
+    """The floor inside the block the writer commits into a team's CLAUDE.md."""
+    prefs = io.open(PREFS_SKILL, encoding="utf-8").read()
+    block = re.search(r'BLOCK = """(.*?)"""', prefs, re.S)
+    assert block, "could not find the emitted block"
+    return hashlib.sha256(" ".join(block.group(1).split()).encode("utf-8")).hexdigest()
+
+
+@pytest.mark.parametrize("name", sorted(FLOOR_REGIONS))
+def test_the_floor_region_is_unchanged(name):
+    parts, heading, pinned = FLOOR_REGIONS[name]
+    got = _floor_hash(parts, heading)
+    assert got == pinned, (
+        "the floor region %r changed.\n"
+        "Read the diff before doing anything. A sentence ADDED beside the floor can revoke it "
+        "while every required phrase stays verbatim, which is how this region was defeated twice.\n"
+        "If the change is intended, re-pin with --print-floor-hashes.\n"
+        "  expected %s\n  got      %s" % (name, pinned, got))
+
+
+def test_the_floor_inside_the_emitted_block_is_unchanged():
+    """This one is committed into every teammate's CLAUDE.md, so it is the copy that matters most."""
+    assert _emitted_block_hash() == EMITTED_BLOCK_SHA, (
+        "the block the writer commits into a team's CLAUDE.md changed. Read the diff: an added "
+        "exception here reaches every session in the repo.\n  expected %s\n  got      %s"
+        % (EMITTED_BLOCK_SHA, _emitted_block_hash()))
+
+
+EMITTED_BLOCK_SHA = "844a1640c348dd40c29d2f7918b7ae70b334e1c4672170cc6aebd47016b3d8ae"
+
+
+if __name__ == "__main__":
+    import sys as _s
+    if "--print-floor-hashes" in _s.argv:
+        for _n in sorted(FLOOR_REGIONS):
+            _p, _h, _ = FLOOR_REGIONS[_n]
+            print('    "%s": (\n        %r, %r,\n        "%s"),' % (_n, _p, _h, _floor_hash(_p, _h)))
+        print('EMITTED_BLOCK_SHA = "%s"' % _emitted_block_hash())
