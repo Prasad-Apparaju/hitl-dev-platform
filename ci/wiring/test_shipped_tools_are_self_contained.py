@@ -1765,3 +1765,41 @@ def test_the_installed_block_and_the_template_agree():
     tmpl = io.open(CLAUDE_TMPL, encoding="utf-8").read()
     for cmd in ("/hitl:dev-preferences", "/hitl:dev-draft-for"):
         assert cmd in block and cmd in tmpl, "%s is missing from one of the two" % cmd
+
+
+def test_every_shared_file_a_skill_reads_is_actually_shipped():
+    """A skill can only read what build.sh copies into the plugin.
+
+    `personas.md` is the doctrine both persona commands are told to read FIRST -- "the floor in it
+    governs everything below" -- and the build.sh line that ships it sat uncommitted in the plugin
+    repo. A release cut from the committed build.sh would have shipped two commands whose first
+    instruction points at a file that does not exist, with the floor absent entirely.
+
+    Nothing else covers this: every other guard here lives in the source repo, and the ship list
+    lives in the other one.
+    """
+    plugin = os.path.abspath(os.path.join(ROOT, "..", "hitl-claude-plugin"))
+    build = os.path.join(plugin, "scripts", "build.sh")
+    if not os.path.isfile(build):
+        pytest.skip("plugin repo not checked out beside this one")
+    bs = io.open(build, encoding="utf-8").read()
+
+    referenced = set()
+    for pat in (os.path.join(ROOT, "ai", "claude", "*", "SKILL.md"),
+                os.path.join(ROOT, "ai", "claude", "*", "*", "SKILL.md")):
+        import glob
+        for f in glob.glob(pat):
+            referenced |= set(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/shared/([A-Za-z0-9_./-]+)",
+                                         io.open(f, encoding="utf-8").read()))
+    assert referenced, "no shared/ references found — this guard would be vacuous"
+
+    missing = []
+    for rel in sorted(referenced):
+        base = os.path.basename(rel)
+        # A file ships if build.sh names it, or copies the directory it lives in.
+        if base in bs or os.path.dirname(rel) and os.path.dirname(rel) in bs:
+            continue
+        missing.append(rel)
+    assert not missing, (
+        "these are read via ${CLAUDE_PLUGIN_ROOT}/shared/ but build.sh never copies them, so the "
+        "instruction points at nothing in an installed plugin: %s" % missing)
