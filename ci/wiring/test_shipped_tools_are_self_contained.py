@@ -679,7 +679,14 @@ def _prefs_script(kind):
         "expected exactly one embedded script under %r, found %d — a second fence in the section "
         "makes it ambiguous which one a user runs" % (PREFS_SECTIONS[kind], len(blocks)))
     mode = PREFS_DEFAULT_MODE.get(kind)
-    prefix = ("import sys\nif len(sys.argv) < 2: sys.argv.append(%r)\n" % mode) if mode else ""
+    # `write` takes the four answers as arguments, because pasting them into the script made a
+    # backslash a Python escape and a % a format specifier. Supply representative ones so callers
+    # that only care about file handling do not have to.
+    extra = (["short — lead with the answer", "only when asked",
+              "the decision the reader needs to make", "say it straight"]
+             if kind == "write" else [])
+    prefix = ("import sys\nif len(sys.argv) < 2: sys.argv[1:] = %r\n" % ([mode] + extra)) \
+        if mode else ""
     return prefix + blocks[0]
 
 
@@ -1097,7 +1104,7 @@ def test_the_floor_inside_the_emitted_block_is_unchanged():
         % (EMITTED_BLOCK_SHA, _emitted_block_hash()))
 
 
-EMITTED_BLOCK_SHA = "d975be8133627f9ff4e673d838dbb7c942bd5590f612b029a7c17c5f35e42d5a"
+EMITTED_BLOCK_SHA = "afeda8c4539e76bc8c98183f80a9011492fa9273d122cae35b3f4fc5b288d381"
 
 
 if __name__ == "__main__":
@@ -1485,11 +1492,16 @@ def test_a_percent_in_an_answer_does_not_crash_the_write(tmp_path):
     """Round 9 removed a `\"\"\"` hazard by switching to %-formatting, which added a % hazard on the
     same line. "cut preamble by 90%" gave the user a traceback and no saved preferences after they
     had just answered a four-question interview."""
-    src = _prefs_script("write").replace("**Length:** short", "**Length:** short - by 90%", 1)
     d = _proj(tmp_path, "# Rules\n\nteam rules\n")
-    r = _run(src, d)
-    assert r.returncode == 0, "a %% in an answer crashed the write: %s" % r.stderr[-300:]
-    assert "90%" in (d / "CLAUDE.md").read_text(encoding="utf-8")
+    hostile = r"short - by 90% and paths like C:\notes"
+    r = _run(_prefs_script("write"), d,
+             ["write", hostile, "only when asked", "the decision", "say it straight"])
+    assert r.returncode == 0, "a hostile answer crashed the write: %s" % r.stderr[-300:]
+    saved = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert hostile in saved, (
+        "the answer was mangled on the way in. A %% used to crash the write and a backslash used "
+        "to be read as a Python escape, saving C:\\notes as a newline followed by 'otes'.\n%s"
+        % saved[:400])
 
 
 @pytest.mark.parametrize("kind", ["write", "flip", "reset"])
@@ -1725,3 +1737,31 @@ def test_the_upgrade_gitignore_step_verifies_its_own_outcome():
     body = s[i:s.index("## Step 5", i)]
     assert "git check-ignore -q" in body, "Step 4.9 asserts the exclusion instead of verifying it"
     assert "COULD NOT exclude" in body, "there is no honest branch when the rule does not take"
+
+
+def test_no_update_step_inherits_a_plugin_root_from_an_earlier_step():
+    """Shell state does not persist between tool calls, so `${CLAUDE_PLUGIN_ROOT:-$ROOT}` in a
+    later step resolved to empty.
+
+    Step 4.8 then reported "No HITL block template in this plugin build — skipping", which is false
+    and benign-sounding, while Step 5 announced a successful update. The block carries the only
+    instructions telling a session these commands exist, so the headline fix reached nobody. The
+    step's own comment warns against exactly this ("dress a path defect up as a legitimate
+    absence") and the code did it anyway.
+    """
+    s = io.open(UPDATE_SKILL, encoding="utf-8").read()
+    assert "${CLAUDE_PLUGIN_ROOT:-$ROOT}" not in s, (
+        "a step inherits $ROOT from an earlier Bash call, which is always empty")
+    for step in ("## Step 4.7", "## Step 4.8"):
+        i = s.index(step)
+        body = s[i:i + 2000]
+        assert "installed_plugins.json" in body, (
+            "%s does not resolve the plugin root itself" % step)
+
+
+def test_the_installed_block_and_the_template_agree():
+    """Both must tell a session the commands exist: onboarding installs one, upgrades the other."""
+    block = io.open(HITL_BLOCK, encoding="utf-8").read()
+    tmpl = io.open(CLAUDE_TMPL, encoding="utf-8").read()
+    for cmd in ("/hitl:dev-preferences", "/hitl:dev-draft-for"):
+        assert cmd in block and cmd in tmpl, "%s is missing from one of the two" % cmd

@@ -346,7 +346,9 @@ Without the opt-out file, "install anything absent" would resurrect a deliberate
 every update. One path per line, `#` comments allowed (e.g. `best-practices/tenant-isolation.yaml`).
 
 ```bash
-ROOT="${CLAUDE_PLUGIN_ROOT:-$ROOT}"
+# Same self-contained resolution: $ROOT from an earlier step is not in scope here.
+ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
 if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
   echo "No shipped rule set found — skipping semgrep re-sync."
 else
@@ -424,7 +426,11 @@ Never overwrites the team's file: it maintains one marker-delimited block. Creat
 refreshes, or stays silent if current; a truncated `HITL:BEGIN` leaves the file untouched (exit 3).
 
 ```bash
-ROOT="${CLAUDE_PLUGIN_ROOT:-$ROOT}"
+# Resolve the plugin root HERE. Shell state does not persist between tool calls, so inheriting
+# $ROOT from Step 4.6 left it empty: the template lookup failed and this step printed "not in this
+# build — skipping", which is false and benign-sounding, while Step 5 reported a successful update.
+ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
 BLOCK="$ROOT/shared/templates/claude-md-hitl-block.md"
 SCRIPT="$ROOT/shared/tools/hitl-onboarding/ensure_claude_block.py"
 if [[ -f "$BLOCK" && -f "$SCRIPT" ]]; then

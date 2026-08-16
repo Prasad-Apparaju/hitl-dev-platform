@@ -66,7 +66,10 @@ block format would have that example treated as the real block. Do not relax eit
 
 ```bash
 MODE=show          # show | off | on | reset | write
-python3 - "$MODE" <<'PY'
+# For `write`, pass the four answers as arguments. They are DATA: never paste them into the script.
+# A backslash in an answer would otherwise be read as a Python escape and
+# silently mangle the saved block -- the same defect the author's name had.
+python3 - "$MODE" "$LENGTH" "$WORKINGS" "$OPEN_WITH" "$DISAGREEMENTS" "$TONE" <<'PY'
 import io, os, re, subprocess, sys
 
 # ONE script, four modes. These were three near-identical copies, and every copy was a place a fix
@@ -93,16 +96,24 @@ def claude_md():
 
 
 def read_text(p):
-    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
+    """Returns (text, newline) with the text EXACTLY as on disk.
+
+    It used to normalise CRLF to LF and convert the whole file back on write, so a single stray
+    CRLF line turned every other line into CRLF -- a whole-file diff on a committed file, under
+    a message saying the rest of it was untouched. Lines we do not edit are now never rewritten;
+    `newline` is only the dominant ending, used for the block we insert.
+    """
     try:
         raw = io.open(p, "rb").read()
     except OSError as e:
         raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
-    nl = "\r\n" if b"\r\n" in raw else "\n"
     try:
-        return raw.decode("utf-8").replace("\r\n", "\n"), nl
+        text = raw.decode("utf-8")
     except UnicodeDecodeError:
         raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
+    crlf = text.count("\r\n")
+    nl = "\r\n" if crlf and crlf * 2 >= text.count("\n") else "\n"
+    return text, nl
 
 
 def mask_fences(t):
@@ -120,7 +131,7 @@ def mask_fences(t):
     out, fence = [], None
     unterminated = False
     for ln in t.split("\n"):
-        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
+        m = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", ln)
         if fence is None:
             if m:
                 fence = m.group(1)
@@ -137,8 +148,9 @@ def mask_fences(t):
 
 
 def write_text(p, text, nl):
+    # `text` already carries the file's own endings; nl was applied to the inserted block only.
     try:
-        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
+        io.open(p, "wb").write(text.encode("utf-8"))
     except OSError as e:
         raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
 
@@ -189,7 +201,7 @@ if MODE in ("off", "on"):
         raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
                          "Fix by hand - nothing changed." % (nb, ne))
     want = "PAUSED" if MODE == "off" else "ACTIVE"
-    hit = re.search(r"(^<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", m, re.M)
+    hit = re.search(r"(^<!-- HITL:PREFS:BEGIN status: )(ACTIVE|PAUSED)", m, re.M)
     if not hit:
         raise SystemExit("No status marker in the block - check it by hand; nothing changed.")
     write_text(p, cur[:hit.start(2)] + want + cur[hit.end(2):], nl)
@@ -232,6 +244,7 @@ def _who():
         n = ""
     n = " ".join(n.split())              # newlines and tabs cannot survive into a comment line
     n = n.replace("-->", "").replace("<!--", "")   # cannot close or open the marker around it
+    n = n.replace("\u2014", "-")                    # the marker delimits the name with em dashes
     return n[:60].strip()
 
 WHO = _who()
@@ -251,10 +264,10 @@ BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev
 
 **If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
 
-- **Length:** short — lead with the answer, bullets over paragraphs
-- **Your workings:** only when asked
-- **Open with:** the decision the reader needs to make
-- **Disagreements:** say it straight
+- **Length:** %(length)s
+- **Your workings:** %(workings)s
+- **Open with:** %(open_with)s
+- **Disagreements:** %(disagreements)s%(tone)s
 
 Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
 — briefly if that is the setting, but never left out. If brevity and completeness conflict, cut the
@@ -269,7 +282,19 @@ open a file to find out.
 Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
 someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
 "default mode" ignores them for one session without changing anything for anyone else.
-<!-- HITL:PREFS:END -->""".replace("%(who)s", WHO)
+<!-- HITL:PREFS:END -->"""
+ANS = {"who": WHO}
+for i, k in enumerate(("length", "workings", "open_with", "disagreements"), start=2):
+    v = " ".join((sys.argv[i] if len(sys.argv) > i else "").split())
+    if not v:
+        raise SystemExit("Missing the %s answer. Pass all four; nothing written." % k)
+    ANS[k] = v.replace("-->", "").replace("<!--", "")
+_t = " ".join((sys.argv[6] if len(sys.argv) > 6 else "").split())
+ANS["tone"] = ("\n- **Tone:** " + _t.replace("-->", "").replace("<!--", "")) if _t else ""
+for k, v in ANS.items():
+    BLOCK = BLOCK.replace("%(" + k + ")s", v)   # substitution, never formatting
+
+BLOCK = BLOCK.replace("\n", nl)   # the inserted text adopts the file's endings; the rest is untouched
 
 if nb > 1 or ne > 1 or (nb == 1 and ne == 0) or (nb == 0 and ne == 1):
     # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
@@ -285,7 +310,7 @@ if nb == 1:
     # Editing your bullets is not un-pausing. Anchored to the MARKER: the block's own body explains
     # what `status: PAUSED` means, so an unanchored test matched that sentence and paused a block
     # nobody had paused, on the ordinary adjust path this skill tells people to use.
-    if re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?status: PAUSED", old, re.M):
+    if re.search(r"^<!-- HITL:PREFS:BEGIN status: PAUSED", old, re.M):
         new = new.replace("status: ACTIVE", "status: PAUSED", 1)
         notes.append("Kept them PAUSED - run `/hitl:dev-preferences on` when you want them applied.")
     prev = owner_of(old)
@@ -293,7 +318,7 @@ if nb == 1:
         notes.append("These were set by %s; the block now records you. Worth telling them." % prev)
     out = cur[:hit.start()] + new + cur[hit.end():]
 else:
-    out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
+    out = (cur.rstrip("\r\n") + nl + nl + BLOCK + nl) if cur.strip() else BLOCK + nl
 write_text(p, out, nl)
 print("Saved to CLAUDE.md in this project.")
 for n in notes:
@@ -376,11 +401,12 @@ Replace the four bullets with their actual answers and change nothing else. Keep
 filled in by the script, the marker is how `off` works, and the rest is what makes the block safe to
 leave in a file other people read.
 
-Write the bullets as plain prose. They land inside a `"""` string, so a stray `"""` in an answer
-breaks the script for the same reason the name is no longer pasted in. Nothing else in an answer is
-hazardous: `%`, backslashes and braces are all safe, because the name is substituted with
-`.replace()` rather than a format string. Someone answering *"cut preamble by 90%"* used to get a
-traceback and no saved preferences.
+**Pass the four answers as shell variables, never by editing the script.** Set `LENGTH`,
+`WORKINGS`, `OPEN_WITH`, `DISAGREEMENTS` and optionally `TONE`, then run it. Nothing in an answer
+is hazardous that way: quotes, `%`, backslashes and braces all survive verbatim. Editing them into
+the block by hand reintroduces the two defects this shape exists to prevent — a `%` used to crash
+the write, and a Windows path in an answer used to save with its backslashes swallowed as
+escape codes.
 
 Print whatever the script prints. It reports when it kept an existing pause and when it has
 replaced someone else's name — both are things the person needs to hear, and neither is something
