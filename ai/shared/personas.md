@@ -61,10 +61,28 @@ couple of offhand remarks and never seen by them, is the thing to avoid here.
 
 ## Where they live, and who can undo them
 
-**Local by default.** `.hitl/people/` is gitignored on a fresh onboarding. A description of how a
-colleague thinks does not belong in a PR diff, in code review, or in git history where deleting the
-file later does not remove it. Sharing one with the team is a deliberate act: remove the ignore line,
-and tell the person whose profile it is.
+**Local by default — check it, do not assume it.** A description of how a colleague thinks does not
+belong in a PR diff, in code review, or in git history where deleting the file later does not
+remove it. Onboarding adds the ignore rule, but a project that upgraded rather than onboarded may
+not have it, someone may have removed it, and this may not be a HITL project at all.
+
+So **before writing a profile, confirm it is actually ignored**, and fix it if not:
+
+```bash
+mkdir -p .hitl/people
+if ! git check-ignore -q .hitl/people/ 2>/dev/null; then
+  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> .gitignore
+  echo "Added .hitl/people/ to .gitignore first — this file describes a person and should not be committed."
+fi
+```
+
+Telling someone a file is local when it is about to be committed is worse than not having said
+anything, because they will not check. If you cannot make it ignored — no `.gitignore`, not a git
+repo, the rule refused — **say so before you write, and let them decide whether to write it at
+all.**
+
+Sharing one with the team is a deliberate act: remove the ignore line, and tell the person whose
+profile it is.
 
 **The subject's file is on someone else's machine, and that is the whole problem.** Be honest about
 what this is: a profile is local, so the person it describes cannot list it, read it, or delete it.

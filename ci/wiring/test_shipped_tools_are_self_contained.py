@@ -1015,7 +1015,7 @@ FLOOR_REGIONS = {
         "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
     "personas.md / where they live": (
         ('ai', 'shared', 'personas.md'), '## Where they live, and who can undo them',
-        "a60b6525d122ae7c4890d6960b90797eda05bede1b890b25b1822b63826d2f63"),
+        "f6876fafee8462664bd29102ad3bf075cd089c84fdaf0cf4f9a148c74a4df969"),
     "personas.md / whose profile is it": (
         ('ai', 'shared', 'personas.md'), '## Whose profile is it',
         "529deec65e92b6c5faf7836a755cb167fac7cf79cda0510e32dbb77a01b6efb6"),
@@ -1354,3 +1354,107 @@ def test_a_name_containing_an_end_marker_cannot_terminate_the_block(tmp_path):
     assert len(re.findall(r"^<!-- HITL:PREFS:END -->", text, re.M)) == 1, (
         "the name forged a second END marker")
     assert _run(_prefs_script("flip"), d, ["off"]).returncode == 0, "the block is now inoperable"
+
+
+def test_adjusting_preferences_does_not_invent_a_pause(tmp_path):
+    """The pause-preservation test read the block's own explanatory prose.
+
+    The block body says: "If the marker above reads `status: PAUSED`, ignore this whole block".
+    An unanchored search for that string matched THAT sentence, so the first adjust flipped a
+    never-paused block to PAUSED and printed that it had "kept" a pause the user never set. The
+    skill actively tells people to re-run it to adjust, so this was the ordinary path.
+    """
+    d = _proj(tmp_path, "# My Project\n\nteam rules here\n")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    assert "status: ACTIVE" in (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script("write"), d)
+    assert r.returncode == 0
+    text = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    marker = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*", text, re.M).group(0)
+    assert "status: ACTIVE" in marker, "adjusting turned the user's preferences off: %s" % marker
+    assert "PAUSED" not in r.stdout, "claimed to keep a pause that was never set: %r" % r.stdout
+
+
+def test_the_upgrade_path_gitignores_persona_profiles():
+    """Onboarding adds the ignore rule. dev-update did not, and every current user is on that path.
+
+    A team that onboarded before this feature gets the commands and none of the protection, so the
+    first profile of a named colleague is an untracked file in a directory teams `git add -A`.
+    HITL meanwhile tells the author it is local.
+    """
+    s = io.open(UPDATE_SKILL, encoding="utf-8").read()
+    assert ".hitl/people/" in s, "dev-update never ensures persona profiles are ignored"
+    assert 'grep -q "^\\.hitl/people/"' in s, (
+        "the upgrade path must use the same idempotent check as onboarding")
+    assert "git ls-files" in s, (
+        "a profile already committed is not covered by adding an ignore rule; the upgrade must "
+        "say so rather than implying it is now safe")
+
+
+def test_the_save_path_verifies_the_ignore_rather_than_asserting_it():
+    """Doctrine stated locality as an accomplished fact, so the model repeats it to the user.
+
+    Nothing checked at write time, and telling someone a file is local when it is about to be
+    committed is worse than saying nothing, because then they do not check.
+    """
+    s = " ".join(io.open(os.path.join(ROOT, "ai", "shared", "personas.md"),
+                         encoding="utf-8").read().split())
+    assert "git check-ignore" in s, "nothing verifies the profile is actually ignored before writing"
+    assert "say so before you write" in s, (
+        "there is no instruction to stop and tell the user when it cannot be made local")
+
+
+FENCED_EXAMPLE = ("# Rules\n\nExample header:\n\n```markdown\n"
+                  "<!-- HITL:PREFS:BEGIN status: ACTIVE -->\nmy documentation line\n"
+                  "<!-- HITL:PREFS:END -->\n```\n\nnot a real block.\n")
+
+
+def test_a_fenced_example_of_the_block_is_not_the_block(tmp_path):
+    """Anchoring is not enough: inside a fence, a marker still begins its line.
+
+    A team documenting the block format in their own CLAUDE.md had that example treated as the
+    real block -- their line replaced, and the block written INSIDE the fence, where no session
+    would ever read it as an instruction. Destructive and inert at once.
+    """
+    d = _proj(tmp_path, FENCED_EXAMPLE)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    t = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "my documentation line" in t, "the team's own text inside the fence was overwritten"
+    assert t.index("set by") > t.rindex("```"), "the block was written inside the code fence"
+    assert _run(_prefs_script("flip"), d, ["off"]).returncode == 0, "the real block is not operable"
+    assert _run(_prefs_script("reset"), d).returncode == 0
+    back = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert back.count("```") == 2 and "my documentation line" in back, "reset damaged the fence"
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_crlf_files_stay_crlf(tmp_path, kind):
+    """Writing LF back into a CRLF file rewrites every line, so `off` produced a 300-line diff."""
+    d = tmp_path / "p"
+    d.mkdir()
+    (d / "CLAUDE.md").write_bytes(b"# R\r\n\r\nrules\r\n")
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada Lovelace"], cwd=str(d), check=True)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    if kind != "write":
+        assert _run(_prefs_script(kind), d, ["off"] if kind == "flip" else []).returncode == 0
+    raw = (d / "CLAUDE.md").read_bytes()
+    assert raw.replace(b"\r\n", b"").count(b"\n") == 0, (
+        "%s left bare LF line endings in a CRLF file" % kind)
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_an_unwritable_file_is_reported_not_traced(tmp_path, kind):
+    """A raw Python traceback tells the user nothing about what did or did not happen."""
+    d = _proj(tmp_path, "# Rules\n\nteam rules\n")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    before = (d / "CLAUDE.md").read_bytes()
+    os.chmod(str(d / "CLAUDE.md"), 0o444)
+    try:
+        r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    finally:
+        os.chmod(str(d / "CLAUDE.md"), 0o644)
+    assert r.returncode != 0
+    assert "Traceback" not in r.stderr, "%s dumped a traceback at the user: %s" % (kind, r.stderr[-300:])
+    assert "Nothing changed" in (r.stdout + r.stderr), "%s did not say the file was untouched" % kind
+    assert (d / "CLAUDE.md").read_bytes() == before

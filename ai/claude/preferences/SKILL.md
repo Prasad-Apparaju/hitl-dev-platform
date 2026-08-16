@@ -58,11 +58,15 @@ else
 fi
 ```
 
-**Every marker test below anchors to the start of a line, and this is load-bearing.** A real marker
-always begins its own line; a *mention* of one — in the generated `CLAUDE.md`'s own instructions, in
-a doc, in a code fence — is inline. Counting unanchored strings makes prose look like a block: the
-writer then edits the sentence instead of appending, and `off` refuses because it sees two of
-everything. Do not relax the `^`.
+**Every marker test below anchors to the start of a line, and masks fenced regions first. Both are
+load-bearing.** A real marker begins its own line, so counting unanchored strings makes ordinary
+prose look like a block: the writer then edits the sentence describing the markers instead of
+appending after it, and `off` refuses because it sees two of everything.
+
+Anchoring alone is not enough. A marker inside a ``` fence *does* begin its line, so a team
+documenting the block format in their own `CLAUDE.md` would have that example treated as the real
+block: their text replaced, and the block written inside the fence where no session reads it.
+Fences are blanked before any marker test runs. Do not relax either.
 
 ## `off` / `on`
 
@@ -72,16 +76,51 @@ Flip one marker. Nothing is deleted and nothing is re-asked.
 MODE=off            # or: MODE=on
 python3 - "$MODE" <<'PY'
 import io, os, re, sys
+
+def mask_fences(t):
+    """Blank the inside of ``` fences, keeping every offset identical.
+
+    A marker inside a fenced example DOES start its own line, so anchoring alone cannot tell it
+    from a real one. A team documenting the block format in their own CLAUDE.md would otherwise
+    have that example treated as the block: their text replaced, and the real block written inside
+    the fence where no session will ever read it.
+    """
+    out, inside = [], False
+    for ln in t.split("\n"):
+        if ln.startswith("```"):
+            inside = not inside
+            out.append(ln)
+        else:
+            out.append(" " * len(ln) if inside else ln)
+    return "\n".join(out)
+
+
+def read_text(p):
+    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
+    raw = io.open(p, "rb").read()
+    nl = "\r\n" if b"\r\n" in raw else "\n"
+    return raw.decode("utf-8").replace("\r\n", "\n"), nl
+
+
+def write_text(p, text, nl):
+    try:
+        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
+    except OSError as e:
+        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
+
+
 mode = (sys.argv[1] if len(sys.argv) > 1 else "").strip().lower()
 if mode not in ("off", "on"):
     raise SystemExit("Pass exactly 'off' or 'on'. Nothing changed.")   # guessing here turned it ON
 p = "CLAUDE.md"
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
-s = io.open(p, encoding="utf-8").read()
-# Anchored: a marker starts a line; a mention of one sits inside a sentence and must not count.
-nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", s, re.M))
-ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", s, re.M))
+s, nl = read_text(p)
+# Anchored AND fence-masked: a marker starts a line; a mention of one sits inside a sentence, and
+# an example of one sits inside a code fence. Neither is a block.
+m = mask_fences(s)
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
 if nb == 0 and ne == 0:
     raise SystemExit("No preferences are set in this project, so there is nothing to %s. "
                      "Run /hitl:dev-preferences to set them up." % mode)
@@ -89,11 +128,11 @@ if nb != 1 or ne != 1:
     raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
                      "Fix by hand - nothing changed." % (nb, ne))
 want = "PAUSED" if mode == "off" else "ACTIVE"
-s2, n = re.subn(r"(^<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)",
-                r"\g<1>" + want, s, count=1, flags=re.M)
-if not n:
+hit = re.search(r"(^<!-- HITL:PREFS:BEGIN[^\n]*?status: )(ACTIVE|PAUSED)", m, re.M)
+if not hit:
     raise SystemExit("No status marker in the block - check it by hand; nothing changed.")
-io.open(p, "w", encoding="utf-8").write(s2)
+s2 = s[:hit.start(2)] + want + s[hit.end(2):]
+write_text(p, s2, nl)
 print("Preferences are now %s." % want)
 PY
 ```
@@ -107,12 +146,46 @@ and deletes everything between, including content HITL does not own.
 ```bash
 python3 - <<'PY'
 import io, os, re
+
+def mask_fences(t):
+    """Blank the inside of ``` fences, keeping every offset identical.
+
+    A marker inside a fenced example DOES start its own line, so anchoring alone cannot tell it
+    from a real one. A team documenting the block format in their own CLAUDE.md would otherwise
+    have that example treated as the block: their text replaced, and the real block written inside
+    the fence where no session will ever read it.
+    """
+    out, inside = [], False
+    for ln in t.split("\n"):
+        if ln.startswith("```"):
+            inside = not inside
+            out.append(ln)
+        else:
+            out.append(" " * len(ln) if inside else ln)
+    return "\n".join(out)
+
+
+def read_text(p):
+    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
+    raw = io.open(p, "rb").read()
+    nl = "\r\n" if b"\r\n" in raw else "\n"
+    return raw.decode("utf-8").replace("\r\n", "\n"), nl
+
+
+def write_text(p, text, nl):
+    try:
+        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
+    except OSError as e:
+        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
+
+
 p = "CLAUDE.md"
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
-s = io.open(p, encoding="utf-8").read()
-nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", s, re.M))
-ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", s, re.M))
+s, nl = read_text(p)
+m = mask_fences(s)
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
 if nb == 0:
     raise SystemExit("No preferences block here - nothing to remove.")
 if nb != 1 or ne != 1:
@@ -120,14 +193,15 @@ if nb != 1 or ne != 1:
                      "by hand. Nothing changed." % (nb, ne))
 span = re.compile(r"\n?^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->\n?",
                   re.S | re.M)
-new, n = span.subn("\n", s)
-if not n:
+hit = span.search(m)
+if not hit:
     raise SystemExit("Could not match the block cleanly - remove it by hand. Nothing changed.")
+new = s[:hit.start()] + "\n" + s[hit.end():]
 # The span eats the newline on both sides and puts one back, which leaves a blank line behind when
 # the block sat at EOF. Small, but the message below claims the rest of the file is untouched.
-if not s[span.search(s).end():].strip():
+if not s[hit.end():].strip():
     new = new.rstrip("\n") + "\n"
-io.open(p, "w", encoding="utf-8").write(new)
+write_text(p, new, nl)
 print("Removed. The rest of CLAUDE.md is untouched.")
 PY
 ```
@@ -189,6 +263,38 @@ Fill in the four bullets and nothing else.
 python3 - <<'PY'
 import io, os, re, subprocess
 
+def mask_fences(t):
+    """Blank the inside of ``` fences, keeping every offset identical.
+
+    A marker inside a fenced example DOES start its own line, so anchoring alone cannot tell it
+    from a real one. A team documenting the block format in their own CLAUDE.md would otherwise
+    have that example treated as the block: their text replaced, and the real block written inside
+    the fence where no session will ever read it.
+    """
+    out, inside = [], False
+    for ln in t.split("\n"):
+        if ln.startswith("```"):
+            inside = not inside
+            out.append(ln)
+        else:
+            out.append(" " * len(ln) if inside else ln)
+    return "\n".join(out)
+
+
+def read_text(p):
+    """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
+    raw = io.open(p, "rb").read()
+    nl = "\r\n" if b"\r\n" in raw else "\n"
+    return raw.decode("utf-8").replace("\r\n", "\n"), nl
+
+
+def write_text(p, text, nl):
+    try:
+        io.open(p, "wb").write(text.replace("\n", nl).encode("utf-8"))
+    except OSError as e:
+        raise SystemExit("Could not write CLAUDE.md (%s). Nothing changed." % e.strerror)
+
+
 def _who():
     """Whoever is setting this, as DATA. Never interpolated into source."""
     try:
@@ -227,10 +333,12 @@ someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` 
 p = "CLAUDE.md"
 if os.path.islink(p):
     raise SystemExit("CLAUDE.md is a symlink - writing through it would edit the target. Nothing written.")
-cur = io.open(p, encoding="utf-8").read() if os.path.isfile(p) else ""
-# Anchored, so the generated CLAUDE.md's own description of these markers is not mistaken for a block.
-nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", cur, re.M))
-ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", cur, re.M))
+cur, nl = read_text(p) if os.path.isfile(p) else ("", "\n")
+# Anchored and fence-masked, so neither the generated CLAUDE.md's description of these markers nor
+# a team's fenced example of them is mistaken for a block.
+cm = mask_fences(cur)
+nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", cm, re.M))
+ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", cm, re.M))
 if nb > 1 or ne > 1 or (nb == 1 and ne == 0):
     # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
     # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
@@ -240,24 +348,28 @@ notes = []
 if nb == 1:
     span = re.compile(r"^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!-- HITL:PREFS:END -->",
                       re.S | re.M)
-    old = span.search(cur)
+    old = span.search(cm)
     if not old:
         raise SystemExit("Could not match the block cleanly - fix by hand; nothing written.")
-    old = old.group(0)
+    at = old.span()
+    old = cur[at[0]:at[1]]
     new = BLOCK
     # Editing your bullets is not the same as un-pausing. Someone who ran `off` and then adjusted
     # would have had it silently switched back on by the rewrite.
-    if re.search(r"status: PAUSED", old):
+    # Anchored to the MARKER, not the block. The block's own body explains what `status: PAUSED`
+    # means, so an unanchored test matched that sentence and paused a block nobody had paused --
+    # on the ordinary adjust path this skill tells people to use.
+    if re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?status: PAUSED", old, re.M):
         new = new.replace("status: ACTIVE", "status: PAUSED", 1)
         notes.append("Kept them PAUSED - run `/hitl:dev-preferences on` when you want them applied.")
     prev = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) —", old, re.M)
     if prev and prev.group(1).strip() and prev.group(1).strip() != WHO:
         notes.append("These were set by %s; the block now records you. Worth telling them."
                      % prev.group(1).strip())
-    out = span.sub(lambda _: new, cur, count=1)
+    out = cur[:at[0]] + new + cur[at[1]:]
 else:
     out = (cur.rstrip("\n") + "\n\n" + BLOCK + "\n") if cur.strip() else BLOCK + "\n"
-io.open(p, "w", encoding="utf-8").write(out)
+write_text(p, out, nl)
 print("Saved to CLAUDE.md in this project.")
 for m in notes:
     print(m)

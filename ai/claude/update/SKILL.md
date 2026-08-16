@@ -443,6 +443,43 @@ fi
 
 ---
 
+## Step 4.9 — Ensure persona profiles are gitignored
+
+`.hitl/people/` holds descriptions of named colleagues. `shared/personas.md` tells the reader, and
+tells you, that these are **local by default** — and onboarding is what makes that true. A project
+that onboarded before this feature existed gets the commands from this update and none of the
+ignore rule, so the first profile someone saves is an ordinary untracked file inside a directory
+teams routinely `git add -A`. It lands in a PR diff, gets read in review, and stays in history
+after deletion: the three harms the doctrine names, to someone who never agreed to any of it.
+
+Same idempotent check onboarding uses, so running it twice adds nothing.
+
+```bash
+GITIGNORE=".gitignore"
+if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
+  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
+  echo "✓ .gitignore — .hitl/people/ excluded"
+  git add "$GITIGNORE" 2>/dev/null || true
+else
+  echo "✓ .gitignore — .hitl/people/ already excluded"
+fi
+```
+
+**If a profile is already tracked**, the ignore rule does not retroactively untrack it. Say so
+plainly and let them decide:
+
+```bash
+TRACKED=$(git ls-files '.hitl/people/' 2>/dev/null)
+if [[ -n "$TRACKED" ]]; then
+  echo "NOTE: these profiles are already tracked, so the ignore rule does not cover them:"
+  echo "$TRACKED" | sed 's/^/  /'
+  echo "  They are in git history. 'git rm --cached' stops future commits but does not remove the past."
+  echo "  Tell the people they describe."
+fi
+```
+
+---
+
 ## Step 5 — Confirm
 
 Output this exactly:
