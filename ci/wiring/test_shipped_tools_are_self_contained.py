@@ -651,7 +651,9 @@ def _section(text, heading):
     assert i != -1, "section %r not found" % heading
     i += 1
     spans = _fences(text)
-    for m in re.finditer(r"\n## ", text[i + len(heading):]):
+    level = len(heading) - len(heading.lstrip("#"))
+    nxt = r"\n#{1,%d} " % level
+    for m in re.finditer(nxt, text[i + len(heading):]):
         pos = i + len(heading) + m.start()
         if not any(a <= pos <= b for a, b in spans):
             return text[i:pos]
@@ -670,11 +672,44 @@ def _prefs_script(kind):
 
 
 def _fresh_project(tmp_path):
-    """A CLAUDE.md exactly as onboarding generates it, from the shipped template."""
+    """A CLAUDE.md as REAL onboarding produces it, by running init-project.sh.
+
+    This used to copy the template directly. Real onboarding appends the managed HITL block on top
+    of it, so the fixture was ~26 lines short of what a user actually has -- and a mutation round
+    put a documentation example of a PREFS block, at line start, inside that managed block. Every
+    behavioural guard stayed green while the writer misbehaved on a really-onboarded project.
+    A fixture that is not what onboarding emits is a fixture that tests a project nobody has.
+    """
     d = tmp_path / "proj"
     d.mkdir()
-    (d / "CLAUDE.md").write_text(io.open(CLAUDE_TMPL, encoding="utf-8").read(), encoding="utf-8")
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    (d / "CLAUDE.md").write_text(_onboarded_claude_md(), encoding="utf-8")
     return d
+
+
+_ONBOARDED = []
+
+
+def _onboarded_claude_md():
+    """Run real onboarding ONCE per session and reuse its CLAUDE.md.
+
+    Running it per test roughly doubled the suite. The property that matters is that the fixture is
+    byte-identical to what onboarding emits, not that each test re-runs the script.
+    """
+    if not _ONBOARDED:
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            subprocess.run(["git", "init", "-q", "."], cwd=td, check=True)
+            r = subprocess.run(["bash", INIT, td, "--tool", "claude", "--name", "Acme"],
+                               cwd=td, capture_output=True, text=True)
+            f = os.path.join(td, "CLAUDE.md")
+            assert os.path.isfile(f), (
+                "onboarding produced no CLAUDE.md (rc=%s)\n%s" % (r.returncode, r.stderr[-600:]))
+            text = io.open(f, encoding="utf-8").read()
+        assert "HITL:BEGIN" in text, (
+            "onboarding did not write its managed block; the fixture would not match a real project")
+        _ONBOARDED.append(text)
+    return _ONBOARDED[0]
 
 
 def _run(script, cwd, args=()):
@@ -951,6 +986,9 @@ FLOOR_REGIONS = {
     "CLAUDE.md template / communication preferences": (
         ('ai', 'claude', 'generate-docs', 'templates', 'CLAUDE.md.template'), '## Communication Preferences',
         "d3f10e4c1ca94fb57273bb5421fd3a5c1e40bb8be240d8089d9c8b054dee9ca3"),
+    "draft-for / hand it over": (
+        ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 4 — Hand it over with its provenance',
+        "0f9274b97d2763db87ea5781dcf06394a49c4940d5cd2b45c138b4a2739466ab"),
     "draft-for / what this is not for": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## What this is not for',
         "0a764e69130523218f2a00fd66c5a5ad0197b7d4f1be70ceef61aa1e4d41adac"),
@@ -960,12 +998,36 @@ FLOOR_REGIONS = {
     "draft-for / write to the profile": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 3 — Write to the profile',
         "34478767bde804dce54a20d6ecf908648ef34853a175fca9ffb3a00c28510486"),
+    "generate-docs / phase R5 process setup": (
+        ('ai', 'claude', 'generate-docs', 'SKILL.md'), '### Phase R5 — Process Setup (Day 5 equivalent)',
+        "5de52a038f5dec9caefa220c2251c9d0691fa966976ae99b3666173cb25a0676"),
     "personas.md / offering it": (
         ('ai', 'shared', 'personas.md'), '## Offering it',
         "cba3c5b499aa96d9716a6df7977a890e44aef0fee4d0ac55586cca0772f8789f"),
+    "personas.md / outbound": (
+        ('ai', 'shared', 'personas.md'), '## Outbound',
+        "58d5c2b4e26cb4358a9b69f7060ca34f1e961e5d49200c767a2bc1673023b3d1"),
     "personas.md / the floor": (
         ('ai', 'shared', 'personas.md'), '## The floor — read this before anything else',
         "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
+    "personas.md / where they live": (
+        ('ai', 'shared', 'personas.md'), '## Where they live, and who can undo them',
+        "a60b6525d122ae7c4890d6960b90797eda05bede1b890b25b1822b63826d2f63"),
+    "personas.md / whose profile is it": (
+        ('ai', 'shared', 'personas.md'), '## Whose profile is it',
+        "529deec65e92b6c5faf7836a755cb167fac7cf79cda0510e32dbb77a01b6efb6"),
+    "preferences / if they ask for it everywhere": (
+        ('ai', 'claude', 'preferences', 'SKILL.md'), '## If they ask for it everywhere',
+        "049c73e140b652abfa305401ad1d73866dfca38412908e13479a68ffdaecc094"),
+    "preferences / modes": (
+        ('ai', 'claude', 'preferences', 'SKILL.md'), '## Modes',
+        "4d564314192fbb7ce0a065dfe1e1196be18c5da8fab2837990a69cac52b4fb7c"),
+    "preferences / setting up and adjusting": (
+        ('ai', 'claude', 'preferences', 'SKILL.md'), '## Setting up, and adjusting',
+        "289efeeb0ee9500642074772628cb71520dda7daa186e232d3690395bd4f1bd5"),
+    "preferences / the floor lives in the file": (
+        ('ai', 'claude', 'preferences', 'SKILL.md'), '## The floor, and why it lives in the file',
+        "08b31fba29f94780e5bc2af96d89e9fc3e1372462f4e6c9f3dfd3284129ec36c"),
     "preferences / when to offer this": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## When to offer this',
         "dca62287136cccf5bbf55c9f0d25735288452896319f114dd38eecd221699b8d"),
@@ -1218,3 +1280,74 @@ def test_the_session_instructions_offer_both_commands():
     for cmd in ("/hitl:dev-preferences", "/hitl:dev-draft-for"):
         assert cmd in t, (
             "the session instructions never mention %s, so nobody is told it exists" % cmd)
+
+
+def test_every_embedded_script_lives_in_a_section_we_test():
+    """M29: a fourth fence can be added and is lifted by nobody.
+
+    The round added a plausible `global` mode after `## The floor` that copied the block into
+    ~/.claude/CLAUDE.md with no anchoring, no symlink check and no confirmation -- the one thing
+    "Scope: this project" promises never happens. It was never run, never syntax-checked, and never
+    seen by any guard, because selection enumerates three sections and ignores the rest.
+    """
+    text = io.open(PREFS_SKILL, encoding="utf-8").read()
+    known = set()
+    for heading in PREFS_SECTIONS.values():
+        known |= {b for b in re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK),
+                                        _section(text, heading), re.S)}
+    known |= {b for b in re.findall(r"```bash\n(.*?)\n```", _section(text, "## `show`"), re.S)}
+    every = set(re.findall(r"<<'%s'\n(.*?)\n%s\n" % (MARK, MARK), text, re.S))
+    every |= set(re.findall(r"```bash\n(.*?)\n```", text, re.S))
+    # bash fences that merely wrap a python heredoc are represented by the heredoc body
+    stray = {b for b in every - known if MARK not in b}
+    assert not stray, (
+        "the preferences skill contains %d embedded script(s) that no guard runs:\n%s"
+        % (len(stray), "\n---\n".join(sorted(stray))[:900]))
+
+
+def test_the_persona_template_is_unchanged():
+    """M43: the template's comments are the instructions for filling it in. Its header once
+    advertised an inbound path the feature does not have; the wording discipline and the
+    style-only limit on `notes` live here too."""
+    import hashlib
+    t = io.open(os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml"),
+                encoding="utf-8").read()
+    got = hashlib.sha256(" ".join(t.split()).encode("utf-8")).hexdigest()
+    assert got == PERSONA_TEMPLATE_SHA, (
+        "ai/shared/templates/persona.yaml changed. Read the diff: this file teaches what to write "
+        "about a colleague.\n  expected %s\n  got      %s" % (PERSONA_TEMPLATE_SHA, got))
+
+
+PERSONA_TEMPLATE_SHA = "22abdfb9112ca9634a11efcfd1c4552761d9673c7c20043d3747bcc21a65f5d3"
+
+
+@pytest.mark.parametrize("mode", ["", "toggle", "off on", "--off", "of", "on;rm -rf ."])
+def test_flip_refuses_any_mode_it_does_not_recognise(tmp_path, mode):
+    """Guessing here once turned preferences ON when the user asked for OFF.
+
+    Case variants are NOT in this list: the script lowercases deliberately, so `OFF` is a user
+    typing, not an unrecognised mode. Asserting they are refused would pin a behaviour the design
+    does not want.
+    """
+    d = _proj(tmp_path, INLINE_MENTION)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script("flip"), d, [mode] if mode else [])
+    assert r.returncode != 0, "flip acted on an unrecognised mode %r" % mode
+    assert (d / "CLAUDE.md").read_text(encoding="utf-8") == before, (
+        "flip modified the file for mode %r" % mode)
+
+
+def test_a_name_containing_an_end_marker_cannot_terminate_the_block(tmp_path):
+    """The name is the one value that comes from outside. It must not be able to close the block."""
+    d = tmp_path / "p"
+    d.mkdir()
+    (d / "CLAUDE.md").write_text(INLINE_MENTION, encoding="utf-8")
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada <!-- HITL:PREFS:END --> Lovelace"],
+                   cwd=str(d), check=True)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    text = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert len(re.findall(r"^<!-- HITL:PREFS:END -->", text, re.M)) == 1, (
+        "the name forged a second END marker")
+    assert _run(_prefs_script("flip"), d, ["off"]).returncode == 0, "the block is now inoperable"
