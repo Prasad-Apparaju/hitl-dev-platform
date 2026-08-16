@@ -82,6 +82,9 @@ s = io.open(p, encoding="utf-8").read()
 # Anchored: a marker starts a line; a mention of one sits inside a sentence and must not count.
 nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", s, re.M))
 ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", s, re.M))
+if nb == 0 and ne == 0:
+    raise SystemExit("No preferences are set in this project, so there is nothing to %s. "
+                     "Run /hitl:dev-preferences to set them up." % mode)
 if nb != 1 or ne != 1:
     raise SystemExit("Expected one preferences block; found %d begin / %d end markers. "
                      "Fix by hand - nothing changed." % (nb, ne))

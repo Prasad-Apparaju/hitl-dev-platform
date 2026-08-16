@@ -408,11 +408,23 @@ def test_no_persona_field_is_advertised_without_a_reader():
     import yaml as _y
     tmpl = _y.safe_load(io.open(os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml"),
                                 encoding="utf-8").read())
-    consumers = io.open(DRAFT_SKILL, encoding="utf-8").read() + \
-        io.open(os.path.join(ROOT, "ai", "shared", "personas.md"), encoding="utf-8").read()
-    fields = [k for k in tmpl if k != "schema_version"] + list((tmpl.get("style") or {}).keys())
-    dead = [f for f in fields if f not in consumers]
-    assert not dead, "persona fields with no reader anywhere: %s" % sorted(dead)
+    # A mention is not a reader. This guard used to concatenate draft-for and personas.md and look
+    # for the field name anywhere in the blob — so `pushback` counted as wired because personas.md
+    # contains the prose 'a profile that reads "doesn't like pushback"'. The field had no row in the
+    # table that turns a profile into a draft, and setting it did nothing. Require the ROW.
+    text = io.open(DRAFT_SKILL, encoding="utf-8").read()
+    rows = [ln for ln in text.splitlines() if ln.startswith("|")]
+    style = list((tmpl.get("style") or {}).keys())
+    dead = [f for f in style if not any(("`%s" % f) in ln for ln in rows)]
+    assert not dead, (
+        "style fields with no row in draft-for's instruction table: %s — documented, settable, "
+        "and inert" % sorted(dead))
+
+    top = [k for k in tmpl if k not in ("schema_version", "style")]
+    consumers = text + io.open(os.path.join(ROOT, "ai", "shared", "personas.md"),
+                               encoding="utf-8").read()
+    dead_top = [f for f in top if f not in consumers]
+    assert not dead_top, "persona fields with no reader anywhere: %s" % sorted(dead_top)
 
 
 def test_preferences_are_project_scoped_by_default():
@@ -688,3 +700,35 @@ def test_persona_subject_rights_are_stated_as_obligations_not_capabilities():
                          encoding="utf-8").read().split())
     assert "cannot list it, read it, or delete it" in s, (
         "the doc still presents these as rights the subject can exercise")
+
+
+def test_off_before_setup_says_so_rather_than_blaming_the_block(tmp_path):
+    """"No status marker in the block" on a project that has no block sends people hand-editing."""
+    d = _fresh_project(tmp_path)
+    r = _run(_prefs_script("flip"), d, ["off"])
+    assert r.returncode != 0
+    assert "nothing to off" in (r.stdout + r.stderr), (
+        "the no-block case is reported as a malformed block: %s" % (r.stdout + r.stderr))
+
+
+def test_the_main_hitl_block_matcher_is_anchored_too():
+    """Same latent defect, one file over: documenting a marker must not create one."""
+    src = io.open(os.path.join(ROOT, "tools", "hitl-onboarding", "ensure_claude_block.py"),
+                  encoding="utf-8").read()
+    assert 'r"^" + re.escape(begin)' in src, "_span/count are unanchored — prose can impersonate a block"
+    assert "re.S | re.M" in src, "the span regex is not multiline-anchored"
+
+
+def test_documenting_the_markers_does_not_create_a_block():
+    """The generalised rule, asserted behaviourally: a file that only DESCRIBES the markers is a
+    file with no block, for both writers."""
+    import importlib.util
+    p = os.path.join(ROOT, "tools", "hitl-onboarding", "ensure_claude_block.py")
+    spec = importlib.util.spec_from_file_location("_ecb", p)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    prose = ("# Team rules\n\nThe onboarding writes a block between `<!-- HITL:BEGIN` and "
+             "`<!-- HITL:END -->` markers.\n\nKeep our own rules below.\n")
+    out, action = mod.apply(prose, "<!-- HITL:BEGIN -->\nx\n<!-- HITL:END -->")
+    assert action == "appended", "a prose mention was treated as an existing block (%s)" % action
+    assert prose.rstrip("\n") in out, "the sentence describing the markers was modified"

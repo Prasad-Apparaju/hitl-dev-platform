@@ -31,9 +31,14 @@ def _span(begin, end):
     it matches from the orphan to the later END and eats everything in between — which on a real
     CLAUDE.md meant deleting the team's own rules while reporting that nothing was touched. The
     tempered repetition below refuses to pass a second BEGIN.
+
+    Anchored to start-of-line, for the reason the sibling preferences block was broken by: prose
+    that *describes* a marker is inline, a real marker begins its own line. Counting or matching
+    unanchored lets documentation impersonate a block, and the writer then edits the sentence
+    describing it.
     """
-    return re.compile(re.escape(begin) + r"(?:(?!" + re.escape(begin) + r").)*?" + re.escape(end),
-                      re.S)
+    return re.compile(r"^" + re.escape(begin) + r"(?:(?!^" + re.escape(begin) + r").)*?^" +
+                      re.escape(end), re.S | re.M)
 
 
 def apply(current, block, begin=DEFAULT_BEGIN, end=DEFAULT_END):
@@ -44,8 +49,9 @@ def apply(current, block, begin=DEFAULT_BEGIN, end=DEFAULT_END):
     block = block.rstrip("\n")
     if current is None:
         return block + "\n", "created"
-    if begin in current:
-        n_begin, n_end = current.count(begin), current.count(end)
+    if re.search(r"^" + re.escape(begin), current, re.M):
+        n_begin = len(re.findall(r"^" + re.escape(begin), current, re.M))
+        n_end = len(re.findall(r"^" + re.escape(end), current, re.M))
         if n_end == 0:
             # Truncated block. Replacing to end-of-file would eat the team's real content.
             return current, "unterminated"

@@ -54,6 +54,7 @@ Item 3 survives every style setting. That is the floor.
 | `lead_with: decision` | First line is the call they need to make, or that you made and why |
 | `domain: <x>` | Assume fluency in the vocabulary. Still explain your *reasoning* — fluency is not telepathy |
 | `formats: [bullets]` | Bullets, not paragraphs pretending to be bullets |
+| `pushback: direct` | Open a disagreement with the disagreement. `softened` earns one sentence of framing first — it never turns into agreement, and never into silence |
 | `notes` | Free text in their own words — read it last; it overrides the **style** rows above, and nothing else |
 
 **Compress the reasoning, never the consequence.** If it will not fit, the reasoning goes and the
