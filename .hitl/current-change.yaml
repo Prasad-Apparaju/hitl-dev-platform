@@ -193,3 +193,14 @@ workflow:
     name: 90dROI
     phase: Post-Ship
     status: open
+skips:
+- step: adversarial_review
+  crit: ceremony
+  disposition: decline
+  ack_by: pappar
+  ts: '2026-08-16'
+  reason: '2.7.0 ships without an adversarial review of d77bd3a. Five rounds reviewed this feature at
+    earlier commits; rounds 11-14 found no design defect and no failure of the safety core, and every
+    blocker was in delivery. Round 15, scoped to the upgrade path, was still running when the release
+    was cut, and the version bump would have made its verdict stale regardless. Accepted knowingly: the
+    exact shipped commit is unreviewed.'
