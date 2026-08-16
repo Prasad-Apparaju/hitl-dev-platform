@@ -56,8 +56,12 @@ the escape exists.
 ## `show`
 
 ```bash
-if grep -q '^<!-- HITL:PREFS:BEGIN' CLAUDE.md 2>/dev/null; then
-  sed -n '/^<!-- HITL:PREFS:BEGIN/,/^<!-- HITL:PREFS:END -->/p' CLAUDE.md
+# Same file the other three resolve to. Run from a subdirectory, a bare `CLAUDE.md` reported that
+# nothing was set while `off` in that same directory happily paused the real block.
+F="$(git rev-parse --show-toplevel 2>/dev/null)/CLAUDE.md"
+[ -f "$F" ] || F="CLAUDE.md"
+if grep -q '^<!-- HITL:PREFS:BEGIN' "$F" 2>/dev/null; then
+  sed -n '/^<!-- HITL:PREFS:BEGIN/,/^<!-- HITL:PREFS:END -->/p' "$F"
 else
   echo "No HITL preferences set in this project."   # sed exits 0 on no match, so test first
 fi
@@ -83,21 +87,34 @@ python3 - "$MODE" <<'PY'
 import io, os, re, sys
 
 def mask_fences(t):
-    """Blank the inside of ``` fences, keeping every offset identical.
+    """Blank the inside of fenced blocks, keeping every offset identical.
 
-    A marker inside a fenced example DOES start its own line, so anchoring alone cannot tell it
-    from a real one. A team documenting the block format in their own CLAUDE.md would otherwise
-    have that example treated as the block: their text replaced, and the real block written inside
-    the fence where no session will ever read it.
+    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
+    so anchoring alone cannot tell it from a real one.
+
+    The first version just toggled on any line starting with ```, which broke two ways: an odd
+    number of such lines inverted the whole file so the real block looked masked and a SECOND block
+    got written, and `~~~` fences were not recognised at all. Match the opening fence character and
+    length, close only on the same character at least as long, and report an unterminated fence
+    rather than guessing what the rest of the file is.
     """
-    out, inside = [], False
+    out, fence = [], None
+    unterminated = False
     for ln in t.split("\n"):
-        if ln.startswith("```"):
-            inside = not inside
+        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+            out.append(ln)
+        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
+                and not m.group(2).strip():
+            fence = None
             out.append(ln)
         else:
-            out.append(" " * len(ln) if inside else ln)
-    return "\n".join(out)
+            out.append(" " * len(ln))
+    if fence is not None:
+        unterminated = True
+    return "\n".join(out), unterminated
 
 
 def claude_md():
@@ -118,9 +135,15 @@ def claude_md():
 
 def read_text(p):
     """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
-    raw = io.open(p, "rb").read()
+    try:
+        raw = io.open(p, "rb").read()
+    except OSError as e:
+        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
     nl = "\r\n" if b"\r\n" in raw else "\n"
-    return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    try:
+        return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    except UnicodeDecodeError:
+        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
 
 
 def write_text(p, text, nl):
@@ -139,7 +162,10 @@ if not os.path.isfile(p) or os.path.islink(p):
 s, nl = read_text(p)
 # Anchored AND fence-masked: a marker starts a line; a mention of one sits inside a sentence, and
 # an example of one sits inside a code fence. Neither is a block.
-m = mask_fences(s)
+m, unterminated = mask_fences(s)
+if unterminated:
+    raise SystemExit("CLAUDE.md has an unterminated ``` or ~~~ fence, so I cannot tell which lines "
+                     "are real markers. Close the fence by hand; nothing changed.")
 nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
 ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
 if nb == 0 and ne == 0:
@@ -174,21 +200,34 @@ python3 - <<'PY'
 import io, os, re
 
 def mask_fences(t):
-    """Blank the inside of ``` fences, keeping every offset identical.
+    """Blank the inside of fenced blocks, keeping every offset identical.
 
-    A marker inside a fenced example DOES start its own line, so anchoring alone cannot tell it
-    from a real one. A team documenting the block format in their own CLAUDE.md would otherwise
-    have that example treated as the block: their text replaced, and the real block written inside
-    the fence where no session will ever read it.
+    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
+    so anchoring alone cannot tell it from a real one.
+
+    The first version just toggled on any line starting with ```, which broke two ways: an odd
+    number of such lines inverted the whole file so the real block looked masked and a SECOND block
+    got written, and `~~~` fences were not recognised at all. Match the opening fence character and
+    length, close only on the same character at least as long, and report an unterminated fence
+    rather than guessing what the rest of the file is.
     """
-    out, inside = [], False
+    out, fence = [], None
+    unterminated = False
     for ln in t.split("\n"):
-        if ln.startswith("```"):
-            inside = not inside
+        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+            out.append(ln)
+        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
+                and not m.group(2).strip():
+            fence = None
             out.append(ln)
         else:
-            out.append(" " * len(ln) if inside else ln)
-    return "\n".join(out)
+            out.append(" " * len(ln))
+    if fence is not None:
+        unterminated = True
+    return "\n".join(out), unterminated
 
 
 def claude_md():
@@ -209,9 +248,15 @@ def claude_md():
 
 def read_text(p):
     """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
-    raw = io.open(p, "rb").read()
+    try:
+        raw = io.open(p, "rb").read()
+    except OSError as e:
+        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
     nl = "\r\n" if b"\r\n" in raw else "\n"
-    return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    try:
+        return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    except UnicodeDecodeError:
+        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
 
 
 def write_text(p, text, nl):
@@ -225,7 +270,10 @@ p = claude_md()
 if not os.path.isfile(p) or os.path.islink(p):
     raise SystemExit("No regular CLAUDE.md here (missing, or a symlink) - nothing changed.")
 s, nl = read_text(p)
-m = mask_fences(s)
+m, unterminated = mask_fences(s)
+if unterminated:
+    raise SystemExit("CLAUDE.md has an unterminated ``` or ~~~ fence, so I cannot tell which lines "
+                     "are real markers. Close the fence by hand; nothing changed.")
 nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", m, re.M))
 ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", m, re.M))
 if nb == 0:
@@ -310,21 +358,34 @@ python3 - <<'PY'
 import io, os, re, subprocess
 
 def mask_fences(t):
-    """Blank the inside of ``` fences, keeping every offset identical.
+    """Blank the inside of fenced blocks, keeping every offset identical.
 
-    A marker inside a fenced example DOES start its own line, so anchoring alone cannot tell it
-    from a real one. A team documenting the block format in their own CLAUDE.md would otherwise
-    have that example treated as the block: their text replaced, and the real block written inside
-    the fence where no session will ever read it.
+    Returns (masked_text, unterminated). A marker inside a fenced example DOES start its own line,
+    so anchoring alone cannot tell it from a real one.
+
+    The first version just toggled on any line starting with ```, which broke two ways: an odd
+    number of such lines inverted the whole file so the real block looked masked and a SECOND block
+    got written, and `~~~` fences were not recognised at all. Match the opening fence character and
+    length, close only on the same character at least as long, and report an unterminated fence
+    rather than guessing what the rest of the file is.
     """
-    out, inside = [], False
+    out, fence = [], None
+    unterminated = False
     for ln in t.split("\n"):
-        if ln.startswith("```"):
-            inside = not inside
+        m = re.match(r"^(`{3,}|~{3,})(.*)$", ln)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+            out.append(ln)
+        elif m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
+                and not m.group(2).strip():
+            fence = None
             out.append(ln)
         else:
-            out.append(" " * len(ln) if inside else ln)
-    return "\n".join(out)
+            out.append(" " * len(ln))
+    if fence is not None:
+        unterminated = True
+    return "\n".join(out), unterminated
 
 
 def claude_md():
@@ -345,9 +406,15 @@ def claude_md():
 
 def read_text(p):
     """Returns (text, newline). Writing LF back into a CRLF file rewrites every line."""
-    raw = io.open(p, "rb").read()
+    try:
+        raw = io.open(p, "rb").read()
+    except OSError as e:
+        raise SystemExit("Could not read CLAUDE.md (%s). Nothing changed." % e.strerror)
     nl = "\r\n" if b"\r\n" in raw else "\n"
-    return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    try:
+        return raw.decode("utf-8").replace("\r\n", "\n"), nl
+    except UnicodeDecodeError:
+        raise SystemExit("CLAUDE.md is not valid UTF-8, so I will not rewrite it. Nothing changed.")
 
 
 def write_text(p, text, nl):
@@ -404,10 +471,13 @@ if os.path.islink(p):
 cur, nl = read_text(p) if os.path.isfile(p) else ("", "\n")
 # Anchored and fence-masked, so neither the generated CLAUDE.md's description of these markers nor
 # a team's fenced example of them is mistaken for a block.
-cm = mask_fences(cur)
+cm, unterminated = mask_fences(cur)
+if unterminated:
+    raise SystemExit("CLAUDE.md has an unterminated ``` or ~~~ fence, so I cannot tell which lines "
+                     "are real markers. Close the fence by hand; nothing written.")
 nb = len(re.findall(r"^<!-- HITL:PREFS:BEGIN", cm, re.M))
 ne = len(re.findall(r"^<!-- HITL:PREFS:END -->", cm, re.M))
-if nb > 1 or ne > 1 or (nb == 1 and ne == 0):
+if nb > 1 or ne > 1 or (nb == 1 and ne == 0) or (nb == 0 and ne == 1):
     # A stale marker above a real block makes BEGIN...END span the gap and delete what is between.
     # We cannot tell which span is ours, so refuse: a wrong guess destroys content HITL does not own.
     raise SystemExit("CLAUDE.md has %d begin / %d preferences markers - expected one of each. "

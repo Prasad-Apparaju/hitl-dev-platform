@@ -15,8 +15,12 @@ Read `${CLAUDE_PLUGIN_ROOT}/shared/personas.md` first. The floor in it governs e
 ## Step 1 — Find the person
 
 ```bash
-ls .hitl/people/ 2>/dev/null
+ls "$(git rev-parse --show-toplevel 2>/dev/null || echo .)/.hitl/people/" 2>/dev/null
 ```
+
+Profiles belong to the repo, not to whatever directory the session started in. Reading them relative
+to the current directory means a profile saved from a subdirectory is invisible here, and you would
+offer to create a second one for the same person.
 
 Match `$ARGUMENTS`'s first token against the filenames and the `name:` field, case-insensitively.
 

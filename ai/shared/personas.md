@@ -66,13 +66,15 @@ belong in a PR diff, in code review, or in git history where deleting the file l
 remove it. Onboarding adds the ignore rule, but a project that upgraded rather than onboarded may
 not have it, someone may have removed it, and this may not be a HITL project at all.
 
-So **before writing a profile, confirm it is actually ignored**, and fix it if not:
-
-**Check the result, do not assume it.** `.gitignore` has no effect on a file git already tracks, and
-outside a repo `git check-ignore` fails in a way that looks like "not ignored" — so appending a rule
-and announcing success is exactly the false assurance the paragraph below warns about.
+So **before writing a profile, confirm it is actually ignored** — and check the result rather than
+assuming it. `.gitignore` has no effect on a file git already tracks, and outside a repo
+`git check-ignore` fails in a way that looks like "not ignored", so appending a rule and announcing
+success is exactly the false assurance this section exists to prevent.
 
 ```bash
+# Resolve to the repo, not the current directory: a session started in a subdirectory otherwise
+# gets its own .hitl/people/, invisible from the root, and draft-for offers to create a second one.
+cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
 mkdir -p .hitl/people
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   echo "NOT A GIT REPO — nothing here can make this file local. Say so before writing it."

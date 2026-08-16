@@ -995,7 +995,7 @@ FLOOR_REGIONS = {
         "d3f10e4c1ca94fb57273bb5421fd3a5c1e40bb8be240d8089d9c8b054dee9ca3"),
     "draft-for / find the person": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 1 — Find the person',
-        "94e4bd8f0e98f835ff71adbfcd84fab1e709a46258fa7bbc6a50fbdba816ba01"),
+        "e92fcbc99cf3ec943d0c1c91e7389aa32f980833d8a1379c9d63d474cb7f6eb4"),
     "draft-for / hand it over": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 4 — Hand it over with its provenance',
         "c21319895e3b33480f4552838531cf3ff17cfe82477b2a9d13bb926ca73124d6"),
@@ -1022,7 +1022,7 @@ FLOOR_REGIONS = {
         "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
     "personas.md / where they live": (
         ('ai', 'shared', 'personas.md'), '## Where they live, and who can undo them',
-        "7cf2816abea9a69191b112bd94d534edf6c11fd3969afff5e7e521326ff4bc89"),
+        "704907220b4d49f520196f9fab72389be6f223e711f2696b2383672a975df23b"),
     "personas.md / whose profile is it": (
         ('ai', 'shared', 'personas.md'), '## Whose profile is it',
         "529deec65e92b6c5faf7836a755cb167fac7cf79cda0510e32dbb77a01b6efb6"),
@@ -1494,7 +1494,9 @@ def test_the_block_belongs_to_the_repo_not_the_current_directory(tmp_path, kind)
 
 def _ignore_script():
     s = io.open(os.path.join(ROOT, "ai", "shared", "personas.md"), encoding="utf-8").read()
-    m = re.search(r"```bash\n(mkdir -p \.hitl/people.*?)\n```", s, re.S)
+    # Selected by what it DOES (the check-ignore verify), not by its first line -- which is how
+    # this helper broke the moment the block gained a `cd` to the repo root.
+    m = re.search(r"```bash\n((?:(?!```).)*?check-ignore(?:(?!```).)*?)\n```", s, re.S)
     assert m, "the locality pre-check is gone from personas.md"
     return m.group(1)
 
@@ -1583,3 +1585,79 @@ def test_whether_the_subject_was_told_is_recorded_and_surfaced():
         "a one-time mention is what the recording exists to replace")
     assert "Do not refuse to draft" in flat, (
         "an unrecorded answer must not become a blocker; honest defaults have to stay usable")
+
+
+def test_show_finds_the_block_from_a_subdirectory(tmp_path):
+    """`show` is bash and was left out of BOTH the repo-root fix and the fence fix.
+
+    From a subdirectory it reported "No HITL preferences set in this project" while `off` in that
+    same directory happily paused the real block. The two commands disagreed about whether the
+    feature was even on.
+    """
+    d = _proj(tmp_path, "# Rules\n\nteam rules\n")
+    sub = d / "sub" / "deep"
+    sub.mkdir(parents=True)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    out = subprocess.run(["bash", "-c", _prefs_bash("## `show`")], cwd=str(sub),
+                         capture_output=True, text=True).stdout
+    assert "HITL:PREFS:BEGIN" in out, "show from a subdirectory could not see the block: %r" % out
+    assert "No HITL preferences set" not in out
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_an_unterminated_fence_is_refused_not_guessed(tmp_path, kind):
+    """Fence masking toggled on any ``` line, so an ODD count inverted the whole file: the real
+    block looked masked, a SECOND block was written, and off/reset then denied any block existed."""
+    d = _proj(tmp_path, "# R\n\n```markdown\n<!-- HITL:PREFS:BEGIN status: ACTIVE -->\nx\n"
+                        "<!-- HITL:PREFS:END -->\n")
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    assert r.returncode != 0, "%s acted on a file with an unterminated fence" % kind
+    assert "unterminated" in (r.stdout + r.stderr)
+    assert (d / "CLAUDE.md").read_text(encoding="utf-8") == before
+
+
+def test_tilde_fences_are_masked_too(tmp_path):
+    """The ``` fix was not applied to the other fence character markdown allows."""
+    d = _proj(tmp_path, "# R\n\n~~~markdown\n<!-- HITL:PREFS:BEGIN status: ACTIVE -->\nexample\n"
+                        "<!-- HITL:PREFS:END -->\n~~~\n\nreal text\n")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    t = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "\nexample\n" in t, "the team's ~~~ fenced example was overwritten"
+    assert t.index("set by") > t.rindex("~~~"), "the block was written inside the ~~~ fence"
+
+
+def test_an_orphan_end_marker_is_refused(tmp_path):
+    """The writer appended beside a lone END, then off/reset saw 1/2 markers and refused forever."""
+    d = _proj(tmp_path, "# R\n\nteam rules\n\n<!-- HITL:PREFS:END -->\n")
+    before = (d / "CLAUDE.md").read_text(encoding="utf-8")
+    r = _run(_prefs_script("write"), d)
+    assert r.returncode != 0, "wrote a block beside an orphan END, wedging the file"
+    assert (d / "CLAUDE.md").read_text(encoding="utf-8") == before
+
+
+@pytest.mark.parametrize("kind", ["write", "flip", "reset"])
+def test_a_non_utf8_file_is_reported_not_traced(tmp_path, kind):
+    """The traceback fix wrapped the write and left the read bare."""
+    d = tmp_path / "p"
+    d.mkdir()
+    (d / "CLAUDE.md").write_bytes(b"\xff\xfe not utf8\n")
+    subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada"], cwd=str(d), check=True)
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    assert r.returncode != 0
+    assert "Traceback" not in r.stderr, "%s dumped a traceback: %s" % (kind, r.stderr[-200:])
+    assert "Nothing changed" in (r.stdout + r.stderr)
+
+
+def test_profiles_are_read_and_written_at_the_repo_root():
+    """Same subdirectory defect as the block, in the two places that fix did not reach.
+
+    A profile saved from a subdirectory landed in <subdir>/.hitl/people/, invisible to draft-for at
+    the root, which would then offer to create a second one for the same person.
+    """
+    for name, path in (("personas.md", os.path.join(ROOT, "ai", "shared", "personas.md")),
+                       ("draft-for", DRAFT_SKILL)):
+        s = io.open(path, encoding="utf-8").read()
+        assert "--show-toplevel" in s, (
+            "%s resolves .hitl/people/ from the current directory, not the repo" % name)
