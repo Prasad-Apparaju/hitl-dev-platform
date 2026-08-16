@@ -4,6 +4,48 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.7.0] — 2026-08-16
+
+### Added
+
+**Two commands for how HITL talks, and how you write to other people.**
+
+- **`/hitl:dev-preferences`** — tune how HITL talks to you in this project: length, whether it
+  narrates its process, how it opens a disagreement. Four questions, adjustable any time, `off` to
+  pause and `reset` to remove. Say *"default mode"* to drop it for one session without touching the
+  file. Settings live in a marked block in the project's `CLAUDE.md`, which is committed — so the
+  block records who set it, says so before writing, and tells a teammate whose settings are in
+  force and how to change them.
+- **`/hitl:dev-draft-for <person>`** — draft a PR comment, issue update or status note for a
+  specific person, using a stored profile under `.hitl/people/`. Drafts only; it never sends, and
+  never in the same turn it wrote. Profiles are gitignored by default, record who wrote them and
+  whether the subject knows they exist, and both are disclosed on every draft.
+
+**A preference shapes form, never substance.** Length, ordering, how much reasoning you show are
+negotiable. A risk, a cost, an uncertainty, or a decision that is the reader's to make is not. That
+rule is stated wherever someone acts on a profile, and it is pinned by hash so it cannot drift
+quietly. Asked to store *"no risk warnings"*, HITL records the tone and declines that one clause.
+
+### Fixed
+
+- **`dev-update` Step 4.8 installed nothing.** It read a plugin root set in an earlier Bash call,
+  which does not persist, and reported a benign-sounding "not in this build — skipping" while the
+  update announced success. Steps 4.7 and 4.8 now resolve the root themselves.
+- **The build deleted that fix.** `build.sh` prefixed `$ROOT/shared/...` and then collapsed the
+  `$ROOT/` away, shipping a path that expands to `/shared/...`. It now protects any `$VAR/shared/`,
+  which also repairs the brownfield observability survey's template copy.
+- **`shared/personas.md` was never shipped**, though both commands open by reading it.
+- **`generate-docs` pointed at a template path that does not exist** in the installed plugin, and
+  had no rule against overwriting a `CLAUDE.md` that already exists.
+- **Step 4.6 said "kept your manifest-waivers.yaml"** even when it had just created one.
+
+### Note for existing projects
+
+Run `/hitl:dev-update`. It adds the `.hitl/people/` ignore rule and refreshes the `CLAUDE.md` block,
+which is what tells a session these commands exist.
+
+---
+
 ## [2.6.5] — 2026-08-14
 
 **If you are on 2.6.4, update before running `/hitl:dev-update` again.** It could leave your change file unusable.
