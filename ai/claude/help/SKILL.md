@@ -35,6 +35,13 @@ Output this exactly:
 | `/hitl:dev-update` | Update the HITL plugin to the latest version |
 | `/hitl:help` | This command — find the right command for any situation |
 
+### Working with HITL day to day
+
+| Command | When to use |
+|---|---|
+| `/hitl:dev-preferences` | **HITL is too wordy, too terse, or over-explaining** — tune how it talks to you in this project. Four questions; adjust or remove it any time |
+| `/hitl:dev-draft-for <person>` | Draft a PR comment, issue update or status note **for a specific person**, using their stored profile. Drafts only; never sends |
+
 ### Developer workflow
 
 | Command | When to use |

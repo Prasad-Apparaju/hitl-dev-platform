@@ -66,8 +66,10 @@ You don't need to know which workflow or tier is right. It asks, and it explains
 | `/hitl:help` | You don't know which command to use |
 | `/hitl:dev-switch-context` | Moving between issues or branches |
 | `/hitl:dev-update` | Updating the plugin |
+| `/hitl:dev-preferences` | HITL is too wordy or too terse for you |
+| `/hitl:dev-draft-for` | Writing a message for one particular person |
 
-The other 49 are for specific roles and moments. HITL invokes what it needs. Don't memorize them.
+The other 50 are for specific roles and moments. HITL invokes what it needs. Don't memorize them.
 
 ---
 

@@ -260,3 +260,5 @@ graph TB
 |---|---|
 | `/hitl:help` | Find the right command for any situation |
 | `/hitl:dev-update` | Update the plugin to the latest version |
+| `/hitl:dev-preferences` | Tune how HITL talks to you in this project |
+| `/hitl:dev-draft-for` | Draft a message for a specific person from their profile |

@@ -1721,6 +1721,17 @@ def test_plugin_native_onboarding_ignores_persona_profiles(skill):
     s = io.open(os.path.join(ROOT, "ai", "claude", skill, "SKILL.md"), encoding="utf-8").read()
     assert ".hitl/people/" in s, "%s onboards a project without excluding persona profiles" % skill
     assert "git check-ignore" in s, "%s asserts the exclusion instead of verifying it" % skill
+    # It must live INSIDE a numbered step. It was first appended as an unnumbered section after the
+    # final `---` and after the last step's closing message, absent from the skill's own step
+    # ledger -- so a session that ran the last step printed the confirmation and stopped, and
+    # nothing ever routed it here.
+    i = s.index(".hitl/people/")
+    steps = [m for m in re.finditer(r"^## Step \d+", s[:i], re.M)]
+    assert steps, "the gitignore rule sits before any numbered step in %s" % skill
+    after = s[steps[-1].end():i]
+    assert "\n---\n" not in after, (
+        "%s puts the gitignore rule after the end of its last step, where nothing routes to it"
+        % skill)
 
 
 def test_the_hook_rewire_branch_returns_for_the_remaining_steps():
@@ -1876,3 +1887,118 @@ def test_the_skill_never_tells_anyone_to_paste_answers_into_the_script():
     for bad in ("Fill in the four bullets", "Replace the four bullets"):
         assert bad not in s, "the removed hand-edit path is still instructed: %r" % bad
     assert "Do not edit the block literal to insert their answers" in s
+
+
+DISCOVERY_SURFACES = [
+    ("ai/claude/help/SKILL.md", "the command directory /hitl:help itself points people at"),
+    ("docs/command-map.md", "the command map"),
+    ("docs/getting-started.md", "the guide a new developer reads"),
+    ("README.md", "the repo front page"),
+]
+
+
+@pytest.mark.parametrize("rel,what", DISCOVERY_SURFACES)
+@pytest.mark.parametrize("cmd", ["/hitl:dev-preferences", "/hitl:dev-draft-for"])
+def test_both_commands_are_findable(rel, what, cmd):
+    """A command nobody can find is a command that does not exist.
+
+    Both were absent from every lookup surface, including the directory the CLAUDE.md block
+    advertises as "find the right command". Someone asking "how do I make it less verbose" and
+    running /hitl:help got a list that did not contain the answer.
+    """
+    s = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
+    assert cmd in s, "%s is missing from %s (%s)" % (cmd, rel, what)
+
+
+def test_the_getting_started_command_count_is_right():
+    """It says "the other N are for specific roles". Adding a row without fixing N makes the guide
+    lie about how many commands exist, which is the kind of small wrongness that erodes a doc."""
+    s = io.open(os.path.join(ROOT, "docs", "getting-started.md"), encoding="utf-8").read()
+    table = s[s.index("| Command | When |"):s.index("The other")]
+    listed = len(re.findall(r"^\| `/hitl:", table, re.M))
+    claimed = int(re.search(r"The other (\d+) are", s).group(1))
+    plugin = os.path.abspath(os.path.join(ROOT, "..", "hitl-claude-plugin", "skills"))
+    if not os.path.isdir(plugin):
+        pytest.skip("plugin repo not checked out beside this one")
+    total = len([d for d in os.listdir(plugin) if os.path.isdir(os.path.join(plugin, d))])
+    assert listed + claimed == total, (
+        "the guide lists %d and claims %d others, but %d ship" % (listed, claimed, total))
+
+
+# --- the built plugin, not the source ------------------------------------------------------------
+#
+# Every other guard in this file reads ai/. The build rewrites paths on the way out, so a fix can be
+# correct in source and deleted in the artifact. That is not hypothetical: build.sh pass 2 prefixed
+# `$ROOT/shared/templates/...` and pass 3 then ate the `$ROOT/`, shipping a dev-update whose Step
+# 4.8 expanded to `/shared/templates/...` and installed nothing. Source-side tests were all green.
+
+PLUGIN_REPO = os.path.abspath(os.path.join(ROOT, "..", "hitl-claude-plugin"))
+
+
+def _built_files():
+    if not os.path.isdir(os.path.join(PLUGIN_REPO, "skills")):
+        pytest.skip("plugin repo not checked out beside this one")
+    out = []
+    for sub in ("skills", "shared", "commands", "agents"):
+        d = os.path.join(PLUGIN_REPO, sub)
+        for dp, _, fn in os.walk(d):
+            for f in fn:
+                if f.endswith((".md", ".yaml")):
+                    out.append(os.path.join(dp, f))
+    assert out, "no built files found — this guard would be vacuous"
+    return out
+
+
+def _bash_fences(text):
+    """(start_line, body) for each ```bash fence."""
+    out, cur, start = [], None, 0
+    for n, ln in enumerate(text.split("\n"), 1):
+        if cur is None and re.match(r"^```\s*(bash|sh)\b", ln):
+            cur, start = [], n
+        elif cur is not None and ln.startswith("```"):
+            out.append((start, "\n".join(cur)))
+            cur = None
+        elif cur is not None:
+            cur.append(ln)
+    return out
+
+
+def test_no_shipped_bash_block_depends_on_an_unset_plugin_root():
+    """CLAUDE_PLUGIN_ROOT is not in the Bash tool environment.
+
+    In prose it is correct — Claude resolves it. Inside a bash fence it expands to nothing, so
+    `${CLAUDE_PLUGIN_ROOT}/shared/x` becomes `/shared/x`. A block that needs the plugin root must
+    resolve it itself, the way dev-update Step 4.6 does, before using it.
+    """
+    offenders = []
+    for path in _built_files():
+        text = io.open(path, encoding="utf-8", errors="replace").read()
+        for line_no, body in _bash_fences(text):
+            # Precise rule: inside a bash fence the variable may appear ONLY in the resolution
+            # idiom `${CLAUDE_PLUGIN_ROOT:-...}`, never as a path prefix. Checking merely that the
+            # fence resolves ROOT *somewhere* is too weak -- the block that shipped broken did
+            # resolve ROOT on one line and then built its path from the unset variable on the next.
+            for m in re.finditer(r"\$\{CLAUDE_PLUGIN_ROOT\}/", body):
+                offenders.append("%s (fence at line %d): %s"
+                                 % (os.path.relpath(path, PLUGIN_REPO), line_no,
+                                    body[max(0, m.start() - 30):m.end() + 30].strip()))
+    assert not offenders, (
+        "these shipped bash blocks use ${CLAUDE_PLUGIN_ROOT} without resolving it, so it expands "
+        "to an empty string at runtime:\n  " + "\n  ".join(sorted(set(offenders))))
+
+
+def test_every_plugin_root_path_in_the_build_exists():
+    """A path that resolves in the source tree and nowhere in the plugin is how generate-docs
+    shipped pointing at a template directory that does not exist in the installed layout."""
+    missing = []
+    for path in _built_files():
+        text = io.open(path, encoding="utf-8", errors="replace").read()
+        for ref in set(re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([A-Za-z0-9_./-]+)", text)):
+            ref = ref.rstrip(".,`)\"'")
+            if any(ch in ref for ch in "<>*") or ref.endswith("/"):
+                continue          # placeholder like shared/people/<slug>.yaml
+            if not os.path.exists(os.path.join(PLUGIN_REPO, ref)):
+                missing.append("%s -> %s" % (os.path.relpath(path, PLUGIN_REPO), ref))
+    assert not missing, (
+        "shipped files reference paths that do not exist in the built plugin:\n  "
+        + "\n  ".join(sorted(set(missing))))

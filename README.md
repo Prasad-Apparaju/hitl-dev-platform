@@ -78,7 +78,7 @@ Pick the path that matches where you are:
 
 | Role | Commands | Guide |
 |------|----------|-------|
-| **Developer** | `/hitl:dev-practices`, `/hitl:dev-generate-docs`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude`, `/hitl:dev-review-lld-adherence`, `/hitl:dev-review-security` | [Developer guide](docs/roles/developer.md) |
+| **Developer** | `/hitl:dev-practices`, `/hitl:dev-generate-docs`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude`, `/hitl:dev-review-lld-adherence`, `/hitl:dev-review-security`, `/hitl:dev-preferences`, `/hitl:dev-draft-for` | [Developer guide](docs/roles/developer.md) |
 | **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
 | **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code` | [Architect guide](docs/roles/architect.md) |
 | **Technical Advisor** | `/hitl:ta-approve` | Approve/reject design gates (scope, HLD, LLD, decision packet) |

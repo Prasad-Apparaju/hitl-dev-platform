@@ -248,9 +248,17 @@ else
   if [[ -d "$ROOT/shared/ci/manifest-agentic" ]]; then
     mkdir -p ci/manifest-agentic tools/manifest-agentic
     cp "$ROOT/shared/ci/manifest-agentic/"*.py ci/manifest-agentic/ 2>/dev/null
-    [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
+    # Report what actually happened. This printed "kept your manifest-waivers.yaml" even when it
+    # had just created one, which is a claim about the user's own file that was simply untrue.
+    WAIVERS_NOTE="no waivers file"
+    if [[ -f ci/manifest-agentic/manifest-waivers.yaml ]]; then
+      WAIVERS_NOTE="kept your manifest-waivers.yaml"
+    elif [[ -f "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]]; then
+      cp "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
+      WAIVERS_NOTE="added a starter manifest-waivers.yaml"
+    fi
     cp "$ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
-    echo "  ✓ ci/manifest-agentic/ (compound-agentic validator) synced — kept your manifest-waivers.yaml"
+    echo "  ✓ ci/manifest-agentic/ (compound-agentic validator) synced — $WAIVERS_NOTE"
   fi
   # Release gate (#80): the adversarial-review validator, so a repo's own CI can run it.
   if [[ -d "$ROOT/shared/ci/adversarial" ]]; then
@@ -451,14 +459,10 @@ fi
 
 ## Step 4.9 — Ensure persona profiles are gitignored
 
-`.hitl/people/` holds descriptions of named colleagues. `shared/personas.md` tells the reader, and
-tells you, that these are **local by default** — and onboarding is what makes that true. A project
-that onboarded before this feature existed gets the commands from this update and none of the
-ignore rule, so the first profile someone saves is an ordinary untracked file inside a directory
-teams routinely `git add -A`. It lands in a PR diff, gets read in review, and stays in history
-after deletion: the three harms the doctrine names, to someone who never agreed to any of it.
-
-Same idempotent check onboarding uses, so running it twice adds nothing.
+`.hitl/people/` holds descriptions of named colleagues, and `shared/personas.md` promises they are
+**local by default**. Onboarding is what makes that true, so a project upgrading into this feature
+gets the commands and none of the protection: the first profile saved lands in a PR diff and stays
+in history after deletion. Same idempotent check onboarding uses; running it twice adds nothing.
 
 ```bash
 GITIGNORE=".gitignore"
@@ -475,8 +479,7 @@ else
 fi
 ```
 
-**If a profile is already tracked**, the ignore rule does not retroactively untrack it. Say so
-plainly and let them decide:
+**If a profile is already tracked**, the rule does not untrack it. Say so and let them decide:
 
 ```bash
 TRACKED=$(git ls-files '.hitl/people/' 2>/dev/null)

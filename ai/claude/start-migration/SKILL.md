@@ -430,6 +430,21 @@ Update `.hitl/current-change.yaml` — set `current_step`:
   phase: "Migration Setup"
 ```
 
+**Before the closing message, exclude persona profiles from git.** `.hitl/people/` holds
+descriptions of named colleagues. Committed, they land in PR diffs and stay in history after
+deletion. `init-project.sh` adds this rule and a plugin-installed team never runs that script, so
+it has to happen here.
+
+```bash
+GITIGNORE=".gitignore"
+if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
+  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
+fi
+git check-ignore -q .hitl/people/ 2>/dev/null \
+  && echo "✓ .gitignore — .hitl/people/ excluded" \
+  || echo "COULD NOT exclude .hitl/people/ — say so before any profile is written here."
+```
+
 Output this exactly:
 
 ---
@@ -481,20 +496,3 @@ Each resulting slice is then handed to developers via the standard 31-step workf
 **Migration is complete when:** every BI entry in `docs/00-migration/source-behavioral-inventory.md` has status `Complete` or `Descoped` in the migration brief's coverage matrix, **and** the readiness register's Parity and Cutover layers are green — parity proven against the legacy system, cutover executed, legacy sunset recorded. Ported code with the legacy still running is not a finished migration.
 
 ---
-
-### Persona profiles stay local
-
-`.hitl/people/` holds descriptions of named colleagues. They must not be committed: a description of
-how a teammate thinks does not belong in a PR diff, in code review, or in git history where deleting
-the file later does not remove it. `init-project.sh` adds this rule, and a plugin-installed team
-never runs that script, so add it here.
-
-```bash
-GITIGNORE=".gitignore"
-if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
-  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
-fi
-git check-ignore -q .hitl/people/ 2>/dev/null \
-  && echo "✓ .gitignore — .hitl/people/ excluded" \
-  || echo "COULD NOT exclude .hitl/people/ — say so before any profile is written here."
-```
