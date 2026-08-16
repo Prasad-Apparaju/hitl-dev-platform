@@ -968,9 +968,20 @@ def test_generate_docs_neither_mislocates_nor_clobbers_claude_md():
     project carrying both marked blocks that is a silent delete of onboarding AND preferences."""
     p = os.path.join(ROOT, "ai", "claude", "generate-docs", "SKILL.md")
     s = io.open(p, encoding="utf-8").read()
-    for m in re.findall(r"[\w${}/.-]*CLAUDE\.md\.template", s):
-        rel = m.replace("${CLAUDE_PLUGIN_ROOT}/", "ai/claude/")
-        assert os.path.isfile(os.path.join(ROOT, rel)), "points at a missing template: %s" % m
+    # This guard resolved ${CLAUDE_PLUGIN_ROOT} against the SOURCE tree, so it happily accepted a
+    # path that exists here and nowhere in the built plugin -- which is exactly what shipped.
+    # build.sh flattens ai/claude/generate-docs/templates/ AND ai/shared/templates/ into
+    # shared/templates/, so resolve the way the plugin lays it out, not the way the repo does.
+    for m in re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}[\w/.-]*CLAUDE\.md\.template", s):
+        rel = m.replace("${CLAUDE_PLUGIN_ROOT}/", "")
+        assert rel.startswith("shared/templates/"), (
+            "%s does not resolve in the built plugin, where templates live under shared/templates/"
+            % m)
+        src = os.path.join(ROOT, "ai", "claude", "generate-docs", "templates",
+                           os.path.basename(rel))
+        alt = os.path.join(ROOT, "ai", "shared", "templates", os.path.basename(rel))
+        assert os.path.isfile(src) or os.path.isfile(alt), (
+            "no source file feeds %s" % m)
     assert "do not overwrite it" in s.lower(), "no preserve rule on a file teams edit"
     assert "HITL:PREFS:BEGIN" in s, "the preserve rule does not name the preferences block"
 
@@ -1015,7 +1026,7 @@ FLOOR_REGIONS = {
         "6ca55d129e0b9b0bda6bfc996d54b26e7112604d01ca269495d39fbd1b6121f4"),
     "generate-docs / phase R5 process setup": (
         ('ai', 'claude', 'generate-docs', 'SKILL.md'), '### Phase R5 — Process Setup (Day 5 equivalent)',
-        "5de52a038f5dec9caefa220c2251c9d0691fa966976ae99b3666173cb25a0676"),
+        "8b1b7b3743d269b8893051e8348433c640c100e1d2483c4e3eec9f7f127d6e96"),
     "personas.md / offering it": (
         ('ai', 'shared', 'personas.md'), '## Offering it',
         "cba3c5b499aa96d9716a6df7977a890e44aef0fee4d0ac55586cca0772f8789f"),
@@ -1663,3 +1674,54 @@ def test_profiles_are_read_and_written_at_the_repo_root():
         s = io.open(path, encoding="utf-8").read()
         assert "--show-toplevel" in s, (
             "%s resolves .hitl/people/ from the current directory, not the repo" % name)
+
+
+HITL_BLOCK = os.path.join(ROOT, "ai", "shared", "templates", "claude-md-hitl-block.md")
+ONBOARD_SKILLS = ["start-from-prd", "start-brownfield", "start-migration"]
+
+
+def test_the_installed_block_carries_the_feature_instructions():
+    """The only place that told a session these commands exist was CLAUDE.md.template.
+
+    An upgraded project never receives that template. What it receives is the marker block, which
+    both init-project.sh and dev-update Step 4.8 install -- and that block said nothing about
+    preferences, "default mode", or draft-for. So the feature reached the project and nothing in
+    the project ever mentioned it: the whole defect class this repo keeps catching.
+    """
+    s = io.open(HITL_BLOCK, encoding="utf-8").read()
+    for cmd in ("/hitl:dev-preferences", "/hitl:dev-draft-for"):
+        assert cmd in s, "the installed block never mentions %s" % cmd
+    assert "status: PAUSED" in s, "the block does not tell a session to honour a pause"
+    assert "default mode" in s, "the one-session escape is not instructed where sessions read it"
+    assert "never omitted" in s, "the floor is absent from the block every project actually gets"
+
+
+@pytest.mark.parametrize("skill", ONBOARD_SKILLS)
+def test_plugin_native_onboarding_ignores_persona_profiles(skill):
+    """init-project.sh adds the rule, and a plugin-installed team never runs init-project.sh.
+
+    These three are the documented onboarding commands. Without the rule, the first profile a team
+    saves is committed while personas.md tells the author it is local.
+    """
+    s = io.open(os.path.join(ROOT, "ai", "claude", skill, "SKILL.md"), encoding="utf-8").read()
+    assert ".hitl/people/" in s, "%s onboards a project without excluding persona profiles" % skill
+    assert "git check-ignore" in s, "%s asserts the exclusion instead of verifying it" % skill
+
+
+def test_the_hook_rewire_branch_returns_for_the_remaining_steps():
+    """Step 4 sends the model into another command's Step 0, which ends "restart and re-run this
+    command". Followed literally on an old repo -- the exact audience -- Steps 4.5 through 4.9 and
+    the completion message never run, and nothing tells the user anything was skipped."""
+    s = " ".join(io.open(UPDATE_SKILL, encoding="utf-8").read().split())
+    assert "sub-steps 1-3 only" in s, "the jump does not bound what to run"
+    assert "come straight back here to Step 4.5" in s, "the jump never returns"
+    assert "Ignore its closing" in s, "the restart instruction is not neutralised"
+
+
+def test_the_upgrade_gitignore_step_verifies_its_own_outcome():
+    """It printed the tick unconditionally. Same false assurance personas.md was fixed for."""
+    s = io.open(UPDATE_SKILL, encoding="utf-8").read()
+    i = s.index("## Step 4.9")
+    body = s[i:s.index("## Step 5", i)]
+    assert "git check-ignore -q" in body, "Step 4.9 asserts the exclusion instead of verifying it"
+    assert "COULD NOT exclude" in body, "there is no honest branch when the rule does not take"

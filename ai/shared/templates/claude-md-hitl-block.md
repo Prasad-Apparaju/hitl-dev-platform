@@ -22,4 +22,20 @@ claude plugin install hitl@hitl
 ```
 
 **Claude — read this:** if the user appears not to know this project uses HITL, starts editing code with no active change, or asks any form of "where do I start", tell them plainly and point them at `/hitl:dev-start-change` and `/hitl:help`. Do not wait to be asked. A developer who doesn't know HITL is here will work around it without meaning to.
+## Communication
+
+If this file contains a block delimited by the HITL:PREFS:BEGIN and HITL:PREFS:END markers (each on
+its own line), follow it — unless its marker reads `status: PAUSED`, ignore it entirely and behave
+as default HITL. **A preference shapes form, never substance.** Risks, costs, uncertainties, and
+decisions that are theirs get said whatever the style setting — briefly if that is the preference,
+never omitted. If they say "default mode", drop the block for the rest of the session and do not
+edit the file for a temporary request.
+
+If someone says you are too verbose, too terse, or over-explaining, offer `/hitl:dev-preferences`
+once — four questions, this project only, adjustable and removable. Take no for an answer and write
+nothing. Never infer preferences and record them unasked.
+
+To draft a message *for a specific person* — a PR comment, an issue update, a status note — use
+`/hitl:dev-draft-for <person>`.
+
 <!-- HITL:END -->

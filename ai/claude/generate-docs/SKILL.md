@@ -207,7 +207,7 @@ This mode reads the existing codebase and generates the full documentation basel
 ### Phase R5 — Process Setup (Day 5 equivalent)
 
 1. **Generate `CLAUDE.md`** from the template at
-   `${CLAUDE_PLUGIN_ROOT}/generate-docs/templates/CLAUDE.md.template`:
+   `${CLAUDE_PLUGIN_ROOT}/shared/templates/CLAUDE.md.template`:
 
    **If `CLAUDE.md` already exists, do not overwrite it.** It is a file teams edit, and it carries
    two marked blocks that regenerating would silently delete: the `HITL:BEGIN`/`HITL:END` block

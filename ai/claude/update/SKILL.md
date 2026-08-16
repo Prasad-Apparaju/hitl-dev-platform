@@ -157,7 +157,7 @@ for m in installed_plugins.json "command -v" HITL_PY; do grep -q "$m" .hitl/hook
 [[ -f .hitl/hooks/first-pass-permissions.sh ]] || echo "STALE: first-pass-permissions.sh absent"
 ```
 
-No `installed_plugins.json` = pre-v1.0.9 discovery, broken on current Claude Code. No `command -v` probe or `HITL_PY` = pre-issue-#14: a bare `python3` is the Microsoft Store stub on Windows, on PATH but running nothing, so every hook silently no-ops — and a lone `installed_plugins.json` grep passes straight over it. No `first-pass-permissions.sh` = pre-CR-15, so the permission policy never engages. On any of those, delete `.hitl/hooks/` and re-create all **nine** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) from the template in Step 0 of `/hitl:dev-start-from-prd`, which is the single source of truth for wrapper contents.
+No `installed_plugins.json` = pre-v1.0.9 discovery, broken on current Claude Code. No `command -v` probe or `HITL_PY` = pre-issue-#14: a bare `python3` is the Microsoft Store stub on Windows, on PATH but running nothing, so every hook silently no-ops — and a lone `installed_plugins.json` grep passes straight over it. No `first-pass-permissions.sh` = pre-CR-15, so the permission policy never engages. On any of those, delete `.hitl/hooks/` and re-create all **nine** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) from the template in Step 0 of `/hitl:dev-start-from-prd` (**sub-steps 1-3 only**: create the wrappers, then come straight back here to Step 4.5. Ignore its closing "restart and re-run this command" instruction — that is written for onboarding, and following it here skips Steps 4.5 through 4.9 and the completion message, with no sign anything was missed), which is the single source of truth for wrapper contents.
 
 Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook. Assert what `statusLine` **points at**, not merely that the key is present:
 ```bash
@@ -458,10 +458,14 @@ Same idempotent check onboarding uses, so running it twice adds nothing.
 GITIGNORE=".gitignore"
 if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
   printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
-  echo "✓ .gitignore — .hitl/people/ excluded"
   git add "$GITIGNORE" 2>/dev/null || true
+fi
+# Verify, do not assert. .gitignore has no effect on a file git already tracks, and outside a repo
+# check-ignore fails in a way that reads as "not ignored".
+if git check-ignore -q .hitl/people/ 2>/dev/null; then
+  echo "✓ .gitignore — .hitl/people/ excluded"
 else
-  echo "✓ .gitignore — .hitl/people/ already excluded"
+  echo "COULD NOT exclude .hitl/people/. Do not tell anyone a profile written here is local."
 fi
 ```
 

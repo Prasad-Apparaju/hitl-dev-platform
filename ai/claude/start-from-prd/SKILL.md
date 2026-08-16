@@ -320,3 +320,20 @@ Then output this exactly:
 - Track platform progress any time with `/hitl:ops-plan-platform status`.
 
 ---
+
+### Persona profiles stay local
+
+`.hitl/people/` holds descriptions of named colleagues. They must not be committed: a description of
+how a teammate thinks does not belong in a PR diff, in code review, or in git history where deleting
+the file later does not remove it. `init-project.sh` adds this rule, and a plugin-installed team
+never runs that script, so add it here.
+
+```bash
+GITIGNORE=".gitignore"
+if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
+  printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
+fi
+git check-ignore -q .hitl/people/ 2>/dev/null \
+  && echo "✓ .gitignore — .hitl/people/ excluded" \
+  || echo "COULD NOT exclude .hitl/people/ — say so before any profile is written here."
+```
