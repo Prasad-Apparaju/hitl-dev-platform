@@ -22,6 +22,16 @@ authored_by: ""                # REQUIRED, no default. "self" only if the subjec
                                # third-party authorship from this field, so a wrong value here
                                # silently turns the disclosure off.
 
+written: ""                    # YYYY-MM-DD. A profile is a snapshot of what someone wanted months
+                               # ago, and nothing else here says how old it is.
+subject_told: ""               # yes | no | unknown. Does the person KNOW this file describes them?
+                               # "Tell them it exists" is the doctrine's central obligation and it
+                               # used to live exactly one turn: HITL suggested it, the sender said
+                               # sure, and from the next session nobody could tell whether it
+                               # happened. Recording it is what makes it checkable later. `no` and
+                               # `unknown` are honest answers - draft-for surfaces both rather than
+                               # pretending, and neither blocks anything.
+
 domain: ""                     # e.g. "supply-chain". Means skip the domain primer — NOT skip the
                                # reasoning. Fluent readers still need to know why, just not what a
                                # purchase order is.

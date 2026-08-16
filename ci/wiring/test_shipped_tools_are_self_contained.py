@@ -998,7 +998,7 @@ FLOOR_REGIONS = {
         "94e4bd8f0e98f835ff71adbfcd84fab1e709a46258fa7bbc6a50fbdba816ba01"),
     "draft-for / hand it over": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 4 — Hand it over with its provenance',
-        "0f9274b97d2763db87ea5781dcf06394a49c4940d5cd2b45c138b4a2739466ab"),
+        "c21319895e3b33480f4552838531cf3ff17cfe82477b2a9d13bb926ca73124d6"),
     "draft-for / what this is not for": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## What this is not for',
         "0a764e69130523218f2a00fd66c5a5ad0197b7d4f1be70ceef61aa1e4d41adac"),
@@ -1007,7 +1007,7 @@ FLOOR_REGIONS = {
         "25dddd4c827233f7f8d054fc03eee363bcc092bcd479c256a1e879c43a638802"),
     "draft-for / write to the profile": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 3 — Write to the profile',
-        "34478767bde804dce54a20d6ecf908648ef34853a175fca9ffb3a00c28510486"),
+        "6ca55d129e0b9b0bda6bfc996d54b26e7112604d01ca269495d39fbd1b6121f4"),
     "generate-docs / phase R5 process setup": (
         ('ai', 'claude', 'generate-docs', 'SKILL.md'), '### Phase R5 — Process Setup (Day 5 equivalent)',
         "5de52a038f5dec9caefa220c2251c9d0691fa966976ae99b3666173cb25a0676"),
@@ -1031,7 +1031,7 @@ FLOOR_REGIONS = {
         "049c73e140b652abfa305401ad1d73866dfca38412908e13479a68ffdaecc094"),
     "preferences / modes": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## Modes',
-        "4d564314192fbb7ce0a065dfe1e1196be18c5da8fab2837990a69cac52b4fb7c"),
+        "348425cc4d5c719cf944190472a7fba9fdd5529757a21d741a8c2f4c081e77c1"),
     "preferences / setting up and adjusting": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## Setting up, and adjusting',
         "289efeeb0ee9500642074772628cb71520dda7daa186e232d3690395bd4f1bd5"),
@@ -1081,7 +1081,7 @@ def test_the_floor_inside_the_emitted_block_is_unchanged():
         % (EMITTED_BLOCK_SHA, _emitted_block_hash()))
 
 
-EMITTED_BLOCK_SHA = "844a1640c348dd40c29d2f7918b7ae70b334e1c4672170cc6aebd47016b3d8ae"
+EMITTED_BLOCK_SHA = "d975be8133627f9ff4e673d838dbb7c942bd5590f612b029a7c17c5f35e42d5a"
 
 
 if __name__ == "__main__":
@@ -1328,7 +1328,7 @@ def test_the_persona_template_is_unchanged():
         "about a colleague.\n  expected %s\n  got      %s" % (PERSONA_TEMPLATE_SHA, got))
 
 
-PERSONA_TEMPLATE_SHA = "22abdfb9112ca9634a11efcfd1c4552761d9673c7c20043d3747bcc21a65f5d3"
+PERSONA_TEMPLATE_SHA = "9fbcc923e566cf0d91a31257450c72ac8642a79280f5a94174cd0bf58eb24d82"
 
 
 @pytest.mark.parametrize("mode", ["", "toggle", "off on", "--off", "of", "on;rm -rf ."])
@@ -1527,3 +1527,59 @@ def test_the_description_does_not_advertise_a_mode_that_does_not_exist():
     fm = re.match(r"---\n(.*?)\n---", io.open(PREFS_SKILL, encoding="utf-8").read(), re.S).group(1)
     assert "for one session" not in fm, (
         "the description steers people to `off` for a one-session pause, which persists")
+
+
+def test_a_teammate_is_told_whose_preferences_are_in_force(tmp_path):
+    """The mitigation only fired if the teammate opened CLAUDE.md.
+
+    The skill names the problem itself: people "who never ran the command and cannot tell whose
+    settings are in force". What they actually experience is HITL going terse with no attribution
+    in the session, and the closing paragraph of the block never reaches them. The instruction now
+    lives in the block, which is what a session reads.
+    """
+    d = _proj(tmp_path, "# Rules\n\nteam rules\n")
+    assert _run(_prefs_script("write"), d).returncode == 0
+    block = re.search(r"^<!-- HITL:PREFS:BEGIN.*?^<!-- HITL:PREFS:END -->",
+                      (d / "CLAUDE.md").read_text(encoding="utf-8"), re.S | re.M).group(0)
+    assert "is not Ada Lovelace" in block, (
+        "the block does not tell a session to name whose settings it is applying")
+    assert "default mode" in block
+
+
+@pytest.mark.parametrize("kind,expect", [("flip", "whole team"), ("reset", "gone for everyone")])
+def test_pausing_or_deleting_says_whose_settings_they_were(tmp_path, kind, expect):
+    """The write path discloses team scope; off/on/reset did not, and they edit the same committed
+    file. A teammate following the block's own advice to run `off` silently paused a named
+    colleague's settings for the whole repo."""
+    d = _proj(tmp_path, "# Rules\n\nteam rules\n")
+    subprocess.run(["git", "config", "user.name", "Priya Nair"], cwd=str(d), check=True)
+    assert _run(_prefs_script("write"), d).returncode == 0
+    subprocess.run(["git", "config", "user.name", "Sam Ortiz"], cwd=str(d), check=True)
+    r = _run(_prefs_script(kind), d, ["off"] if kind == "flip" else [])
+    assert r.returncode == 0
+    assert "Priya Nair" in r.stdout, "%s did not say whose settings it changed: %r" % (kind, r.stdout)
+    assert expect in r.stdout, "%s did not state the blast radius: %r" % (kind, r.stdout)
+
+
+def test_whether_the_subject_was_told_is_recorded_and_surfaced():
+    """"Tell them it exists" is the doctrine's central obligation and it lived exactly one turn.
+
+    HITL suggested it, the sender said sure, and from the next session nobody -- human or model --
+    could tell whether it happened. The profile is the only thing that outlives the conversation,
+    so it has to carry the answer.
+    """
+    tmpl = io.open(os.path.join(ROOT, "ai", "shared", "templates", "persona.yaml"),
+                   encoding="utf-8").read()
+    import yaml as _y
+    fields = _y.safe_load(tmpl)
+    for f in ("subject_told", "written"):
+        assert f in fields, "the profile records no %r" % f
+    draft = io.open(DRAFT_SKILL, encoding="utf-8").read()
+    rows = [ln for ln in draft.splitlines() if ln.startswith("|")]
+    for f in ("subject_told", "written"):
+        assert any(("`%s" % f) in ln for ln in rows), "%r has no reader in draft-for" % f
+    flat = " ".join(draft.split())
+    assert "Say it every time, not once." in flat, (
+        "a one-time mention is what the recording exists to replace")
+    assert "Do not refuse to draft" in flat, (
+        "an unrecorded answer must not become a blocker; honest defaults have to stay usable")

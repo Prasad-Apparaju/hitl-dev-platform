@@ -60,6 +60,8 @@ Item 3 survives every style setting. That is the floor.
 | `lead_with: decision` | First line is the call they need to make, or that you made and why |
 | `domain: <x>` | Assume fluency in the vocabulary. Still explain your *reasoning* — fluency is not telepathy |
 | `formats: [bullets]` | Bullets, not paragraphs pretending to be bullets |
+| `written` | A date. If it is more than a few months old, say so: "this profile is from March; worth checking it still fits" |
+| `subject_told` | `no` or `unknown` means the person does not know this file exists. Say that to the sender, once, plainly. Do not refuse to draft |
 | `pushback: direct` | Open a disagreement with the disagreement. `softened` earns one sentence of framing first — it never turns into agreement, and never into silence |
 | `notes` | Free text in their own words — read it last; it overrides the **style** rows above, and nothing else |
 
@@ -97,6 +99,14 @@ empty one as its own answer rather than skipping the line:
 | `self` | "written by Kishor" — his own stated preference |
 | someone's name | "written by Priya, not by Kishor" — the draft is shaped by one person's reading of another |
 | empty or missing | "who wrote this profile isn't recorded, so treat it as someone's reading of him" |
+
+And if `subject_told` is not `yes`, add one line to the same hand-off:
+
+> Kishor doesn't know this profile exists (or it isn't recorded). Worth mentioning it to him — I can
+> set `subject_told: yes` once you have.
+
+Say it every time, not once. A profile outlives the conversation that created it, and the person it
+describes is the one party who never sees any of this.
 
 Never let an unset field read as self-authored. The disclosure exists precisely for the profile
 someone wrote about a colleague, and that is the profile most likely to have the field left blank.

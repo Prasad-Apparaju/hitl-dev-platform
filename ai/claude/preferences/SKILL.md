@@ -41,6 +41,11 @@ block's marker so a teammate reading it later knows who to ask.
 | `on` | Start applying them again |
 | `reset` | Delete the block entirely |
 
+`off`, `on` and `reset` all edit a **committed** file, so they change things for the whole team, not
+just for you — and the settings may be someone else's. Each one prints whose they are; pass that on
+rather than swallowing it. If you only want them gone for yourself, right now, say *"default mode"*
+instead and nothing is written at all.
+
 **Turning it off for one session only** needs no command — say *"default mode"* or *"ignore my
 preferences"* and behave as HITL does out of the box for the rest of the session. Do not edit the
 file for a temporary request. Mention this once when you first set the preferences up, so they know
@@ -150,6 +155,11 @@ if not hit:
 s2 = s[:hit.start(2)] + want + s[hit.end(2):]
 write_text(p, s2, nl)
 print("Preferences are now %s." % want)
+owner = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) \u2014", m, re.M)
+if owner and owner.group(1).strip():
+    print("These are %s's settings, and CLAUDE.md is committed - this changes them for the whole "
+          "team. To drop them just for yourself, say \"default mode\" instead and run `on`."
+          % owner.group(1).strip())
 PY
 ```
 
@@ -233,8 +243,12 @@ new = s[:hit.start()] + "\n" + s[hit.end():]
 # the block sat at EOF. Small, but the message below claims the rest of the file is untouched.
 if not s[hit.end():].strip():
     new = new.rstrip("\n") + "\n"
+owner = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by ([^\n]*?) \u2014", m, re.M)
 write_text(p, new, nl)
 print("Removed. The rest of CLAUDE.md is untouched.")
+if owner and owner.group(1).strip():
+    print("Those were %s's settings and CLAUDE.md is committed, so they are gone for everyone. "
+          "Worth telling them." % owner.group(1).strip())
 PY
 ```
 
@@ -373,6 +387,12 @@ BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev
 Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
 — briefly if that is the setting, but never left out. If brevity and completeness conflict, cut the
 reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
+
+**If the person in this session is not %(who)s, say so once, early, in your own words:** that you
+are following %(who)s's preferences from this repo's `CLAUDE.md`, and that `/hitl:dev-preferences`
+adjusts them, `off` pauses them, or "default mode" drops them for this session only. Say it once,
+briefly, then get on with the work. Someone wondering why you are suddenly terse should not have to
+open a file to find out.
 
 Reading this and it is not how you want HITL to talk to you? It is a shared file, so these are
 someone else's settings, not yours. `/hitl:dev-preferences` adjusts them, `off` pauses them, and
