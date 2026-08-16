@@ -1,0 +1,63 @@
+# Run the test suite and every validator on push and pull request.
+#
+# Until this file existed, nothing ran the tests but a person on a laptop. The repo had 628 tests,
+# a skill linter, a catalog verifier and a breadcrumb matrix, and none of them could block a bad
+# change. That is the same defect the tests themselves keep catching: a mechanism that exists, is
+# referenced, and has nothing driving it.
+#
+# semgrep is installed on purpose. Without it 40 convention-rule tests skip, which is how they
+# behave on most laptops -- so CI is the only place they actually run.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml semgrep
+
+      - name: Test suite
+        run: python -m pytest ci/ tools/ -q -rs
+
+      - name: Skill lint
+        run: python ci/skill-lint/check_skills.py
+
+      - name: Workflow catalog matches the runtime copy
+        run: python tools/workflow-catalog/derive.py verify
+
+      - name: Breadcrumb matrix
+        # A bash harness outside pytest. It has caught breaks the Python suite could not see.
+        run: bash ci/breadcrumb/run_matrix.sh
+
+      - name: No test was silently skipped for a missing tool
+        # A skip is a test that did not run. Fine on a laptop, not fine here: CI exists precisely
+        # so the environment-dependent ones are exercised somewhere.
+        run: |
+          python -m pytest ci/ tools/ -q -rs 2>&1 | tee /tmp/out.txt
+          if grep -q "not installed" /tmp/out.txt; then
+            echo "::error::a test skipped because a tool is missing from the CI image"
+            grep "not installed" /tmp/out.txt | sort -u
+            exit 1
+          fi

@@ -986,6 +986,9 @@ FLOOR_REGIONS = {
     "CLAUDE.md template / communication preferences": (
         ('ai', 'claude', 'generate-docs', 'templates', 'CLAUDE.md.template'), '## Communication Preferences',
         "d3f10e4c1ca94fb57273bb5421fd3a5c1e40bb8be240d8089d9c8b054dee9ca3"),
+    "draft-for / find the person": (
+        ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 1 — Find the person',
+        "94e4bd8f0e98f835ff71adbfcd84fab1e709a46258fa7bbc6a50fbdba816ba01"),
     "draft-for / hand it over": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 4 — Hand it over with its provenance',
         "0f9274b97d2763db87ea5781dcf06394a49c4940d5cd2b45c138b4a2739466ab"),
