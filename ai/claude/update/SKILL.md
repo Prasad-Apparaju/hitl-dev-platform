@@ -130,12 +130,21 @@ proposes, then apply. Also refresh the validator copies — they are snapshots, 
 without this new checks never reach the project they protect.
 
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 MIG="ci/first-pass/migrate_project.py"
-[[ -f "$MIG" ]] || MIG="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/migrate_project.py"
-python3 "$MIG" --root .                    # review, then:
-python3 "$MIG" --root . --apply
-[[ -d "$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass" ]] && mkdir -p ci/first-pass \
-  && cp "$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/"*.py ci/first-pass/
+[[ -f "$MIG" ]] || MIG="$ROOT/shared/ci/first-pass/migrate_project.py"
+if [[ -f "$MIG" ]]; then
+  python3 "$MIG" --root .                  # review, then:
+  python3 "$MIG" --root . --apply
+else
+  echo "No migrator found in the project or the plugin — skipping the change-file migration."
+fi
+if [[ -d "$ROOT/shared/ci/first-pass" ]]; then
+  mkdir -p ci/first-pass && cp "$ROOT/shared/ci/first-pass/"*.py ci/first-pass/
+  echo "  ✓ ci/first-pass/ validators refreshed from the plugin"
+else
+  echo "  ! Could not find the plugin's ci/first-pass — validators NOT refreshed."
+fi
 ```
 
 Permissions merge additively. The migrator also reports any active change lightened without
@@ -228,8 +237,7 @@ Pass, FR-29, added in 2.4.x). Tool **code** is refreshed (plugin-owned); repo-ow
 ledger, customized `.github/workflows/*`) are preserved.
 
 ```bash
-ROOT="${CLAUDE_PLUGIN_ROOT:-}"
-[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 if [[ -z "$ROOT" ]]; then
   echo "Plugin root not found — skipping CI-tool re-sync."
 else
@@ -248,8 +256,7 @@ else
   if [[ -d "$ROOT/shared/ci/manifest-agentic" ]]; then
     mkdir -p ci/manifest-agentic tools/manifest-agentic
     cp "$ROOT/shared/ci/manifest-agentic/"*.py ci/manifest-agentic/ 2>/dev/null
-    # Report what actually happened. This printed "kept your manifest-waivers.yaml" even when it
-    # had just created one, which is a claim about the user's own file that was simply untrue.
+    # Report what actually happened: this claimed to have "kept" a file it had just created.
     WAIVERS_NOTE="no waivers file"
     if [[ -f ci/manifest-agentic/manifest-waivers.yaml ]]; then
       WAIVERS_NOTE="kept your manifest-waivers.yaml"
@@ -354,9 +361,7 @@ Without the opt-out file, "install anything absent" would resurrect a deliberate
 every update. One path per line, `#` comments allowed (e.g. `best-practices/tenant-isolation.yaml`).
 
 ```bash
-# Same self-contained resolution: $ROOT from an earlier step is not in scope here.
-ROOT="${CLAUDE_PLUGIN_ROOT:-}"
-[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
   echo "No shipped rule set found — skipping semgrep re-sync."
 else
@@ -434,11 +439,9 @@ Never overwrites the team's file: it maintains one marker-delimited block. Creat
 refreshes, or stays silent if current; a truncated `HITL:BEGIN` leaves the file untouched (exit 3).
 
 ```bash
-# Resolve the plugin root HERE. Shell state does not persist between tool calls, so inheriting
-# $ROOT from Step 4.6 left it empty: the template lookup failed and this step printed "not in this
-# build — skipping", which is false and benign-sounding, while Step 5 reported a successful update.
-ROOT="${CLAUDE_PLUGIN_ROOT:-}"
-[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+# Resolve here: shell state does not persist between tool calls, and inheriting $ROOT from an
+# earlier step left it empty, so this printed a false "not in this build — skipping".
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 BLOCK="$ROOT/shared/templates/claude-md-hitl-block.md"
 SCRIPT="$ROOT/shared/tools/hitl-onboarding/ensure_claude_block.py"
 if [[ -f "$BLOCK" && -f "$SCRIPT" ]]; then
@@ -460,9 +463,8 @@ fi
 ## Step 4.9 — Ensure persona profiles are gitignored
 
 `.hitl/people/` holds descriptions of named colleagues, and `shared/personas.md` promises they are
-**local by default**. Onboarding is what makes that true, so a project upgrading into this feature
-gets the commands and none of the protection: the first profile saved lands in a PR diff and stays
-in history after deletion. Same idempotent check onboarding uses; running it twice adds nothing.
+**local by default** — onboarding is what makes that true, so an upgrading project gets the
+commands and none of the protection. Same idempotent check; running it twice adds nothing.
 
 ```bash
 GITIGNORE=".gitignore"

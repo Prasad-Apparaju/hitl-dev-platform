@@ -80,7 +80,7 @@ Heuristics from the issue: labels (`bug`/`enhancement` → development; `documen
 "port", "consolidate" → migration; "onboard", "adopt HITL", "no docs yet" → brownfield), and
 whether `docs/system-manifest.yaml` exists (absent on a real project → prd/brownfield).
 
-**The `docs` workflow is only for changes that touch nothing but docs.** If a change edits docs *and* code, it is a `development` change (the delivery spine already reconciles docs). This keeps the docs workflow from becoming a way to skip the gates on real code. Its own reviewer gate (`doc_review`) is domain-routed: route the review to the role that owns the touched area (Architect for design docs, PM for product docs, Ops for runbooks). At its final `merge` step, set the top-level `status: merged` in `.hitl/current-change.yaml` so the change file does not linger and satisfy the gate for the next change.
+**The `docs` workflow is only for changes that touch nothing but docs.** Docs *and* code is a `development` change (the spine already reconciles docs), which stops `docs` becoming a way to skip the gates on real code. Its `doc_review` gate is domain-routed: Architect for design docs, PM for product, Ops for runbooks. At its final `merge` step set top-level `status: merged` in `.hitl/current-change.yaml`, so the file does not linger and satisfy the gate for the next change.
 
 State: "This looks like a **<workflow>** change because …. Proceed with the <workflow> workflow?"
 Wait for confirmation (or correction) before Step 4.
@@ -192,8 +192,9 @@ Rules that still apply when collecting the choices:
 If the validator is missing, say so **before** collecting any choices — the ledger is unenforced without it:
 
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 CHK="ci/first-pass/check_skips.py"
-[[ -f "$CHK" ]] || CHK="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/check_skips.py"
+[[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || echo "⚠ First Pass validator not found — run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
 ```
 
@@ -239,7 +240,7 @@ BRANCH=$(git branch --show-current)
 # Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.
 PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
 [[ -n "$PY" ]] || { echo "No usable Python found (need python3, python, or py on PATH)."; exit 1; }
-HITL_VERSION=$(cat "${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json" 2>/dev/null \
+HITL_VERSION=$(cat "$ROOT/.claude-plugin/plugin.json" 2>/dev/null \
   | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 
 TIER=2                       # from Step 3b — never assume it
@@ -440,11 +441,6 @@ workflow's own steps.
 Only meaningful once the change file exists. Run it **before** the Step 7 commit, so nothing
 uncertified is ever pushed:
 
-```bash
-CHK="ci/first-pass/check_skips.py"
-[[ -f "$CHK" ]] || CHK="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/check_skips.py"
-python3 "$CHK" .hitl/current-change.yaml
-```
 
 **No `--rollup` here, deliberately.** The roll-up is written at the impact step, once the change knows
 its own area — so at intake every skip would warn as missing from a ledger it cannot be in yet. A
@@ -459,8 +455,12 @@ Then fold the skips into the durable roll-up so they survive the next intake rep
 a manifest domain at all):
 
 ```bash
-RS="ci/first-pass/resurface.py"
-[[ -f "$RS" ]] || RS="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/resurface.py"
+# CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+CHK="ci/first-pass/check_skips.py"; RS="ci/first-pass/resurface.py"
+[[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/first-pass/check_skips.py"
+[[ -f "$RS" ]] || RS="$ROOT/shared/ci/first-pass/resurface.py"
+python3 "$CHK" .hitl/current-change.yaml
 python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
 ```
 

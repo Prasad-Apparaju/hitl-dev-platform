@@ -84,12 +84,14 @@ that real rather than stated — without it the requirement is prose and a relea
 it did before.
 
 ```bash
+# CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 # PARSE it. A grep for `id: release` does not match the change file, because the generator writes
 # every scalar through json.dumps and emits `id: "release"` — so the whole gate silently never ran.
 WF=$(python3 -c "import yaml;d=yaml.safe_load(open('.hitl/current-change.yaml'));print((d.get('workflow') or {}).get('id',''))" 2>/dev/null)
 if [[ "$WF" == "release" ]]; then
   GATE="ci/adversarial/check_review.py"
-  [[ -f "$GATE" ]] || GATE="$CLAUDE_PLUGIN_ROOT/shared/ci/adversarial/check_review.py"
+  [[ -f "$GATE" ]] || GATE="$ROOT/shared/ci/adversarial/check_review.py"
   if [[ -f "$GATE" ]]; then python3 "$GATE"; else echo "release gate script not found — do not publish"; fi
 fi
 ```

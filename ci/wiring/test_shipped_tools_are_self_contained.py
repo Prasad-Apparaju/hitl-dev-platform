@@ -1917,12 +1917,20 @@ def test_the_getting_started_command_count_is_right():
     table = s[s.index("| Command | When |"):s.index("The other")]
     listed = len(re.findall(r"^\| `/hitl:", table, re.M))
     claimed = int(re.search(r"The other (\d+) are", s).group(1))
+    # The prose above the table makes its own claim, and it was left saying "53 commands... you
+    # need four of them" over a six-row table. Checking only the arithmetic below the table missed
+    # both halves of that.
+    headline = int(re.search(r"There are (\d+) HITL commands", s).group(1))
+    assert "need four of them" not in s, (
+        "the lead-in still says four over a %d-row table" % listed)
     plugin = os.path.abspath(os.path.join(ROOT, "..", "hitl-claude-plugin", "skills"))
     if not os.path.isdir(plugin):
         pytest.skip("plugin repo not checked out beside this one")
     total = len([d for d in os.listdir(plugin) if os.path.isdir(os.path.join(plugin, d))])
     assert listed + claimed == total, (
         "the guide lists %d and claims %d others, but %d ship" % (listed, claimed, total))
+    assert headline == total, (
+        "the lead-in says %d commands exist; %d ship" % (headline, total))
 
 
 # --- the built plugin, not the source ------------------------------------------------------------
@@ -1974,14 +1982,24 @@ def test_no_shipped_bash_block_depends_on_an_unset_plugin_root():
     for path in _built_files():
         text = io.open(path, encoding="utf-8", errors="replace").read()
         for line_no, body in _bash_fences(text):
-            # Precise rule: inside a bash fence the variable may appear ONLY in the resolution
-            # idiom `${CLAUDE_PLUGIN_ROOT:-...}`, never as a path prefix. Checking merely that the
-            # fence resolves ROOT *somewhere* is too weak -- the block that shipped broken did
-            # resolve ROOT on one line and then built its path from the unset variable on the next.
-            for m in re.finditer(r"\$\{CLAUDE_PLUGIN_ROOT\}/", body):
+            # Inside a bash fence the variable may appear ONLY as `${CLAUDE_PLUGIN_ROOT:-}` with
+            # an EMPTY default, which is the resolve-then-fall-back idiom. Everything else is a
+            # path built from something the Bash tool does not set.
+            #
+            # The first version of this guard had two holes and both were occupied in shipped code:
+            # it required braces, so the unbraced `$CLAUDE_PLUGIN_ROOT/shared/...` in Step 3b went
+            # unnoticed (a silent no-op that never refreshed a project's validators); and it
+            # whitelisted any `${CLAUDE_PLUGIN_ROOT:-X}`, but `:-.` is not a resolution, it is a
+            # wrong default -- Step 4.5 crashed on every plugin-onboarded repo because of it.
+            pat = r"\$(?:\{CLAUDE_PLUGIN_ROOT(?::-(?P<dflt>[^}]*))?\}|CLAUDE_PLUGIN_ROOT)/"
+            # Comments explaining the defect are not the defect.
+            code = "\n".join(l for l in body.split("\n") if not l.lstrip().startswith("#"))
+            for m in re.finditer(pat, code):
+                if m.groupdict().get("dflt") == "":
+                    continue        # ${CLAUDE_PLUGIN_ROOT:-} — empty default, then resolved below
                 offenders.append("%s (fence at line %d): %s"
                                  % (os.path.relpath(path, PLUGIN_REPO), line_no,
-                                    body[max(0, m.start() - 30):m.end() + 30].strip()))
+                                    code[max(0, m.start() - 30):m.end() + 30].strip()))
     assert not offenders, (
         "these shipped bash blocks use ${CLAUDE_PLUGIN_ROOT} without resolving it, so it expands "
         "to an empty string at runtime:\n  " + "\n  ".join(sorted(set(offenders))))

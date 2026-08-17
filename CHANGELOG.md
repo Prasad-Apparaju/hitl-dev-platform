@@ -4,6 +4,35 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.7.1] — 2026-08-16
+
+Round 15 reviewed the upgrade path against 2.7.0 and cleared it, then found a class of defect one
+level down. `CLAUDE_PLUGIN_ROOT` is not in the Bash tool environment, and eight shipped code blocks
+built paths from it anyway.
+
+### Fixed
+
+- **`dev-update` Step 4.5 crashed on every plugin-onboarded project.** It resolved the workflow
+  catalog from `${CLAUDE_PLUGIN_ROOT:-.}` and fell back to a path that exists only in the HITL
+  platform repo, so it never found the catalog a product repo actually has. Nothing was lost —
+  the catalog is unchanged between 2.6.5 and 2.7.0, and it failed loudly — but it would have
+  mattered the first release that changes a workflow.
+- **Step 3b's validator refresh was a silent no-op**, so projects kept old snapshots and never
+  received checks that had shipped since.
+- **Six more blocks** across `dev-start-change`, `dev-validate`, `dev-apply-change` and
+  `dev-adversarial-review` had the same fallback, silently unresolvable.
+- **The guard for this exact class had two holes and both were occupied**: it required braces, so
+  the unbraced form slipped through, and it treated `${CLAUDE_PLUGIN_ROOT:-X}` as a resolution when
+  it is a default. It now catches every form and ignores comments.
+- **`getting-started.md` said "53 HITL commands, you need four of them"** above a six-row table,
+  with 56 shipping. The count guard now checks the prose, not only the arithmetic under the table.
+
+### Note
+
+Nothing in 2.7.0 is unsafe. Run `/hitl:dev-update` when convenient.
+
+---
+
 ## [2.7.0] — 2026-08-16
 
 ### Added

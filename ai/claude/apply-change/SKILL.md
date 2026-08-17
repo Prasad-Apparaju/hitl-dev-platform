@@ -171,8 +171,10 @@ resurfacing matches unresolved entries against those same domains and paths. Cal
 `manifest.domain` and `allowed_paths` exist, it matches nothing and silently says nothing.
 
 ```bash
+# CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 RS="ci/first-pass/resurface.py"
-[[ -f "$RS" ]] || RS="$CLAUDE_PLUGIN_ROOT/shared/ci/first-pass/resurface.py"
+[[ -f "$RS" ]] || RS="$ROOT/shared/ci/first-pass/resurface.py"
 python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
 ```
 

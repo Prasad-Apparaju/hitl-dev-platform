@@ -1,6 +1,24 @@
-id: GH-86-release-2.7.0
-title: Release 2.7.0 — preferences and draft-for
+schema_version: '2.0'
+change_id: GH-86-release-2.7.1
+tier: 2
 status: release-in-progress
+expected_branch: fix/81-82-83-dev-update
+first_pass: false
+source_artifacts:
+  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/81
+  hld: n/a
+  lld: n/a
+allowed_paths:
+- ai/
+- ci/
+- tools/
+manifest:
+  domains:
+  - name: dev-update-and-gate
+    paths:
+    - ai/
+    - ci/
+    - tools/
 workflow:
   id: release
   total: 12
@@ -71,10 +89,6 @@ skips:
   disposition: decline
   ack_by: pappar
   ts: '2026-08-16'
-  reason: 2.7.0 ships without an adversarial review of the exact commit. Five rounds reviewed this feature
-    at earlier commits; rounds 11-14 found no design defect and no failure of the safety core, and every
-    blocker was in delivery. Round 15, scoped to the upgrade path, was still running when the release
-    was cut, and the version bump would have made its verdict stale regardless. Accepted knowingly.
-predecessor:
-  id: null
-  note: development change this release ships
+  reason: 2.7.1 is the fix for round 15's findings against 2.7.0. Round 15 verdict was SHIP; its five
+    findings are addressed here and each was reproduced and re-verified, but this patch commit itself
+    is unreviewed. Accepted knowingly.

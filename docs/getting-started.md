@@ -58,7 +58,7 @@ Claude will offer this itself when you start work. Run it directly when you'd ra
 
 You don't need to know which workflow or tier is right. It asks, and it explains its reasoning.
 
-**There are 53 HITL commands. You need four of them:**
+**There are 56 HITL commands. These are the ones worth knowing:**
 
 | Command | When |
 |---|---|

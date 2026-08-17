@@ -37,12 +37,23 @@ does **not** overwrite anything yet. (Limitation: step *lines* must be single-li
 format HITL writes; a hand-authored multi-line block step is updated but flagged to verify by diff.)
 
 ```bash
-CATALOG="${CLAUDE_PLUGIN_ROOT:-.}/shared/workflows.yaml"
-[[ -f "$CATALOG" ]] || CATALOG="ai/shared/workflows.yaml"
+# Resolve the plugin root HERE, the way Steps 4.6-4.8 do. CLAUDE_PLUGIN_ROOT is not in the Bash
+# tool environment, so `${CLAUDE_PLUGIN_ROOT:-.}` silently became "./shared/workflows.yaml" and the
+# fallback pointed at ai/shared/, a path that exists only in the HITL platform repo. On every
+# plugin-onboarded product repo this step crashed with FileNotFoundError.
+ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+[[ -z "$ROOT" ]] && ROOT=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
+CATALOG="$ROOT/shared/workflows.yaml"
+# Fall back to the copy onboarding actually installs in a product repo, not to the platform path.
+[[ -f "$CATALOG" ]] || CATALOG="ci/first-pass/workflows.yaml"
+[[ -f "$CATALOG" ]] || { echo "No workflow catalog found (looked in the plugin and ci/first-pass/). Skipping the migration; nothing changed."; exit 0; }
 # Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.
 PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
 [[ -n "$PY" ]] || { echo "No usable Python found (need python3, python, or py on PATH)."; exit 1; }
-NEW_VER=$("$PY" -c "import json; print(json.load(open('${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json'))['version'])" 2>/dev/null || echo "0.0.0")
+NEW_VER=$("$PY" -c "import json; print(json.load(open('$ROOT/.claude-plugin/plugin.json'))['version'])" 2>/dev/null || echo "")
+# "0.0.0" used to be the fallback, which stamped a fake version into the user's change file and
+# permanently disabled the "skip if already current" rule.
+[[ -n "$NEW_VER" ]] || { echo "Could not read the plugin version. Skipping the migration; nothing changed."; exit 0; }
 
 "$PY" - "$CATALOG" "$NEW_VER" << 'PY'
 import sys, re, yaml, difflib
