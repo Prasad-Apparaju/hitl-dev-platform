@@ -8,19 +8,18 @@ source_artifacts:
   issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/88
   hld: n/a
   lld: n/a
-allowed_paths:
+allowed_paths: &id001
 - ai/claude/adversarial-review/
+- ai/claude/hooks/
+- ai/claude/preferences/
 - ai/shared/
 - ci/adversarial/
+- ci/hooks/
 - ci/wiring/
 manifest:
   domains:
-  - name: adversarial-review
-    paths:
-    - ai/claude/adversarial-review/
-    - ai/shared/
-    - ci/adversarial/
-    - ci/wiring/
+  - name: adversarial-review-and-hook-messages
+    paths: *id001
 workflow:
   id: development
   total: 31
