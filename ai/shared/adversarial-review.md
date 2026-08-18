@@ -21,9 +21,10 @@ two published versions and a data-loss bug in the field.
 
 Be brief, say what it costs, and make declining easy. Something like:
 
-> Design's done. Want me to run an adversarial review on it before we build? It takes about ten
-> minutes, runs in the background while you keep working, and it's looking for reasons this is
-> wrong rather than reasons it's right. Or skip it — I'll note that we did.
+> Design's done. Want me to run an adversarial review on it before we build? A round takes about
+> ten minutes and runs in the background while you keep working — it's looking for reasons this is
+> wrong rather than reasons it's right. If it finds things there may be more than one round, and
+> I'll show you what came back before I change anything. Or skip it — I'll note that we did.
 
 Three things that must be true of the offer:
 
@@ -33,6 +34,28 @@ Three things that must be true of the offer:
   working while it runs; nothing is blocked.
 - **Make declining a real option, once.** Ask, accept the answer, move on. Do not ask again in the
   same step.
+- **Say ten minutes is a round, not the review.** A change that needs three rounds costs a working
+  day. Quoting the round as the whole is how the estimate stops being believed.
+- **Say they will see the findings before anything changes.** It is the difference between a review
+  they authorised and a rewrite that arrived while they were elsewhere.
+
+## Presenting what came back
+
+Findings go to the person who owns the change **before** they are fixed, because a finding can be
+real, reproducible, and still not this change's problem. Deciding that is scope, and scope is
+theirs.
+
+Put CRITICAL and HIGH to them one at a time; summarise the rest. For each: what breaks, in a
+sentence, in their words — what it costs if it ships — and your recommendation. Never the raw
+`claim` field, never YAML, never a term the reviewer coined without glossing it. The reviewer wrote
+for you; you write for them.
+
+They answer **fix**, **accept**, or **defer**. Accept and defer both need their name in
+`accepted_by`, which is what the gate checks and what makes the decision theirs rather than yours.
+Anything they have not answered stays `open`.
+
+Keep it off the critical path. They were promised background work; a triage list they can answer
+when they get to it honours that, and a blocking prompt does not.
 
 ## When to encourage more strongly
 
@@ -136,4 +159,6 @@ release gate fails if the code has moved since, which is what stops a review of 
 counting for a later one.
 
 Findings are `open`, `fixed`, or `accepted`. Accepting one is a real decision and needs a name
-against it — that is what `accepted_by` is for.
+against it — that is what `accepted_by` is for, and the name has to belong to someone who actually
+said so. Collect it at triage; do not supply it yourself. A finding nobody has answered is `open`,
+and the gate blocking on it is the system working.

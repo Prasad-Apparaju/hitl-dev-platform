@@ -221,6 +221,72 @@ def test_every_reviewer_agent_carries_the_adversarial_stance():
     assert not missing, f"reviewer agents without the adversarial stance: {sorted(missing)}"
 
 
+def test_findings_are_put_to_a_human_before_they_are_resolved():
+    """`accepted_by` is enforced by a gate that nothing ever collected a name for.
+
+    The record template calls accepting a finding "someone's decision" and
+    ci/adversarial/check_review.py blocks with UNSIGNED_ACCEPTANCE without a name. But no step asked
+    anyone, which left "fix every CRITICAL and HIGH" as the only disposition an agent could reach —
+    and an unbounded fix-and-re-review loop as the only shape the review could take.
+
+    The seam is ORDER: putting findings to a human has to happen before resolving them, or it is a
+    notification rather than a decision. Asserted by position, not by presence, because a triage
+    section that sits after the fixes reads identically and does nothing.
+    """
+    body = _read(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    heads = re.findall(r"(?m)^## Step \d+ — (.+)$", body)
+    assert heads, "no step headings in the adversarial-review skill — this check went blind"
+
+    def _pos(pattern):
+        m = re.search(r"(?m)^## Step \d+ — .*%s.*$" % pattern, body)
+        return m.start() if m else -1
+
+    triage = _pos(r"[Pp]ut it to the user")
+    verify = _pos(r"[Vv]erify")
+    resolve = _pos(r"[Rr]esolve")
+    assert triage > 0, ("the adversarial-review skill has no step putting findings to the user; "
+                        "`accepted_by` is unreachable and 'fix everything' is the only answer")
+    assert verify > 0 and resolve > 0, "verify/resolve steps not found — the headings changed"
+    assert verify < triage < resolve, (
+        "triage must sit between verifying findings and resolving them (verify=%d, triage=%d, "
+        "resolve=%d). After the fixes it is a status update, not a decision." % (verify, triage, resolve))
+
+
+def test_an_unanswered_finding_is_never_accepted_on_someones_behalf():
+    """The failure mode of asking is an agent answering for the person it asked.
+
+    A name written into `accepted_by` that nobody said turns the one field the gate trusts into
+    decoration. Both the skill and the shared guidance have to carry the rule, because an agent
+    running the command reads one and an agent doing it by hand reads the other.
+    """
+    for rel in (os.path.join(AI, "claude", "adversarial-review", "SKILL.md"),
+                os.path.join(AI, "shared", "adversarial-review.md")):
+        txt = _read(rel)
+        assert re.search(r"(?i)not answered|unanswered|did not say", txt), (
+            "%s does not say what happens to a finding nobody answered — the default has to be "
+            "`open`, or silence reads as consent" % os.path.basename(rel))
+
+
+def test_the_review_cost_is_quoted_per_round_not_per_review():
+    """Ten minutes is a round. A change needing three rounds costs a working day.
+
+    Quoting the round as the whole review is what makes the estimate stop being believed, and it is
+    the sentence a user weighs the offer against.
+    """
+    for rel in (os.path.join(AI, "claude", "adversarial-review", "SKILL.md"),
+                os.path.join(AI, "shared", "adversarial-review.md")):
+        # Normalise first. These files are hard-wrapped and the shared doc quotes the offer inside a
+        # blockquote, so "ten minutes" is routinely split as "ten\n> minutes". A raw substring test
+        # silently skips the file it is meant to check — the same blindness that let a broken link
+        # pass 53/53 in 2.4.7.
+        flat = re.sub(r"\s+", " ", _read(rel).replace("\n>", " "))
+        if "ten minutes" not in flat.lower():
+            continue
+        assert re.search(r"(?i)a round takes.{0,30}ten minutes|ten minutes.{0,40}(is|=).{0,20}round|"
+                         r"cost of a round", flat), (
+            "%s quotes ten minutes without tying it to a single round" % os.path.basename(rel))
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish

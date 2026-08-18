@@ -1,5 +1,5 @@
 ---
-description: Run an independent adversarial review of the current work — spawns clean-context reviewers briefed to refute rather than confirm, collects reproduced findings, and writes the review record the release gate reads. Use at the end of design or code, and before publishing anything to users.
+description: Run an independent adversarial review of the current work — spawns clean-context reviewers briefed to refute rather than confirm, collects reproduced findings, puts them to you before anything is fixed, and writes the review record the release gate reads. Use at the end of design or code, and before publishing anything to users.
 argument-hint: "[what to review — a phase name, paths, or a diff range. Defaults to the whole change.]"
 disable-model-invocation: true
 ---
@@ -47,8 +47,14 @@ Record the sha. Everything below hangs off it.
 
 ## Step 2 — Say what it costs, then start it in the background
 
-Tell the user, briefly: roughly ten minutes, runs in the background, they keep working. Then start.
-Do not wait for permission a second time if they already accepted the offer at a step boundary.
+Tell the user, briefly: **a round** takes roughly ten minutes, runs in the background, they keep
+working. Say that if it finds things there may be more than one round, and that they will see what
+came back before anything is changed. Ten minutes is the cost of a round, not of the review — a
+change that needs three rounds costs a working day, and quoting the round as the whole makes the
+next estimate worthless.
+
+Then start. Do not wait for permission a second time if they already accepted the offer at a step
+boundary.
 
 ---
 
@@ -117,7 +123,52 @@ in the report.
 
 ---
 
-## Step 5 — Write the record
+## Step 5 — Put it to the user before you fix anything
+
+You have verified findings. **You do not yet know which of them this change should carry.** That is
+not your call: a finding can be real, reproducible, and still out of scope for the change in front
+of you. Scope belongs to the person who owns the change.
+
+Skipping this step is what makes a review feel like it happens in the dark — the user offered ten
+minutes of background work and got back a rewritten change hours later, having never seen what was
+found.
+
+**Put CRITICAL and HIGH to them individually. Summarise MEDIUM and LOW** — disposition those
+yourself and list them in the report. A twenty-five item ballot is not a decision, it is a signature
+mill, and a rubber-stamped `accepted_by` is worse than none because it looks like someone decided.
+
+Write each one in plain English:
+
+- **What breaks**, in a sentence, in their terms. Not the record's `claim` field, not YAML, no
+  unglossed jargon. If a reviewer wrote "the effect-tier guard misclassifies a tunnelled host",
+  you write "anyone with a port-forward open makes the deployed stack look local, so the check
+  that is supposed to stop destructive tests against production doesn't fire".
+- **What it costs if it ships**, concretely.
+- **Your recommendation**, and why. They are checking a judgement, not forming five from scratch.
+
+Then take one of three answers per finding:
+
+| Answer | What it means | What you write |
+|---|---|---|
+| **fix** | it belongs to this change | `status: fixed`, once the fix exists |
+| **accept** | real, and this change is not the place | `status: accepted` + `accepted_by:` their name |
+| **defer** | later, on the record | `status: accepted` + `accepted_by:`, and seed a fast-follow |
+
+`accepted_by` is the whole point of this step. The gate requires it and the template calls
+accepting risk "someone's decision" — so if nobody is asked, *fix everything* is the only answer
+you can reach, and that is what turns a review into a loop.
+
+**Do not block on it.** They accepted a review that runs in the background; do not convert it into
+a stop-the-world prompt. Put the list where they will see it, keep working on what is unambiguous
+(anything they already said to fix, anything MEDIUM or below), and pick the rest up when they
+answer.
+
+**A finding they have not answered is `open`.** Never accept on someone's behalf, and never write a
+name into `accepted_by` that did not say the words.
+
+---
+
+## Step 6 — Write the record
 
 Copy `shared/templates/adversarial-review-record.yaml` to
 `.hitl/reviews/<change-id>-round<N>.yaml` and fill it in.
@@ -145,9 +196,10 @@ and a round-1-clean review reads differently from a round-3-clean one.
 
 ---
 
-## Step 6 — Resolve, then re-review if needed
+## Step 7 — Resolve, then re-review if needed
 
-Fix every `CRITICAL` and `HIGH`, or accept it explicitly with `accepted_by`.
+Apply the dispositions from Step 5. Every `CRITICAL` and `HIGH` ends as `fixed` or as `accepted`
+with a name against it — an unanswered one stays `open` and the gate blocks, which is correct.
 
 **Fixing changes the code, which makes the record stale.** That is intended. Run another round
 against the new sha. Keep going until a round comes back with nothing new — convergence is the
@@ -167,7 +219,7 @@ Exit 0 means the gate is satisfied for the current commit. Exit 2 prints what is
 
 ---
 
-## Step 7 — Report
+## Step 8 — Report
 
 Tell the user, in a few lines:
 
