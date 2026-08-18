@@ -28,6 +28,7 @@ import io
 import os
 import re
 import subprocess
+import sys
 
 import pytest
 
@@ -285,6 +286,48 @@ def test_the_review_cost_is_quoted_per_round_not_per_review():
         assert re.search(r"(?i)a round takes.{0,30}ten minutes|ten minutes.{0,40}(is|=).{0,20}round|"
                          r"cost of a round", flat), (
             "%s quotes ten minutes without tying it to a single round" % os.path.basename(rel))
+
+
+def test_the_lens_catalog_and_the_gate_agree():
+    """The catalog is prose and the gate is code; the ids have to be the same set.
+
+    The catalog deliberately does not ship as a data file. `scripts/build.sh` ships shared prose
+    from an explicit allowlist and `dev-update` copies only *.py into ci/adversarial/, so a
+    lenses.yaml would be missing from the built plugin and from every repo onboarded before it —
+    the "ships to shared/ but nothing copies it in" defect of 2.4.1 and 2.6.2. The cost of keeping
+    it as prose is that it can drift from the validator, which is what this asserts.
+    """
+    sys.path.insert(0, os.path.join(ROOT, "ci", "adversarial"))
+    try:
+        import check_review
+    finally:
+        sys.path.pop(0)
+
+    doc = _read(os.path.join(AI, "shared", "adversarial-review.md"))
+    start = doc.find("## The lens catalog")
+    assert start > 0, "the lens catalog section is gone — this check went blind"
+    end = doc.find("### Older names", start)
+    assert end > start, "the catalog's alias section is gone — this check went blind"
+
+    documented = set(re.findall(r"(?m)^\| `([a-z]+)` \|", doc[start:end]))
+    documented |= set(re.findall(r"\| `([a-z]+)` \| (?:Does|What|When|Someone|This)",
+                                 doc[start:end]))
+    assert documented, "no lens ids parsed from the catalog table — the format changed"
+
+    in_code = set(check_review.LENSES)
+    missing = sorted(documented - in_code)
+    extra = sorted(in_code - documented)
+    assert not missing, ("lenses documented but unknown to the gate, so a record using one warns "
+                         "UNKNOWN_LENS: %s" % missing)
+    assert not extra, ("lenses the gate knows but the catalog never offers, so nobody can pick "
+                       "them: %s" % extra)
+
+    # `[a-z-]+`, not `[a-z]+`: a hyphenated older name (`blast-radius`) is exactly the kind of
+    # alias someone adds, and the narrower class skipped it silently.
+    aliases = set(re.findall(r"`([a-z][a-z-]*)` →", doc[start:]))
+    unmapped = sorted(a for a in aliases if a not in check_review.LENS_ALIASES)
+    assert not unmapped, ("the catalog promises these older names still resolve, and the gate does "
+                          "not map them: %s" % unmapped)
 
 
 def test_the_skip_ledger_is_never_retired_with_the_change_file():

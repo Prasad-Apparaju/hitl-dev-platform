@@ -53,6 +53,26 @@ came back before anything is changed. Ten minutes is the cost of a round, not of
 change that needs three rounds costs a working day, and quoting the round as the whole makes the
 next estimate worthless.
 
+**Say which lenses you would point it at, and why.** They know things about this change you do
+not: that the migration is already covered elsewhere, that nobody has looked at cost yet. Pick the
+plan from the catalog in `shared/adversarial-review.md` — the base pair for the phase you just
+finished, plus whatever the change earns — and name it in one line:
+
+> Design's done. Want an adversarial review before we build? I'd point it at **fitness** (does this
+> actually satisfy FR-12) and **consequence** (it rewrites records in place), plus **security**
+> since it touches the token store. Three lenses, about half an hour, runs in the background. Swap
+> or drop any of them.
+
+This is the same single question, carrying more information. **Do not add a second prompt for plan
+approval** — the offer is the plan. They can answer yes, or yes-with-changes, or no.
+
+They pick **where to look, never what will be found.** Take "drop security, it's covered by the
+pentest" as a deselection and record it; do not pass their reasoning to the reviewers, because a
+brief carrying someone's conclusion gets that conclusion back.
+
+**A dropped lens is a skip.** Record it like any other, so if something later goes wrong in that
+area it is visible that a lens for it was offered and declined.
+
 Then start. Do not wait for permission a second time if they already accepted the offer at a step
 boundary.
 
@@ -60,18 +80,16 @@ boundary.
 
 ## Step 3 — Write the briefs
 
-Spawn **two** reviewers with **different lenses**. Two reviewers with the same lens find the same
-things twice.
+Spawn one reviewer per lens the user agreed to, **never two on the same lens** — they find the
+same things twice.
 
-The default pair, which catch different classes and rarely overlap:
+The lens catalog, what each one asks, and when to add it are in `shared/adversarial-review.md`.
+The short version: the base pair is `consequence` plus the one for the phase you just finished
+(`fitness` after design, `correctness` after code, `upgrade` at release), and conditional lenses
+are added for what the change actually touches.
 
-| Lens | Asks |
-|---|---|
-| **Correctness** | Does it do what it claims? What input breaks it? Is the fix complete, or does the same bug survive somewhere the diff did not touch? |
-| **Consequence** | What does this destroy, expose, or make unrecoverable? What happens to someone who already has the old version? |
-
-Swap a lens when the work calls for it — `security` for auth and secrets, `migration` for anything
-that rewrites data in place, `compatibility` when the change lands in repos you do not control.
+**Use the catalog's ids verbatim in the record.** The gate groups records by lens to catch two
+reviewers filed under one; a hand-invented name defeats it silently.
 
 Each brief must contain, in this order:
 

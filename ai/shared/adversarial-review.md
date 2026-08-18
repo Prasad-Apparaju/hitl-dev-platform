@@ -57,6 +57,66 @@ Anything they have not answered stays `open`.
 Keep it off the critical path. They were promised background work; a triage list they can answer
 when they get to it honours that, and a blocking prompt does not.
 
+## The lens catalog
+
+A lens is the question a reviewer is pointed at. Two reviewers with the same lens find the same
+things twice, so a round is a *set* of lenses, not a headcount.
+
+**Use these ids verbatim in the record's `lens:` field.** The gate groups records by lens to catch
+two reviewers filed under one, and it can only do that if the names are stable. Inventing
+`consequence-2` for a second consequence reviewer defeats it.
+
+### The base pair — always, and one of them depends on what you just finished
+
+| Phase finished | Lens | Asks |
+|---|---|---|
+| design | `fitness` | Does this design satisfy the requirement it claims to? Which case does it not handle? |
+| code | `correctness` | Does it do what it claims? What input breaks it? Does the same bug survive somewhere the diff did not touch? |
+| release | `upgrade` | What happens to someone who already has the old version? To the next person installing fresh? |
+| any | `consequence` | What does this destroy, expose, or make unrecoverable? |
+
+`consequence` runs in every phase. Blast radius does not depend on which phase you are in.
+
+### Conditional lenses — add the ones the change earns
+
+| Lens | Asks | Add it when |
+|---|---|---|
+| `security` | What does this let someone do that they should not? | profile `security`; auth, secrets, permissions, a trust boundary |
+| `data` | What is unrecoverable if this runs wrong once? | in-place rewrites, backfills, schema changes |
+| `scalability` | What happens at a hundred times the rows, users, or calls? | tag `perf`; a new per-row or per-user path |
+| `operability` | When this breaks at 3am, how would anyone know, and how do you undo it? | tag `infra`; tier 2+; a new failure mode |
+| `compatibility` | What breaks in repos or clients you do not control? | anything shipped outward |
+| `bypass` | This adds a check. How do you get around it? | the change introduces a gate, validator, or hook |
+| `interfaces` | Does this hold at the boundary it crosses? | multi-domain scope; a facade contract changes |
+| `user` | Someone does this in normal use without reading the docs. What happens? | a user-facing surface, a new command |
+| `cost` | What does this spend, per call and per month? | new external calls, storage, or model usage |
+
+`user` and `upgrade` are in this list because of what they caught here, not for symmetry. HITL 2.7.1
+exists because a round finally looked at the upgrade path, and the feedback panel found in ordinary
+use what four adversarial rounds and an external model had missed.
+
+### Older names
+
+`destructiveness` → `consequence`. `migration` → `data`. `install` → `upgrade`. `perf` →
+`scalability`. Records using them still validate; the gate resolves them to the canonical id.
+
+### How many
+
+Two is the floor and the usual answer. Add a third or fourth when the change plainly earns it; past
+that you are buying rounds, not coverage, and each lens is another ten minutes and another set of
+findings to triage. **At `release` two distinct lenses are required** — the review is a floor step
+there, and a review with one lens, or none, is a required step satisfied with nothing in it.
+
+### Choosing is the user's, not yours
+
+Put the plan in the offer (see above) and let them cut or add. Two rules:
+
+- **They pick where to look, never what will be found.** "Add a security lens" is theirs. "Skip
+  consequence, the migration is fine" is pre-deciding the thing the review exists to test — take
+  the deselection, and do not pass the reasoning to the reviewers.
+- **A lens they drop is a skip**, recorded like any other, so that if something later goes wrong in
+  that area it is visible that a lens for it was offered and declined.
+
 ## When to encourage more strongly
 
 Offer normally, but say what you noticed when the work has the shape that reviews catch:

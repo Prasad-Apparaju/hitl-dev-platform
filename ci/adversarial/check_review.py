@@ -38,6 +38,33 @@ SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
 OPEN_STATES = ("open",)
 RESOLVED_STATES = ("fixed", "accepted")
 
+# The lens vocabulary, mirrored from the catalog in ai/shared/adversarial-review.md. Kept here as
+# data rather than read from a file on purpose: this validator is copied into product repos, and
+# `dev-update` copies only *.py into ci/adversarial/ — a catalog file would be absent in every
+# repo onboarded before it existed, which is the "ships to shared/ but nothing copies it in"
+# defect from 2.4.1 and 2.6.2. A test asserts these ids match the catalog.
+LENSES = ("fitness", "correctness", "consequence", "upgrade", "security", "data", "scalability",
+          "operability", "compatibility", "bypass", "interfaces", "user", "cost")
+
+# Older names that still appear in records written before the catalog existed.
+LENS_ALIASES = {"destructiveness": "consequence", "migration": "data", "install": "upgrade",
+                "perf": "scalability", "functionality": "fitness"}
+
+RELEASE_LENS_FLOOR = 2
+
+
+def canonical_lens(raw):
+    """Resolve a recorded lens to its catalog id.
+
+    Duplicate detection groups by lens, and it compared raw strings — so a second consequence
+    reviewer filed as `consequence-2` was invisible to it, which is exactly what happened
+    downstream. Strip the disambiguating suffix people reach for, then apply the alias map.
+    """
+    lens = str(raw or "").strip().lower()
+    lens = re.sub(r"[\s_-]*\d+$", "", lens)
+    lens = re.sub(r"[\s_-]*(bis|b|two|second)$", "", lens)
+    return LENS_ALIASES.get(lens, lens)
+
 
 def _fail(findings, code, msg):
     findings.append("[BLOCK] %s: %s" % (code, msg))
@@ -307,7 +334,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
     seen = {}
     for pth, doc in records:
         n = _round((pth, doc))
-        lens = str(doc.get("lens", "")).strip().lower()
+        lens = canonical_lens(doc.get("lens"))
         seen.setdefault((n, lens), []).append(pth)
     dupes = sorted((n, l) for (n, l), paths in seen.items() if len(paths) > 1)
     records.sort(key=_round)
@@ -323,10 +350,39 @@ def check(change_path, reviews_dir, sha=None, root="."):
     for key in dupes:
         n, lens = key
         _fail(out, "DUPLICATE_ROUND",
-              "round %s has more than one record for lens %r (%s) — which governs is decided by "
-              "filename, so a second record can silently override a do-not-ship verdict. Two "
-              "reviewers in one round is expected: give each a distinct `lens:`."
-              % (n, lens or "(unset)", ", ".join(seen[key])))
+              "round %s has more than one record for lens %r (%s). Two reviewers in one round is "
+              "expected — but on DIFFERENT lenses, or they find the same things twice. Names are "
+              "resolved to the catalog id first, so `%s-2` counts as `%s`: pick a second lens from "
+              "the catalog in shared/adversarial-review.md instead of numbering this one."
+              % (n, lens or "(unset)", ", ".join(seen[key]), lens or "x", lens or "x"))
+
+    # An unrecognised lens is information, never a block. Records written before the catalog
+    # existed have to keep validating, and a vocabulary that rejects them would be a reason to
+    # delete the check rather than fix the name.
+    for pth, doc in latest:
+        raw = str(doc.get("lens", "")).strip()
+        if raw and canonical_lens(raw) not in LENSES:
+            warnings.append(
+                "[warn] UNKNOWN_LENS: %s uses lens %r, which is not in the catalog "
+                "(shared/adversarial-review.md). It still counts; the id is what lets the gate "
+                "group reviewers and what tells the next round what was already looked at."
+                % (os.path.basename(pth), raw))
+
+    # At release the review is a floor step. One lens, or a round of two reviewers pointed at the
+    # same question, is a required step satisfied with nothing in it. This is the rule the template
+    # already asserted ("the skill mandates two reviewers per round") and nothing ever checked.
+    wf = change.get("workflow")
+    wf_id = str(wf.get("id", "")).strip().lower() if isinstance(wf, dict) else ""
+    if wf_id == "release":
+        distinct = sorted({canonical_lens(doc.get("lens")) for _, doc in latest if str(doc.get("lens", "")).strip()})
+        if len(distinct) < RELEASE_LENS_FLOOR:
+            _fail(out, "LENS_FLOOR",
+                  "round %s was reviewed through %d lens%s (%s) — a release needs at least %d "
+                  "distinct ones. Two reviewers on one question find the same things twice; pick a "
+                  "second from the catalog in shared/adversarial-review.md, or record the decision "
+                  "to ship without one as an acknowledged skip."
+                  % (top, len(distinct), "" if len(distinct) == 1 else "es",
+                     ", ".join(distinct) or "none recorded", RELEASE_LENS_FLOOR))
 
     if dirty:
         head = ", ".join(dirty[:3])

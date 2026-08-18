@@ -481,3 +481,88 @@ def test_untracked_build_output_does_not_trap_the_gate(tmp_path):
     # ...but unreviewed SOURCE still must.
     (repo / "code.py").write_text("x = 2\n", encoding="utf-8")
     assert "UNCOMMITTED_CHANGES" in _codes(check(c, r, root=str(repo))[0])
+
+# ---------------------------------------------------------------------------
+# Lens vocabulary (#90)
+# ---------------------------------------------------------------------------
+
+def _multi(tmp_path, lenses, workflow_id=None):
+    """A round reviewed through several lenses, one record each."""
+    root = tmp_path
+    change = {"change_id": "GH-80", "tier": 2}
+    if workflow_id:
+        change["workflow"] = {"id": workflow_id, "steps": []}
+    _write(root / ".hitl" / "current-change.yaml", change)
+    for i, lens in enumerate(lenses, 1):
+        _write(root / ".hitl" / "reviews" / ("GH-80-round1-%d.yaml" % i), _record(lens=lens))
+    return (str(root / ".hitl" / "current-change.yaml"), str(root / ".hitl" / "reviews"))
+
+
+def test_a_numbered_second_lens_no_longer_hides_a_duplicate(tmp_path):
+    """`consequence-2` is a second reviewer on the same question, and it read as a distinct lens.
+
+    Grouping compared raw strings, so the downstream project's extra consequence reviewer was
+    invisible to the duplicate check. Two reviewers on one lens find the same things twice, which
+    is the cost this check exists to prevent.
+    """
+    c, r = _multi(tmp_path, ["consequence", "consequence-2"])
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "DUPLICATE_ROUND" in _codes(blocks), blocks
+
+
+@pytest.mark.parametrize("alias,canon", [("destructiveness", "consequence"), ("migration", "data"),
+                                         ("install", "upgrade"), ("perf", "scalability")])
+def test_older_lens_names_still_validate(tmp_path, alias, canon):
+    """Records written before the catalog existed must keep passing.
+
+    A vocabulary that rejects yesterday's records is a reason to delete the check rather than
+    rename the lens.
+    """
+    c, r = _multi(tmp_path, ["correctness", alias])
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not blocks, blocks
+    assert not any("UNKNOWN_LENS" in w for w in warns), warns
+
+
+def test_an_alias_collides_with_its_canonical_name(tmp_path):
+    """`consequence` + `destructiveness` is one lens twice, however it is spelled."""
+    c, r = _multi(tmp_path, ["consequence", "destructiveness"])
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "DUPLICATE_ROUND" in _codes(blocks), blocks
+
+
+def test_an_unknown_lens_warns_but_never_blocks(tmp_path):
+    c, r = _multi(tmp_path, ["correctness", "vibes"])
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not blocks, blocks
+    assert any("UNKNOWN_LENS" in w for w in warns), warns
+
+
+def test_a_release_reviewed_through_one_lens_blocks(tmp_path):
+    """`adversarial_review` is a floor step at release. One lens is that step satisfied with
+    nothing in it — the rule the record template asserted and nothing ever checked."""
+    c, r = _multi(tmp_path, ["correctness"], workflow_id="release")
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "LENS_FLOOR" in _codes(blocks), blocks
+
+
+def test_a_release_reviewed_through_two_lenses_passes(tmp_path):
+    c, r = _multi(tmp_path, ["upgrade", "consequence"], workflow_id="release")
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not blocks, blocks
+
+
+def test_the_lens_floor_applies_only_to_release(tmp_path):
+    """Every other workflow keeps validating exactly as before; this rule is new, and a new rule
+    that retroactively blocks existing changes is how a gate gets switched off."""
+    for wf in (None, "development", "docs", "brownfield"):
+        c, r = _multi(tmp_path / (wf or "none"), ["correctness"], workflow_id=wf)
+        blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / (wf or "none")))
+        assert not blocks, (wf, blocks)
+
+
+def test_two_reviewers_on_one_lens_cannot_satisfy_the_release_floor(tmp_path):
+    """The floor counts DISTINCT lenses. Filing the same question twice is not coverage."""
+    c, r = _multi(tmp_path, ["consequence", "destructiveness"], workflow_id="release")
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "LENS_FLOOR" in _codes(blocks), blocks
