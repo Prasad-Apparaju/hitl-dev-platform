@@ -73,6 +73,6 @@ Run \`/hitl:check-conventions\` to verify code quality before architect code rev
 SUMMARY
 
 echo "" >&2
-echo "HITL Session Summary written to: $SUMMARY_FILE" >&2
+echo "📝 Session summary saved: $SUMMARY_FILE" >&2
 
 exit 0

@@ -275,8 +275,9 @@ BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev
 - **Disagreements:** %(disagreements)s%(tone)s
 
 Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
-— briefly if that is the setting, but never left out. If brevity and completeness conflict, cut the
-reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
+— briefly if that is the setting, but never left out. An icon is never the only thing carrying a
+warning: drop every glyph and the sentences must still say the same things. If brevity and
+completeness conflict, cut the reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
 
 **If the person in this session is not %(who)s, say so once, early, in your own words:** that you
 are following %(who)s's preferences from this repo's `CLAUDE.md`, and that `/hitl:dev-preferences`
@@ -363,7 +364,12 @@ for brevity would be self-defeating.
 > 3. **Open with** — the decision you need to make, the result, or the context?
 > 4. **Disagreements** — straight, or eased in? *(I'll still disagree either way — this is only how it opens.)*
 >
-> Anything else? "no emoji", "tables over prose", "I know this domain, skip the primer".
+> Anything else? "plain text, no icons", "tables over prose", "I know this domain, skip the primer".
+
+HITL marks state with a small set of icons by default — 🔒 paused, 🧭 where you are, ⚠️ irreversible,
+✅ done. *"Plain text"* turns them off. It cannot turn off what they mark: the sentence carries the
+warning, the icon only makes it findable, so a plain-text project gets the same words without the
+glyph.
 
 Take partial answers; default the rest and say which you assumed. Then **show the block you are
 about to write and ask before writing.**

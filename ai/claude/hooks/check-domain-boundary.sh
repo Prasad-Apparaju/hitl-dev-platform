@@ -85,7 +85,9 @@ PYEOF
 
 PYEXIT=$?
 if [[ $PYEXIT -ne 0 ]]; then
-  echo "HITL BOUNDARY CHECK ERROR: failed to parse .hitl/current-change.yaml" >&2
+  echo "⚠️  I could not read .hitl/current-change.yaml, so I cannot check this edit against the" >&2
+  echo "    paths your change declared. The file is probably malformed — worth a look before you" >&2
+  echo "    keep going, since nothing is being checked until it parses." >&2
   exit 2
 fi
 
@@ -116,14 +118,16 @@ while IFS= read -r file; do
   done <<< "$ALLOWED_PATHS"
 
   if [[ "$MATCHED" == "false" ]]; then
-    echo "HITL DOMAIN BOUNDARY WARNING:" >&2
-    echo "  File edited: $file" >&2
-    echo "  Change: $CHANGE_ID" >&2
-    echo "  This file is outside the approved allowed_paths in .hitl/current-change.yaml" >&2
-    echo "  Allowed paths:" >&2
-    while IFS= read -r p; do echo "    - $p" >&2; done <<< "$ALLOWED_PATHS"
+    echo "🧭 Heads up: $file sits outside what $CHANGE_ID said it would touch." >&2
     echo "" >&2
-    echo "  If intentional, update allowed_paths and confirm with the architect." >&2
+    echo "   The edit went through — this is a note, not a block. It matters because the scope you" >&2
+    echo "   declared is what reviewers read to know where to look." >&2
+    echo "" >&2
+    echo "   Declared for this change:" >&2
+    while IFS= read -r p; do echo "     - $p" >&2; done <<< "$ALLOWED_PATHS"
+    echo "" >&2
+    echo "   Meant to go here? Add the path to allowed_paths in .hitl/current-change.yaml and let" >&2
+    echo "   the architect know the scope grew. Did not mean to? Now is the cheap moment to undo it." >&2
   fi
 done <<< "$AFFECTED_PATHS"
 
@@ -149,12 +153,12 @@ if [[ -f "$DEPLOYMENT_VIEW" ]]; then
   done <<< "$AFFECTED_PATHS"
 
   if [[ "$IAC_EDITED" == "true" ]]; then
-    echo "HITL DEPLOYMENT VIEW MAY BE STALE:" >&2
-    echo "  IaC file edited: $IAC_FILE" >&2
-    echo "  If this changes the deployment topology (new service, new dependency," >&2
-    echo "  new environment, or CI/CD change), update:" >&2
-    echo "  $DEPLOYMENT_VIEW" >&2
-    echo "  To regenerate from current IaC: /hitl:architect-review-existing (Phase 4c)" >&2
+    echo "🧭 You changed infrastructure ($IAC_FILE), so the deployment view may now be out of date." >&2
+    echo "" >&2
+    echo "   It only matters if this added a service, a dependency, an environment, or changed CI/CD." >&2
+    echo "   If it did, the doc that describes the topology is:" >&2
+    echo "     $DEPLOYMENT_VIEW" >&2
+    echo "   /hitl:architect-review-existing (Phase 4c) regenerates it from the current IaC." >&2
   fi
 fi
 

@@ -111,11 +111,13 @@ CONTEXT_FILE=".hitl/current-change.yaml"
 
 # ── Layer 1: no active change → block all guarded edits ───────────────────────────────────────
 if ! hitl_change_active "$CONTEXT_FILE"; then
-  echo "HITL BLOCKED: no active change for this project/branch." >&2
-  echo "You must select an issue and workflow before editing files." >&2
-  echo "  Claude Code: run /hitl:dev-start-change" >&2
-  echo "  Codex:       run the Change Initialization workflow in AGENTS.md" >&2
-  echo "(Edits under .hitl/ and .claude/ are exempt so intake can write the change file.)" >&2
+  echo "🔒 Nothing is tracked for this branch yet, so edits are paused." >&2
+  echo "" >&2
+  echo "Tell me what you are working on — an issue number, or just describe it — and I will set it up." >&2
+  echo "  • Claude Code: /hitl:dev-start-change" >&2
+  echo "  • Codex: the Change Initialization workflow in AGENTS.md" >&2
+  echo "" >&2
+  echo "Files under .hitl/ and .claude/ stay editable, so setting up is never blocked by this." >&2
   exit 2
 fi
 
@@ -123,8 +125,11 @@ fi
 REQUIRED_FIELDS=("change_id" "tier" "status")
 for field in "${REQUIRED_FIELDS[@]}"; do
   if ! grep -q "^${field}:" "$CONTEXT_FILE" 2>/dev/null; then
-    echo "HITL CONTEXT INCOMPLETE: .hitl/current-change.yaml is missing required field: ${field}" >&2
-    echo "Re-run the change initialization / start workflow to regenerate the context file." >&2
+    echo "🔒 The change file is missing '${field}', so I cannot tell what you are working on." >&2
+    echo "" >&2
+    echo "That file is .hitl/current-change.yaml. Run /hitl:dev-start-change to rebuild it —" >&2
+    echo "your progress is read from the file, so check it over rather than starting again if" >&2
+    echo "you were partway through." >&2
     exit 2
   fi
 done
@@ -137,15 +142,18 @@ if [[ "$(hitl_branch_reconcile "$CONTEXT_FILE" "$CURRENT_BRANCH")" == "mismatch"
   if hitl_branch_gone "$CONTEXT_FILE"; then
     # Branch deleted on merge: the change is over, and telling someone to switch to a branch that
     # no longer exists is advice they cannot follow. Name the real remedy instead.
-    echo "HITL: change ${CHANGE_ID} looks complete — its branch '${EXPECTED}' no longer exists." >&2
-    echo "A finished change left active blocks every edit, so close it out:" >&2
-    echo "  • Set  status: \"merged\"  in .hitl/current-change.yaml to retire it, then commit." >&2
-    echo "  • Then run /hitl:dev-start-change to begin the next piece of work." >&2
+    echo "✅ ${CHANGE_ID} looks finished — its branch '${EXPECTED}' is gone, which usually means it merged." >&2
+    echo "" >&2
+    echo "It is still marked active, and an active change blocks edits everywhere else. To close it out:" >&2
+    echo "  • Set  status: \"merged\"  in .hitl/current-change.yaml, then commit that." >&2
+    echo "  • Then /hitl:dev-start-change for the next piece of work." >&2
   else
-    echo "HITL CONTEXT MISMATCH: branch '${CURRENT_BRANCH}' does not match active change ${CHANGE_ID}." >&2
-    echo "All edits are blocked until the context is realigned." >&2
-    echo "  • Run /hitl:dev-switch-context to reload context for this branch." >&2
-    echo "  • Or run /hitl:dev-start-change to select the correct change." >&2
+    echo "🧭 You are on '${CURRENT_BRANCH}', but the tracked change ${CHANGE_ID} lives on '${EXPECTED}'." >&2
+    echo "" >&2
+    echo "Edits are paused until those agree, so pick whichever is true:" >&2
+    echo "  • Working on ${CHANGE_ID}? Switch to '${EXPECTED}'." >&2
+    echo "  • Working on something else here? /hitl:dev-switch-context points HITL at this branch." >&2
+    echo "  • Starting something new? /hitl:dev-start-change." >&2
   fi
   exit 2
 fi
@@ -165,11 +173,13 @@ if [[ "$SOURCE_FILE_FOUND" == "true" ]]; then
   done
 
   if [[ "$ALLOWED" == "false" ]]; then
-    echo "HITL BLOCKED: status '${STATUS}' does not permit source code edits." >&2
-    echo "Design approval is required before writing implementation code." >&2
-    echo "  • If design is in progress: wait for the architect to reach the next gate." >&2
-    echo "  • If a gate is awaiting review: run /hitl:ta-approve to advance it." >&2
-    echo "  • If status is 'blocked': resolve the finding in .hitl/current-change.yaml first." >&2
+    echo "🔒 The design for this change is not approved yet, so code edits are on hold." >&2
+    echo "" >&2
+    echo "Docs and design files are still editable — it is only source code that waits." >&2
+    echo "Where you are: status is '${STATUS}'." >&2
+    echo "  • Design still in progress? Keep going; the gate comes to you." >&2
+    echo "  • Waiting on review? /hitl:ta-approve moves it along." >&2
+    echo "  • Blocked on a finding? It is written in .hitl/current-change.yaml — resolve that first." >&2
     exit 2
   fi
 fi

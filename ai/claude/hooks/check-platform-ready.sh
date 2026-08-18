@@ -66,9 +66,14 @@ for cand in "${HITL_PY:-}" python3 python py; do
   fi
 done
 if [[ -z "$PY" ]]; then
-  echo "HITL DEPLOY BLOCKED: no Python with PyYAML found, so the platform readiness register cannot be verified." >&2
-  echo "  Install PyYAML (pip install pyyaml) or set HITL_PY to a capable interpreter, then retry." >&2
-  echo "  A Tier ${TIER} production deploy is not allowed on an unverifiable register." >&2
+  echo "🔒 Deploy stopped: I cannot verify the readiness register, so I will not say it is ready." >&2
+  echo "" >&2
+  echo "   Reading it needs Python with PyYAML, and I could not find one." >&2
+  echo "     • pip install pyyaml" >&2
+  echo "     • or point HITL_PY at an interpreter that has it" >&2
+  echo "" >&2
+  echo "   This is a tier ${TIER} production deploy. Unverifiable is treated as not ready, on purpose —" >&2
+  echo "   the alternative is shipping on a check that silently did not run." >&2
   exit 2
 fi
 

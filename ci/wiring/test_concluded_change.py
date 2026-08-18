@@ -12,6 +12,7 @@ These are run as real processes against real git repos, because the defect was i
 hooks read git state, which no in-process test would have seen.
 """
 import os
+import re
 import subprocess
 
 import pytest
@@ -74,8 +75,11 @@ def test_branch_deleted_reports_concluded_not_mismatch():
         p = _edit(repo)
         assert p.returncode == 2, "a concluded change must still block edits (fail closed)"
         err = p.stderr
-        assert "looks complete" in err, err
-        assert "no longer exists" in err, err
+        # Properties, not phrases (#91 rewrote the wording). What must hold: the message says the
+        # change is over, names the real remedy, and never advises switching to a branch that is
+        # gone — the 2.6.1 defect, where the only advice offered was impossible to follow.
+        assert re.search(r"(?i)looks (complete|finished)|has (merged|finished)", err), err
+        assert re.search(r"(?i)no longer exists|is gone", err), err
         assert 'status: "merged"' in err, "must name the actual remedy"
         assert "dev-switch-context" not in err, "must not advise switching to a deleted branch"
 
@@ -88,9 +92,11 @@ def test_live_branch_still_reports_mismatch():
                      make_branch="issue/99-live")
         p = _edit(repo)
         assert p.returncode == 2
-        assert "CONTEXT MISMATCH" in p.stderr, p.stderr
+        # A live branch is a mismatch, not a conclusion: switching is real advice here.
         assert "dev-switch-context" in p.stderr, "switching IS the right advice here"
-        assert "looks complete" not in p.stderr
+        assert not re.search(r"(?i)looks (complete|finished)|is gone", p.stderr), (
+            "a live change must not be reported as finished — that pushes someone into re-intake "
+            "and loses their step progress")
 
 
 def test_merged_status_deactivates_and_forces_re_intake():
@@ -100,7 +106,7 @@ def test_merged_status_deactivates_and_forces_re_intake():
         repo = _repo(pathlib.Path(td), '"merged"', "issue/58-gone")
         p = _edit(repo)
         assert p.returncode == 2
-        assert "no active change" in p.stderr, p.stderr
+        assert re.search(r"(?i)nothing is tracked|no active change", p.stderr), p.stderr
         assert "dev-start-change" in p.stderr, "must send them through the front door"
 
 

@@ -381,6 +381,108 @@ def test_the_brief_asks_for_intra_file_consistency():
         "the brief never asks a reviewer to check a file against itself first")
 
 
+HOOKS = os.path.join(AI, "claude", "hooks")
+
+
+def _hook_messages():
+    """Every line a hook prints to a person, by file."""
+    out = {}
+    for f in sorted(os.listdir(HOOKS)):
+        if not f.endswith(".sh"):
+            continue
+        lines = [l.strip() for l in _read(os.path.join(HOOKS, f)).splitlines()
+                 if re.search(r'echo\s+".*"\s*>&2', l.strip())]
+        if lines:
+            out[f] = lines
+    return out
+
+
+def test_hooks_do_not_shout_their_internal_state():
+    """A gate interrupts someone mid-edit; what it says is the whole experience of being gated.
+
+    These read as a compiler reporting internal state in capitals: "HITL CONTEXT MISMATCH", "All
+    edits are blocked until the context is realigned." Nobody has a context mismatch. 2.6.0 fixed
+    exactly this in the intake banner and never reached the hooks.
+    """
+    offenders = []
+    for f, lines in _hook_messages().items():
+        for l in lines:
+            if re.search(r'"HITL [A-Z]{2,}', l) or re.search(r'"[A-Z]{3,}[A-Z ]{6,}:', l):
+                offenders.append("%s: %s" % (f, l[:70]))
+    assert not offenders, ("hook messages shouting an error code at a person:\n  "
+                           + "\n  ".join(offenders))
+
+
+def _message_blocks(text):
+    """Consecutive stderr lines are one message; a line of real code ends it.
+
+    Per MESSAGE, not per file. Checking the whole file passes as soon as any one message names a
+    remedy, so stripping the way out of three messages stayed green while a fourth still had one —
+    the guard reported on a file that no longer told most people what to do.
+    """
+    blocks, cur = [], []
+    for line in text.splitlines():
+        t = line.strip()
+        if re.search(r'echo\s+".*"\s*>&2', t) or re.search(r'echo\s+""\s*>&2', t):
+            cur.append(t)
+        elif t.startswith("while IFS=") or not t or t.startswith("#"):
+            continue                      # loops that print, blanks, comments: not a break
+        elif cur:
+            blocks.append(cur)
+            cur = []
+    if cur:
+        blocks.append(cur)
+    return [" ".join(b) for b in blocks]
+
+
+def test_a_hook_that_blocks_says_what_to_do_next():
+    """Being stopped with no way forward is what makes a gate feel broken rather than protective.
+
+    2.6.1 is the case in point: a concluded change told people to run dev-switch-context, and the
+    branch it named was deleted. The advice existed and could not be followed.
+    """
+    missing = []
+    for f in sorted(os.listdir(HOOKS)):
+        if not f.endswith(".sh"):
+            continue
+        for blk in _message_blocks(_read(os.path.join(HOOKS, f))):
+            if not re.search(r"(?i)paused|blocked|stopped|on hold", blk):
+                continue
+            if not re.search(r"/hitl:[a-z-]+|pip install|HITL_PY|Set  ?status|Switch to", blk):
+                missing.append("%s: %s" % (f, blk[:80]))
+    assert not missing, ("these messages stop someone and never name a next step:\n  "
+                         + "\n  ".join(missing))
+
+
+def test_icons_stay_out_of_the_aligned_trail():
+    """Emoji are commonly double-width and render inconsistently across terminals.
+
+    The breadcrumb is aligned text with its own assertion matrix, so icons belong in prose. The
+    existing semantic glyphs there are single-width by construction.
+    """
+    emoji = re.compile("[\U0001F300-\U0001FAFF]")
+    for name in ("workflow-steps.md",):
+        for base in (os.path.join(AI, "claude", "dev-practices"), os.path.join(AI, "shared")):
+            p = os.path.join(base, name)
+            if os.path.isfile(p):
+                for line in _read(p).splitlines():
+                    if "·" in line and ("Phase" in line or "→" in line):
+                        assert not emoji.search(line), (
+                            "%s: an emoji in the breadcrumb line breaks alignment: %s" % (name, line[:70]))
+    statusline = os.path.join(HOOKS, "statusline-hitl.sh")
+    if os.path.isfile(statusline):
+        assert not emoji.search(_read(statusline)), (
+            "the statusline is width-sensitive; keep icons out of it")
+
+
+def test_turning_icons_off_cannot_remove_a_warning():
+    """The form/substance rule, applied to glyphs. If an icon is the only thing marking a risk,
+    a plain-text project silently loses the risk."""
+    txt = _flat(os.path.join(AI, "claude", "preferences", "SKILL.md"))
+    assert re.search(r"(?i)icon is never the only thing", txt), (
+        "preferences does not say an icon can never be the only thing carrying a warning")
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish

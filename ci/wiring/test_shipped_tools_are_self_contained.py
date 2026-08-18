@@ -1067,7 +1067,7 @@ FLOOR_REGIONS = {
         "348425cc4d5c719cf944190472a7fba9fdd5529757a21d741a8c2f4c081e77c1"),
     "preferences / setting up and adjusting": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## Setting up, and adjusting',
-        "289efeeb0ee9500642074772628cb71520dda7daa186e232d3690395bd4f1bd5"),
+        "109d5ccc8f26d1b3ce5693d88db555f5c51774ec587a72a0f13fde39a1d4c643"),
     "preferences / the floor lives in the file": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## The floor, and why it lives in the file',
         "08b31fba29f94780e5bc2af96d89e9fc3e1372462f4e6c9f3dfd3284129ec36c"),
@@ -1114,7 +1114,7 @@ def test_the_floor_inside_the_emitted_block_is_unchanged():
         % (EMITTED_BLOCK_SHA, _emitted_block_hash()))
 
 
-EMITTED_BLOCK_SHA = "afeda8c4539e76bc8c98183f80a9011492fa9273d122cae35b3f4fc5b288d381"
+EMITTED_BLOCK_SHA = "2cb9a0b67d187d682a78f6e9b29a6099f1af146882e6472ce221528348bf9f92"
 
 
 if __name__ == "__main__":

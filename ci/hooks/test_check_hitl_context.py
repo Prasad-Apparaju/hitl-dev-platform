@@ -100,7 +100,11 @@ class TestGuardedPathsStillBlocked:
             hitl_project, "Write", {"file_path": str(hitl_project / "src" / "app.py")}
         )
         assert code == 2
-        assert "no active change" in err
+        # Assert the DURABLE property, not the sentence. What has to be true is that the block is
+        # explained and names the way out; the wording is meant to be rewritten (#91), and a test
+        # pinned to a phrase makes improving it look like a regression.
+        assert "dev-start-change" in err, err
+        assert "paused" in err or "blocked" in err, err
 
     def test_relative_project_source_blocked(self, hitl_project):
         code, _ = run_hook(hitl_project, "Edit", {"file_path": "src/app.py"})
