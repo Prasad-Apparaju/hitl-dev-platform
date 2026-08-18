@@ -698,10 +698,17 @@ def _fresh_project(tmp_path):
     put a documentation example of a PREFS block, at line start, inside that managed block. Every
     behavioural guard stayed green while the writer misbehaved on a really-onboarded project.
     A fixture that is not what onboarding emits is a fixture that tests a project nobody has.
+
+    The repo-local identity is part of the fixture, not scenery. The writer refuses when it cannot
+    name who set the preferences, so a fixture without one inherits whatever `git config user.name`
+    the developer happens to have -- green on a laptop, red on a CI runner and on a fresh clone.
+    Tests that exercise a MISSING name set it empty themselves and are unaffected.
     """
     d = tmp_path / "proj"
     d.mkdir()
     subprocess.run(["git", "init", "-q", "."], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.name", "Ada Lovelace"], cwd=str(d), check=True)
+    subprocess.run(["git", "config", "user.email", "ada@example.com"], cwd=str(d), check=True)
     (d / "CLAUDE.md").write_text(_onboarded_claude_md(), encoding="utf-8")
     return d
 
