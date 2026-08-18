@@ -127,7 +127,7 @@
   <div class="band-label">Where they stand today</div>
   <div class="status">
     <div class="statcard">
-      <h3>2.x — v2.1.1 <span class="pill live">CURRENT · hitl@hitl</span></h3>
+      <h3>2.x — v2.7.1 <span class="pill live">CURRENT · hitl@hitl</span></h3>
       <p>Served from <code>release/2.x</code> since 2026-07-13. Everything 1.1.0 has — including the platform-bootstrap feature (register, roadmap, hard production gate) — on the redesigned workflow model, plus the docs-only workflow and the brownfield PRD shell.</p>
     </div>
     <div class="statcard">
@@ -196,7 +196,7 @@
         <tr>
           <td class="dim">Taxonomy</td>
           <td>6 workflows (development, brownfield, migration, migration review, prd, platform); one fixed step sequence each</td>
-          <td>7 workflows (adds the docs route) / 6 profiles / 5 tags — one shared spine underneath</td>
+          <td>8 workflows (adds the docs and release routes) / 6 profiles / 5 tags — one shared spine underneath</td>
         </tr>
       </tbody>
     </table>
@@ -206,5 +206,5 @@
     <b>What upgrading means for a live project:</b> the change-file schema is additive and <code>/hitl:dev-update</code> remaps the embedded workflow by stable key — in-flight changes keep their done/current step status across the model change. The platform readiness register carries over untouched (<code>schema_version 1.0</code> on both lines). 2.x ships as a major version because the mental model is different, not because anything breaks.
   </div>
 
-  <footer>sources: workflow catalog (release/2.x vs release/1.x) · CHANGELOG 2.0.0–2.1.0 · docs/design/workflow-model · docs/design/platform-bootstrap</footer>
+  <footer>sources: workflow catalog (release/2.x vs release/1.x) · CHANGELOG 2.0.0–2.7.1 · docs/design/workflow-model · docs/design/platform-bootstrap</footer>
 </div>

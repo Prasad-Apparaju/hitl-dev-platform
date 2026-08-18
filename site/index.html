@@ -194,6 +194,43 @@
     <figcaption>the core idea on one canvas — click to open full size</figcaption>
   </figure>
 
+  <div class="group-label">What's new</div>
+  <div class="principles" style="margin-top:0">
+    <p>The principles above have been in place since 2.0. These are the capabilities added since, newest first. Full notes for every release are on <a href="https://github.com/Prasad-Apparaju/hitl-dev-platform/releases" target="_blank" rel="noopener">the releases page</a>.</p>
+    <div class="prin-grid">
+      <div class="prin">
+        <h3>How HITL talks to you <span class="pill live">2.7</span></h3>
+        <p>Tune length, whether it narrates its process, and how it opens a disagreement — per project, adjustable any time. A companion command drafts a PR comment or status note for a named reader. A preference shapes <em>form</em>, never substance: a risk, a cost, or a decision that is yours to make is stated regardless, and that rule is pinned by hash.</p>
+        <span class="mech">dev-preferences · dev-draft-for · marked CLAUDE.md block</span>
+      </div>
+      <div class="prin">
+        <h3>Releases pass a review gate <span class="pill live">2.6</span></h3>
+        <p>Publishing a version is a tracked workflow, not something one person does from memory at 11pm. An independent adversarial review is required before you ship, and a validator binds the review record to the exact code being released — so a review of some earlier state cannot satisfy it. Skipping the review needs a signed waiver.</p>
+        <span class="mech">release workflow · review record bound to the shipped tree</span>
+      </div>
+      <div class="prin">
+        <h3>The project says it uses HITL <span class="pill live">2.6</span></h3>
+        <p>A developer used to discover the framework weeks in. Onboarding now maintains a marked section in the project's <code>CLAUDE.md</code> — the only thing that can speak when the plugin isn't installed — and a getting-started guide walks one change end to end.</p>
+        <span class="mech">managed CLAUDE.md section · docs/getting-started.md</span>
+      </div>
+      <div class="prin">
+        <h3>First Pass: a thin whole version <span class="pill live">2.4–2.5</span></h3>
+        <p>Answer one menu up front — do it now, write an honest-minimal starter, defer, or decline — then build. Every lightened step is recorded with who and why, deferrals seed follow-up tickets, and skips resurface later without assigning blame. The floor for the change's tier and the TDD cycle cannot be waved through.</p>
+        <span class="mech">skip ledger · fail-closed check_skips.py · brief mode</span>
+      </div>
+      <div class="prin">
+        <h3>A front door for agentic design <span class="pill live">2.3</span></h3>
+        <p>One intake conversation elicits an agentic system's shape and risks, then recommends a proportionate set of controls, records the decisions, and draws the map. It authors no manifest field — a human writes the manifest, and the validator checks it independently, so nothing grades its own homework.</p>
+        <span class="mech">agentic-intake · recommendation report · neutral handoff</span>
+      </div>
+      <div class="prin">
+        <h3>Systems, not just services <span class="pill live">2.2</span></h3>
+        <p>The manifest can describe a product built as a graph of deterministic services and agents with sync, async and event edges. Seventeen fail-closed validators ask the questions everyone forgets: is this agent over-privileged, does the async edge have idempotency and a DLQ, is there an eval per agent and end to end, does the observability floor hold.</p>
+        <span class="mech">manifest interactions · ci/manifest-agentic · generated posture views</span>
+      </div>
+    </div>
+  </div>
+
   <div class="group-label">Start here</div>
   <div class="cards">
     <a class="pagecard feature" href="getting-started.html">
@@ -217,11 +254,11 @@
     </a>
     <a class="pagecard" href="catalog.html">
       <h2>The full catalog <span class="pill aud">EVERY STEP</span></h2>
-      <p>All 7 workflows, their phases, 84 steps and the substep, in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
+      <p>All 8 workflows, their phases, 96 steps and 3 substeps, in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
       <span class="go">open the catalog &rarr;</span>
     </a>
   </div>
 
 
-  <footer>HITL · current release: v2.1.1 (<code>hitl@hitl</code>) — the walkthrough and catalog describe what is shipped and enforced · on the legacy 1.x line (v1.1.1, <code>hitl-1x@hitl</code>, feature-frozen except critical fixes)? see the <a href="journey-1x.html">1.x reference map</a> and <a href="compare.html">what changes when you move to 2.x</a></footer>
+  <footer>HITL · current release: v2.7.1 (<code>hitl@hitl</code>) — the walkthrough and catalog describe what is shipped and enforced · on the legacy 1.x line (v1.1.1, <code>hitl-1x@hitl</code>, feature-frozen except critical fixes)? see the <a href="journey-1x.html">1.x reference map</a> and <a href="compare.html">what changes when you move to 2.x</a></footer>
 </div>

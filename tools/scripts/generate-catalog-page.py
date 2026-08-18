@@ -34,7 +34,32 @@ ORDER = [
     ("migration", "Migration — set up a target system", "run once per migration"),
     ("migration_review", "Migration Review — vet external docs", "architect gate before migration design"),
     ("platform", "Platform Bootstrap — onboarded to delivery-ready", "long-lived, per project; drives the readiness register"),
+    ("release", "Release — publish a version to users", "gated by an independent adversarial review bound to the shipped code"),
 ]
+
+
+def check_order_covers(catalog):
+    """ORDER is an allowlist, so a workflow added to the catalog silently never rendered.
+
+    That is exactly the drift this page claims it cannot have. The `release` workflow shipped in
+    2.6.4 and was absent from the catalog page until this check existed. A missing title is a build
+    failure now, not a quiet omission.
+    """
+    known = {"spine"} | set(catalog["workflows"])
+    listed = {name for name, _, _ in ORDER}
+    missing = sorted(known - listed)
+    unknown = sorted(listed - known)
+    problems = []
+    if missing:
+        problems.append("in the catalog but not on the page: " + ", ".join(missing))
+    if unknown:
+        problems.append("on the page but not in the catalog: " + ", ".join(unknown))
+    if problems:
+        raise SystemExit(
+            "generate-catalog-page: ORDER does not cover the catalog.\n  "
+            + "\n  ".join(problems)
+            + "\nAdd a (name, title, one-liner) entry to ORDER, or remove the stale one."
+        )
 
 
 def esc(value):
@@ -215,7 +240,7 @@ SHELL = """<meta charset="utf-8">
 </style>
 
 <div class="wrap">
-<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="going-ai-native.html">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a></nav>
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="going-ai-native.html">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html" class="here">Full catalog</a><a href="https://github.com/Prasad-Apparaju/hitl-dev-platform" style="margin-left:auto" target="_blank" rel="noopener">GitHub &#8599;</a></nav>
 
   <header>
     <h1>The complete workflow catalog</h1>
@@ -237,6 +262,7 @@ __FRAGMENT__
 
 def main():
     catalog = yaml.safe_load((ROOT / "tools" / "workflow-catalog" / "catalog.yaml").read_text())
+    check_order_covers(catalog)
     fragment = build_fragment(catalog)
     out_path = ROOT / "site" / "catalog.html"
     total_rows = fragment.count('details class="steprow')
