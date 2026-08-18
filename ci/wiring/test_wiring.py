@@ -41,6 +41,17 @@ HOOKS = os.path.join(AI, "claude", "hooks")
 def _read(p):
     return io.open(p, encoding="utf-8", errors="replace").read()
 
+def _flat(path):
+    """Read a doc with its hard wrapping removed.
+
+    These files wrap at 100 columns and quote things inside blockquotes, so any phrase long enough
+    to be worth asserting is usually split across a newline. Three guards in this file passed or
+    failed for that reason rather than for the rule they check. Match against this, not the raw
+    text.
+    """
+    return re.sub(r"\s+", " ", _read(path).replace("\n>", " "))
+
+
 
 def _shipped_text():
     """Everything that ships and could reference a module: skills, hooks, CI, tools."""
@@ -262,7 +273,7 @@ def test_an_unanswered_finding_is_never_accepted_on_someones_behalf():
     """
     for rel in (os.path.join(AI, "claude", "adversarial-review", "SKILL.md"),
                 os.path.join(AI, "shared", "adversarial-review.md")):
-        txt = _read(rel)
+        txt = _flat(rel)
         assert re.search(r"(?i)not answered|unanswered|did not say", txt), (
             "%s does not say what happens to a finding nobody answered — the default has to be "
             "`open`, or silence reads as consent" % os.path.basename(rel))
@@ -328,6 +339,46 @@ def test_the_lens_catalog_and_the_gate_agree():
     unmapped = sorted(a for a in aliases if a not in check_review.LENS_ALIASES)
     assert not unmapped, ("the catalog promises these older names still resolve, and the gate does "
                           "not map them: %s" % unmapped)
+
+
+def test_reviewers_hand_their_report_over_through_a_file():
+    """A named agent becomes an addressable peer, not a task that returns — it does the work and the
+    report never comes back. The skill instructed naming and its next step said "reports come back".
+
+    Verified directly: an unnamed agent returned its content in under two seconds; the named one
+    delivered nothing, never appeared in the subagent list, and did not answer a direct message.
+    So the report has to arrive through a file, and the skill must not instruct a name.
+    """
+    body = _flat(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    assert ".hitl/reviews/incoming/" in body, (
+        "no file-based report path; the skill is back to hoping reports are returned")
+    assert re.search(r"(?i)do not give the reviewers names|not give .{0,20}names", body), (
+        "the skill no longer warns against naming reviewers, which is what suppresses delivery")
+    assert re.search(r"(?i)missing file .{0,30}(unknown|never failed)|unknown, never failed", body), (
+        "nothing says a missing report is UNKNOWN — recording a reviewer as failed on a transcript "
+        "read is how a real lens was written off as incomplete")
+    assert re.search(r"(?i)do not read a reviewer's transcript|not read .{0,20}transcript", body), (
+        "the transcript race is not warned against; the last message is unflushed when an agent "
+        "goes idle, so a read returns a stub")
+
+
+def test_the_loop_stops_and_asks():
+    """Two rounds then a human decision. Not a prohibition — this repo's own 2.7.x work ran to
+    round 15 — but round 3 has to be a choice someone makes rather than a continuation."""
+    body = _flat(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    assert re.search(r"(?i)two rounds, then ask", body), "no stop condition on the fix loop"
+    assert not re.search(r"(?i)keep going until a round comes back with nothing new", body), (
+        "the unbounded 'keep going until convergence' rule is back")
+    assert re.search(r"(?i)scope question", body), (
+        "nothing tells the reader that the same decision blocking twice is a scope question")
+
+
+def test_the_brief_asks_for_intra_file_consistency():
+    """Two contradictory claims twenty lines apart survive every cross-file comparison, because
+    every other document agrees with the stale half. Found at round 4 on GH-371."""
+    body = _flat(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    assert re.search(r"(?i)each file against itself", body), (
+        "the brief never asks a reviewer to check a file against itself first")
 
 
 def test_the_skip_ledger_is_never_retired_with_the_change_file():

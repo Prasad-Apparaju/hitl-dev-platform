@@ -45,8 +45,10 @@ def _record(**over):
         "scope": "diff v1.0.0..HEAD",
         "reviewer": {"model": "fable", "context": "clean", "spawned_by": "hitl:adversarial-review"},
         "stance": "refute",
+        # A valid record closes a blocking finding with evidence, not just a status. `verified_by`
+        # is the reproduction re-run and its output; without it the gate blocks at release.
         "findings": [{"id": "F1", "severity": "HIGH", "claim": "x", "reproduction": "y",
-                      "status": "fixed"}],
+                      "status": "fixed", "verified_by": "re-ran y: exit 0, no output"}],
         "verdict": "ship",
     }
     rec.update(over)
@@ -566,3 +568,125 @@ def test_two_reviewers_on_one_lens_cannot_satisfy_the_release_floor(tmp_path):
     c, r = _multi(tmp_path, ["consequence", "destructiveness"], workflow_id="release")
     blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert "LENS_FLOOR" in _codes(blocks), blocks
+
+
+# ---------------------------------------------------------------------------
+# Closing a finding needs evidence (#88)
+# ---------------------------------------------------------------------------
+
+def _rel(tmp_path, findings, round_=1, extra_change=None):
+    root = tmp_path
+    change = {"change_id": "GH-80", "tier": 2, "workflow": {"id": "release", "steps": []}}
+    if extra_change:
+        change.update(extra_change)
+    _write(root / ".hitl" / "current-change.yaml", change)
+    for i, lens in enumerate(("correctness", "consequence"), 1):
+        rec = _record(lens=lens, round=round_, findings=findings if i == 1 else [])
+        _write(root / ".hitl" / "reviews" / ("GH-80-round%d-%d.yaml" % (round_, i)), rec)
+    return (str(root / ".hitl" / "current-change.yaml"), str(root / ".hitl" / "reviews"))
+
+
+def test_a_critical_marked_fixed_with_no_evidence_blocks_a_release(tmp_path):
+    """The asymmetry this closes: `accepted` always needed a name, `fixed` needed nothing.
+
+    An empty resolved_by AND a fabricated sha both passed the gate clean before this. The records
+    behind #88 all carried real commit ids; what none of them carried was anyone re-running the
+    reproduction.
+    """
+    c, r = _rel(tmp_path, [{"id": "F1", "severity": "CRITICAL", "claim": "data loss",
+                            "reproduction": "run x", "status": "fixed",
+                            "resolved_by": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}])
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "UNVERIFIED_FIX" in _codes(blocks), blocks
+
+
+def test_evidence_satisfies_it(tmp_path):
+    c, r = _rel(tmp_path, [{"id": "F1", "severity": "CRITICAL", "claim": "data loss",
+                            "reproduction": "run x", "status": "fixed",
+                            "verified_by": "re-ran `run x`: exits 2, refuses, nothing written"}])
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not blocks, blocks
+
+
+def test_outside_release_an_unverified_fix_warns_rather_than_blocks(tmp_path):
+    """Every existing record closes findings without this field. Blocking them retroactively is
+    how a gate gets switched off; the warning is what moves the practice."""
+    root = tmp_path
+    _write(root / ".hitl" / "current-change.yaml",
+           {"change_id": "GH-80", "tier": 2, "workflow": {"id": "development", "steps": []}})
+    _write(root / ".hitl" / "reviews" / "GH-80-round1.yaml",
+           _record(findings=[{"id": "F1", "severity": "HIGH", "claim": "x", "reproduction": "y",
+                              "status": "fixed"}]))
+    blocks, warns = check(str(root / ".hitl" / "current-change.yaml"),
+                          str(root / ".hitl" / "reviews"), sha=SHA, root=str(root))
+    assert not blocks, blocks
+    assert any("UNVERIFIED_FIX" in w for w in warns), warns
+
+
+def test_a_medium_closed_without_evidence_is_left_alone(tmp_path):
+    """The bar is for findings that block. Demanding a re-run for every LOW is how the field gets
+    filled in with 'done' to make the gate quiet."""
+    c, r = _rel(tmp_path, [{"id": "F1", "severity": "MEDIUM", "claim": "x", "reproduction": "y",
+                            "status": "fixed"}])
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not blocks, blocks
+
+
+def test_round_three_says_it_should_have_been_a_decision(tmp_path):
+    c, r = _rel(tmp_path, [], round_=3)
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not blocks, blocks
+    assert any("ROUND_DEPTH" in w for w in warns), warns
+
+
+def test_two_rounds_do_not_warn(tmp_path):
+    c, r = _rel(tmp_path, [], round_=2)
+    _, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert not any("ROUND_DEPTH" in w for w in warns), warns
+
+
+def test_the_same_finding_in_consecutive_rounds_is_flagged_as_scope(tmp_path):
+    """GH-458 re-scoped at round 4 and the recurring finding dissolved. It was available at round 2."""
+    root = tmp_path
+    _write(root / ".hitl" / "current-change.yaml", {"change_id": "GH-80", "tier": 2})
+    shared = {"id": "F1", "severity": "HIGH", "claim": "the shared account makes runs collide",
+              "reproduction": "run twice", "status": "fixed", "verified_by": "re-ran: passes"}
+    _write(root / ".hitl" / "reviews" / "GH-80-round1.yaml", _record(round=1, findings=[shared]))
+    _write(root / ".hitl" / "reviews" / "GH-80-round2.yaml", _record(round=2, findings=[shared]))
+    _, warns = check(str(root / ".hitl" / "current-change.yaml"),
+                     str(root / ".hitl" / "reviews"), sha=SHA, root=str(root))
+    assert any("RECURRING_FINDING" in w for w in warns), warns
+
+
+def test_distinct_findings_across_rounds_are_not_flagged(tmp_path):
+    root = tmp_path
+    _write(root / ".hitl" / "current-change.yaml", {"change_id": "GH-80", "tier": 2})
+    for n, claim in ((1, "the shared account collides"), (2, "the retry loop never terminates")):
+        _write(root / ".hitl" / "reviews" / ("GH-80-round%d.yaml" % n),
+               _record(round=n, findings=[{"id": "F1", "severity": "HIGH", "claim": claim,
+                                           "reproduction": "r", "status": "fixed",
+                                           "verified_by": "re-ran: passes"}]))
+    _, warns = check(str(root / ".hitl" / "current-change.yaml"),
+                     str(root / ".hitl" / "reviews"), sha=SHA, root=str(root))
+    assert not any("RECURRING_FINDING" in w for w in warns), warns
+
+
+def test_a_second_reviewers_open_critical_is_not_invisible(tmp_path):
+    """Findings were read off ONE record per round — the first adverse one, or the last if all said
+    ship. So an unresolved CRITICAL in the other reviewer's record shipped unseen.
+
+    Same shape as the duplicate-lens hole: two reviewers per round is the design, and half of them
+    were not being read. Found by writing a test that put the finding on the record the gate did not
+    happen to select.
+    """
+    root = tmp_path
+    _write(root / ".hitl" / "current-change.yaml", {"change_id": "GH-80", "tier": 2})
+    _write(root / ".hitl" / "reviews" / "GH-80-round1-a.yaml",
+           _record(lens="correctness",
+                   findings=[{"id": "F1", "severity": "CRITICAL", "claim": "unfixed data loss",
+                              "reproduction": "r", "status": "open"}]))
+    _write(root / ".hitl" / "reviews" / "GH-80-round1-b.yaml",
+           _record(lens="consequence", findings=[]))
+    blocks, _ = check(str(root / ".hitl" / "current-change.yaml"),
+                      str(root / ".hitl" / "reviews"), sha=SHA, root=str(root))
+    assert "FINDING_OPEN" in _codes(blocks), blocks

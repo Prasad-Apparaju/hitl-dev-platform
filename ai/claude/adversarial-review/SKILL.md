@@ -91,6 +91,18 @@ are added for what the change actually touches.
 **Use the catalog's ids verbatim in the record.** The gate groups records by lens to catch two
 reviewers filed under one; a hand-invented name defeats it silently.
 
+**Do not give the reviewers names.** A named agent becomes an addressable peer rather than a task
+that returns: it does the work, and its report does not come back. Attribution comes from the file
+it writes, which is a stronger claim than the agent's identity anyway.
+
+**Every reviewer writes its report to a file as its final action.** That is the only channel that
+survives whichever way the harness chooses to hand work back, and it removes the temptation to read
+a transcript, which is a race you lose:
+
+```
+.hitl/reviews/incoming/<lens>-round<N>.md
+```
+
 Each brief must contain, in this order:
 
 1. **The state under review** — the sha, and how to see the diff. Not a summary of it: let them read
@@ -99,6 +111,9 @@ Each brief must contain, in this order:
    to confirm."*
 3. **What to attack, in priority order.** Be specific about the mechanisms, not about what you think
    is wrong with them.
+   **Include: check each file against itself before checking files against each other.** Two
+   contradictory claims twenty lines apart survive every cross-file comparison, because every other
+   document agrees with the stale half.
 4. **The reproduction rule.** *"Report only findings you reproduced, with the exact command and the
    observed output."* A finding nobody reproduced is a guess, and acting on guesses turns review
    into theatre.
@@ -106,8 +121,12 @@ Each brief must contain, in this order:
    findings."* A reviewer that must produce findings will.
 6. **A verdict instruction** — SHIP or DO NOT SHIP, and if the latter, the smallest change that
    would fix it.
-7. **Working rules** — scratch directories only, restore anything touched, never modify tracked
-   files.
+7. **Where the report goes.** *"Write your full report to `.hitl/reviews/incoming/<lens>-round<N>.md`
+   as your final action, then reply with that path and nothing else."* Say it last so it is the
+   instruction nearest the end of the brief.
+8. **Working rules** — scratch directories only, restore anything touched, never modify tracked
+   files. Writing its own report file is the one exception, and `.hitl/` is exempt from the gate's
+   uncommitted-changes check for exactly this reason.
 
 ### What must not be in a brief
 
@@ -124,10 +143,18 @@ Give each reviewer a distinct name so the reports are attributable.
 
 ## Step 4 — Verify before you believe
 
-Reports come back. **Do not act on them yet.**
+**Read `.hitl/reviews/incoming/`.** Do not wait for reports to arrive on their own and do not read
+a reviewer's transcript — the last message is not flushed when the agent goes idle, so a transcript
+read returns a half-written report and looks like a reviewer that produced nothing.
 
-For each finding, reproduce it yourself. Reviewers are wrong sometimes — confidently. Relaying an
-unverified finding wastes everyone's time and teaches you to distrust the next real one.
+**A missing file means unknown, never failed.** If a lens has no report, say the lens did not
+complete and offer to re-run it. Never record a reviewer as having failed to synthesize anything:
+that is asserting a state you did not verify, the same move as marking a finding fixed without
+checking.
+
+Then, for each finding, **do not act on it yet** — reproduce it yourself. Reviewers are wrong
+sometimes, confidently. Relaying an unverified finding wastes everyone's time and teaches you to
+distrust the next real one.
 
 - **Reproduces** → it is real. Keep it, at the severity you measure, which may not be the severity
   claimed.
@@ -219,9 +246,26 @@ and a round-1-clean review reads differently from a round-3-clean one.
 Apply the dispositions from Step 5. Every `CRITICAL` and `HIGH` ends as `fixed` or as `accepted`
 with a name against it — an unanswered one stays `open` and the gate blocks, which is correct.
 
-**Fixing changes the code, which makes the record stale.** That is intended. Run another round
-against the new sha. Keep going until a round comes back with nothing new — convergence is the
-signal, not a single clean pass.
+**Fixing changes the code, which makes the record stale.** That is intended: run another round
+against the new sha.
+
+**Two rounds, then ask.** Round 3 and beyond are a decision for the person who owns the change, not
+an automatic continuation. Say what round 2 found, what is still open, and what you would do next —
+then let them choose. Fifteen rounds of hardening is a fine thing to decide to do; it is not a fine
+thing to drift into.
+
+**A round against your own repairs is not a round against the design.** The first round reads work
+that someone reasoned their way into, and finds the assumption behind it. Later rounds mostly read
+fixes written minutes earlier, and find the ones that were correct about the defect they were shown
+and wrong about its class. Yield falls, cost does not. Say which kind of round you are proposing.
+
+**Two rounds in a row blocked by the same underlying decision is a scope question, not a fix
+question.** When the same acceptance criterion or design choice keeps producing findings, stop and
+put *that* to the user. Narrowing the change often dissolves the whole cluster, and it is cheapest
+before three rounds of repairs have been built on top of it.
+
+Convergence is a signal worth having, but it is not a plan. A loop with no stop condition but
+cleanliness will keep finding the last fix's mistakes.
 
 Check where you stand:
 

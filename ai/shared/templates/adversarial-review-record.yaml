@@ -44,6 +44,11 @@ findings: []
 #   reproduction: ""         # the command and observed output. A finding nobody reproduced is a guess.
 #   status: open             # open | fixed | accepted
 #   resolved_by: ""          # commit that fixed it
+#   verified_by: ""          # HOW YOU KNOW it is fixed: the reproduction above, re-run, and what it
+#                            # printed. A commit id says where the fix went, not that it worked —
+#                            # records that closed CRITICALs against a fix which did not hold all
+#                            # carried real commit ids. Required at release for CRITICAL and HIGH;
+#                            # a warning everywhere else.
 #   accepted_by: ""          # required when status is 'accepted' — accepting risk is someone's decision
 
 verdict: do-not-ship         # ship | do-not-ship. Anything but 'ship' blocks the release.
