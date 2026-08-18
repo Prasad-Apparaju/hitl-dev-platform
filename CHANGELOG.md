@@ -4,6 +4,118 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.8.0] — 2026-08-18
+
+Adversarial review was the one part of HITL that had never been reviewed. Three reports from real
+use, plus what checking them turned up, add up to this release. **If you run
+`/hitl:dev-adversarial-review`, this changes how it behaves.**
+
+### Fixed
+
+- **The reviewers' reports were not reaching anyone.** The skill told you to give each reviewer a
+  name; naming turns a task that returns into an addressable peer that goes idle, so the report is
+  written and never handed back. On one change, ten reviewers produced full reports — 13,000 to
+  25,000 characters each — and not one was delivered. They were recovered by hand out of log files.
+
+  Verified here rather than assumed: two agents, identical prompts, one named. The unnamed one
+  returned its answer in 1.9 seconds. The named one delivered nothing, never appeared in the
+  subagent list, and answered a direct question with an idle signal carrying no content.
+
+  Reviewers now write their report to `.hitl/reviews/incoming/<lens>-round<N>.md` and the skill
+  reads the file. **A missing report is UNKNOWN, never "the reviewer failed"** — reading a
+  transcript to find out is a race, and losing it wrote a false record claiming a reviewer had
+  never synthesized anything. It had; the file was mid-flush.
+
+- **Marking a finding fixed required no evidence at all.** Accepting a risk has always needed a
+  name against it. Claiming you had eliminated one needed nothing: a CRITICAL marked `fixed` with
+  an empty `resolved_by`, or a fabricated commit id, passed the gate clean and printed *"adversarial
+  review present, fresh, and cleared."*
+
+  New `verified_by` records the reproduction re-run and what it printed. Blocks at release for
+  CRITICAL and HIGH, warns elsewhere so existing records keep validating. Deliberately not a
+  commit-pointer check: every false closure in the reports behind this carried a real commit id.
+
+- **The gate read one reviewer's findings per round.** It picked the first record whose verdict was
+  adverse — or the last one if they all said ship — and inspected only that one. A second
+  reviewer's unresolved CRITICAL shipped unseen. Two reviewers per round is the whole design, and
+  half of them were not being read. Found while writing a test for something else.
+
+- **A second reviewer on the same question was invisible.** Duplicate detection compared raw lens
+  strings, so filing one as `consequence-2` slipped past it. Names now resolve to a catalog id
+  first.
+
+### Added
+
+- **Findings are put to you before anything is fixed.** A finding can be real, reproducible, and
+  still not this change's problem — and deciding that is scope, which is yours. CRITICAL and HIGH
+  come to you one at a time in plain English (what breaks, what it costs, the recommendation);
+  MEDIUM and LOW are summarised. You answer fix, accept, or defer. It does not block, and anything
+  you have not answered stays open.
+
+  This is what makes `accepted_by` reachable. The gate has always required it and nothing ever
+  asked anyone for a name, which left *fix everything* as the only answer an agent could give — and
+  that is what turned reviews into a loop.
+
+- **A lens catalog.** Thirteen named lenses with a base pair that depends on what you just
+  finished: `fitness` after design, `correctness` after code, `upgrade` at release, `consequence`
+  always. Then conditional ones the change earns — `security`, `data`, `scalability`,
+  `operability`, `compatibility`, `bypass`, `interfaces`, `user`, `cost`.
+
+  The plan goes into the offer that already exists rather than a second prompt. You pick where to
+  look, never what will be found, and a lens you drop is recorded like any other skip.
+
+  `user` and `upgrade` are in the catalog because of what they caught here: 2.7.1 exists because a
+  round finally looked at the upgrade path, and the feedback panel found in ordinary use what four
+  adversarial rounds and an external model had missed. Neither was a documented lens.
+
+- **Two rounds, then it asks.** Not a cap — this framework's own 2.7.x work ran to round 15 and
+  round 15 found something — but round three is a decision someone makes, not a continuation. The
+  gate also flags a finding that appears in consecutive rounds: two rounds blocked by one
+  underlying decision is a scope question, not another fix.
+
+- **Two distinct lenses are required at release.** The record template always asserted the skill
+  mandates two reviewers per round. Nothing checked it, and a round with one lens is a required
+  step satisfied with nothing in it. Release only.
+
+### Changed
+
+- **HITL stops talking like a compiler.** It interrupts you mid-edit and then reports its internal
+  state in capitals: *"HITL CONTEXT MISMATCH: branch 'main' does not match active change GH-58. All
+  edits are blocked until the context is realigned."* Nobody has a context mismatch. Nobody
+  realigns anything. Several messages offered no way forward at all.
+
+  All 42 of them, across five hooks, now say the same thing the way a colleague would and end with
+  what to do next:
+
+  ```
+  🔒 Nothing is tracked for this branch yet, so edits are paused.
+
+  Tell me what you are working on — an issue number, or just describe it — and I will set it up.
+  ```
+
+  Same gates, same exit codes, same enforcement. Icons are a small set marking state — 🔒 paused,
+  🧭 where you are, ⚠️ irreversible, ✅ done — extending the existing `✓ ✗ ● ◐ ○ ·` vocabulary
+  rather than decorating. They stay out of the breadcrumb and statusline, which are width-sensitive.
+  They never celebrate: a 🎉 on a skipped review congratulates someone for lowering the bar.
+  `/hitl:dev-preferences` accepts *"plain text, no icons"*, and cannot turn off what an icon marks —
+  the sentence carries the warning, the glyph only makes it findable.
+
+- **The portal had not moved since v2.1.1** while the plugin shipped to 2.7.1, so it advertised none
+  of First Pass, the compound-agentic surface, the agentic intake, or the release gate. It also
+  turned out the catalog page silently dropped the `release` workflow: its generator uses a
+  hand-maintained allowlist, and a workflow missing from it never rendered — on a page whose own
+  copy says it cannot drift. That is a build failure now. The generator was also overwriting the
+  page's navigation on every deploy, so the live catalog had been missing its "Getting started" and
+  GitHub links since they were added.
+
+### Note for existing projects
+
+Run `/hitl:dev-update`. Records written before this release keep validating: an unrecognised lens
+warns rather than blocks, `destructiveness`, `migration`, `install` and `perf` resolve to their
+catalog ids, and `verified_by` is only enforced at release.
+
+---
+
 ## [2.7.1] — 2026-08-16
 
 Round 15 reviewed the upgrade path against 2.7.0 and cleared it, then found a class of defect one
