@@ -1,0 +1,47 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 2
+lens: bypass
+reviewed_sha: 54abacb2eabd0da4a050b0e88195545084399fec
+reviewed_tree: e9e2859bbbd310d7ea1f36b419657609cbd29faa
+scope: diff 7a12355..54abacb (the round-1 fixes) within diff v2.7.1..54abacb
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review round 2 \u2014 unnamed clean-context subagent"
+  brief: Assume the round-1 fixes are wrong, incomplete, or bypassable. Refute, do not confirm.
+stance: refute
+findings:
+- id: R2B-1
+  severity: CRITICAL
+  claim: "The floor counts records that no other check ever validates \u2014 independence, stance, open findings\
+    \ and verdict are all checked only on the top round, so an earlier record satisfies the floor without being\
+    \ a review the gate would accept."
+  reproduction: See .hitl/reviews/incoming/bypass-round2.md R2-1, escalating fixtures.
+  status: open
+- id: R2B-2
+  severity: CRITICAL
+  claim: The all-rounds change made the string-counting weakness (round 1 B-2) worse rather than better; shipping
+    in this state is not defensible.
+  reproduction: See bypass-round2.md R2-2.
+  status: open
+- id: R2B-3
+  severity: HIGH
+  claim: Round 1's B-1 was not fixed in code. Only this repo's change file was edited. The release-only rules still
+    key on a free-text string, so any release whose change file says otherwise silently skips both gates.
+  reproduction: check_review.py:376 is_release = wf_id == 'release'; validate/SKILL.md:92 unchanged. Confirmed independently
+    by the release author.
+  status: open
+- id: R2B-4
+  severity: HIGH
+  claim: Three shipped files promise a rule the gate no longer enforces; the absence check for the naming instruction
+    is byte-exact and four rewordings pass; the message-block parser hides a dead end behind a branch nobody reaches.
+  reproduction: See bypass-round2.md R2-4, R2-5, R2-6. R2-5 confirmed independently by the release author.
+  status: open
+- id: R2B-5
+  severity: MEDIUM
+  claim: One collector widened and the other not; B-6 residue; the block message attributes an all-rounds count
+    to the top round.
+  reproduction: See bypass-round2.md R2-7, R2-8, R2-10.
+  status: open
+verdict: do-not-ship

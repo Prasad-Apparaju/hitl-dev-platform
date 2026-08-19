@@ -1,0 +1,43 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 2
+lens: consequence
+reviewed_sha: 54abacb2eabd0da4a050b0e88195545084399fec
+reviewed_tree: e9e2859bbbd310d7ea1f36b419657609cbd29faa
+scope: diff 7a12355..54abacb (the round-1 fixes) within diff v2.7.1..54abacb
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review round 2 \u2014 unnamed clean-context subagent"
+  brief: Assume the round-1 fixes are wrong, incomplete, or bypassable. Refute, do not confirm.
+stance: refute
+findings:
+- id: R2C-1
+  severity: CRITICAL
+  claim: The LENS_FLOOR fix removed the only thing keeping round-1 CRITICALs alive. Findings are read from the top
+    round; the floor used to be read there too, so a narrow round 2 could not be the top round. Decoupling them
+    means a clean one-lens round 2 now clears a release carrying open CRITICALs from round 1.
+  reproduction: 'r1 fitness + consequence, each with an OPEN CRITICAL (''deletes the user database on upgrade'',
+    ''credentials written to world-readable log''); r2 fitness clean, verdict ship. Gate: blocks NONE, warns none,
+    neither CRITICAL named. Reproduced independently by the release author.'
+  status: open
+- id: R2C-2
+  severity: HIGH
+  claim: 'The release floor counts records the gate itself would reject as reviews: an uncatalogued lens, a garbage
+    reviewed_sha, or a record that is not a review at all can satisfy it from an earlier round.'
+  reproduction: See .hitl/reviews/incoming/consequence-round2.md fixtures C, D, E.
+  status: open
+- id: R2C-3
+  severity: HIGH
+  claim: The message-block parser was loosened to accommodate the empty-branch fix, weakening the guard that would
+    have caught that regression.
+  reproduction: See consequence-round2.md HIGH-3.
+  status: open
+- id: R2C-4
+  severity: MEDIUM
+  claim: The widened shouting guard reads only the first line of each call; the release note describes behaviour
+    that does not ship; the CRITICAL fix shipped with no test; one of two empty-able variables guarded; check_review.py
+    contradicts itself 50 lines apart; the SKILL.md guard asserts a string not a property.
+  reproduction: See consequence-round2.md MEDIUM-4..6, LOW-7, LOW-9, LOW-10.
+  status: open
+verdict: do-not-ship
