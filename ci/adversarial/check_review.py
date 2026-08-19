@@ -53,6 +53,18 @@ LENS_ALIASES = {"destructiveness": "consequence", "migration": "data", "install"
 RELEASE_LENS_FLOOR = 2
 
 
+def _looks_like_a_release(change, root):
+    """Cheap signals that this change is publishing a version, whatever its workflow says."""
+    cid = str(change.get("change_id") or "").lower()
+    if "release" in cid:
+        return "change_id names a release"
+    steps = (change.get("workflow") or {}).get("steps") if isinstance(change.get("workflow"), dict) else None
+    keys = {str(s.get("key", "")) for s in steps if isinstance(s, dict)} if isinstance(steps, list) else set()
+    if {"publish", "version_bump"} & keys:
+        return "the plan contains publish/version_bump steps"
+    return ""
+
+
 def canonical_lens(raw):
     """Resolve a recorded lens to its catalog id.
 
@@ -374,12 +386,33 @@ def check(change_path, reviews_dir, sha=None, root="."):
     wf = change.get("workflow")
     wf_id = str(wf.get("id", "")).strip().lower() if isinstance(wf, dict) else ""
     is_release = wf_id == "release"
+    # The release-only rules key on a free-text field, so a change file that says anything else
+    # skips them silently — which is how they failed to run on the release that introduced them.
+    # The key cannot be made trustworthy here, so say so out loud when this looks like a release
+    # and the workflow does not claim to be one.
+    if not is_release and _looks_like_a_release(change, root):
+        warnings.append(
+            "[warn] RELEASE_RULES_INACTIVE: this change looks like a release (%s) but its "
+            "workflow is %r, so the release-only checks (two distinct lenses, evidence for a "
+            "closed CRITICAL/HIGH) are NOT running. Set workflow.id to 'release' if it is one."
+            % (_looks_like_a_release(change, root), wf_id or "unset"))
     if is_release:
         # ALL rounds, not just the top one. Counting `latest` punished the normal loop: round 1
         # with two lenses, round 2 re-reviewing one fix with one lens, and the release blocked —
         # so a release that reviewed MORE than the minimum failed while one that did less passed.
+        # Only records that are actually reviews, and only lenses that exist. The floor counted
+        # any record with any non-empty lens string, so an uncatalogued name, a garbage
+        # reviewed_sha, a confirming stance, or an inherited context all satisfied it — none of
+        # which the gate would accept as a review anywhere else. Two invented ids cleared it.
+        def _is_a_review(doc):
+            r = doc.get("reviewer") if isinstance(doc.get("reviewer"), dict) else {}
+            return (str(doc.get("stance", "")).strip().lower() == "refute"
+                    and str(r.get("context", "")).strip().lower() == "clean"
+                    and len(str(doc.get("reviewed_sha", "")).strip()) >= MIN_SHA
+                    and canonical_lens(doc.get("lens")) in LENSES)
+
         distinct = sorted({canonical_lens(doc.get("lens")) for _, doc in records
-                           if str(doc.get("lens", "")).strip()})
+                           if _is_a_review(doc)})
         if len(distinct) < RELEASE_LENS_FLOOR:
             _fail(out, "LENS_FLOOR",
                   "round %s was reviewed through %d lens%s (%s) — a release needs at least %d "
@@ -461,7 +494,40 @@ def check(change_path, reviews_dir, sha=None, root="."):
     # were read off the selected record alone, so a second reviewer's unresolved CRITICAL shipped
     # unseen whenever the selected record said `ship` — the same shape as the duplicate-lens hole:
     # two reviewers per round is the design, and half of them were not being read.
+    # An open CRITICAL or HIGH from ANY round is still open. Findings used to be read from the top
+    # round alone, which was survivable only by accident: the lens floor also read the top round,
+    # so a narrow round 2 could not be the top round and the earlier findings stayed in view.
+    # Decoupling the floor removed that accident, and a clean one-lens round 2 then cleared a
+    # release carrying two open CRITICALs. A finding is closed by being fixed or accepted, never
+    # by a later round declining to mention it.
+    def _identity(item):
+        """What makes two records refer to the same finding: its id, or failing that its claim."""
+        fid = str(item.get("id", "")).strip().lower()
+        claim = re.sub(r"[^a-z0-9 ]", "", str(item.get("claim", "")).lower()).strip()[:60]
+        return (fid or None, claim or None)
+
+    # Resolved anywhere, in any round, counts as resolved. A later round marking a finding fixed
+    # or accepted is exactly how the loop is supposed to close one.
+    _resolved = set()
+    for _p, _doc in records:
+        for _item in (_doc.get("findings") or []):
+            if isinstance(_item, dict) and \
+                    str(_item.get("status", "")).strip().lower() in RESOLVED_STATES:
+                for _k in _identity(_item):
+                    if _k:
+                        _resolved.add(_k)
+
     findings = []
+    for _p, _doc in records:
+        if _round((_p, _doc)) == top:
+            continue
+        for _i, _item in enumerate(_doc.get("findings") or []):
+            if not isinstance(_item, dict):
+                continue
+            if (str(_item.get("status", "open")).strip().lower() in OPEN_STATES
+                    and str(_item.get("severity", "")).strip().upper() in BLOCKING
+                    and not any(k and k in _resolved for k in _identity(_item))):
+                findings.append((_p, _i, _item))
     for _p, _doc in latest:
         _f = _doc.get("findings")
         if _f is None:

@@ -357,7 +357,18 @@ def test_reviewers_hand_their_report_over_through_a_file():
     # Presence of the new rule is not absence of the old one. Both sentences shipped together in
     # the same step — the fix and its cause — and every test passed, because each guard only ever
     # asserted that its own sentence existed.
-    assert not re.search(r"(?i)give each reviewer a distinct name", body), (
+    # Byte-exact matching let four rewordings through ("a distinct, stable name", "every
+    # reviewer", "**distinct name**", "Each reviewer needs a distinct name"). Match the SHAPE:
+    # an instruction to give reviewers names, however it is phrased.
+    NAMING = re.compile(r"(?i)(give|assign)\s+(each|every|the)?\s*reviewers?\s+.{0,30}names?\b"
+                        r"|reviewers?\s+needs?\s+.{0,20}\bnames?\b"
+                        r"|name\s+(each|every)\s+reviewer")
+    # The skill's own rule is "Do NOT give the reviewers names", which matches the same shape.
+    # Judge each hit by what precedes it rather than by the hit alone.
+    instructing = [m for m in NAMING.finditer(body)
+                   if not re.search(r"(?i)\b(do not|don't|never|no)\s*$",
+                                    body[max(0, m.start() - 24):m.start()])]
+    assert not instructing, (
         "the 2.7.1 instruction to name reviewers is still here. That instruction is what stopped "
         "ten reports from ever being delivered; it cannot coexist with the fix for it")
     assert re.search(r"(?i)missing file .{0,30}(unknown|never failed)|unknown, never failed", body), (
