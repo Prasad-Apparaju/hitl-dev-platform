@@ -375,13 +375,20 @@ def check(change_path, reviews_dir, sha=None, root="."):
     wf_id = str(wf.get("id", "")).strip().lower() if isinstance(wf, dict) else ""
     is_release = wf_id == "release"
     if is_release:
-        distinct = sorted({canonical_lens(doc.get("lens")) for _, doc in latest if str(doc.get("lens", "")).strip()})
+        # ALL rounds, not just the top one. Counting `latest` punished the normal loop: round 1
+        # with two lenses, round 2 re-reviewing one fix with one lens, and the release blocked —
+        # so a release that reviewed MORE than the minimum failed while one that did less passed.
+        distinct = sorted({canonical_lens(doc.get("lens")) for _, doc in records
+                           if str(doc.get("lens", "")).strip()})
         if len(distinct) < RELEASE_LENS_FLOOR:
             _fail(out, "LENS_FLOOR",
                   "round %s was reviewed through %d lens%s (%s) — a release needs at least %d "
-                  "distinct ones. Two reviewers on one question find the same things twice; pick a "
-                  "second from the catalog in shared/adversarial-review.md, or record the decision "
-                  "to ship without one as an acknowledged skip."
+                  "distinct ones, across all its rounds. Two reviewers on one question find the "
+                  "same things twice; pick a second lens from the catalog in "
+                  "shared/adversarial-review.md and run it.\n"
+                  "        Do NOT reach for the adversarial_review skip to clear this: that waives "
+                  "the whole gate, including every open finding, and records that no review "
+                  "happened at all — which would be false."
                   % (top, len(distinct), "" if len(distinct) == 1 else "es",
                      ", ".join(distinct) or "none recorded", RELEASE_LENS_FLOOR))
 

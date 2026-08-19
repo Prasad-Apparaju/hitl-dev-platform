@@ -1,0 +1,39 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 1
+lens: bypass
+reviewed_sha: 7a123555727f92e8dc1ae3595249a552ec334dcb
+reviewed_tree: a84cd1d918cd06a2b65be0d95cb45db4fe4d96ae
+scope: diff v2.7.1..7a12355 (25 files)
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review \u2014 unnamed clean-context subagent"
+  brief: Assume it is broken/harmful/bypassable and find how. Refute, do not confirm.
+stance: refute
+findings:
+- id: B1
+  severity: CRITICAL
+  claim: The two new release-only checks did not run on their own release.
+  reproduction: workflow.id == 'development' in .hitl/current-change.yaml at 7a12355.
+  status: fixed
+  resolved_by: this commit
+  verified_by: 'release now runs under GH-92-release-2.8.0 (workflow.id: release); check_review.py evaluates LENS_FLOOR
+    and UNVERIFIED_FIX against it.'
+- id: B2
+  severity: CRITICAL
+  claim: LENS_FLOOR counts distinct strings, not distinct lenses.
+  reproduction: two invented lens ids satisfied the floor; canonical_lens('second') == ''.
+  status: accepted
+  accepted_by: pappar
+  resolved_by: 'partially addressed: counting now spans all rounds. The string-vs-lens weakness is deferred to the
+    follow-up issue with U-M and B-6..B-12.'
+- id: B-H
+  severity: HIGH
+  claim: change_id differing only in case is dropped silently; round inflation buries an open CRITICAL; the no-shouting,
+    aligned-trail and next-step guards are each defeatable while staying green.
+  reproduction: See .hitl/reviews/incoming/bypass-round1.md B-3, B-5, B-6, B-7, B-8.
+  status: accepted
+  accepted_by: pappar
+  resolved_by: deferred at triage; the no-shouting guard was hardened for the Python-block case (B-6 partially).
+verdict: do-not-ship

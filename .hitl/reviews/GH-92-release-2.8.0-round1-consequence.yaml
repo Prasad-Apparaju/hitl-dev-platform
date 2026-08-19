@@ -1,0 +1,54 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 1
+lens: consequence
+reviewed_sha: 7a123555727f92e8dc1ae3595249a552ec334dcb
+reviewed_tree: a84cd1d918cd06a2b65be0d95cb45db4fe4d96ae
+scope: diff v2.7.1..7a12355 (25 files)
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review \u2014 unnamed clean-context subagent"
+  brief: Assume it is broken/harmful/bypassable and find how. Refute, do not confirm.
+stance: refute
+findings:
+- id: C1
+  severity: CRITICAL
+  claim: "LENS_FLOOR counts the top round only, so a normal converge loop (r1 two lenses, r2 one-lens re-review)\
+    \ blocks \u2014 doing MORE review fails while doing less passes. The escape it advises waives the whole gate\
+    \ and silently discards open CRITICALs."
+  reproduction: 'fixture r1=correctness+consequence, r2=correctness -> blocks [''LENS_FLOOR'']; with an acknowledged
+    adversarial_review skip an OPEN CRITICAL ''deletes the user database on upgrade'' produced blocks: none and
+    was never mentioned.'
+  status: fixed
+  resolved_by: this commit
+  verified_by: 're-ran both fixtures: converge loop now blocks [] (passes); a release reviewed through one lens
+    across all rounds still blocks [''LENS_FLOOR'']. Message no longer points at the adversarial_review skip.'
+- id: C2-H1
+  severity: HIGH
+  claim: The CHANGELOG told existing projects the upgrade is validation-neutral. Records that passed on 2.7.1 now
+    block at release.
+  reproduction: 2.7.1 exit=0 vs 2.8.0 exit=2 with blocks=['LENS_FLOOR'] on the same record set.
+  status: fixed
+  resolved_by: this commit
+  verified_by: CHANGELOG 'Note for existing projects' now states exactly which two rules are new, that they are
+    release-only, and that the earlier draft was wrong.
+- id: C2-H2
+  severity: HIGH
+  claim: The deploy gate's four user-facing messages live in its Python block and were never rewritten; the new
+    no-shouting guard scans only bash echoes and certified the file clean.
+  reproduction: 'bash hooks_new/check-platform-ready.sh production printed ''HITL DEPLOY BLOCKED: ...'' byte-identical
+    to v2.7.1; the guard''s regex reported [] offenders.'
+  status: fixed
+  resolved_by: this commit
+  verified_by: all four rewritten; grep 'HITL [A-Z]{2,}' across ai/claude/hooks/*.sh returns nothing; the guard
+    now also scans print(/block( lines.
+- id: C2-M
+  severity: MEDIUM
+  claim: Round-2 findings inspection, unignored incoming dir, unreachable boundary-error message, DUPLICATE_ROUND
+    on legitimately distinct names, stale onboarding docs.
+  reproduction: See .hitl/reviews/incoming/consequence-round1.md MEDIUM-1..3, LOW-1..3.
+  status: accepted
+  accepted_by: pappar
+  resolved_by: deferred to a follow-up issue at triage
+verdict: do-not-ship

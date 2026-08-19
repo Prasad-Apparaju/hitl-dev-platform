@@ -150,8 +150,8 @@ try:
     except Exception:
         # FAIL CLOSED: an unparseable register never releases a production deploy,
         # whatever text it happens to contain.
-        block("HITL DEPLOY BLOCKED: platform readiness register is not parseable.",
-              f"  Fix {path} or re-run /hitl:ops-plan-platform derive.")
+        block("🔒 Deploy stopped: I cannot read the readiness register, so I cannot say this is ready.",
+              f"  The file is {path}. Fix it, or re-run /hitl:ops-plan-platform derive to rebuild it.")
 
     # The flag is DERIVED (template contract: "never hand-set"). It is never a bypass:
     # readiness is re-derived from the items and waivers below, so a hand-flipped
@@ -257,8 +257,8 @@ try:
     # FAIL CLOSED on a structurally empty register: no items means the register was
     # never derived (or was truncated). There is nothing to trust — whatever the flag says.
     if total_items == 0:
-        lines = [f"HITL DEPLOY BLOCKED: platform readiness register has no items "
-                 f"(Tier {tier} production deploy)."]
+        lines = [f"🔒 Deploy stopped: the readiness register is empty, so there is nothing to "
+                 f"check this tier {tier} production deploy against."]
         if flag_ready:
             lines.append("  delivery_ready: true cannot be honored on an empty register "
                          "— the flag is derived from items that are not there.")
@@ -282,8 +282,8 @@ try:
                            "— the flag is derived, never hand-set; re-run "
                            "/hitl:ops-plan-platform verify-ready")
 
-    print(f"HITL DEPLOY BLOCKED: platform is not delivery-ready (Tier {tier} production deploy).",
-          file=sys.stderr)
+    print(f"🔒 Deploy stopped: this project is not delivery-ready yet, and this is a tier {tier} "
+          f"production deploy. What is still open:", file=sys.stderr)
     for b in blockers:
         print(f"  • {b}", file=sys.stderr)
     print("  Run /hitl:ops-plan-platform status for the full picture, or record complete "
@@ -292,7 +292,7 @@ try:
 except SystemExit:
     raise
 except Exception as exc:  # FAIL CLOSED on anything unexpected — never crash into a deploy
-    block("HITL DEPLOY BLOCKED: platform readiness register could not be evaluated "
-          f"({type(exc).__name__}).",
-          f"  Fix {path} or re-run /hitl:ops-plan-platform derive.")
+    block("🔒 Deploy stopped: something went wrong reading the readiness register "
+          f"({type(exc).__name__}), so I will not report it as ready.",
+          f"  The file is {path}. Fix it, or re-run /hitl:ops-plan-platform derive.")
 PYEOF

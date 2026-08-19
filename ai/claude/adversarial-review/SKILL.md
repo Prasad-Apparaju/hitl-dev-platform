@@ -137,7 +137,7 @@ Each brief must contain, in this order:
 - **Reassurance of any kind** — "this is well tested", "this was already reviewed". Both are
   invitations to look less hard.
 
-Give each reviewer a distinct name so the reports are attributable.
+Attribution comes from the report file each reviewer writes, not from the agent.
 
 ---
 

@@ -148,10 +148,19 @@ if [[ "$(hitl_branch_reconcile "$CONTEXT_FILE" "$CURRENT_BRANCH")" == "mismatch"
     echo "  • Set  status: \"merged\"  in .hitl/current-change.yaml, then commit that." >&2
     echo "  • Then /hitl:dev-start-change for the next piece of work." >&2
   else
-    echo "🧭 You are on '${CURRENT_BRANCH}', but the tracked change ${CHANGE_ID} lives on '${EXPECTED}'." >&2
+    # expected_branch is empty on the older change-file shape, where the change is matched from an
+    # issue/N-* branch name instead. Interpolating it blind printed "lives on ''" and "Switch to ''".
+    if [[ -n "$EXPECTED" ]]; then
+      echo "🧭 You are on '${CURRENT_BRANCH}', but the tracked change ${CHANGE_ID} lives on '${EXPECTED}'." >&2
+    else
+      echo "🧭 You are on '${CURRENT_BRANCH}', which does not match the tracked change ${CHANGE_ID}." >&2
+      echo "   (That change does not record a branch, so I cannot tell you which one to switch to.)" >&2
+    fi
     echo "" >&2
     echo "Edits are paused until those agree, so pick whichever is true:" >&2
-    echo "  • Working on ${CHANGE_ID}? Switch to '${EXPECTED}'." >&2
+    if [[ -n "$EXPECTED" ]]; then
+      echo "  • Working on ${CHANGE_ID}? Switch to '${EXPECTED}'." >&2
+    fi
     echo "  • Working on something else here? /hitl:dev-switch-context points HITL at this branch." >&2
     echo "  • Starting something new? /hitl:dev-start-change." >&2
   fi

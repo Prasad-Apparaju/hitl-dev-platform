@@ -1,0 +1,50 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 1
+lens: upgrade
+reviewed_sha: 7a123555727f92e8dc1ae3595249a552ec334dcb
+reviewed_tree: a84cd1d918cd06a2b65be0d95cb45db4fe4d96ae
+scope: diff v2.7.1..7a12355 (25 files)
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review \u2014 unnamed clean-context subagent"
+  brief: Assume it is broken/harmful/bypassable and find how. Refute, do not confirm.
+stance: refute
+findings:
+- id: U-H1
+  severity: HIGH
+  claim: 'The rewritten mismatch message interpolates expected_branch, which is empty on the older change-file shape:
+    users saw "lives on ''''" and "Switch to ''''."'
+  reproduction: change file with no expected_branch on branch issue/42-something -> "lives on ''"; v2.7.1's message
+    never referenced the variable.
+  status: fixed
+  resolved_by: this commit
+  verified_by: same fixture now prints 'which does not match the tracked change GH-7' plus an explicit note that
+    no branch is recorded; regression test added and mutation-tested (reintroducing the interpolation fails it).
+- id: U-H2
+  severity: HIGH
+  claim: The skill tells you both to name the reviewers and not to; the 2.7.1 naming instruction is the last line
+    of Step 3, closest to where agents are spawned. The guard only asserted the new sentence exists.
+  reproduction: grep -n -i name SKILL.md showed line 94 'Do not give the reviewers names' and line 140 'Give each
+    reviewer a distinct name'. All 762 tests passed with both present.
+  status: fixed
+  resolved_by: this commit
+  verified_by: line deleted; guard now asserts the old sentence is ABSENT, not merely that the new one is present.
+- id: U-H3
+  severity: HIGH
+  claim: 'The new release-only rules were switched off for their own release: the change file said workflow.id development.'
+  reproduction: yaml showed workflow.id == 'development'; LENS_FLOOR/UNVERIFIED_FIX fire only on 'release'.
+  status: fixed
+  resolved_by: this commit
+  verified_by: 'release run moved onto GH-92-release-2.8.0 with workflow.id: release; the gate now evaluates both
+    rules against this release and blocks on a missing record.'
+- id: U-M
+  severity: MEDIUM
+  claim: canonical_lens strips a bare 'b'/digits; two invented lenses satisfy the floor; an undocumented fifth alias;
+    portal announces v2.7.1; 'plain text no icons' does not turn icons off; icon vocabulary larger than documented.
+  reproduction: See .hitl/reviews/incoming/upgrade-round1.md F6-F12.
+  status: accepted
+  accepted_by: pappar
+  resolved_by: deferred to a follow-up issue at triage
+verdict: do-not-ship

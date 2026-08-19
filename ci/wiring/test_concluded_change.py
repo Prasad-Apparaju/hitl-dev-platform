@@ -138,3 +138,31 @@ def test_branch_gone_helper_is_conservative_about_unfetched_branches():
              'source "%s/_steps.sh"; hitl_branch_gone .hitl/current-change.yaml' % HOOKS],
             cwd=str(repo), capture_output=True, text=True)
         assert probe.returncode == 1, "a remote-only branch must not be treated as gone"
+
+
+def test_a_change_with_no_recorded_branch_never_says_switch_to_nothing(tmp_path):
+    """The older change-file shape records no `expected_branch`; the change is matched from an
+    `issue/N-*` branch name instead. The rewritten message interpolated it blind, so a hard block
+    on every edit read "lives on ''" and "Switch to ''." — two of three remedies unreadable.
+
+    The message it replaced never referenced the variable, so this was introduced by the rewrite.
+    """
+    r = tmp_path / "repo"
+    (r / ".hitl").mkdir(parents=True)
+    _git(str(r), "init", "-q", "-b", "main")
+    _git(str(r), "config", "user.email", "t@t")
+    _git(str(r), "config", "user.name", "t")
+    (r / "seed.txt").write_text("x", encoding="utf-8")
+    _git(str(r), "add", "-A")
+    _git(str(r), "commit", "-qm", "seed")
+    _git(str(r), "checkout", "-q", "-b", "issue/42-something")
+    (r / ".hitl" / "current-change.yaml").write_text(
+        CHANGE.format(status="implementation-approved", branch="").replace(
+            'expected_branch: ""\n', ""), encoding="utf-8")
+
+    p = _edit(r)
+    assert p.returncode == 2, "still a hard block"
+    assert "''" not in p.stderr, ("an empty branch was interpolated into the advice:\n" + p.stderr)
+    assert "Switch to ''" not in p.stderr, p.stderr
+    assert "/hitl:dev-switch-context" in p.stderr, "the remedies that DO apply must survive"
+

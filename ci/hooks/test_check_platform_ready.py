@@ -102,6 +102,17 @@ def project(tmp_path):
     return tmp_path
 
 
+def _says_empty(err):
+    """The register has no items to check against."""
+    return "empty" in err or "no items" in err
+
+
+def _says_unreadable(err):
+    """The register could not be read or parsed, so readiness cannot be asserted."""
+    return ("not parseable" in err or "cannot read" in err.lower()
+            or "could not be evaluated" in err or "went wrong reading" in err)
+
+
 class TestEnvironmentScope:
     def test_staging_never_gated(self, project):
         write_register(project, REGISTER_WITH_GAP)
@@ -156,7 +167,10 @@ class TestRegisterStates:
                        'schema_version: "1.0"\nlayers: {}\ndelivery_ready: true\nwaivers: []\n')
         code, err = run_gate(project, "production", 2)
         assert code == 2
-        assert "no items" in err and "cannot be honored" in err
+        # Properties, not phrases (#91 rewrote these messages). What must hold: it says the
+        # register is empty, and it refuses to honour a hand-set delivery_ready on that basis.
+        assert _says_empty(err), err
+        assert "derived from items that are not there" in err, err
 
     def test_delivery_ready_flag_on_truncated_register_blocks(self, project):
         # Flag true + missing canonical items: schema validation still runs.
@@ -182,7 +196,7 @@ class TestRegisterStates:
         write_register(project, "layers: [broken\ndelivery_ready: false\n")
         code, err = run_gate(project, "production", 2)
         assert code == 2
-        assert "not parseable" in err
+        assert _says_unreadable(err), err
 
     def test_unparseable_register_with_ready_line_still_blocks(self, project):
         # Codex major 6: malformed YAML containing 'delivery_ready: true' must fail
@@ -190,7 +204,7 @@ class TestRegisterStates:
         write_register(project, "layers: [broken\ndelivery_ready: true\n")
         code, err = run_gate(project, "production", 2)
         assert code == 2
-        assert "not parseable" in err
+        assert _says_unreadable(err), err
 
     def test_non_mapping_register_blocks(self, project):
         write_register(project, "- just\n- a\n- list\n")
@@ -202,7 +216,7 @@ class TestRegisterStates:
         write_register(project, 'schema_version: "1.0"\nlayers: {}\ndelivery_ready: false\nwaivers: []\n')
         code, err = run_gate(project, "production", 2)
         assert code == 2
-        assert "no items" in err
+        assert _says_empty(err), err
 
     def test_missing_layers_blocks(self, project):
         write_register(project, 'schema_version: "1.0"\ndelivery_ready: false\n')
@@ -219,7 +233,7 @@ class TestRegisterStates:
             (reg_dir / "platform-readiness.yaml").write_text(f.read())
         code, err = run_gate(project, "production", 2)
         assert code == 2
-        assert "not parseable" not in err
+        assert not _says_unreadable(err), err
         for item in ("D1", "E1", "F1"):
             assert item in err
 

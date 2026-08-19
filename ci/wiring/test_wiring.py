@@ -354,6 +354,12 @@ def test_reviewers_hand_their_report_over_through_a_file():
         "no file-based report path; the skill is back to hoping reports are returned")
     assert re.search(r"(?i)do not give the reviewers names|not give .{0,20}names", body), (
         "the skill no longer warns against naming reviewers, which is what suppresses delivery")
+    # Presence of the new rule is not absence of the old one. Both sentences shipped together in
+    # the same step — the fix and its cause — and every test passed, because each guard only ever
+    # asserted that its own sentence existed.
+    assert not re.search(r"(?i)give each reviewer a distinct name", body), (
+        "the 2.7.1 instruction to name reviewers is still here. That instruction is what stopped "
+        "ten reports from ever being delivered; it cannot coexist with the fix for it")
     assert re.search(r"(?i)missing file .{0,30}(unknown|never failed)|unknown, never failed", body), (
         "nothing says a missing report is UNKNOWN — recording a reviewer as failed on a transcript "
         "read is how a real lens was written off as incomplete")
@@ -390,8 +396,12 @@ def _hook_messages():
     for f in sorted(os.listdir(HOOKS)):
         if not f.endswith(".sh"):
             continue
+        # Bash echoes AND the python heredocs. check-platform-ready.sh speaks to a user from
+        # inside a `python3 << PYEOF` block via print(..., file=sys.stderr) and block(...); the
+        # echo-only scan saw 8 of its lines and certified the 4 a user actually hits as fine.
         lines = [l.strip() for l in _read(os.path.join(HOOKS, f)).splitlines()
-                 if re.search(r'echo\s+".*"\s*>&2', l.strip())]
+                 if re.search(r'echo\s+".*"\s*>&2', l.strip())
+                 or re.search(r'(print|block)\s*\(\s*f?"', l.strip())]
         if lines:
             out[f] = lines
     return out
@@ -425,8 +435,12 @@ def _message_blocks(text):
         t = line.strip()
         if re.search(r'echo\s+".*"\s*>&2', t) or re.search(r'echo\s+""\s*>&2', t):
             cur.append(t)
-        elif t.startswith("while IFS=") or not t or t.startswith("#"):
-            continue                      # loops that print, blanks, comments: not a break
+        elif (t.startswith("while IFS=") or not t or t.startswith("#")
+              or re.match(r"^(if|elif|else|fi|then|done|do)\b", t)):
+            # Loops, conditionals, blanks and comments do not end a message. One message often
+            # varies a line by a condition — the remedy can sit in the branch after the sentence
+            # that announces the block, and splitting there reports a message that does not exist.
+            continue
         elif cur:
             blocks.append(cur)
             cur = []

@@ -84,8 +84,9 @@ use, plus what checking them turned up, add up to this release. **If you run
   edits are blocked until the context is realigned."* Nobody has a context mismatch. Nobody
   realigns anything. Several messages offered no way forward at all.
 
-  All 42 of them, across five hooks, now say the same thing the way a colleague would and end with
-  what to do next:
+  All 46 of them, across five hooks — including the four inside the deploy gate's Python
+  block, which a first pass missed — now say the same thing the way a colleague would and end
+  with what to do next:
 
   ```
   🔒 Nothing is tracked for this branch yet, so edits are paused.
@@ -110,9 +111,21 @@ use, plus what checking them turned up, add up to this release. **If you run
 
 ### Note for existing projects
 
-Run `/hitl:dev-update`. Records written before this release keep validating: an unrecognised lens
-warns rather than blocks, `destructiveness`, `migration`, `install` and `perf` resolve to their
-catalog ids, and `verified_by` is only enforced at release.
+Run `/hitl:dev-update`.
+
+**If you use the release workflow, some records that passed before will now block**, and that is
+the point of them — but know it before you upgrade mid-release. On a change whose workflow is
+`release`, a round reviewed through fewer than two distinct lenses now fails `LENS_FLOOR`, and a
+CRITICAL or HIGH marked `fixed` without `verified_by` now fails `UNVERIFIED_FIX`. Both are new
+requirements, not stricter readings of old ones.
+
+Everywhere else the upgrade is quiet: outside a release, an unverified fix warns rather than
+blocks, an unrecognised lens warns rather than blocks, and `destructiveness`, `migration`,
+`install` and `perf` resolve to their catalog ids. Nothing that passed on a `development`,
+`docs`, `brownfield` or `platform` change fails now.
+
+The earlier draft of this note said records written before the release keep validating, full stop.
+That was wrong, and the review that caught it is the one this release ships.
 
 ---
 
