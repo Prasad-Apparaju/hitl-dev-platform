@@ -18,7 +18,7 @@ lens: ""                     # An id from the catalog in shared/adversarial-revi
                              # twice. Do not number a second one (`consequence-2`): the gate
                              # resolves that back to `consequence` and reports the duplicate.
                              # If ANY lens in a round says do-not-ship, the round says do-not-ship.
-                             # At release, two distinct lenses are required.
+                             # Two lenses at release is the practice; it is not gate-enforced (#92).
 reviewed_sha: ""             # the commit reviewed. MUST match what ships, or it blocks.
 reviewed_tree: ""            # git rev-parse HEAD^{tree} — lets a squash-merged review still
                              # count when the content is byte-identical and the commit is gone.
@@ -45,10 +45,9 @@ findings: []
 #   status: open             # open | fixed | accepted
 #   resolved_by: ""          # commit that fixed it
 #   verified_by: ""          # HOW YOU KNOW it is fixed: the reproduction above, re-run, and what it
-#                            # printed. A commit id says where the fix went, not that it worked —
-#                            # records that closed CRITICALs against a fix which did not hold all
-#                            # carried real commit ids. Required at release for CRITICAL and HIGH;
-#                            # a warning everywhere else.
+#                            # printed. Not enforced — a commit id says where the fix went, not that
+#                            # it worked, and the check that would have required this was cut in
+#                            # 2.8.0 (#92). Fill it in anyway; the next round reads it.
 #   accepted_by: ""          # required when status is 'accepted' — accepting risk is someone's decision
 
 verdict: do-not-ship         # ship | do-not-ship. Anything but 'ship' blocks the release.

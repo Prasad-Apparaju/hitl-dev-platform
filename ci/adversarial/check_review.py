@@ -50,20 +50,6 @@ LENSES = ("fitness", "correctness", "consequence", "upgrade", "security", "data"
 LENS_ALIASES = {"destructiveness": "consequence", "migration": "data", "install": "upgrade",
                 "perf": "scalability", "functionality": "fitness"}
 
-RELEASE_LENS_FLOOR = 2
-
-
-def _looks_like_a_release(change, root):
-    """Cheap signals that this change is publishing a version, whatever its workflow says."""
-    cid = str(change.get("change_id") or "").lower()
-    if "release" in cid:
-        return "change_id names a release"
-    steps = (change.get("workflow") or {}).get("steps") if isinstance(change.get("workflow"), dict) else None
-    keys = {str(s.get("key", "")) for s in steps if isinstance(s, dict)} if isinstance(steps, list) else set()
-    if {"publish", "version_bump"} & keys:
-        return "the plan contains publish/version_bump steps"
-    return ""
-
 
 def canonical_lens(raw):
     """Resolve a recorded lens to its catalog id.
@@ -380,51 +366,6 @@ def check(change_path, reviews_dir, sha=None, root="."):
                 "group reviewers and what tells the next round what was already looked at."
                 % (os.path.basename(pth), raw))
 
-    # At release the review is a floor step. One lens, or a round of two reviewers pointed at the
-    # same question, is a required step satisfied with nothing in it. This is the rule the template
-    # already asserted ("the skill mandates two reviewers per round") and nothing ever checked.
-    wf = change.get("workflow")
-    wf_id = str(wf.get("id", "")).strip().lower() if isinstance(wf, dict) else ""
-    is_release = wf_id == "release"
-    # The release-only rules key on a free-text field, so a change file that says anything else
-    # skips them silently — which is how they failed to run on the release that introduced them.
-    # The key cannot be made trustworthy here, so say so out loud when this looks like a release
-    # and the workflow does not claim to be one.
-    if not is_release and _looks_like_a_release(change, root):
-        warnings.append(
-            "[warn] RELEASE_RULES_INACTIVE: this change looks like a release (%s) but its "
-            "workflow is %r, so the release-only checks (two distinct lenses, evidence for a "
-            "closed CRITICAL/HIGH) are NOT running. Set workflow.id to 'release' if it is one."
-            % (_looks_like_a_release(change, root), wf_id or "unset"))
-    if is_release:
-        # ALL rounds, not just the top one. Counting `latest` punished the normal loop: round 1
-        # with two lenses, round 2 re-reviewing one fix with one lens, and the release blocked —
-        # so a release that reviewed MORE than the minimum failed while one that did less passed.
-        # Only records that are actually reviews, and only lenses that exist. The floor counted
-        # any record with any non-empty lens string, so an uncatalogued name, a garbage
-        # reviewed_sha, a confirming stance, or an inherited context all satisfied it — none of
-        # which the gate would accept as a review anywhere else. Two invented ids cleared it.
-        def _is_a_review(doc):
-            r = doc.get("reviewer") if isinstance(doc.get("reviewer"), dict) else {}
-            return (str(doc.get("stance", "")).strip().lower() == "refute"
-                    and str(r.get("context", "")).strip().lower() == "clean"
-                    and len(str(doc.get("reviewed_sha", "")).strip()) >= MIN_SHA
-                    and canonical_lens(doc.get("lens")) in LENSES)
-
-        distinct = sorted({canonical_lens(doc.get("lens")) for _, doc in records
-                           if _is_a_review(doc)})
-        if len(distinct) < RELEASE_LENS_FLOOR:
-            _fail(out, "LENS_FLOOR",
-                  "round %s was reviewed through %d lens%s (%s) — a release needs at least %d "
-                  "distinct ones, across all its rounds. Two reviewers on one question find the "
-                  "same things twice; pick a second lens from the catalog in "
-                  "shared/adversarial-review.md and run it.\n"
-                  "        Do NOT reach for the adversarial_review skip to clear this: that waives "
-                  "the whole gate, including every open finding, and records that no review "
-                  "happened at all — which would be false."
-                  % (top, len(distinct), "" if len(distinct) == 1 else "es",
-                     ", ".join(distinct) or "none recorded", RELEASE_LENS_FLOOR))
-
     if top >= 3:
         warnings.append(
             "[warn] ROUND_DEPTH: this is round %d. Two rounds then a human decision is the rule — "
@@ -554,19 +495,6 @@ def check(change_path, reviews_dir, sha=None, root="."):
             continue
         if sev in BLOCKING and state in OPEN_STATES:
             unresolved.append("%s: %s" % (sev, str(f.get("claim", "?"))[:80]))
-        # Closing a finding needs evidence, and a commit id is not it. Every false closure in the
-        # reports that prompted this carried a real commit that touched the right files; what was
-        # missing was anyone re-running the reproduction. `accepted` has needed a name since the
-        # gate existed — `fixed` needed nothing at all, so the honest answer ("I fixed it") and the
-        # convenient one were indistinguishable.
-        if state == "fixed" and sev in BLOCKING and not str(f.get("verified_by", "")).strip():
-            msg = ("%s: findings[%d] is a %s marked fixed with no verified_by — record the "
-                   "reproduction re-run and what it printed. `resolved_by` says where the fix "
-                   "went, not that it worked." % (fpath, i, sev))
-            if is_release:
-                _fail(out, "UNVERIFIED_FIX", msg)
-            else:
-                warnings.append("[warn] UNVERIFIED_FIX: " + msg)
 
         if state == "accepted" and not str(f.get("accepted_by", "")).strip():
             _fail(out, "UNSIGNED_ACCEPTANCE",

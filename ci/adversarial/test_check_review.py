@@ -540,39 +540,9 @@ def test_an_unknown_lens_warns_but_never_blocks(tmp_path):
     assert any("UNKNOWN_LENS" in w for w in warns), warns
 
 
-def test_a_release_reviewed_through_one_lens_blocks(tmp_path):
-    """`adversarial_review` is a floor step at release. One lens is that step satisfied with
-    nothing in it — the rule the record template asserted and nothing ever checked."""
-    c, r = _multi(tmp_path, ["correctness"], workflow_id="release")
-    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
-    assert "LENS_FLOOR" in _codes(blocks), blocks
 
 
-def test_a_release_reviewed_through_two_lenses_passes(tmp_path):
-    c, r = _multi(tmp_path, ["upgrade", "consequence"], workflow_id="release")
-    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
-    assert not blocks, blocks
 
-
-def test_the_lens_floor_applies_only_to_release(tmp_path):
-    """Every other workflow keeps validating exactly as before; this rule is new, and a new rule
-    that retroactively blocks existing changes is how a gate gets switched off."""
-    for wf in (None, "development", "docs", "brownfield"):
-        c, r = _multi(tmp_path / (wf or "none"), ["correctness"], workflow_id=wf)
-        blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / (wf or "none")))
-        assert not blocks, (wf, blocks)
-
-
-def test_two_reviewers_on_one_lens_cannot_satisfy_the_release_floor(tmp_path):
-    """The floor counts DISTINCT lenses. Filing the same question twice is not coverage."""
-    c, r = _multi(tmp_path, ["consequence", "destructiveness"], workflow_id="release")
-    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
-    assert "LENS_FLOOR" in _codes(blocks), blocks
-
-
-# ---------------------------------------------------------------------------
-# Closing a finding needs evidence (#88)
-# ---------------------------------------------------------------------------
 
 def _rel(tmp_path, findings, round_=1, extra_change=None):
     root = tmp_path
@@ -586,50 +556,8 @@ def _rel(tmp_path, findings, round_=1, extra_change=None):
     return (str(root / ".hitl" / "current-change.yaml"), str(root / ".hitl" / "reviews"))
 
 
-def test_a_critical_marked_fixed_with_no_evidence_blocks_a_release(tmp_path):
-    """The asymmetry this closes: `accepted` always needed a name, `fixed` needed nothing.
-
-    An empty resolved_by AND a fabricated sha both passed the gate clean before this. The records
-    behind #88 all carried real commit ids; what none of them carried was anyone re-running the
-    reproduction.
-    """
-    c, r = _rel(tmp_path, [{"id": "F1", "severity": "CRITICAL", "claim": "data loss",
-                            "reproduction": "run x", "status": "fixed",
-                            "resolved_by": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}])
-    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
-    assert "UNVERIFIED_FIX" in _codes(blocks), blocks
 
 
-def test_evidence_satisfies_it(tmp_path):
-    c, r = _rel(tmp_path, [{"id": "F1", "severity": "CRITICAL", "claim": "data loss",
-                            "reproduction": "run x", "status": "fixed",
-                            "verified_by": "re-ran `run x`: exits 2, refuses, nothing written"}])
-    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
-    assert not blocks, blocks
-
-
-def test_outside_release_an_unverified_fix_warns_rather_than_blocks(tmp_path):
-    """Every existing record closes findings without this field. Blocking them retroactively is
-    how a gate gets switched off; the warning is what moves the practice."""
-    root = tmp_path
-    _write(root / ".hitl" / "current-change.yaml",
-           {"change_id": "GH-80", "tier": 2, "workflow": {"id": "development", "steps": []}})
-    _write(root / ".hitl" / "reviews" / "GH-80-round1.yaml",
-           _record(findings=[{"id": "F1", "severity": "HIGH", "claim": "x", "reproduction": "y",
-                              "status": "fixed"}]))
-    blocks, warns = check(str(root / ".hitl" / "current-change.yaml"),
-                          str(root / ".hitl" / "reviews"), sha=SHA, root=str(root))
-    assert not blocks, blocks
-    assert any("UNVERIFIED_FIX" in w for w in warns), warns
-
-
-def test_a_medium_closed_without_evidence_is_left_alone(tmp_path):
-    """The bar is for findings that block. Demanding a re-run for every LOW is how the field gets
-    filled in with 'done' to make the gate quiet."""
-    c, r = _rel(tmp_path, [{"id": "F1", "severity": "MEDIUM", "claim": "x", "reproduction": "y",
-                            "status": "fixed"}])
-    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
-    assert not blocks, blocks
 
 
 def test_round_three_says_it_should_have_been_a_decision(tmp_path):

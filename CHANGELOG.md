@@ -31,9 +31,10 @@ use, plus what checking them turned up, add up to this release. **If you run
   an empty `resolved_by`, or a fabricated commit id, passed the gate clean and printed *"adversarial
   review present, fresh, and cleared."*
 
-  New `verified_by` records the reproduction re-run and what it printed. Blocks at release for
-  CRITICAL and HIGH, warns elsewhere so existing records keep validating. Deliberately not a
-  commit-pointer check: every false closure in the reports behind this carried a real commit id.
+  The record now carries `verified_by` for the reproduction re-run and what it printed. It is a
+  field to fill in, not yet a rule: the check that would have required it was cut from this release
+  (see the note below). A commit id says where a fix went, not that it worked — every false closure
+  in the reports behind this carried a real commit id.
 
 - **The gate read one reviewer's findings per round.** It picked the first record whose verdict was
   adverse — or the last one if they all said ship — and inspected only that one. A second
@@ -73,9 +74,8 @@ use, plus what checking them turned up, add up to this release. **If you run
   gate also flags a finding that appears in consecutive rounds: two rounds blocked by one
   underlying decision is a scope question, not another fix.
 
-- **Two distinct lenses are required at release.** The record template always asserted the skill
-  mandates two reviewers per round. Nothing checked it, and a round with one lens is a required
-  step satisfied with nothing in it. Release only.
+- **Two distinct lenses at release is now written down as the practice**, with the catalog to pick
+  the second from. Enforcing it in the gate was attempted and cut; see below.
 
 ### Changed
 
@@ -111,21 +111,27 @@ use, plus what checking them turned up, add up to this release. **If you run
 
 ### Note for existing projects
 
-Run `/hitl:dev-update`.
+Run `/hitl:dev-update`. **Nothing that validated before this release fails now.**
 
-**If you use the release workflow, some records that passed before will now block**, and that is
-the point of them — but know it before you upgrade mid-release. On a change whose workflow is
-`release`, a round reviewed through fewer than two distinct lenses now fails `LENS_FLOOR`, and a
-CRITICAL or HIGH marked `fixed` without `verified_by` now fails `UNVERIFIED_FIX`. Both are new
-requirements, not stricter readings of old ones.
+### On two checks that are not in this release
 
-Everywhere else the upgrade is quiet: outside a release, an unverified fix warns rather than
-blocks, an unrecognised lens warns rather than blocks, and `destructiveness`, `migration`,
-`install` and `perf` resolve to their catalog ids. Nothing that passed on a `development`,
-`docs`, `brownfield` or `platform` change fails now.
+This release was going to add two rules to the release gate: a release must be reviewed through at
+least two distinct lenses, and a CRITICAL or HIGH marked `fixed` must record how that was verified.
+Both are good rules. Neither shipped.
 
-The earlier draft of this note said records written before the release keep validating, full stop.
-That was wrong, and the review that caught it is the one this release ships.
+Three rounds of independent review found **ten CRITICAL findings, every one of them inside those two
+checks** — and none anywhere else in this release. Each round's fixes produced the next round's
+CRITICALs. The last of them was a heuristic added to catch a specific failure, which turned out not
+to fire on the exact case it was written for.
+
+The root cause is structural rather than a run of bugs: this validator was built to judge one review
+round, and both rules require reasoning about a *sequence* of rounds — what an earlier round found,
+whether a later one really closed it. Bolting that on at the end of a release was the wrong place to
+discover it. The redesign is issue #92.
+
+What did ship from that work, because it is independent of both rules and found nothing in three
+rounds: an open CRITICAL or HIGH now survives every round until something resolves it, rather than
+being dropped by a later round that does not mention it.
 
 ---
 
