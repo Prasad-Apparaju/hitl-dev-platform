@@ -508,6 +508,25 @@ def test_turning_icons_off_cannot_remove_a_warning():
         "preferences does not say an icon can never be the only thing carrying a warning")
 
 
+def test_the_portal_agrees_with_itself_about_the_current_version():
+    """catalog.html is generated and stamps plugin.json's version; four pages are hand-written.
+
+    They drifted five versions apart once (v2.1.1 on the home page against a plugin at 2.7.1), and
+    were about to drift again one version later — the same class the release claims to have closed.
+    """
+    import json
+    ver = json.load(io.open(os.path.join(AI, "claude", "plugin", "plugin.json"), encoding="utf-8"))["version"]
+    site = os.path.join(ROOT, "site")
+    stale = {}
+    for f in sorted(x for x in os.listdir(site) if x.endswith(".html")):
+        hits = set(re.findall(r"v(\d+\.\d+\.\d+)", _read(os.path.join(site, f))))
+        wrong = {h for h in hits if h != ver and not h.startswith("1.")}
+        if wrong:
+            stale[f] = sorted(wrong)
+    assert not stale, ("these pages name a 2.x version that is not the shipped %s: %s\n"
+                       "  (1.x references are the legacy line and are left alone)" % (ver, stale))
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish
