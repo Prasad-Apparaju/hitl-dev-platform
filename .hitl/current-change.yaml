@@ -51,17 +51,17 @@ workflow:
     key: adversarial_review
     name: adversarial_review
     phase: Gate
-    status: current
+    status: done
   - n: '6'
     key: resolve_findings
     name: resolve_findings
     phase: Gate
-    status: open
+    status: done
   - n: '7'
     key: build
     name: build
     phase: Publish
-    status: open
+    status: current
   - n: '8'
     key: publish
     name: publish
@@ -87,4 +87,16 @@ workflow:
     name: retire
     phase: Confirm
     status: open
-skips: []
+skips:
+- step: adversarial_review
+  crit: floor
+  disposition: decline
+  ack_by: pappar
+  waiver_ref: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/92
+  ts: '2026-08-20'
+  reason: 'NOT an unreviewed release. Five rounds ran (11 reviewer reports, tracked under .hitl/reviews/incoming/).
+    Round 5 returned ''the code is sound'' on both lenses: the hooks verified path-by-path against v2.7.1,
+    and each of the four shipping features assessed as sound. Every round-5 finding was in the CHANGELOG
+    prose and every ship-blocking one is closed. What is waived is a SIXTH round over a prose-only diff.
+    The three release-gate rules that produced every CRITICAL were removed from this release and go to
+    #92. Decided by pappar.'
