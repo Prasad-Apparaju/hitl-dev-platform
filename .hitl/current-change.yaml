@@ -1,0 +1,85 @@
+schema_version: '2.0'
+change_id: GH-98-release-2.9.0
+tier: 2
+status: release-in-progress
+expected_branch: main
+first_pass: false
+source_artifacts:
+  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/97
+  hld: n/a
+  lld: n/a
+allowed_paths: &id001
+- ai/
+- ci/
+- tools/
+- site/
+- CHANGELOG.md
+manifest:
+  domains:
+  - name: release-2.9.0
+    paths: *id001
+workflow:
+  id: release
+  total: 12
+  steps:
+  - n: '1'
+    key: rc_scope
+    name: rc_scope
+    phase: Prepare
+    status: done
+  - n: '2'
+    key: changelog
+    name: changelog
+    phase: Prepare
+    status: current
+  - n: '3'
+    key: version_bump
+    name: version_bump
+    phase: Prepare
+    status: open
+  - n: '4'
+    key: gates
+    name: gates
+    phase: Verify
+    status: open
+  - n: '5'
+    key: adversarial_review
+    name: adversarial_review
+    phase: Gate
+    status: open
+  - n: '6'
+    key: resolve_findings
+    name: resolve_findings
+    phase: Gate
+    status: open
+  - n: '7'
+    key: build
+    name: build
+    phase: Publish
+    status: open
+  - n: '8'
+    key: publish
+    name: publish
+    phase: Publish
+    status: open
+  - n: '9'
+    key: tag
+    name: tag
+    phase: Publish
+    status: open
+  - n: '10'
+    key: install_verify
+    name: install_verify
+    phase: Confirm
+    status: open
+  - n: '11'
+    key: announce
+    name: announce
+    phase: Confirm
+    status: open
+  - n: '12'
+    key: retire
+    name: retire
+    phase: Confirm
+    status: open
+skips: []
