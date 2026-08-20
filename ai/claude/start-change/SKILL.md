@@ -93,21 +93,26 @@ Propose a tier from the issue and say why, then **wait for a human to confirm or
 seed a change without one. Tier decides which steps may be lightened at all, and nothing downstream
 re-checks the declaration against what the change actually touches.
 
-Where protection actually changes, from the catalog: **3 → 2** takes `impact`, `packet`,
-`arch_review`, `qa_verify` and `rollout` off `floor` in one move; **2 → 1** moves only
-`integration_verify`; `deploy` and `promote` never demote.
+Where protection actually changes: **3 → 2** takes `impact`, `packet`, `arch_review`, `qa_verify`
+and `rollout` off `floor`; **2 → 1** moves only `integration_verify`; `deploy` and `promote` never
+demote. **Declaring 2 instead of 3 is the consequential call** — slow down on that one.
 
-So **declaring 2 instead of 3 is the consequential call**, and it is the one the tooling does not
-guard: tier 2 is the generator's default and needs no attribution. Treat the 3 → 2 decision as the
-one to slow down on, whatever the paperwork asks for. Default up.
-
-Tiers are defined in [`/hitl:dev-practices`](../dev-practices/SKILL.md). At **tier 0 or 1** the change
-file must record `tier_set_by` and `tier_reason`, and the generator refuses without them. That
-attribution exists because tier 0/1 unlocks the batch-decline path in Step 4b, not because of floor
-demotion — be honest about which lock is on which door.
+Tiers are defined in [`/hitl:dev-practices`](../dev-practices/SKILL.md). Both departures from the
+tier you proposed are attributed: the generator refuses a tier 0/1 without `tier_set_by` and
+`tier_reason`, and refuses a tier 2+ without them when the shape probe said the change was trivial.
+A light path is a human's call; so is overruling a proposal that the change is small.
 
 > Default up. If a change could plausibly be tier 2 or tier 3, it is tier 3. The cost of extra process
 > is lower than the cost of an under-reviewed change, and a wrong tier is not caught later.
+
+### Default up, but propose from the shape
+
+"Default up" is right for a change that touches the product; applied to one line in a shell script
+it produced a three-and-a-half hour run for adding an environment variable. **Look at what the
+change touches before you propose a tier** ([`right-sizing.md`](right-sizing.md)): if the diff is
+non-source only and the request is a value rather than behaviour, propose tier 0/1 with the reason
+pre-filled and let them correct you. Making someone argue a tier *down* is the friction that pushes
+people out of the process entirely.
 
 ---
 
@@ -137,16 +142,13 @@ workflow of 10 steps or fewer, where the phase summary would be longer than the 
 
 ---
 
-## Step 4b — Offer First Pass (optional, FR-29)
+## Step 4b — Offer First Pass (FR-29)
 
-**First Pass** is the skip-with-record way to run this same plan: lighten what does not apply, on the
-record, and keep going. It is for anyone right-sizing a change — a developer on a one-line regression as
-much as a PM shipping a thin first version. It is opt-in; the default is the full plan.
-
-**At tier 0 or 1, offer the ceremony steps pre-selected as declined.** A bug fix does not need a Figma
-review, an ROI model, a training plan, or two ROI checkpoints, and making someone decline each one by
-hand is the friction that pushes people out of the process entirely. Present them ticked, with a
-one-line reason filled in ("tier 1: not required at this tier"), and let one confirmation record the lot.
+**First Pass** lightens what does not apply, on the record, and keeps going — for a developer on a
+one-line regression as much as a PM shipping a thin first version. Above tier 1 it is opt-in and the
+full plan is the default. **At tier 0 or 1, offer it without being asked**: ceremony steps
+pre-selected as declined, reason filled in, one confirmation for the lot
+([`right-sizing.md`](right-sizing.md)).
 
 Pre-selected is not pre-recorded. **Nothing is written until the human confirms**, and doing nothing
 still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
@@ -169,47 +171,8 @@ creates it — so recording here would write to a stale or absent file that Step
 the choices and let the generator apply them:
 
 ```bash
-# Only NON-keep steps go in. An absent step means keep. `actor` is the accountable human, not the agent.
-cat > .hitl/first-pass-choices.json <<'JSON'
-{
-  "actor": "name@team",
-  "choices": {
-    "roi":   { "disposition": "decline", "reason": "internal tool; ROI self-evident" },
-    "figma": { "disposition": "defer",   "reason": "no UI change", "followup_ref": "GH-123" },
-    "docs":  { "disposition": "starter", "reason": "thin first pass" }
-  }
-}
-JSON
-```
-
-Rules that still apply when collecting the choices:
-1. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
-   step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver. Put both in the entry.
-2. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
-   version of the system"), mark it `needs-enhancement`, record its path; seed a fast-follow to *enhance* it.
-3. **Defer** — seed a linked fast-follow ticket and put its ref in `followup_ref`.
-
-If the validator is missing, say so **before** collecting any choices — the ledger is unenforced without it:
-
-```bash
-ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
-CHK="ci/first-pass/check_skips.py"
-[[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/first-pass/check_skips.py"
-[[ -f "$CHK" ]] || echo "⚠ First Pass validator not found — run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
-```
-
-Certification happens in **Step 6b**, once the change file exists and there is something real to certify.
-
-Run the change under **brief mode** ([`shared/first-pass/brief.md`](../../shared/first-pass/brief.md) —
-say less, ask less, never re-ask what intake already settled) and the **reduced-friction permission policy**
-([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
-respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
-
-> **Resurfacing does not happen here.** `resurface.surface()` matches unresolved skips against the new
-> change's domains and `allowed_paths`, and neither is known until the workflow's own impact step fills
-> them. Called at change start it always matches nothing. It belongs at the impact step, where scope
-> exists. See the worked example at
-> [`docs/examples/first-pass/`](https://github.com/Prasad-Apparaju/hitl-dev-platform/tree/main/docs/examples/first-pass).
+See [`first-pass-choices.md`](first-pass-choices.md) for the choices file, the floor/starter/defer
+rules, and what to do when the validator is missing.
 
 ---
 
@@ -261,9 +224,17 @@ except ValueError:
     sys.exit(f"tier must be an integer 0-4, got {tier_s!r}")
 if not 0 <= tier <= 4:
     sys.exit(f"tier must be 0-4, got {tier}")
+# Attribution is owed on EITHER departure from the tier the shape suggests: a name for the light
+# path and nothing for the heavy one is what let a one-line shell-script change run the full spine
+# for 3h31m. TRIVIAL_SHAPE comes from the probe in right-sizing.md.
+trivial = os.environ.get("TRIVIAL_SHAPE", "").strip().lower() in ("1", "true", "yes")
 if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
     sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
              "and it unlocks the batch-decline path at intake.")
+if trivial and tier >= 2 and not (tier_set_by.strip() and tier_reason.strip()):
+    sys.exit("no source under a manifest domain is touched, so tier %d needs TIER_SET_BY and "
+             "TIER_REASON. Full ceremony on a one-line change is someone's decision, not a "
+             "default. See right-sizing.md; TRIVIAL_SHAPE=0 if the probe is wrong." % tier)
 
 # Catalog: prefer the plugin copy, fall back to the source path.
 for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),

@@ -527,6 +527,44 @@ def test_the_portal_agrees_with_itself_about_the_current_version():
                        "  (1.x references are the legacy line and are left alone)" % (ver, stale))
 
 
+def test_both_departures_from_the_proposed_tier_are_attributed():
+    """A user added one env var to a shell script and it ran 3h31m through the full spine.
+
+    Nothing malfunctioned: intake tiered up, and at tier 2 every ceremony step runs. Three defaults
+    compounded, and the load-bearing one was that the CHEAP path cost paperwork — tier 0/1 refused
+    without tier_set_by/tier_reason while tier 2 was the free default. The friction was on the
+    correct answer. Both departures are attributed now.
+    """
+    body = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    assert "TRIVIAL_SHAPE" in body, (
+        "the generator no longer reads the shape probe, so a trivially-shaped change can be tiered "
+        "up with no name against it")
+    assert re.search(r"if\s+trivial\s+and\s+tier\s*>=\s*2\s+and\s+not", body), (
+        "the tier 2+ attribution rule for a trivial shape is gone")
+    assert re.search(r"if\s+tier\s*<=\s*1\s+and\s+not", body), (
+        "the original tier 0/1 attribution rule is gone — this fix ADDS a rule, it does not "
+        "trade one for the other")
+
+
+def test_intake_proposes_a_tier_from_the_shape():
+    """Making someone argue a tier DOWN is the friction that pushes people out of the process."""
+    ref = os.path.join(AI, "claude", "start-change", "right-sizing.md")
+    assert os.path.isfile(ref), "right-sizing.md is gone; intake has no shape guidance"
+    txt = _flat(ref)
+    assert re.search(r"(?i)git diff --name-only", txt), "the probe command is gone"
+    assert re.search(r"(?i)does not lower a floor step", txt), (
+        "nothing states the probe never lowers a floor — that is the line between right-sizing and "
+        "weakening the gate")
+    assert re.search(r"(?i)naming a key is not moving one", txt), (
+        "the distinction that decides this case is gone: adding FIRECRAWL_API_KEY= to a script is "
+        "a chore, changing where a secret lives is not")
+    body = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    assert "right-sizing.md" in body, "the skill no longer points at the shape guidance"
+    assert re.search(r"(?i)at tier 0 or 1, offer it without being asked", body), (
+        "First Pass is opt-in again at tier 0/1 — the one feature built for this case has to be "
+        "asked for by someone who already knows it exists")
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish
