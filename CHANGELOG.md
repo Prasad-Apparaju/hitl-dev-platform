@@ -4,6 +4,65 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.9.0] — 2026-08-20
+
+A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It took **3 hours 31 minutes** and
+eleven recorded steps, including an adversarial design review, a full TDD RED/GREEN cycle, a
+refactor step, an adversarial code review, and a 57-minute review round. They reported the tool as
+broken.
+
+Nothing malfunctioned. HITL did exactly what it was specified to do, and the specification was
+wrong for that change.
+
+### Fixed
+
+- **Intake now proposes a tier from the shape of the change.** "Default up" is right for a change
+  that touches the product and wrong for one line in a shell script, and nothing distinguished the
+  two. If the diff touches only non-source paths — scripts, config, CI, docs — and the request is a
+  *value* rather than *behaviour*, intake proposes tier 0 or 1 with the reason already filled in:
+
+  > This touches `demo.sh` only, so I'd run it as tier 1 — the ceremony steps come off and it's
+  > about twenty minutes. Say the word if you want it heavier.
+
+  A proposal you can reject in four characters is not pressure. Making someone argue a tier *down*
+  is the friction that pushes people out of the process entirely.
+
+- **The cheap path no longer costs more paperwork than the expensive one.** Tier 2 was the
+  generator's default and needed no attribution, while tier 0/1 was refused without `tier_set_by`
+  and `tier_reason`. The friction sat on the correct answer. A tier 2+ declared on a
+  trivially-shaped change now needs a name and a reason too. This **adds** a rule rather than
+  trading one away: both departures from the proposed tier are somebody's decision.
+
+- **First Pass is offered at tier 0/1 without being asked**, with the ceremony steps pre-selected as
+  declined and the reason filled in, so one confirmation clears all eleven. It was opt-in, which
+  meant the one feature built for exactly this case had to be requested by someone who already knew
+  it existed.
+
+### What this deliberately does not do
+
+The shape probe never lowers a floor step, never applies to source under a manifest domain however
+small the diff, and never survives a real risk signal — secrets moving between files, auth,
+anything a `security` profile activates on.
+
+**Naming a key is not moving one.** Adding `FIRECRAWL_API_KEY=` to a script that already reads
+environment variables is a chore. Changing where a secret is stored, or who can read it, is not.
+That distinction is the whole judgement, and where it is unclear, "default up" is exactly what it
+was written for.
+
+### Changed
+
+`start-change/SKILL.md` was over the 500-line body limit, so the tier guidance and the First Pass
+disposition mechanics move to `right-sizing.md` and `first-pass-choices.md` beside it, rather than
+load-bearing prose being trimmed to fit.
+
+### Note for existing projects
+
+Run `/hitl:dev-update`. One thing newly refuses: a tier 2 or higher declared on a change whose diff
+touches no source under a manifest domain, with no `tier_set_by`/`tier_reason`. Supply both, or let
+intake propose the lighter tier it was going to suggest anyway.
+
+---
+
 ## [2.8.0] — 2026-08-18
 
 Adversarial review was the one part of HITL that had never been reviewed. Three reports from real
