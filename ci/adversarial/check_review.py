@@ -435,12 +435,6 @@ def check(change_path, reviews_dir, sha=None, root="."):
     # were read off the selected record alone, so a second reviewer's unresolved CRITICAL shipped
     # unseen whenever the selected record said `ship` — the same shape as the duplicate-lens hole:
     # two reviewers per round is the design, and half of them were not being read.
-    # An open CRITICAL or HIGH from ANY round is still open. Findings used to be read from the top
-    # round alone, which was survivable only by accident: the lens floor also read the top round,
-    # so a narrow round 2 could not be the top round and the earlier findings stayed in view.
-    # Decoupling the floor removed that accident, and a clean one-lens round 2 then cleared a
-    # release carrying two open CRITICALs. A finding is closed by being fixed or accepted, never
-    # by a later round declining to mention it.
     # Findings are read from the governing round. Carrying earlier rounds forward was tried in
     # 2.8.0 and cut: four CRITICALs in the only review it ever had, all in how it decided that a
     # finding had been resolved. Reasoning across rounds needs a model this validator does not

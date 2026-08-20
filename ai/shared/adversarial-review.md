@@ -106,8 +106,8 @@ Two is the floor and the usual answer. Add a third or fourth when the change pla
 that you are buying rounds, not coverage, and each lens is another ten minutes and another set of
 findings to triage. **At `release`, do not go below two.** The review is a floor step there, and a
 release looked at through one lens is that step satisfied with very little in it. This is a rule you
-keep, not one the gate enforces — enforcing it was cut from 2.8.0 after three review rounds found
-ten CRITICALs in the enforcement itself; the redesign is issue #92.
+keep, not one the gate enforces — enforcing it was cut from 2.8.0 after four review rounds found
+fourteen CRITICALs in the enforcement itself; the redesign is issue #92.
 
 ### Choosing is the user's, not yours
 

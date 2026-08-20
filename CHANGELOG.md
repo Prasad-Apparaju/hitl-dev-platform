@@ -62,7 +62,7 @@ use, plus what checking them turned up, add up to this release. **If you run
   `operability`, `compatibility`, `bypass`, `interfaces`, `user`, `cost`.
 
   The plan goes into the offer that already exists rather than a second prompt. You pick where to
-  look, never what will be found, and a lens you drop is recorded like any other skip.
+  look, never what will be found, and a lens you drop is named in the record's `scope`.
 
   `user` and `upgrade` are in the catalog because of what they caught here: 2.7.1 exists because a
   round finally looked at the upgrade path, and the feedback panel found in ordinary use what four
@@ -111,7 +111,17 @@ use, plus what checking them turned up, add up to this release. **If you run
 
 ### Note for existing projects
 
-Run `/hitl:dev-update`. **Nothing that validated before this release fails now.**
+Run `/hitl:dev-update`. Two things newly block, both of them holes this release closes:
+
+- **A second reviewer filed under a numbered lens.** `consequence` plus `consequence-2` read as two
+  lenses before; names now resolve to a catalog id, so that is one lens twice and `DUPLICATE_ROUND`
+  says so. Give the second reviewer a different lens from the catalog.
+- **An open CRITICAL or HIGH on a record the gate did not happen to select.** Findings were read
+  from one record per round — the first adverse one, or the last if they all said ship — so a second
+  reviewer's unresolved finding shipped unseen. Every record in the round is read now.
+
+Nothing else changes. Records with one lens, a finding closed with a bare commit id, a legacy lens
+name, or an accepted finding with a name against it all validate exactly as they did on 2.7.1.
 
 ### On three checks that are not in this release
 
@@ -132,9 +142,10 @@ whether a later one really closed it, whether a resolution is trustworthy. Round
 adding a round makes the gate weaker, because every integrity rule reads only the newest one.
 Bolting that on at the end of a release was the wrong place to discover it. The redesign is #92.
 
-All three survive as written practice: pick a second lens from the catalog, record `verified_by`
-when you close a finding, and read the earlier rounds — the trail is kept for that reason. What is
-not here is enforcement that was wrong more often than the thing it enforced.
+All three survive as written practice rather than as rules: pick a second lens from the catalog,
+fill in `verified_by` when you close a finding, and read the earlier rounds — the trail is kept for
+that reason. Nothing reads `verified_by`; it is there so the next round can. What is not here is
+enforcement that was wrong more often than the thing it enforced.
 
 ---
 

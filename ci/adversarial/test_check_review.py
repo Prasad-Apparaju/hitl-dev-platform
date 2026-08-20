@@ -45,8 +45,9 @@ def _record(**over):
         "scope": "diff v1.0.0..HEAD",
         "reviewer": {"model": "fable", "context": "clean", "spawned_by": "hitl:adversarial-review"},
         "stance": "refute",
-        # A valid record closes a blocking finding with evidence, not just a status. `verified_by`
-        # is the reproduction re-run and its output; without it the gate blocks at release.
+        # `verified_by` is the reproduction re-run and its output. Nothing enforces it — the check
+        # that would have was cut from 2.8.0 (#92) — but a record that fills it in is the shape the
+        # next round can actually read.
         "findings": [{"id": "F1", "severity": "HIGH", "claim": "x", "reproduction": "y",
                       "status": "fixed", "verified_by": "re-ran y: exit 0, no output"}],
         "verdict": "ship",
