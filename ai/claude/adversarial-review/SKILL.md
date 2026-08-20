@@ -70,8 +70,10 @@ They pick **where to look, never what will be found.** Take "drop security, it's
 pentest" as a deselection and record it; do not pass their reasoning to the reviewers, because a
 brief carrying someone's conclusion gets that conclusion back.
 
-**A dropped lens is a skip.** Record it like any other, so if something later goes wrong in that
-area it is visible that a lens for it was offered and declined.
+**Write a dropped lens into the record you do write.** Name it in `scope` — *"security lens
+offered and declined"* — so if something later goes wrong there, it is visible that a lens for it
+was on the table. It is not a workflow skip: `skips[]` records lightened workflow *steps*, keyed by
+step, and a lens is not one. Filing it there produces a change file the First Pass check rejects.
 
 Then start. Do not wait for permission a second time if they already accepted the offer at a step
 boundary.

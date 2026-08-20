@@ -441,34 +441,11 @@ def check(change_path, reviews_dir, sha=None, root="."):
     # Decoupling the floor removed that accident, and a clean one-lens round 2 then cleared a
     # release carrying two open CRITICALs. A finding is closed by being fixed or accepted, never
     # by a later round declining to mention it.
-    def _identity(item):
-        """What makes two records refer to the same finding: its id, or failing that its claim."""
-        fid = str(item.get("id", "")).strip().lower()
-        claim = re.sub(r"[^a-z0-9 ]", "", str(item.get("claim", "")).lower()).strip()[:60]
-        return (fid or None, claim or None)
-
-    # Resolved anywhere, in any round, counts as resolved. A later round marking a finding fixed
-    # or accepted is exactly how the loop is supposed to close one.
-    _resolved = set()
-    for _p, _doc in records:
-        for _item in (_doc.get("findings") or []):
-            if isinstance(_item, dict) and \
-                    str(_item.get("status", "")).strip().lower() in RESOLVED_STATES:
-                for _k in _identity(_item):
-                    if _k:
-                        _resolved.add(_k)
-
+    # Findings are read from the governing round. Carrying earlier rounds forward was tried in
+    # 2.8.0 and cut: four CRITICALs in the only review it ever had, all in how it decided that a
+    # finding had been resolved. Reasoning across rounds needs a model this validator does not
+    # have — see #92. Until then a round says what it says, and the trail is what carries history.
     findings = []
-    for _p, _doc in records:
-        if _round((_p, _doc)) == top:
-            continue
-        for _i, _item in enumerate(_doc.get("findings") or []):
-            if not isinstance(_item, dict):
-                continue
-            if (str(_item.get("status", "open")).strip().lower() in OPEN_STATES
-                    and str(_item.get("severity", "")).strip().upper() in BLOCKING
-                    and not any(k and k in _resolved for k in _identity(_item))):
-                findings.append((_p, _i, _item))
     for _p, _doc in latest:
         _f = _doc.get("findings")
         if _f is None:

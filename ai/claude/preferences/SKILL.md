@@ -366,10 +366,11 @@ for brevity would be self-defeating.
 >
 > Anything else? "plain text, no icons", "tables over prose", "I know this domain, skip the primer".
 
-HITL marks state with a small set of icons by default — 🔒 paused, 🧭 where you are, ⚠️ irreversible,
-✅ done. *"Plain text"* turns them off. It cannot turn off what they mark: the sentence carries the
-warning, the icon only makes it findable, so a plain-text project gets the same words without the
-glyph.
+HITL marks state with a small set of icons: 🔒 paused, 🧭 where you are, ⚠️ irreversible, ✅ done,
+🔄 working, 📝 saved. *"Plain text"* tells **Claude** to drop them from what it writes. It does not
+change the hooks: those six live as literal characters in shell scripts that read no configuration,
+so a blocked edit still arrives with its 🔒. Either way the sentence carries the warning and the
+icon only makes it findable, so nothing is lost by dropping them.
 
 Take partial answers; default the rest and say which you assumed. Then **show the block you are
 about to write and ask before writing.**

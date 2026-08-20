@@ -32,9 +32,8 @@ use, plus what checking them turned up, add up to this release. **If you run
   review present, fresh, and cleared."*
 
   The record now carries `verified_by` for the reproduction re-run and what it printed. It is a
-  field to fill in, not yet a rule: the check that would have required it was cut from this release
-  (see the note below). A commit id says where a fix went, not that it worked — every false closure
-  in the reports behind this carried a real commit id.
+  field to fill in, not a rule (see the note below). A commit id says where a fix went, not that it
+  worked — every false closure in the reports behind this carried a real commit id.
 
 - **The gate read one reviewer's findings per round.** It picked the first record whose verdict was
   adverse — or the last one if they all said ship — and inspected only that one. A second
@@ -98,8 +97,9 @@ use, plus what checking them turned up, add up to this release. **If you run
   🧭 where you are, ⚠️ irreversible, ✅ done — extending the existing `✓ ✗ ● ◐ ○ ·` vocabulary
   rather than decorating. They stay out of the breadcrumb and statusline, which are width-sensitive.
   They never celebrate: a 🎉 on a skipped review congratulates someone for lowering the bar.
-  `/hitl:dev-preferences` accepts *"plain text, no icons"*, and cannot turn off what an icon marks —
-  the sentence carries the warning, the glyph only makes it findable.
+  `/hitl:dev-preferences` accepts *"plain text, no icons"*, which governs what Claude writes; the
+  hooks carry their icons as literal characters and read no configuration. Either way the sentence
+  carries the warning and the glyph only makes it findable.
 
 - **The portal had not moved since v2.1.1** while the plugin shipped to 2.7.1, so it advertised none
   of First Pass, the compound-agentic surface, the agentic intake, or the release gate. It also
@@ -113,25 +113,28 @@ use, plus what checking them turned up, add up to this release. **If you run
 
 Run `/hitl:dev-update`. **Nothing that validated before this release fails now.**
 
-### On two checks that are not in this release
+### On three checks that are not in this release
 
-This release was going to add two rules to the release gate: a release must be reviewed through at
-least two distinct lenses, and a CRITICAL or HIGH marked `fixed` must record how that was verified.
-Both are good rules. Neither shipped.
+This release was going to add three rules to the release gate: a release must be reviewed through at
+least two distinct lenses; a CRITICAL or HIGH marked `fixed` must record how that was verified; and
+an open CRITICAL or HIGH must survive later rounds until something resolves it. All three are good
+rules. None shipped.
 
-Three rounds of independent review found **ten CRITICAL findings, every one of them inside those two
-checks** — and none anywhere else in this release. Each round's fixes produced the next round's
-CRITICALs. The last of them was a heuristic added to catch a specific failure, which turned out not
-to fire on the exact case it was written for.
+Four rounds of independent review found **fourteen CRITICAL findings, every one of them inside those
+three rules** — and none anywhere else in this release. Each round's fixes produced the next round's
+CRITICALs, including the last one: the rule kept after round 3 as "the part that survived review"
+had in fact failed the only round it was ever exposed to, and four of the CRITICALs were in it. That
+mistake was published in an earlier draft of this note, which is corrected here.
 
-The root cause is structural rather than a run of bugs: this validator was built to judge one review
-round, and both rules require reasoning about a *sequence* of rounds — what an earlier round found,
-whether a later one really closed it. Bolting that on at the end of a release was the wrong place to
-discover it. The redesign is issue #92.
+The root cause is structural rather than a run of bugs. This validator judges **one** review round.
+All three rules require reasoning about a **sequence** of rounds — what an earlier round found,
+whether a later one really closed it, whether a resolution is trustworthy. Round 3 put it exactly:
+adding a round makes the gate weaker, because every integrity rule reads only the newest one.
+Bolting that on at the end of a release was the wrong place to discover it. The redesign is #92.
 
-What did ship from that work, because it is independent of both rules and found nothing in three
-rounds: an open CRITICAL or HIGH now survives every round until something resolves it, rather than
-being dropped by a later round that does not mention it.
+All three survive as written practice: pick a second lens from the catalog, record `verified_by`
+when you close a finding, and read the earlier rounds — the trail is kept for that reason. What is
+not here is enforcement that was wrong more often than the thing it enforced.
 
 ---
 

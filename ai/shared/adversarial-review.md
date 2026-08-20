@@ -116,8 +116,9 @@ Put the plan in the offer (see above) and let them cut or add. Two rules:
 - **They pick where to look, never what will be found.** "Add a security lens" is theirs. "Skip
   consequence, the migration is fine" is pre-deciding the thing the review exists to test — take
   the deselection, and do not pass the reasoning to the reviewers.
-- **A lens they drop is a skip**, recorded like any other, so that if something later goes wrong in
-  that area it is visible that a lens for it was offered and declined.
+- **A lens they drop goes in the record's `scope`**, e.g. *"security lens offered and declined"*, so
+  that if something later goes wrong there it is visible that a lens for it was on the table. Not in
+  `skips[]` — that records lightened workflow steps, keyed by step, and a lens is not a step.
 
 ## When to encourage more strongly
 

@@ -1067,7 +1067,7 @@ FLOOR_REGIONS = {
         "348425cc4d5c719cf944190472a7fba9fdd5529757a21d741a8c2f4c081e77c1"),
     "preferences / setting up and adjusting": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## Setting up, and adjusting',
-        "109d5ccc8f26d1b3ce5693d88db555f5c51774ec587a72a0f13fde39a1d4c643"),
+        "d1c697a8bdd362091590dca2d86c805feb0155c183ab38320e9e056671fe751b"),
     "preferences / the floor lives in the file": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## The floor, and why it lives in the file',
         "08b31fba29f94780e5bc2af96d89e9fc3e1372462f4e6c9f3dfd3284129ec36c"),
