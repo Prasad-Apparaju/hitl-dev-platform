@@ -22,6 +22,3 @@ docs/presentations/
 docs/infographic/
 .playwright-mcp/
 
-# Reviewer reports land here before they are read into a record. They are working
-# material, not governance state — the record under .hitl/reviews/ is what counts.
-.hitl/reviews/incoming/

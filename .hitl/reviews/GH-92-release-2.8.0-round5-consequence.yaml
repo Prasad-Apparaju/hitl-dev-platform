@@ -1,0 +1,51 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 5
+lens: consequence
+reviewed_sha: 699b87a34b5e9e7624484c44a37f4b7df037f518
+reviewed_tree: 0aefa0c428d10bef8c77d0267e5422bd3b3b5686
+scope: "diff v2.7.1..HEAD \u2014 the narrowed release"
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review round 5 \u2014 unnamed clean-context subagent"
+  brief: Confirming review after three scope reductions. Refute, do not confirm.
+stance: refute
+findings:
+- id: R5Q-H1
+  severity: HIGH
+  claim: 'The reverse direction of the compatibility claim is real and is not what the note said: reading every record
+    in a round newly reports an unsigned acceptance, a malformed severity and a non-list findings block in a sibling
+    record. Four distinct new-only codes, not two.'
+  reproduction: Fuzz across record shapes; v2.7.1 exit=0 vs HEAD exit=2 on S1/S2/S3. See consequence-round5.md H-1, H-2.
+  status: fixed
+  resolved_by: this commit
+  verified_by: The note no longer enumerates codes. It names the two mechanisms and says explicitly that the codes seen
+    depend on what was already wrong in the record that was never read, and that the enumeration was dropped after two
+    incomplete drafts.
+- id: R5Q-C1
+  severity: HIGH
+  claim: '''Fourteen CRITICALs, every one inside those three rules, none anywhere else'' is false: round 4''s CRITICAL-1
+    concerns canonical_lens() and the sibling-record findings loop, both of which ship.'
+  reproduction: Independently reproduced the alias-pair shape at HEAD. See consequence-round5.md C-1.
+  status: fixed
+  resolved_by: this commit
+  verified_by: The count and the partition are removed from the CHANGELOG rather than restated. The passage now says
+    some of what those rounds found is in shipped code and fixed above, and that the summarising attempt is dropped rather
+    than corrected a third time.
+- id: R5Q-C3
+  severity: MEDIUM
+  claim: Every committed review record cites evidence in .hitl/reviews/incoming/, which was gitignored, so the governance
+    trail pointed at files that do not ship.
+  reproduction: git check-ignore on the cited paths. See consequence-round5.md C-3.
+  status: fixed
+  resolved_by: this commit
+  verified_by: incoming/ un-ignored; all eleven round reports are now tracked alongside the records that cite them.
+- id: R5Q-LOW
+  severity: LOW
+  claim: Icon vocabulary wording, 'all 46' not reproducible, 'the portal had not moved since v2.1.1' imprecise.
+  reproduction: See consequence-round5.md C-4, C-5, C-6.
+  status: accepted
+  accepted_by: pappar
+  resolved_by: 'deferred to #92 at triage'
+verdict: do-not-ship

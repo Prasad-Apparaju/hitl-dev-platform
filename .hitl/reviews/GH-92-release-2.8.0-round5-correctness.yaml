@@ -1,0 +1,51 @@
+schema_version: '1.0'
+change_id: GH-92-release-2.8.0
+round: 5
+lens: correctness
+reviewed_sha: 699b87a34b5e9e7624484c44a37f4b7df037f518
+reviewed_tree: 0aefa0c428d10bef8c77d0267e5422bd3b3b5686
+scope: "diff v2.7.1..HEAD \u2014 the narrowed release"
+reviewer:
+  model: claude-opus-5[1m]
+  context: clean
+  spawned_by: "/hitl:dev-adversarial-review round 5 \u2014 unnamed clean-context subagent"
+  brief: Confirming review after three scope reductions. Refute, do not confirm.
+stance: refute
+findings:
+- id: R5C-A1
+  severity: HIGH
+  claim: check_review.py stated the removed carry-forward rule as current behaviour, three lines above the paragraph
+    saying it was cut.
+  reproduction: See .hitl/reviews/incoming/correctness-round5.md A1.
+  status: fixed
+  resolved_by: 699b87a
+  verified_by: 'grep of check_review.py: the stale rationale block is gone; the surviving comment states only that findings
+    are read from the governing round.'
+- id: R5C-A2
+  severity: HIGH
+  claim: '''Nothing that validated before this release fails now'' was false: a numbered sibling lens and an open finding
+    on an unselected record both newly block.'
+  reproduction: v2.7.1 exit=0 vs HEAD exit=2 on both shapes. See correctness-round5.md A2.
+  status: fixed
+  resolved_by: this commit
+  verified_by: 'The note now describes the two mechanisms (every record in the round is read; lens resolves to a catalog
+    id) rather than enumerating codes, and states the enumeration was dropped because two earlier drafts were incomplete.
+    Checked against git diff v2.7.1..HEAD of the validator: both mechanisms present, nothing else changed.'
+- id: R5C-B1a
+  severity: HIGH
+  claim: The CHANGELOG still told users to record a dropped lens as a skip, which both skill docs were corrected to reject.
+  reproduction: See correctness-round5.md B1a.
+  status: fixed
+  resolved_by: 699b87a
+  verified_by: CHANGELOG now reads 'a lens you drop is named in the record's scope', matching ai/shared/adversarial-review.md
+    and the skill.
+- id: R5C-MED
+  severity: MEDIUM
+  claim: 'Removal debris: a test fixture promising UNVERIFIED_FIX; the CHANGELOG on verified_by ''surviving as practice'';
+    the shared doc carrying the round/CRITICAL counts the CHANGELOG corrects; getting-started.html step counts; icon
+    vocabulary guard; two portal LOWs.'
+  reproduction: See correctness-round5.md A3-A6, B4a, B4b, B5a-d.
+  status: accepted
+  accepted_by: pappar
+  resolved_by: 'A3, A5 fixed in 699b87a; the remainder deferred to #92 at triage'
+verdict: do-not-ship

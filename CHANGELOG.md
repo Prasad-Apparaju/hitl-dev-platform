@@ -111,18 +111,25 @@ use, plus what checking them turned up, add up to this release. **If you run
 
 ### Note for existing projects
 
-Run `/hitl:dev-update`. Two things newly block, both of them holes this release closes:
+Run `/hitl:dev-update`. **Two things changed in how review records are read, and a record that
+relied on either may now block where it did not before.** Both are holes this release closes, so the
+new blocks are correct — but know them before you upgrade mid-release:
 
-- **A second reviewer filed under a numbered lens.** `consequence` plus `consequence-2` read as two
-  lenses before; names now resolve to a catalog id, so that is one lens twice and `DUPLICATE_ROUND`
-  says so. Give the second reviewer a different lens from the catalog.
-- **An open CRITICAL or HIGH on a record the gate did not happen to select.** Findings were read
-  from one record per round — the first adverse one, or the last if they all said ship — so a second
-  reviewer's unresolved finding shipped unseen. Every record in the round is read now.
+- **Every record in a round is read.** Findings used to be taken from one record per round: the
+  first adverse one, or the last if they all said ship. Whichever record the gate happened not to
+  pick was not examined at all. Anything wrong in a sibling record — an unresolved finding, an
+  acceptance with no signer, a malformed severity, a `findings:` that is not a list — was invisible
+  and is now reported.
+- **Lens names resolve to a catalog id.** `consequence-2` is `consequence`, `destructiveness` is
+  `consequence`. A second reviewer filed under a numbered variant read as a distinct lens before;
+  it now reads as the same lens twice and `DUPLICATE_ROUND` says so.
 
-Nothing else changes. Records with one lens, a finding closed with a bare commit id, a legacy lens
-name, or an accepted finding with a name against it all validate exactly as they did on 2.7.1.
+Deliberately not a list of error codes: the codes you see depend on what was already wrong in the
+record that was never being read, and an earlier draft of this note twice gave a count that turned
+out to be incomplete.
 
+Nothing else changed. A single-record round, a finding closed with a bare commit id, and a legacy
+lens name all validate exactly as they did on 2.7.1.
 ### On three checks that are not in this release
 
 This release was going to add three rules to the release gate: a release must be reviewed through at
@@ -130,11 +137,12 @@ least two distinct lenses; a CRITICAL or HIGH marked `fixed` must record how tha
 an open CRITICAL or HIGH must survive later rounds until something resolves it. All three are good
 rules. None shipped.
 
-Four rounds of independent review found **fourteen CRITICAL findings, every one of them inside those
-three rules** — and none anywhere else in this release. Each round's fixes produced the next round's
-CRITICALs, including the last one: the rule kept after round 3 as "the part that survived review"
-had in fact failed the only round it was ever exposed to, and four of the CRITICALs were in it. That
-mistake was published in an earlier draft of this note, which is corrected here.
+Four rounds of independent review found CRITICAL defects in all three, repeatedly, and each round's
+fixes produced the next round's findings. The rule kept after round 3 as "the part that survived
+review" had in fact failed the only round it was ever exposed to. Earlier drafts of this note tried
+to summarise that as a count, and to claim every finding in the release sat inside these three
+rules. Both were wrong — some of what those rounds found is in code that ships and is fixed above —
+and the attempt is dropped rather than corrected a third time.
 
 The root cause is structural rather than a run of bugs. This validator judges **one** review round.
 All three rules require reasoning about a **sequence** of rounds — what an earlier round found,
