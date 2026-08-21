@@ -595,6 +595,66 @@ def test_the_catalog_does_not_claim_profiles_filter_the_plan():
         "uses them before believing it")
 
 
+def test_every_step_declares_what_it_protects_and_what_skipping_costs():
+    """The selection view shows `protects` beside an unticked box and ranks by `forgo_cost`.
+
+    A step with no entry renders a blank reason and sorts nowhere, which is how a step quietly
+    becomes the one nobody thinks about. An orphan entry is a step someone deleted while leaving its
+    justification behind. Assert BOTH directions — a coverage check that only looks one way passes
+    while half the data is wrong.
+    """
+    import yaml
+    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    steps = {s["key"] for s in cat["spine"]["steps"]}
+    costs = cat.get("step_costs") or {}
+    assert costs, "no step_costs block — the selection view has nothing to rank or explain"
+
+    missing = sorted(steps - set(costs))
+    orphans = sorted(set(costs) - steps)
+    assert not missing, "spine steps with no protects/forgo_cost: %s" % missing
+    assert not orphans, "step_costs entries for steps that do not exist: %s" % orphans
+
+    RANKS = {"high", "medium", "low"}
+    for key, e in sorted(costs.items()):
+        assert e.get("forgo_cost") in RANKS, (
+            "%s: forgo_cost %r is not one of %s" % (key, e.get("forgo_cost"), sorted(RANKS)))
+        prot = str(e.get("protects", "")).strip()
+        assert len(prot) > 25, (
+            "%s: `protects` is what a person reads when deciding to untick this step. %r does not "
+            "tell them what they lose." % (key, prot))
+        assert not re.match(r"(?i)\s*(runs|performs|the) %s\b" % re.escape(key.replace("_", " ")), prot), (
+            "%s: `protects` restates the step name instead of naming the consequence" % key)
+        eng = e.get("engages")
+        assert eng == "always" or isinstance(eng, dict), (
+            "%s: engages must be 'always' or a dict of paths/profiles/tags/multi_domain" % key)
+        if isinstance(eng, dict):
+            unknown = set(eng) - {"paths", "profiles", "tags", "multi_domain"}
+            assert not unknown, "%s: engages has unknown keys %s" % (key, sorted(unknown))
+
+
+def test_a_floor_step_is_never_ranked_below_high():
+    """Modulation reorders the list; it must not argue a floor step down it.
+
+    A `floor` step ranked low would sort into the tail and be dropped by someone reading the ranks
+    rather than the flags — the two signals must not disagree.
+    """
+    import yaml
+    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    costs = cat.get("step_costs") or {}
+    # Only steps that are floor at EVERY tier, plus no_omit. A step that is floor at tier 3 alone
+    # (packet, impact, qa_verify...) is LOCKED at that tier — it never appears in the rankable list
+    # there — and is ordinarily rankable everywhere else. Treating those as "must be high" would be
+    # the guard inventing a rule rather than checking one.
+    bad = []
+    for s in cat["spine"]["steps"]:
+        crit = s.get("crit")
+        if crit == "floor" or s.get("no_omit"):
+            if costs.get(s["key"], {}).get("forgo_cost") != "high":
+                bad.append("%s (%s) ranked %s" % (s["key"], crit, costs.get(s["key"], {}).get("forgo_cost")))
+    assert not bad, ("a floor / no_omit step ranked below high, so the rank and the flag disagree: %s"
+                     % bad)
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish

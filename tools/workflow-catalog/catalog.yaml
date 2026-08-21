@@ -348,3 +348,173 @@ tags:
   chore:    { tier: 0, activates: [], required_evidence: [] }
   tooling:  { activates: [],     required_evidence: [] }
   infra:    { activates: [],     required_evidence: [] }
+
+# ── What each step protects, and what skipping it costs ─────────────────────────────────────
+#
+# Read by the intake selection: `protects` is the sentence shown beside an unticked box, and
+# `forgo_cost` ranks the list so the consequential choices sit at the top.
+#
+# `forgo_cost` is the cost of skipping the step ON A CHANGE THAT ENGAGES IT — not an average.
+# The rank shown to a person is modulated in both directions:
+#   • down one   when `engages` does not match the change (paths from the diff, profile/tags from
+#                the change file, multi_domain from the manifest)
+#   • up one     when the change touches a manifest domain with entries in the incident registry —
+#                "this area has burned us before" is the one signal worth raising on. A project with
+#                no registry, or a registry with no matching entry, is treated the same: no raise.
+#   • never past the floor. Modulation reorders the list. It does not unlock a floor step or soften
+#     `no_omit`; those are decided by tier and by signature, not by rank.
+#
+# Every spine step has an entry and there are no orphans — ci/wiring asserts both.
+step_costs:
+  issue:
+    protects: "There is a written record of what was asked for and why, outliving the conversation that produced it."
+    forgo_cost: high
+    engages: always
+  figma:
+    protects: "What gets built matches what design actually drew, rather than a developer's reading of it."
+    forgo_cost: low
+    engages: { paths: ["**/*.tsx", "**/*.jsx", "**/*.vue", "**/components/**", "**/ui/**"] }
+  impact:
+    protects: "You find the callers, data and scheduled jobs this touches before you touch them."
+    forgo_cost: high
+    engages: always
+  roi:
+    protects: "There is a stated reason this is worth building, recorded before the effort is spent."
+    forgo_cost: low
+    engages: { profiles: ["feature"] }
+  docs:
+    protects: "The runbook and reference stop describing a system that no longer exists."
+    forgo_cost: medium
+    engages: { paths: ["docs/**", "**/*.md", "**/README*"] }
+  iac:
+    protects: "Infrastructure changes are written down and reviewable, not applied by hand and forgotten."
+    forgo_cost: medium
+    engages: { paths: ["infra/**", "**/*.tf", "**/Dockerfile", "k8s/**", "**/*.yaml"] }
+  test_plan:
+    protects: "QA knows what \"working\" means for this change before anyone builds it."
+    forgo_cost: medium
+    engages: { profiles: ["feature", "enhancement", "fix"] }
+  training:
+    protects: "The people who operate this are told it changed."
+    forgo_cost: low
+    engages: { profiles: ["feature"] }
+  packet:
+    protects: "The decision and the alternatives are recorded where the next person will look for them."
+    forgo_cost: medium
+    engages: always
+  baseline:
+    protects: "There is a before-measurement, so \"faster\" is a number instead of a feeling."
+    forgo_cost: medium
+    engages: { tags: ["perf"] }
+  sec_design:
+    protects: "The threat model is considered while the design can still change cheaply."
+    forgo_cost: high
+    engages: { profiles: ["security"] }
+  cve_audit:
+    protects: "You know which published vulnerabilities the version you are moving to carries."
+    forgo_cost: high
+    engages: { profiles: ["upgrade"] }
+  adv_design:
+    protects: "Someone with no stake in the design tries to break it while it is still cheap to change."
+    forgo_cost: medium
+    engages: always
+  red:
+    protects: "A test fails for the stated reason first, so the fix is proven to fix something real."
+    forgo_cost: high
+    engages: always
+  test_review:
+    protects: "A person checks the tests assert the right thing, not merely that they pass."
+    forgo_cost: low
+    engages: always
+  design_plus:
+    protects: "The design is updated when building teaches you something it did not know."
+    forgo_cost: medium
+    engages: always
+  verify_red:
+    protects: "The failing test really fails, and fails for the reason claimed."
+    forgo_cost: medium
+    engages: always
+  green:
+    protects: "The change actually makes the failing test pass."
+    forgo_cost: high
+    engages: always
+  verify_green:
+    protects: "The suite is green for real, not green because it never ran."
+    forgo_cost: high
+    engages: always
+  refactor:
+    protects: "The code is left in a shape the next person can work in."
+    forgo_cost: low
+    engages: { tags: ["refactor"] }
+  conventions:
+    protects: "The code reads like the rest of the codebase, so review is about substance."
+    forgo_cost: low
+    engages: always
+  adv_code:
+    protects: "Someone tries to break the implementation rather than only reading it."
+    forgo_cost: medium
+    engages: always
+  review1:
+    protects: "A second person has actually read the diff."
+    forgo_cost: high
+    engages: always
+  review2:
+    protects: "A second independent reader, for changes one pair of eyes should not carry alone."
+    forgo_cost: medium
+    engages: { multi_domain: true }
+  arch_review:
+    protects: "The change still fits the architecture it landed in, and crossed no boundary quietly. Erosion is invisible per change and shows up only cumulatively."
+    forgo_cost: high
+    engages: always
+  rerun:
+    protects: "Tests re-run after review edits, so the thing reviewed is the thing that ships."
+    forgo_cost: medium
+    engages: always
+  reconcile:
+    protects: "Every review finding is resolved or explicitly accepted; none are quietly dropped."
+    forgo_cost: medium
+    engages: always
+  qa_verify:
+    protects: "Someone checks the change against the acceptance criteria, not against the code."
+    forgo_cost: high
+    engages: always
+  impact_brief:
+    protects: "Teams downstream hear about this before it arrives in their lap."
+    forgo_cost: medium
+    engages: { multi_domain: true }
+  rollout:
+    protects: "There is a plan for how this reaches production and how it comes back if it must."
+    forgo_cost: high
+    engages: always
+  verify_pr:
+    protects: "CI is green on the exact commit being merged, not an earlier one."
+    forgo_cost: high
+    engages: always
+  integration_verify:
+    protects: "The pieces work together, not just individually."
+    forgo_cost: high
+    engages: { multi_domain: true }
+  figma_compare:
+    protects: "What shipped looks like what was designed."
+    forgo_cost: low
+    engages: { paths: ["**/*.tsx", "**/*.jsx", "**/*.vue", "**/components/**", "**/ui/**"] }
+  deploy:
+    protects: "The change reaches an environment through a repeatable, recorded path."
+    forgo_cost: high
+    engages: always
+  pentest:
+    protects: "Someone actively tried to abuse it before a customer could."
+    forgo_cost: high
+    engages: { profiles: ["security"] }
+  promote:
+    protects: "Production only ever receives what a person decided to send it."
+    forgo_cost: high
+    engages: always
+  roi_30:
+    protects: "Someone checks whether the thing was worth building."
+    forgo_cost: low
+    engages: { profiles: ["feature"] }
+  roi_90:
+    protects: "The longer-term effect is looked at rather than assumed."
+    forgo_cost: low
+    engages: { profiles: ["feature"] }
