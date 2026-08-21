@@ -11,7 +11,7 @@ Two entry points, both executable:
   choices  turn what they kept into .hitl/first-pass-choices.json — INCLUDING the tail, which is
            the whole compensation for the tail being skipped by default
 """
-import argparse, json, os, subprocess, sys, yaml
+import argparse, json, os, sys, yaml
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
@@ -21,41 +21,11 @@ import rank as R
 OFFERED = 8                       # how many decidable steps are shown; the rest collapse
 
 
-def changed_paths(base="main"):
-    """Paths this change touches. Degrades to empty rather than failing intake."""
-    try:
-        mb = subprocess.run(["git", "merge-base", "HEAD", base], capture_output=True, text=True)
-        ref = mb.stdout.strip() or base
-        r = subprocess.run(["git", "diff", "--name-only", "%s..HEAD" % ref],
-                           capture_output=True, text=True)
-        return [p for p in r.stdout.split("\n") if p.strip()]
-    except Exception:
-        return []
-
-
 def source_paths(manifest):
     return [p for d in ((manifest or {}).get("domains") or []) if isinstance(d, dict)
             for p in (d.get("paths") or []) if isinstance(p, str)]
 
 
-def trivial_shape(paths, manifest):
-    """True when the change touches no source under a manifest domain.
-
-    This is what sets TRIVIAL_SHAPE. Written as a function so something can CALL it: the prose
-    version in right-sizing.md described the probe and assigned its result to nothing, so the
-    refusal that reads it was dead code.
-    """
-    if not paths:
-        return False              # nothing to judge is not evidence of triviality
-    src = source_paths(manifest)
-    if not src:
-        return False              # no manifest means no basis to call anything non-source
-    for p in paths:
-        for s in src:
-            pre = s.rstrip("*").rstrip("/")
-            if pre and (p == pre or p.startswith(pre + "/")):
-                return False
-    return True
 
 
 def build(plan, costs, requires, *, tier, paths, profile, tags, manifest, incidents):
@@ -119,13 +89,16 @@ def _load(path):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["render", "choices", "probe"])
+    ap.add_argument("mode", choices=["render", "choices"])
     ap.add_argument("--workflows", default="ci/first-pass/workflows.yaml")
     ap.add_argument("--workflow", default="development")
     ap.add_argument("--tier", type=int, default=2)
     ap.add_argument("--profile", default="")
     ap.add_argument("--tags", default="")
-    ap.add_argument("--base", default="main")
+    ap.add_argument("--paths", default="",
+                    help="paths the change touches, from the impact analysis — NOT a git diff. "
+                         "At intake there is no diff to read; impact analysis is the step that "
+                         "knows this, by reading the code.")
     ap.add_argument("--manifest", default="docs/02-design/system-manifest.yaml")
     ap.add_argument("--incidents", default="docs/03-engineering/incident-registry.yaml")
     ap.add_argument("--keep", default="")
@@ -134,11 +107,7 @@ def main(argv=None):
 
     wf = _load(a.workflows)
     manifest, incidents = _load(a.manifest), _load(a.incidents)
-    paths = changed_paths(a.base)
-
-    if a.mode == "probe":
-        print("1" if trivial_shape(paths, manifest) else "0")
-        return 0
+    paths = [p for p in a.paths.split(",") if p.strip()]
 
     block = (wf.get("workflows") or {}).get(a.workflow) or {}
     plan = block.get("steps") or []
@@ -154,7 +123,15 @@ def main(argv=None):
         print(render(locked, offered, tail))
         return 0
 
-    kept = {k for k in a.keep.split(",") if k} | {r["key"] for r in locked}
+    asked = {k.strip() for k in a.keep.split(",") if k.strip()}
+    known = {r["key"] for r in locked + offered + tail}
+    unknown = sorted(asked - known)
+    if unknown:
+        print("--keep names steps that are not in this plan: %s\n"
+              "Refusing rather than silently declining what you asked to keep."
+              % ", ".join(unknown), file=sys.stderr)
+        return 2
+    kept = asked | {r["key"] for r in locked}
     doc, warn = choices(kept, offered, tail, wf.get("step_requires") or {}, a.actor)
     if not a.actor.strip():
         print("--actor is required: a skip is accountable to a person, not the agent", file=sys.stderr)

@@ -1,6 +1,7 @@
 # The step selection
 
 - [What it is for](#what-it-is-for)
+- [When it runs](#when-it-runs--and-why-not-at-intake)
 - [Compute the order](#compute-the-order)
 - [Show it](#show-it)
 - [Rules](#rules)
@@ -11,33 +12,38 @@ Called from Step 4.
 ## What it is for
 
 A user asked for one environment variable to be added to a shell script and HITL ran thirty-one
-steps over three and a half hours. Every mechanism for right-sizing existed and none of them was
-reachable: the plan was shown as seven phase names, the disposition menu had no defined form, and
-`keep` was the default for all thirty-one. You cannot pick from a list you were never shown.
+steps over three and a half hours. Every mechanism for right-sizing existed and none was reachable:
+the plan was shown as seven phase names and `keep` was the default for all thirty-one. You cannot
+pick from a list you were never shown.
 
-So: show the steps, ranked, with what each one protects, and let the person choose.
+## When it runs — and why not at intake
+
+**After impact analysis, not before.** Intake happens before a line is written, so nothing there
+knows what the change touches. A first attempt probed `git diff` at intake and always got an empty
+answer, because at intake there is nothing to diff.
+
+Impact analysis (`/hitl:dev-apply-change` step 3) is the step that reads the codebase and answers
+what this change affects — endpoints, modules, infrastructure, docs, tests, compatibility. That is
+the first moment HITL knows the shape of the work, so that is when the plan gets sized.
+
+Until then the plan is **provisional**: the full spine, shown so the shape of the work is visible,
+sized by nobody.
 
 ## Compute the order
 
-`ci/first-pass/plan_select.py` does all of it — ranking, rendering, and writing the choices. Run it;
-do not reimplement it in prose.
+`ci/first-pass/plan_select.py` ranks, renders, and writes the choices. Run it; do not reimplement it.
+
+**`--paths` comes from the impact analysis you just did** — the affected modules, infra and docs —
+not from a git diff. There is no diff yet; that is the whole point of running here.
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 SEL="ci/first-pass/plan_select.py"; [[ -f "$SEL" ]] || SEL="$ROOT/shared/ci/first-pass/plan_select.py"
 WF="ci/first-pass/workflows.yaml";  [[ -f "$WF"  ]] || WF="$ROOT/shared/workflows.yaml"
 
-# 1. the shape probe — this is what sets TRIVIAL_SHAPE for Step 6's generator
-export TRIVIAL_SHAPE="$(python3 "$SEL" probe --base "${BASE:-main}")"
-
-# 2. the selection a person reads
 python3 "$SEL" render --workflows "$WF" --workflow "$WF_ID" --tier "$TIER" \
-        --profile "$PROFILE" --tags "$TAGS" --base "${BASE:-main}"
+        --profile "$PROFILE" --tags "$TAGS" --paths "$IMPACT_PATHS"
 ```
-
-`TRIVIAL_SHAPE` must be exported here. Step 6's generator reads it and refuses a tier 2+ on a
-change that touches no source under a manifest domain without a name and a reason. Set nowhere, that
-refusal is dead code — which is exactly what shipped in the first draft of this feature.
 
 ## Show it
 
@@ -76,7 +82,7 @@ back to the same tool, which writes an entry for every step not kept, offered or
 
 ```bash
 python3 "$SEL" choices --workflows "$WF" --workflow "$WF_ID" --tier "$TIER" \
-        --profile "$PROFILE" --base "${BASE:-main}" \
+        --profile "$PROFILE" --paths "$IMPACT_PATHS" \
         --keep "issue,review1,verify_pr" --actor "<the person, not you>" \
         > .hitl/first-pass-choices.json
 ```

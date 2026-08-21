@@ -5,19 +5,26 @@ step-by-step interview.
 
 ## The choices file
 
-```bash
-# Only NON-keep steps go in. An absent step means keep. `actor` is the accountable human,
-# not the agent.
-cat > .hitl/first-pass-choices.json <<'JSON'
+**Do not hand-write it.** `ci/first-pass/plan_select.py choices` writes
+`.hitl/first-pass-choices.json`, and it is the only thing that should. This file used to carry a
+heredoc that wrote the same path; whichever ran second won, and when that was the hand-written one
+the collapsed tail vanished from the record while the fail-closed validator reported the change
+clean. One writer.
+
+See [`selection.md`](selection.md) for the command. Its shape, for reading a file someone sends you:
+
+```json
 {
   "actor": "name@team",
   "choices": {
-    "roi":   { "disposition": "decline", "reason": "internal tool; ROI self-evident" },
-    "docs":  { "disposition": "starter", "reason": "thin first pass" }
+    "roi":  { "disposition": "decline", "reason": "below the cut line at intake (rank low): ..." },
+    "docs": { "disposition": "starter", "reason": "thin first pass" }
   }
 }
-JSON
 ```
+
+Only non-keep steps appear. An absent step means keep. `actor` is the accountable human, never the
+agent.
 
 ## Rules that still apply when collecting the choices
 

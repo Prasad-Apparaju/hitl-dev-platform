@@ -135,13 +135,19 @@ development workflow — 31 steps (+19a) across 7 phases:
 
 The phase summary is the shape of the work — enough to judge whether the workflow fits.
 
-**Then show the selection** ([`selection.md`](selection.md)): the steps, ranked by what it costs to
-skip each one, with the sentence saying what that step protects, and checkboxes. Locked steps lead
-as already-on; six to eight are offered; the tail is collapsed and skipped, recorded.
+**Say plainly that this plan is provisional.** Nothing here has read the codebase yet: intake runs
+before a line is written, so nothing at this point knows what the change touches. The plan is the
+full spine because that is the honest default when the shape is unknown — not because anyone
+decided it fits.
 
-This replaces "print the phase summary and move on". A person cannot pick from a list they were
-never shown, and the previous version showed seven phase names for thirty-one steps — which is how
-one environment variable in a shell script came to run the full spine for three and a half hours.
+> That's the full route — 31 steps. I haven't looked at the code yet, so this is everything rather
+> than what you need. Impact analysis is the step that works out what this actually touches, and
+> we'll right-size the plan there.
+
+**The sizing happens after impact analysis** (`/hitl:dev-apply-change` step 3), which is the first
+moment anything knows the shape of the work. See [`selection.md`](selection.md). Do not try to size
+it here: an earlier version probed `git diff` at intake and always got an empty answer, because at
+intake there is nothing to diff.
 
 **Print the full ordered list on request** ("show me every step"), and always print it in full for a
 workflow of 10 steps or fewer, where the phase summary would be longer than the list it replaces.
@@ -229,17 +235,9 @@ except ValueError:
     sys.exit(f"tier must be an integer 0-4, got {tier_s!r}")
 if not 0 <= tier <= 4:
     sys.exit(f"tier must be 0-4, got {tier}")
-# Attribution is owed on EITHER departure from the tier the shape suggests: a name for the light
-# path and nothing for the heavy one is what let a one-line shell-script change run the full spine
-# for 3h31m. TRIVIAL_SHAPE comes from the probe in right-sizing.md.
-trivial = os.environ.get("TRIVIAL_SHAPE", "").strip().lower() in ("1", "true", "yes")
 if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
     sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
              "and it unlocks the batch-decline path at intake.")
-if trivial and tier >= 2 and not (tier_set_by.strip() and tier_reason.strip()):
-    sys.exit("no source under a manifest domain is touched, so tier %d needs TIER_SET_BY and "
-             "TIER_REASON. Full ceremony on a one-line change is someone's decision, not a "
-             "default. See right-sizing.md; TRIVIAL_SHAPE=0 if the probe is wrong." % tier)
 
 # Catalog: prefer the plugin copy, fall back to the source path.
 for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),

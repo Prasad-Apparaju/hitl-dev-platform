@@ -154,14 +154,16 @@ def _sel(d, *args):
                           cwd=d, capture_output=True, text=True)
 
 
-def test_the_probe_runs_and_answers_for_a_real_change():
-    """The first version described the probe in prose and assigned its result to nothing."""
-    assert _sel(_repo(), "probe", "--base", "main").stdout.strip() == "1"
-    assert _sel(_repo(src_only=True), "probe", "--base", "main").stdout.strip() == "0"
+def test_there_is_no_probe_mode():
+    """The probe read `git diff` at intake, where there is nothing to diff — intake runs before a
+    line is written. Its job belongs to impact analysis, which reads the code. Removed rather than
+    patched: three independent causes of death meant the design was wrong, not the implementation."""
+    r = _sel(_repo(), "probe")
+    assert r.returncode != 0 and "invalid choice" in (r.stderr + r.stdout)
 
 
 def test_render_produces_a_selection_a_person_could_answer():
-    out = _sel(_repo(), "render", "--tier", "1", "--profile", "fix", "--base", "main").stdout
+    out = _sel(_repo(), "render", "--tier", "1", "--profile", "fix", "--paths", "scripts/demo.sh").stdout
     assert "Running (locked)" in out and "[x]" in out
     assert "skipped and recorded" in out
     assert out.count("[x]") <= 8, "more than eight decidable items defeats the cut"
@@ -170,7 +172,7 @@ def test_render_produces_a_selection_a_person_could_answer():
 def test_the_tail_reaches_the_choices_file():
     """The whole compensation for inverting the default. Prose describing it is not the control."""
     d = _repo()
-    r = _sel(d, "choices", "--tier", "1", "--profile", "fix", "--base", "main",
+    r = _sel(d, "choices", "--tier", "1", "--profile", "fix", "--paths", "scripts/demo.sh",
              "--keep", "issue,review1", "--actor", "priya")
     assert r.returncode == 0, r.stderr
     doc = json.loads(r.stdout)
@@ -183,7 +185,7 @@ def test_the_tail_reaches_the_choices_file():
 
 
 def test_choices_refuses_without_a_named_actor():
-    r = _sel(_repo(), "choices", "--tier", "1", "--base", "main", "--keep", "issue", "--actor", "")
+    r = _sel(_repo(), "choices", "--tier", "1", "--paths", "scripts/demo.sh", "--keep", "issue", "--actor", "")
     assert r.returncode == 2 and "accountable to a person" in r.stderr
 
 
@@ -191,7 +193,7 @@ def test_an_incoherent_keep_is_reported_when_the_choices_are_written():
     """green/red cannot demonstrate this: red is no_omit, so it is locked and always kept — the
     incoherence is unreachable by construction. reconcile/review1 are both ordinary steps."""
     d = _repo()
-    r = _sel(d, "choices", "--tier", "2", "--base", "main", "--keep", "reconcile", "--actor", "p")
+    r = _sel(d, "choices", "--tier", "2", "--paths", "scripts/demo.sh", "--keep", "reconcile", "--actor", "p")
     assert r.returncode == 0, r.stderr
     assert "incoherent: keeping reconcile while dropping review1" in r.stderr, r.stderr
     assert "review that did not happen" in r.stderr
@@ -200,7 +202,7 @@ def test_an_incoherent_keep_is_reported_when_the_choices_are_written():
 def test_locking_a_prerequisite_removes_the_incoherence():
     """A locked prerequisite is kept, so keeping its dependant is coherent — no false alarm."""
     d = _repo()
-    r = _sel(d, "choices", "--tier", "2", "--base", "main", "--keep", "green", "--actor", "p")
+    r = _sel(d, "choices", "--tier", "2", "--paths", "scripts/demo.sh", "--keep", "green", "--actor", "p")
     assert "incoherent" not in r.stderr, (
         "red is no_omit and therefore kept; flagging green would be a false positive")
 

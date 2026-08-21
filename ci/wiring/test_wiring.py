@@ -527,30 +527,20 @@ def test_the_portal_agrees_with_itself_about_the_current_version():
                        "  (1.x references are the legacy line and are left alone)" % (ver, stale))
 
 
-def test_both_departures_from_the_proposed_tier_are_attributed():
-    """A user added one env var to a shell script and it ran 3h31m through the full spine.
+def test_the_tier_0_1_attribution_rule_survives():
+    """A light path is a human's call and needs a name against it. That rule predates 2.9.0.
 
-    Nothing malfunctioned: intake tiered up, and at tier 2 every ceremony step runs. Three defaults
-    compounded, and the load-bearing one was that the CHEAP path cost paperwork — tier 0/1 refused
-    without tier_set_by/tier_reason while tier 2 was the free default. The friction was on the
-    correct answer. Both departures are attributed now.
+    2.9.0 added a mirror rule — attribution for a tier 2+ on a trivially-shaped change — and it was
+    dead code with three independent causes: the probe read a diff that does not exist at intake,
+    the export did not survive to the reader, and the manifest path was wrong. Removed rather than
+    patched a third time. This asserts the ORIGINAL rule was not lost along with it.
     """
     body = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
-    assert "TRIVIAL_SHAPE" in body, (
-        "the generator no longer reads the shape probe, so a trivially-shaped change can be tiered "
-        "up with no name against it")
-    # Reading it is not enough. Something must SET it: the first version of this feature read
-    # TRIVIAL_SHAPE in three places, set it in none, and the refusal was dead code while this guard
-    # stayed green — because it asserted a name appeared in a file.
-    sel = _read(os.path.join(AI, "claude", "start-change", "selection.md"))
-    assert re.search(r"export TRIVIAL_SHAPE=", sel), (
-        "nothing exports TRIVIAL_SHAPE, so the refusal that reads it can never fire")
-    assert re.search(r"if\s+trivial\s+and\s+tier\s*>=\s*2\s+and\s+not", body), (
-        "the tier 2+ attribution rule for a trivial shape is gone")
     assert re.search(r"if\s+tier\s*<=\s*1\s+and\s+not", body), (
-        "the original tier 0/1 attribution rule is gone — this fix ADDS a rule, it does not "
-        "trade one for the other")
-
+        "the tier 0/1 attribution rule is gone — removing the mirror rule must not take it too")
+    assert "TRIVIAL_SHAPE" not in body, (
+        "TRIVIAL_SHAPE is back in the generator. It cannot be set at intake; if sizing is being "
+        "attempted there again, read selection.md on why that moment knows nothing")
 
 def test_intake_proposes_a_tier_from_the_shape():
     """Making someone argue a tier DOWN is the friction that pushes people out of the process."""
@@ -689,16 +679,22 @@ def test_step_costs_reach_the_runtime_and_something_reads_them():
     # resolver line, and invoked nothing — the ranker was tested, shipped and unreachable while a
     # guard asserting the filename appeared in the file stayed green.
     seltext = _read(sel)
-    for mode in ("probe", "render", "choices"):
+    for mode in ("render", "choices"):
         # Anchored to the start of a line and rejecting a leading `#`. Commenting out the call
         # leaves the string in the file, so an unanchored search matches a call nobody makes —
         # the mutation that exposed this was literally `# python3 "$SEL" render`.
         assert re.search(r'(?m)^[^#\n]*python3 "\$SEL" %s' % mode, seltext), (
             "selection.md does not invoke `plan_select.py %s`. Naming the tool is not calling it — "
             "that is how three features shipped unreachable." % mode)
-    body = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
-    assert "selection.md" in body, (
-        "Step 4 no longer routes into the selection, so the ranking is computed for nobody")
+    # The selection runs AFTER impact analysis, in apply-change — the first moment anything has
+    # read the codebase. Intake only points at it and says the plan is provisional until then.
+    intake = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    apply_ = _flat(os.path.join(AI, "claude", "apply-change", "SKILL.md"))
+    assert "selection.md" in intake and re.search(r"(?i)provisional", intake), (
+        "intake no longer says the plan is provisional, or no longer points at where it gets sized")
+    assert "selection.md" in apply_ and re.search(r"(?i)right-size the plan", apply_), (
+        "apply-change no longer sizes the plan after impact analysis, so sizing has drifted back to "
+        "intake, where nothing has read the code")
 
 
 def test_the_selection_keeps_its_load_bearing_rules():
@@ -768,6 +764,31 @@ def test_the_checked_in_catalog_page_is_generator_output():
     assert before == after, (
         "site/catalog.html is not what the generator produces. The deploy regenerates it, so what "
         "is committed here is not what users see. Run tools/scripts/generate-catalog-page.py.")
+
+
+def test_only_one_thing_writes_the_choices_file():
+    """Two writers to .hitl/first-pass-choices.json; the second destroyed the first.
+
+    selection.md runs plan_select.py, which records every step not kept including the collapsed
+    tail. first-pass-choices.md carried a heredoc writing the same path by hand. Whichever ran
+    second won, and when that was the hand-written one the tail vanished from the record while the
+    fail-closed validator certified the change clean — the exact hole the tail record exists to
+    close. Found by two lenses independently.
+    """
+    d = os.path.join(AI, "claude", "start-change")
+    writers = []
+    for f in sorted(os.listdir(d)):
+        if not f.endswith(".md"):
+            continue
+        for line in _read(os.path.join(d, f)).splitlines():
+            t = line.strip()
+            if re.search(r"(>|cat >|tee)\s*\.hitl/first-pass-choices\.json", t) and not t.startswith("#"):
+                writers.append("%s: %s" % (f, t[:60]))
+    assert len(writers) == 1, (
+        "expected exactly one writer of the choices file, found %d:\n  %s"
+        % (len(writers), "\n  ".join(writers)))
+    assert "selection.md" in writers[0], (
+        "the writer should be the selection running plan_select.py, not a hand-written heredoc")
 
 
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
