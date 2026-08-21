@@ -170,7 +170,6 @@ record is the person who confirmed, never the agent.
 creates it — so recording here would write to a stale or absent file that Step 6 then overwrites. Capture
 the choices and let the generator apply them:
 
-```bash
 See [`first-pass-choices.md`](first-pass-choices.md) for the choices file, the floor/starter/defer
 rules, and what to do when the validator is missing.
 

@@ -565,6 +565,36 @@ def test_intake_proposes_a_tier_from_the_shape():
         "asked for by someone who already knows it exists")
 
 
+def test_the_catalog_does_not_claim_profiles_filter_the_plan():
+    """Profiles and tags are advice to intake. Nothing at runtime applies them.
+
+    `ai/shared/workflows.yaml` — what a change file is seeded from — carries only `workflows`, and
+    the generator takes the `development` block verbatim. derive.py implements excludes/activates
+    and is a source-tree tool the plugin does not ship. So `fix` excluding roi has never removed a
+    step, `chore` carrying tier 0 has never set a tier, and `perf` activating baseline has never
+    turned it on. A user asked for one env var in a shell script and got all 31 steps.
+
+    This asserts the catalog SAYS so. If someone later wires profiles into the runtime, the runtime
+    check below starts failing and both halves get revisited together.
+    """
+    cat = _read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml"))
+    # Anchor on the top-level key, not the first occurrence of the word — the section's own header
+    # comment contains "profiles:" and a naive index() cuts the note this test is looking for.
+    m = re.search(r"(?m)^profiles:\s*$", cat)
+    assert m, "no top-level profiles: block in the catalog"
+    head = cat[:m.start()]
+    assert re.search(r"(?i)advisory|advice to intake", head), (
+        "the catalog presents profiles as filters again. They are not applied at runtime; saying so "
+        "is the only thing stopping the next reader trusting `excludes`")
+
+    import yaml
+    runtime = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    assert "profiles" not in runtime and "tags" not in runtime, (
+        "the runtime catalog now carries profiles/tags. If they are genuinely applied, delete this "
+        "test and the advisory note in catalog.yaml — but check the change-file generator actually "
+        "uses them before believing it")
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish

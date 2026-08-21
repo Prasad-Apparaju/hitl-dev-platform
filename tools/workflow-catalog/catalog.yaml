@@ -276,10 +276,29 @@ workflows:
       - { key: reconcile,        name: "Reconcile Cross-Refs",         label: "Reconcile", phase: "Docs Change" }
       - { key: merge,            name: "Merge",                        label: "Merge",     phase: "Docs Change" }
 
-# ── Delivery profiles: named presets over the shared spine ──────────────────────────────────
-# A profile selects which conditional spine slots are on (`activates`, by cond activator),
-# drops steps that don't apply (`excludes`, by key), and contributes a `required_evidence` set
-# (impact analysis may extend it per change — see docs/design/workflow-model/03-execution-model.md).
+# ── Delivery profiles: ADVISORY presets over the shared spine ───────────────────────────────
+#
+# READ THIS BEFORE TRUSTING A FIELD HERE. Profiles and tags are **advice to intake**, not a filter
+# on the plan. They describe what a change of this kind usually needs, and they are meant to inform
+# what intake pre-selects. Nothing at runtime applies them.
+#
+# Concretely: `ai/shared/workflows.yaml` — the file a change file is actually seeded from — carries
+# only `workflows`. It has no `profiles` and no `tags`, and the change-file generator takes the
+# whole `development` block verbatim. `derive.py` implements `excludes`/`activates` correctly and
+# is a source-tree tool that the plugin does not ship. So:
+#
+#   `fix` excluding roi+training      has never removed a step from a real plan
+#   `chore` carrying tier: 0          has never set a tier
+#   `perf` activating baseline        has never turned that step on
+#
+# Every change gets the same 31 numbered steps regardless of profile or tag. That is deliberate as
+# of now: right-sizing happens where a human can see it — the intake selection — rather than by a
+# taxonomy silently filtering the plan before anyone reads it. These fields feed that selection's
+# defaults and the generated docs.
+#
+# A profile selects which conditional spine slots it suggests (`activates`), which steps it suggests
+# dropping (`excludes`), and the `required_evidence` a change of this kind owes
+# (see docs/design/workflow-model/03-execution-model.md).
 # `feature` is the base: no conditionals, nothing excluded == the runtime `development` workflow.
 profiles:
   feature:

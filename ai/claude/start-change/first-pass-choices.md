@@ -40,10 +40,10 @@ CHK="ci/first-pass/check_skips.py"
 
 Certification happens in **Step 6b**, once the change file exists and there is something real to certify.
 
-Run the change under **brief mode** ([`shared/first-pass/brief.md`](../../shared/first-pass/brief.md) —
+Run the change under **brief mode** (`shared/first-pass/brief.md` —
 say less, ask less, never re-ask what intake already settled) and the **reduced-friction permission policy**
-([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
-respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
+(`shared/first-pass/permissions.md`); use the neutral /
+respectful language in `shared/first-pass/language.md`.
 
 > **Resurfacing does not happen here.** `resurface.surface()` matches unresolved skips against the new
 > change's domains and `allowed_paths`, and neither is known until the workflow's own impact step fills
