@@ -6,60 +6,95 @@ All notable changes to the HITL plugin are documented here.
 
 ## [2.9.0] — 2026-08-20
 
-A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It took **3 hours 31 minutes** and
-eleven recorded steps, including an adversarial design review, a full TDD RED/GREEN cycle, a
-refactor step, an adversarial code review, and a 57-minute review round. They reported the tool as
-broken.
+A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It took **3 hours 31 minutes** across
+eleven recorded steps, including an adversarial design review, a full TDD cycle, a refactor, an
+adversarial code review and a 57-minute review round. They reported the tool as broken.
 
-Nothing malfunctioned. HITL did exactly what it was specified to do, and the specification was
-wrong for that change.
+Nothing malfunctioned. Chasing it turned up something worse than a bad default: **nothing was
+sizing the plan at all.**
 
-### Fixed
+### The finding
 
-- **Intake now proposes a tier from the shape of the change.** "Default up" is right for a change
-  that touches the product and wrong for one line in a shell script, and nothing distinguished the
-  two. If the diff touches only non-source paths — scripts, config, CI, docs — and the request is a
-  *value* rather than *behaviour*, intake proposes tier 0 or 1 with the reason already filled in:
+`ai/shared/workflows.yaml` — the file a change file is seeded from, and the only one the plugin
+ships — carries `workflows` and nothing else. No profiles. No tags. The change-file generator takes
+the whole `development` block verbatim and never receives a profile. `derive.py` implements
+`excludes` and `activates` correctly and is a source-tree tool that is not shipped.
 
-  > This touches `demo.sh` only, so I'd run it as tier 1 — the ceremony steps come off and it's
-  > about twenty minutes. Say the word if you want it heavier.
+So of the three-tier model introduced in 2.0.0, only the first tier ever reached a user:
 
-  A proposal you can reject in four characters is not pressure. Making someone argue a tier *down*
-  is the friction that pushes people out of the process entirely.
+| Declared in the catalog | Effect on a real plan |
+|---|---|
+| `fix` excludes `roi`, `training` | none, ever |
+| `chore` carries `tier: 0` | none, ever |
+| `perf` activates `baseline` | none, ever |
 
-- **The cheap path no longer costs more paperwork than the expensive one.** Tier 2 was the
-  generator's default and needed no attribution, while tier 0/1 was refused without `tier_set_by`
-  and `tier_reason`. The friction sat on the correct answer. A tier 2+ declared on a
-  trivially-shaped change now needs a name and a reason too. This **adds** a rule rather than
-  trading one away: both departures from the proposed tier are somebody's decision.
+Every change in every project has been getting the same 31 steps. The taxonomy meant to right-size
+work has been documentation since it was written.
 
-- **First Pass is offered at tier 0/1 without being asked**, with the ceremony steps pre-selected as
-  declined and the reason filled in, so one confirmation clears all eleven. It was opt-in, which
-  meant the one feature built for exactly this case had to be requested by someone who already knew
-  it existed.
+### The decision
 
-### What this deliberately does not do
+Rather than wire the taxonomy in — a filter that silently shortens a plan before anyone reads it —
+**right-sizing moves to where a person can see it.** The catalog now says plainly that profiles and
+tags are advice to intake, not a filter, so the next reader does not trust `excludes` the way I did.
 
-The shape probe never lowers a floor step, never applies to source under a manifest domain however
-small the diff, and never survives a real risk signal — secrets moving between files, auth,
-anything a `security` profile activates on.
+### Added
 
-**Naming a key is not moving one.** Adding `FIRECRAWL_API_KEY=` to a script that already reads
-environment variables is a chore. Changing where a secret is stored, or who can read it, is not.
-That distinction is the whole judgement, and where it is unclear, "default up" is exactly what it
-was written for.
+- **A step selection at intake.** Once the ask is understood, the steps are shown ranked by what it
+  costs to skip each one, each with a sentence saying what that step protects — *"the runbook keeps
+  describing a system that no longer exists"*, not "documentation". Floor steps and the TDD pair
+  lead the list as already-on with their reason. Six to eight are offered with checkboxes. The tail
+  is collapsed, skipped, **and recorded** with a name and a reason.
+
+  On the change that started this: 4 locked, 8 offered, 22 recorded. A person decides on 8 items
+  instead of 34.
+
+- **`protects` and `forgo_cost` for all 38 steps**, plus a ranker that modulates them: down one rank
+  when the change does not engage a step, up one when a changed path falls in a manifest domain
+  named in the incident registry, never past the floor. A project with no manifest or no registry
+  gets the same order, quietly — missing data means no signal, never an error.
+
+- **Coherence.** Keeping a step while dropping what it requires makes a claim the plan cannot
+  support: GREEN is defined against a RED that was never generated; `reconcile` resolves findings
+  from a review nobody did. Eleven such dependencies now **challenge** the selection and take an
+  answer. They never block — the floor itself yields to a signature, so coherence is not the one
+  place HITL refuses outright.
+
+- **A tier proposed from the shape of the change.** If the diff touches only non-source paths and
+  the request is a value rather than behaviour, intake proposes tier 0 or 1 with the reason filled
+  in instead of making someone argue a tier down. This sets the frame; the selection is where the
+  sizing actually happens.
 
 ### Changed
 
-`start-change/SKILL.md` was over the 500-line body limit, so the tier guidance and the First Pass
-disposition mechanics move to `right-sizing.md` and `first-pass-choices.md` beside it, rather than
-load-bearing prose being trimmed to fit.
+- **The cheap path no longer costs more paperwork than the expensive one.** Tier 2 was the
+  generator's default and needed no attribution while tier 0/1 was refused without `tier_set_by` and
+  `tier_reason` — the friction sat on the correct answer. A tier 2+ declared on a trivially-shaped
+  change now needs a name and a reason too. This **adds** a rule rather than trading one away.
+
+- **First Pass is offered at tier 0/1 without being asked**, ceremony steps pre-selected as declined.
+
+- **What silence means.** Previously an unshown step ran: `keep` was the default for all 31 (CR-1),
+  which existed so an agent could not quietly lighten a plan. Now the tail is skipped by default and
+  recorded. The human still confirms — they are confirming *these eight* rather than *cut these
+  twenty-five*. A default nobody was shown was not protecting anyone. **Nothing is ever silent:**
+  every skipped step lands in the ledger, and the fail-closed validator still blocks an unauthorised
+  floor skip.
+
+### What deliberately did not change
+
+The shape probe never lowers a floor step, never applies to source under a manifest domain however
+small the diff, and never survives a real risk signal. **Naming a key is not moving one** — adding
+`FIRECRAWL_API_KEY=` to a script that already reads environment variables is a chore; changing where
+a secret is stored is not.
 
 ### Note for existing projects
 
 Run `/hitl:dev-update`. One thing newly refuses: a tier 2 or higher declared on a change whose diff
-touches no source under a manifest domain, with no `tier_set_by`/`tier_reason`. Supply both, or let
-intake propose the lighter tier it was going to suggest anyway.
+touches no source under a manifest domain, with no `tier_set_by`/`tier_reason`. Supply both, or take
+the lighter tier intake was going to propose.
+
+Existing change files are unaffected. `step_costs` and `step_requires` are new blocks read at intake;
+nothing re-reads a plan that has already been seeded.
 
 ---
 
