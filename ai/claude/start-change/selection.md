@@ -1,5 +1,10 @@
 # The step selection
 
+- [What it is for](#what-it-is-for)
+- [Compute the order](#compute-the-order)
+- [Show it](#show-it)
+- [Rules](#rules)
+
 Shown at intake once the ask is understood and the impact read is done, before the plan is fixed.
 Called from Step 4.
 
@@ -14,18 +19,25 @@ So: show the steps, ranked, with what each one protects, and let the person choo
 
 ## Compute the order
 
-`ci/first-pass/rank.py` (plugin fallback `$ROOT/shared/ci/first-pass/rank.py`) does this. It reads
-`step_costs` from the same `workflows.yaml` the plan comes from.
+`ci/first-pass/plan_select.py` does all of it — ranking, rendering, and writing the choices. Run it;
+do not reimplement it in prose.
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
-RANK="ci/first-pass/rank.py"; [[ -f "$RANK" ]] || RANK="$ROOT/shared/ci/first-pass/rank.py"
-git diff --name-only "$(git merge-base HEAD "${BASE:-main}")"..HEAD 2>/dev/null | head -200
+SEL="ci/first-pass/plan_select.py"; [[ -f "$SEL" ]] || SEL="$ROOT/shared/ci/first-pass/plan_select.py"
+WF="ci/first-pass/workflows.yaml";  [[ -f "$WF"  ]] || WF="$ROOT/shared/workflows.yaml"
+
+# 1. the shape probe — this is what sets TRIVIAL_SHAPE for Step 6's generator
+export TRIVIAL_SHAPE="$(python3 "$SEL" probe --base "${BASE:-main}")"
+
+# 2. the selection a person reads
+python3 "$SEL" render --workflows "$WF" --workflow "$WF_ID" --tier "$TIER" \
+        --profile "$PROFILE" --tags "$TAGS" --base "${BASE:-main}"
 ```
 
-Pass it the changed paths, the profile and tags, whether the change spans more than one manifest
-domain, and whether any changed path falls in a domain named in the incident registry. Missing
-inputs are not errors — a project with no manifest or no registry still gets a usable order.
+`TRIVIAL_SHAPE` must be exported here. Step 6's generator reads it and refuses a tier 2+ on a
+change that touches no source under a manifest domain without a name and a reason. Set nowhere, that
+refusal is dead code — which is exactly what shipped in the first draft of this feature.
 
 ## Show it
 
@@ -59,11 +71,25 @@ the top items there and keep fine control conversational — *"also drop docs"* 
 
 ## Rules
 
-**Everything below the cut line is skipped, and recorded.** Name, reason, timestamp, in the ledger
-that already exists. This inverts CR-1, which made `keep` the default so an agent could not quietly
-lighten a plan. The human still confirms — they are confirming *these six* rather than *cut these
-twenty-five*. A default nobody was shown is not protecting anyone. Say what is being skipped; never
-let silence do it.
+**Everything below the cut line is skipped, and recorded.** Not by hand — pass what the person kept
+back to the same tool, which writes an entry for every step not kept, offered or collapsed alike:
+
+```bash
+python3 "$SEL" choices --workflows "$WF" --workflow "$WF_ID" --tier "$TIER" \
+        --profile "$PROFILE" --base "${BASE:-main}" \
+        --keep "issue,review1,verify_pr" --actor "<the person, not you>" \
+        > .hitl/first-pass-choices.json
+```
+
+That file is what Step 6 turns into the ledger. **If the tail does not reach it, the tail is skipped
+and NOT recorded**, and the fail-closed validator certifies the change clean — the first draft of
+this feature did precisely that, and a review caught it. The command above is the compensation for
+inverting the default; prose describing it is not.
+
+This inverts CR-1, which made `keep` the default so an agent could not quietly lighten a plan. The
+human still confirms — they are confirming *these eight* rather than *cut these twenty-five*. A
+default nobody was shown was not protecting anyone. Silence is still never allowed to do the
+skipping: every step not kept lands in the file above, with the reason it was ranked where it was.
 
 **The floor can be unticked.** It is not locked out of the view, it is locked out of *casual*
 choice: name the specific loss, take a name against it, and a linked waiver where the step maps to a

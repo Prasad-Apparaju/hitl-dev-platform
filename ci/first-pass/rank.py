@@ -17,8 +17,42 @@ Degrading quietly is a requirement, not a nicety: a project with no manifest, no
 error and never a raise.
 """
 import fnmatch
+import os
+import sys
 
 RANKS = ("low", "medium", "high")
+
+# ONE authority for criticality. This module reimplemented it as a plain crit_by_tier[tier] lookup
+# and disagreed with the validator: at tier 4 six steps that check_skips.py blocks you for skipping
+# were offered in the selection as ordinary choices, because there is no key `4` and the lookup fell
+# back to the base. resolve_crit() is monotonic — criticality may only RISE with tier — and has been
+# hardened across several review rounds. Import it rather than agreeing with it by coincidence.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.append(_HERE)   # append: the front of sys.path shadows the stdlib
+try:
+    from check_skips import resolve_crit as _resolve_crit
+except Exception:                     # pragma: no cover - a repo without the validator still ranks
+    _resolve_crit = None
+
+
+def effective_crit(step, tier):
+    """The step's criticality at this tier, from the validator's own resolver where available."""
+    if _resolve_crit is not None:
+        return _resolve_crit(step, tier)
+    base = (step or {}).get("crit", "standard")
+    best = base
+    cbt = (step or {}).get("crit_by_tier")
+    if isinstance(cbt, dict):
+        rank = {"ceremony": 0, "standard": 1, "floor": 2}
+        for k, v in cbt.items():
+            try:
+                tk = int(k)
+            except (TypeError, ValueError):
+                continue
+            if tk <= tier and v in rank and rank[v] > rank.get(best, 1):
+                best = v
+    return best
 
 
 def _idx(rank):
@@ -83,7 +117,7 @@ def rank_plan(steps, costs, *, tier=2, paths=(), profile="", tags=(), multi_doma
     out = []
     for pos, s in enumerate(steps or []):
         key = s.get("key")
-        crit = (s.get("crit_by_tier") or {}).get(tier, s.get("crit", "standard"))
+        crit = effective_crit(s, tier)
         locked = crit == "floor" or bool(s.get("no_omit"))
         entry = costs.get(key) or {}
         out.append({

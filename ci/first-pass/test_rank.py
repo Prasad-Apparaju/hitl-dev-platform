@@ -117,3 +117,107 @@ def test_it_challenges_rather_than_blocks():
     out = R.incoherent({"promote"}, REQ)
     assert isinstance(out, list) and out and isinstance(out[0], tuple)
     assert R.incoherent(None, None) == [] and R.incoherent({"green"}, None) == []
+
+
+# ── the callers actually run ─────────────────────────────────────────────────────────────────────
+import json, subprocess, tempfile
+
+
+def _repo(tmp="", src_only=False):
+    """A real repo with a manifest, a source file and a script, on a branch with one commit."""
+    d = tempfile.mkdtemp()
+    run = lambda *a: subprocess.run(a, cwd=d, capture_output=True, text=True, check=True)
+    run("git", "init", "-q", ".")
+    run("git", "config", "user.name", "t"); run("git", "config", "user.email", "t@t")
+    os.makedirs(os.path.join(d, "src")); os.makedirs(os.path.join(d, "scripts"))
+    os.makedirs(os.path.join(d, "docs", "02-design")); os.makedirs(os.path.join(d, "ci", "first-pass"))
+    open(os.path.join(d, "src", "app.py"), "w").write("x = 1\n")
+    open(os.path.join(d, "scripts", "demo.sh"), "w").write("echo hi\n")
+    open(os.path.join(d, "docs", "02-design", "system-manifest.yaml"), "w").write(
+        'domains:\n  - name: app\n    paths: ["src/"]\n')
+    run("git", "add", "-A"); run("git", "commit", "-qm", "base")
+    run("git", "checkout", "-q", "-b", "work")
+    tgt = "src/app.py" if src_only else "scripts/demo.sh"
+    open(os.path.join(d, tgt), "a").write("# change\n")
+    run("git", "add", "-A"); run("git", "commit", "-qm", "change")
+    here = os.path.dirname(os.path.abspath(__file__))
+    for f in os.listdir(here):
+        if f.endswith(".py"):
+            open(os.path.join(d, "ci", "first-pass", f), "w").write(open(os.path.join(here, f)).read())
+    open(os.path.join(d, "ci", "first-pass", "workflows.yaml"), "w").write(
+        open(os.path.join(ROOT, "ai", "shared", "workflows.yaml")).read())
+    return d
+
+
+def _sel(d, *args):
+    return subprocess.run([sys.executable, "ci/first-pass/plan_select.py", *args],
+                          cwd=d, capture_output=True, text=True)
+
+
+def test_the_probe_runs_and_answers_for_a_real_change():
+    """The first version described the probe in prose and assigned its result to nothing."""
+    assert _sel(_repo(), "probe", "--base", "main").stdout.strip() == "1"
+    assert _sel(_repo(src_only=True), "probe", "--base", "main").stdout.strip() == "0"
+
+
+def test_render_produces_a_selection_a_person_could_answer():
+    out = _sel(_repo(), "render", "--tier", "1", "--profile", "fix", "--base", "main").stdout
+    assert "Running (locked)" in out and "[x]" in out
+    assert "skipped and recorded" in out
+    assert out.count("[x]") <= 8, "more than eight decidable items defeats the cut"
+
+
+def test_the_tail_reaches_the_choices_file():
+    """The whole compensation for inverting the default. Prose describing it is not the control."""
+    d = _repo()
+    r = _sel(d, "choices", "--tier", "1", "--profile", "fix", "--base", "main",
+             "--keep", "issue,review1", "--actor", "priya")
+    assert r.returncode == 0, r.stderr
+    doc = json.loads(r.stdout)
+    assert doc["actor"] == "priya"
+    for collapsed in ("roi", "training", "figma"):
+        assert collapsed in doc["choices"], (
+            "%s was collapsed into the tail and never recorded — skipped, and NOT recorded" % collapsed)
+    for key, e in doc["choices"].items():
+        assert e["disposition"] == "decline" and len(e["reason"]) > 20, (key, e)
+
+
+def test_choices_refuses_without_a_named_actor():
+    r = _sel(_repo(), "choices", "--tier", "1", "--base", "main", "--keep", "issue", "--actor", "")
+    assert r.returncode == 2 and "accountable to a person" in r.stderr
+
+
+def test_an_incoherent_keep_is_reported_when_the_choices_are_written():
+    """green/red cannot demonstrate this: red is no_omit, so it is locked and always kept — the
+    incoherence is unreachable by construction. reconcile/review1 are both ordinary steps."""
+    d = _repo()
+    r = _sel(d, "choices", "--tier", "2", "--base", "main", "--keep", "reconcile", "--actor", "p")
+    assert r.returncode == 0, r.stderr
+    assert "incoherent: keeping reconcile while dropping review1" in r.stderr, r.stderr
+    assert "review that did not happen" in r.stderr
+
+
+def test_locking_a_prerequisite_removes_the_incoherence():
+    """A locked prerequisite is kept, so keeping its dependant is coherent — no false alarm."""
+    d = _repo()
+    r = _sel(d, "choices", "--tier", "2", "--base", "main", "--keep", "green", "--actor", "p")
+    assert "incoherent" not in r.stderr, (
+        "red is no_omit and therefore kept; flagging green would be a false positive")
+
+
+def test_the_ranker_and_the_validator_agree_on_the_floor_at_every_tier():
+    """They disagreed: rank.py used crit_by_tier[tier], a plain lookup, while check_skips resolves
+    monotonically — floor at 3 means floor at 3 AND ABOVE. At tier 4 six steps the validator blocks
+    you for skipping were offered in the selection as ordinary choices.
+
+    Ranging over 0..4 matters: they agreed at 1 and 2 and diverged above.
+    """
+    import check_skips as CS
+    for tier in (0, 1, 2, 3, 4):
+        locked = {r["key"] for r in R.rank_plan(SPINE, COSTS, tier=tier) if r["locked"]}
+        expect = {s["key"] for s in SPINE
+                  if CS.resolve_crit(s, tier) == "floor" or s.get("no_omit")}
+        assert locked == expect, (
+            "tier %d: the selection and the validator disagree about what is locked. "
+            "only-selection=%s only-validator=%s"
+            % (tier, sorted(locked - expect), sorted(expect - locked)))

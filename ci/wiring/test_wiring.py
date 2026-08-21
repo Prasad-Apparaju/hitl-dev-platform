@@ -539,6 +539,12 @@ def test_both_departures_from_the_proposed_tier_are_attributed():
     assert "TRIVIAL_SHAPE" in body, (
         "the generator no longer reads the shape probe, so a trivially-shaped change can be tiered "
         "up with no name against it")
+    # Reading it is not enough. Something must SET it: the first version of this feature read
+    # TRIVIAL_SHAPE in three places, set it in none, and the refusal was dead code while this guard
+    # stayed green — because it asserted a name appeared in a file.
+    sel = _read(os.path.join(AI, "claude", "start-change", "selection.md"))
+    assert re.search(r"export TRIVIAL_SHAPE=", sel), (
+        "nothing exports TRIVIAL_SHAPE, so the refusal that reads it can never fire")
     assert re.search(r"if\s+trivial\s+and\s+tier\s*>=\s*2\s+and\s+not", body), (
         "the tier 2+ attribution rule for a trivial shape is gone")
     assert re.search(r"if\s+tier\s*<=\s*1\s+and\s+not", body), (
@@ -679,6 +685,17 @@ def test_step_costs_reach_the_runtime_and_something_reads_them():
 
     sel = os.path.join(AI, "claude", "start-change", "selection.md")
     assert os.path.isfile(sel), "the selection spec is gone; intake has nothing to show"
+    # A CALLER, not a mention. The first version of this feature named rank.py in prose, showed a
+    # resolver line, and invoked nothing — the ranker was tested, shipped and unreachable while a
+    # guard asserting the filename appeared in the file stayed green.
+    seltext = _read(sel)
+    for mode in ("probe", "render", "choices"):
+        # Anchored to the start of a line and rejecting a leading `#`. Commenting out the call
+        # leaves the string in the file, so an unanchored search matches a call nobody makes —
+        # the mutation that exposed this was literally `# python3 "$SEL" render`.
+        assert re.search(r'(?m)^[^#\n]*python3 "\$SEL" %s' % mode, seltext), (
+            "selection.md does not invoke `plan_select.py %s`. Naming the tool is not calling it — "
+            "that is how three features shipped unreachable." % mode)
     body = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
     assert "selection.md" in body, (
         "Step 4 no longer routes into the selection, so the ranking is computed for nobody")
