@@ -698,6 +698,35 @@ def test_the_selection_keeps_its_load_bearing_rules():
         "time is mostly waiting for a human")
 
 
+def test_coherence_is_checked_and_challenges_rather_than_blocks():
+    """Keeping a step while dropping what it requires makes a claim the plan cannot support.
+
+    Two halves have to stay true together: the data exists in both catalog and runtime, and the
+    thing that reads it returns a list to talk about rather than refusing. A coherence check that
+    blocks would be the only hard refusal in a framework built on recorded exceptions.
+    """
+    import yaml
+    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    run = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    req = cat.get("step_requires")
+    assert req, "no step_requires — nothing knows that GREEN is defined against RED"
+    assert run.get("step_requires") == req, "runtime step_requires has drifted from the catalog"
+
+    keys = {s["key"] for s in cat["spine"]["steps"]}
+    for step, e in req.items():
+        assert step in keys and all(n in keys for n in e["needs"]), (
+            "%s: a prerequisite that names no real step can never fire" % step)
+
+    src = _read(os.path.join(ROOT, "ci", "first-pass", "rank.py"))
+    assert "def incoherent(" in src, "rank.py no longer implements the coherence check"
+    assert "raise" not in src.split("def incoherent(")[1].split("\ndef ")[0], (
+        "incoherent() raises. It must return findings to challenge with, not refuse")
+
+    sel = _flat(os.path.join(AI, "claude", "start-change", "selection.md"))
+    assert "incoherent" in sel and re.search(r"(?i)do not block it", sel), (
+        "the selection no longer cites the check, or no longer says it challenges")
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish

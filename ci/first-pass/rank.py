@@ -128,3 +128,24 @@ def touches_risky(paths, risky):
                 if pref and (p == pref or p.startswith(pref + "/")):
                     return True
     return False
+
+
+def incoherent(kept, requires):
+    """Steps kept whose prerequisites were dropped.
+
+    Returns [(step, missing_prereq, why)] — the material for a challenge, not a refusal. Keeping a
+    step while dropping what it requires does not make the plan lighter; it makes a claim the plan
+    cannot support. The person may still proceed: the floor itself yields to a signature, so
+    coherence is not the one place HITL refuses outright.
+
+    `kept` is whatever the selection kept — a set, or anything iterable of step keys.
+    """
+    kept = set(kept or ())
+    out = []
+    for step in sorted(kept):
+        entry = (requires or {}).get(step) or {}
+        for need in (entry.get("needs") or []):
+            if need not in kept:
+                out.append((step, need, entry.get("without_it", "")))
+    return out
+

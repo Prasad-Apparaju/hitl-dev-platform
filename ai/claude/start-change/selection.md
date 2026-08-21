@@ -72,10 +72,17 @@ hard gate. That is the skip ledger's existing machinery, reachable from here for
 > Unticking **pentest**. This change touches auth, so nothing else in the plan looks for a
 > privilege bug. Who is accepting that, and against which waiver?
 
-**Push back on an incoherent selection, do not block it.** `green` without `red` is claiming a fix
-with no failing test behind it; `promote` without `deploy`; `reconcile` with no review to reconcile
-against. Name it, take the answer, proceed — consistent with everything else here, where even the
-floor yields to a signature.
+**Push back on an incoherent selection, do not block it.** `rank.incoherent(kept, step_requires)`
+returns every kept step whose prerequisite was dropped, with the sentence saying what breaks.
+`green` without `red` is a fix with no failing test behind it; `promote` without `deploy`;
+`reconcile` resolving findings from a review nobody did.
+
+Name it, take the answer, proceed — consistent with everything else here, where even the floor
+yields to a signature. Dropping *both* a step and its prerequisite is coherent and says nothing:
+skipping the whole TDD pair is an ordinary recorded skip.
+
+> Keeping **GREEN** but dropping **RED**. That is a fix with no failing test behind it — GREEN is
+> defined against RED. Keep RED as a starter, or drop both?
 
 **Never quote a duration.** Quote step counts. Elapsed time is dominated by when someone reads their
 notifications, which HITL does not control and cannot predict.

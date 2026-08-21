@@ -518,3 +518,49 @@ step_costs:
     protects: "The longer-term effect is looked at rather than assumed."
     forgo_cost: low
     engages: { profiles: ["feature"] }
+
+# ── Which steps stop making sense without another ──────────────────────────────────────────
+#
+# Read by the intake selection. Keeping a step while dropping what it requires does not make the
+# plan lighter, it makes a claim the plan cannot support: GREEN is defined against a RED that was
+# never generated, `reconcile` resolves findings from a review nobody did.
+#
+# This CHALLENGES, it does not block. Name the incoherence, take the answer, proceed — the floor
+# itself yields to a signature, so coherence is not the one place HITL refuses outright.
+#
+# Deliberately not a phase-order graph. Later-than is not depends-on, and a dependency for every
+# pair would make the check noise that people learn to click past.
+step_requires:
+  verify_red:
+    needs: [red]
+    without_it: "verifying a RED that was never generated"
+  green:
+    needs: [red]
+    without_it: "a fix with no failing test behind it — GREEN is defined against RED"
+  verify_green:
+    needs: [green]
+    without_it: "verifying a GREEN that was never generated"
+  design_plus:
+    needs: [red]
+    without_it: "the tests are what teach the design here; without them there is nothing to learn from"
+  rerun:
+    needs: [review1]
+    without_it: "re-running after review edits, with no review to have edited anything"
+  reconcile:
+    needs: [review1]
+    without_it: "reconciling findings from a review that did not happen"
+  review2:
+    needs: [review1]
+    without_it: "a second reviewer with no first review to be second to"
+  promote:
+    needs: [deploy]
+    without_it: "promoting a build that was never deployed anywhere"
+  figma_compare:
+    needs: [figma]
+    without_it: "comparing the build against a design review nobody did"
+  roi_30:
+    needs: [roi]
+    without_it: "checking against an ROI estimate that was never made"
+  roi_90:
+    needs: [roi]
+    without_it: "checking against an ROI estimate that was never made"
