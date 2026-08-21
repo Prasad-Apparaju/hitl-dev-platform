@@ -38,25 +38,50 @@ Three things all have to be true, and today they cannot be.
 
 Impact analysis lives in a second command that runs later. So the check finishes before the record exists. Fixing the writing end cannot help.
 
+```mermaid
+flowchart LR
+  subgraph A["dev-start-change (intake)"]
+    direction TB
+    a3["3. pick workflow"] --> a4["4. show plan"]
+    a4 --> a6["6. write change file"]
+    a6 --> a6b["6b. CHECK the skips"]
+    a6b --> a7["7. commit"]
+  end
+  subgraph B["dev-apply-change (later, separate run)"]
+    direction TB
+    b3["3. impact analysis"] --> b3a["3a. shorten the plan"]
+    b3a --> b7["7. plan the work"]
+  end
+  A --> B
+  a6b -. "has to read what<br>3a writes, but runs first" .-> b3a
+  classDef bad fill:#f8d7da,stroke:#a33
+  class a6b,b3a bad
+```
+
+The dotted line is the problem. The check needs what the shortening produces, and it runs in an earlier command.
+
 ## What we are changing
 
 Move impact analysis into intake, right after the conversation about what you want.
 
 Then everything happens in one command, in an order where each step has what it needs:
 
-```
-/hitl:dev-start-change
-  1   don't overwrite an active change
-  2   pick the issue
-  3   pick the workflow             from the issue text
-  3a  IMPACT ANALYSIS               moved here. produces the facts
-  3b  confirm the tier              now based on evidence
-  4   size the plan                 using those facts
-  5   create the branch
-  6   write the change file         including anything skipped
-  6b  check the skips               now runs after the record exists
-  7   commit
-  8   hand off
+```mermaid
+flowchart TB
+  s1["1. don't overwrite an active change"] --> s2["2. pick the issue"]
+  s2 --> s3["3. pick the workflow"]
+  s3 --> s3a["3a. IMPACT ANALYSIS<br>moved here, produces the facts"]
+  s3a --> s3b["3b. confirm the tier<br>now based on evidence"]
+  s3b --> s4["4. shorten the plan<br>using those facts"]
+  s4 --> s5["5. create the branch"]
+  s5 --> s6["6. write the change file<br>including anything skipped"]
+  s6 --> s6b["6b. CHECK the skips"]
+  s6b --> s7["7. commit"]
+  s7 --> s8["8. hand off to dev-apply-change"]
+  classDef moved fill:#d4edda,stroke:#3a3
+  classDef check fill:#d1ecf1,stroke:#36a
+  class s3a,s4 moved
+  class s6b check
 ```
 
 Nothing else moves. The check stays where it is and starts working, because the record is now written before it runs. No file passed between commands, no second writer, no state crossing a boundary. All three of my failures were machinery I invented to bridge a gap that should not have been there.
@@ -79,6 +104,24 @@ That matters because the project already writes this down. Each domain in the ma
 | `last_changed` | whether that description is likely still true |
 
 Graphify indexes the code and the docs, rebuilds whenever a file is written, and is committed to the repo. So all of this can be looked up.
+
+```mermaid
+flowchart TB
+  P["paths you touched"] --> D{"which domain<br>claims these files?"}
+  D -->|"no domain does"| U["undeclared<br>confidence: unknown"]
+  D -->|"a domain does"| M["the domain entry"]
+  M --> L["lld<br>the design doc"]
+  M --> F["facade_apis<br>what callers see"]
+  M --> E["events in and out"]
+  M --> T["tests that cover it"]
+  M --> R["owning_fr<br>the requirement"]
+  M --> DEP["depends_on, read backwards<br>who breaks if this changes"]
+  L --> SRC{"does the change go past<br>what is written down?"}
+  SRC -->|"yes"| READ["read the source there<br>and say the model is short"]
+  SRC -->|"no"| DONE["done, no source read needed"]
+  classDef warn fill:#fff3cd,stroke:#a80
+  class U,READ warn
+```
 
 So impact analysis becomes: find the domain, follow what it declares, and read source code only where the change goes past what is written down.
 
