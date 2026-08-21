@@ -223,3 +223,42 @@ def test_the_ranker_and_the_validator_agree_on_the_floor_at_every_tier():
             "tier %d: the selection and the validator disagree about what is locked. "
             "only-selection=%s only-validator=%s"
             % (tier, sorted(locked - expect), sorted(expect - locked)))
+
+
+def test_a_repo_without_step_costs_collapses_nothing():
+    """The upgrade case that mattered: a project on 2.8.0 refreshes the plugin but not its copy of
+    ci/first-pass/workflows.yaml.
+
+    Without step_costs every step ranks the same, so the order falls back to catalog order — which
+    is CHRONOLOGY. The first eight are the Design phase; the tail is review1, review2, qa_verify,
+    verify_pr, arch_review, rerun, reconcile and rollout. Collapsing that tail and skipping it by
+    default is strictly worse than the problem this release exists to fix.
+    """
+    import plan_select as P
+    locked, offered, tail = P.build(SPINE, {}, {}, tier=2, paths=["src/a.py"], profile="fix",
+                                    tags=[], manifest={}, incidents={})
+    assert tail == [], "a plan with no ranking data must not be collapsed at all"
+    for k in ("review1", "qa_verify", "verify_pr", "rollout"):
+        assert k in {r["key"] for r in offered}, "%s must stay on the plan, not fall off it" % k
+
+
+def test_a_repo_with_step_costs_does_collapse():
+    """The other half: opting in must still lighten the plan, or the guard above is a way of
+    disabling the feature."""
+    import plan_select as P
+    locked, offered, tail = P.build(SPINE, COSTS, {}, tier=2, paths=["src/a.py"], profile="fix",
+                                    tags=[], manifest={}, incidents={})
+    assert tail, "with ranking data present the tail must collapse"
+    assert len(offered) <= 8
+    for k in ("review1", "qa_verify", "verify_pr"):
+        assert k not in {r["key"] for r in tail}, (
+            "%s ranked into the skipped tail even with costs present" % k)
+
+
+def test_partial_step_costs_is_treated_as_no_basis():
+    """Half a catalog is not a ranking. A handful of entries must not license collapsing the rest."""
+    import plan_select as P
+    few = {k: COSTS[k] for k in list(COSTS)[:3]}
+    _, offered, tail = P.build(SPINE, few, {}, tier=2, paths=[], profile="", tags=[],
+                               manifest={}, incidents={})
+    assert tail == [], "three entries out of thirty-eight is not enough to rank a plan"

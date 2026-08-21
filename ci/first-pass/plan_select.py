@@ -28,6 +28,21 @@ def source_paths(manifest):
 
 
 
+def sizable(costs, plan):
+    """Is there enough data to lighten this plan responsibly?
+
+    Without `step_costs` every step ranks the same, so the order collapses to catalog order — and
+    catalog order is CHRONOLOGY, not importance. The first eight steps are the Design phase and the
+    tail is every review, verification and the rollout plan. A project that upgraded but has not
+    refreshed its ci/first-pass/workflows.yaml would have had code review and QA silently dropped.
+
+    No basis to rank means no collapsing: show the whole plan, exactly as before. A project gets the
+    lighter path when it has opted in, never as a side effect of missing data.
+    """
+    keys = {s.get("key") for s in (plan or [])}
+    return bool(keys and len([k for k in keys if (costs or {}).get(k)]) >= max(1, len(keys) // 2))
+
+
 def build(plan, costs, requires, *, tier, paths, profile, tags, manifest, incidents):
     risky = R.risky_domains(manifest, incidents)
     ranked = R.rank_plan(plan, costs, tier=tier, paths=paths, profile=profile, tags=tags,
@@ -35,6 +50,8 @@ def build(plan, costs, requires, *, tier, paths, profile, tags, manifest, incide
                          risky_domain=R.touches_risky(paths, risky))
     locked = [r for r in ranked if r["locked"]]
     rest = [r for r in ranked if not r["locked"]]
+    if not sizable(costs, plan):
+        return locked, rest, []          # nothing collapses; the plan is shown whole
     return locked, rest[:OFFERED], rest[OFFERED:]
 
 

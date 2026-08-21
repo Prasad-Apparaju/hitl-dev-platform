@@ -4,97 +4,93 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [2.9.0] — 2026-08-20
+## [2.9.0] — 2026-08-21
 
 A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It took **3 hours 31 minutes** across
 eleven recorded steps, including an adversarial design review, a full TDD cycle, a refactor, an
 adversarial code review and a 57-minute review round. They reported the tool as broken.
 
-Nothing malfunctioned. Chasing it turned up something worse than a bad default: **nothing was
-sizing the plan at all.**
+Nothing malfunctioned, and the cause was not a bad default. **HITL decided how much process the
+change needed before it had looked at the change.**
 
 ### The finding
 
-`ai/shared/workflows.yaml` — the file a change file is seeded from, and the only one the plugin
-ships — carries `workflows` and nothing else. No profiles. No tags. The change-file generator takes
-the whole `development` block verbatim and never receives a profile. `derive.py` implements
-`excludes` and `activates` correctly and is a source-tree tool that is not shipped.
+Intake picks a tier from your description, prints a 31-step plan, and writes the change file. The
+codebase is first read two skills later, at `/hitl:dev-apply-change` step 3 — impact analysis, the
+step that works out which endpoints, modules, infrastructure, docs and tests a change actually
+touches. So the decision that should have used that analysis was made twice before it ran.
 
-So of the three-tier model introduced in 2.0.0, only the first tier ever reached a user:
+Underneath that, a second finding: the taxonomy meant to right-size a plan never reached the
+runtime. `ai/shared/workflows.yaml` — the file a change file is seeded from, and the only one the
+plugin ships — carries no profiles and no tags. `fix` excluding `roi` has never removed a step.
+`chore` carrying `tier: 0` has never set a tier. `perf` activating `baseline` has never turned it
+on. Every change in every project has been getting the same 31 steps.
 
-| Declared in the catalog | Effect on a real plan |
-|---|---|
-| `fix` excludes `roi`, `training` | none, ever |
-| `chore` carries `tier: 0` | none, ever |
-| `perf` activates `baseline` | none, ever |
+### Changed — the plan is sized after the code has been read
 
-Every change in every project has been getting the same 31 steps. The taxonomy meant to right-size
-work has been documentation since it was written.
+- **Intake now says its plan is provisional**, because it is: nothing at intake has read anything.
 
-### The decision
+  > That's the full route — 31 steps. I haven't looked at the code yet, so this is everything
+  > rather than what you need.
 
-Rather than wire the taxonomy in — a filter that silently shortens a plan before anyone reads it —
-**right-sizing moves to where a person can see it.** The catalog now says plainly that profiles and
-tags are advice to intake, not a filter, so the next reader does not trust `excludes` the way I did.
+- **The sizing happens at `apply-change` step 3a**, immediately after impact analysis, taking the
+  affected paths from that analysis. It also revisits the tier: step 1 sets one from your
+  description, and a tier chosen that way and never rechecked is a guess that hardened.
+
+- **The step selection.** The plan is shown ranked by what it costs to skip each step, each with a
+  sentence saying what that step protects — *"the runbook keeps describing a system that no longer
+  exists"*, not "documentation". Floor steps and the TDD pair lead as already-on with their reason.
+  Six to eight are offered. The tail is collapsed, skipped, and written to the ledger with a name
+  and a reason.
+
+  On the change that started this: 4 locked, 8 offered, 22 collapsed. Eight decisions instead
+  of 34, and every step not kept — collapsed or unticked — written to the ledger.
 
 ### Added
 
-- **A step selection at intake.** Once the ask is understood, the steps are shown ranked by what it
-  costs to skip each one, each with a sentence saying what that step protects — *"the runbook keeps
-  describing a system that no longer exists"*, not "documentation". Floor steps and the TDD pair
-  lead the list as already-on with their reason. Six to eight are offered with checkboxes. The tail
-  is collapsed, skipped, **and recorded** with a name and a reason.
-
-  On the change that started this: 4 locked, 8 offered, 22 recorded. A person decides on 8 items
-  instead of 34.
-
-- **`protects` and `forgo_cost` for all 38 steps**, plus a ranker that modulates them: down one rank
+- **`protects` and `forgo_cost` for all 38 steps**, and a ranker that modulates them: down one rank
   when the change does not engage a step, up one when a changed path falls in a manifest domain
-  named in the incident registry, never past the floor. A project with no manifest or no registry
-  gets the same order, quietly — missing data means no signal, never an error.
+  named in the incident registry, never past the floor. Missing manifest, missing registry and
+  missing costs all mean no signal — never an error.
 
 - **Coherence.** Keeping a step while dropping what it requires makes a claim the plan cannot
-  support: GREEN is defined against a RED that was never generated; `reconcile` resolves findings
-  from a review nobody did. Eleven such dependencies now **challenge** the selection and take an
-  answer. They never block — the floor itself yields to a signature, so coherence is not the one
-  place HITL refuses outright.
+  support: GREEN is defined against a RED that was never generated. Eleven such dependencies
+  **challenge** the selection and take an answer. They never block; the floor itself yields to a
+  signature, so coherence is not the one place HITL refuses outright.
 
-- **A tier proposed from the shape of the change.** If the diff touches only non-source paths and
-  the request is a value rather than behaviour, intake proposes tier 0 or 1 with the reason filled
-  in instead of making someone argue a tier down. This sets the frame; the selection is where the
-  sizing actually happens.
+- **The catalog now says what is advisory.** Profiles and tags inform what intake proposes; they do
+  not filter the plan, and the comment block says so with the three examples above. A declared rule
+  nothing enforces is worse than no rule.
 
-### Changed
+### Fixed
 
-- **The cheap path no longer costs more paperwork than the expensive one.** Tier 2 was the
-  generator's default and needed no attribution while tier 0/1 was refused without `tier_set_by` and
-  `tier_reason` — the friction sat on the correct answer. A tier 2+ declared on a trivially-shaped
-  change now needs a name and a reason too. This **adds** a rule rather than trading one away.
+- **A project that upgrades without refreshing its catalog copy is not silently lightened.**
+  Without `step_costs` there is no basis to rank, so the plan is shown whole and nothing is
+  collapsed. An earlier version of this release fell back to catalog order in that case — and
+  catalog order is chronology, so the first eight steps were the Design phase and the tail was
+  every review, QA, verification and the rollout plan, skipped by default. Strictly worse than the
+  problem this release exists to fix. A plan is lightened when a project has the data to lighten it,
+  never as a side effect of missing it.
 
-- **First Pass is offered at tier 0/1 without being asked**, ceremony steps pre-selected as declined.
+- Three plugin-relative links, a stale retired-test hash, and `site/catalog.html`, which was not
+  generator output and omitted three shipped steps and a whole phase. The page is regenerated on
+  every deploy, so what was committed was not what users would have seen. Now guarded by
+  regenerate-and-compare.
 
-- **What silence means.** Previously an unshown step ran: `keep` was the default for all 31 (CR-1),
-  which existed so an agent could not quietly lighten a plan. Now the tail is skipped by default and
-  recorded. The human still confirms — they are confirming *these eight* rather than *cut these
-  twenty-five*. A default nobody was shown was not protecting anyone. **Nothing is ever silent:**
-  every skipped step lands in the ledger, and the fail-closed validator still blocks an unauthorised
-  floor skip.
+### What is deliberately not here
 
-### What deliberately did not change
-
-The shape probe never lowers a floor step, never applies to source under a manifest domain however
-small the diff, and never survives a real risk signal. **Naming a key is not moving one** — adding
-`FIRECRAWL_API_KEY=` to a script that already reads environment variables is a chore; changing where
-a secret is stored is not.
+An earlier draft of this release tried to compute a change's shape **at intake**, from `git diff`,
+and refuse an unattributed tier 2+ on a trivially-shaped change. It could not work — at intake
+nothing has been written, so there is no diff — and it had two further independent causes of death.
+Both the probe and that refusal are removed rather than patched. The tier 0/1 attribution rule,
+which predates this release, is unchanged.
 
 ### Note for existing projects
 
-Run `/hitl:dev-update`. One thing newly refuses: a tier 2 or higher declared on a change whose diff
-touches no source under a manifest domain, with no `tier_set_by`/`tier_reason`. Supply both, or take
-the lighter tier intake was going to propose.
-
-Existing change files are unaffected. `step_costs` and `step_requires` are new blocks read at intake;
-nothing re-reads a plan that has already been seeded.
+Run `/hitl:dev-update`. **Nothing that validated before this release fails now**, and no existing
+change file is re-read or re-seeded. `step_costs` and `step_requires` are new blocks consulted when
+a plan is sized; a project that has not refreshed its copy gets the plan in catalog order, which is
+what it got before.
 
 ---
 

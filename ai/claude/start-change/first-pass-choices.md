@@ -11,7 +11,7 @@ heredoc that wrote the same path; whichever ran second won, and when that was th
 the collapsed tail vanished from the record while the fail-closed validator reported the change
 clean. One writer.
 
-See [`selection.md`](selection.md) for the command. Its shape, for reading a file someone sends you:
+The command is in `selection.md`, beside this file. Its shape, for reading a file someone sends you:
 
 ```json
 {
