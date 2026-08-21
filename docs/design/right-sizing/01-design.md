@@ -1,171 +1,155 @@
-# Right-sizing a change: impact-led plan sizing
+# Deciding how much process a change needs
 
-**Status:** draft, for review · **Issue:** #97 · **Supersedes:** three implementation attempts in 2.9.0
+**Status:** draft, for review
+**Issue:** #97
+**Replaces:** three attempts at this in 2.9.0, all of which failed review
 
 ## Why this document exists
 
-Three implementations of this feature were built and all three failed adversarial review — nine
-lenses, three rounds, every one DO NOT SHIP. Not one was reviewed as a *design* first, and every
-failure was a **contract between components** rather than a defect inside one:
+I built this feature three times. All three failed review. Nine reviewers across three rounds, every one saying don't ship.
 
-| attempt | what broke |
+None of the three was ever designed first. I went from idea to code each time. And every failure was the same kind of problem: two parts of the system that had to agree, and didn't. Each part worked on its own, so reviewing the code never caught it.
+
+| attempt | what went wrong |
 |---|---|
-| 1 | the ranker had no caller; the record was never produced |
-| 2 | the probe read `git diff` at intake, where nothing has been written |
-| 3 | the record was written correctly, to a validator that had already run |
+| 1 | nothing ever called the tool, so no record was written |
+| 2 | the tool looked at your change before you had made it |
+| 3 | the record was written correctly, but the thing meant to check it had already finished |
 
-Each fix moved the break to the next link. Code review cannot catch that class — each component was
-correct on its own. This document exists so the fourth attempt starts from an agreed contract.
+Each time I fixed the part I was shown, and the break moved one link along.
 
-## The problem
+## The problem we are solving
 
-A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It ran 31 steps over 3h31m.
+Someone asked for one line to be added to a shell script. HITL ran 31 steps and took three and a half hours.
 
-Two causes, and the second is the real one:
+There are two reasons for that. The second is the real one.
 
-1. Nothing sizes a plan. Profiles and tags never reach the runtime catalog, so every change in every
-   project gets the same 31 steps.
-2. **HITL decides how much process a change needs before it has looked at the change.** Intake picks
-   a tier from your description and fixes the plan. The codebase is first read two skills later.
+First, nothing shortens a plan. The settings meant to do that never reach the file HITL actually reads, so every change in every project gets the same 31 steps.
 
-## The constraint that killed three attempts
+Second, HITL decides how much process a change needs before it has looked at the change. Intake asks you to pick a tier, then shows you a plan. Your code is not read until a separate command, run later.
 
-Three things must hold at once, and today they cannot:
+## Why the three attempts could not work
 
-- sizing must happen **after** something has read the code — that is the only moment the shape of the
-  work is known
-- the ledger validator (`check_skips.py`) runs at intake Step 6b
-- the validator must read what sizing produced
+Three things all have to be true, and today they cannot be.
 
-The validator runs near the end of intake. Impact analysis lives in `apply-change`, a **separate
-command run later**. So the check completes before the record exists, and no amount of fixing the
-writing end changes that.
+1. The plan can only be shortened after something has read the code. That is the only point where anyone knows what the change involves.
+2. The check that skipped steps were skipped legitimately runs near the end of intake.
+3. That check has to see what the shortening produced.
 
-## The decision
+Impact analysis lives in a second command that runs later. So the check finishes before the record exists. Fixing the writing end cannot help.
 
-**Move impact analysis into intake, immediately after the requirements conversation.** Everything
-then happens in one command, in an order where each step has what it needs.
+## What we are changing
+
+Move impact analysis into intake, right after the conversation about what you want.
+
+Then everything happens in one command, in an order where each step has what it needs:
 
 ```
 /hitl:dev-start-change
-  1   don't clobber an active change
-  2   choose the issue
-  3   determine the workflow            ← classification, from the issue
-  3a  IMPACT ANALYSIS                   ← MOVED HERE. produces the facts
-  3b  confirm the tier                  ← now from evidence, not description
-  4   size the plan                     ← the selection, using those facts
+  1   don't overwrite an active change
+  2   pick the issue
+  3   pick the workflow             from the issue text
+  3a  IMPACT ANALYSIS               moved here. produces the facts
+  3b  confirm the tier              now based on evidence
+  4   size the plan                 using those facts
   5   create the branch
-  6   write the change file             ← including the skips
-  6b  certify the ledger                ← validator, now downstream of the record
+  6   write the change file         including anything skipped
+  6b  check the skips               now runs after the record exists
   7   commit
-  8   route onward
+  8   hand off
 ```
 
-Nothing else moves. The validator stays exactly where it is and becomes correct, because the record
-now exists before it runs. No cross-command state, no hand-off file, no second writer.
+Nothing else moves. The check stays where it is and starts working, because the record is now written before it runs. No file passed between commands, no second writer, no state crossing a boundary. All three of my failures were machinery I invented to bridge a gap that should not have been there.
 
-## Impact analysis is a graph query, not a codebase scan
+## Impact analysis should look things up, not search
 
-The current instruction is *"search the codebase to verify each item. Don't guess — read the files."*
-It queries neither the manifest nor Graphify, and re-derives every time what the project already
-declares. That is why moving it earlier looked expensive. It is not.
+Today it says: search the codebase, don't guess, read the files. It does not look at the system manifest and does not look at Graphify.
 
-HITL builds a top-down chain on purpose — manifest → HLD → LLD → ADRs — and Graphify indexes code
-**and** docs, rebuilds on write, and is committed. Each domain in the manifest already declares:
+That matters because the project already writes this down. Each domain in the manifest records:
 
-| field | answers |
+| field | what it tells you |
 |---|---|
-| `files` | which domain owns the touched paths |
-| `lld` | the design doc for this domain |
-| `facade_apis`, `boundary_entities` | what callers see |
-| `depends_on` (reversed) | who breaks if this changes |
-| `events_emitted` / `events_consumed` | what fires and what listens |
+| `files` | which domain owns the code you touched |
+| `lld` | the design doc for that domain |
+| `facade_apis`, `boundary_entities` | what other code can see |
+| `depends_on` | who breaks if this changes, read backwards |
+| `events_emitted`, `events_consumed` | what it sends and listens for |
 | `tests` | what covers it |
-| `owning_fr` | which requirement is in play, and so which acceptance criteria |
-| `last_changed` | whether the declaration is plausibly current |
+| `owning_fr` | which requirement this exists to satisfy |
+| `last_changed` | whether that description is likely still true |
 
-So impact analysis becomes: **resolve the domain, walk the declared model down and sideways, then
-read source only where the change goes beyond what is declared.**
+Graphify indexes the code and the docs, rebuilds whenever a file is written, and is committed to the repo. So all of this can be looked up.
 
-That last clause is where the quality is. A change the declared model cannot account for is itself a
-finding — either the manifest is stale (`ci/manifest-drift` exists for this) or the change crosses a
-boundary nobody wrote down. Both are worth saying out loud, and neither is visible to a grep.
+So impact analysis becomes: find the domain, follow what it declares, and read source code only where the change goes past what is written down.
 
-## What impact analysis must produce
+That last part is where the quality comes from. If the change touches something no domain claims, that is worth saying. Either the manifest is out of date, or the change crosses a line nobody recorded. Searching the codebase would not tell you either way.
 
-Sizing consumes a defined artifact, not prose. This is the contract:
+This also changes the cost. I told you earlier that moving impact analysis into intake would make intake slower. That was wrong. Most of the answer is already written down.
+
+## What impact analysis has to hand over
+
+Sizing needs facts, not prose. This is what it reads:
 
 ```yaml
 impact:
-  domains:      [billing]              # from `files`
-  dependents:   [checkout, reporting]  # depends_on, reversed
-  facades:      [POST /refund]         # facade_apis touched
+  domains:      [billing]
+  dependents:   [checkout, reporting]
+  facades:      [POST /refund]
   events:       [refund.issued]
-  docs:         [docs/.../billing.md]  # the domain's lld/HLD
+  docs:         [docs/.../billing.md]
   tests:        [tests/billing/]
   owning_fr:    FR-12
   paths:        [src/billing/refund.py]
-  undeclared:   []                     # touched, and no domain claims it
+  undeclared:   []          # touched, and no domain claims it
   confidence:   declared | partial | unknown
 ```
 
-`undeclared` and `confidence` are load-bearing. A change with `confidence: unknown` must not be
-sized down — see the floor below.
+The last two matter most. If confidence is `unknown`, or anything is undeclared, the plan does not get shortened.
 
-## What sizing consumes
+## What sizing does with it
 
-`rank.py` already ranks by `forgo_cost` modulated by engagement. Today `engages` matches path globs
-invented by hand. It should match **structure**:
+Ranking already works. What is wrong is how a step decides whether it applies to your change. Right now it matches folder-name patterns I made up. It should match what the project actually declares:
 
-- `engages.domains` — this step matters when the change touches these domains
-- `engages.dependents` — matters when anything depends on the touched domain
-- `engages.facades` — matters when a public interface moves
-- the incident-registry raise keys off `domains`, which it can now actually resolve
+- this step matters when the change touches these domains
+- this step matters when something depends on the domain you touched
+- this step matters when a public interface moves
 
-That replaces guessed directory names with the model the project maintains.
+The incident registry check can also work properly, because it can now match on domain names.
 
-## The floor: when sizing must not happen
+## When the plan does not get shortened
 
-Sizing is a privilege earned by information. It is **off** when:
+Shortening is earned by having good information. It is off when:
 
-- `confidence: unknown`, or `undeclared` is non-empty — the model cannot explain the change
+- confidence is `unknown`, or something touched is undeclared
 - the project has no manifest
-- `step_costs` is absent or covers less than the whole plan
-- the workflow is not `development`
+- the ranking data is missing or incomplete
+- the workflow is anything other than `development`
 
-In every one of those cases the full plan is shown and nothing is collapsed — 2.8.0 behaviour. A
-plan is lightened when there is a basis to lighten it, never as a side effect of missing data.
+In all of those cases you see the full plan and nothing is dropped. That is how 2.8.0 behaves. A plan gets shortened when there is a reason to shorten it, never because information was missing.
 
-## Consequences for `apply-change`
+## What happens to the second command
 
-- Its **Step 3 (Impact Analysis)** is removed; the analysis now arrives in the change file.
-- Its **Step 1** currently re-derives the tier from the description. That becomes a check against the
-  recorded evidence, not a fresh guess.
-- It becomes what it mostly already is: the implementation planner.
+- Its impact analysis step goes away. The facts arrive in the change file.
+- Its first step currently re-guesses the tier from your description. That becomes a check against the recorded evidence.
+- It becomes what it mostly already is: the thing that plans the implementation.
 
-Both skills need reconciling in one change. That is the part most likely to break and the part that
-most needs review before code.
+Both commands change together. This is the part most likely to go wrong and the part that most needs reviewing before any code is written.
 
-## Upgrade
+## Upgrading
 
-- A project that upgrades the plugin but not its `ci/first-pass/workflows.yaml` has no `step_costs`,
-  so sizing is off and it sees exactly 2.8.0 behaviour.
-- An existing `.hitl/current-change.yaml` is never re-read or re-seeded.
-- `dev-update` refreshes the catalog copy; until it runs, nothing changes for that project.
+- A project that updates the plugin but not its own copy of the workflow file has no ranking data, so shortening is off and nothing changes for them.
+- An existing change file is never re-read or rewritten.
+- `dev-update` refreshes the copy. Until someone runs it, that project behaves as it does today.
 
-## Out of scope
+## Not in scope
 
-- Wiring profiles and tags into the runtime. They stay advisory.
-- Any change to what the floor protects, or to `no_omit`.
-- The compound-agentic manifest fields; this reads `domains` only.
+- Making profiles and tags actually filter the plan. They stay as advice.
+- Any change to which steps are protected, or to the test-first rule.
+- The compound-agentic manifest fields. This reads domains only.
 
-## Open questions for review
+## Questions for the reviewer
 
-1. **Does impact analysis at intake change what intake is for?** It becomes a heavier front door.
-   Is that right, or should sizing be a distinct command run between the two?
-2. **What does a stale manifest do to sizing?** `last_changed` is a hint, not proof. Is
-   `confidence: partial` enough to size on, or should any staleness signal disable it?
-3. **Who is the actor on a skip recorded at intake** — the person driving intake, always? There is no
-   second human present at that moment.
-4. **Should the workflow classification (Step 3) also be revisited** once impact analysis has run? It
-   is decided from the issue text and never rechecked, the same weakness the tier had.
+1. Does putting impact analysis in intake make the front door too heavy? Or should shortening be its own command, run between the two?
+2. What should a stale manifest do? `last_changed` is a hint, not proof. Is `partial` confidence enough to shorten on?
+3. Who is named as responsible for a skipped step recorded during intake? Only one person is there.
+4. Should the workflow choice in step 3 also be rechecked once the analysis has run? It is picked from the issue text and never looked at again. That is the same weakness the tier had.
