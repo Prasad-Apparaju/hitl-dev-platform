@@ -5,8 +5,7 @@ the one on offer rather than the one someone has to argue for.
 
 ## Why this exists
 
-A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It ran three hours thirty-one
-minutes across eleven recorded steps, including an adversarial design review, a full TDD RED/GREEN
+A user asked for `FIRECRAWL_API_KEY` to be added to `demo.sh`. It ran to eleven recorded steps, including an adversarial design review, a full TDD RED/GREEN
 cycle, a refactor step, an adversarial code review, and a fifty-seven minute review round. They
 reported the tool as broken. That is a fair description of how it felt, and nothing malfunctioned:
 intake tiered up, and at tier 2 every ceremony step runs.
@@ -32,8 +31,8 @@ outside the `paths` of a domain in the system manifest.
 
 Say it in one line, and be plain that tiering up is one word away:
 
-> This touches `demo.sh` only, so I'd run it as tier 1 — the ceremony steps come off and it's about
-> twenty minutes. Say the word if you want it heavier.
+> This touches `demo.sh` only, so I'd run it as tier 1 — that's 8 steps to decide on instead of 31.
+> Say the word if you want it heavier.
 
 A proposal someone can reject in four characters is not pressure. Making them argue a tier down is.
 

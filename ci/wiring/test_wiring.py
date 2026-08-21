@@ -744,6 +744,32 @@ def test_coherence_is_checked_and_challenges_rather_than_blocks():
         "the selection no longer cites the check, or no longer says it challenges")
 
 
+def test_the_checked_in_catalog_page_is_generator_output():
+    """site/catalog.html is regenerated on every deploy, so a hand-edited copy is republished over.
+
+    It had drifted: the checked-in page omitted three shipped steps and a whole phase, and the
+    deploy would have silently replaced it with something different again. Regenerate-and-compare
+    is the only check that can see that.
+    """
+    import subprocess, shutil, tempfile
+    page = os.path.join(ROOT, "site", "catalog.html")
+    before = _read(page)
+    backup = tempfile.mkstemp()[1]
+    shutil.copy(page, backup)
+    try:
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scripts",
+                                                         "generate-catalog-page.py")],
+                           cwd=ROOT, capture_output=True, text=True)
+        assert r.returncode == 0, "the catalog generator failed: %s" % (r.stderr or r.stdout)[-400:]
+        after = _read(page)
+    finally:
+        shutil.copy(backup, page)
+        os.unlink(backup)
+    assert before == after, (
+        "site/catalog.html is not what the generator produces. The deploy regenerates it, so what "
+        "is committed here is not what users see. Run tools/scripts/generate-catalog-page.py.")
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish
