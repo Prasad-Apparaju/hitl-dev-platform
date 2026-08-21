@@ -262,3 +262,43 @@ def test_partial_step_costs_is_treated_as_no_basis():
     _, offered, tail = P.build(SPINE, few, {}, tier=2, paths=[], profile="", tags=[],
                                manifest={}, incidents={})
     assert tail == [], "three entries out of thirty-eight is not enough to rank a plan"
+
+
+def test_apply_writes_into_the_change_file_that_already_exists():
+    """The selection runs at apply-change 3a, after intake created the change file.
+
+    Writing .hitl/first-pass-choices.json there records for intake's Step 6, which has already run —
+    a hand-off to a consumer that never comes. `apply` updates the file in place: unkept steps go
+    `skipped` and every one gets an attributed entry in skips[], which is what the validator reads.
+    """
+    import yaml as _y
+    d = _repo()
+    wf = _y.safe_load(open(os.path.join(d, "ci", "first-pass", "workflows.yaml")))
+    steps = [{"n": s["n"], "key": s["key"], "name": s["key"], "phase": s["phase"], "status": "open"}
+             for s in wf["workflows"]["development"]["steps"]]
+    os.makedirs(os.path.join(d, ".hitl"), exist_ok=True)
+    open(os.path.join(d, ".hitl", "current-change.yaml"), "w").write(_y.safe_dump(
+        {"schema_version": "2.0", "change_id": "GH-1", "tier": 1, "status": "planning",
+         "expected_branch": "work", "first_pass": False,
+         "workflow": {"id": "development", "total": len(steps), "steps": steps}, "skips": []},
+        sort_keys=False))
+
+    r = _sel(d, "apply", "--tier", "1", "--profile", "fix", "--paths", "scripts/demo.sh",
+             "--keep", "issue,review1", "--actor", "priya")
+    assert r.returncode == 0, r.stderr
+    doc = _y.safe_load(open(os.path.join(d, ".hitl", "current-change.yaml")))
+    assert doc["skips"], "nothing was recorded"
+    assert all(e.get("actor") for e in doc["skips"]), "an unattributed skip is not a record"
+    assert all(e.get("disposition") == "decline" and e.get("step") for e in doc["skips"])
+    skipped = {s["key"] for s in doc["workflow"]["steps"] if s["status"] == "skipped"}
+    recorded = {e["step"] for e in doc["skips"]}
+    assert skipped == recorded, (
+        "a step marked skipped with no ledger entry is the silent skip the ledger exists to stop: %s"
+        % sorted(skipped ^ recorded))
+    assert "review1" not in skipped and "issue" not in skipped
+
+
+def test_apply_refuses_when_there_is_no_change_file():
+    d = _repo()
+    r = _sel(d, "apply", "--tier", "1", "--paths", "src/app.py", "--keep", "issue", "--actor", "p")
+    assert r.returncode == 2 and "dev-start-change" in r.stderr

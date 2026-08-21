@@ -96,6 +96,42 @@ def choices(kept, offered, tail, requires, actor):
     return doc, warn
 
 
+def apply_to_change(change_path, kept, offered, tail, requires, actor):
+    """Write the dispositions into the change file that already exists.
+
+    The selection runs at apply-change step 3a, AFTER intake created the change file. Writing a
+    choices file here would hand off to start-change step 6, which has already run — so the record
+    would be written for a consumer that never comes. Update the file in place instead: mark each
+    unkept step `skipped`, and append an attributed entry to `skips[]`, which is what the
+    fail-closed validator reads.
+    """
+    doc = _load(change_path)
+    if not doc:
+        return None, "no change file at %s — intake creates it; run /hitl:dev-start-change first" % change_path
+    kept = set(kept or ())
+    unkept = {r["key"]: r for r in list(offered) + list(tail) if r["key"] not in kept}
+    steps = ((doc.get("workflow") or {}).get("steps")) or []
+    if not steps:
+        return None, "the change file has no workflow.steps to disposition"
+
+    existing = {str(e.get("step")) for e in (doc.get("skips") or []) if isinstance(e, dict)}
+    ts = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)\
+        .isoformat(timespec="seconds")
+    added = []
+    for st in steps:
+        k = st.get("key")
+        if k in unkept and str(st.get("status")) not in ("done",):
+            st["status"] = "skipped"
+            if k not in existing:
+                r = unkept[k]
+                added.append({"step": k, "crit": r["step"].get("crit", "standard"),
+                              "disposition": "decline", "actor": actor, "ts": ts,
+                              "reason": "not selected at right-sizing (rank %s): %s"
+                                        % (r["rank"], r["protects"] or "no reason recorded")})
+    doc.setdefault("skips", []).extend(added)
+    return doc, None
+
+
 def _load(path):
     try:
         with open(path) as f:
@@ -106,7 +142,7 @@ def _load(path):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["render", "choices"])
+    ap.add_argument("mode", choices=["render", "choices", "apply"])
     ap.add_argument("--workflows", default="ci/first-pass/workflows.yaml")
     ap.add_argument("--workflow", default="development")
     ap.add_argument("--tier", type=int, default=2)
@@ -120,6 +156,7 @@ def main(argv=None):
     ap.add_argument("--incidents", default="docs/03-engineering/incident-registry.yaml")
     ap.add_argument("--keep", default="")
     ap.add_argument("--actor", default="")
+    ap.add_argument("--change", default=".hitl/current-change.yaml")
     a = ap.parse_args(argv)
 
     wf = _load(a.workflows)
@@ -149,6 +186,18 @@ def main(argv=None):
               % ", ".join(unknown), file=sys.stderr)
         return 2
     kept = asked | {r["key"] for r in locked}
+    if a.mode == "apply":
+        doc, err = apply_to_change(a.change, kept, offered, tail,
+                                   wf.get("step_requires") or {}, a.actor)
+        if err:
+            print(err, file=sys.stderr)
+            return 2
+        for step, need, why in R.incoherent(kept, wf.get("step_requires") or {}):
+            print("incoherent: keeping %s while dropping %s — %s" % (step, need, why), file=sys.stderr)
+        with open(a.change, "w") as f:
+            yaml.safe_dump(doc, f, sort_keys=False, width=100)
+        print("wrote %d skip records to %s" % (len(doc.get("skips") or []), a.change))
+        return 0
     doc, warn = choices(kept, offered, tail, wf.get("step_requires") or {}, a.actor)
     if not a.actor.strip():
         print("--actor is required: a skip is accountable to a person, not the agent", file=sys.stderr)

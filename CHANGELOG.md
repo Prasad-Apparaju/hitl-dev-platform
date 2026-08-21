@@ -40,8 +40,9 @@ on. Every change in every project has been getting the same 31 steps.
 - **The step selection.** The plan is shown ranked by what it costs to skip each step, each with a
   sentence saying what that step protects — *"the runbook keeps describing a system that no longer
   exists"*, not "documentation". Floor steps and the TDD pair lead as already-on with their reason.
-  Six to eight are offered. The tail is collapsed, skipped, and written to the ledger with a name
-  and a reason.
+  Six to eight are offered. The tail is collapsed, skipped, and written straight into
+  `.hitl/current-change.yaml` with a name and a reason — each unkept step marked `skipped` and
+  given an attributed entry in `skips[]`, which is what the fail-closed validator reads.
 
   On the change that started this: 4 locked, 8 offered, 22 collapsed. Eight decisions instead
   of 34, and every step not kept — collapsed or unticked — written to the ledger.

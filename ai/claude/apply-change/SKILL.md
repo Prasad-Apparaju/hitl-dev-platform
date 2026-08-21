@@ -136,7 +136,8 @@ intake, which ran before a line existed.
 
 Take the affected modules, infrastructure and docs from Step 3 and run the selection in
 `start-change/selection.md`: it ranks the plan by what it costs to skip each step, shows what each
-one protects, and writes every step not kept into the ledger.
+one protects, and writes every step not kept straight into `.hitl/current-change.yaml` —
+`plan_select.py apply`, not a choices file: intake's Step 6 consumed that and has already run.
 
 Revisit the tier here too. Step 1 set it from the description; you now have evidence. If the
 evidence disagrees with the tier, say so and change it — a tier chosen from a description and never

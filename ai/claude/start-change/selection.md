@@ -77,20 +77,21 @@ the top items there and keep fine control conversational — *"also drop docs"* 
 
 ## Rules
 
-**Everything below the cut line is skipped, and recorded.** Not by hand — pass what the person kept
-back to the same tool, which writes an entry for every step not kept, offered or collapsed alike:
+**Everything below the cut line is skipped, and recorded.** Not by hand, and not into a hand-off
+file — the change file already exists by now, so write straight into it:
 
 ```bash
-python3 "$SEL" choices --workflows "$WF" --workflow "$WF_ID" --tier "$TIER" \
+python3 "$SEL" apply --workflows "$WF" --workflow "$WF_ID" --tier "$TIER" \
         --profile "$PROFILE" --paths "$IMPACT_PATHS" \
-        --keep "issue,review1,verify_pr" --actor "<the person, not you>" \
-        > .hitl/first-pass-choices.json
+        --keep "issue,review1,verify_pr" --actor "<the person, not you>"
 ```
 
-That file is what Step 6 turns into the ledger. **If the tail does not reach it, the tail is skipped
-and NOT recorded**, and the fail-closed validator certifies the change clean — the first draft of
-this feature did precisely that, and a review caught it. The command above is the compensation for
-inverting the default; prose describing it is not.
+That marks each unkept step `skipped` and appends an attributed entry to `skips[]`, which is what
+the fail-closed validator reads.
+
+**Not a choices file.** `.hitl/first-pass-choices.json` is consumed by intake's Step 6, which has
+already run by the time the selection happens — writing one here records for a consumer that never
+comes. An earlier version of this feature did exactly that.
 
 This inverts CR-1, which made `keep` the default so an agent could not quietly lighten a plan. The
 human still confirms — they are confirming *these eight* rather than *cut these twenty-five*. A

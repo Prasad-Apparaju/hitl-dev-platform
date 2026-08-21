@@ -679,7 +679,7 @@ def test_step_costs_reach_the_runtime_and_something_reads_them():
     # resolver line, and invoked nothing — the ranker was tested, shipped and unreachable while a
     # guard asserting the filename appeared in the file stayed green.
     seltext = _read(sel)
-    for mode in ("render", "choices"):
+    for mode in ("render", "apply"):
         # Anchored to the start of a line and rejecting a leading `#`. Commenting out the call
         # leaves the string in the file, so an unanchored search matches a call nobody makes —
         # the mutation that exposed this was literally `# python3 "$SEL" render`.
@@ -766,30 +766,35 @@ def test_the_checked_in_catalog_page_is_generator_output():
         "is committed here is not what users see. Run tools/scripts/generate-catalog-page.py.")
 
 
-def test_only_one_thing_writes_the_choices_file():
-    """Two writers to .hitl/first-pass-choices.json; the second destroyed the first.
+def test_the_selection_writes_the_change_file_not_a_hand_off():
+    """The selection runs at apply-change 3a, after intake's Step 6 has already consumed
+    .hitl/first-pass-choices.json. Writing one there records for a consumer that never comes.
 
-    selection.md runs plan_select.py, which records every step not kept including the collapsed
-    tail. first-pass-choices.md carried a heredoc writing the same path by hand. Whichever ran
-    second won, and when that was the hand-written one the tail vanished from the record while the
-    fail-closed validator certified the change clean — the exact hole the tail record exists to
-    close. Found by two lenses independently.
+    Two earlier versions got this wrong in opposite directions: first two writers of the choices
+    file racing each other, then a single writer producing a file nobody would read. The record now
+    goes straight into .hitl/current-change.yaml, which is what the validator reads.
     """
     d = os.path.join(AI, "claude", "start-change")
-    writers = []
-    for f in sorted(os.listdir(d)):
-        if not f.endswith(".md"):
-            continue
+    handoff = []
+    for f in sorted(x for x in os.listdir(d) if x.endswith(".md")):
         for line in _read(os.path.join(d, f)).splitlines():
             t = line.strip()
             if re.search(r"(>|cat >|tee)\s*\.hitl/first-pass-choices\.json", t) and not t.startswith("#"):
-                writers.append("%s: %s" % (f, t[:60]))
-    assert len(writers) == 1, (
-        "expected exactly one writer of the choices file, found %d:\n  %s"
-        % (len(writers), "\n  ".join(writers)))
-    assert "selection.md" in writers[0], (
-        "the writer should be the selection running plan_select.py, not a hand-written heredoc")
+                handoff.append("%s: %s" % (f, t[:60]))
+    assert not handoff, (
+        "the selection still writes a choices file. Intake's Step 6 consumes that and has already "
+        "run by then, so the record reaches nobody:\n  " + "\n  ".join(handoff))
 
+    sel = _read(os.path.join(d, "selection.md"))
+    assert re.search(r'(?m)^[^#\n]*python3 "\$SEL" apply', sel), (
+        "selection.md does not run `plan_select.py apply`, so nothing writes the skip records")
+
+    src = _read(os.path.join(ROOT, "ci", "first-pass", "plan_select.py"))
+    assert "def apply_to_change(" in src, "plan_select.py no longer writes into the change file"
+    body = src.split("def apply_to_change(")[1].split("\ndef ")[0]
+    assert 'st["status"] = "skipped"' in body and 'doc.setdefault("skips"' in body, (
+        "apply must BOTH mark the step skipped and append the ledger entry. A step marked skipped "
+        "with no entry is the silent skip the ledger exists to stop")
 
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
