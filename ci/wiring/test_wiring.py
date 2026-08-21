@@ -655,6 +655,49 @@ def test_a_floor_step_is_never_ranked_below_high():
                      % bad)
 
 
+def test_step_costs_reach_the_runtime_and_something_reads_them():
+    """Data nobody reads is this repo's recurring defect: `excludes`, `activates`, `chore: tier 0`
+    are all correct, all tested, all consumed by nothing.
+
+    step_costs is only worth carrying if it reaches the file intake actually reads AND something
+    turns it into an order. Assert both ends, so the middle cannot quietly fall out.
+    """
+    import yaml
+    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    run = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    assert run.get("step_costs"), (
+        "ai/shared/workflows.yaml has no step_costs. That is the file a plan is seeded from and the "
+        "only one the plugin ships — without it the selection has nothing to rank or explain")
+    assert run["step_costs"] == cat["step_costs"], (
+        "the runtime step_costs has drifted from the catalog; regenerate it from the catalog")
+
+    ranker = os.path.join(ROOT, "ci", "first-pass", "rank.py")
+    assert os.path.isfile(ranker), "ci/first-pass/rank.py is gone — nothing turns costs into an order"
+    src = _read(ranker)
+    for fn in ("shown_rank", "rank_plan", "engaged", "risky_domains"):
+        assert "def %s(" % fn in src, "rank.py no longer defines %s()" % fn
+
+    sel = os.path.join(AI, "claude", "start-change", "selection.md")
+    assert os.path.isfile(sel), "the selection spec is gone; intake has nothing to show"
+    body = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    assert "selection.md" in body, (
+        "Step 4 no longer routes into the selection, so the ranking is computed for nobody")
+
+
+def test_the_selection_keeps_its_load_bearing_rules():
+    """Three rules are the difference between right-sizing and quietly running less process."""
+    sel = _flat(os.path.join(AI, "claude", "start-change", "selection.md"))
+    assert re.search(r"(?i)below the cut line is skipped, and recorded", sel), (
+        "nothing says the tail is recorded — an unshown default that runs nothing is exactly the "
+        "silent lightening CR-1 was written to prevent")
+    assert re.search(r"(?i)floor can be unticked", sel) and re.search(r"(?i)waiver", sel), (
+        "the floor is either locked out of the view or unticked with a name against it; this says "
+        "neither")
+    assert re.search(r"(?i)never quote a duration|quote step counts", sel), (
+        "the duration rule is gone. Two shipped estimates in this repo were wrong because elapsed "
+        "time is mostly waiting for a human")
+
+
 def test_the_skip_ledger_is_never_retired_with_the_change_file():
     """CR-10 makes the ledger durable across changes. The retirement step removes the change file
     and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish

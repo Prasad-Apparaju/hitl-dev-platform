@@ -133,9 +133,15 @@ development workflow — 31 steps (+19a) across 7 phases:
   Post-Ship     2   30dROI → 90dROI
 ```
 
-This still shows the whole journey up front — that principle holds, and the shape of the work is what a
-person actually needs to decide whether the workflow fits. A thirty-one item list is the moment a small
-change starts to feel like the wrong tool, and position is carried by the breadcrumb from here on anyway.
+The phase summary is the shape of the work — enough to judge whether the workflow fits.
+
+**Then show the selection** ([`selection.md`](selection.md)): the steps, ranked by what it costs to
+skip each one, with the sentence saying what that step protects, and checkboxes. Locked steps lead
+as already-on; six to eight are offered; the tail is collapsed and skipped, recorded.
+
+This replaces "print the phase summary and move on". A person cannot pick from a list they were
+never shown, and the previous version showed seven phase names for thirty-one steps — which is how
+one environment variable in a shell script came to run the full spine for three and a half hours.
 
 **Print the full ordered list on request** ("show me every step"), and always print it in full for a
 workflow of 10 steps or fewer, where the phase summary would be longer than the list it replaces.
