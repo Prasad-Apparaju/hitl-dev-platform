@@ -1,101 +1,78 @@
-# Deciding how much process a change needs
+# Right-sizing a change
 
 **Status:** draft, for review · **Issue:** #97
 
-The plan only. Background is on issue #97.
-
-## The rule
-
-What HITL does depends on whether it knows anything about the change.
+## What happens
 
 ```mermaid
 flowchart TB
-  A["which domain does this affect?<br>asked at intake"] --> B{"does the manifest<br>describe that domain?"}
-  B -->|"no domain, or none matches"| C["OUTSIDE THE MODEL<br>run the floor<br>say so, once<br>record it"]
-  B -->|"yes"| D["INSIDE THE MODEL<br>use what the domain declares<br>to decide which steps apply"]
-  C --> E{"risk signal?<br>secrets, auth, deploy, migration"}
-  D --> E
-  E -->|"yes"| F["ignore all of the above<br>run the full plan"]
-  E -->|"no"| G["the plan"]
-  classDef out fill:#fff3cd,stroke:#a80
-  classDef risk fill:#f8d7da,stroke:#a33
-  class C out
-  class F risk
+  A["1. you say what you want"] --> B["2. where does this fit?<br>which domain, which workflow"]
+  B --> C["3. what does it affect?<br>callers, contracts, docs, tests"]
+  C --> D["4. two options offered<br>fast track or full scale"]
+  D --> E["5. you adjust<br>untick anything that is not a must-have"]
+  E --> F["6. build"]
+  classDef pick fill:#d4edda,stroke:#3a3
+  class D,E pick
 ```
 
-## 1. Outside the model, HITL steps back
+Six steps. One conversation. Nothing is handed to a second command.
 
-If no domain claims the work, HITL knows nothing useful about it. It does not know the callers, the contracts, the tests, or the requirement. Running 31 steps over it is ceremony performed on something the framework cannot see.
+## 1. You say what you want
 
-So: run the floor, say once that this is outside the model, record that as the reason, and get on with it.
+Unchanged. Intake asks, and asks again if it is unclear.
 
-This is the case that started this. `scripts/demo.sh` is in no domain. Nothing declares it. A short path is the honest answer, not the risky one.
+## 2. Where does this fit
 
-The earlier version of this document had this backwards. It treated "we know nothing" as a reason for more process.
+Which domain in the system manifest, and which workflow. The domain is the important part: it is what makes step 3 possible.
 
-## 2. Inside the model, use what is declared
+If no domain owns it, say so and carry on. It changes what step 3 can find, not whether we proceed.
 
-If a domain claims the work, the manifest already says what matters:
+## 3. What does it affect
 
-| field | what it tells you |
+From the domain's entry in the manifest, without reading the codebase:
+
+| from the manifest | tells us |
 |---|---|
-| `files` | what code belongs to it |
-| `lld` | the design doc |
+| `files` | what code is in scope |
+| `lld` | which design doc describes it |
 | `facade_apis`, `boundary_entities` | what other code can see |
-| `depends_on` | who breaks if this changes, read backwards |
+| `depends_on` | who breaks if this changes |
 | `events_emitted`, `events_consumed` | what it sends and listens for |
 | `tests` | what covers it |
 
-A step applies when the change touches something it protects. Docs matter when there is an `lld`. Compatibility matters when a facade moves. Integration matters when something depends on this domain.
+Read source only where the change clearly goes beyond what the manifest describes, and say so when it does.
 
-## 3. Risk overrides both
+If there is no domain, this comes back thin. That is a fact about the project, not a reason to stop.
 
-Some work is not safe to shorten regardless of what the model says. Secrets moving, auth, permissions, anything that deploys, anything that rewrites data in place.
+## 4. Two options
 
-A risk signal means the full plan. It beats "outside the model" and it beats a clean manifest entry. This is the rule the earlier version was missing: its conditions were all about how confident we were in the manifest, and none about how dangerous the change was.
+**Fast track.** The must-haves, plus the steps this change's own facts say are needed. If it touches a public interface, compatibility is in. If something depends on it, integration is in. If it has a design doc, docs are in.
 
-## 4. How much gets cut depends on how much we know
+**Full scale.** Everything the workflow defines.
 
-Today the plan is cut to a fixed eight steps whatever the evidence. That makes the evidence decorative.
+Show both, with the difference between them. Say which one is recommended and why, in one line.
 
-The cut has to be a function of what we know:
+## 5. You adjust
 
-- outside the model: the floor, and nothing else claimed
-- inside the model, one domain, no dependents: short
-- inside the model, several domains or dependents: longer
-- any risk signal: everything
+The offered list is tickable. Untick anything, except a must-have.
 
-## 5. This happens at intake, and nothing moves
+Must-haves cannot be unticked here. That is the floor for this change's tier, plus the test-first cycle, which can be thinned but never dropped.
 
-Intake asks which domain the work affects. The manifest is a file, so looking it up needs nothing that has not happened yet.
+Everything unticked is recorded: which step, who, why. That is what the existing validator reads.
 
-That means the existing order already works. Sizing happens at step 4, the change file records it at step 6, the skip check reads it at step 6b. No step moves, no second command is involved, nothing is handed between runs.
+## 6. Build
 
-The previous version moved impact analysis into intake to make this work. That is not needed. Impact analysis is about what the change will affect in detail; sizing only needs to know which domain we are in.
+The change file records the plan and what was dropped. Then the normal flow continues.
 
-## 6. What changes
+## What has to be decided
 
-- Intake asks which domain, and looks it up.
-- Sizing uses the domain's declared model, or the floor if there is none.
-- A risk check runs before either.
-- The cut stops being a constant.
-- `dev-apply-change` is untouched.
+1. **What goes in the fast track for a change with no domain?** The must-haves and nothing else, or the must-haves plus a basic set that applies to any change?
+2. **How is risk handled?** Some work should not be offered a fast track at all: secrets, auth, anything that deploys or migrates data. Is that a separate check, or does it just force full scale?
+3. **What does a must-have look like on screen?** Shown and locked, or not shown at all?
+4. **Is the recommendation binding?** If fast track is recommended and someone takes full scale, is that worth recording?
 
-## 7. Upgrading
+## Not in scope
 
-- A project with no manifest is always outside the model, so it gets the floor and a note. That is a change in behaviour and needs saying in the release notes.
-- A project that has not refreshed its workflow file has no ranking data, so nothing is shortened and it behaves as it does today.
-- Existing change files are not re-read or rewritten.
-
-## 8. Not in scope
-
-- Making profiles and tags filter the plan. They stay as advice.
-- Any change to what the floor protects.
-- Moving impact analysis.
-
-## 9. To decide before building
-
-1. What is the floor for a change outside the model? The existing tier floor, or something smaller?
-2. How is the risk signal detected? Asked, inferred from paths, or from the issue?
-3. If a project keeps doing work outside its model, is that worth telling them? It is a signal their manifest is incomplete.
-4. Who is named as responsible for the shortening at intake?
+- Moving impact analysis out of the second command. Step 3 here is a manifest lookup, not the full impact analysis, and both can exist.
+- Changing what the floor protects.
+- Making profiles and tags filter the plan.
