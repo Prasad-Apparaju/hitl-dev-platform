@@ -32,7 +32,7 @@ Before anything is read or planned, HITL writes back what it understood:
 | what you want | the ask, corrected |
 | in scope | what this change covers |
 | out of scope | what it explicitly does not, so it can be pointed at later |
-| definition of done | what counts as delivered, to whoever is paying for it |
+| definition of done | what counts as delivered, in the requester's terms |
 
 Length comes from the change, not from a cap. A one-line fix has a one-line definition of done. A
 feature has a list. You confirm or correct all of it.
@@ -41,36 +41,33 @@ This is the cheapest moment to catch a misread. Everything downstream is derived
 a misunderstanding here becomes a wrong impact analysis and then a wrong plan, and a wrong plan is
 harder to argue with than a wrong sentence because it looks considered.
 
-### The definition of done is a commercial artifact
+### What the definition of done is for
 
-It is not the plan restated. The plan is HITL's view of the process. This is the product manager's
-view of what they are buying, and a product manager does not care that the architecture review ran.
-They care whether the thing does what they asked for the money they agreed.
+It is not the plan restated. The plan is how the work gets done. This is what counts as delivered,
+in the requester's own words, agreed before anyone starts.
 
-The pattern it exists to stop: a product manager and a developer agree on something handwavy, work
-happens, and the disagreement surfaces at billing. That is worst with contractors, where the
-sentence written on day one is the only thing anyone can point at afterwards.
+The two are written at different moments by different people and answer different questions, so
+neither can stand in for the other. A completed plan does not prove the thing does what was asked.
+A met definition of done does not prove it was built properly.
 
-So three properties:
+Three properties:
 
-**It is attributed.** Who agreed, and when. An agreement with nobody's name on it is what most teams
-already have, and it is the thing that evaporates under pressure.
+**It is attributed.** Who agreed, and when. An agreement with nobody's name on it is not one.
 
-**Vague lines are flagged, not blocked.** "The system should be fast" cannot be checked. HITL says
-so, offers a sharper version, and takes whatever answer comes back. If the vague line stays, the
-record says it was flagged as unverifiable and accepted anyway, with a name and a date. That record
-is what settles the argument later, and it does not require HITL to have been right about the
-wording.
+**Vague lines are flagged, not blocked.** "The system should be fast" cannot be shown to be met.
+HITL says so, offers a sharper version, and takes whatever answer comes back. If the vague line
+stays, the record says it was flagged as unverifiable and accepted anyway, with a name and a date.
+That record does not require HITL to have been right about the wording, only to have asked.
 
 **Changing it after work starts is a scope change,** routed through the existing scope-change review
 rather than edited in place.
 
 ### Acceptance criteria are translated from it
 
-Not written alongside it. The definition of done is the anchor, in the product manager's language.
-The criteria are the checkable translation, written once the work is understood well enough to say
-how each line gets proved. Every criterion has to be something QA can actually test, because QA is
-who reads them. "Works properly" is not a criterion. "Returns 400 with a message naming the missing
+Not written alongside it. The definition of done is the anchor, in the requester's language. The
+criteria are the checkable translation, written once the work is understood well enough to say how
+each line gets proved. Every criterion has to be something QA can actually test, because QA is who
+reads them. "Works properly" is not a criterion. "Returns 400 with a message naming the missing
 field" is.
 
 Every definition-of-done line must name at least one criterion that satisfies it. A line with none
@@ -82,10 +79,8 @@ when the definition of done is long, which is exactly when the gap matters.
 
 The link is read in the other direction at the end. QA already verifies each criterion at the QA
 post-handoff verification step and can block promotion. Because the criteria point back, those
-results roll up into the product manager's own sentences: four of the five things you said you were
-buying are verified, one was never tested. Without the link, QA reports on criteria the product
-manager never wrote and may not
-recognise.
+results report against the definition of done rather than against a list of criteria the requester
+never wrote: four of the five lines are verified, one was never tested.
 
 ### Where it is written
 
@@ -232,8 +227,8 @@ in #97: the cheap path asks for paperwork while the expensive one asks for nothi
 cheap if the fast track is right often enough that unticking is rare. If the rewritten rules are
 poor, this shows up as people quietly taking full scale because it asks fewer questions.
 
-**Every change now pays for an impact analysis up front.** That is the price of the plan being built
-on what is actually there. If it turns out to be slow on small changes, the fix is to make the
+**Every change now runs an impact analysis up front.** That is what it takes for the plan to be
+built on what is actually there. If it turns out to be slow on small changes, the fix is to make the
 top-down read stop earlier, not to make it skippable, because a skippable plan-generator leaves no
 plan.
 
