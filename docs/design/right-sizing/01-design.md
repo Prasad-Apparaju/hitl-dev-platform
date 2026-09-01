@@ -25,19 +25,69 @@ Unchanged. Intake asks, and asks again if it is unclear.
 
 ## 2. HITL restates it, you confirm
 
-Before anything is read or planned, HITL writes back what it understood, in a fixed short shape:
+Before anything is read or planned, HITL writes back what it understood:
 
-- what you want
-- what is in scope
-- what is out
+| | |
+|---|---|
+| what you want | the ask, corrected |
+| in scope | what this change covers |
+| out of scope | what it explicitly does not, so it can be pointed at later |
+| definition of done | what counts as delivered, to whoever is paying for it |
 
-Three or four lines, not a document. You confirm or correct it.
+Length comes from the change, not from a cap. A one-line fix has a one-line definition of done. A
+feature has a list. You confirm or correct all of it.
 
 This is the cheapest moment to catch a misread. Everything downstream is derived from this text, so
 a misunderstanding here becomes a wrong impact analysis and then a wrong plan, and a wrong plan is
 harder to argue with than a wrong sentence because it looks considered.
 
-The confirmed text is written down, because it has to outlive the conversation:
+### The definition of done is a commercial artifact
+
+It is not the plan restated. The plan is HITL's view of the process. This is the product manager's
+view of what they are buying, and a product manager does not care that the architecture review ran.
+They care whether the thing does what they asked for the money they agreed.
+
+The pattern it exists to stop: a product manager and a developer agree on something handwavy, work
+happens, and the disagreement surfaces at billing. That is worst with contractors, where the
+sentence written on day one is the only thing anyone can point at afterwards.
+
+So three properties:
+
+**It is attributed.** Who agreed, and when. An agreement with nobody's name on it is what most teams
+already have, and it is the thing that evaporates under pressure.
+
+**Vague lines are flagged, not blocked.** "The system should be fast" cannot be checked. HITL says
+so, offers a sharper version, and takes whatever answer comes back. If the vague line stays, the
+record says it was flagged as unverifiable and accepted anyway, with a name and a date. That record
+is what settles the argument later, and it does not require HITL to have been right about the
+wording.
+
+**Changing it after work starts is a scope change,** routed through the existing scope-change review
+rather than edited in place.
+
+### Acceptance criteria are translated from it
+
+Not written alongside it. The definition of done is the anchor, in the product manager's language.
+The criteria are the checkable translation, written once the work is understood well enough to say
+how each line gets proved. Every criterion has to be something QA can actually test, because QA is
+who reads them. "Works properly" is not a criterion. "Returns 400 with a message naming the missing
+field" is.
+
+Every definition-of-done line must name at least one criterion that satisfies it. A line with none
+stops progress before Build begins, until it either gets a criterion or is explicitly marked as not
+verifiable in this change, with a reason and a name.
+
+On a one-line fix that is one line pointing at one criterion, and it costs nothing. It only bites
+when the definition of done is long, which is exactly when the gap matters.
+
+The link is read in the other direction at the end. QA already verifies each criterion at the QA
+post-handoff verification step and can block promotion. Because the criteria point back, those
+results roll up into the product manager's own sentences: four of the five things you said you were
+buying are verified, one was never tested. Without the link, QA reports on criteria the product
+manager never wrote and may not
+recognise.
+
+### Where it is written
 
 | where | when |
 |---|---|
@@ -84,6 +134,8 @@ resting on a hand-written field is not presented as if it came from the code.
 - the tier 3 locked floor drops from ten steps to nine
 - the check that every floor step must appear in the plan stops expecting it
 - `apply-change` loses its step 3, because the work has already happened
+- every step after it renumbers, so `workflow-steps.md` and anything else citing a step by number
+  has to be updated in the same pass
 
 ## 4. Fast track or full scale
 
