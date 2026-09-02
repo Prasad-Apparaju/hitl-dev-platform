@@ -83,7 +83,7 @@ hitl_workflow_field() {
   ' "$f"
 }
 
-# hitl_steps <yaml> → emit one line per step as: n|label|status
+# hitl_steps <yaml> → emit one line per step as: n|label|status|phase|command
 # Order is preserved. Substeps (e.g. 19a) come through as their literal n.
 hitl_steps() {
   local f="$1"
@@ -96,7 +96,7 @@ hitl_steps() {
       v=t; sub("^[ ]*" key ":[ ]*","",v); sub(/[ ]+#.*/,"",v); sub(/[ ]*$/,"",v)
       gsub(/^"|"$/,"",v); gsub(/^'"'"'|'"'"'$/,"",v); return v
     }
-    function flush() { if (have) { if (st=="") st="open"; print n "|" lbl "|" st "|" ph } have=0; n=""; lbl=""; st=""; ph="" }
+    function flush() { if (have) { if (st=="") st="open"; print n "|" lbl "|" st "|" ph "|" cmd } have=0; n=""; lbl=""; st=""; ph=""; cmd="" }
     /^workflow:/        { w=1; next }
     w && /^[ ]+steps:/  { s=1; next }
     s {
@@ -109,8 +109,10 @@ hitl_steps() {
         st=line;  sub(/.*[,{][ ]*status:[ ]*/, "", st); sub(/[ ]*[,}].*/, "", st); gsub(/["{} ]/,"",st)
         ph=""                                                     # phase is optional (additive)
         if (match(line, /[,{][ ]*phase:[ ]*[^,}]*/)) { ph=substr(line,RSTART,RLENGTH); sub(/.*phase:[ ]*/,"",ph); sub(/[ ]+$/,"",ph); gsub(/^"|"$/,"",ph) }
+        cmd=""                                                    # command is optional (additive, #100)
+        if (match(line, /[,{][ ]*command:[ ]*[^,}]*/)) { cmd=substr(line,RSTART,RLENGTH); sub(/.*command:[ ]*/,"",cmd); sub(/[ ]+$/,"",cmd); gsub(/^"|"$/,"",cmd) }
         if (st=="") st="open"
-        print n "|" lbl "|" st "|" ph; have=0; next
+        print n "|" lbl "|" st "|" ph "|" cmd; have=0; next
       }
       if (line ~ /^[ ]+-[ ]/) {                                  # ── block style: new list item
         flush(); have=1
@@ -120,6 +122,7 @@ hitl_steps() {
         else if (rest ~ /^label:/)  lbl=field(rest,"label")
         else if (rest ~ /^status:/) st=field(rest,"status")
         else if (rest ~ /^phase:/)  ph=field(rest,"phase")
+        else if (rest ~ /^command:/) cmd=field(rest,"command")
         next
       }
       if (have && line ~ /^[ ]+[A-Za-z_]+:/) {                   # ── block style: continuation field
@@ -127,6 +130,7 @@ hitl_steps() {
         else if (line ~ /^[ ]+label:/)  lbl=field(line,"label")
         else if (line ~ /^[ ]+status:/) st=field(line,"status")
         else if (line ~ /^[ ]+phase:/)  ph=field(line,"phase")
+        else if (line ~ /^[ ]+command:/) cmd=field(line,"command")
         next
       }
     }
@@ -150,6 +154,16 @@ hitl_current_n() {
 # hitl_current_label <yaml> → the label of the current step.
 hitl_current_label() {
   hitl_steps "$1" | awk -F'|' '$3=="current"{print $2; exit}'
+}
+
+# hitl_current_command <yaml> → the command for the step whose status is `current`.
+#
+# Read from `workflow.steps`, NOT `current_step`. The steps list is written once at intake and only
+# its `status` fields change afterwards, so the command rides along with the row. `current_step` is
+# rewritten by ~49 separate advance instructions across the skills, none of which carry `command` —
+# so reading it there showed the hint on step 1 and never again (design review 4, #100).
+hitl_current_command() {
+  hitl_steps "$1" | awk -F'|' '$3=="current"{print $5; exit}'
 }
 
 # hitl_cs_field <yaml> <name|phase|number> → read a field from the current_step block.

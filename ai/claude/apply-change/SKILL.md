@@ -92,11 +92,11 @@ workflow:
   id: development
   total: 31
   steps:
-    - { n: 1,   key: issue,  label: "Issue",  phase: "Requirements", status: done }
-    - { n: 2,   key: figma,  label: "Figma",  phase: "Requirements", status: done }
-    - { n: 3,   key: impact, label: "Impact", phase: "Design",       status: current }
-    - { n: 4,   key: roi,    label: "ROI",    phase: "Design",       status: open }
-    # … remaining steps from ai/shared/workflows.yaml (carry each step's `phase` verbatim), all status: open
+    - { n: 1,   key: issue,  label: "Issue",  phase: "Requirements", status: done,    command: manual }
+    - { n: 2,   key: figma,  label: "Figma",  phase: "Requirements", status: done,    command: manual }
+    - { n: 3,   key: impact, label: "Impact", phase: "Design",       status: current, command: dev-apply-change }
+    - { n: 4,   key: roi,    label: "ROI",    phase: "Design",       status: open,    command: guided }
+    # … remaining steps from ai/shared/workflows.yaml — carry each step's `phase` AND `command` verbatim, all status: open
 current_step:
   number: 3
   name: "Impact analysis"

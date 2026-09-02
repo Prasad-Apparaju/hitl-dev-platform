@@ -754,3 +754,62 @@ def test_every_step_skill_says_what_comes_next():
     assert not silent, (
         "steps that never say what comes next: %s. A person finishing a step should not have to "
         "work out what happens now." % silent)
+
+
+def test_the_command_survives_a_step_advance():
+    """The hint must still show after the pointer moves, not only on a freshly created change.
+
+    The first version of this feature read `current_step.command`. That block is rewritten by ~49
+    advance instructions across the skills and none of them carry `command`, so the hint appeared on
+    step 1 and vanished for the rest of the change. Every test written at the time passed: two
+    exercised the generator's first emission and one used a fixture that already had the field.
+    Nothing advanced a file, which is the state a change spends all its life in.
+
+    So this builds a change file the way `apply-change` instructs — statuses flipped, `current_step`
+    rewritten WITHOUT a command — and asserts the statusline still names the command.
+    """
+    hooks = os.path.join(AI, "claude", "hooks")
+    yaml_text = (
+        'schema_version: "2.0"\nchange_id: GH-1\ntier: 2\nstatus: in-progress\n'
+        'expected_branch: main\n\nworkflow:\n  id: development\n  total: 3\n  steps:\n'
+        '    - { n: "1", key: issue, label: "Issue", phase: "Requirements", status: done, command: manual }\n'
+        '    - { n: "10", key: red, label: "RED", phase: "Build", status: current, command: dev-tdd }\n'
+        '    - { n: "11", key: green, label: "GREEN", phase: "Build", status: open, command: dev-tdd }\n'
+        # exactly what an advance writes: no command in this block
+        '\ncurrent_step:\n  number: 10\n  name: "RED"\n  phase: "Build"\n')
+
+    with tempfile.TemporaryDirectory() as d:
+        hd = os.path.join(d, ".hitl", "hooks")
+        os.makedirs(hd)
+        for f in ("statusline-hitl.sh", "_steps.sh"):
+            shutil.copy(os.path.join(hooks, f), os.path.join(hd, f))
+        with io.open(os.path.join(d, ".hitl", "current-change.yaml"), "w", encoding="utf-8") as fh:
+            fh.write(yaml_text)
+        out = subprocess.run(
+            ["bash", os.path.join(hd, "statusline-hitl.sh")],
+            input='{"cwd":"/p","model":{"display_name":"O"},"context_window":{"used_percentage":9}}',
+            capture_output=True, text=True, env=dict(os.environ, CLAUDE_PROJECT_DIR=d))
+        assert "/hitl:dev-tdd" in out.stdout, (
+            "the command vanished once the pointer advanced past the first step. It must be read "
+            "from workflow.steps, which only has statuses flipped, not from current_step, which is "
+            "rewritten wholesale. Statusline said:\n%s" % out.stdout)
+
+
+def test_the_apply_change_seed_template_carries_the_command():
+    """`apply-change` seeds its own change file; its template is the one most changes are built from.
+
+    It omitted `command`, so every file it produced was born without the field regardless of what
+    intake's generator does.
+    """
+    skill = _read(os.path.join(AI, "claude", "apply-change", "SKILL.md"))
+    block = skill[skill.index("  steps:"):]
+    block = block[:block.index("current_step:")]
+    rows = [l for l in block.split("\n") if l.strip().startswith("- {")]
+    assert rows, "no example step rows found in the apply-change seed template"
+    without = [l.strip()[:60] for l in rows if "command:" not in l]
+    assert not without, (
+        "seed template rows with no command: %s. A file born without it cannot show the hint at any "
+        "step, whatever the statusline does." % without)
+    assert "`command` verbatim" in skill or "AND `command`" in skill, (
+        "the template tells the agent which fields to carry from the catalog; command must be named "
+        "or the four example rows are the only ones that will have it")

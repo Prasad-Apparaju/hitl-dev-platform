@@ -67,7 +67,12 @@ if hitl_change_active "$YAML_FILE"; then
   # What to run for the step you are standing on. The catalog has always known this; it was dropped
   # in derivation and again in the change file, so the one thing a person needs was the one thing
   # never shown. Three kinds: a real command, `manual` (nothing to run), `guided` (Claude drives).
-  step_cmd=$(hitl_cs_field "$YAML_FILE" command)
+  #
+  # Resolved from `workflow.steps`, which is written once and only has its statuses flipped after.
+  # `current_step` is rewritten on every advance by instructions that do not carry `command`, so it
+  # is only a fallback for a file whose steps list predates this (design review 4).
+  step_cmd=$(hitl_current_command "$YAML_FILE")
+  [ -z "$step_cmd" ] && step_cmd=$(hitl_cs_field "$YAML_FILE" command)
   next_hint=""
   case "$step_cmd" in
     ""|null)  next_hint="" ;;
