@@ -10,34 +10,36 @@ Each row is one step of the development delivery spine, with the command that ex
 |---|---|---|---|---|
 | 1 | GitHub Issue | Requirements | manual | PM |
 | 2 | Figma Review | Requirements | manual | PM |
-| 3 | Impact Analysis | Design | dev-apply-change | Dev |
-| 4 | ROI Estimate | Design | guided | PM |
-| 5 | Update Docs | Design | dev-generate-docs | Architect |
-| 6 | Update IaC | Design | ops-apply-iac | Ops |
-| 7 | Test Case Planning | Design | qa-plan-tests | QA |
-| 8 | Training Plan Stub | Design | guided | PM |
-| 9 | Package Decision Packet | Design | manual | Architect |
-| 10 | AI Generates Tests (RED) | Build | dev-tdd | Dev |
-| 11 | Human Reviews Tests | Build | qa-review-tests | QA |
-| 12 | Tests Improve the Design | Build | dev-tdd | Dev |
-| 13 | Verify RED | Build | manual | Dev |
-| 14 | Generate Code (GREEN) | Build | dev-tdd | Dev |
-| 15 | Verify GREEN | Build | manual | Dev |
-| 16 | Refactor | Build | manual | Dev |
-| 17 | Convention Checks | Build | dev-check-conventions | Dev |
-| 18 | Code Review Round 1 | Verify | dev-review-lld-adherence | Dev |
-| 19 | Code Review Round 2 | Verify | dev-review-security | Dev |
-| 19a | Architect Code Review | Verify | architect-review-code | Architect |
-| 20 | Rerun Tests | Verify | manual | Dev |
-| 21 | Reconcile Docs | Verify | dev-generate-docs | Dev |
-| 22 | QA Post-Handoff Verification | Verify | qa-verify-quality | QA |
-| 23 | Downstream Impact Brief | Assess | dev-impact-brief | Dev |
-| 24 | Risk-Rated Rollout Plan | Assess | ops-review-release | Ops |
-| 25 | Verify PR Completeness | Ship | manual | Dev |
-| 26 | Integration Verification | Ship | architect-verify-traceability | Architect |
-| 27 | Figma Comparison | Ship | manual | QA |
-| 28 | Build, Migrate, Apply, Deploy | Ship | ops-deploy | Ops |
-| 29 | Promote or Rollback | Ship | ops-post-deploy-monitor | Ops |
+| 3 | ROI Estimate | Design | guided | PM |
+| 4 | Update Docs | Design | dev-generate-docs | Architect |
+| 5 | Update IaC | Design | ops-apply-iac | Ops |
+| 6 | Test Case Planning | Design | qa-plan-tests | QA |
+| 7 | Training Plan Stub | Design | guided | PM |
+| 8 | Package Decision Packet | Design | manual | Architect |
+| 8a | Adversarial Design Review | Design | dev-adversarial-review | Architect |
+| 9 | AI Generates Tests (RED) | Build | dev-tdd | Dev |
+| 10 | Human Reviews Tests | Build | qa-review-tests | QA |
+| 11 | Tests Improve the Design | Build | dev-tdd | Dev |
+| 12 | Verify RED | Build | manual | Dev |
+| 13 | Generate Code (GREEN) | Build | dev-tdd | Dev |
+| 14 | Verify GREEN | Build | manual | Dev |
+| 15 | Refactor | Build | manual | Dev |
+| 16 | Convention Checks | Build | dev-check-conventions | Dev |
+| 16a | Adversarial Code Review | Build | dev-adversarial-review | Architect |
+| 17 | Code Review Round 1 | Verify | dev-review-lld-adherence | Dev |
+| 18 | Code Review Round 2 | Verify | dev-review-security | Dev |
+| 18a | Architect Code Review | Verify | architect-review-code | Architect |
+| 19 | Rerun Tests | Verify | manual | Dev |
+| 20 | Reconcile Docs | Verify | dev-generate-docs | Dev |
+| 21 | QA Post-Handoff Verification | Verify | qa-verify-quality | QA |
+| 22 | Downstream Impact Brief | Assess | dev-impact-brief | Dev |
+| 23 | Risk-Rated Rollout Plan | Assess | ops-review-release | Ops |
+| 24 | Verify PR Completeness | Ship | manual | Dev |
+| 25 | Integration Verification | Ship | architect-verify-traceability | Architect |
+| 26 | Figma Comparison | Ship | manual | QA |
+| 27 | Build, Migrate, Apply, Deploy | Ship | ops-deploy | Ops |
+| 28 | Promote or Rollback | Ship | ops-post-deploy-monitor | Ops |
+| 29 | Closing Retrospective | Post-Ship | dev-retro | Dev |
 | 30 | 30-Day ROI Check | Post-Ship | guided | PM |
 | 31 | 90-Day ROI Check | Post-Ship | guided | PM |
 

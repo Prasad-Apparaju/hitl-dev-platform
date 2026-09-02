@@ -65,7 +65,7 @@ workflows:
       - { n: 26, key: figma_compare, label: "Figma2", phase: "Ship", crit: ceremony, command: manual }
       - { n: 27, key: deploy, label: "Deploy", phase: "Ship", crit: floor, command: ops-deploy }
       - { n: 28, key: promote, label: "Promote", phase: "Ship", crit: floor, command: ops-post-deploy-monitor }
-      - { n: 29, key: retro, label: "Retro", phase: "Post-Ship", crit: floor, command: guided }
+      - { n: 29, key: retro, label: "Retro", phase: "Post-Ship", crit: floor, command: dev-retro }
       - { n: 30, key: roi_30, label: "30dROI", phase: "Post-Ship", crit: ceremony, command: guided }
       - { n: 31, key: roi_90, label: "90dROI", phase: "Post-Ship", crit: ceremony, command: guided }
 

@@ -73,7 +73,7 @@ spine:
     - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security, command: ops-pentest,                 role: Ops, crit: floor }
     - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship", command: ops-post-deploy-monitor,      role: Ops, crit: floor }
     # ── Post-Ship ─────────────────────────────────────────────────
-    - { key: retro,              name: "Closing Retrospective",         label: "Retro",    phase: "Post-Ship", command: guided,                      role: Dev, crit: floor }
+    - { key: retro,              name: "Closing Retrospective",         label: "Retro",    phase: "Post-Ship", command: dev-retro,                   role: Dev, crit: floor }
     - { key: roi_30,             name: "30-Day ROI Check",             label: "30dROI",   phase: "Post-Ship", command: guided,                       role: PM, crit: ceremony }
     - { key: roi_90,             name: "90-Day ROI Check",             label: "90dROI",   phase: "Post-Ship", command: guided,                       role: PM, crit: ceremony }
 

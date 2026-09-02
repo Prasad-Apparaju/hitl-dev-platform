@@ -44,6 +44,7 @@
     "ai/claude/qa/report-defect",
     "ai/claude/qa/review-tests",
     "ai/claude/qa/verify-quality",
+    "ai/claude/retro",
     "ai/claude/review-lld-adherence",
     "ai/claude/review-security",
     "ai/claude/skills/agentic-intake",
