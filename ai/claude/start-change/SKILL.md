@@ -377,8 +377,12 @@ lines += [
 for s in steps:
     ch = choices.get(s["key"])
     st = STATUS_FOR[ch["disposition"]] if ch else ("current" if s is first else "open")
+    # `command` rides along so the statusline can name the command for the step you are standing on.
+    # It is authored once in the catalog and was being dropped here, which is why nobody could be
+    # told what to run. Omitted when the catalog declares none: five workflows declare no commands.
+    cmd = f', command: {q(s["command"])}' if s.get("command") else ''
     lines.append(f'    - {{ n: {q(s["n"])}, key: {q(s["key"])}, label: {q(s["label"])}, '
-                 f'phase: {q(s["phase"])}, status: {st} }}')
+                 f'phase: {q(s["phase"])}, status: {st}{cmd} }}')
 
 if choices:
     lines += ['', 'skips:']
@@ -399,6 +403,11 @@ lines += [
     f'  name: {q(first["label"])}',
     f'  phase: {q(first["phase"])}',
 ]
+# The statusline reads this block, so the command for the step you are standing on has to be in it.
+# Three kinds: a real command, `manual` (a person does it, there is nothing to run) and `guided`
+# (Claude walks you through it). The statusline renders each differently; keep the raw value here.
+if first.get("command"):
+    lines.append(f'  command: {q(first["command"])}')
 out = "\n".join(lines)
 # Refuse to hand the wrapper something it cannot parse. The guard downstream checks exit status and
 # non-emptiness; only this check can catch a file that is both and still invalid.

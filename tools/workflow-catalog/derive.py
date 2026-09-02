@@ -198,6 +198,14 @@ def verify(catalog: dict, runtime: dict) -> list[str]:
                 if dv != rv:
                     problems.append(
                         f"{name}->{rid}: {f} {dv!r} != runtime {rv!r} (key {d['key']})")
+            # `command` is what tells a person which command to run for the step they are standing on.
+            # derive_steps has always emitted it and verify never compared it, so the runtime simply
+            # did not carry it and no gate noticed for the life of the file. Empty and absent are the
+            # same thing here: five workflows declare no command for any step.
+            if (d.get("command") or None) != (r.get("command") or None):
+                problems.append(
+                    f"{name}->{rid}: command {d.get('command')!r} != runtime {r.get('command')!r} "
+                    f"(key {d['key']})")
         derived_total = total_of(derived)
         rt_total = rt_workflows[rid].get("total")
         if rt_total is not None and derived_total != rt_total:

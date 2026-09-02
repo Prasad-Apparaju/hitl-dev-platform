@@ -27,8 +27,10 @@ Run: python3 -m pytest ci/wiring -q
 import io
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 import pytest
 
@@ -614,3 +616,102 @@ def test_every_step_declares_what_it_protects_and_what_skipping_costs():
         if isinstance(eng, dict):
             unknown = set(eng) - {"paths", "profiles", "tags", "multi_domain"}
             assert not unknown, "%s: engages has unknown keys %s" % (key, sorted(unknown))
+
+
+# --- the command for the current step reaches a human --------------------------------------------
+# The catalog has always declared a command per step. derive_steps emitted it, `verify` never
+# compared it, so the runtime did not carry it; the change-file generator did not write it; and the
+# statusline could not show it. Authored once, dropped twice, never seen. These tests close the
+# whole path rather than any one hop, because each hop passed its own checks while the path was dead.
+
+def test_the_runtime_carries_the_command_the_catalog_declares():
+    """Every step whose catalog entry declares a command has it in the runtime workflow file.
+
+    `derive.py verify` now compares this field, so a drift fails the gate. This asserts the state
+    that gate protects, which is what someone reads when they wonder whether the data is there.
+    """
+    import yaml
+    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    rt = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+
+    declared = {s["key"]: s["command"] for s in cat["spine"]["steps"] if s.get("command")}
+    assert declared, "the catalog declares no commands at all"
+
+    # Compare over what the runtime actually contains. The spine also holds conditional steps
+    # (`baseline`, `sec_design`, `cve_audit`, `pentest`) that activate on a condition and are
+    # legitimately absent from the base workflow, so iterating the catalog would fail on those.
+    runtime = rt["workflows"]["development"]["steps"]
+    wrong = sorted(s["key"] for s in runtime
+                   if s["key"] in declared and s.get("command") != declared[s["key"]])
+    assert not wrong, (
+        "runtime steps whose command is missing or disagrees with the catalog: %s. This is the "
+        "defect this test exists for: nobody can be told what to run if the command never arrives."
+        % wrong)
+
+    carried = sum(1 for s in runtime if s.get("command"))
+    assert carried >= 30, (
+        "only %d of %d development steps carry a command; the field was being dropped in derivation"
+        % (carried, len(runtime)))
+
+
+def test_the_change_file_generator_writes_the_command_for_the_current_step():
+    """The statusline reads `current_step`, so the command has to be in that block.
+
+    Runs the real generator out of SKILL.md rather than asserting the source contains a string. A
+    guard that greps for code it never executes is how three features shipped unreachable here.
+    """
+    skill = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    body = skill.split("<< 'PY'", 1)[1].split("\nPY\n", 1)[0]
+    body = body.split("\n", 1)[1]                     # drop the redirect tail of the invocation line
+
+    with tempfile.TemporaryDirectory() as d:
+        gen = os.path.join(d, "gen.py")
+        with io.open(gen, "w", encoding="utf-8") as fh:
+            fh.write(body)
+        out = subprocess.run(
+            [sys.executable, gen, "development", "GH-1", "feat", "2.8.0", "2", "", "who", "why"],
+            capture_output=True, text=True, cwd=ROOT)
+        assert out.returncode == 0, "generator failed: %s" % out.stderr[-800:]
+
+        import yaml
+        doc = yaml.safe_load(out.stdout)
+        cs = doc.get("current_step") or {}
+        assert cs.get("command"), (
+            "current_step carries no command, so the statusline has nothing to show. Block was: %r"
+            % cs)
+        steps = doc["workflow"]["steps"]
+        assert any(s.get("command") for s in steps), "no step in the plan carries a command"
+
+
+def test_the_statusline_shows_what_to_run():
+    """End to end: a change file with a command in it produces a visible hint.
+
+    Covers all three kinds. `manual` and `guided` are not commands and must not render as one — a
+    statusline reading "/hitl:manual" sends someone looking for a command that does not exist.
+    """
+    hooks = os.path.join(AI, "claude", "hooks")
+    stdin = ('{"cwd":"/p","model":{"display_name":"O"},"context_window":{"used_percentage":10}}')
+
+    cases = [("dev-tdd", "/hitl:dev-tdd"), ("manual", "no command"), ("guided", "say go")]
+    for value, expected in cases:
+        with tempfile.TemporaryDirectory() as d:
+            hd = os.path.join(d, ".hitl", "hooks")
+            os.makedirs(hd)
+            for f in ("statusline-hitl.sh", "_steps.sh"):
+                shutil.copy(os.path.join(hooks, f), os.path.join(hd, f))
+            with io.open(os.path.join(d, ".hitl", "current-change.yaml"), "w", encoding="utf-8") as fh:
+                fh.write(
+                    'schema_version: "2.0"\nchange_id: GH-1\ntier: 2\nstatus: in-progress\n'
+                    'expected_branch: main\n\nworkflow:\n  id: development\n  total: 3\n  steps:\n'
+                    '    - { n: "1", key: red, label: "RED", phase: "Build", status: current }\n'
+                    '\ncurrent_step:\n  number: 1\n  name: "RED"\n  phase: "Build"\n'
+                    '  command: "%s"\n' % value)
+            out = subprocess.run(
+                ["bash", os.path.join(hd, "statusline-hitl.sh")],
+                input=stdin, capture_output=True, text=True,
+                env=dict(os.environ, CLAUDE_PROJECT_DIR=d))
+            assert expected in out.stdout, (
+                "command %r should render as %r; statusline said:\n%s" % (value, expected, out.stdout))
+        if value in ("manual", "guided"):
+            assert "/hitl:%s" % value not in out.stdout, (
+                "%r rendered as a runnable command; there is no /hitl:%s" % (value, value))

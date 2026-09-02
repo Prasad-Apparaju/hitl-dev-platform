@@ -64,13 +64,25 @@ if hitl_change_active "$YAML_FILE"; then
   warn=""
   [ "$(hitl_branch_reconcile "$YAML_FILE" "$branch")" = "mismatch" ] && warn=" ${COLOR_RED}⚠ branch≠${change_id}${COLOR_RESET}"
 
+  # What to run for the step you are standing on. The catalog has always known this; it was dropped
+  # in derivation and again in the change file, so the one thing a person needs was the one thing
+  # never shown. Three kinds: a real command, `manual` (nothing to run), `guided` (Claude drives).
+  step_cmd=$(hitl_cs_field "$YAML_FILE" command)
+  next_hint=""
+  case "$step_cmd" in
+    ""|null)  next_hint="" ;;
+    manual)   next_hint="  ${COLOR_CYAN}→ yours to do, no command${COLOR_RESET}" ;;
+    guided)   next_hint="  ${COLOR_CYAN}→ say go, Claude walks it${COLOR_RESET}" ;;
+    *)        next_hint="  ${COLOR_CYAN}→ /hitl:${step_cmd}${COLOR_RESET}" ;;
+  esac
+
   cur=$(hitl_current_n "$YAML_FILE")
   if hitl_has_workflow "$YAML_FILE" && [ -n "$cur" ]; then
     wf=$(hitl_workflow_field "$YAML_FILE" id)
     [ -z "$step_name" ] && step_name=$(hitl_current_label "$YAML_FILE")
     trail=$(hitl_render_trail "$YAML_FILE" color "$step_name")
     # Phase 2: compact "change ▸ phase ▸ step name" + numberless trail. No global counter.
-    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL ▸ ${change_id} ▸ ${phase:-$wf} ▸ ${step_name} [T${tier}]${warn}\n     ${trail}"
+    hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL ▸ ${change_id} ▸ ${phase:-$wf} ▸ ${step_name} [T${tier}]${next_hint}${warn}\n     ${trail}"
   else
     num=$(hitl_cs_field "$YAML_FILE" number)
     hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-change} · Step ${num:-?} [${change_id} · T${tier}]${warn}  (run /hitl:dev-update for the step trail)"

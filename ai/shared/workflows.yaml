@@ -34,40 +34,40 @@ workflows:
     title: "Development — deliver a change"
     total: 31
     steps:
-      - { n: 1,   key: issue,              label: "Issue",    phase: "Requirements", crit: standard }
-      - { n: 2,   key: figma,              label: "Figma",    phase: "Requirements", crit: ceremony }
-      - { n: 3,   key: impact,             label: "Impact",   phase: "Design", crit: standard, crit_by_tier: { 3: floor } }
-      - { n: 4,   key: roi,                label: "ROI",      phase: "Design", crit: ceremony }
-      - { n: 5,   key: docs,               label: "Docs",     phase: "Design", crit: standard }
-      - { n: 6,   key: iac,                label: "IaC",      phase: "Design", crit: standard }
-      - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design", crit: standard }
-      - { n: 8,   key: training,           label: "Train",    phase: "Design", crit: ceremony }
-      - { n: 9,   key: packet,             label: "Packet",   phase: "Design", crit: standard, crit_by_tier: { 3: floor } }
-      - { n: 9a,  key: adv_design,        label: "AdvDsgn",  phase: "Design",   crit: ceremony }
-      - { n: 10,  key: red,                label: "RED",      phase: "Build", crit: standard, no_omit: true }
-      - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build", crit: ceremony }
-      - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build", crit: standard }
-      - { n: 13,  key: verify_red,         label: "VfyRED",   phase: "Build", crit: standard }
-      - { n: 14,  key: green,              label: "GREEN",    phase: "Build", crit: standard, no_omit: true }
-      - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build", crit: standard }
-      - { n: 16,  key: refactor,           label: "Refact",   phase: "Build", crit: ceremony }
-      - { n: 17,  key: conventions,        label: "Conv",     phase: "Build", crit: standard }
-      - { n: 17a, key: adv_code,          label: "AdvCode",  phase: "Build",    crit: ceremony }
-      - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify", crit: standard }
-      - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify", crit: standard }
-      - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify", crit: standard, crit_by_tier: { 3: floor } }
-      - { n: 20,  key: rerun,              label: "Rerun",    phase: "Verify", crit: standard }
-      - { n: 21,  key: reconcile,          label: "Recncl",   phase: "Verify", crit: standard }
-      - { n: 22,  key: qa_verify,          label: "QAVfy",    phase: "Verify", crit: standard, crit_by_tier: { 3: floor } }
-      - { n: 23,  key: impact_brief,       label: "ImpBrf",   phase: "Assess", crit: ceremony }
-      - { n: 24,  key: rollout,            label: "Rollout",  phase: "Assess", crit: standard, crit_by_tier: { 3: floor } }
-      - { n: 25,  key: verify_pr,          label: "VfyPR",    phase: "Ship", crit: standard }
-      - { n: 26,  key: integration_verify, label: "IntVfy",   phase: "Ship", crit: standard, crit_by_tier: { 2: floor } }
-      - { n: 27,  key: figma_compare,      label: "Figma2",   phase: "Ship", crit: ceremony }
-      - { n: 28,  key: deploy,             label: "Deploy",   phase: "Ship", crit: floor }
-      - { n: 29,  key: promote,            label: "Promote",  phase: "Ship", crit: floor }
-      - { n: 30,  key: roi_30,             label: "30dROI",   phase: "Post-Ship", crit: ceremony }
-      - { n: 31,  key: roi_90,             label: "90dROI",   phase: "Post-Ship", crit: ceremony }
+      - { n: 1,   key: issue,              label: "Issue",    phase: "Requirements", crit: standard, command: manual }
+      - { n: 2,   key: figma,              label: "Figma",    phase: "Requirements", crit: ceremony, command: manual }
+      - { n: 3,   key: impact,             label: "Impact",   phase: "Design", crit: standard, crit_by_tier: { 3: floor }, command: dev-apply-change }
+      - { n: 4,   key: roi,                label: "ROI",      phase: "Design", crit: ceremony, command: guided }
+      - { n: 5,   key: docs,               label: "Docs",     phase: "Design", crit: standard, command: dev-generate-docs }
+      - { n: 6,   key: iac,                label: "IaC",      phase: "Design", crit: standard, command: ops-apply-iac }
+      - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design", crit: standard, command: qa-plan-tests }
+      - { n: 8,   key: training,           label: "Train",    phase: "Design", crit: ceremony, command: guided }
+      - { n: 9,   key: packet,             label: "Packet",   phase: "Design", crit: standard, crit_by_tier: { 3: floor }, command: manual }
+      - { n: 9a,  key: adv_design,        label: "AdvDsgn",  phase: "Design",   crit: ceremony, command: dev-adversarial-review }
+      - { n: 10,  key: red,                label: "RED",      phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
+      - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build", crit: ceremony, command: qa-review-tests }
+      - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build", crit: standard, command: dev-tdd }
+      - { n: 13,  key: verify_red,         label: "VfyRED",   phase: "Build", crit: standard, command: manual }
+      - { n: 14,  key: green,              label: "GREEN",    phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
+      - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build", crit: standard, command: manual }
+      - { n: 16,  key: refactor,           label: "Refact",   phase: "Build", crit: ceremony, command: manual }
+      - { n: 17,  key: conventions,        label: "Conv",     phase: "Build", crit: standard, command: dev-check-conventions }
+      - { n: 17a, key: adv_code,          label: "AdvCode",  phase: "Build",    crit: ceremony, command: dev-adversarial-review }
+      - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify", crit: standard, command: dev-review-lld-adherence }
+      - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify", crit: standard, command: dev-review-security }
+      - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: architect-review-code }
+      - { n: 20,  key: rerun,              label: "Rerun",    phase: "Verify", crit: standard, command: manual }
+      - { n: 21,  key: reconcile,          label: "Recncl",   phase: "Verify", crit: standard, command: dev-generate-docs }
+      - { n: 22,  key: qa_verify,          label: "QAVfy",    phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: qa-verify-quality }
+      - { n: 23,  key: impact_brief,       label: "ImpBrf",   phase: "Assess", crit: ceremony, command: dev-impact-brief }
+      - { n: 24,  key: rollout,            label: "Rollout",  phase: "Assess", crit: standard, crit_by_tier: { 3: floor }, command: ops-review-release }
+      - { n: 25,  key: verify_pr,          label: "VfyPR",    phase: "Ship", crit: standard, command: manual }
+      - { n: 26,  key: integration_verify, label: "IntVfy",   phase: "Ship", crit: standard, crit_by_tier: { 2: floor }, command: architect-verify-traceability }
+      - { n: 27,  key: figma_compare,      label: "Figma2",   phase: "Ship", crit: ceremony, command: manual }
+      - { n: 28,  key: deploy,             label: "Deploy",   phase: "Ship", crit: floor, command: ops-deploy }
+      - { n: 29,  key: promote,            label: "Promote",  phase: "Ship", crit: floor, command: ops-post-deploy-monitor }
+      - { n: 30,  key: roi_30,             label: "30dROI",   phase: "Post-Ship", crit: ceremony, command: guided }
+      - { n: 31,  key: roi_90,             label: "90dROI",   phase: "Post-Ship", crit: ceremony, command: guided }
 
   # ── Brownfield setup: onboard an existing codebase (11 steps) ──────────────────────────────
   # Canonical source: ai/claude/start-brownfield/SKILL.md
@@ -156,40 +156,40 @@ workflows:
     title: "Platform Bootstrap — onboarded to delivery-ready"
     total: 17
     steps:
-      - { n: 1,  key: derive_register,  label: "Register", phase: "Survey" }
-      - { n: 2,  key: roadmap,          label: "Roadmap",  phase: "Survey" }
-      - { n: 3,  key: test_suites,      label: "Suites",   phase: "Verify" }
-      - { n: 4,  key: e2e_env,          label: "E2E",      phase: "Verify" }
-      - { n: 5,  key: traceability,     label: "Trace",    phase: "Verify" }
-      - { n: 6,  key: build_repro,      label: "Build",    phase: "Deliver" }
-      - { n: 7,  key: deploy_playbook,  label: "Playbook", phase: "Deliver" }
-      - { n: 8,  key: cd_from_ci,       label: "CD",       phase: "Deliver" }
-      - { n: 9,  key: obs_established,  label: "Observ",   phase: "Operate" }
-      - { n: 10, key: canary_exercised, label: "Canary",   phase: "Operate" }
-      - { n: 11, key: sec_posture,      label: "SecPos",   phase: "Operate" }
-      - { n: 12, key: golden_dataset,   label: "Golden",   phase: "Parity",  cond: migration }
-      - { n: 13, key: shadow_run,       label: "Shadow",   phase: "Parity",  cond: migration }
-      - { n: 14, key: cutover_plan,     label: "CutPlan",  phase: "Cutover", cond: migration }
-      - { n: 15, key: dual_run,         label: "DualRun",  phase: "Cutover", cond: migration }
-      - { n: 16, key: decommission,     label: "Sunset",   phase: "Cutover", cond: migration }
-      - { n: 17, key: delivery_ready,   label: "Ready",    phase: "Ready" }
+      - { n: 1,  key: derive_register,  label: "Register", phase: "Survey", command: ops-plan-platform }
+      - { n: 2,  key: roadmap,          label: "Roadmap",  phase: "Survey", command: ops-plan-platform }
+      - { n: 3,  key: test_suites,      label: "Suites",   phase: "Verify", command: manual }
+      - { n: 4,  key: e2e_env,          label: "E2E",      phase: "Verify", command: manual }
+      - { n: 5,  key: traceability,     label: "Trace",    phase: "Verify", command: guided }
+      - { n: 6,  key: build_repro,      label: "Build",    phase: "Deliver", command: ops-build }
+      - { n: 7,  key: deploy_playbook,  label: "Playbook", phase: "Deliver", command: guided }
+      - { n: 8,  key: cd_from_ci,       label: "CD",       phase: "Deliver", command: manual }
+      - { n: 9,  key: obs_established,  label: "Observ",   phase: "Operate", command: ops-setup-observability }
+      - { n: 10, key: canary_exercised, label: "Canary",   phase: "Operate", command: ops-deploy }
+      - { n: 11, key: sec_posture,      label: "SecPos",   phase: "Operate", command: ops-pentest }
+      - { n: 12, key: golden_dataset,   label: "Golden",   phase: "Parity",  cond: migration, command: guided }
+      - { n: 13, key: shadow_run,       label: "Shadow",   phase: "Parity",  cond: migration, command: guided }
+      - { n: 14, key: cutover_plan,     label: "CutPlan",  phase: "Cutover", cond: migration, command: guided }
+      - { n: 15, key: dual_run,         label: "DualRun",  phase: "Cutover", cond: migration, command: manual }
+      - { n: 16, key: decommission,     label: "Sunset",   phase: "Cutover", cond: migration, command: manual }
+      - { n: 17, key: delivery_ready,   label: "Ready",    phase: "Ready", command: ops-plan-platform }
   release:
     id: release
     title: "Release — publish a version to users"
     total: 12
     steps:
-      - { n: 1,  key: rc_scope,            label: "Scope",       phase: "Prepare" , crit: standard }
-      - { n: 2,  key: changelog,           label: "Notes",       phase: "Prepare" , crit: standard }
-      - { n: 3,  key: version_bump,        label: "Bump",        phase: "Prepare" , crit: standard }
-      - { n: 4,  key: gates,               label: "Gates",       phase: "Verify"  , crit: floor, no_omit: true }
-      - { n: 5,  key: adversarial_review,  label: "Adversarial", phase: "Gate"    , crit: floor }
-      - { n: 6,  key: resolve_findings,    label: "Resolve",     phase: "Gate"    , crit: floor }
-      - { n: 7,  key: build,               label: "Build",       phase: "Publish" , crit: standard }
-      - { n: 8,  key: publish,             label: "Publish",     phase: "Publish" , crit: floor, no_omit: true }
-      - { n: 9,  key: tag,                 label: "Tag",         phase: "Publish" , crit: standard }
-      - { n: 10, key: install_verify,      label: "Verify",      phase: "Confirm" , crit: floor, no_omit: true }
-      - { n: 11, key: announce,            label: "Announce",    phase: "Confirm" , crit: ceremony }
-      - { n: 12, key: retire,              label: "Retire",      phase: "Confirm" , crit: standard }
+      - { n: 1,  key: rc_scope,            label: "Scope",       phase: "Prepare" , crit: standard, command: manual }
+      - { n: 2,  key: changelog,           label: "Notes",       phase: "Prepare" , crit: standard, command: manual }
+      - { n: 3,  key: version_bump,        label: "Bump",        phase: "Prepare" , crit: standard, command: manual }
+      - { n: 4,  key: gates,               label: "Gates",       phase: "Verify"  , crit: floor, no_omit: true, command: dev-validate }
+      - { n: 5,  key: adversarial_review,  label: "Adversarial", phase: "Gate"    , crit: floor, command: manual }
+      - { n: 6,  key: resolve_findings,    label: "Resolve",     phase: "Gate"    , crit: floor, command: manual }
+      - { n: 7,  key: build,               label: "Build",       phase: "Publish" , crit: standard, command: manual }
+      - { n: 8,  key: publish,             label: "Publish",     phase: "Publish" , crit: floor, no_omit: true, command: manual }
+      - { n: 9,  key: tag,                 label: "Tag",         phase: "Publish" , crit: standard, command: manual }
+      - { n: 10, key: install_verify,      label: "Verify",      phase: "Confirm" , crit: floor, no_omit: true, command: manual }
+      - { n: 11, key: announce,            label: "Announce",    phase: "Confirm" , crit: ceremony, command: manual }
+      - { n: 12, key: retire,              label: "Retire",      phase: "Confirm" , crit: standard, command: manual }
 
 # ── What each step protects, and what skipping it costs ─────────────────────────────────────
 #
