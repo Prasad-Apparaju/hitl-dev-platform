@@ -575,3 +575,53 @@ def test_not_applicable_does_not_resurface():
          "disposition": "decline", "domains": ["billing"], "paths": []}]}
     raised = [e["step"] for e in R.surface(rollup, ["billing"], [])]
     assert raised == ["docs"], raised
+
+
+# --- the intake stub (#97) --------------------------------------------------------------------
+
+def test_a_genuine_stub_certifies_clean():
+    """Under right-sizing the plan does not exist until impact analysis has run, so intake writes a
+    stub. Certifying it against the plan checks produced 9 blocking INCOMPLETE_PLANs and 25
+    PLAN_PRUNED warnings for a change nobody had sized yet."""
+    stub = {"change_id": "GH-1", "tier": 3, "tier_provisional": True,
+            "status": "intake", "first_pass": True}
+    assert C.check(stub, CATALOG) == []
+
+
+def test_intake_status_does_not_exempt_a_change_that_has_a_plan():
+    """NEG: the exemption is the dangerous part, because "no plan block" is what a bypass looks
+    like. Claiming intake while carrying a plan is itself a block, AND every normal check still
+    runs — so the status cannot be used to un-certify planned work."""
+    # omit a floor step, so INCOMPLETE_PLAN would fire on any change that is actually certified
+    ch = make_change([], tier=2, omit=("deploy",))
+    ch["status"] = "intake"
+    found = C.check(ch, CATALOG)
+    assert "INTAKE_NOT_EMPTY" in blockers(found)
+    # the plan checks still ran: the status did not buy an exemption from them
+    assert "INCOMPLETE_PLAN" in blockers(found), codes(found)
+
+
+def test_intake_status_does_not_exempt_a_change_that_has_skips():
+    ch = {"change_id": "GH-1", "tier": 2, "status": "intake", "first_pass": True,
+          "skips": [base_skip("roi")]}
+    assert "INTAKE_NOT_EMPTY" in blockers(C.check(ch, CATALOG))
+
+
+def test_intake_not_empty_is_non_waivable():
+    assert "INTAKE_NOT_EMPTY" in C.NON_WAIVABLE
+
+
+def test_a_provisional_tier_may_not_survive_past_intake():
+    """NEG: the stub's tier is HITL's placeholder, not a human's declaration. Step 4 replaces it
+    with one proposed from impact findings and confirmed by a person. A provisional tier on a
+    planned change means that confirmation never happened."""
+    ch = make_change([], tier=3)
+    ch["tier_provisional"] = True
+    assert "TIER_PROVISIONAL" in blockers(C.check(ch, CATALOG))
+
+
+def test_the_provisional_tier_is_the_strictest_one():
+    """It fails closed. If anything does resolve criticality against a stub, it resolves at the
+    tier that locks the most, not the least."""
+    assert C.resolve_crit(CATALOG["impact"], 3) == "floor"
+    assert C.resolve_crit(CATALOG["impact"], 1) != "floor"

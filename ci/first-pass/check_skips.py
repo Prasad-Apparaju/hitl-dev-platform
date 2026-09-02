@@ -68,6 +68,11 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 "UNKNOWN_STEP", "INVALID_STATUS", "INVALID_TIER", "MALFORMED", "CRIT_MONOTONIC",
                 # a load-bearing step DELETED from the plan (not skipped, no record) is a bypass (codex-1)
                 "INCOMPLETE_PLAN",
+                # `status: intake` claimed by a change that has a plan or skips — the stub exemption
+                # is not a way to un-certify planned work (#97)
+                "INTAKE_NOT_EMPTY",
+                # a provisional tier surviving past intake means nobody confirmed it (#97)
+                "TIER_PROVISIONAL",
                 # steps lightened while `first_pass` is absent: enforcement never engaged, so every other
                 # check below was skipped and the ledger is uncertified. The bug this catches shipped
                 # because the driver never emitted the flag.
@@ -295,6 +300,33 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
             findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_set_by` — a light path is a human's call, not the agent's"))
         if not _str(change.get("tier_reason")).strip():
             findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_reason` — record why this change qualifies"))
+
+    # 0.4) INTAKE STUB (#97). Under right-sizing the plan does not exist until impact analysis has
+    #    run, so intake writes a stub carrying the change id, the agreed requirement and a
+    #    PROVISIONAL tier. Certifying a stub against the plan checks below would produce 9 blocking
+    #    INCOMPLETE_PLANs and 25 PLAN_PRUNED warnings for a change that has not been sized yet.
+    #
+    #    The exemption is deliberately narrow, because "no plan block" is exactly what a bypass
+    #    looks like. `status: intake` exempts ONLY a change that genuinely has nothing to certify:
+    #    no steps and no skips. Claiming intake while carrying either is itself a non-waivable
+    #    block, so the status cannot be used to un-certify a change that has already been planned.
+    if _str(change.get("status")) == "intake":
+        if steps or skips:
+            findings.append(_f("INTAKE_NOT_EMPTY",
+                               f"status is `intake` but the change carries {len(steps)} plan step(s) "
+                               f"and {len(skips)} skip record(s) — a stub has neither. Set the real "
+                               f"status; `intake` does not exempt a change that has been planned"))
+        else:
+            # A genuine stub: nothing to certify yet, and the tier is provisional by definition.
+            return findings
+    elif change.get("tier_provisional"):
+        # The provisional tier is the strictest one, so a stub fails closed if anything does resolve
+        # criticality against it. It must not survive into a planned change: step 4 replaces it with
+        # a human's declaration, and TIER_UNATTRIBUTED covers the attribution.
+        findings.append(_f("TIER_PROVISIONAL",
+                           "tier is still marked provisional on a change that has been planned — "
+                           "the tier is proposed from impact findings and confirmed by a human at "
+                           "step 4, and that confirmation has not happened"))
 
     # 0.5) PLAN COMPLETENESS (codex-1): a load-bearing step DELETED from the plan entirely leaves no status
     #    and no record to inspect — silently omitting it. Every catalog step that is `floor` (at this tier) or
