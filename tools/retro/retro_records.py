@@ -52,13 +52,29 @@ _STATIC_CATALOG_FIELDS = {
     "rules", "sizing_rules", "rule",
 }
 
-_RUNTIME = os.path.join(os.path.dirname(__file__), "..", "..", "ai", "shared", "workflows.yaml")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+# The catalog sits at a different depth in the two layouts this module ships in. Source keeps it at
+# ai/shared/workflows.yaml; the built plugin flattens it to shared/workflows.yaml, one level above
+# shared/tools/retro/. Resolving only the first is how the derived ban set silently degrades to the
+# static one in the shipped package, with nothing to say it happened.
+_CATALOG_CANDIDATES = (
+    os.path.normpath(os.path.join(_HERE, "..", "..", "ai", "shared", "workflows.yaml")),  # source
+    os.path.normpath(os.path.join(_HERE, "..", "..", "workflows.yaml")),                  # plugin
+)
 
 
-def _catalog_field_names(path=_RUNTIME):
+def _resolve_catalog(candidates=_CATALOG_CANDIDATES):
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    return None
+
+
+def _catalog_field_names(path=None):
     """Every key that defines a sizing rule, read from the catalog itself where possible."""
     names = set(_STATIC_CATALOG_FIELDS)
-    if yaml is None or not os.path.isfile(path):
+    path = path or _resolve_catalog()
+    if yaml is None or not path or not os.path.isfile(path):
         return names
     try:
         with open(path) as fh:

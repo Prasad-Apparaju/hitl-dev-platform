@@ -79,6 +79,31 @@ def test_catalog_fields_are_derived_from_the_real_catalog():
         assert field in R.CATALOG_FIELDS, f"{field} must be a guarded rule field"
 
 
+def test_catalog_resolves_in_the_shipped_plugin_layout(tmp_path):
+    """The built plugin flattens the catalog to shared/workflows.yaml, one level above
+    shared/tools/retro/. Resolving only the source path degrades the ban set silently."""
+    plugin = tmp_path / "shared"
+    (plugin / "tools" / "retro").mkdir(parents=True)
+    (plugin / "workflows.yaml").write_text(
+        "step_costs:\n  retro:\n    engages: always\n    forgo_cost: high\n"
+        "workflows:\n  development:\n    steps:\n"
+        "      - { n: 1, key: a, label: A, phase: P, crit: floor, command: x, no_omit: true }\n"
+    )
+    here = str(plugin / "tools" / "retro")
+    cands = (os.path.normpath(os.path.join(here, "..", "..", "ai", "shared", "workflows.yaml")),
+             os.path.normpath(os.path.join(here, "..", "..", "workflows.yaml")))
+    resolved = R._resolve_catalog(cands)
+    assert resolved is not None, "the plugin-layout catalog must resolve"
+    names = R._catalog_field_names(resolved)
+    for field in ("engages", "forgo_cost", "crit", "command", "no_omit"):
+        assert field in names, f"{field} must be derived from the shipped catalog"
+
+
+def test_catalog_resolution_survives_no_catalog_at_all():
+    names = R._catalog_field_names("/nonexistent/workflows.yaml")
+    assert R._STATIC_CATALOG_FIELDS <= names, "must fall back to the static floor, not empty"
+
+
 def test_observations_use_the_projected_channel_only():
     for obs in R.sizing_observations(CHANGE, IMPACT):
         assert set(obs) <= set(R.OBSERVATION_FIELDS), f"unprojected key in {obs}"
