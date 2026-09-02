@@ -182,3 +182,30 @@ def test_an_exclusion_carries_the_reason_it_was_excluded():
     reads back. An empty one records a step vanishing with no account of why."""
     for e in S.excluded(_size(SMALL, 1), "fast"):
         assert e["reason"].strip(), e
+
+
+# ── the intake stub ──────────────────────────────────────────────────────────
+
+def test_the_stub_certifies_clean_and_is_deliberately_not_an_active_change():
+    """Two properties that pull in opposite directions and both matter.
+
+    It must certify clean, or intake produces a file that fails the validator it is about to run.
+    It must NOT count as an active change, because a stub carries no plan, so nothing has
+    authorised a source edit yet. An earlier comment in the generator claimed the stub existed to
+    satisfy that gate, which is the opposite of what it does.
+    """
+    import subprocess
+    import check_skips as C
+
+    gen = os.path.join(HERE, "gen_change.py")
+    out = subprocess.run([sys.executable, gen, "--stub", "GH-1", "main", "2.8.0"],
+                         capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    doc = yaml.safe_load(out.stdout)
+
+    assert C.check(doc, CATALOG) == [], C.check(doc, CATALOG)
+    assert doc["status"] == "intake"
+    assert doc["tier"] == 3 and doc["tier_provisional"] is True, "provisional tier must fail closed"
+    assert "workflow" not in doc and "current_step" not in doc, (
+        "a stub with either would satisfy hitl_change_active and unblock edits before a plan exists")
+    assert doc["impact_record"], "the stub must name the record, or nothing can check it is missing"

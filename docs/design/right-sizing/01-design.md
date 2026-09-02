@@ -93,11 +93,17 @@ they are written after step 3 answers that, even though the text is agreed here.
 
 ### The change file starts here as a stub
 
-Intake writes a stub: change id, branch, the confirmed requirement and its definition of done. No
-tier, no workflow steps, no plan, because none of those exist yet.
+Intake writes a stub: change id, branch, the confirmed requirement and its definition of done, and
+a pointer to the impact record. No workflow steps and no plan, because neither exists yet.
 
-That matters for one reason beyond tidiness: the gate that blocks source edits looks for a change
-file, so the stub is what protects the intake conversation itself. Step 3 fills in the rest.
+The stub is not merely tidiness. It persists the agreed requirement and definition of done, so a
+session that dies between step 2 and step 3 does not lose the text everything downstream derives
+from; it is what the analysis reads; and it names the impact record, so the blocking
+missing-record check has something to check.
+
+What it deliberately does **not** do is unblock editing. A stub carries no plan, so it does not
+satisfy the active-change gate and source edits stay blocked through intake. That is correct:
+nothing has authorised an edit yet. Step 3 fills in the rest.
 
 The generator refuses a planless change file today, so it has to learn to write a stub. Three places
 set or read the tier before step 4 and all three change:
@@ -108,10 +114,17 @@ set or read the tier before step 4 and all three change:
 | the Step 6 generator's `TIER=2` default with `tier_set_by` / `tier_reason` | moves to step 4, keeping the attribution rules |
 | `apply-change` Step 7, which sets `tier` "from Step 3" | goes with the change-file init it no longer owns |
 
-The stub carries **no** tier, and that is not free: `check_skips` raises `INVALID_TIER` for a tier
-outside 0..4 and resolves criticality at the strictest tier when it cannot read one. So either the
-stub is exempt from certification until step 4 fills it in, or it carries a declared provisional
-value. That has to be decided before this is built, not discovered by the validator.
+The stub cannot simply omit the tier: `check_skips` raises `INVALID_TIER` for anything outside 0..4
+and resolves criticality at the strictest tier when it cannot read one. So it declares a
+**provisional tier of 3**, the strictest, so it fails closed, marked `tier_provisional: true`.
+`TIER_PROVISIONAL` blocks if that survives past intake, because the tier is proposed from findings
+and confirmed by a person, and a provisional value on a planned change means nobody confirmed it.
+
+`status: intake` exempts the stub from the plan checks, narrowly. Measured before deciding: a stub
+run through the validator produces **9 blocking `INCOMPLETE_PLAN` errors and 25 `PLAN_PRUNED`
+warnings**, so the missing tier was one problem in thirty-five. The exemption covers only a change
+with no steps and no skips; claiming `intake` while carrying either is `INTAKE_NOT_EMPTY`,
+non-waivable, with every normal check still running alongside it.
 
 ## 3. Impact analysis runs
 

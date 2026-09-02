@@ -16,6 +16,55 @@ file behind, and a truncated change file reads as "no active change" to the gate
 """
 import sys, os, json, yaml
 from datetime import datetime, timezone
+
+# ── stub mode (#97) ────────────────────────────────────────────────────────────────────────────
+# Intake writes the change file BEFORE a plan exists, because the plan is produced by impact
+# analysis, which runs after the requirement is agreed. The stub does three things: it persists the
+# agreed requirement and definition of done so a session dying mid-intake does not lose the text
+# everything downstream derives from, it gives the analysis its input, and it names the impact
+# record so the blocking reference check has a subject.
+#
+# It deliberately does NOT satisfy `hitl_change_active`: no `current_step`, no `workflow` block, so
+# source edits stay blocked through intake. That is right — there is no plan yet, so nothing has
+# authorised an edit. An earlier draft of this comment claimed the opposite.
+#
+# It carries a PROVISIONAL tier of 3 — the strictest — so it fails closed if anything resolves
+# criticality against it. `status: intake` exempts it from the plan checks, narrowly: check_skips
+# blocks (INTAKE_NOT_EMPTY) if a change claims intake while carrying steps or skips, so the status
+# cannot be used to un-certify work that has been planned.
+if len(sys.argv) > 1 and sys.argv[1] == "--stub":
+    if len(sys.argv) < 5:
+        sys.exit("usage: gen_change.py --stub <change_id> <branch> <hitl_version>")
+    _cid, _branch, _ver = sys.argv[2:5]
+    _now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    print(f'''schema_version: "2.0"
+hitl_version: "{_ver}"
+
+change_id: "{_cid}"
+status: intake
+expected_branch: "{_branch}"
+opened_at: "{_now}"
+
+# Provisional until impact analysis runs and a human confirms one (#97). check_skips blocks
+# TIER_PROVISIONAL if this survives past intake, because the tier is proposed from findings and
+# confirmed by a person, and a provisional value on a planned change means nobody confirmed it.
+tier: 3
+tier_provisional: true
+
+# Filled by intake's restate-and-confirm, before anything is read or planned.
+requirement:
+  what: ""
+  in_scope: []
+  out_of_scope: []
+  definition_of_done: []
+  agreed_by: ""
+  agreed_at: ""
+
+# Written by impact analysis. A named record that is missing or empty BLOCKS: a second artifact is
+# only safe when something notices its absence.
+impact_record: ".hitl/impact/{_cid}.yaml"''')
+    sys.exit(0)
+
 wf_id, change_id, branch, ver, tier_s, choices_path = sys.argv[1:7]
 tier_set_by, tier_reason = (sys.argv[7:9] + ["", ""])[:2]
 try:
