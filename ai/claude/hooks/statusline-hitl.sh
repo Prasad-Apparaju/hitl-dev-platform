@@ -7,7 +7,7 @@
 #
 # Claude Code pipes a JSON object to stdin containing: cwd, model, context_window.
 # Wire up in .claude/settings.json:
-#   "statusLine": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\""
+#   "statusLine": { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"" }
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 YAML_FILE="$ROOT/.hitl/current-change.yaml"

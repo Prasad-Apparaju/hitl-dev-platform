@@ -275,7 +275,7 @@ setup_claude() {
     # docs/design/workflow-model/04-harness-acceptance-criteria.md Part B §9.
     cat > "$SETTINGS" <<'JSON'
 {
-  "statusLine": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"",
+  "statusLine": { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"" },
   "hooks": {
     "SessionStart": [
       {

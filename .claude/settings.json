@@ -23,7 +23,7 @@
       "Bash(cat ai/*)"
     ]
   },
-  "statusLine": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/statusline-hitl.sh\"",
+  "statusLine": { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/ai/claude/hooks/statusline-hitl.sh\"" },
   "hooks": {
     "SessionStart": [
       {
