@@ -91,12 +91,42 @@ never wrote: four of the five lines are verified, one was never tested.
 A fix or a chore never creates a PRD. Both destinations depend on which area owns the change, so
 they are written after step 3 answers that, even though the text is agreed here.
 
+### The change file starts here as a stub
+
+Intake writes a stub: change id, branch, the confirmed requirement and its definition of done. No
+tier, no workflow steps, no plan, because none of those exist yet.
+
+That matters for one reason beyond tidiness: the gate that blocks source edits looks for a change
+file, so the stub is what protects the intake conversation itself. Step 3 fills in the rest.
+
+The generator refuses a planless change file today. It has to learn to write a stub, and anything
+reading `tier` or `workflow.steps` early has to tolerate their absence.
+
 ## 3. Impact analysis runs
 
 **Impact analysis is not a step in the plan. It is the thing that produces the plan.** It always
 runs, it cannot be ticked off, and there is no plan yet to put it in.
 
-**Where does this fit.** Which area of the system manifest owns it, and which workflow applies.
+### It runs on every workflow, asking different questions
+
+Impact analysis is not a manifest lookup. It is "what does this touch, and what does it demand". The
+manifest is only one place that answer lives, and which questions to ask depends on the work:
+
+| workflow | what it is asking | where it reads |
+|---|---|---|
+| development | what does this change reach | the manifest, the design docs, the code |
+| brownfield | what security posture and CI/CD compliance exist already, and what is missing | the codebase itself |
+| migration | what does changing the tech stack cost, what breaks, what has no equivalent | the source system |
+| prd | what has to be created: repo, docs, structure | the product doc and the empty ground |
+
+The three that have no manifest are not degraded cases. They are the workflows that exist to produce
+one, and asking what that will take is exactly the analysis worth doing.
+
+The output is the same shape everywhere: findings, provenance, and what the rules concluded. So
+everything downstream works unchanged, because it keys off findings rather than off the manifest.
+
+**Which area does this belong to.** The workflow was already chosen at intake, as a routing decision.
+Step 3 does not revisit it; it answers which area of the system owns the work.
 
 If no area owns it, HITL says so and asks one question: is this genuinely outside the system, like a
 demo script or a CI config, or is the manifest missing an area? Outside means the fast track is the
@@ -128,12 +158,25 @@ The record holds three things:
 The third part is what makes the retrospective's feedback loop possible. You cannot ask whether a
 rule was right if you never recorded what it decided.
 
+### It also writes the acceptance criteria
+
+The definition of done was agreed at step 2 in the requester's language. The criteria are its
+checkable translation, and this is the first moment the work is understood well enough to write them.
+
+They belong here for a structural reason, not a tidy one. Step 2 blocks progress before Build until
+every definition-of-done line names a criterion. Nothing in the 34-step plan produces criteria today,
+and any step that did could be unticked, which would leave a block with no producer and a stall with
+no next command. Impact analysis always runs and cannot be removed, so the check can never fire
+without its producer having run.
+
 ### What this costs elsewhere
 
 `impact` is currently a step in the catalog, marked floor at tier 3. Taking it out of the plan means:
 
-- the development workflow drops from 34 steps to 33
-- the tier 3 locked floor drops from ten steps to nine
+- the development workflow drops from 34 steps to 33, then back to 34 when the retrospective is
+  added as a step (see progress-and-retro)
+- the tier 3 locked floor goes ten → nine without `impact`, then back to ten with the retrospective
+  locked. Tier 1 goes four → five, tier 2 five → six
 - the check that every floor step must appear in the plan stops expecting it
 - `apply-change` loses its step 3, because the work has already happened
 - every step after it renumbers, so `workflow-steps.md` and anything else citing a step by number
@@ -153,6 +196,16 @@ that needed it. Deciding once, on evidence, means a word in the issue text can n
 what the code says.
 
 Anything that reads the tier before the plan exists has to be found and checked as part of this.
+
+### The choice appears only where there is something to size
+
+Every workflow gets an impact analysis. Not every workflow gets offered two options.
+
+HITL has eight workflows, from 34 steps down to five. Offering a fast track on a five-step process
+adds a confirmation and a decision to the lightest path in the system, which is the ceremony this
+work exists to remove. So the choice appears where the plan is long enough for the two options to
+differ meaningfully; in practice that is `development` (34) and `platform` (17). Elsewhere the
+analysis runs, and the plan is simply the plan.
 
 ### Three sets, two predicates
 
@@ -182,8 +235,8 @@ backwards.
 
 ### What is locked
 
-- **The tier floor**, plus the test-first cycle. Four steps at tier 1, five at tier 2, nine at tier 3
-  once `impact` leaves the plan. These cannot be unticked.
+- **The tier floor**, plus the test-first cycle, plus the retrospective. Five steps at tier 1, six at
+  tier 2, ten at tier 3. These cannot be unticked.
 - **Anything `needed_now` put in.** These can be unticked, but not with one click. See step 5.
 
 Risk is handled by the tier and by nothing else. A risky change is a high tier, a high tier locks

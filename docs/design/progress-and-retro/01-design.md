@@ -15,10 +15,11 @@ flowchart LR
   A["session starts"] --> B{"block stale?"}
   B -->|"no"| C["carry on"]
   B -->|"yes"| D["HITL writes it, shows it"]
-  D --> E{"you agree?"}
-  E -->|"yes"| F["block refreshed"]
-  E -->|"no"| G["declining is recorded"]
-  H["change closes"] --> I["retrospective written"]
+  D --> E{"your call"}
+  E -->|"post it"| F["block refreshed"]
+  E -->|"skip, note it"| G["one dated line"]
+  E -->|"skip quietly"| H["recorded locally"]
+  I["change closes"] --> J["retrospective written"]
   classDef human fill:#d4edda,stroke:#3a3
   class E human
 ```
@@ -43,6 +44,10 @@ gates for a week and the block goes stale with nothing to nudge it.
 
 It runs on your machine, during a session. At the start of a session on an open change, HITL checks
 when the block was last refreshed. Two days or more, and one is due.
+
+Nothing holds that timestamp today, so the trigger has nothing to read. It goes in the change file,
+written whenever the block is refreshed **or a refresh is declined**. A decline has to reset the
+clock too, or every later session re-asks a question already answered.
 
 Same scope as #93: tier 2 and above. A tier 0 or tier 1 change does not accumulate enough thread to
 need a current-state block, and refreshing one on a two-line fix is the ceremony this whole effort
@@ -82,9 +87,23 @@ HITL states that a refresh is due on this cadence and why, shows what it wrote, 
 edit the text before it goes. It is never published on your behalf, and there is no default that
 results in something appearing on a shared issue without you reading it.
 
-Declining is recorded, with a reason, like any other skip. The block then shows that it is
-deliberately stale rather than appearing merely neglected, so a quiet change and a change whose
-owner chose not to report are distinguishable.
+Declining is recorded, with a reason, like any other skip.
+
+**Whether the decline is visible is the person's choice, asked once.** "Never published on your
+behalf" and "the block shows it is deliberately stale" cannot both be true: writing *anything* into
+the block is publishing to a shared issue. So the refusal is not a second question. It is the same
+question, with three answers:
+
+```
+An update is due. Here is what I would post:
+  [post it]   [skip, note it on the issue]   [skip quietly]
+```
+
+The middle option writes one dated line and nothing about the work. The default, for anyone who says
+no and moves on, is the quiet skip: recorded in the change file, issue untouched. Publishing
+something a person did not affirmatively choose is the thing the guarantee exists to prevent.
+
+The guarantee is therefore: **nothing goes out that you have not read.** Not "nothing goes out".
 
 ### Attribution
 
@@ -97,14 +116,17 @@ a person's name is the thing this line exists to prevent.
 
 ## The retrospective
 
-A step in the catalog, at the end. Unlike every other step, it does **not** fall out of the fast
-track.
+A step in the catalog, at the end, and **floor at every tier**. It cannot be unticked.
 
-That is deliberate and it is the one exception in the design. The retrospective's third part is what
-corrects right-sizing's rules, and those rules are least trustworthy on exactly the fast-tracked
-changes. A feedback loop that switches itself off whenever the thing it corrects takes the short
-path never corrects anything. So it applies always, and its cost is kept low by having nothing to
-collect: everything it reads is already written down.
+Saying it "never falls out of the fast track" was not enough. Right-sizing lets anything that is not
+floor-locked be unticked, so a rule keeping it in the plan would have been undone by one click, and
+on exactly the fast-tracked changes whose feedback matters most. A loop that switches off whenever
+someone is in a hurry never corrects anything. Being floor is the only thing that actually holds.
+
+The cost is real and worth stating: the tier-1 locked set goes from four steps to five. That is
+process added to the lightest path, which this work otherwise exists to reduce. It is defensible
+only because the retrospective collects nothing and asks nobody anything. It is generated from
+records already written by the time it runs.
 
 ### What it reads
 
