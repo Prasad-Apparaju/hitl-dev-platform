@@ -99,13 +99,42 @@ tier, no workflow steps, no plan, because none of those exist yet.
 That matters for one reason beyond tidiness: the gate that blocks source edits looks for a change
 file, so the stub is what protects the intake conversation itself. Step 3 fills in the rest.
 
-The generator refuses a planless change file today. It has to learn to write a stub, and anything
-reading `tier` or `workflow.steps` early has to tolerate their absence.
+The generator refuses a planless change file today, so it has to learn to write a stub. Three places
+set or read the tier before step 4 and all three change:
+
+| where | what happens to it |
+|---|---|
+| `start-change` Step 3b, confirm the tier | deleted; the tier is proposed from findings at step 4 |
+| the Step 6 generator's `TIER=2` default with `tier_set_by` / `tier_reason` | moves to step 4, keeping the attribution rules |
+| `apply-change` Step 7, which sets `tier` "from Step 3" | goes with the change-file init it no longer owns |
+
+The stub carries **no** tier, and that is not free: `check_skips` raises `INVALID_TIER` for a tier
+outside 0..4 and resolves criticality at the strictest tier when it cannot read one. So either the
+stub is exempt from certification until step 4 fills it in, or it carries a declared provisional
+value. That has to be decided before this is built, not discovered by the validator.
 
 ## 3. Impact analysis runs
 
 **Impact analysis is not a step in the plan. It is the thing that produces the plan.** It always
 runs, it cannot be ticked off, and there is no plan yet to put it in.
+
+### Who calls whom
+
+`start-change` stays the enforced front door and owns the whole sequence. It calls the analysis as a
+subroutine between its own step 2 and step 4, and continues when the record comes back:
+
+| | |
+|---|---|
+| `start-change` | restate, confirm, write the stub, **call the analysis**, propose the tier, build the plan, run 4b, create the branch |
+| `apply-change` | read the stub, produce the record, write the criteria, return |
+
+`apply-change` loses two things it does today, because intake already owns both: creating the feature
+branch (its Step 2a) and initialising the change file (its Step 7). Its Step 1 challenge moves to
+intake's restate-and-confirm. What is left is one job done well.
+
+The branch is created **after** the plan is agreed, not before the analysis. Nothing about the
+analysis needs a branch, and creating one for a change that has not been sized yet leaves a stray
+branch whenever intake is abandoned.
 
 ### It runs on every workflow, asking different questions
 
@@ -182,10 +211,19 @@ without its producer having run.
   being reachable from a plan. It becomes the impact analysis rather than being deleted: it already
   holds the analysis, the challenge stance and the artifact identification, and rebuilding those
   elsewhere is how tested behaviour quietly stops working
-- `apply-change` Step 7a (fold this change's skips into the durable ledger at the real scope, then
-  resurface overlapping unresolved entries) moves with it. It was anchored at the impact step because
-  that was "the first moment the change knows its own area"; under this design that moment comes
-  earlier, so resurfacing now informs the plan instead of arriving after it
+- `apply-change` Step 7a **splits**, because its two halves have different preconditions. It was
+  written as one step because both preconditions happened to be satisfied at the same moment; they no
+  longer are.
+
+  | half | needs | now runs |
+  |---|---|---|
+  | resurface earlier unresolved entries | the area | at step 3, so it informs the plan |
+  | fold this change's skips into the roll-up | this change's skips | after step 5, when they exist |
+
+  Running the fold at step 3 would append an empty set, this change's skips would never reach
+  `.hitl/skip-ledger.yaml`, and `check_skips` would raise `ROLLUP` for every one of them. Calling
+  this a move rather than a split was exactly the defect this design keeps naming: data that quietly
+  stops being written
 - every step after it renumbers, so `workflow-steps.md` and anything else citing a step by number
   has to be updated in the same pass
 
@@ -254,7 +292,12 @@ backwards.
 ### What is locked
 
 - **The tier floor**, plus the test-first cycle, plus the retrospective. Five steps at tier 1, six at
-  tier 2, ten at tier 3. These cannot be unticked.
+  tier 2, ten at tier 3. These cannot be dropped by the rules and are not offered as a tick.
+
+  "Locked" here means what it already means in `check_skips`, not something stronger: a floor step
+  can still be skipped, but only as a risk-accepted decision carrying an accountable person's
+  `ack_by` and a reason, plus a waiver where the step maps to a hard gate. Step 4b's menu already
+  says so: `floor | keep · request risk-accepted skip`. Nothing here makes that stricter.
 - **Anything `needed_now` put in.** These can be unticked, but not with one click. See step 5.
 
 Risk is handled by the tier and by nothing else. A risky change is a high tier, a high tier locks
@@ -280,6 +323,12 @@ Each step carries three lines. Two exist already and are unchanged:
 | `protects` | the sentence shown next to the step |
 | `forgo_cost` | high, medium or low; orders the steps that are not in the fast track |
 | `engages` + `needed_now` | the two rules above |
+
+**`step_costs` lives in two files, and both have to change.** It is authored in
+`tools/workflow-catalog/catalog.yaml` and derived into `ai/shared/workflows.yaml`, with
+`derive.py verify` and a wiring test asserting they agree. The `engages` rewrite, the new
+`needed_now`, and the retrospective step all have to land in the spine, in `step_costs`, and pass the
+derive gate. Saying "the catalog" hides a step.
 
 `engages` exists on all 38 steps and does not yet do its job. Twenty-one development steps say
 `always`, which decides nothing. Five key off profiles, which never reach the runtime, so they can
@@ -307,9 +356,28 @@ clean shape for a step that is neither present nor recorded. One confirmation re
 the rule that dropped each step as its reason. A tier-1 fast track does not ask for twenty-four
 reasons; it asks once.
 
-The list is tickable. A step the tier floor put there cannot be unticked. Anything else can, and
-unticking something the rules put in opens one short prompt: which of the three (a thin version now,
-later with a ticket, or not at all) and why. That is the disposition the ledger already carries.
+The list is tickable. A step the tier floor put there is not offered as a tick. Anything else can be
+unticked, and unticking something the rules put in opens one short prompt: which of the three (a thin
+version now, later with a ticket, or not at all) and why. That is the disposition the ledger already
+carries.
+
+### One addition to the ledger
+
+The ledger has three dispositions: `defer`, `decline`, `starter`. None of them means *the rules
+determined this does not apply to this change*, and that is not the same fact as a person choosing to
+skip something.
+
+Without a fourth, a tier-1 fast track writes about 25 entries and the only cheap one is `decline`
+(`defer` fails without a linked follow-up, `starter` means writing a thin artifact). That records a
+named human as having declined 25 steps they never looked at, and the retrospective reads that list
+back as "what was left out and why".
+
+So one disposition is added, meaning the rules excluded it, carrying the rule that decided it as its
+reason. It does not resurface later, because nothing was deferred. It is what the retrospective
+compares against what actually happened.
+
+**This is the one place the reuse is not free.** Everything else about First Pass is untouched; this
+changes `check_skips.py`, the disposition set and the resurfacing rules.
 
 ### First Pass stops being opt-in
 

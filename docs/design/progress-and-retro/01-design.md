@@ -121,12 +121,18 @@ a person's name is the thing this line exists to prevent.
 
 ## The retrospective
 
-A step in the catalog, at the end, and **floor at every tier**. It cannot be unticked.
+A step in the catalog, at the end, and **floor at every tier**. It is not offered as a tick.
 
 Saying it "never falls out of the fast track" was not enough. Right-sizing lets anything that is not
 floor-locked be unticked, so a rule keeping it in the plan would have been undone by one click, and
 on exactly the fast-tracked changes whose feedback matters most. A loop that switches off whenever
-someone is in a hurry never corrects anything. Being floor is the only thing that actually holds.
+someone is in a hurry never corrects anything.
+
+Floor is the strongest thing available, and it is worth being exact about what that means. It is not
+"impossible". `check_skips` lets a floor step be skipped as a risk-accepted decision with an
+accountable person's `ack_by` and a reason. So the retrospective can still be dropped; it just cannot
+be dropped by a rule, by a tick, or by anyone unwilling to put their name against it. That is the
+right bar for something whose whole job is telling you when the rules were wrong.
 
 The cost is real and worth stating: the tier-1 locked set goes from four steps to five. That is
 process added to the lightest path, which this work otherwise exists to reduce. It is defensible
