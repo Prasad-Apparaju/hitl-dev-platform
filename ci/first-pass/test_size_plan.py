@@ -134,16 +134,17 @@ def test_the_locked_set_matches_the_validator():
 
 
 def test_a_rule_cannot_drop_a_locked_step():
-    """NEG: `impact` carries `engages: never` and `needed_now: never`, and is floor at tier 3. So
-    its rules say drop it and the floor says keep it, which is the only case that actually proves
-    the override. An earlier version of this test used `deploy`, whose rules say `always` anyway —
-    it passed with the override deleted, which is a test that proves nothing."""
-    o = _size(SMALL, 3)
-    imp = next(x for x in o if x["step"] == "impact")
-    assert imp["locked"] is True, "impact is floor at tier 3"
-    assert imp["needed_now"] is True and imp["applies"] is True, \
-        "the rules say never; the floor must win"
-    assert "locked" in imp["because"]
+    """NEG: a locked step whose own rules would drop it must survive."""
+    # `integration_verify` is floor at tier 2, and its rules key off dependents / multi_domain /
+    # events_changed — all false for SMALL. So the rules say drop it and the floor says keep it,
+    # which is the only case that actually proves the override. An earlier version used `deploy`,
+    # whose rules say `always` anyway, and passed with the override deleted.
+    o = _size(SMALL, 2)
+    iv = next(x for x in o if x["step"] == "integration_verify")
+    assert iv["locked"] is True, "integration_verify is floor at tier 2"
+    assert iv["needed_now"] is True and iv["applies"] is True, \
+        "its rules find nothing in this change; the floor must win anyway"
+    assert "locked" in iv["because"]
 
 
 def test_locked_steps_are_never_offered_as_exclusions():

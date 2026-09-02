@@ -18,9 +18,10 @@ CATALOG = C.load_catalog(os.path.join(HERE, "..", "..", "ai", "shared", "workflo
 # ── dispositions (MENU-2, NOOMIT-1) ───────────────────────────────────────────
 def test_floor_menu_is_keep_or_risk_accept():
     assert D.allowed_dispositions(CATALOG["deploy"], 2) == ["keep", "risk_accept"]
-    # impact becomes floor at tier 3
-    assert D.allowed_dispositions(CATALOG["impact"], 3) == ["keep", "risk_accept"]
-    assert D.allowed_dispositions(CATALOG["impact"], 2) != ["keep", "risk_accept"]
+    # `packet` becomes floor at tier 3. `impact` used to sit here; it left the plan in #97,
+    # because impact analysis is what PRODUCES the plan rather than a step inside one.
+    assert D.allowed_dispositions(CATALOG["packet"], 3) == ["keep", "risk_accept"]
+    assert D.allowed_dispositions(CATALOG["packet"], 2) != ["keep", "risk_accept"]
 
 
 def test_no_omit_is_keep_or_starter_only():

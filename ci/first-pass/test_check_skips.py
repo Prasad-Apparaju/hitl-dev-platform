@@ -58,8 +58,10 @@ def base_skip(step, **kw):
 
 # ── resolve_crit + catalog ────────────────────────────────────────────────────
 def test_resolve_crit_tier_scoped():
-    assert C.resolve_crit(CATALOG["impact"], 2) == "standard"
-    assert C.resolve_crit(CATALOG["impact"], 3) == "floor"
+    # `packet` stands in for what `impact` used to demonstrate here: impact analysis left the plan
+    # in #97, because it is what produces the plan rather than a step inside one.
+    assert C.resolve_crit(CATALOG["packet"], 2) == "standard"
+    assert C.resolve_crit(CATALOG["packet"], 3) == "floor"
     assert C.resolve_crit(CATALOG["deploy"], 0) == "floor"
     assert C.resolve_crit(CATALOG["deploy"], 3) == "floor"
     assert C.resolve_crit(CATALOG["roi"], 3) == "ceremony"
@@ -461,7 +463,9 @@ def test_tier_two_and_above_needs_no_attribution():
 # nothing caught it. These tests make the catalog the arbiter.
 
 def test_the_big_floor_demotion_is_three_to_two():
-    five = ["impact", "packet", "arch_review", "qa_verify", "rollout"]
+    # Four now, not five: `impact` left the plan in #97. The demotion it describes is unchanged
+    # for the rest, and `retro` joined as floor at EVERY tier so it never appears in a demotion.
+    five = ["packet", "arch_review", "qa_verify", "rollout"]
     for k in five:
         assert C.resolve_crit(CATALOG[k], 3) == "floor", f"{k} should be floor at tier 3"
         assert C.resolve_crit(CATALOG[k], 2) == "standard", f"{k} should be standard at tier 2"
@@ -623,5 +627,5 @@ def test_a_provisional_tier_may_not_survive_past_intake():
 def test_the_provisional_tier_is_the_strictest_one():
     """It fails closed. If anything does resolve criticality against a stub, it resolves at the
     tier that locks the most, not the least."""
-    assert C.resolve_crit(CATALOG["impact"], 3) == "floor"
-    assert C.resolve_crit(CATALOG["impact"], 1) != "floor"
+    assert C.resolve_crit(CATALOG["packet"], 3) == "floor"
+    assert C.resolve_crit(CATALOG["packet"], 1) != "floor"

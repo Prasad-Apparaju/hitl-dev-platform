@@ -34,40 +34,40 @@ workflows:
     title: "Development — deliver a change"
     total: 31
     steps:
-      - { n: 1,   key: issue,              label: "Issue",    phase: "Requirements", crit: standard, command: manual }
-      - { n: 2,   key: figma,              label: "Figma",    phase: "Requirements", crit: ceremony, command: manual }
-      - { n: 3,   key: impact,             label: "Impact",   phase: "Design", crit: standard, crit_by_tier: { 3: floor }, command: dev-apply-change }
-      - { n: 4,   key: roi,                label: "ROI",      phase: "Design", crit: ceremony, command: guided }
-      - { n: 5,   key: docs,               label: "Docs",     phase: "Design", crit: standard, command: dev-generate-docs }
-      - { n: 6,   key: iac,                label: "IaC",      phase: "Design", crit: standard, command: ops-apply-iac }
-      - { n: 7,   key: test_plan,          label: "Tests",    phase: "Design", crit: standard, command: qa-plan-tests }
-      - { n: 8,   key: training,           label: "Train",    phase: "Design", crit: ceremony, command: guided }
-      - { n: 9,   key: packet,             label: "Packet",   phase: "Design", crit: standard, crit_by_tier: { 3: floor }, command: manual }
-      - { n: 9a,  key: adv_design,        label: "AdvDsgn",  phase: "Design",   crit: ceremony, command: dev-adversarial-review }
-      - { n: 10,  key: red,                label: "RED",      phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
-      - { n: 11,  key: test_review,        label: "TstRvw",   phase: "Build", crit: ceremony, command: qa-review-tests }
-      - { n: 12,  key: design_plus,        label: "Dsn+",     phase: "Build", crit: standard, command: dev-tdd }
-      - { n: 13,  key: verify_red,         label: "VfyRED",   phase: "Build", crit: standard, command: manual }
-      - { n: 14,  key: green,              label: "GREEN",    phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
-      - { n: 15,  key: verify_green,       label: "VfyGRN",   phase: "Build", crit: standard, command: manual }
-      - { n: 16,  key: refactor,           label: "Refact",   phase: "Build", crit: ceremony, command: manual }
-      - { n: 17,  key: conventions,        label: "Conv",     phase: "Build", crit: standard, command: dev-check-conventions }
-      - { n: 17a, key: adv_code,          label: "AdvCode",  phase: "Build",    crit: ceremony, command: dev-adversarial-review }
-      - { n: 18,  key: review1,            label: "Rvw1",     phase: "Verify", crit: standard, command: dev-review-lld-adherence }
-      - { n: 19,  key: review2,            label: "Rvw2",     phase: "Verify", crit: standard, command: dev-review-security }
-      - { n: 19a, key: arch_review,        label: "ArchRvw",  phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: architect-review-code }
-      - { n: 20,  key: rerun,              label: "Rerun",    phase: "Verify", crit: standard, command: manual }
-      - { n: 21,  key: reconcile,          label: "Recncl",   phase: "Verify", crit: standard, command: dev-generate-docs }
-      - { n: 22,  key: qa_verify,          label: "QAVfy",    phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: qa-verify-quality }
-      - { n: 23,  key: impact_brief,       label: "ImpBrf",   phase: "Assess", crit: ceremony, command: dev-impact-brief }
-      - { n: 24,  key: rollout,            label: "Rollout",  phase: "Assess", crit: standard, crit_by_tier: { 3: floor }, command: ops-review-release }
-      - { n: 25,  key: verify_pr,          label: "VfyPR",    phase: "Ship", crit: standard, command: manual }
-      - { n: 26,  key: integration_verify, label: "IntVfy",   phase: "Ship", crit: standard, crit_by_tier: { 2: floor }, command: architect-verify-traceability }
-      - { n: 27,  key: figma_compare,      label: "Figma2",   phase: "Ship", crit: ceremony, command: manual }
-      - { n: 28,  key: deploy,             label: "Deploy",   phase: "Ship", crit: floor, command: ops-deploy }
-      - { n: 29,  key: promote,            label: "Promote",  phase: "Ship", crit: floor, command: ops-post-deploy-monitor }
-      - { n: 30,  key: roi_30,             label: "30dROI",   phase: "Post-Ship", crit: ceremony, command: guided }
-      - { n: 31,  key: roi_90,             label: "90dROI",   phase: "Post-Ship", crit: ceremony, command: guided }
+      - { n: 1, key: issue, label: "Issue", phase: "Requirements", crit: standard, command: manual }
+      - { n: 2, key: figma, label: "Figma", phase: "Requirements", crit: ceremony, command: manual }
+      - { n: 3, key: roi, label: "ROI", phase: "Design", crit: ceremony, command: guided }
+      - { n: 4, key: docs, label: "Docs", phase: "Design", crit: standard, command: dev-generate-docs }
+      - { n: 5, key: iac, label: "IaC", phase: "Design", crit: standard, command: ops-apply-iac }
+      - { n: 6, key: test_plan, label: "Tests", phase: "Design", crit: standard, command: qa-plan-tests }
+      - { n: 7, key: training, label: "Train", phase: "Design", crit: ceremony, command: guided }
+      - { n: 8, key: packet, label: "Packet", phase: "Design", crit: standard, crit_by_tier: { 3: floor }, command: manual }
+      - { n: 8a, key: adv_design, label: "AdvDsgn", phase: "Design", crit: ceremony, command: dev-adversarial-review }
+      - { n: 9, key: red, label: "RED", phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
+      - { n: 10, key: test_review, label: "TstRvw", phase: "Build", crit: ceremony, command: qa-review-tests }
+      - { n: 11, key: design_plus, label: "Dsn+", phase: "Build", crit: standard, command: dev-tdd }
+      - { n: 12, key: verify_red, label: "VfyRED", phase: "Build", crit: standard, command: manual }
+      - { n: 13, key: green, label: "GREEN", phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
+      - { n: 14, key: verify_green, label: "VfyGRN", phase: "Build", crit: standard, command: manual }
+      - { n: 15, key: refactor, label: "Refact", phase: "Build", crit: ceremony, command: manual }
+      - { n: 16, key: conventions, label: "Conv", phase: "Build", crit: standard, command: dev-check-conventions }
+      - { n: 16a, key: adv_code, label: "AdvCode", phase: "Build", crit: ceremony, command: dev-adversarial-review }
+      - { n: 17, key: review1, label: "Rvw1", phase: "Verify", crit: standard, command: dev-review-lld-adherence }
+      - { n: 18, key: review2, label: "Rvw2", phase: "Verify", crit: standard, command: dev-review-security }
+      - { n: 18a, key: arch_review, label: "ArchRvw", phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: architect-review-code }
+      - { n: 19, key: rerun, label: "Rerun", phase: "Verify", crit: standard, command: manual }
+      - { n: 20, key: reconcile, label: "Recncl", phase: "Verify", crit: standard, command: dev-generate-docs }
+      - { n: 21, key: qa_verify, label: "QAVfy", phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: qa-verify-quality }
+      - { n: 22, key: impact_brief, label: "ImpBrf", phase: "Assess", crit: ceremony, command: dev-impact-brief }
+      - { n: 23, key: rollout, label: "Rollout", phase: "Assess", crit: standard, crit_by_tier: { 3: floor }, command: ops-review-release }
+      - { n: 24, key: verify_pr, label: "VfyPR", phase: "Ship", crit: standard, command: manual }
+      - { n: 25, key: integration_verify, label: "IntVfy", phase: "Ship", crit: standard, crit_by_tier: { 2: floor }, command: architect-verify-traceability }
+      - { n: 26, key: figma_compare, label: "Figma2", phase: "Ship", crit: ceremony, command: manual }
+      - { n: 27, key: deploy, label: "Deploy", phase: "Ship", crit: floor, command: ops-deploy }
+      - { n: 28, key: promote, label: "Promote", phase: "Ship", crit: floor, command: ops-post-deploy-monitor }
+      - { n: 29, key: retro, label: "Retro", phase: "Post-Ship", crit: floor, command: guided }
+      - { n: 30, key: roi_30, label: "30dROI", phase: "Post-Ship", crit: ceremony, command: guided }
+      - { n: 31, key: roi_90, label: "90dROI", phase: "Post-Ship", crit: ceremony, command: guided }
 
   # ── Brownfield setup: onboard an existing codebase (11 steps) ──────────────────────────────
   # Canonical source: ai/claude/start-brownfield/SKILL.md
@@ -211,11 +211,6 @@ step_costs:
     forgo_cost: low
     engages: { any: [surfaces:ui] }
     needed_now: { any: [surfaces:ui] }
-  impact:
-    protects: "You find the callers, data and scheduled jobs this touches before you touch them."
-    forgo_cost: high
-    engages: never
-    needed_now: never
   roi:
     protects: "There is a stated reason this is worth building, recorded before the effort is spent."
     forgo_cost: low
@@ -378,6 +373,11 @@ step_costs:
     needed_now: { any: [interfaces_changed, data_migration] }
   promote:
     protects: "Production only ever receives what a person decided to send it."
+    forgo_cost: high
+    engages: always
+    needed_now: always
+  retro:
+    protects: "You find out whether the plan this change was given was the right one, on the changes most likely to have been sized wrong."
     forgo_cost: high
     engages: always
     needed_now: always

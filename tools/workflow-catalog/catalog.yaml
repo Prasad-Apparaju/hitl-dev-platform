@@ -31,7 +31,10 @@ spine:
     - { key: issue,              name: "GitHub Issue",                 label: "Issue",    phase: "Requirements", command: manual,                       role: PM, crit: standard }
     - { key: figma,              name: "Figma Review",                 label: "Figma",    phase: "Requirements", command: manual,                       role: PM, crit: ceremony }
     # ── Design ────────────────────────────────────────────────────
-    - { key: impact,             name: "Impact Analysis",              label: "Impact",   phase: "Design", command: dev-apply-change,             role: Dev, crit: standard, crit_by_tier: { 3: floor } }
+    # `impact` was here. Impact analysis is no longer a step in the plan: it is what
+    # PRODUCES the plan, so there is no plan yet to put it in (#97). `apply-change` is
+    # called as a subroutine by intake before the plan exists. Its step_costs entry
+    # stays, with `never` rules, so nothing can select it back into a plan.
     - { key: roi,                name: "ROI Estimate",                 label: "ROI",      phase: "Design", command: guided,                       role: PM, crit: ceremony }
     - { key: docs,               name: "Update Docs",                  label: "Docs",     phase: "Design", command: dev-generate-docs,            role: Architect, crit: standard }
     - { key: iac,                name: "Update IaC",                   label: "IaC",      phase: "Design", command: ops-apply-iac,                role: Ops, crit: standard }
@@ -70,6 +73,7 @@ spine:
     - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security, command: ops-pentest,                 role: Ops, crit: floor }
     - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship", command: ops-post-deploy-monitor,      role: Ops, crit: floor }
     # ── Post-Ship ─────────────────────────────────────────────────
+    - { key: retro,              name: "Closing Retrospective",         label: "Retro",    phase: "Post-Ship", command: guided,                      role: Dev, crit: floor }
     - { key: roi_30,             name: "30-Day ROI Check",             label: "30dROI",   phase: "Post-Ship", command: guided,                       role: PM, crit: ceremony }
     - { key: roi_90,             name: "90-Day ROI Check",             label: "90dROI",   phase: "Post-Ship", command: guided,                       role: PM, crit: ceremony }
 
@@ -376,11 +380,6 @@ step_costs:
     forgo_cost: low
     engages: { any: [surfaces:ui] }
     needed_now: { any: [surfaces:ui] }
-  impact:
-    protects: "You find the callers, data and scheduled jobs this touches before you touch them."
-    forgo_cost: high
-    engages: never
-    needed_now: never
   roi:
     protects: "There is a stated reason this is worth building, recorded before the effort is spent."
     forgo_cost: low
@@ -546,6 +545,11 @@ step_costs:
     forgo_cost: high
     engages: always
     needed_now: always
+  retro:
+    protects: "You find out whether the plan this change was given was the right one, on the changes most likely to have been sized wrong."
+    forgo_cost: high
+    engages: always
+    needed_now: always
   roi_30:
     protects: "Someone checks whether the thing was worth building."
     forgo_cost: low
@@ -596,6 +600,11 @@ step_requires:
   figma_compare:
     needs: [figma]
     without_it: "comparing the build against a design review nobody did"
+  retro:
+    protects: "You find out whether the plan this change was given was the right one, on the changes most likely to have been sized wrong."
+    forgo_cost: high
+    engages: always
+    needed_now: always
   roi_30:
     needs: [roi]
     without_it: "checking against an ROI estimate that was never made"
