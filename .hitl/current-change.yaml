@@ -23,6 +23,12 @@ manifest:
   - name: release-2.9.0
     paths: *id001
 
+skips:
+  - step: adversarial_review
+    ack_by: "pappar"
+    reason: "Ships the retro implementation that cleared the headline blocker; the five
+      remaining 2.9.0 review findings are known and carried forward."
+
 workflow:
   id: "release"
   version: "2.9.0"
