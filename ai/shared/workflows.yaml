@@ -205,154 +205,192 @@ step_costs:
     protects: "There is a written record of what was asked for and why, outliving the conversation that produced it."
     forgo_cost: high
     engages: always
+    needed_now: always
   figma:
     protects: "What gets built matches what design actually drew, rather than a developer's reading of it."
     forgo_cost: low
-    engages: { paths: ["**/*.tsx", "**/*.jsx", "**/*.vue", "**/components/**", "**/ui/**"] }
+    engages: { any: [surfaces:ui] }
+    needed_now: { any: [surfaces:ui] }
   impact:
     protects: "You find the callers, data and scheduled jobs this touches before you touch them."
     forgo_cost: high
-    engages: always
+    engages: never
+    needed_now: never
   roi:
     protects: "There is a stated reason this is worth building, recorded before the effort is spent."
     forgo_cost: low
-    engages: { profiles: ["feature"] }
+    engages: { any: [surfaces:ui, surfaces:api] }
+    needed_now: never
   docs:
     protects: "The runbook and reference stop describing a system that no longer exists."
     forgo_cost: medium
-    engages: { paths: ["docs/**", "**/*.md", "**/README*"] }
+    engages: { any: [docs_affected] }
+    needed_now: { any: [docs_affected] }
   iac:
     protects: "Infrastructure changes are written down and reviewable, not applied by hand and forgotten."
     forgo_cost: medium
-    engages: { paths: ["infra/**", "**/*.tf", "**/Dockerfile", "k8s/**", "**/*.yaml"] }
+    engages: { any: [surfaces:infra] }
+    needed_now: { any: [surfaces:infra] }
   test_plan:
     protects: "QA knows what \"working\" means for this change before anyone builds it."
     forgo_cost: medium
-    engages: { profiles: ["feature", "enhancement", "fix"] }
+    engages: always
+    needed_now: { any: [reaches_production, tests_covering] }
   training:
     protects: "The people who operate this are told it changed."
     forgo_cost: low
-    engages: { profiles: ["feature"] }
+    engages: { any: [surfaces:ui, interfaces_changed] }
+    needed_now: never
   packet:
     protects: "The decision and the alternatives are recorded where the next person will look for them."
     forgo_cost: medium
     engages: always
+    needed_now: { any: [multi_domain, interfaces_changed] }
   baseline:
     protects: "There is a before-measurement, so \"faster\" is a number instead of a feeling."
     forgo_cost: medium
-    engages: { tags: ["perf"] }
+    engages: { any: [surfaces:api, data_migration] }
+    needed_now: never
   sec_design:
     protects: "The threat model is considered while the design can still change cheaply."
     forgo_cost: high
-    engages: { profiles: ["security"] }
+    engages: { any: [interfaces_changed, data_migration] }
+    needed_now: { any: [interfaces_changed, data_migration] }
   cve_audit:
     protects: "You know which published vulnerabilities the version you are moving to carries."
     forgo_cost: high
-    engages: { profiles: ["upgrade"] }
+    engages: { any: [surfaces:config, surfaces:infra] }
+    needed_now: never
   adv_design:
     protects: "Someone with no stake in the design tries to break it while it is still cheap to change."
     forgo_cost: medium
     engages: always
+    needed_now: never
   red:
     protects: "A test fails for the stated reason first, so the fix is proven to fix something real."
     forgo_cost: high
     engages: always
+    needed_now: always
   test_review:
     protects: "A person checks the tests assert the right thing, not merely that they pass."
     forgo_cost: low
-    engages: always
+    engages: { any: [tests_covering] }
+    needed_now: never
   design_plus:
     protects: "The design is updated when building teaches you something it did not know."
     forgo_cost: medium
     engages: always
+    needed_now: never
   verify_red:
     protects: "The failing test really fails, and fails for the reason claimed."
     forgo_cost: medium
     engages: always
+    needed_now: always
   green:
     protects: "The change actually makes the failing test pass."
     forgo_cost: high
     engages: always
+    needed_now: always
   verify_green:
     protects: "The suite is green for real, not green because it never ran."
     forgo_cost: high
     engages: always
+    needed_now: always
   refactor:
     protects: "The code is left in a shape the next person can work in."
     forgo_cost: low
-    engages: { tags: ["refactor"] }
+    engages: always
+    needed_now: never
   conventions:
     protects: "The code reads like the rest of the codebase, so review is about substance."
     forgo_cost: low
     engages: always
+    needed_now: never
   adv_code:
     protects: "Someone tries to break the implementation rather than only reading it."
     forgo_cost: medium
     engages: always
+    needed_now: never
   review1:
     protects: "A second person has actually read the diff."
     forgo_cost: high
     engages: always
+    needed_now: { any: [reaches_production] }
   review2:
     protects: "A second independent reader, for changes one pair of eyes should not carry alone."
     forgo_cost: medium
-    engages: { multi_domain: true }
+    engages: { any: [multi_domain, interfaces_changed, data_migration] }
+    needed_now: { any: [multi_domain, interfaces_changed, data_migration] }
   arch_review:
     protects: "The change still fits the architecture it landed in, and crossed no boundary quietly. Erosion is invisible per change and shows up only cumulatively."
     forgo_cost: high
-    engages: always
+    engages: { any: [interfaces_changed, multi_domain] }
+    needed_now: { any: [interfaces_changed, multi_domain] }
   rerun:
     protects: "Tests re-run after review edits, so the thing reviewed is the thing that ships."
     forgo_cost: medium
     engages: always
+    needed_now: always
   reconcile:
     protects: "Every review finding is resolved or explicitly accepted; none are quietly dropped."
     forgo_cost: medium
-    engages: always
+    engages: { any: [docs_affected] }
+    needed_now: { any: [docs_affected] }
   qa_verify:
     protects: "Someone checks the change against the acceptance criteria, not against the code."
     forgo_cost: high
     engages: always
+    needed_now: { any: [reaches_production] }
   impact_brief:
     protects: "Teams downstream hear about this before it arrives in their lap."
     forgo_cost: medium
-    engages: { multi_domain: true }
+    engages: { any: [multi_domain, dependents] }
+    needed_now: { any: [multi_domain] }
   rollout:
     protects: "There is a plan for how this reaches production and how it comes back if it must."
     forgo_cost: high
-    engages: always
+    engages: { any: [reaches_production] }
+    needed_now: { any: [reaches_production] }
   verify_pr:
     protects: "CI is green on the exact commit being merged, not an earlier one."
     forgo_cost: high
     engages: always
+    needed_now: always
   integration_verify:
     protects: "The pieces work together, not just individually."
     forgo_cost: high
-    engages: { multi_domain: true }
+    engages: { any: [dependents, multi_domain, events_changed] }
+    needed_now: { any: [dependents, events_changed] }
   figma_compare:
     protects: "What shipped looks like what was designed."
     forgo_cost: low
-    engages: { paths: ["**/*.tsx", "**/*.jsx", "**/*.vue", "**/components/**", "**/ui/**"] }
+    engages: { any: [surfaces:ui] }
+    needed_now: { any: [surfaces:ui] }
   deploy:
     protects: "The change reaches an environment through a repeatable, recorded path."
     forgo_cost: high
     engages: always
+    needed_now: always
   pentest:
     protects: "Someone actively tried to abuse it before a customer could."
     forgo_cost: high
-    engages: { profiles: ["security"] }
+    engages: { any: [interfaces_changed, data_migration] }
+    needed_now: { any: [interfaces_changed, data_migration] }
   promote:
     protects: "Production only ever receives what a person decided to send it."
     forgo_cost: high
     engages: always
+    needed_now: always
   roi_30:
     protects: "Someone checks whether the thing was worth building."
     forgo_cost: low
-    engages: { profiles: ["feature"] }
+    engages: { any: [surfaces:ui, surfaces:api] }
+    needed_now: never
   roi_90:
     protects: "The longer-term effect is looked at rather than assumed."
     forgo_cost: low
-    engages: { profiles: ["feature"] }
+    engages: { any: [surfaces:ui, surfaces:api] }
+    needed_now: never
 
 # ── Which steps stop making sense without another ──────────────────────────────────────────
 #

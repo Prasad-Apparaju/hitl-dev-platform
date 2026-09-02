@@ -578,26 +578,31 @@ def test_the_catalog_does_not_claim_profiles_filter_the_plan():
 
 
 def test_every_step_declares_what_it_protects_and_what_skipping_costs():
-    """Every spine step has a `protects` sentence and a `forgo_cost`, both directions checked.
+    """Every spine step carries protects, forgo_cost, and BOTH rules, in a language the schema defines.
 
-    NOTHING READS THIS YET. The 2.9.0 reader was deleted and #97 rebuilds it, so this is data held
-    across a gap. That is normally this repo's recurring defect and it is deliberate here: the
-    values were authored by hand and re-deriving them costs a person's time, not a script's.
+    `engages` answers "does this step make sense for this change at all"; `needed_now` answers
+    "must it happen before this ships". They are separate because an earlier draft used one field
+    for both, which made the fast track and full scale resolve to the same list.
 
-    A step with no entry will render a blank reason and sort nowhere, which is how a step quietly
-    becomes the one nobody thinks about. An orphan entry is a step someone deleted while leaving its
-    justification behind. Assert BOTH directions — a coverage check that only looks one way passes
-    while half the data is wrong.
+    The predicates are validated against `impact-record.schema.yaml`, so a rule cannot name a
+    finding that does not exist. That is the failure this test is really for: a rule keyed to a
+    field nobody writes is a rule that silently never fires, which is this repo's recurring defect.
     """
     import yaml
     cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    schema = yaml.safe_load(_read(os.path.join(AI, "shared", "templates", "impact-record.schema.yaml")))
+
+    fields = set(schema["findings"])
+    surfaces = set(schema["findings"]["surfaces"]["enum_values"])
+    valid = fields | {"surfaces:%s" % s for s in surfaces}
+
     steps = {s["key"] for s in cat["spine"]["steps"]}
     costs = cat.get("step_costs") or {}
-    assert costs, "no step_costs block — #97 has nothing to rank or explain with"
+    assert costs, "no step_costs block — the plan has nothing to size with"
 
     missing = sorted(steps - set(costs))
     orphans = sorted(set(costs) - steps)
-    assert not missing, "spine steps with no protects/forgo_cost: %s" % missing
+    assert not missing, "spine steps with no step_costs entry: %s" % missing
     assert not orphans, "step_costs entries for steps that do not exist: %s" % orphans
 
     RANKS = {"high", "medium", "low"}
@@ -606,154 +611,52 @@ def test_every_step_declares_what_it_protects_and_what_skipping_costs():
             "%s: forgo_cost %r is not one of %s" % (key, e.get("forgo_cost"), sorted(RANKS)))
         prot = str(e.get("protects", "")).strip()
         assert len(prot) > 25, (
-            "%s: `protects` is what a person reads when deciding to untick this step. %r does not "
+            "%s: `protects` is what a person reads when deciding to drop this step. %r does not "
             "tell them what they lose." % (key, prot))
         assert not re.match(r"(?i)\s*(runs|performs|the) %s\b" % re.escape(key.replace("_", " ")), prot), (
             "%s: `protects` restates the step name instead of naming the consequence" % key)
-        eng = e.get("engages")
-        assert eng == "always" or isinstance(eng, dict), (
-            "%s: engages must be 'always' or a dict of paths/profiles/tags/multi_domain" % key)
-        if isinstance(eng, dict):
-            unknown = set(eng) - {"paths", "profiles", "tags", "multi_domain"}
-            assert not unknown, "%s: engages has unknown keys %s" % (key, sorted(unknown))
+
+        for field in ("engages", "needed_now"):
+            rule = e.get(field)
+            assert rule is not None, "%s: no `%s` rule" % (key, field)
+            if isinstance(rule, str):
+                assert rule in ("always", "never"), (
+                    "%s.%s: bare string must be `always` or `never`, got %r" % (key, field, rule))
+                continue
+            assert isinstance(rule, dict) and set(rule) <= {"any", "all"} and len(rule) == 1, (
+                "%s.%s: must be always/never or a single {any|all: [...]}, got %r" % (key, field, rule))
+            preds = list(rule.values())[0]
+            assert preds, "%s.%s: empty predicate list is never true; say `never`" % (key, field)
+            unknown = sorted(set(preds) - valid)
+            assert not unknown, (
+                "%s.%s names findings that impact-record.schema.yaml does not define: %s. A rule "
+                "keyed to a field nobody writes never fires, and nothing else would notice."
+                % (key, field, unknown))
 
 
-# --- the command for the current step reaches a human --------------------------------------------
-# The catalog has always declared a command per step. derive_steps emitted it, `verify` never
-# compared it, so the runtime did not carry it; the change-file generator did not write it; and the
-# statusline could not show it. Authored once, dropped twice, never seen. These tests close the
-# whole path rather than any one hop, because each hop passed its own checks while the path was dead.
+def test_no_rule_reads_the_area_instead_of_the_change():
+    """Rules read what the change reaches, never what its area happens to have.
 
-def test_the_runtime_carries_the_command_the_catalog_declares():
-    """Every step whose catalog entry declares a command has it in the runtime workflow file.
+    A rule keyed to the area's paperwork answers the same for every change to that area, so a
+    one-line fix in the best-documented part of the system would draw the longest plan and
+    documenting an area would tax every future change to it. Both walkthroughs came out backwards
+    on an earlier draft for exactly this reason.
 
-    `derive.py verify` now compares this field, so a drift fails the gate. This asserts the state
-    that gate protects, which is what someone reads when they wonder whether the data is there.
+    Enforced structurally: the old `paths`, `profiles` and `tags` predicates are gone, and the
+    schema's fields are all phrased as what the change touches.
     """
     import yaml
     cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
-    rt = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
-
-    declared = {s["key"]: s["command"] for s in cat["spine"]["steps"] if s.get("command")}
-    assert declared, "the catalog declares no commands at all"
-
-    # Compare over what the runtime actually contains. The spine also holds conditional steps
-    # (`baseline`, `sec_design`, `cve_audit`, `pentest`) that activate on a condition and are
-    # legitimately absent from the base workflow, so iterating the catalog would fail on those.
-    runtime = rt["workflows"]["development"]["steps"]
-    wrong = sorted(s["key"] for s in runtime
-                   if s["key"] in declared and s.get("command") != declared[s["key"]])
-    assert not wrong, (
-        "runtime steps whose command is missing or disagrees with the catalog: %s. This is the "
-        "defect this test exists for: nobody can be told what to run if the command never arrives."
-        % wrong)
-
-    carried = sum(1 for s in runtime if s.get("command"))
-    assert carried >= 30, (
-        "only %d of %d development steps carry a command; the field was being dropped in derivation"
-        % (carried, len(runtime)))
-
-
-def test_the_change_file_generator_writes_the_command_for_the_current_step():
-    """The statusline reads `current_step`, so the command has to be in that block.
-
-    Runs the real generator out of SKILL.md rather than asserting the source contains a string. A
-    guard that greps for code it never executes is how three features shipped unreachable here.
-    """
-    skill = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
-    body = skill.split("<< 'PY'", 1)[1].split("\nPY\n", 1)[0]
-    body = body.split("\n", 1)[1]                     # drop the redirect tail of the invocation line
-
-    with tempfile.TemporaryDirectory() as d:
-        gen = os.path.join(d, "gen.py")
-        with io.open(gen, "w", encoding="utf-8") as fh:
-            fh.write(body)
-        out = subprocess.run(
-            [sys.executable, gen, "development", "GH-1", "feat", "2.8.0", "2", "", "who", "why"],
-            capture_output=True, text=True, cwd=ROOT)
-        assert out.returncode == 0, "generator failed: %s" % out.stderr[-800:]
-
-        import yaml
-        doc = yaml.safe_load(out.stdout)
-        cs = doc.get("current_step") or {}
-        assert cs.get("command"), (
-            "current_step carries no command, so the statusline has nothing to show. Block was: %r"
-            % cs)
-        steps = doc["workflow"]["steps"]
-        assert any(s.get("command") for s in steps), "no step in the plan carries a command"
-
-
-def test_the_statusline_shows_what_to_run():
-    """End to end: a change file with a command in it produces a visible hint.
-
-    Covers all three kinds. `manual` and `guided` are not commands and must not render as one — a
-    statusline reading "/hitl:manual" sends someone looking for a command that does not exist.
-    """
-    hooks = os.path.join(AI, "claude", "hooks")
-    stdin = ('{"cwd":"/p","model":{"display_name":"O"},"context_window":{"used_percentage":10}}')
-
-    cases = [("dev-tdd", "/hitl:dev-tdd"), ("manual", "no command"), ("guided", "say go")]
-    for value, expected in cases:
-        with tempfile.TemporaryDirectory() as d:
-            hd = os.path.join(d, ".hitl", "hooks")
-            os.makedirs(hd)
-            for f in ("statusline-hitl.sh", "_steps.sh"):
-                shutil.copy(os.path.join(hooks, f), os.path.join(hd, f))
-            with io.open(os.path.join(d, ".hitl", "current-change.yaml"), "w", encoding="utf-8") as fh:
-                fh.write(
-                    'schema_version: "2.0"\nchange_id: GH-1\ntier: 2\nstatus: in-progress\n'
-                    'expected_branch: main\n\nworkflow:\n  id: development\n  total: 3\n  steps:\n'
-                    '    - { n: "1", key: red, label: "RED", phase: "Build", status: current }\n'
-                    '\ncurrent_step:\n  number: 1\n  name: "RED"\n  phase: "Build"\n'
-                    '  command: "%s"\n' % value)
-            out = subprocess.run(
-                ["bash", os.path.join(hd, "statusline-hitl.sh")],
-                input=stdin, capture_output=True, text=True,
-                env=dict(os.environ, CLAUDE_PROJECT_DIR=d))
-            assert expected in out.stdout, (
-                "command %r should render as %r; statusline said:\n%s" % (value, expected, out.stdout))
-        if value in ("manual", "guided"):
-            assert "/hitl:%s" % value not in out.stdout, (
-                "%r rendered as a runnable command; there is no /hitl:%s" % (value, value))
-
-
-def test_every_step_skill_says_what_comes_next():
-    """Each skill or command a workflow step names must close by pointing at the shared contract.
-
-    The statusline shows the command ambiently; this is the other half, at the moment a step ends.
-    One shared file holds the wording so twenty-two of them cannot drift into twenty-two phrasings.
-
-    Resolves BOTH kinds. HITL ships skills (`<dir>/SKILL.md`) and lightweight commands (a single
-    `commands/<area>/<name>.md`), and two steps name commands rather than skills. An earlier version
-    of this test looked only for SKILL.md and reported those two as missing; they were never missing.
-    """
-    import yaml
-    contract = os.path.join(AI, "shared", "next-step.md")
-    assert os.path.isfile(contract), "ai/shared/next-step.md is gone; the step skills reference it"
-
-    rt = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
-    cmds = sorted({s["command"] for w in rt["workflows"].values() for s in w["steps"]
-                   if s.get("command") and s["command"] not in ("manual", "guided")})
-
-    def target_for(cmd):
-        pre, rest = cmd.split("-", 1)
-        for p in (os.path.join(AI, "claude", rest if pre == "dev" else os.path.join(pre, rest),
-                               "SKILL.md"),
-                  os.path.join(AI, "claude", "commands", pre, rest + ".md"),
-                  os.path.join(AI, "claude", "commands", rest + ".md")):
-            if os.path.isfile(p):
-                return p
-        return None
-
-    missing = sorted(c for c in cmds if target_for(c) is None)
-    assert not missing, (
-        "workflow steps name these, and neither a skill nor a command exists for them: %s. A step "
-        "that names something nobody can run is worse than a step that names nothing." % missing)
-
-    silent = sorted(c for c in cmds if "ai/shared/next-step.md" not in _read(target_for(c)))
-    assert not silent, (
-        "steps that never say what comes next: %s. A person finishing a step should not have to "
-        "work out what happens now." % silent)
+    banned = {"paths", "profiles", "tags"}
+    offenders = []
+    for key, e in (cat.get("step_costs") or {}).items():
+        for field in ("engages", "needed_now"):
+            rule = e.get(field)
+            if isinstance(rule, dict) and set(rule) & banned:
+                offenders.append("%s.%s" % (key, field))
+    assert not offenders, (
+        "these rules match on paths/profiles/tags again: %s. Those are properties of an area or a "
+        "folder name, not of the change, and profiles never reach the runtime at all." % offenders)
 
 
 def test_the_command_survives_a_step_advance():

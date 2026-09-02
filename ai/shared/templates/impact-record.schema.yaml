@@ -1,0 +1,179 @@
+# HITL Impact Record Schema
+# One file per change, written by the impact analysis before any plan exists.
+# Place at .hitl/impact/<change_id>.yaml in the product repo, referenced from
+# .hitl/current-change.yaml as `impact_record:`.
+#
+# Required by: ai/claude/apply-change (writes it), ai/claude/start-change (reads it to
+# build the plan), the retrospective (compares what the rules concluded against what happened).
+#
+# WHY THIS FILE EXISTS SEPARATELY. The plan is derived from what the change actually reaches.
+# If the derivation is not written down, nobody can ask later whether a rule was right — which
+# is the loop that corrects the rules. The change file names this record, and a named record
+# that is missing or empty BLOCKS: a second artifact is only safe when something notices its
+# absence.
+
+$schema:
+  version: "1.0"
+  description: "What a change reaches, where each answer came from, and what the rules concluded"
+
+# ── Identity ───────────────────────────────────────────────────────────────────────────────
+
+change_id:
+  type: string
+  description: "Must match .hitl/current-change.yaml change_id. A mismatch is a blocking error."
+  example: "GH-97-right-sizing"
+
+workflow:
+  type: string
+  description: |
+    Which workflow this analysis was run for. The questions asked differ: `development` asks what
+    the change reaches; `brownfield` asks what security posture and CI/CD compliance exist already;
+    `migration` asks what changing the tech stack costs; `prd` asks what has to be created.
+  enum: [development, brownfield, migration, migration_review, docs, prd, platform, release]
+
+# ── Findings: the predicate vocabulary ─────────────────────────────────────────────────────
+#
+# These field names ARE the language the rules are written in. `engages` and `needed_now` read
+# nothing else. Adding a predicate means adding a field here first.
+#
+# THE DISTINCTION THAT MATTERS: every field describes what THIS CHANGE touches, never what the
+# area happens to have. An area having tests is not a fact about your change; your change
+# altering behaviour those tests cover is. Rules keyed to the area's paperwork give the same
+# answer for every change to it, so a one-line fix in the best-documented part of the system
+# would draw the longest plan.
+
+findings:
+  area:
+    type: string | null
+    description: |
+      Which manifest area owns the work. `null` when nothing does, which has two meanings the
+      analysis must distinguish by asking: genuinely outside the system, or a stale manifest.
+    example: "billing"
+
+  area_absence:
+    type: string | null
+    description: "Set only when area is null. Which of the two it is, per the human's answer."
+    enum: [outside_the_system, manifest_incomplete, null]
+
+  dependents:
+    type: list[string]
+    description: "Areas that depend on what this change alters. Empty is a finding, not a gap."
+    example: ["checkout", "reporting"]
+
+  interfaces_changed:
+    type: list[string]
+    description: |
+      Public interfaces (facade APIs, boundary entities) this change alters. Drives whether
+      compatibility and integration work is needed now.
+    example: ["RefundService.issue"]
+
+  events_changed:
+    type: list[string]
+    description: "Events this change starts emitting, stops emitting, or changes the shape of."
+
+  tests_covering:
+    type: list[string]
+    description: |
+      Existing tests that cover the behaviour being changed. NOT the area's whole test list —
+      only what this change puts at risk.
+
+  docs_affected:
+    type: list[string]
+    description: "Design docs describing behaviour this change alters, so they will need reconciling."
+
+  data_migration:
+    type: boolean
+    description: "Does this change alter persisted shape or require moving existing data."
+
+  reaches_production:
+    type: boolean
+    description: "Can this change reach users on merge, or is it behind a flag / not yet deployed."
+
+  surfaces:
+    type: list[enum]
+    description: |
+      What kinds of surface this change touches. Some steps are about a surface rather than a
+      consequence: a Figma comparison needs a UI, an IaC review needs infrastructure. Without
+      this the only way to ask was to match folder names, which is guesswork about what a path
+      means and is what the old `paths:` predicates did.
+    enum_values: [ui, api, data, infra, config, docs, tests]
+    example: [api, tests]
+
+  multi_domain:
+    type: boolean
+    description: |
+      Does the change span more than one manifest area. Already a predicate in `step_costs`
+      today; kept with the same meaning so existing rules do not change meaning under them.
+
+  source_read_required:
+    type: boolean
+    description: |
+      True when the declared picture (manifest, design docs) was too thin to answer and source
+      had to be read. A signal about the project's documentation, and the retrospective reads it.
+
+# ── Provenance ─────────────────────────────────────────────────────────────────────────────
+
+provenance:
+  type: map[string, enum]
+  description: |
+    Per finding field, where the answer came from. A finding resting on a hand-written manifest
+    field must never be presented as if it came from the code, because one is a claim and the
+    other is evidence.
+  enum_values: [manifest, design_doc, source, human]
+  example:
+    dependents: manifest
+    interfaces_changed: source
+    area_absence: human
+
+# ── What the rules concluded ───────────────────────────────────────────────────────────────
+
+rule_outcomes:
+  type: list[object]
+  description: |
+    One entry per catalog step, recording what each predicate decided and why. This is what
+    makes the feedback loop possible: you cannot ask whether a rule was right if you never
+    recorded what it decided.
+  fields:
+    step:
+      type: string
+      description: "Catalog step key."
+    applies:
+      type: boolean
+      description: "What `engages` concluded — does this step make sense for this change at all."
+    needed_now:
+      type: boolean
+      description: "What `needed_now` concluded — must it happen before this ships."
+    because:
+      type: string
+      description: |
+        The finding that decided it, in the words shown to a person. "three areas depend on this"
+        or "no interface files in the change". Where no rule fit and HITL judged, say so here.
+    judged:
+      type: boolean
+      description: |
+        True when no rule answered and HITL decided. Makes overrides countable, so a rule that is
+        always being overridden can be found and fixed rather than quietly compensated for.
+
+# ── Acceptance criteria ────────────────────────────────────────────────────────────────────
+
+acceptance_criteria:
+  type: list[object]
+  description: |
+    The checkable translation of the definition of done, written here because this is the first
+    moment the work is understood well enough. Written here rather than in a plan step because
+    any step could be dropped, and the coverage check must never fire without its producer
+    having run.
+  fields:
+    id:
+      type: string
+      example: "AC-1"
+    criterion:
+      type: string
+      description: "Something QA can actually test. \"Works properly\" is not one."
+      example: "Returns 400 with a message naming the missing field"
+    satisfies:
+      type: list[string]
+      description: |
+        Which definition-of-done lines this proves. Every DoD line must be named by at least one
+        criterion, or be explicitly marked unverifiable with a reason and a name.
+      example: ["DOD-1"]
