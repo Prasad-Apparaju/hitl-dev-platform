@@ -629,3 +629,63 @@ def test_the_provisional_tier_is_the_strictest_one():
     tier that locks the most, not the least."""
     assert C.resolve_crit(CATALOG["packet"], 3) == "floor"
     assert C.resolve_crit(CATALOG["packet"], 1) != "floor"
+
+
+# --- the impact record (#97, impl review 1) ----------------------------------------------------
+
+def test_a_named_impact_record_that_is_missing_blocks():
+    """The design, the schema header and the generator's comment all said this blocks. None of them
+    wrote the check — the recurring defect of this repo, appearing inside the fix for it."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/nope.yaml"
+        assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_an_empty_impact_record_blocks_too():
+    import os as _os
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        _os.makedirs(_os.path.join(d, ".hitl", "impact"))
+        open(_os.path.join(d, ".hitl", "impact", "x.yaml"), "w").write("change_id: GH-1\n")
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/x.yaml"
+        assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG, change_dir=d)), \
+            "an empty record is the same as none"
+
+
+def test_an_unreadable_impact_record_fails_closed():
+    """NEG: a record we cannot parse is not one we can vouch for."""
+    import os as _os
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        _os.makedirs(_os.path.join(d, ".hitl", "impact"))
+        open(_os.path.join(d, ".hitl", "impact", "x.yaml"), "w").write("{ not: [valid\n")
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/x.yaml"
+        assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_a_real_impact_record_certifies_clean():
+    import os as _os
+    import tempfile
+    import yaml as _y
+    with tempfile.TemporaryDirectory() as d:
+        _os.makedirs(_os.path.join(d, ".hitl", "impact"))
+        _y.safe_dump({"change_id": "GH-1", "findings": {"area": "billing"}},
+                     open(_os.path.join(d, ".hitl", "impact", "x.yaml"), "w"))
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/x.yaml"
+        assert not [c for c in codes(C.check(ch, CATALOG, change_dir=d)) if "IMPACT" in c]
+
+
+def test_a_change_naming_no_record_is_not_reported():
+    """Every change file written before this feature is in that state, and they are not wrong. The
+    design says a NAMED record that is missing blocks; it does not say one must be named."""
+    ch = make_change([], tier=2)
+    assert not [c for c in codes(C.check(ch, CATALOG)) if "IMPACT" in c]
+
+
+def test_impact_record_is_non_waivable():
+    assert "IMPACT_RECORD" in C.NON_WAIVABLE

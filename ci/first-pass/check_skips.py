@@ -73,6 +73,8 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 "INTAKE_NOT_EMPTY",
                 # a provisional tier surviving past intake means nobody confirmed it (#97)
                 "TIER_PROVISIONAL",
+                # a change asserting an impact record that is not there (#97)
+                "IMPACT_RECORD",
                 # steps lightened while `first_pass` is absent: enforcement never engaged, so every other
                 # check below was skipped and the ledger is uncertified. The bug this catches shipped
                 # because the driver never emitted the flag.
@@ -327,6 +329,36 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
                            "tier is still marked provisional on a change that has been planned — "
                            "the tier is proposed from impact findings and confirmed by a human at "
                            "step 4, and that confirmation has not happened"))
+
+    # 0.45) THE IMPACT RECORD (#97). The plan is derived from what the change reaches, and that
+    #    derivation is written to its own file. The design, the schema header and the generator's
+    #    own comment all said a missing or empty record BLOCKS — and none of them wrote the check,
+    #    which is this repo's recurring defect appearing in the middle of the fix for it.
+    #
+    #    Named-but-absent is non-waivable: the change file asserts a record that is not there, so
+    #    nothing can be said about how the plan was sized. Not named at all is waivable, because
+    #    every change file written before this feature is in that state and they are not wrong.
+    _rec = _str(change.get("impact_record")).strip()
+    if _rec:
+        _path = _rec if os.path.isabs(_rec) else os.path.join(change_dir, _rec)
+        if not os.path.isfile(_path):
+            findings.append(_f("IMPACT_RECORD", f"change names impact record '{_rec}' but it is not "
+                                                f"there — the plan cannot be shown to follow from anything"))
+        else:
+            try:
+                import yaml as _y                       # imported lazily, as everywhere else here
+                _body = _y.safe_load(open(_path)) or {}
+            except Exception:
+                # A record we cannot read is not a record we can vouch for. Fail closed, and say
+                # which failure it was rather than folding it into "empty".
+                findings.append(_f("IMPACT_RECORD", f"impact record '{_rec}' could not be read"))
+                _body = {"__unreadable__": True}
+            if not (isinstance(_body, dict) and (_body.get("findings") or _body.get("rule_outcomes"))):
+                findings.append(_f("IMPACT_RECORD", f"impact record '{_rec}' has no findings and no "
+                                                    f"rule outcomes — an empty record is the same as none"))
+    # No `impact_record` at all is NOT reported. The design says a NAMED record that is missing or
+    # empty blocks; it does not say every change must name one. Requiring it would be a larger claim
+    # than the design makes and would fire on every change file written before this feature.
 
     # 0.5) PLAN COMPLETENESS (codex-1): a load-bearing step DELETED from the plan entirely leaves no status
     #    and no record to inspect — silently omitting it. Every catalog step that is `floor` (at this tier) or

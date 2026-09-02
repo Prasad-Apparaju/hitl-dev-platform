@@ -343,11 +343,12 @@ Each step carries three lines. Two exist already and are unchanged:
 `needed_now`, and the retrospective step all have to land in the spine, in `step_costs`, and pass the
 derive gate. Saying "the catalog" hides a step.
 
-`engages` exists on all 38 steps and does not yet do its job. Twenty-one development steps say
+`engages` was rewritten on all 38 steps, and `needed_now` authored alongside it. Before that: Twenty-one development steps say
 `always`, which decides nothing. Five key off profiles, which never reach the runtime, so they can
 never fire. Four match folder patterns, which is guesswork about what a path means. Only three key
-off a real fact, and one off a tag. Every one gets rewritten, and `needed_now` is authored alongside
-it in the same pass. Some will be wrong at first, and step 6 is how they get corrected.
+off a real fact, and one off a tag. Nineteen development steps still say `always` for `engages`, and that is correct rather than
+unfinished: most are locked or genuinely universal, and `needed_now` does the discriminating. Some
+of the rules will be wrong at first, and step 6 is how they get corrected.
 
 ## 5. You adjust
 

@@ -15,6 +15,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 
 import yaml  # noqa: E402
+from io import open as io_open  # noqa: E402
 import size_plan as S  # noqa: E402
 from check_skips import load_catalog, resolve_crit  # noqa: E402
 
@@ -209,3 +210,65 @@ def test_the_stub_certifies_clean_and_is_deliberately_not_an_active_change():
     assert "workflow" not in doc and "current_step" not in doc, (
         "a stub with either would satisfy hitl_change_active and unblock edits before a plan exists")
     assert doc["impact_record"], "the stub must name the record, or nothing can check it is missing"
+
+
+# ── what implementation review 1 found ───────────────────────────────────────
+
+def test_the_tier_is_required_and_not_read_from_the_record():
+    """It defaulted to 3, and a schema-conformant record never carries a tier, so EVERY change was
+    sized at the strictest tier: a one-line fix with no dependents got packet, arch_review,
+    qa_verify, rollout and integration_verify locked. Silent, and exactly the over-ceremony this
+    feature exists to remove."""
+    import subprocess
+    import json
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        rec = os.path.join(d, "rec.yaml")
+        with io_open(rec, "w") as fh:
+            yaml.safe_dump({"change_id": "GH-1", "workflow": "development",
+                            "findings": dict(SMALL)}, fh)
+        gen = os.path.join(HERE, "size_plan.py")
+        wf = WORKFLOWS
+        # no tier -> refuses rather than guessing
+        out = subprocess.run([sys.executable, gen, rec, wf], capture_output=True, text=True)
+        assert out.returncode == 2 and "tier" in out.stderr, out.stderr
+
+        sizes = {}
+        for t in ("1", "3"):
+            o = subprocess.run([sys.executable, gen, rec, wf, t], capture_output=True, text=True)
+            assert o.returncode == 0, o.stderr
+            sizes[t] = json.loads(o.stdout)
+        assert len(sizes["1"]["plan"]) < len(sizes["3"]["plan"]), (
+            "the tier must change the plan, or it is not reaching the sizer")
+
+
+def test_the_record_workflow_is_honoured_not_assumed():
+    """`load_catalog` defaults to development, so a brownfield record used to come back with a
+    development plan, no warning, exit 0."""
+    import subprocess
+    import json
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        rec = os.path.join(d, "rec.yaml")
+        with io_open(rec, "w") as fh:
+            yaml.safe_dump({"change_id": "GH-1", "workflow": "brownfield",
+                            "findings": {"surfaces": ["api"]}}, fh)
+        o = subprocess.run([sys.executable, os.path.join(HERE, "size_plan.py"), rec, WORKFLOWS, "2"],
+                           capture_output=True, text=True)
+        assert o.returncode == 0, o.stderr
+        j = json.loads(o.stdout)
+        assert j["workflow"] == "brownfield"
+        assert "map_code" in j["plan"], j["plan"]
+        assert "red" not in j["plan"], "a brownfield record produced development steps"
+
+
+def test_no_hard_gate_can_be_dropped_by_a_rule():
+    """`needed_now` is tier-independent, so `never` on a hard-gate step meant a tier-3 fast track
+    dropped it with no ack and no waiver asked for. The tier cannot close a gap a rule holds open."""
+    import check_skips as C
+    costs = yaml.safe_load(open(WORKFLOWS))["step_costs"]
+    droppable = [k for k in C.HARD_GATE_STEPS
+                 if k in costs and costs[k].get("needed_now") == "never"]
+    assert not droppable, (
+        "hard gates a fast track would silently drop: %s. check_skips asks for no ack on these "
+        "unless they are floor, so nothing downstream catches it either." % droppable)

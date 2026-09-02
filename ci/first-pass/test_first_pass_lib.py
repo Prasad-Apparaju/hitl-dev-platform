@@ -497,3 +497,21 @@ def test_normalisation_prefers_the_scoped_copy_of_a_duplicate():
         {"change_id": "GH-D", "step": "roi", "domains": ["billing"]}]}
     rollup, _, _ = R.to_rollup({"change_id": "GH-D", "skips": []}, dup)
     assert len(rollup["entries"]) == 1 and rollup["entries"][0].get("domains") == ["billing"]
+
+
+def test_not_applicable_is_refused_on_a_load_bearing_step():
+    """Defence in depth (#97). check_skips blocks this with RULE_OVER_FLOOR, but the generator
+    refuses it earlier via is_allowed, so a bad choices file never reaches the ledger at all.
+    A mutation that let it through was caught by nothing until this test existed."""
+    assert D.is_allowed(CATALOG["roi"], 2, "not_applicable") is True
+    assert D.is_allowed(CATALOG["deploy"], 2, "not_applicable") is False
+    assert D.is_allowed(CATALOG["red"], 1, "not_applicable") is False, "no_omit too"
+    assert D.is_allowed(CATALOG["packet"], 3, "not_applicable") is False, "floor at tier 3"
+    assert D.is_allowed(CATALOG["packet"], 2, "not_applicable") is True, "standard at tier 2"
+
+
+def test_not_applicable_is_never_a_menu_option():
+    """It is the rules speaking, not a choice a person is offered. If it appeared on the menu a
+    human could pick it, and the ledger would record a rule that never fired."""
+    for key in ("roi", "docs", "conventions"):
+        assert "not_applicable" not in D.allowed_dispositions(CATALOG[key], 2)

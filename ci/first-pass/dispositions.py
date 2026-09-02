@@ -41,12 +41,21 @@ def allowed_dispositions(step_meta, tier):
 
 
 def is_allowed(step_meta, tier, disposition):
-    """Is a chosen LEDGER disposition (keep|defer|decline|starter) valid for this step? `keep` always;
-    `starter` needs a registry entry; a `no_omit` step forbids defer/decline. A floor skip is reachable
-    (its extra ack/waiver requirement is enforced by check_skips, not here — `risk_accept` is a menu
-    label, not a ledger value)."""
+    """Is a chosen LEDGER disposition valid for this step? `keep` always; `starter` needs a registry
+    entry; a `no_omit` step forbids defer/decline. A floor skip is reachable (its extra ack/waiver
+    requirement is enforced by check_skips, not here — `risk_accept` is a menu label, not a ledger
+    value).
+
+    `not_applicable` (#97) is the RULES excluding a step, not a person declining it, so it is NOT a
+    menu option — `allowed_dispositions` never offers it. It is valid as a ledger value on any step
+    the rules may decide about, which is anything not floor and not no_omit. check_skips enforces
+    that boundary independently with RULE_OVER_FLOOR, because a rule retiring a load-bearing step is
+    a hole straight through the floor.
+    """
     if disposition == "keep":
         return True
+    if disposition == "not_applicable":
+        return not (_c.resolve_crit(step_meta, tier) == "floor" or step_meta.get("no_omit"))
     if disposition not in ("defer", "decline", "starter"):
         return False
     if disposition == "starter" and not _s.has_starter(step_meta.get("key")):

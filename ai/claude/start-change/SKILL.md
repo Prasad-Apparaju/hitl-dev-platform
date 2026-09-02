@@ -160,11 +160,13 @@ the consequential call.**
 
 ### Two options
 
-Size the plan from the record:
+Size the plan from the record, passing the tier the human just confirmed. The sizer requires it
+and will not read one from the record: the impact analysis is not allowed to set a tier, and two
+sources for that field disagree.
 
 ```bash
 SZ="ci/first-pass/size_plan.py"; [[ -f "$SZ" ]] || SZ="$ROOT/shared/ci/first-pass/size_plan.py"
-"$PY" "$SZ" ".hitl/impact/$CHANGE_ID.yaml" "$WFYAML" fast
+"$PY" "$SZ" ".hitl/impact/$CHANGE_ID.yaml" "$WFYAML" "$TIER" fast
 ```
 
 Show both, and the difference:

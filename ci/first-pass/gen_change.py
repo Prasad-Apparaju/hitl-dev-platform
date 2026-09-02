@@ -77,6 +77,22 @@ if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
     sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
              "and it unlocks the batch-decline path at intake.")
 
+# Carry the stub's durable fields forward (#97). Step 6 replaces `.hitl/current-change.yaml` with
+# this output, so anything only the stub had is destroyed unless it is read back here: the agreed
+# requirement and definition of done from Step 3b, and the impact-record pointer. Losing them means
+# the definition-of-done coverage check has nothing to read and the record has nothing naming it.
+_carry = {}
+for _p in (".hitl/current-change.yaml",):
+    if os.path.isfile(_p):
+        try:
+            _prev = yaml.safe_load(open(_p)) or {}
+        except Exception:
+            _prev = {}
+        if isinstance(_prev, dict) and _prev.get("change_id") == change_id:
+            for _f in ("requirement", "impact_record"):
+                if _prev.get(_f):
+                    _carry[_f] = _prev[_f]
+
 # Catalog: prefer the plugin copy, fall back to the source path.
 for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),
           "ai/shared/workflows.yaml"):
@@ -105,7 +121,13 @@ if resolve_crit is None or has_starter is None or is_allowed is None:
     sys.exit("ci/first-pass not found — cannot resolve criticality or the starter registry. "
              "Run /hitl:dev-update.")
 
-STATUS_FOR = {"defer": "skipped", "decline": "skipped", "starter": "starter"}
+# `not_applicable` (#97): the RULES excluded the step, which is not a person declining it. The step
+# is still present in the plan with status `skipped` and still carries a record — check_skips has no
+# clean shape for a step that is neither present nor recorded. Omitting this was why every
+# right-sized change died here with no change file: the sizer produced a disposition the generator
+# refused, and no test covered the generator with a rules-excluded choice.
+STATUS_FOR = {"defer": "skipped", "decline": "skipped", "starter": "starter",
+              "not_applicable": "skipped"}
 
 # Validate the whole choices document before touching anything. A malformed file must produce a
 # clear refusal, not a traceback: the caller replaces the live change file with our stdout, so an
@@ -212,6 +234,12 @@ lines += [
     f'  phase: {q(first["phase"])}',
 ]
 lines += [f'  command: {q(first["command"])}'] if first.get("command") else []  # statusline (#100)
+
+# The stub's durable fields, re-emitted so Step 6 does not destroy them (#97).
+if _carry:
+    lines.append('')
+    lines.append(yaml.safe_dump(_carry, sort_keys=False, default_flow_style=False).rstrip())
+
 out = "\n".join(lines)
 # Refuse to hand the wrapper something it cannot parse. The guard downstream checks exit status and
 # non-emptiness; only this check can catch a file that is both and still invalid.

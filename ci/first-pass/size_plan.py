@@ -160,26 +160,60 @@ def excluded(outcomes, option):
 
 
 def main(argv):
-    """Size a plan from a written impact record. Prints the two options and what each leaves out."""
+    """Size a plan from a written impact record. Prints the two options and what each leaves out.
+
+    The TIER IS REQUIRED and is not read from the record. The record is written by the impact
+    analysis, which is explicitly not allowed to set a tier — two writers for that field is how a
+    tier set in one place disagrees with one set in another. Intake confirms the tier with a human
+    at Step 4 and passes it here.
+
+    It used to default to 3 when absent, and since a schema-conformant record never carries one,
+    every change was sized at the strictest tier: a one-line fix with no dependents got `packet`,
+    `arch_review`, `qa_verify`, `rollout` and `integration_verify` locked. That is precisely the
+    over-ceremony this exists to remove, arriving silently. Defaulting was the bug; refusing is the
+    fix.
+    """
     import json
     import os
     import yaml
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from check_skips import load_catalog, resolve_crit
 
-    if len(argv) < 3:
-        print("usage: size_plan.py <impact-record.yaml> <workflows.yaml> [fast|full]", file=sys.stderr)
+    if len(argv) < 4:
+        print("usage: size_plan.py <impact-record.yaml> <workflows.yaml> <tier> [fast|full]",
+              file=sys.stderr)
         return 2
     rec = yaml.safe_load(open(argv[1]))
     wf = yaml.safe_load(open(argv[2]))
-    catalog = load_catalog(argv[2])
+    try:
+        tier = int(argv[3])
+    except ValueError:
+        print("tier must be an integer 0-4, got %r" % argv[3], file=sys.stderr)
+        return 2
+    if not 0 <= tier <= 4:
+        print("tier must be 0-4, got %d" % tier, file=sys.stderr)
+        return 2
+    if rec.get("tier") is not None and int(rec["tier"]) != tier:
+        print("the record carries tier %r but %d was passed — the impact analysis must not set a "
+              "tier, and two sources for it will disagree" % (rec["tier"], tier), file=sys.stderr)
+        return 2
+
+    # Size against the workflow the record was written for, not always `development`.
+    # `load_catalog` defaults to development, so handing it a brownfield record used to return a
+    # development plan with no warning and exit 0.
+    workflow = rec.get("workflow") or "development"
+    known = set((wf.get("workflows") or {}))
+    if workflow not in known:
+        print("record names workflow %r; the catalog defines %s" % (workflow, sorted(known)),
+              file=sys.stderr)
+        return 2
+    catalog = load_catalog(argv[2], workflow)
     costs = wf.get("step_costs") or {}
     findings = rec.get("findings") or {}
-    tier = rec.get("tier", 3)
-    option = argv[3] if len(argv) > 3 else "fast"
+    option = argv[4] if len(argv) > 4 else "fast"
 
     outcomes = size(findings, catalog, costs, tier, resolve_crit)
-    print(json.dumps({"option": option,
+    print(json.dumps({"workflow": workflow, "tier": tier, "option": option,
                       "plan": plan(outcomes, option),
                       "excluded": excluded(outcomes, option),
                       "outcomes": outcomes}, indent=2))

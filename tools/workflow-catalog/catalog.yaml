@@ -421,10 +421,12 @@ step_costs:
     engages: { any: [interfaces_changed, data_migration] }
     needed_now: { any: [interfaces_changed, data_migration] }
   cve_audit:
+    # A hard gate, so `needed_now` may not be `never` — see conventions. It is unreachable today for
+    # a different reason (#102: `cond:` steps never resolve at runtime).
     protects: "You know which published vulnerabilities the version you are moving to carries."
     forgo_cost: high
     engages: { any: [surfaces:config, surfaces:infra] }
-    needed_now: never
+    needed_now: always
   adv_design:
     protects: "Someone with no stake in the design tries to break it while it is still cheap to change."
     forgo_cost: medium
@@ -466,10 +468,13 @@ step_costs:
     engages: always
     needed_now: never
   conventions:
+    # A hard gate (check_skips.HARD_GATE_STEPS). `needed_now: never` is tier-independent, so a
+    # tier-3 fast track dropped it with no ack and no waiver asked for — the tier cannot close a gap
+    # a rule holds open (#97, impl review 1).
     protects: "The code reads like the rest of the codebase, so review is about substance."
     forgo_cost: low
     engages: always
-    needed_now: never
+    needed_now: always
   adv_code:
     protects: "Someone tries to break the implementation rather than only reading it."
     forgo_cost: medium
