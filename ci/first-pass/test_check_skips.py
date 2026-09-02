@@ -689,3 +689,55 @@ def test_a_change_naming_no_record_is_not_reported():
 
 def test_impact_record_is_non_waivable():
     assert "IMPACT_RECORD" in C.NON_WAIVABLE
+
+
+def test_the_impact_record_resolves_from_the_repo_root():
+    """The pointer is repo-root relative (".hitl/impact/<id>.yaml"), and `run()` passes the
+    directory CONTAINING the change file — `<repo>/.hitl`. Joining them looked for
+    `<repo>/.hitl/.hitl/impact/...`, so every right-sized change died on a non-waivable block.
+
+    The other four tests pass `change_dir=<repo root>`, which encodes the INTENDED semantics and
+    never exercises the path run() builds. This one uses the real directory layout."""
+    import os as _os
+    import tempfile
+    with tempfile.TemporaryDirectory() as root:
+        _os.makedirs(_os.path.join(root, ".hitl", "impact"))
+        import yaml as _y
+        _y.safe_dump({"change_id": "GH-1", "findings": {"area": "b"}},
+                     open(_os.path.join(root, ".hitl", "impact", "GH-1.yaml"), "w"))
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/GH-1.yaml"
+        # change_dir as run() computes it: the directory holding the change file
+        found = C.check(ch, CATALOG, change_dir=_os.path.join(root, ".hitl"))
+        assert not [c for c in codes(found) if "IMPACT" in c], codes(found)
+
+
+def test_a_record_for_a_different_change_blocks():
+    """The schema said a mismatch is a blocking error; nothing implemented it, so a plan could be
+    justified by another change's sizing and certify clean. That is worse than no record, because
+    it looks accounted for."""
+    import os as _os
+    import tempfile
+    import yaml as _y
+    with tempfile.TemporaryDirectory() as root:
+        _os.makedirs(_os.path.join(root, ".hitl", "impact"))
+        _y.safe_dump({"change_id": "GH-999", "workflow": "development", "findings": {"area": "b"}},
+                     open(_os.path.join(root, ".hitl", "impact", "x.yaml"), "w"))
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/x.yaml"
+        assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG,
+                                                   change_dir=_os.path.join(root, ".hitl")))
+
+
+def test_a_record_sized_against_another_workflow_blocks():
+    import os as _os
+    import tempfile
+    import yaml as _y
+    with tempfile.TemporaryDirectory() as root:
+        _os.makedirs(_os.path.join(root, ".hitl", "impact"))
+        _y.safe_dump({"change_id": "GH-1", "workflow": "brownfield", "findings": {"area": "b"}},
+                     open(_os.path.join(root, ".hitl", "impact", "x.yaml"), "w"))
+        ch = make_change([], tier=2)
+        ch["impact_record"] = ".hitl/impact/x.yaml"
+        assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG,
+                                                   change_dir=_os.path.join(root, ".hitl")))

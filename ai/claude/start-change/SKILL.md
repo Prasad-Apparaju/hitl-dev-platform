@@ -166,8 +166,16 @@ sources for that field disagree.
 
 ```bash
 SZ="ci/first-pass/size_plan.py"; [[ -f "$SZ" ]] || SZ="$ROOT/shared/ci/first-pass/size_plan.py"
-"$PY" "$SZ" ".hitl/impact/$CHANGE_ID.yaml" "$WFYAML" "$TIER" fast
+"$PY" "$SZ" ".hitl/impact/$CHANGE_ID.yaml" "$TIER" fast
 ```
+
+**Write the outcomes back into the record.** `size_plan` returns `outcomes` — what each rule decided
+and why. Append it to `.hitl/impact/<change_id>.yaml` as `rule_outcomes`. Without it the record says
+what was found and never what was concluded from it, and the retrospective has nothing to compare
+against: you cannot ask whether a rule was right if nobody wrote down what it decided.
+
+It is written here, not by the analysis, because sizing needs the tier and the tier does not exist
+until this step.
 
 Show both, and the difference:
 

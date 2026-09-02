@@ -272,3 +272,53 @@ def test_no_hard_gate_can_be_dropped_by_a_rule():
     assert not droppable, (
         "hard gates a fast track would silently drop: %s. check_skips asks for no ack on these "
         "unless they are floor, so nothing downstream catches it either." % droppable)
+
+
+def test_an_exclusion_says_why_it_is_OUT_not_why_it_applies():
+    """`because` returned the `engages` sentence whenever `needed_now` was false, so every
+    fast-track exclusion carried an affirmative finding: `packet` was dropped with the reason
+    "applies to every change". That string is what a person confirms, what reaches the roll-up, and
+    what the retrospective reads back as what was left out and why."""
+    ex = {e["step"]: e["reason"] for e in S.excluded(_size(SMALL, 1), "fast")}
+    assert "packet" in ex
+    for step, reason in ex.items():
+        assert "applies to every change" not in reason, (step, reason)
+    assert "no multi domain" in ex["packet"] or "no interfaces changed" in ex["packet"], ex["packet"]
+
+
+def test_a_workflow_with_no_rules_is_announced_not_silently_identical():
+    """`step_costs` covers the development spine only, so sizing `release` returned every step with
+    "no rules declared" and fast and full came out byte-identical — a choice between two copies of
+    the same list, offered with a straight face."""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        rec = os.path.join(d, "r.yaml")
+        with io_open(rec, "w") as fh:
+            yaml.safe_dump({"change_id": "GH-1", "workflow": "release",
+                            "findings": {"surfaces": ["api"]}}, fh)
+        o = subprocess.run([sys.executable, os.path.join(HERE, "size_plan.py"), rec, WORKFLOWS, "2"],
+                           capture_output=True, text=True)
+        assert o.returncode == 0
+        assert "no sizing rules" in o.stderr, o.stderr
+        import json
+        j = json.loads(o.stdout)
+        assert len(j["unruled"]) == len(j["outcomes"]), "every release step should be unruled"
+
+
+def test_the_catalog_argument_is_optional():
+    """The skill passed `$WFYAML`, a variable assigned nowhere in the repo, so the command it
+    printed ran as `size_plan.py rec.yaml "" 2 fast` and died on an empty path."""
+    import subprocess
+    import json
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        rec = os.path.join(d, "r.yaml")
+        with io_open(rec, "w") as fh:
+            yaml.safe_dump({"change_id": "GH-1", "workflow": "development",
+                            "findings": dict(SMALL)}, fh)
+        gen = os.path.join(HERE, "size_plan.py")
+        a = subprocess.run([sys.executable, gen, rec, "1"], capture_output=True, text=True)
+        b = subprocess.run([sys.executable, gen, rec, WORKFLOWS, "1"], capture_output=True, text=True)
+        assert a.returncode == 0 and b.returncode == 0, (a.stderr, b.stderr)
+        assert json.loads(a.stdout)["plan"] == json.loads(b.stdout)["plan"]

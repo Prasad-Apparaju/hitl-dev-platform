@@ -340,7 +340,14 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     #    every change file written before this feature is in that state and they are not wrong.
     _rec = _str(change.get("impact_record")).strip()
     if _rec:
-        _path = _rec if os.path.isabs(_rec) else os.path.join(change_dir, _rec)
+        # The pointer is REPO-ROOT relative (".hitl/impact/<id>.yaml") because that is where both
+        # skills write it and what the stub emits. `change_dir` is the directory CONTAINING the
+        # change file, i.e. `<repo>/.hitl`, so joining them looked for `<repo>/.hitl/.hitl/...` and
+        # every right-sized change died on a non-waivable block. The four unit tests passed
+        # `change_dir=<repo root>`, so they encoded the intended semantics and never exercised the
+        # path `run()` actually builds — the defect lived precisely in the gap between them.
+        _root = os.path.dirname(change_dir) if os.path.basename(change_dir) == ".hitl" else change_dir
+        _path = _rec if os.path.isabs(_rec) else os.path.join(_root, _rec)
         if not os.path.isfile(_path):
             findings.append(_f("IMPACT_RECORD", f"change names impact record '{_rec}' but it is not "
                                                 f"there — the plan cannot be shown to follow from anything"))
@@ -356,6 +363,21 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
             if not (isinstance(_body, dict) and (_body.get("findings") or _body.get("rule_outcomes"))):
                 findings.append(_f("IMPACT_RECORD", f"impact record '{_rec}' has no findings and no "
                                                     f"rule outcomes — an empty record is the same as none"))
+            elif isinstance(_body, dict):
+                # The schema said a mismatch is a blocking error and nothing implemented it, so the
+                # sizing evidence could belong to a different change or a different catalog and
+                # certify clean. A plan justified by the wrong record is worse than one justified by
+                # none, because it looks accounted for.
+                _rid = _str(_body.get("change_id")).strip()
+                _cid = _str(change.get("change_id")).strip()
+                if _rid and _cid and _rid != _cid:
+                    findings.append(_f("IMPACT_RECORD", f"impact record is for '{_rid}' but this "
+                                                        f"change is '{_cid}'"))
+                _rwf = _str(_body.get("workflow")).strip()
+                _cwf = _str((change.get("workflow") or {}).get("id")).strip()
+                if _rwf and _cwf and _rwf != _cwf:
+                    findings.append(_f("IMPACT_RECORD", f"impact record was sized against workflow "
+                                                        f"'{_rwf}' but the plan is '{_cwf}'"))
     # No `impact_record` at all is NOT reported. The design says a NAMED record that is missing or
     # empty blocks; it does not say every change must name one. Requiring it would be a larger claim
     # than the design makes and would fire on every change file written before this feature.
@@ -520,16 +542,34 @@ def run(change_path, workflows_path, rollup_path=None, tier=None):
         return [_f("MALFORMED", f"validation crashed on malformed input: {e.__class__.__name__}: {e}")]
 
 
-def _default_workflows():
-    """Locate the criticality catalog. In an onboarded product repo it is co-located with this validator
-    (`ci/first-pass/workflows.yaml`); in the source platform repo it is `ai/shared/workflows.yaml`. Try
-    both so the CLI needs no `--workflows` in either layout."""
+def default_workflows():
+    """Locate the criticality catalog, wherever this is running from.
+
+    THE ONE RESOLVER. There were three, in three tools, and only one matched the layout an onboarded
+    product repo actually has — so `gen_change.py` printed "workflows.yaml not found" and this file
+    silently loaded an empty catalog and reported every skip as UNKNOWN_STEP. A resolution strategy
+    per tool is a guarantee that at least one of them is wrong somewhere.
+
+    Four layouts, most specific first:
+      ci/first-pass/workflows.yaml          an onboarded product repo (init-project.sh puts it here)
+      $CLAUDE_PLUGIN_ROOT/shared/...        the installed plugin
+      <repo>/ai/shared/workflows.yaml       this source repo
+      ./ai/shared/workflows.yaml            a caller running from the source repo root
+    """
     here = os.path.dirname(os.path.abspath(__file__))
+    root = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     for cand in (os.path.join(here, "workflows.yaml"),
-                 os.path.join(here, "..", "..", "ai", "shared", "workflows.yaml")):
-        if os.path.exists(cand):
-            return cand
+                 os.path.join(root, "shared", "workflows.yaml") if root else None,
+                 os.path.join(here, "..", "..", "ai", "shared", "workflows.yaml"),
+                 os.path.join(here, "..", "..", "..", "shared", "workflows.yaml"),
+                 "ai/shared/workflows.yaml"):
+        if cand and os.path.exists(cand):
+            return os.path.abspath(cand)
     return "ai/shared/workflows.yaml"
+
+
+# Kept as the old private name so nothing that imported it breaks.
+_default_workflows = default_workflows
 
 
 if __name__ == "__main__":

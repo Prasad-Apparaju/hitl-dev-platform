@@ -714,3 +714,33 @@ def test_apply_change_no_longer_writes_the_change_file():
     body = skill[skill.index("### Step 3"):]
     rows = [l for l in body.split("\n") if l.strip().startswith("- { n:")]
     assert not rows, "apply-change still carries change-file step rows: %s" % rows[:3]
+
+
+def test_step_requires_agrees_between_catalog_and_runtime():
+    """`derive.py` compares steps and step-level fields; it mentions neither `step_costs` nor
+    `step_requires`, so a block can drift between the two files with every gate green.
+
+    It did: adding the retrospective's cost entry matched `roi_30:` in BOTH blocks and inserted a
+    copied `step_costs` body into `step_requires`, where it sat with no `needs:` key. Found by
+    review, not by any check.
+    """
+    import yaml
+    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    rt = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    for block in ("step_costs", "step_requires"):
+        a, b = cat.get(block) or {}, rt.get(block) or {}
+        assert a == b, "%s differs between the catalog and the runtime: %s" % (
+            block, sorted(set(a) ^ set(b)) or "same keys, different values")
+
+
+def test_the_catalog_resolver_is_the_only_one():
+    """Three tools had three strategies and only one matched an onboarded product repo, so
+    gen_change printed 'workflows.yaml not found' and check_skips silently loaded an empty catalog
+    and reported every skip as UNKNOWN_STEP."""
+    gen = _read(os.path.join(ROOT, "ci", "first-pass", "gen_change.py"))
+    siz = _read(os.path.join(ROOT, "ci", "first-pass", "size_plan.py"))
+    for name, src in (("gen_change.py", gen), ("size_plan.py", siz)):
+        assert "default_workflows" in src, (
+            "%s resolves the catalog its own way again; there must be one resolver" % name)
+    assert 'CLAUDE_PLUGIN_ROOT' not in gen.split("default_workflows")[0][-400:], (
+        "gen_change is resolving the plugin root itself instead of asking the resolver")

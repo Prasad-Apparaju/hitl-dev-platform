@@ -93,9 +93,12 @@ for _p in (".hitl/current-change.yaml",):
                 if _prev.get(_f):
                     _carry[_f] = _prev[_f]
 
-# Catalog: prefer the plugin copy, fall back to the source path.
-for p in (os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT",""), "shared/workflows.yaml"),
-          "ai/shared/workflows.yaml"):
+# Catalog: one resolver, shared with the validator. This used to try two paths, neither of which is
+# where an onboarded product repo keeps the file, so Step 6 failed with "workflows.yaml not found"
+# for every real user while working perfectly in this source repo.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from check_skips import default_workflows as _dw          # noqa: E402
+for p in (_dw(),):
     if os.path.isfile(p):
         _all = yaml.safe_load(open(p))["workflows"]
         if wf_id not in _all:

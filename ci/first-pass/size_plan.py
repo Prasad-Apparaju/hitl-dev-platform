@@ -71,7 +71,9 @@ def why(rule, findings):
     if rule == "always":
         return "applies to every change"
     if rule == "never":
-        return "never required by a rule"
+        # Read by a person deciding whether to put it back, so say what the rule means rather than
+        # that a rule exists. These are the steps that are worth doing and never block shipping.
+        return "not required before this ships"
     form, preds = next(iter(rule.items()))
     fired = [p for p in preds if truth(p, findings)]
     if not fired:
@@ -121,21 +123,30 @@ def size(findings, catalog, costs, tier, resolve_crit):
             # A step with no rules cannot be sized. Failing closed (treating it as needed) is right:
             # the alternative silently drops a step nobody wrote a rule for.
             out.append({"step": key, "applies": True, "needed_now": True,
-                        "because": "no rules declared for this step", "judged": False,
-                        "locked": key in locked})
+                        "because": "no rules declared for this step",
+                        "because_applies": "no rules declared for this step",
+                        "because_needed": "no rules declared for this step",
+                        "judged": False, "locked": key in locked})
             continue
         applies = evaluate(entry.get("engages", "always"), findings)
         needed = evaluate(entry.get("needed_now", "always"), findings)
+        # BOTH sentences are kept, because the reason a step is in is not the reason it is out.
+        # A single `because` field returned the `engages` sentence whenever `needed_now` was false,
+        # so every fast-track exclusion carried an affirmative finding: `packet` was dropped with
+        # the reason "applies to every change", and that string is what a person confirms, what
+        # reaches the roll-up, and what the retrospective reads back as what was left out and why.
+        why_applies = why(entry.get("engages", "always"), findings)
+        why_needed = why(entry.get("needed_now", "always"), findings)
         if key in locked:
             # The floor is not up for rule-based removal. Say so in the same field, so the reason
             # shown to a person is the real one rather than whichever predicate happened to fire.
             applies = needed = True
-            reason = "locked at tier %s" % tier
+            reason = why_applies = why_needed = "locked at tier %s" % tier
         else:
-            reason = why(entry.get("needed_now", "always"), findings) if needed \
-                else why(entry.get("engages", "always"), findings)
+            reason = why_needed if needed else why_applies
         out.append({"step": key, "applies": applies, "needed_now": needed,
-                    "because": reason, "judged": False, "locked": key in locked})
+                    "because": reason, "because_applies": why_applies, "because_needed": why_needed,
+                    "judged": False, "locked": key in locked})
     return out
 
 
@@ -155,7 +166,10 @@ def excluded(outcomes, option):
     declining steps they never looked at.
     """
     field = "needed_now" if option == "fast" else "applies"
-    return [{"step": o["step"], "reason": o["because"]}
+    # The reason must say why it is OUT, not why it applies. A step excluded from the fast track
+    # was excluded by `needed_now`; a step excluded from full scale was excluded by `engages`.
+    reason_field = "because_needed" if option == "fast" else "because_applies"
+    return [{"step": o["step"], "reason": o.get(reason_field) or o["because"]}
             for o in outcomes if not o[field] and not o["locked"]]
 
 
@@ -179,16 +193,27 @@ def main(argv):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from check_skips import load_catalog, resolve_crit
 
-    if len(argv) < 4:
-        print("usage: size_plan.py <impact-record.yaml> <workflows.yaml> <tier> [fast|full]",
+    # `workflows.yaml` is optional and resolved the same way everywhere else. The skill used to pass
+    # a `$WFYAML` variable that was never assigned anywhere in the repo, so the command it printed
+    # ran as `size_plan.py rec.yaml "" 2 fast` and died with FileNotFoundError on an empty path.
+    from check_skips import default_workflows
+    args = [a for a in argv[1:]]
+    if len(args) >= 2 and (args[1].endswith(".yaml") or args[1].endswith(".yml")) \
+            and not args[1].strip().isdigit():
+        rec_path, wf_path, rest = args[0], args[1], args[2:]
+    else:
+        rec_path, wf_path, rest = args[0] if args else "", default_workflows(), args[1:]
+
+    if not rec_path or not rest:
+        print("usage: size_plan.py <impact-record.yaml> [workflows.yaml] <tier> [fast|full]",
               file=sys.stderr)
         return 2
-    rec = yaml.safe_load(open(argv[1]))
-    wf = yaml.safe_load(open(argv[2]))
+    rec = yaml.safe_load(open(rec_path))
+    wf = yaml.safe_load(open(wf_path))
     try:
-        tier = int(argv[3])
+        tier = int(rest[0])
     except ValueError:
-        print("tier must be an integer 0-4, got %r" % argv[3], file=sys.stderr)
+        print("tier must be an integer 0-4, got %r" % rest[0], file=sys.stderr)
         return 2
     if not 0 <= tier <= 4:
         print("tier must be 0-4, got %d" % tier, file=sys.stderr)
@@ -207,13 +232,26 @@ def main(argv):
         print("record names workflow %r; the catalog defines %s" % (workflow, sorted(known)),
               file=sys.stderr)
         return 2
-    catalog = load_catalog(argv[2], workflow)
+    catalog = load_catalog(wf_path, workflow)
     costs = wf.get("step_costs") or {}
     findings = rec.get("findings") or {}
-    option = argv[4] if len(argv) > 4 else "fast"
+    option = rest[1] if len(rest) > 1 else "fast"
 
     outcomes = size(findings, catalog, costs, tier, resolve_crit)
+
+    # `step_costs` covers the development spine only. Sizing another workflow returns every step
+    # with "no rules declared", so fast and full come out BYTE-IDENTICAL and the caller offers a
+    # choice between two copies of the same list. Failing closed is right; doing it silently is not.
+    unruled = [o["step"] for o in outcomes if o["because"] == "no rules declared for this step"]
+    if unruled and len(unruled) == len(outcomes):
+        print("workflow %r has no sizing rules for any of its %d steps, so both options are the "
+              "whole plan. Do not offer a choice here." % (workflow, len(outcomes)), file=sys.stderr)
+    elif unruled:
+        print("%d of %d steps in %r have no sizing rules and are kept: %s"
+              % (len(unruled), len(outcomes), workflow, ", ".join(unruled)), file=sys.stderr)
+
     print(json.dumps({"workflow": workflow, "tier": tier, "option": option,
+                      "unruled": unruled,
                       "plan": plan(outcomes, option),
                       "excluded": excluded(outcomes, option),
                       "outcomes": outcomes}, indent=2))

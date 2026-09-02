@@ -605,11 +605,6 @@ step_requires:
   figma_compare:
     needs: [figma]
     without_it: "comparing the build against a design review nobody did"
-  retro:
-    protects: "You find out whether the plan this change was given was the right one, on the changes most likely to have been sized wrong."
-    forgo_cost: high
-    engages: always
-    needed_now: always
   roi_30:
     needs: [roi]
     without_it: "checking against an ROI estimate that was never made"
