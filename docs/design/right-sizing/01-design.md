@@ -178,7 +178,14 @@ without its producer having run.
 - the tier 3 locked floor goes ten → nine without `impact`, then back to ten with the retrospective
   locked. Tier 1 goes four → five, tier 2 five → six
 - the check that every floor step must appear in the plan stops expecting it
-- `apply-change` loses its step 3, because the work has already happened
+- `impact` is the only step in any workflow that invokes `dev-apply-change`, so that skill stops
+  being reachable from a plan. It becomes the impact analysis rather than being deleted: it already
+  holds the analysis, the challenge stance and the artifact identification, and rebuilding those
+  elsewhere is how tested behaviour quietly stops working
+- `apply-change` Step 7a (fold this change's skips into the durable ledger at the real scope, then
+  resurface overlapping unresolved entries) moves with it. It was anchored at the impact step because
+  that was "the first moment the change knows its own area"; under this design that moment comes
+  earlier, so resurfacing now informs the plan instead of arriving after it
 - every step after it renumbers, so `workflow-steps.md` and anything else citing a step by number
   has to be updated in the same pass
 
@@ -203,9 +210,20 @@ Every workflow gets an impact analysis. Not every workflow gets offered two opti
 
 HITL has eight workflows, from 34 steps down to five. Offering a fast track on a five-step process
 adds a confirmation and a decision to the lightest path in the system, which is the ceremony this
-work exists to remove. So the choice appears where the plan is long enough for the two options to
-differ meaningfully; in practice that is `development` (34) and `platform` (17). Elsewhere the
-analysis runs, and the plan is simply the plan.
+work exists to remove.
+
+**The choice applies to `development` only,** and that is a deliberate limit rather than an
+unfinished one. It is the only workflow with the data the choice needs: an importance rating per
+step, a sentence saying what each protects, and a change file with a ledger to record decisions in.
+
+`platform` is the near miss worth naming. It is 17 steps, so it looks like a candidate, but it is a
+one-time readiness checklist rather than a change: no `crit` on any step, no `step_costs`, and its
+progress lives in `docs/04-operations/platform-readiness.yaml`, not a change file. It also already
+answers "we are not doing this one" with a waiver carrying evidence, which is stronger than a skip
+carrying a reason. Giving it a fast track would be a second way to say the same thing, and the worse
+one.
+
+Elsewhere the analysis runs and the plan is simply the plan.
 
 ### Three sets, two predicates
 
@@ -271,19 +289,38 @@ it in the same pass. Some will be wrong at first, and step 6 is how they get cor
 
 ## 5. You adjust
 
-The list is tickable. A step put there by the tier floor cannot be unticked. Anything else can.
+**This is not a new mechanism. It is First Pass, with a better way of deciding what to pre-select.**
 
-Two ways a step leaves the plan, and they are recorded differently because they are different acts:
+`start-change` Step 4b already does the hard part: it presents steps pre-selected with a one-line
+reason filled in, takes **one confirmation for the whole set**, writes nothing until the human
+confirms, and puts that person's name on every resulting record. Today its pre-selection logic is
+"tier 0 or 1, so decline the ceremony steps". Right-sizing replaces that logic with "here is what
+this change reaches, so here is what it needs".
 
-| | recorded as |
-|---|---|
-| **the fast track did not include it** | HITL's decision, with the rule that decided it as the reason. No prompt. |
-| **you unticked it** | your decision, with a disposition and your reason, asked at that moment |
+Everything else stays exactly as it is: the `skips:` ledger, `first_pass`, `check_skips.py`,
+`PLAN_PRUNED`, `LEDGER_STEPS`, and the rule that the actor is the person who confirmed and never the
+agent. Nothing new to certify, and no second ledger.
 
-Unticking a step that `needed_now` put in opens one short prompt asking which of the three (a thin
-version now, later with a ticket, or not at all) and why. That is what the pull request checker
-reads, and it refuses to pass without both. Asking in the moment costs an interruption per removal,
-which is bearable only because the fast track is usually right.
+That also disposes of a problem an earlier draft created. Writing fast-track omissions as "HITL's
+decision, no prompt" was wrong twice over: it contradicts 4b's actor rule, and the validator has no
+clean shape for a step that is neither present nor recorded. One confirmation records the lot, with
+the rule that dropped each step as its reason. A tier-1 fast track does not ask for twenty-four
+reasons; it asks once.
+
+The list is tickable. A step the tier floor put there cannot be unticked. Anything else can, and
+unticking something the rules put in opens one short prompt: which of the three (a thin version now,
+later with a ticket, or not at all) and why. That is the disposition the ledger already carries.
+
+### First Pass stops being opt-in
+
+It is the default. Every change is shown a proposal and confirms or adjusts it; full scale is simply
+the answer set where nothing is dropped.
+
+This closes the third root cause named in #97: the one feature built for this problem had to be
+asked for by someone who already knew it existed. The cost is that `first_pass: true` lands on
+nearly every change, so the flag stops distinguishing much. It does not weaken anything: the flag
+gates enforcement, so always-true means enforcement always engages. `FP_UNDECLARED` stays, because
+its job is catching a driver that forgets to write the flag, and that failure is still possible.
 
 Locked steps are shown, greyed, with their reason next to them. Hiding them would mean you cannot
 see what HITL decided on your behalf.

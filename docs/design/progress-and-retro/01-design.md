@@ -3,10 +3,15 @@
 **Status:** agreed, ready to build
 **Issues:** progress updates extend #93 · the retrospective is #98
 
-Two additions, kept in one design because they share a voice, a destination and an attribution line.
+Two additions, kept in one design because they share a voice and a source: both are written from
+records that already exist, in the blameless language HITL already defines and lints.
 
-- a **progress update**, refreshing the current-state block while work is open
-- a **retrospective** written once, when the change closes
+- a **progress update**, refreshing the current-state block on the issue while work is open
+- a **retrospective** written once when the change closes, kept locally unless someone asks for it
+
+They do **not** share a destination, and that difference is deliberate. The update is for people, so
+it is published and needs approving. The retrospective is mostly for the machinery that corrects the
+sizing rules, so it is not published and needs nothing.
 
 ## When each fires
 
@@ -125,8 +130,8 @@ someone is in a hurry never corrects anything. Being floor is the only thing tha
 
 The cost is real and worth stating: the tier-1 locked set goes from four steps to five. That is
 process added to the lightest path, which this work otherwise exists to reduce. It is defensible
-only because the retrospective collects nothing and asks nobody anything. It is generated from
-records already written by the time it runs.
+because the retrospective genuinely costs no one anything: it collects nothing, publishes nothing,
+and asks nobody to approve anything. See below.
 
 ### What it reads
 
@@ -142,9 +147,27 @@ Nothing new is collected. All of it is already written down by the time the chan
 | lines flagged vague and accepted anyway | where the agreement was known to be soft |
 | the impact analysis record, in its own file | what was found, and what each rule concluded from it |
 
+### Where it goes
+
+**Written locally, published only if someone asks.** It lands in the change record, and its readers
+are the resurfacing mechanism and the rule corrections, both of which are machinery rather than
+people.
+
+That is what makes floor-at-every-tier honest. An earlier draft claimed the retrospective "asks
+nobody anything" and then gave it an approval line and a destination on the issue, which under the
+guarantee three sections above needs a reader and an approver. Both could not be true. Keeping it
+local makes the claim true rather than contradicted: nothing goes out, so nothing needs approving,
+so a tier-1 one-line fix does not end with a confirmation prompt.
+
+Anyone who wants it on the issue asks for it. That publish is an ordinary publish: it carries the
+attribution line, and someone reads it first.
+
+The cost is a document nobody reads unless they go looking. That is accepted, because its primary
+job is feeding the loop that corrects the sizing rules, and that reader never gets bored.
+
 ### What it produces
 
-Three short parts, in the same blameless voice, with the same attribution line.
+Three short parts, in the same blameless voice.
 
 **What happened.** What was asked, what shipped, what was left out.
 
