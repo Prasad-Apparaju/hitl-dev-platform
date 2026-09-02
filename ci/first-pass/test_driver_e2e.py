@@ -6,10 +6,11 @@ Why this file exists: every unit in ci/first-pass/ passed while the driver never
 reported clean on every change. Unit coverage cannot catch that — the defect lives in the seam
 between the skill's generator and the validator, and nothing exercised the seam.
 
-So these tests run the generator **as it actually ships**: extracted verbatim from the fenced
-heredoc in `dev-start-change`'s SKILL.md. If someone edits that block and breaks the contract,
-this fails. If someone rewrites the skill so the block can no longer be found, this fails too,
-which is the point — a driver that cannot be located cannot be trusted.
+So these tests run the generator **as it actually ships**. It used to live as a heredoc inside
+`dev-start-change`'s SKILL.md and was extracted verbatim; since #97 it is a real file at
+ci/first-pass/gen_change.py, so they run that. The seam is still what matters, so
+`test_the_skill_actually_invokes_the_generator` asserts the skill calls it: a generator that is
+correct and unreferenced is the same defect in a new place.
 """
 import io
 import json
@@ -30,19 +31,33 @@ import check_skips as C  # noqa: E402
 CATALOG = C.load_catalog(os.path.join(ROOT, "ai", "shared", "workflows.yaml"))
 
 
-def _generator_source():
-    """The Step 6 generator, lifted verbatim out of the shipped skill."""
-    text = io.open(SKILL, encoding="utf-8").read()
-    m = re.search(r"<< 'PY'.*?\n(.*?)\nPY\n", text, re.S)
-    assert m, "Step 6 generator heredoc not found in start-change/SKILL.md"
-    return m.group(1)
+GENERATOR = os.path.join(HERE, "gen_change.py")
 
 
 @pytest.fixture(scope="module")
-def gen(tmp_path_factory):
-    p = tmp_path_factory.mktemp("driver") / "gen.py"
-    p.write_text(_generator_source(), encoding="utf-8")
-    return str(p)
+def gen():
+    assert os.path.isfile(GENERATOR), "ci/first-pass/gen_change.py is gone"
+    return GENERATOR
+
+
+def test_the_skill_actually_invokes_the_generator():
+    """The generator being correct is half of it; the skill having to call it is the other half.
+
+    This file exists because every unit passed while the driver never emitted `first_pass`. Moving
+    the generator into its own file makes it testable and makes it possible for the skill to stop
+    calling it, which would be the same defect wearing different clothes.
+    """
+    text = io.open(SKILL, encoding="utf-8").read()
+    assert "gen_change.py" in text, (
+        "start-change no longer references the generator. A change file nothing writes is a gate "
+        "nothing satisfies.")
+    # Anchored to the start of a line so a COMMENTED-OUT call does not satisfy it. The first
+    # version of this assertion matched `# "$PY" "$GEN"` and passed while the call was disabled,
+    # which is the failure this whole file exists to catch.
+    assert re.search(r'^\s*"\$PY"\s+"\$GEN"', text, re.M), (
+        "the generator is named but never executed on a live line — assert the call, not the mention")
+    assert "shared/ci/first-pass/gen_change.py" in text, (
+        "no installed-plugin fallback path: this would work from source and fail for every user")
 
 
 def run_gen(gen, tmp_path, tier=2, choices=None, set_by="", reason="", wf="development"):
