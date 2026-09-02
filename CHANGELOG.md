@@ -4,6 +4,32 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.9.1] — 2026-09-02
+
+`/hitl:dev-retro` did not run for anyone who installed the plugin. 2.9.0 shipped it with
+`${CLAUDE_PLUGIN_ROOT:-.}`, and `.` is not a resolution — it is a wrong default. In a product repo
+the generator resolved to `./shared/tools/retro/retro_records.py`, which is not there, so a floor
+step that runs on every change exited 1. This repo did not see it because it runs from source.
+
+### Fixed
+
+- **`dev-retro` resolves the plugin root the way `dev-update` does**, in both of its bash blocks,
+  instead of defaulting to the working directory.
+- **`getting-started.md` said 56 commands over a 57-command install.** Adding a skill without
+  fixing the count made the guide wrong about its own subject.
+
+### Changed
+
+- **The plugin-root guard catches a literal default wherever it appears**, not only immediately
+  before a `/`. The value could be laundered through a variable first — `ROOT="${CLAUDE_PLUGIN_ROOT:-.}"`
+  and then `"$ROOT/shared/x"` — which is the same defect one indirection away, and is how this one
+  shipped past a guard written for exactly it. Third hole closed in that check.
+- **`build.sh` fails when a shipped skill names a file the package does not contain.** 2.9.0 built
+  cleanly with `skills/dev-retro/SKILL.md` present and its generator absent, because the build
+  allowlists tool directories by name and nothing reported the omission.
+
+---
+
 ## [2.9.0] — 2026-09-02
 
 Two features, both about the same complaint: HITL asked for too much on small changes, and never

@@ -50,7 +50,7 @@ The document is a pure function of the records. Do not hand-write it — that is
 what actually happened.
 
 ```bash
-ROOT="${CLAUDE_PLUGIN_ROOT:-.}"
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 GEN="tools/retro/retro_records.py"
 [[ -f "$GEN" ]] || GEN="$ROOT/shared/tools/retro/retro_records.py"
 [[ -f "$GEN" ]] || { echo "retro generator not found — run /hitl:dev-update."; exit 1; }
@@ -116,8 +116,9 @@ The unresolved items already live in the skip ledger, which resurfaces them at t
 touching this area. Confirm the roll-up is current rather than writing a second copy:
 
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 RS="ci/first-pass/resurface.py"
-[[ -f "$RS" ]] || RS="${CLAUDE_PLUGIN_ROOT:-.}/shared/ci/first-pass/resurface.py"
+[[ -f "$RS" ]] || RS="$ROOT/shared/ci/first-pass/resurface.py"
 python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
 ```
 

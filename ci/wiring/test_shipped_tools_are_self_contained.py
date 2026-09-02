@@ -1998,12 +1998,20 @@ def test_no_shipped_bash_block_depends_on_an_unset_plugin_root():
             # unnoticed (a silent no-op that never refreshed a project's validators); and it
             # whitelisted any `${CLAUDE_PLUGIN_ROOT:-X}`, but `:-.` is not a resolution, it is a
             # wrong default -- Step 4.5 crashed on every plugin-onboarded repo because of it.
-            pat = r"\$(?:\{CLAUDE_PLUGIN_ROOT(?::-(?P<dflt>[^}]*))?\}|CLAUDE_PLUGIN_ROOT)/"
+            # Third hole, found in 2.9.0's dev-retro: requiring a trailing `/` meant the value
+            # could be laundered through a variable first —
+            #   ROOT="${CLAUDE_PLUGIN_ROOT:-.}"   ...   "$ROOT/shared/x"
+            # — which is the same wrong default one indirection away, and shipped unnoticed. So a
+            # literal default is now an offender wherever it appears, slash or no slash.
+            pat = ("\\$(?:\\{CLAUDE_PLUGIN_ROOT(?::-(?P<dflt>[^}]*))?\\}|CLAUDE_PLUGIN_ROOT)/"
+                   "|\\$\\{CLAUDE_PLUGIN_ROOT:-(?P<lit>(?![$}])[^}]*)\\}")
             # Comments explaining the defect are not the defect.
             code = "\n".join(l for l in body.split("\n") if not l.lstrip().startswith("#"))
             for m in re.finditer(pat, code):
                 if m.groupdict().get("dflt") == "":
                     continue        # ${CLAUDE_PLUGIN_ROOT:-} — empty default, then resolved below
+                if (m.groupdict().get("dflt") or "").startswith("$("):
+                    continue        # ${CLAUDE_PLUGIN_ROOT:-$(...)} — resolved inline, the dev-update idiom
                 offenders.append("%s (fence at line %d): %s"
                                  % (os.path.relpath(path, PLUGIN_REPO), line_no,
                                     code[max(0, m.start() - 30):m.end() + 30].strip()))

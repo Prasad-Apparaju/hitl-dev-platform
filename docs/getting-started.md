@@ -58,7 +58,7 @@ Claude will offer this itself when you start work. Run it directly when you'd ra
 
 You don't need to know which workflow or tier is right. It asks, and it explains its reasoning.
 
-**There are 56 HITL commands. These are the ones worth knowing:**
+**There are 57 HITL commands. These are the ones worth knowing:**
 
 | Command | When |
 |---|---|
@@ -69,7 +69,7 @@ You don't need to know which workflow or tier is right. It asks, and it explains
 | `/hitl:dev-preferences` | HITL is too wordy or too terse for you |
 | `/hitl:dev-draft-for` | Writing a message for one particular person |
 
-The other 50 are for specific roles and moments. HITL invokes what it needs. Don't memorize them.
+The other 51 are for specific roles and moments. HITL invokes what it needs. Don't memorize them.
 
 ---
 
