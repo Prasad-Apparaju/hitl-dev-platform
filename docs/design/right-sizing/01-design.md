@@ -8,16 +8,17 @@
 flowchart TB
   A["1. you say what you want"] --> B["2. HITL restates it, you confirm"]
   B --> C["3. impact analysis runs"]
-  C --> D["4. fast track or full scale"]
+  C --> D["4. tier, then fast track or full scale"]
   D --> E["5. you adjust"]
   E --> F["6. build"]
+  F -.->|"something is discovered"| D
   classDef pick fill:#d4edda,stroke:#3a3
   classDef gen fill:#e7e0f5,stroke:#75a
   class D,E pick
   class C gen
 ```
 
-Six steps, one conversation. The plan does not exist until step 3 has run.
+Six steps. The plan does not exist until step 3 has run, and it is not final once it does.
 
 ## 1. You say what you want
 
@@ -74,15 +75,12 @@ Every definition-of-done line must name at least one criterion that satisfies it
 stops progress before Build begins, until it either gets a criterion or is explicitly marked as not
 verifiable in this change, with a reason and a name.
 
-On a one-line fix that is one line pointing at one criterion, and it costs nothing. It only bites
-when the definition of done is long, which is exactly when the gap matters.
-
 The link is read in the other direction at the end. QA already verifies each criterion at the QA
 post-handoff verification step and can block promotion. Because the criteria point back, those
 results report against the definition of done rather than against a list of criteria the requester
 never wrote: four of the five lines are verified, one was never tested.
 
-### Where it is written
+### Where the requirement is written
 
 | where | when |
 |---|---|
@@ -90,14 +88,13 @@ never wrote: four of the five lines are verified, one was never tested.
 | the change file | always |
 | the PRD | appended when the area has one; created only when the workflow is a feature |
 
-A fix or a chore never creates a PRD.
+A fix or a chore never creates a PRD. Both destinations depend on which area owns the change, so
+they are written after step 3 answers that, even though the text is agreed here.
 
 ## 3. Impact analysis runs
 
 **Impact analysis is not a step in the plan. It is the thing that produces the plan.** It always
 runs, it cannot be ticked off, and there is no plan yet to put it in.
-
-It answers two questions:
 
 **Where does this fit.** Which area of the system manifest owns it, and which workflow applies.
 
@@ -106,20 +103,30 @@ demo script or a CI config, or is the manifest missing an area? Outside means th
 locked floor and nothing else. Missing means HITL will not pretend it sized correctly, and offers
 full scale or asks you to name the area.
 
-**What does it affect.** Read top-down, cheapest source first:
+**What does this change reach.** Read top-down, cheapest source first: the manifest entry, then the
+design docs it points at, then source, and only where the declared picture is thin or the change
+clearly goes beyond it.
 
-| from the manifest | tells us |
+The distinction that matters is between what the *area* has and what this *change* touches. An area
+having tests is not a fact about your change. Your change altering behaviour those tests cover is.
+Rules read the second kind, never the first, for the reason in step 4.
+
+### What it writes
+
+Its own file, referenced from the change file. The change file names it; if the named record is
+missing or empty, that blocks. A second artifact is only safe when something notices its absence,
+and data that quietly stops being written is this repo's recurring defect.
+
+The record holds three things:
+
+| | |
 |---|---|
-| `files` | what code is in scope |
-| `lld` | which design doc describes it |
-| `facade_apis`, `boundary_entities` | what other code can see |
-| `depends_on` | who breaks if this changes |
-| `events_emitted`, `events_consumed` | what it sends and listens for |
-| `tests` | what covers it |
+| the findings | which area owns it or none, what this change reaches, what depends on it, which interfaces and events are involved, what tests cover the behaviour being changed |
+| provenance, per finding | manifest, design doc, or source, so a hand-written field is never presented as if it came from the code |
+| what the rules concluded | which step each finding put in or left out, and why |
 
-Then the design docs the manifest points at, then source, and only where the declared picture is
-thin or the change clearly goes beyond it. Say which of the three the answer came from, so a finding
-resting on a hand-written field is not presented as if it came from the code.
+The third part is what makes the retrospective's feedback loop possible. You cannot ask whether a
+rule was right if you never recorded what it decided.
 
 ### What this costs elsewhere
 
@@ -132,105 +139,141 @@ resting on a hand-written field is not presented as if it came from the code.
 - every step after it renumbers, so `workflow-steps.md` and anything else citing a step by number
   has to be updated in the same pass
 
-## 4. Fast track or full scale
+## 4. Tier, then fast track or full scale
 
-There are three sets, not two:
+### The tier is decided here, once
 
-| | |
-|---|---|
-| every step the workflow defines | a list, not an offer |
-| **the ones that apply to this change** | this is **full scale** |
-| **the ones needed now** | this is **fast track** |
+Not at intake. HITL proposes a tier from what impact analysis found, and a human confirms or
+corrects it exactly as before, with the same attribution rules.
+
+This is the root fix for the change that started this. `FIRECRAWL_API_KEY` in an issue title is what
+tiered a shell script up to a three and a half hour path. Impact analysis would have found a file in
+no area, with no dependents and no callers. The evidence existed; it just arrived after the decision
+that needed it. Deciding once, on evidence, means a word in the issue text can no longer outvote
+what the code says.
+
+Anything that reads the tier before the plan exists has to be found and checked as part of this.
+
+### Three sets, two predicates
+
+| | | decided by |
+|---|---|---|
+| every step the workflow defines | a list, not an offer | the catalog |
+| the ones that **apply** to this change | this is **full scale** | `engages` |
+| the ones **needed now** | this is **fast track** | `needed_now` |
 
 Full scale is not every step. Offering a Figma comparison on a backend change, or a training plan on
 a one-line fix, makes the thorough option look stupid and teaches people to distrust it.
 
-Both are shown, with the difference between them, and one line saying which is recommended and why.
-The recommendation is advice. Taking full scale instead is not recorded.
+**`engages` answers: does this step make sense here at all?** A Figma comparison needs interface
+files in the change.
 
-### How a step is judged not to apply
+**`needed_now` answers: does it have to happen before this ships?** A step is in the fast track when
+impact analysis found something *this change reaches* that the step protects. Three dependent areas
+found, integration is in. Nothing depends on it, integration is out. A published interface is
+touched, compatibility is in.
 
-Rules first, judgement where they are silent.
-
-Each step's rule is checked against what impact analysis actually found. Where a rule answers, that
-is the answer, and it is testable. Where no rule fits, HITL decides and says so in one line, such as
-"dropping the Figma comparison, this change touches no interface files." The override is shown
-rather than buried, so a bad call gets argued with and becomes a rule next time.
+Both read the change's reach, never the area's paperwork. That distinction is the whole point. Rules
+keyed to whether an area *has* a design doc, dependents and tests give identical answers for every
+change to that area, so a one-line fix in the best-documented part of the system would draw the
+longest plan, and documenting an area would make every future change to it more expensive. A new
+feature in a new area would draw almost nothing, because it has no history to match on. Both
+backwards.
 
 ### What is locked
 
-Two things, and nothing else:
-
 - **The tier floor**, plus the test-first cycle. Four steps at tier 1, five at tier 2, nine at tier 3
-  once `impact` leaves the plan. These cannot be unticked here.
-- **Anything a rule put in.** These can be unticked, but not with one click. See step 5.
+  once `impact` leaves the plan. These cannot be unticked.
+- **Anything `needed_now` put in.** These can be unticked, but not with one click. See step 5.
 
 Risk is handled by the tier and by nothing else. A risky change is a high tier, a high tier locks
 more, and the gap between the two options closes on its own. There is no second list of dangerous
-categories, because a rule matching the word `API_KEY` is what turned a one-line shell script edit
-into a three and a half hour path in the first place.
+categories, because a rule matching the word `API_KEY` is what caused this in the first place.
 
-### The rules
+Both options are shown with the difference between them, and one line saying which is recommended
+and why. The recommendation is advice. Taking full scale instead is not recorded.
 
-Each step carries three lines of data in the catalog. Two exist already and stay as they are:
+### Where a rule is silent
 
-| line | what it is | example |
-|---|---|---|
-| `protects` | the sentence shown next to the step | "catches an interface change that breaks a caller" |
-| `forgo_cost` | high, medium or low; orders the steps that are not in the fast track | `high` |
-| `engages` | **the rule**: what must be true for this step to apply | needs rewriting |
+Rules first, judgement second. Where a rule answers, that is the answer, and it is testable. Where
+no rule fits, HITL decides and says so in one line, such as "dropping the Figma comparison, this
+change touches no interface files." The override is shown rather than buried, so a bad call gets
+argued with and becomes a rule next time.
 
-`engages` exists on all 38 steps but does not yet do the job. Twenty-one development steps say
-`always`, which puts them in every plan and so decides nothing. Five key off profiles, which never
-reach the runtime, so they can never fire. Four match folder patterns, which is guesswork about what
-a path means. Only three key off a real fact about the change, and one off a tag.
+### The catalog data
 
-Every one gets rewritten in a single pass, to key off what impact analysis found rather than what a
-path is called: does this area have a design doc, does anything depend on it, does it publish an
-interface, does it emit events, does it have tests, did the analysis have to read source to answer.
-Some will be wrong at first, and real changes will correct them.
+Each step carries three lines. Two exist already and are unchanged:
+
+| line | what it is |
+|---|---|
+| `protects` | the sentence shown next to the step |
+| `forgo_cost` | high, medium or low; orders the steps that are not in the fast track |
+| `engages` + `needed_now` | the two rules above |
+
+`engages` exists on all 38 steps and does not yet do its job. Twenty-one development steps say
+`always`, which decides nothing. Five key off profiles, which never reach the runtime, so they can
+never fire. Four match folder patterns, which is guesswork about what a path means. Only three key
+off a real fact, and one off a tag. Every one gets rewritten, and `needed_now` is authored alongside
+it in the same pass. Some will be wrong at first, and step 6 is how they get corrected.
 
 ## 5. You adjust
 
 The list is tickable. A step put there by the tier floor cannot be unticked. Anything else can.
 
-Unticking a step that a rule put in opens one short prompt, at that moment, asking two things:
+Two ways a step leaves the plan, and they are recorded differently because they are different acts:
 
-- which of the three: a thin version now, later with a ticket, or not at all
-- why
+| | recorded as |
+|---|---|
+| **the fast track did not include it** | HITL's decision, with the rule that decided it as the reason. No prompt. |
+| **you unticked it** | your decision, with a disposition and your reason, asked at that moment |
 
-That is what the pull request checker reads, and it refuses to pass without both. Asking in the
-moment rather than collecting reasons at the end means the answer is given while the thinking is
-fresh, at the cost of an interruption per removal.
+Unticking a step that `needed_now` put in opens one short prompt asking which of the three (a thin
+version now, later with a ticket, or not at all) and why. That is what the pull request checker
+reads, and it refuses to pass without both. Asking in the moment costs an interruption per removal,
+which is bearable only because the fast track is usually right.
 
 Locked steps are shown, greyed, with their reason next to them. Hiding them would mean you cannot
 see what HITL decided on your behalf.
 
-## 6. Build
+## 6. Build, and re-plan as you learn
 
-The change file records the plan and everything removed, with who and why. The normal flow continues.
+**The plan is not final.** Implementation and testing discover things the plan did not account for,
+and the plan changes when they do.
+
+HITL proposes a **delta**, never the whole list again: what it now thinks should be added, and the
+finding that caused it. You deselect from the delta the same way, must-haves stay locked, removals
+are recorded the same way.
+
+A step the fast track left out is not gone. It is not-yet, and it comes back when a finding calls
+for it.
+
+### When it interrupts
+
+| | |
+|---|---|
+| **a finding makes a dropped step load-bearing** | raised immediately; carrying on is the expensive mistake |
+| **everything else** | accumulates and is put to you at the next phase move, as one small delta |
+
+This is also what makes the rest of this design tolerable. Being approximately right at step 4 is
+good enough when step 4 can happen again. Most of the risk in a wrong fast track is not that
+something is missed, but that it is missed permanently.
 
 ## What gets deleted
 
-The whole 2.9.0 selection attempt: `ci/first-pass/rank.py`, `ci/first-pass/plan_select.py`,
-`ci/first-pass/test_rank.py`, `ai/claude/start-change/selection.md`, and the intake changes that
-call them. Steps 4 and 5 are built clean.
-
-The catalog data stays. Only the code that scored with it goes.
-
-The version rolls back to 2.8.0, which is what is actually published.
+Already done, in `8561080`: `rank.py`, `plan_select.py`, `test_rank.py`, `selection.md`,
+`right-sizing.md` and `first-pass-choices.md`, the intake changes that called them, and the version
+stamps. The catalog data was kept and is guarded by two wiring tests.
 
 ## What we are watching after this ships
 
 **The friction is back on the light path.** Asking for a reason at each untick is the same cost named
 in #97: the cheap path asks for paperwork while the expensive one asks for nothing. It only stays
-cheap if the fast track is right often enough that unticking is rare. If the rewritten rules are
-poor, this shows up as people quietly taking full scale because it asks fewer questions.
+cheap if the fast track is right often enough that unticking is rare. If the rules are poor, this
+shows up as people quietly taking full scale because it asks fewer questions.
 
 **Every change now runs an impact analysis up front.** That is what it takes for the plan to be
-built on what is actually there. If it turns out to be slow on small changes, the fix is to make the
-top-down read stop earlier, not to make it skippable, because a skippable plan-generator leaves no
-plan.
+built on what is actually there. If it is slow on small changes, the fix is to make the top-down read
+stop earlier, not to make it skippable, because a skippable plan-generator leaves no plan.
 
 ## Not in scope
 

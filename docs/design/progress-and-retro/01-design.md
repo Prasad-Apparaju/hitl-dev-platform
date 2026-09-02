@@ -44,6 +44,10 @@ gates for a week and the block goes stale with nothing to nudge it.
 It runs on your machine, during a session. At the start of a session on an open change, HITL checks
 when the block was last refreshed. Two days or more, and one is due.
 
+Same scope as #93: tier 2 and above. A tier 0 or tier 1 change does not accumulate enough thread to
+need a current-state block, and refreshing one on a two-line fix is the ceremony this whole effort
+exists to remove.
+
 There is no clock and nothing scheduled. HITL exists only while someone is running it, so a change
 nobody opens gets no updates. That is a real limit, not an oversight: silence in the issue means
 nobody has worked on it, which is information, but it is information nobody is told about.
@@ -93,14 +97,20 @@ a person's name is the thing this line exists to prevent.
 
 ## The retrospective
 
-A step in the catalog, at the end. It gets a criticality and a rule, and it falls out of the fast
-track when it does not apply, like every other step.
+A step in the catalog, at the end. Unlike every other step, it does **not** fall out of the fast
+track.
+
+That is deliberate and it is the one exception in the design. The retrospective's third part is what
+corrects right-sizing's rules, and those rules are least trustworthy on exactly the fast-tracked
+changes. A feedback loop that switches itself off whenever the thing it corrects takes the short
+path never corrects anything. So it applies always, and its cost is kept low by having nothing to
+collect: everything it reads is already written down.
 
 ### What it reads
 
-Nothing new is collected. The change file already holds all of it:
+Nothing new is collected. All of it is already written down by the time the change closes:
 
-| from the change | what it gives |
+| where it comes from | what it gives |
 |---|---|
 | the requirement and its definition of done | what was asked for |
 | the plan, and which option was taken | what was agreed to do |
@@ -108,6 +118,7 @@ Nothing new is collected. The change file already holds all of it:
 | the acceptance criteria and QA's results | whether each line was met |
 | review records | what was found and what was fixed |
 | lines flagged vague and accepted anyway | where the agreement was known to be soft |
+| the impact analysis record, in its own file | what was found, and what each rule concluded from it |
 
 ### What it produces
 
@@ -119,9 +130,11 @@ Three short parts, in the same blameless voice, with the same attribution line.
 verified. This feeds the resurfacing that already exists, so the next change touching this area
 hears about it rather than the work disappearing at close.
 
-**How the sizing turned out.** Was the fast track the right call. Did a dropped step turn out to
-matter. Was a criterion untestable in practice. This is the part that corrects the rules, and the
-design for right-sizing already admits those rules will be wrong at first.
+**How the sizing turned out.** The impact record says what each rule concluded and why. The change
+says what actually happened. Comparing them answers: did a step the fast track dropped come back
+during build, did a step it kept turn out to be unnecessary, was a criterion untestable in practice.
+This is the part that corrects the rules, and right-sizing already admits they will be wrong at
+first.
 
 ### The boundary
 
@@ -132,9 +145,9 @@ grading its own homework. HITL already holds this line elsewhere: `hitl:agentic-
 field of the manifest that the #10 validators check, for exactly this reason.
 
 That precedent is enforced, not merely stated. The intake certifies the boundary in code, with
-`records.handoff_authors_no_manifest_field(handoff) == set()`. This one should be checked the same
-way rather than left as a sentence in a design doc, because a boundary nobody tests is a boundary
-that erodes on the first convenient afternoon.
+`records.handoff_authors_no_manifest_field(handoff) == set()`. This one is checked the same way, not
+left as a sentence in a design doc, because a boundary nobody tests is a boundary that erodes on the
+first convenient afternoon.
 
 So the third part produces a note that a person reads and acts on. Changing a rule is a change, and
 goes through the normal flow like any other.
@@ -143,9 +156,9 @@ goes through the normal flow like any other.
 
 Separate features. Right-sizing decides which steps run. This adds two things that run.
 
-They meet in three places: the retrospective is a new catalog step and so needs a criticality and a
-rule; its third part is the feedback loop that corrects right-sizing's rules; and both write to the
-issue that the requirement was written into.
+They meet in three places: the retrospective is a new catalog step, and the one step whose rule is
+always true; its third part is the feedback loop that corrects right-sizing's rules, which is why it
+cannot be allowed to drop out; and both write to the issue that the requirement was written into.
 
 ## Not in scope
 
