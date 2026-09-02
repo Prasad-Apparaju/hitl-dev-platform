@@ -1,10 +1,70 @@
-schema_version: '2.0'
-change_id: none
-status: no-change-in-progress
-note: >-
-  GH-98-release-2.9.0 was abandoned, not shipped. Three adversarial review rounds
-  found the selection implementation unsound; the code was deleted and the version
-  rolled back to 2.8.0 in 8561080. The change_id also collided: it assumed an issue
-  number that did not exist at the time, and #98 is now the closing-retrospective
-  issue, so the identifier pointed at unrelated work.
-  Right-sizing continues as #97 against docs/design/right-sizing/01-design.md.
+schema_version: "2.0"
+hitl_version: "2.8.0"
+
+change_id: "GH-100-command-surfacing"
+tier: 1
+tier_set_by: "pappar"
+tier_reason: "statusline plus per-skill next-step prose; no gate behaviour changes"
+status: planning
+expected_branch: "main"
+
+source_artifacts:
+  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/100
+  hld: n/a
+  lld: n/a
+
+allowed_paths: &id001
+- ai/
+- ci/
+- tools/
+
+manifest:
+  domains:
+  - name: command-surfacing
+    paths: *id001
+
+workflow:
+  id: "development"
+  version: "2.8.0"
+  total: 31
+  steps:
+    - { n: "1", key: "issue", label: "Issue", phase: "Requirements", status: current, command: "manual" }
+    - { n: "2", key: "figma", label: "Figma", phase: "Requirements", status: open, command: "manual" }
+    - { n: "3", key: "impact", label: "Impact", phase: "Design", status: open, command: "dev-apply-change" }
+    - { n: "4", key: "roi", label: "ROI", phase: "Design", status: open, command: "guided" }
+    - { n: "5", key: "docs", label: "Docs", phase: "Design", status: open, command: "dev-generate-docs" }
+    - { n: "6", key: "iac", label: "IaC", phase: "Design", status: open, command: "ops-apply-iac" }
+    - { n: "7", key: "test_plan", label: "Tests", phase: "Design", status: open, command: "qa-plan-tests" }
+    - { n: "8", key: "training", label: "Train", phase: "Design", status: open, command: "guided" }
+    - { n: "9", key: "packet", label: "Packet", phase: "Design", status: open, command: "manual" }
+    - { n: "9a", key: "adv_design", label: "AdvDsgn", phase: "Design", status: open, command: "dev-adversarial-review" }
+    - { n: "10", key: "red", label: "RED", phase: "Build", status: open, command: "dev-tdd" }
+    - { n: "11", key: "test_review", label: "TstRvw", phase: "Build", status: open, command: "qa-review-tests" }
+    - { n: "12", key: "design_plus", label: "Dsn+", phase: "Build", status: open, command: "dev-tdd" }
+    - { n: "13", key: "verify_red", label: "VfyRED", phase: "Build", status: open, command: "manual" }
+    - { n: "14", key: "green", label: "GREEN", phase: "Build", status: open, command: "dev-tdd" }
+    - { n: "15", key: "verify_green", label: "VfyGRN", phase: "Build", status: open, command: "manual" }
+    - { n: "16", key: "refactor", label: "Refact", phase: "Build", status: open, command: "manual" }
+    - { n: "17", key: "conventions", label: "Conv", phase: "Build", status: open, command: "dev-check-conventions" }
+    - { n: "17a", key: "adv_code", label: "AdvCode", phase: "Build", status: open, command: "dev-adversarial-review" }
+    - { n: "18", key: "review1", label: "Rvw1", phase: "Verify", status: open, command: "dev-review-lld-adherence" }
+    - { n: "19", key: "review2", label: "Rvw2", phase: "Verify", status: open, command: "dev-review-security" }
+    - { n: "19a", key: "arch_review", label: "ArchRvw", phase: "Verify", status: open, command: "architect-review-code" }
+    - { n: "20", key: "rerun", label: "Rerun", phase: "Verify", status: open, command: "manual" }
+    - { n: "21", key: "reconcile", label: "Recncl", phase: "Verify", status: open, command: "dev-generate-docs" }
+    - { n: "22", key: "qa_verify", label: "QAVfy", phase: "Verify", status: open, command: "qa-verify-quality" }
+    - { n: "23", key: "impact_brief", label: "ImpBrf", phase: "Assess", status: open, command: "dev-impact-brief" }
+    - { n: "24", key: "rollout", label: "Rollout", phase: "Assess", status: open, command: "ops-review-release" }
+    - { n: "25", key: "verify_pr", label: "VfyPR", phase: "Ship", status: open, command: "manual" }
+    - { n: "26", key: "integration_verify", label: "IntVfy", phase: "Ship", status: open, command: "architect-verify-traceability" }
+    - { n: "27", key: "figma_compare", label: "Figma2", phase: "Ship", status: open, command: "manual" }
+    - { n: "28", key: "deploy", label: "Deploy", phase: "Ship", status: open, command: "ops-deploy" }
+    - { n: "29", key: "promote", label: "Promote", phase: "Ship", status: open, command: "ops-post-deploy-monitor" }
+    - { n: "30", key: "roi_30", label: "30dROI", phase: "Post-Ship", status: open, command: "guided" }
+    - { n: "31", key: "roi_90", label: "90dROI", phase: "Post-Ship", status: open, command: "guided" }
+
+current_step:
+  number: 1
+  name: "Issue"
+  phase: "Requirements"
+  command: "manual"
