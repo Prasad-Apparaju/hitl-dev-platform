@@ -42,7 +42,12 @@ def _strict_load(path):
 
 
 CRIT_ORDER = {"ceremony": 0, "standard": 1, "floor": 2}
-DISPOSITIONS = {"defer", "decline", "starter"}
+# `not_applicable` (#97): the RULES determined this step does not apply to this change. It is a
+# different fact from a person choosing to skip something, and without it a right-sized plan records
+# a named human as declining ~25 steps they never looked at — which the retrospective then reads
+# back as "what was left out and why". It still carries an actor and a reason, because one
+# confirmation records the lot and the confirming human owns the set.
+DISPOSITIONS = {"defer", "decline", "starter", "not_applicable"}
 # The ONLY valid step statuses. Anything else is a fail-open vector (a floor step hidden behind an
 # unknown status like "declined") — so an unrecognized status is a non-waivable BLOCK (round-1 CRIT-2).
 VALID_STATUSES = {"done", "current", "open", "skipped", "starter"}
@@ -68,7 +73,9 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 # because the driver never emitted the flag.
                 "FP_UNDECLARED",
                 # an unmarked starter presented as complete is the "fabricated full artifact" ADR-6 forbids (codex-4)
-                "STARTER_MARK"}
+                "STARTER_MARK",
+                # a rule may not retire a load-bearing step. Only a human, by name, may (#97).
+                "RULE_OVER_FLOOR"}
 STARTER_MARKER = "needs-enhancement"
 
 
@@ -346,6 +353,17 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         # NO_OMIT (NEG-5): a no_omit step may be starter, never defer/decline
         if no_omit and disp in ("defer", "decline"):
             findings.append(_f("NO_OMIT", f"step '{key}' is no_omit (starter-only) — cannot be {disp}"))
+
+        # RULE_OVER_FLOOR (#97): `not_applicable` is the rules speaking, and the rules may not
+        # retire a load-bearing step. Without this the fourth disposition is a hole straight through
+        # the floor: any step could be dropped by asserting a rule excluded it, with no ack_by, no
+        # waiver, and nobody's judgement on the record. A floor step is dropped by a named human
+        # accepting the risk, or not at all.
+        if disp == "not_applicable" and (crit == "floor" or no_omit):
+            what = "no_omit" if no_omit else "floor"
+            findings.append(_f("RULE_OVER_FLOOR",
+                               f"step '{key}' is {what} and cannot be marked not_applicable — a rule "
+                               f"may not retire it. Use a risk-accepted skip with ack_by, or keep it"))
 
         # floor authority (NEG-3): floor skip needs ack_by
         if crit == "floor":

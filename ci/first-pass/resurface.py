@@ -90,6 +90,11 @@ def surface(rollup, new_domains, new_paths):
             continue
         if e.get("crit") == "ceremony":
             continue
+        # `not_applicable` is the rules saying a step does not apply to that change (#97). Nothing
+        # was deferred, so there is nothing to come back to. Resurfacing it would nag about work
+        # nobody chose to postpone, which is exactly the noise that gets resurfacing switched off.
+        if e.get("disposition") == "not_applicable":
+            continue
         if overlaps(e, new_domains, new_paths):
             out.append(e)
     out.sort(key=_rank)   # floor first

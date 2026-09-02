@@ -519,3 +519,59 @@ def test_deleting_a_load_bearing_step_still_blocks_not_warns():
 
 def test_a_complete_plan_warns_about_nothing():
     assert C.check(make_change([]), CATALOG) == []
+
+
+# --- the fourth disposition (#97) ------------------------------------------------------------
+
+def test_not_applicable_is_a_valid_disposition():
+    """A right-sized plan drops steps because the rules say they do not apply, which is not the
+    same act as a human declining them. Without a disposition for it, the only cheap option is
+    `decline`, and the ledger then records someone declining ~25 steps they never looked at — which
+    the closing retrospective reads back as "what was left out and why"."""
+    assert "not_applicable" in C.DISPOSITIONS
+
+
+def test_a_rule_may_not_retire_a_floor_step():
+    """NEG: `not_applicable` is the rules speaking, and the rules may not retire a load-bearing
+    step. If they could, the floor is a hole — any step dropped by asserting a rule excluded it,
+    with no ack_by, no waiver, and nobody's judgement on the record."""
+    ch = make_change([base_skip("deploy", disposition="not_applicable")], tier=2)
+    assert "RULE_OVER_FLOOR" in blockers(C.check(ch, CATALOG))
+
+
+def test_a_rule_may_not_retire_a_no_omit_step():
+    ch = make_change([base_skip("red", disposition="not_applicable")], tier=1)
+    assert "RULE_OVER_FLOOR" in blockers(C.check(ch, CATALOG))
+
+
+def test_rule_over_floor_is_non_waivable():
+    """Consistent with the other floor protections: a waiver clears a risk, never a bypass."""
+    assert "RULE_OVER_FLOOR" in C.NON_WAIVABLE
+
+
+def test_not_applicable_still_needs_an_actor_and_a_reason():
+    """One confirmation records the whole set, and the human who confirmed owns it. A rule doing
+    the deciding is not the same as nobody being accountable for the decision."""
+    ch = make_change([{"step": "roi", "disposition": "not_applicable"}], tier=1)
+    assert "SILENT_SKIP" in blockers(C.check(ch, CATALOG))
+
+
+def test_not_applicable_on_an_ordinary_step_certifies_clean():
+    ch = make_change([base_skip("roi", disposition="not_applicable",
+                                reason="no user-facing surface in this change")], tier=1)
+    assert "RULE_OVER_FLOOR" not in codes(C.check(ch, CATALOG))
+    assert "SILENT_SKIP" not in codes(C.check(ch, CATALOG))
+
+
+def test_not_applicable_does_not_resurface():
+    """Nothing was deferred, so there is nothing to come back to. Nagging about work nobody chose
+    to postpone is what gets resurfacing switched off."""
+    sys.path.insert(0, HERE)
+    import resurface as R
+    rollup = {"entries": [
+        {"change_id": "GH-9", "step": "roi", "crit": "standard", "resolved": False,
+         "disposition": "not_applicable", "domains": ["billing"], "paths": []},
+        {"change_id": "GH-9", "step": "docs", "crit": "standard", "resolved": False,
+         "disposition": "decline", "domains": ["billing"], "paths": []}]}
+    raised = [e["step"] for e in R.surface(rollup, ["billing"], [])]
+    assert raised == ["docs"], raised
