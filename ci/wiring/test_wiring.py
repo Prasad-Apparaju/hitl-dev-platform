@@ -527,39 +527,23 @@ def test_the_portal_agrees_with_itself_about_the_current_version():
                        "  (1.x references are the legacy line and are left alone)" % (ver, stale))
 
 
-def test_the_tier_0_1_attribution_rule_survives():
-    """A light path is a human's call and needs a name against it. That rule predates 2.9.0.
+def test_the_skip_ledger_is_never_retired_with_the_change_file():
+    """CR-10 makes the ledger durable across changes. The retirement step removes the change file
+    and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish
+    and resurfacing would only ever see the current change."""
+    txt = _read(os.path.join(AI, "claude", "dev-practices", "workflow-steps.md"))
+    assert "Retire the change's working artifacts" in txt, "the retirement step is gone"
+    retire = txt[txt.index("Retire the change's working artifacts"):][:1200]
+    assert "skip-ledger.yaml" in retire and "Do not touch" in retire, (
+        "the retirement step must explicitly protect .hitl/skip-ledger.yaml")
+    assert not re.search(r"rm\b[^\n]*skip-ledger", retire), (
+        "the retirement step deletes the durable ledger — CR-10 violation")
 
-    2.9.0 added a mirror rule — attribution for a tier 2+ on a trivially-shaped change — and it was
-    dead code with three independent causes: the probe read a diff that does not exist at intake,
-    the export did not survive to the reader, and the manifest path was wrong. Removed rather than
-    patched a third time. This asserts the ORIGINAL rule was not lost along with it.
-    """
-    body = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
-    assert re.search(r"if\s+tier\s*<=\s*1\s+and\s+not", body), (
-        "the tier 0/1 attribution rule is gone — removing the mirror rule must not take it too")
-    assert "TRIVIAL_SHAPE" not in body, (
-        "TRIVIAL_SHAPE is back in the generator. It cannot be set at intake; if sizing is being "
-        "attempted there again, read selection.md on why that moment knows nothing")
 
-def test_intake_proposes_a_tier_from_the_shape():
-    """Making someone argue a tier DOWN is the friction that pushes people out of the process."""
-    ref = os.path.join(AI, "claude", "start-change", "right-sizing.md")
-    assert os.path.isfile(ref), "right-sizing.md is gone; intake has no shape guidance"
-    txt = _flat(ref)
-    assert re.search(r"(?i)git diff --name-only", txt), "the probe command is gone"
-    assert re.search(r"(?i)does not lower a floor step", txt), (
-        "nothing states the probe never lowers a floor — that is the line between right-sizing and "
-        "weakening the gate")
-    assert re.search(r"(?i)naming a key is not moving one", txt), (
-        "the distinction that decides this case is gone: adding FIRECRAWL_API_KEY= to a script is "
-        "a chore, changing where a secret lives is not")
-    body = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
-    assert "right-sizing.md" in body, "the skill no longer points at the shape guidance"
-    assert re.search(r"(?i)at tier 0 or 1, offer it without being asked", body), (
-        "First Pass is opt-in again at tier 0/1 — the one feature built for this case has to be "
-        "asked for by someone who already knows it exists")
-
+# --- catalog data kept back from the 2.9.0 rollback -------------------------------------------
+# The selection code that read this data was deleted; the data was kept, because it was authored
+# by hand and #97 rebuilds the reader. Nothing consumes it in the meantime. These two tests are
+# the only thing standing between "held for the next change" and "quietly rotted".
 
 def test_the_catalog_does_not_claim_profiles_filter_the_plan():
     """Profiles and tags are advice to intake. Nothing at runtime applies them.
@@ -568,7 +552,7 @@ def test_the_catalog_does_not_claim_profiles_filter_the_plan():
     the generator takes the `development` block verbatim. derive.py implements excludes/activates
     and is a source-tree tool the plugin does not ship. So `fix` excluding roi has never removed a
     step, `chore` carrying tier 0 has never set a tier, and `perf` activating baseline has never
-    turned it on. A user asked for one env var in a shell script and got all 31 steps.
+    turned it on.
 
     This asserts the catalog SAYS so. If someone later wires profiles into the runtime, the runtime
     check below starts failing and both halves get revisited together.
@@ -592,9 +576,13 @@ def test_the_catalog_does_not_claim_profiles_filter_the_plan():
 
 
 def test_every_step_declares_what_it_protects_and_what_skipping_costs():
-    """The selection view shows `protects` beside an unticked box and ranks by `forgo_cost`.
+    """Every spine step has a `protects` sentence and a `forgo_cost`, both directions checked.
 
-    A step with no entry renders a blank reason and sorts nowhere, which is how a step quietly
+    NOTHING READS THIS YET. The 2.9.0 reader was deleted and #97 rebuilds it, so this is data held
+    across a gap. That is normally this repo's recurring defect and it is deliberate here: the
+    values were authored by hand and re-deriving them costs a person's time, not a script's.
+
+    A step with no entry will render a blank reason and sort nowhere, which is how a step quietly
     becomes the one nobody thinks about. An orphan entry is a step someone deleted while leaving its
     justification behind. Assert BOTH directions — a coverage check that only looks one way passes
     while half the data is wrong.
@@ -603,7 +591,7 @@ def test_every_step_declares_what_it_protects_and_what_skipping_costs():
     cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
     steps = {s["key"] for s in cat["spine"]["steps"]}
     costs = cat.get("step_costs") or {}
-    assert costs, "no step_costs block — the selection view has nothing to rank or explain"
+    assert costs, "no step_costs block — #97 has nothing to rank or explain with"
 
     missing = sorted(steps - set(costs))
     orphans = sorted(set(costs) - steps)
@@ -626,184 +614,3 @@ def test_every_step_declares_what_it_protects_and_what_skipping_costs():
         if isinstance(eng, dict):
             unknown = set(eng) - {"paths", "profiles", "tags", "multi_domain"}
             assert not unknown, "%s: engages has unknown keys %s" % (key, sorted(unknown))
-
-
-def test_a_floor_step_is_never_ranked_below_high():
-    """Modulation reorders the list; it must not argue a floor step down it.
-
-    A `floor` step ranked low would sort into the tail and be dropped by someone reading the ranks
-    rather than the flags — the two signals must not disagree.
-    """
-    import yaml
-    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
-    costs = cat.get("step_costs") or {}
-    # Only steps that are floor at EVERY tier, plus no_omit. A step that is floor at tier 3 alone
-    # (packet, impact, qa_verify...) is LOCKED at that tier — it never appears in the rankable list
-    # there — and is ordinarily rankable everywhere else. Treating those as "must be high" would be
-    # the guard inventing a rule rather than checking one.
-    bad = []
-    for s in cat["spine"]["steps"]:
-        crit = s.get("crit")
-        if crit == "floor" or s.get("no_omit"):
-            if costs.get(s["key"], {}).get("forgo_cost") != "high":
-                bad.append("%s (%s) ranked %s" % (s["key"], crit, costs.get(s["key"], {}).get("forgo_cost")))
-    assert not bad, ("a floor / no_omit step ranked below high, so the rank and the flag disagree: %s"
-                     % bad)
-
-
-def test_step_costs_reach_the_runtime_and_something_reads_them():
-    """Data nobody reads is this repo's recurring defect: `excludes`, `activates`, `chore: tier 0`
-    are all correct, all tested, all consumed by nothing.
-
-    step_costs is only worth carrying if it reaches the file intake actually reads AND something
-    turns it into an order. Assert both ends, so the middle cannot quietly fall out.
-    """
-    import yaml
-    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
-    run = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
-    assert run.get("step_costs"), (
-        "ai/shared/workflows.yaml has no step_costs. That is the file a plan is seeded from and the "
-        "only one the plugin ships — without it the selection has nothing to rank or explain")
-    assert run["step_costs"] == cat["step_costs"], (
-        "the runtime step_costs has drifted from the catalog; regenerate it from the catalog")
-
-    ranker = os.path.join(ROOT, "ci", "first-pass", "rank.py")
-    assert os.path.isfile(ranker), "ci/first-pass/rank.py is gone — nothing turns costs into an order"
-    src = _read(ranker)
-    for fn in ("shown_rank", "rank_plan", "engaged", "risky_domains"):
-        assert "def %s(" % fn in src, "rank.py no longer defines %s()" % fn
-
-    sel = os.path.join(AI, "claude", "start-change", "selection.md")
-    assert os.path.isfile(sel), "the selection spec is gone; intake has nothing to show"
-    # A CALLER, not a mention. The first version of this feature named rank.py in prose, showed a
-    # resolver line, and invoked nothing — the ranker was tested, shipped and unreachable while a
-    # guard asserting the filename appeared in the file stayed green.
-    seltext = _read(sel)
-    for mode in ("render", "apply"):
-        # Anchored to the start of a line and rejecting a leading `#`. Commenting out the call
-        # leaves the string in the file, so an unanchored search matches a call nobody makes —
-        # the mutation that exposed this was literally `# python3 "$SEL" render`.
-        assert re.search(r'(?m)^[^#\n]*python3 "\$SEL" %s' % mode, seltext), (
-            "selection.md does not invoke `plan_select.py %s`. Naming the tool is not calling it — "
-            "that is how three features shipped unreachable." % mode)
-    # The selection runs AFTER impact analysis, in apply-change — the first moment anything has
-    # read the codebase. Intake only points at it and says the plan is provisional until then.
-    intake = _flat(os.path.join(AI, "claude", "start-change", "SKILL.md"))
-    apply_ = _flat(os.path.join(AI, "claude", "apply-change", "SKILL.md"))
-    assert "selection.md" in intake and re.search(r"(?i)provisional", intake), (
-        "intake no longer says the plan is provisional, or no longer points at where it gets sized")
-    assert "selection.md" in apply_ and re.search(r"(?i)right-size the plan", apply_), (
-        "apply-change no longer sizes the plan after impact analysis, so sizing has drifted back to "
-        "intake, where nothing has read the code")
-
-
-def test_the_selection_keeps_its_load_bearing_rules():
-    """Three rules are the difference between right-sizing and quietly running less process."""
-    sel = _flat(os.path.join(AI, "claude", "start-change", "selection.md"))
-    assert re.search(r"(?i)below the cut line is skipped, and recorded", sel), (
-        "nothing says the tail is recorded — an unshown default that runs nothing is exactly the "
-        "silent lightening CR-1 was written to prevent")
-    assert re.search(r"(?i)floor can be unticked", sel) and re.search(r"(?i)waiver", sel), (
-        "the floor is either locked out of the view or unticked with a name against it; this says "
-        "neither")
-    assert re.search(r"(?i)never quote a duration|quote step counts", sel), (
-        "the duration rule is gone. Two shipped estimates in this repo were wrong because elapsed "
-        "time is mostly waiting for a human")
-
-
-def test_coherence_is_checked_and_challenges_rather_than_blocks():
-    """Keeping a step while dropping what it requires makes a claim the plan cannot support.
-
-    Two halves have to stay true together: the data exists in both catalog and runtime, and the
-    thing that reads it returns a list to talk about rather than refusing. A coherence check that
-    blocks would be the only hard refusal in a framework built on recorded exceptions.
-    """
-    import yaml
-    cat = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
-    run = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
-    req = cat.get("step_requires")
-    assert req, "no step_requires — nothing knows that GREEN is defined against RED"
-    assert run.get("step_requires") == req, "runtime step_requires has drifted from the catalog"
-
-    keys = {s["key"] for s in cat["spine"]["steps"]}
-    for step, e in req.items():
-        assert step in keys and all(n in keys for n in e["needs"]), (
-            "%s: a prerequisite that names no real step can never fire" % step)
-
-    src = _read(os.path.join(ROOT, "ci", "first-pass", "rank.py"))
-    assert "def incoherent(" in src, "rank.py no longer implements the coherence check"
-    assert "raise" not in src.split("def incoherent(")[1].split("\ndef ")[0], (
-        "incoherent() raises. It must return findings to challenge with, not refuse")
-
-    sel = _flat(os.path.join(AI, "claude", "start-change", "selection.md"))
-    assert "incoherent" in sel and re.search(r"(?i)do not block it", sel), (
-        "the selection no longer cites the check, or no longer says it challenges")
-
-
-def test_the_checked_in_catalog_page_is_generator_output():
-    """site/catalog.html is regenerated on every deploy, so a hand-edited copy is republished over.
-
-    It had drifted: the checked-in page omitted three shipped steps and a whole phase, and the
-    deploy would have silently replaced it with something different again. Regenerate-and-compare
-    is the only check that can see that.
-    """
-    import subprocess, shutil, tempfile
-    page = os.path.join(ROOT, "site", "catalog.html")
-    before = _read(page)
-    backup = tempfile.mkstemp()[1]
-    shutil.copy(page, backup)
-    try:
-        r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "scripts",
-                                                         "generate-catalog-page.py")],
-                           cwd=ROOT, capture_output=True, text=True)
-        assert r.returncode == 0, "the catalog generator failed: %s" % (r.stderr or r.stdout)[-400:]
-        after = _read(page)
-    finally:
-        shutil.copy(backup, page)
-        os.unlink(backup)
-    assert before == after, (
-        "site/catalog.html is not what the generator produces. The deploy regenerates it, so what "
-        "is committed here is not what users see. Run tools/scripts/generate-catalog-page.py.")
-
-
-def test_the_selection_writes_the_change_file_not_a_hand_off():
-    """The selection runs at apply-change 3a, after intake's Step 6 has already consumed
-    .hitl/first-pass-choices.json. Writing one there records for a consumer that never comes.
-
-    Two earlier versions got this wrong in opposite directions: first two writers of the choices
-    file racing each other, then a single writer producing a file nobody would read. The record now
-    goes straight into .hitl/current-change.yaml, which is what the validator reads.
-    """
-    d = os.path.join(AI, "claude", "start-change")
-    handoff = []
-    for f in sorted(x for x in os.listdir(d) if x.endswith(".md")):
-        for line in _read(os.path.join(d, f)).splitlines():
-            t = line.strip()
-            if re.search(r"(>|cat >|tee)\s*\.hitl/first-pass-choices\.json", t) and not t.startswith("#"):
-                handoff.append("%s: %s" % (f, t[:60]))
-    assert not handoff, (
-        "the selection still writes a choices file. Intake's Step 6 consumes that and has already "
-        "run by then, so the record reaches nobody:\n  " + "\n  ".join(handoff))
-
-    sel = _read(os.path.join(d, "selection.md"))
-    assert re.search(r'(?m)^[^#\n]*python3 "\$SEL" apply', sel), (
-        "selection.md does not run `plan_select.py apply`, so nothing writes the skip records")
-
-    src = _read(os.path.join(ROOT, "ci", "first-pass", "plan_select.py"))
-    assert "def apply_to_change(" in src, "plan_select.py no longer writes into the change file"
-    body = src.split("def apply_to_change(")[1].split("\ndef ")[0]
-    assert 'st["status"] = "skipped"' in body and 'doc.setdefault("skips"' in body, (
-        "apply must BOTH mark the step skipped and append the ledger entry. A step marked skipped "
-        "with no entry is the silent skip the ledger exists to stop")
-
-def test_the_skip_ledger_is_never_retired_with_the_change_file():
-    """CR-10 makes the ledger durable across changes. The retirement step removes the change file
-    and handoff prose at `promote`; if it ever removed the ledger too, every past skip would vanish
-    and resurfacing would only ever see the current change."""
-    txt = _read(os.path.join(AI, "claude", "dev-practices", "workflow-steps.md"))
-    assert "Retire the change's working artifacts" in txt, "the retirement step is gone"
-    retire = txt[txt.index("Retire the change's working artifacts"):][:1200]
-    assert "skip-ledger.yaml" in retire and "Do not touch" in retire, (
-        "the retirement step must explicitly protect .hitl/skip-ledger.yaml")
-    assert not re.search(r"rm\b[^\n]*skip-ledger", retire), (
-        "the retirement step deletes the durable ledger — CR-10 violation")

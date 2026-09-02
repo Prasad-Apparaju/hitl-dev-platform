@@ -128,24 +128,6 @@ Search the codebase to verify each item. Don't guess — read the files.
 
 If backwards-incompatible changes are identified, flag them explicitly in the summary and do not proceed to planning without a compatibility strategy.
 
-### Step 3a: Right-size the plan
-
-You have just read the codebase and written down what this change affects. **This is the first
-moment anything knows the shape of the work**, and therefore the moment to size the plan — not
-intake, which ran before a line existed.
-
-Take the affected modules, infrastructure and docs from Step 3 and run the selection in
-`start-change/selection.md`: it ranks the plan by what it costs to skip each step, shows what each
-one protects, and writes every step not kept straight into `.hitl/current-change.yaml` —
-`plan_select.py apply`, not a choices file: intake's Step 6 consumed that and has already run.
-
-Revisit the tier here too. Step 1 set it from the description; you now have evidence. If the
-evidence disagrees with the tier, say so and change it — a tier chosen from a description and never
-revisited is a guess that hardened.
-
-If the change turns out to touch more than the description implied, that is a scope finding, not a
-sizing one. Say so before continuing.
-
 ### Step 4: Documentation Plan
 Based on the impact analysis, identify which docs need updating:
 - HLD documents that describe the affected architecture
