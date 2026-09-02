@@ -171,3 +171,10 @@ Report: "Observability configured. `<N>` alerts active. Deployment may proceed w
 - Every go/no-go criterion in the rollout plan must have a corresponding alert — partial coverage is a blocker
 - The on-call routing must exist before deployment — do not deploy without a defined escalation path
 - Alert thresholds must match the rollout plan exactly — do not set tighter or looser thresholds without updating the plan
+
+## Closing this step
+
+When this step is done, close it the way `ai/shared/next-step.md` describes: what finished, what is
+next in words that say what it achieves, and how to start it. Read the next step and its `command`
+from `.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as
+one. Do not list the remaining steps, restate what just happened, or ask permission to continue.

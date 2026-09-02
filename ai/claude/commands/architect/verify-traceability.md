@@ -26,3 +26,9 @@ Then verify the following gates before marking integration verify complete:
 5. **Cross-slice composition** — if this change spans multiple decision-packet slices, verify the slices compose correctly end-to-end (no interface mismatches between them).
 
 Do not approve traceability if any of these gates are open.
+
+## Closing this step
+
+Close it the way `ai/shared/next-step.md` describes: what finished, what is next in words that
+say what it achieves, and how to start it. Read the next step and its `command` from
+`.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as one.

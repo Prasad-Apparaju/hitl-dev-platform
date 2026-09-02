@@ -147,3 +147,10 @@ For Mermaid violations, offer to run the fixer: `python scripts/fix_mermaid_br_t
 - To add a new convention, create a semgrep rule YAML in the appropriate `.semgrep/` subdirectory
 - If the manifest is missing or stale (drift detected), flag it: "The manifest may be out of date. Run the manifest generator to refresh it."
 - Secrets violations are always blocking — there is no "warn and proceed" path for a committed secret
+
+## Closing this step
+
+When this step is done, close it the way `ai/shared/next-step.md` describes: what finished, what is
+next in words that say what it achieves, and how to start it. Read the next step and its `command`
+from `.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as
+one. Do not list the remaining steps, restate what just happened, or ask permission to continue.

@@ -715,3 +715,42 @@ def test_the_statusline_shows_what_to_run():
         if value in ("manual", "guided"):
             assert "/hitl:%s" % value not in out.stdout, (
                 "%r rendered as a runnable command; there is no /hitl:%s" % (value, value))
+
+
+def test_every_step_skill_says_what_comes_next():
+    """Each skill or command a workflow step names must close by pointing at the shared contract.
+
+    The statusline shows the command ambiently; this is the other half, at the moment a step ends.
+    One shared file holds the wording so twenty-two of them cannot drift into twenty-two phrasings.
+
+    Resolves BOTH kinds. HITL ships skills (`<dir>/SKILL.md`) and lightweight commands (a single
+    `commands/<area>/<name>.md`), and two steps name commands rather than skills. An earlier version
+    of this test looked only for SKILL.md and reported those two as missing; they were never missing.
+    """
+    import yaml
+    contract = os.path.join(AI, "shared", "next-step.md")
+    assert os.path.isfile(contract), "ai/shared/next-step.md is gone; the step skills reference it"
+
+    rt = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    cmds = sorted({s["command"] for w in rt["workflows"].values() for s in w["steps"]
+                   if s.get("command") and s["command"] not in ("manual", "guided")})
+
+    def target_for(cmd):
+        pre, rest = cmd.split("-", 1)
+        for p in (os.path.join(AI, "claude", rest if pre == "dev" else os.path.join(pre, rest),
+                               "SKILL.md"),
+                  os.path.join(AI, "claude", "commands", pre, rest + ".md"),
+                  os.path.join(AI, "claude", "commands", rest + ".md")):
+            if os.path.isfile(p):
+                return p
+        return None
+
+    missing = sorted(c for c in cmds if target_for(c) is None)
+    assert not missing, (
+        "workflow steps name these, and neither a skill nor a command exists for them: %s. A step "
+        "that names something nobody can run is worse than a step that names nothing." % missing)
+
+    silent = sorted(c for c in cmds if "ai/shared/next-step.md" not in _read(target_for(c)))
+    assert not silent, (
+        "steps that never say what comes next: %s. A person finishing a step should not have to "
+        "work out what happens now." % silent)

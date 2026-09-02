@@ -306,3 +306,10 @@ in the same step.
 Write the skip the way any other skip is written — see `shared/skip-record.md`. The record is what
 lets HITL mention it later if a change touches the same area, and lets the release gate show that no
 review happened at any point in this change.
+
+## Closing this step
+
+When this step is done, close it the way `ai/shared/next-step.md` describes: what finished, what is
+next in words that say what it achieves, and how to start it. Read the next step and its `command`
+from `.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as
+one. Do not list the remaining steps, restate what just happened, or ask permission to continue.

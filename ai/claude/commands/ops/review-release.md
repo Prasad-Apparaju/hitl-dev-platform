@@ -6,3 +6,9 @@ argument-hint: "[change ID or PR link]"
 Use the `ops-release-reviewer` agent to review the release plan for $ARGUMENTS.
 
 Do not approve Tier 3+ releases until canary criteria are specific measurable numbers, rollback is defined, side-effect safety is assessed, and observability is verified.
+
+## Closing this step
+
+Close it the way `ai/shared/next-step.md` describes: what finished, what is next in words that
+say what it achieves, and how to start it. Read the next step and its `command` from
+`.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as one.

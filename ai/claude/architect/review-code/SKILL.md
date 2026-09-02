@@ -231,3 +231,10 @@ Next action: address revisions on the existing PR branch, then re-request archit
 - A SIGNIFICANT revision means the developer returns to Generate Code (GREEN), re-generates the code, and re-runs AI rounds 1 and 2 before re-requesting architect review on the same PR
 - Architect approval recorded here is distinct from `approvals.architecture` (design approval at the Package Decision Packet step) — both must be set before merge
 - Do not merge the PR at this step — merging is part of the Build/Migrate/Apply/Deploy step
+
+## Closing this step
+
+When this step is done, close it the way `ai/shared/next-step.md` describes: what finished, what is
+next in words that say what it achieves, and how to start it. Read the next step and its `command`
+from `.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as
+one. Do not list the remaining steps, restate what just happened, or ask permission to continue.

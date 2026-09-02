@@ -143,3 +143,10 @@ For the final production promotion (100% traffic, all go/no-go criteria met):
 - Run `/hitl:ops-post-deploy-monitor <change-ID>` — this is required for all Tier 2+ changes. The soak duration is determined by risk level (Low: 1h, Medium: 4h, High: 12h, Critical: 24h). Do not close the issue or declare the change complete until post-deploy monitor produces a STABLE verdict.
 - If the post-deploy monitor produces ROLLBACK: run `/hitl:ops-rollback`.
 
+
+## Closing this step
+
+When this step is done, close it the way `ai/shared/next-step.md` describes: what finished, what is
+next in words that say what it achieves, and how to start it. Read the next step and its `command`
+from `.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as
+one. Do not list the remaining steps, restate what just happened, or ask permission to continue.

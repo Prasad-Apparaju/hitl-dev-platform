@@ -182,3 +182,10 @@ gh issue comment <issue-number> \
 
 Do not approve with open defects. Do not block without filing a defect — informal notes are not actionable.
 
+
+## Closing this step
+
+When this step is done, close it the way `ai/shared/next-step.md` describes: what finished, what is
+next in words that say what it achieves, and how to start it. Read the next step and its `command`
+from `.hitl/current-change.yaml`; `manual` and `guided` are not commands and must not be rendered as
+one. Do not list the remaining steps, restate what just happened, or ask permission to continue.
