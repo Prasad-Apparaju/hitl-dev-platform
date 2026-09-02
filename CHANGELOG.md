@@ -4,6 +4,81 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.9.0] — 2026-09-02
+
+Two features, both about the same complaint: HITL asked for too much on small changes, and never
+told you what to run.
+
+### Added
+
+**Right-sizing (#97).** Someone added one environment variable to a shell script and HITL ran
+eleven steps over three and a half hours. Nothing malfunctioned; the process was specified that
+way. The cause was the order things happened in: the plan was fixed at intake, from the words in
+the issue, before any code was read. `FIRECRAWL_API_KEY` in a title reads like a security change.
+The code said a file in no area, with no callers.
+
+So impact analysis stops being step 3 of the plan and becomes **the thing that produces the plan**.
+It always runs, it cannot be skipped, and there is no plan yet to put it in. It writes what the
+change reaches to `.hitl/impact/<change-id>.yaml`, with the provenance of each finding, so an
+answer read from a hand-written manifest field is never presented as if it came from the code.
+
+The tier is then proposed **from those findings** and confirmed by a person. Two options follow:
+
+- **fast track** — the steps this change's own facts call for
+- **full scale** — everything that applies to a change of this shape
+
+Both are sized by rules on all 38 catalog steps, and every rule reads what the *change* touches,
+never what its *area* has. That distinction is the whole feature: rules keyed to an area's
+paperwork answer the same for every change to it, so a one-line fix in well-documented code would
+draw the longest plan in the system and documenting an area would tax every future change to it.
+
+Measured on the shipped catalog: a one-line API fix behind a flag draws 12 steps of 34, against 23
+for full scale. A cross-domain change touching a published interface with a data migration draws 22,
+against 31.
+
+**This is not a new mechanism.** It replaces the pre-selection logic inside First Pass Step 4b,
+which already presented steps with reasons filled in, took one confirmation for the whole set, and
+put the confirming person's name on every record. The ledger, the validator and the actor rule are
+unchanged.
+
+**First Pass is no longer opt-in.** Every change is shown a proposal; full scale is the answer set
+where nothing is dropped. The one feature built for this problem used to require knowing it existed.
+
+**A fourth disposition, `not_applicable`.** The rules excluding a step is a different fact from a
+person declining it. Without the distinction, a fast track recorded a named human as declining
+twenty-odd steps they never looked at, and the closing retrospective read that list back as what was
+left out and why. `RULE_OVER_FLOOR` (non-waivable) stops a rule retiring a load-bearing step: those
+are dropped by a named person accepting the risk, or not at all.
+
+**What you can run, at every step (#100).** The statusline now says it:
+
+```
+HITL ▸ GH-97 ▸ Build ▸ RED [T2]  → /hitl:dev-tdd
+```
+
+The catalog has declared a command for every step all along. It was dropped in derivation, dropped
+again when the change file was written, and never shown. Each hop passed its own checks while the
+path was dead end to end. Steps with nothing to run say so rather than inventing a command. Every
+step also closes by saying what comes next and how to start it.
+
+### Fixed
+
+- **`impact` left the development workflow** and the retrospective joined it, so the plan is 34
+  steps either way. Locked floors are 5 at tier 1, 6 at tier 2, 10 at tier 3.
+- **One catalog resolver.** Three tools resolved it three ways and only one matched the layout an
+  onboarded product repo has, so the generator failed outright and the validator silently loaded an
+  empty catalog and called every skip unknown.
+- **Security review, CVE audit and pentest are still unreachable** (#102, open). They are `cond:`
+  steps resolved by machinery the plugin does not ship, so a tier-3 change to authentication draws
+  none of them, and `pentest` is marked floor while never appearing in a plan.
+
+### Known limits
+
+- The two-option choice applies to `development` only. Platform is a one-time readiness checklist
+  with its own waiver machinery and no per-step criticality; the other six workflows have no sizing
+  rules and say so rather than offering two identical lists.
+- The sizing rules will be wrong at first. The closing retrospective is what corrects them.
+
 ## [2.8.0] — 2026-08-18
 
 Adversarial review was the one part of HITL that had never been reviewed. Three reports from real
