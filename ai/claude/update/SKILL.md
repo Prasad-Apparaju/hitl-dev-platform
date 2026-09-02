@@ -309,7 +309,7 @@ else
         kept+=("$stale")
       fi
     done < <(printf '%s\n' \
-      ci/first-pass/test_check_skips.py ci/first-pass/test_driver_e2e.py ci/first-pass/test_first_pass_lib.py \
+      ci/first-pass/test_check_skips.py ci/first-pass/test_driver_e2e.py ci/first-pass/test_first_pass_lib.py ci/first-pass/test_size_plan.py \
       ci/manifest-agentic/test_check_manifest_agentic.py ci/manifest-agentic/test_schema_and_examples.py \
       tools/manifest-agentic/test_gen_baseline_evals.py tools/manifest-agentic/test_generate_views.py \
       ci/manifest-drift/test_check_manifest_drift.py \
