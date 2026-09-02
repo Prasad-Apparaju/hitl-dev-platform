@@ -698,21 +698,19 @@ def test_the_command_survives_a_step_advance():
             "rewritten wholesale. Statusline said:\n%s" % out.stdout)
 
 
-def test_the_apply_change_seed_template_carries_the_command():
-    """`apply-change` seeds its own change file; its template is the one most changes are built from.
+def test_apply_change_no_longer_writes_the_change_file():
+    """One writer for the change file, and it is intake (#97).
 
-    It omitted `command`, so every file it produced was born without the field regardless of what
-    intake's generator does.
+    apply-change used to seed its own, with its own tier and its own step list. Two writers for one
+    file is how a tier set in one place and a tier set in another disagree, and it is also how the
+    `command` field went missing from every file this skill produced regardless of what the
+    generator did. It is now the impact analysis: it reads the stub and writes its own record.
     """
     skill = _read(os.path.join(AI, "claude", "apply-change", "SKILL.md"))
-    block = skill[skill.index("  steps:"):]
-    block = block[:block.index("current_step:")]
-    rows = [l for l in block.split("\n") if l.strip().startswith("- {")]
-    assert rows, "no example step rows found in the apply-change seed template"
-    without = [l.strip()[:60] for l in rows if "command:" not in l]
-    assert not without, (
-        "seed template rows with no command: %s. A file born without it cannot show the hint at any "
-        "step, whatever the statusline does." % without)
-    assert "`command` verbatim" in skill or "AND `command`" in skill, (
-        "the template tells the agent which fields to carry from the catalog; command must be named "
-        "or the four example rows are the only ones that will have it")
+    assert "belongs to intake" in skill, (
+        "apply-change should say the change file is intake's; if it seeds one again, two writers "
+        "are back and they will disagree")
+    assert "impact/" in skill, "apply-change is the impact analysis now — it must name the record it writes"
+    body = skill[skill.index("### Step 3"):]
+    rows = [l for l in body.split("\n") if l.strip().startswith("- { n:")]
+    assert not rows, "apply-change still carries change-file step rows: %s" % rows[:3]

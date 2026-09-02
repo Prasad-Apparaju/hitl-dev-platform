@@ -34,18 +34,11 @@ This skill is a design-phase skill. The challenge stance from `ai/shared/challen
 
 ## Steps
 
-### Step 1: Understand and Challenge the Change
+### Step 1: (moved — the challenge belongs to intake)
 
-- Parse the change description from $ARGUMENTS
-- If unclear, ask clarifying questions before proceeding
-- Identify the change tier (0–4) from the dev-practices skill tier table
-
-**Before accepting the tier at face value, challenge it:**
-- Does the scope described match the tier? Cross-domain, multi-service, or migration changes are Tier 3 even when described as simple.
-- Is this change too large to implement safely in one slice? If it touches more than one domain or requires more than one LLD update, ask: "Should this be split into smaller, independently-deployable changes?" A change that can be split should be split.
-- Is this a pattern we've implemented before? Search the codebase before planning — reusing an existing pattern is better than designing a new one.
-
-State the tier with justification. If the change should be split, say so and stop until the PM or developer confirms the scope.
+Challenging a vague ask happens at intake's restate-and-confirm, before anything is read. That is
+the cheapest moment to catch a misread: a wrong sentence is easier to argue with than a wrong plan,
+because a plan looks considered.
 
 ### Step 2: Identify Source Artifacts
 Before any analysis, locate and confirm these exist:
@@ -55,78 +48,55 @@ Before any analysis, locate and confirm these exist:
 
 If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first."
 
-### Step 2a: Create feature branch
+### Step 2a: (removed — the branch belongs to intake)
 
-All work for this change must happen on a dedicated branch so that `.hitl/current-change.yaml` and every commit are isolated to this issue.
+`start-change` creates the branch after the plan is agreed. Creating one here, before the change has
+been sized, leaves a stray branch behind whenever intake is abandoned.
 
-```bash
-# Derive branch name from issue number and title
-N=<issue-number>
-TITLE=$(gh issue view $N --json title -q .title \
-  | tr '[:upper:]' '[:lower:]' \
-  | tr -cs 'a-z0-9' '-' \
-  | cut -c1-50 \
-  | sed 's/^-//;s/-$//')
-# cut BEFORE sed: truncating after the trim re-introduces the trailing hyphen the trim
-# just removed, so every title over 50 chars yields `issue/N-…-` (plugin issue #26).
-BRANCH="issue/${N}-${TITLE}"
-CURRENT=$(git branch --show-current)
-```
+### Step 3: Impact analysis — what this change reaches
 
-- If already on `$BRANCH`: say "Already on branch `$BRANCH` — continuing." and proceed.
-- If branch exists but not checked out: `git checkout "$BRANCH"` and say "Switched to existing branch `$BRANCH`."
-- If branch does not exist: `git checkout -b "$BRANCH"` and say "Created branch `$BRANCH`."
+**This is what produces the plan.** It is not a step inside one: it always runs, it cannot be ticked
+off, and when it runs there is no plan yet to put it in. Intake calls it between agreeing the
+requirement and proposing the tier, and continues when the record comes back.
 
-After switching, write `.hitl/current-change.yaml` and commit it immediately so the file is
-branch-tracked from the start. If `/hitl:dev-start-change` already seeded a `development`
-workflow block, just advance it (steps 1–2 `done`, step 3 `current`). Otherwise write the full
-v2 block, seeded from the catalog at `ai/shared/workflows.yaml` (workflow `development`):
+Read the stub at `.hitl/current-change.yaml` for the agreed requirement and definition of done.
 
-```yaml
-schema_version: "2.0"
-change_id: GH-<N>
-tier: <from Step 1>
-status: planning
-expected_branch: "<this branch>"
-workflow:
-  id: development
-  total: 31
-  steps:
-    - { n: 1,   key: issue,  label: "Issue",  phase: "Requirements", status: done,    command: manual }
-    - { n: 2,   key: figma,  label: "Figma",  phase: "Requirements", status: done,    command: manual }
-    - { n: 3,   key: impact, label: "Impact", phase: "Design",       status: current, command: dev-apply-change }
-    - { n: 4,   key: roi,    label: "ROI",    phase: "Design",       status: open,    command: guided }
-    # … remaining steps from ai/shared/workflows.yaml — carry each step's `phase` AND `command` verbatim, all status: open
-current_step:
-  number: 3
-  name: "Impact analysis"
-  phase: "Design"
-```
+**Which area owns this.** The workflow was already chosen at intake as a routing decision; do not
+revisit it. Answer which area of the manifest owns the work. If none does, say so and ask **one**
+question: is this genuinely outside the system, like a demo script or a CI config, or is the
+manifest missing an area? Outside means the fast track is the locked floor and nothing else. Missing
+means do not pretend it sized correctly — offer full scale or ask for the area.
 
-Seed the full `steps` list from the catalog rather than hand-typing it — copy each step's `phase`
-verbatim from `ai/shared/workflows.yaml` so the phase-ribbon breadcrumb has data. As each step
-below completes, set its `status: done` and the next step's `status: current`, and update
-`current_step` to match, so the breadcrumb advances.
+**What this change reaches.** Read top-down, cheapest source first: the manifest entry, then the
+design docs it points at, then source, and only where the declared picture is thin or the change
+clearly goes beyond it.
 
-```bash
-git add .hitl/current-change.yaml
-git commit -m "chore(hitl): initialize change context for GH-<N>"
-```
+The distinction that decides everything downstream is between what the *area* has and what this
+*change* touches. An area having tests is not a fact about your change; your change altering
+behaviour those tests cover is. Record only the second kind. Rules keyed to the first give the same
+answer for every change to an area, so a one-line fix in the best-documented code would draw the
+longest plan and documenting an area would tax every future change to it.
 
-This commit anchors the file to this branch. Every subsequent step that updates the file will produce a new commit (or the file will be amended into the next logical commit) — whichever keeps the branch diff clean.
+**Write the record** to `.hitl/impact/<change_id>.yaml`, against
+`ai/shared/templates/impact-record.schema.yaml`: the findings, the provenance of each one, and what
+the rules concluded. Provenance matters because a finding resting on a hand-written manifest field
+must never be presented as if it came from the code — one is a claim, the other is evidence.
 
-### Step 3: Impact Analysis
-Identify and list:
-- **Affected endpoints/APIs** — what callers will see different behavior?
-- **Affected services/modules** — what internal code paths change?
-- **Affected infrastructure** — do manifests, configs, secrets, or migrations need updating?
-- **Affected documentation** — which HLD/LLD docs describe the changed behavior?
-- **Affected tests** — which existing tests cover the changed code?
-- **Backwards compatibility** — if any facade API signature, boundary entity shape, or public interface is changing, which callers break? Is there a migration or versioning plan?
+**Write the acceptance criteria** into the same record. This is the first moment the work is
+understood well enough to say how each definition-of-done line gets proved, and it has to happen
+here rather than in a plan step because any step could be dropped, and the coverage check must never
+fire without its producer having run. Every criterion must be something QA can test: "returns 400
+with a message naming the missing field", not "works properly". Every definition-of-done line needs
+at least one criterion, or an explicit note that it is not verifiable in this change, with a reason
+and a name.
 
-Search the codebase to verify each item. Don't guess — read the files.
+**Then resurface what overlaps.** Now the change knows its area, raise unresolved skips from earlier
+changes that touch it. Doing this here rather than later means past decisions inform the plan instead
+of arriving after it.
 
-If backwards-incompatible changes are identified, flag them explicitly in the summary and do not proceed to planning without a compatibility strategy.
+Do **not** fold this change's skips into the roll-up here. They do not exist yet — they are decided
+at intake's Step 4b, after this returns. Appending now would write an empty set and every skip would
+raise `ROLLUP` at certification.
 
 ### Step 4: Documentation Plan
 Based on the impact analysis, identify which docs need updating:
@@ -148,46 +118,16 @@ If infrastructure is affected:
 - Are there new secrets, services, jobs, or migrations?
 - Does the local dev config need updating?
 
-### Step 7: Initialize HITL Context File
-Create or update `.hitl/current-change.yaml` using the schema at `ai/shared/templates/change-context.schema.yaml`. See `ai/shared/templates/GH-000-example.yaml` for a filled-in example. Several fields are **typed and load-bearing** — `first_pass` must be a literal boolean (a mapping or any non-bool makes the First Pass validator enforce at strictest), `status` is an enum whose `merged` value deactivates the change, and `expected_branch` is matched exactly against the current branch.
+### Step 7: (removed — the change file belongs to intake)
 
-Set from the impact analysis above:
-- `change_id`: `GH-<issue-number>`
-- `tier`: from Step 3
-- `status`: `planning`
-- `source_artifacts.issue`: GitHub issue URL; set `hld` and `lld` to paths if known, or `"pending"`
-- `manifest.domain`: affected domain name
-- `allowed_paths`: source paths for this domain
-- `approvals.product` and `approvals.architecture`: both `pending`
-- `current_step`: `{number: 3, name: "Impact analysis", phase: "Design"}`
+Intake writes the stub before calling this skill, and fills in the tier and the plan after it
+returns. Two writers for one file is how a tier set here and a tier set there disagree.
 
-Ask the user to confirm the HITL context file before proceeding.
+### Step 7a: (split — see Step 3)
 
-### Step 7a: Fold skips into the ledger, and resurface what overlaps
-
-Run this **immediately after Step 7**, and only here. This is the first moment the change knows its own
-area, and both halves need it: a roll-up entry records the domains and paths a skip applies to, and
-resurfacing matches unresolved entries against those same domains and paths. Called at intake, before
-`manifest.domain` and `allowed_paths` exist, it matches nothing and silently says nothing.
-
-```bash
-# CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
-ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
-RS="ci/first-pass/resurface.py"
-[[ -f "$RS" ]] || RS="$ROOT/shared/ci/first-pass/resurface.py"
-python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
-```
-
-`--append` folds this change's own skips into `.hitl/skip-ledger.yaml`, stamped with the scope above. It
-is idempotent on `(change_id, step)`, so re-running the impact step cannot duplicate entries. The command
-then prints any unresolved skips from **earlier** changes whose area overlaps this one — floor first, the
-three most critical, with a count of the rest. A change is never reminded of its own decisions.
-
-Read what it prints to the user in the resurfacing voice
-([`shared/first-pass/language.md`](../../shared/first-pass/language.md)): surface the risk, respect the
-choice. Brief mode does not apply here — this is one of the boundaries where persuasion is allowed.
-Offer to fold the enhancement into this change; if the answer is no, that is a legitimate choice and the
-entry stays unresolved for next time.
+Its two halves had different preconditions that used to be satisfied at the same moment. Resurfacing
+needs the area, so it runs in Step 3 and informs the plan. Folding this change's skips into the
+durable roll-up needs the skips, which are decided at intake's Step 4b, so it runs there.
 
 ### Step 8: Summary
 Present the full plan in this format:

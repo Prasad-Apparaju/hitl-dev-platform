@@ -87,66 +87,131 @@ Wait for confirmation (or correction) before Step 4.
 
 ---
 
-## Step 3b — Confirm the tier (a human's call, always)
+## Step 3b — Restate what you understood, and write the stub
 
-Propose a tier from the issue and say why, then **wait for a human to confirm or correct it**. Do not
-seed a change without one. Tier decides which steps may be lightened at all, and nothing downstream
-re-checks the declaration against what the change actually touches.
+**Before anything is read or planned.** Write back what you understood, in a fixed shape:
 
-Where protection actually changes, from the catalog: **3 → 2** takes `impact`, `packet`,
-`arch_review`, `qa_verify` and `rollout` off `floor` in one move; **2 → 1** moves only
-`integration_verify`; `deploy` and `promote` never demote.
+| | |
+|---|---|
+| what you want | the ask, corrected |
+| in scope | what this change covers |
+| out of scope | what it explicitly does not, so it can be pointed at later |
+| definition of done | what counts as delivered, in the requester's terms |
 
-So **declaring 2 instead of 3 is the consequential call**, and it is the one the tooling does not
-guard: tier 2 is the generator's default and needs no attribution. Treat the 3 → 2 decision as the
-one to slow down on, whatever the paperwork asks for. Default up.
+Length comes from the change. A one-line fix has a one-line definition of done. Wait for a
+confirmation or a correction; this is the cheapest moment to catch a misread, because everything
+downstream derives from this text and a wrong plan is harder to argue with than a wrong sentence.
 
-Tiers are defined in [`/hitl:dev-practices`](../dev-practices/SKILL.md). At **tier 0 or 1** the change
-file must record `tier_set_by` and `tier_reason`, and the generator refuses without them. That
-attribution exists because tier 0/1 unlocks the batch-decline path in Step 4b, not because of floor
-demotion — be honest about which lock is on which door.
+**The definition of done is not the plan restated.** The plan is how the work gets done; this is
+what counts as delivered, in the requester's own words. A completed plan does not prove the thing
+does what was asked.
 
-> Default up. If a change could plausibly be tier 2 or tier 3, it is tier 3. The cost of extra process
-> is lower than the cost of an under-reviewed change, and a wrong tier is not caught later.
+**Flag a line you cannot check, do not block it.** "The system should be fast" cannot be shown to be
+met. Say so, offer a sharper version, take whatever answer comes back, and if the vague line stays,
+record that it was flagged as unverifiable and accepted anyway, with a name and a date. That record
+does not require you to have been right about the wording, only to have asked.
+
+Then write the stub:
+
+```bash
+GEN="ci/first-pass/gen_change.py"; [[ -f "$GEN" ]] || GEN="$ROOT/shared/ci/first-pass/gen_change.py"
+"$PY" "$GEN" --stub "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" > .hitl/current-change.yaml
+```
+
+Fill in the `requirement` block with the confirmed text, `agreed_by` and `agreed_at`.
+
+The stub carries a **provisional tier of 3** and `status: intake`. It does not satisfy the
+active-change gate, so source edits stay blocked — correct, since no plan has authorised one yet.
+What it does is keep the agreed text if the session dies, feed the analysis, and name the record.
+
+**No tier question here.** The tier is proposed at Step 4 from what the analysis found. Asking now
+means asking before the evidence exists, which is what tiered a one-line shell script change up to a
+three and a half hour path (#97).
 
 ---
 
-## Step 4 — Show the step plan
+## Step 3c — Run the impact analysis
 
-Read the chosen workflow's steps from the bundled workflow catalog — `workflows.yaml`, resolved
-as `$CLAUDE_PLUGIN_ROOT/shared/workflows.yaml` in the installed plugin (or `ai/shared/workflows.yaml`
-when running from source) — and print the whole journey **by phase**, e.g.:
+Call `/hitl:dev-apply-change`. It reads the stub, works out what this change reaches, writes
+`.hitl/impact/<change_id>.yaml`, translates the definition of done into acceptance criteria, and
+returns. **It is not a step in the plan** — it is what produces the plan.
 
-```
-development workflow — 31 steps (+19a) across 7 phases:
-  Requirements  2   Issue → Figma
-  Design        7   Impact → Packet
-  Build         8   RED → Conv
-  Verify        6   Rvw1 → QAVfy
-  Assess        2   ImpBrf → Rollout
-  Ship          5   VfyPR → Promote
-  Post-Ship     2   30dROI → 90dROI
-```
-
-This still shows the whole journey up front — that principle holds, and the shape of the work is what a
-person actually needs to decide whether the workflow fits. A thirty-one item list is the moment a small
-change starts to feel like the wrong tool, and position is carried by the breadcrumb from here on anyway.
-
-**Print the full ordered list on request** ("show me every step"), and always print it in full for a
-workflow of 10 steps or fewer, where the phase summary would be longer than the list it replaces.
+Do not continue until the record exists and is non-empty. A change file naming a record that is not
+there is a blocking error, because a second artifact is only safe when something notices its absence.
 
 ---
 
-## Step 4b — Offer First Pass (optional, FR-29)
+## Step 4 — Propose the tier, then offer two options
 
-**First Pass** is the skip-with-record way to run this same plan: lighten what does not apply, on the
-record, and keep going. It is for anyone right-sizing a change — a developer on a one-line regression as
-much as a PM shipping a thin first version. It is opt-in; the default is the full plan.
+### The tier, from what the analysis found
 
-**At tier 0 or 1, offer the ceremony steps pre-selected as declined.** A bug fix does not need a Figma
-review, an ROI model, a training plan, or two ROI checkpoints, and making someone decline each one by
-hand is the friction that pushes people out of the process entirely. Present them ticked, with a
-one-line reason filled in ("tier 1: not required at this tier"), and let one confirmation record the lot.
+Propose one, say which finding drives it, and **wait for a human to confirm or correct it**. Record
+`tier_set_by` and `tier_reason`, and clear `tier_provisional`. Leaving it set is a blocking error:
+it means nobody confirmed.
+
+The evidence is in the record now, so the proposal cites it rather than the issue's wording. Three
+dependent areas and a data migration is a different change from one flagged file with no callers,
+and the words in the title do not distinguish them.
+
+Where protection actually changes, from the catalog: **3 → 2** takes `packet`, `arch_review`,
+`qa_verify` and `rollout` off `floor`; **2 → 1** moves only `integration_verify`. `deploy`,
+`promote`, the test-first cycle and the retrospective never demote. So **declaring 2 instead of 3 is
+the consequential call.**
+
+### Two options
+
+Size the plan from the record:
+
+```bash
+SZ="ci/first-pass/size_plan.py"; [[ -f "$SZ" ]] || SZ="$ROOT/shared/ci/first-pass/size_plan.py"
+"$PY" "$SZ" ".hitl/impact/$CHANGE_ID.yaml" "$WFYAML" fast
+```
+
+Show both, and the difference:
+
+```
+This change reaches: 3 areas, 1 published interface, a data migration.
+
+  Fast track   21 steps — what this change's own facts call for
+  Full scale   31 steps — everything that applies to a change of this shape
+
+  The 10 extra: Figma, ROI, training, design review, code review, refactor,
+  conventions, test review, and both ROI checkpoints.
+
+Recommended: fast track. Nothing it drops is protecting something this change touches.
+```
+
+One line on which is recommended and why. **The recommendation is advice** — taking full scale
+instead is not recorded.
+
+Say what each step protects when asked, from `protects` in the catalog. Order anything outside the
+fast track by `forgo_cost`, so the most consequential omission is the first one a person sees.
+
+**Print the full ordered list on request** ("show me every step"), and always in full for a workflow
+of 10 steps or fewer, where a phase summary would be longer than the list it replaces.
+
+---
+
+## Step 4b — Record the choice (First Pass, FR-29)
+
+**First Pass is how the choice at Step 4 is recorded.** It is not a separate offer and no longer
+opt-in: every change is shown a proposal and confirms or adjusts it. Full scale is simply the answer
+set where nothing is dropped. This is the third root cause in #97 — the one feature built for this
+problem had to be asked for by someone who already knew it existed.
+
+**The pre-selection comes from the rules, not from the tier.** `size_plan.py` has already decided
+what applies and what is needed now, from what this change reaches. Present the steps outside the
+chosen option pre-selected, each carrying the finding that decided it as its reason: "no interface
+files in this change", "3 dependents". Let **one confirmation record the lot.**
+
+Those entries take the `not_applicable` disposition — the rules determined the step does not apply,
+which is a different fact from a person choosing to skip it. Without that distinction a fast track
+records a named human declining twenty-odd steps they never looked at, and the retrospective reads
+that back as what was left out and why.
+
+A rule may never retire a load-bearing step. `not_applicable` on a `floor` or `no_omit` step is a
+non-waivable block (`RULE_OVER_FLOOR`); those are dropped by a named person accepting the risk, or
+not at all. `size_plan.py` never offers them, so a plan built from it cannot produce that record.
 
 Pre-selected is not pre-recorded. **Nothing is written until the human confirms**, and doing nothing
 still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
@@ -154,6 +219,9 @@ record is the person who confirmed, never the agent.
 
 **Present the disposition menu ONCE** (brief mode — not a step-by-step interview). Each step's `crit`
 (from the catalog, resolved against this change's `tier`) constrains its options:
+
+Steps the RULES excluded are pre-selected as `not_applicable` and are not part of this menu; the
+menu is for what a person is choosing to lighten beyond that.
 
 | step type | options offered |
 |---|---|
