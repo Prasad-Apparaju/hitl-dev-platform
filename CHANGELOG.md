@@ -64,11 +64,14 @@ against 31.
 
 **This is not a new mechanism.** It replaces the pre-selection logic inside First Pass Step 4b,
 which already presented steps with reasons filled in, took one confirmation for the whole set, and
-put the confirming person's name on every record. The ledger, the validator and the actor rule are
-unchanged.
+put the confirming person's name on every record. The actor rule is unchanged. The ledger and the
+validator are not: the ledger gains a fourth disposition and the validator four non-waivable codes,
+both described below.
 
 **First Pass is no longer opt-in.** Every change is shown a proposal; full scale is the answer set
-where nothing is dropped. The one feature built for this problem used to require knowing it existed.
+where nothing is *declined*. The rules still exclude steps that do not apply, which is why the
+full-scale counts above are 23 and 31 against a 34-step catalog, not 34 both times. The one feature
+built for this problem used to require knowing it existed.
 
 **A fourth disposition, `not_applicable`.** The rules excluding a step is a different fact from a
 person declining it. Without the distinction, a fast track recorded a named human as declining
@@ -82,10 +85,11 @@ are dropped by a named person accepting the risk, or not at all.
 HITL ▸ GH-97 ▸ Build ▸ RED [T2]  → /hitl:dev-tdd
 ```
 
-The catalog has declared a command for every step all along. It was dropped in derivation, dropped
-again when the change file was written, and never shown. Each hop passed its own checks while the
-path was dead end to end. Steps with nothing to run say so rather than inventing a command. Every
-step also closes by saying what comes next and how to start it.
+The catalog has declared commands all along for the three workflows that have them — `development`
+(34 steps), `platform` (17) and `release` (12). They were dropped in derivation, dropped again when
+the change file was written, and never shown. Each hop passed its own checks while the path was dead
+end to end. The other five workflows declare no commands at all, and steps with nothing to run say
+so rather than inventing one. Every step also closes by saying what comes next and how to start it.
 
 ### Fixed
 
@@ -101,8 +105,9 @@ step also closes by saying what comes next and how to start it.
 ### Known limits
 
 - The two-option choice applies to `development` only. Platform is a one-time readiness checklist
-  with its own waiver machinery and no per-step criticality; the other six workflows have no sizing
-  rules and say so rather than offering two identical lists.
+  with its own waiver machinery and no per-step criticality; the other six have too few sizing rules
+  for the two options to differ — `brownfield` has one and `docs` two, the rest none — so they return
+  a single plan with a partial-coverage warning rather than offering two identical lists.
 - The sizing rules will be wrong at first. The closing retrospective is what corrects them.
 
 ## [2.8.0] — 2026-08-18
