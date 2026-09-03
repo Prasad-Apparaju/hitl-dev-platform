@@ -24,10 +24,12 @@ manifest:
     paths: *id001
 
 skips:
-  - step: adversarial_review
-    ack_by: "pappar"
-    reason: "Ships the retro implementation that cleared the headline blocker; the five
-      remaining 2.9.0 review findings are known and carried forward."
+  - { step: adversarial_review, crit: floor, actor: "pappar", ack_by: "pappar",
+      disposition: decline, waiver_ref: "W-001-release-2.9.0", resolved: false,
+      ts: "2026-09-03T00:44:47+00:00",
+      reason: "Three adversarial rounds returned DO NOT SHIP and the 2026-09-02 release review
+        found six items; one was fixed before publishing and five were accepted as known debt.
+        Recorded in .hitl/waivers.yaml, revisit 2026-09-16." }
 
 workflow:
   id: "release"
@@ -38,7 +40,7 @@ workflow:
     - { n: "2", key: "changelog", label: "Notes", phase: "Prepare", status: open, command: "manual" }
     - { n: "3", key: "version_bump", label: "Bump", phase: "Prepare", status: open, command: "manual" }
     - { n: "4", key: "gates", label: "Gates", phase: "Verify", status: open, command: "dev-validate" }
-    - { n: "5", key: "adversarial_review", label: "Adversarial", phase: "Gate", status: open, command: "manual" }
+    - { n: "5", key: "adversarial_review", label: "Adversarial", phase: "Gate", status: skipped, command: "manual" }
     - { n: "6", key: "resolve_findings", label: "Resolve", phase: "Gate", status: open, command: "manual" }
     - { n: "7", key: "build", label: "Build", phase: "Publish", status: open, command: "manual" }
     - { n: "8", key: "publish", label: "Publish", phase: "Publish", status: open, command: "manual" }

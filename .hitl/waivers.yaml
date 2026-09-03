@@ -1,0 +1,36 @@
+# Release waiver store.
+#
+# A waiver here is a recorded decision to ship past a fail-closed gate: who accepted it, why, what
+# was known at the time, and the date it must be looked at again. It mirrors the shape of
+# ci/manifest-agentic/manifest-waivers.yaml, including `revisit` — because the failure mode a
+# waiver has is not being refused, it is being forgotten.
+#
+# A skip record in .hitl/current-change.yaml points here by `waiver_ref: <id>`. Skip != waiver:
+# the skip says a step did not run, the waiver says who decided that and until when.
+schema_version: "1.0"
+
+waivers:
+  - id: W-001-release-2.9.0
+    code: REVIEW_WAIVED
+    locus: adversarial_review
+    change_id: GH-103-release-2.9.0
+    owner: pappar
+    accepted: 2026-09-02
+    revisit: 2026-09-16
+    covers: ["2.9.0", "2.9.1"]
+    reason: >-
+      Three adversarial rounds on 2026-08-20/21 (bypass, consequence, upgrade) each returned DO NOT
+      SHIP, and the 2026-09-02 release review of 46271e7 found six further items. One of the six was
+      fixed before publishing — `retro` shipped as a floor step with no skill behind it, which that
+      review called "the smallest thing that stops it". The remaining five were accepted as known
+      debt rather than resolved, and 2.9.0 and 2.9.1 were published on that basis.
+    findings_of_record:
+      - .hitl/reviews/incoming/release-2.9.0.md
+      - .hitl/reviews/incoming/bypass-2.9.0-r3.md
+      - .hitl/reviews/incoming/consequence-2.9.0-r3.md
+      - .hitl/reviews/incoming/upgrade-2.9.0-r3.md
+    open_at_publish:
+      - "CHANGELOG claims that do not match the shipped catalog (four)"
+      - "mid-change upgrade leaves two steps marked `current`"
+      - "Step 8 re-enters apply-change and re-asks for plans just declined"
+      - "round-3 lens findings never re-checked against HEAD"
