@@ -15,7 +15,7 @@
 #     total: 31
 #     steps:
 #       - { n: 1,   key: issue,       label: "Issue",   status: done }
-#       - { n: 19a, key: arch_review, label: "ArchRvw", status: current }
+#       - { n: 18a, key: arch_review, label: "ArchRvw", status: current }
 #       - { n: 20,  key: rerun,       label: "Rerun",   status: open }
 #
 # Status values: done (✓) · current (▶) · open (·).
@@ -84,7 +84,7 @@ hitl_workflow_field() {
 }
 
 # hitl_steps <yaml> → emit one line per step as: n|label|status|phase|command
-# Order is preserved. Substeps (e.g. 19a) come through as their literal n.
+# Order is preserved. Substeps (e.g. 18a) come through as their literal n.
 hitl_steps() {
   local f="$1"
   # Handles BOTH single-line flow maps ("- { n: 1, key: …, status: done }") and
@@ -146,7 +146,7 @@ hitl_total() {
   hitl_steps "$f" | awk -F'|' '$1 ~ /^[0-9]+$/ {n=$1} END{print n+0}'
 }
 
-# hitl_current_n <yaml> → the `n` of the step whose status is `current` (e.g. "3" or "19a").
+# hitl_current_n <yaml> → the `n` of the step whose status is `current` (e.g. "3" or "18a").
 hitl_current_n() {
   hitl_steps "$1" | awk -F'|' '$3=="current"{print $1; exit}'
 }

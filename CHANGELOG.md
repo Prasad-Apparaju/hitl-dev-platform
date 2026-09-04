@@ -24,6 +24,13 @@ All notable changes to the HITL plugin are documented here.
   --sync-validators` installs what is absent, stays silent on identical files, shows a diff and asks
   on a modified one, leaves repo-added files alone, and honours a per-directory `.hitl-optout`.
 - **`dev-retro`'s description read as an XML tag** and failed the skill lint on `main`.
+- **The step docs number the steps the way the runtime does.** After #97 moved impact analysis
+  out of the plan and put the retrospective in, `workflow-steps.md` and the summary list in
+  `dev-practices` kept their old numbers: every name from step 3 to 29 was one step off, the
+  breadcrumb's full names were wrong for most steps, the retrospective and the two adversarial
+  substeps had no entry, and the architect code review was "19a" everywhere it was mentioned (it
+  is 18a). The breadcrumb matrix, the example change file and the session-summary hook follow.
+  Two wiring tests now hold the three copies to the runtime.
 
 ---
 

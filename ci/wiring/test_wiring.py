@@ -744,3 +744,51 @@ def test_the_catalog_resolver_is_the_only_one():
             "%s resolves the catalog its own way again; there must be one resolver" % name)
     assert 'CLAUDE_PLUGIN_ROOT' not in gen.split("default_workflows")[0][-400:], (
         "gen_change is resolving the plugin root itself instead of asking the resolver")
+
+
+# --- the step doc numbers its steps the way the runtime does -----------------------------------
+# workflow-steps.md is what a person reads to learn what step N is, and the breadcrumb matrix
+# takes full step names from it by number. After #97 moved `impact` out of the plan and put the
+# retrospective in, the doc kept its old numbers: every name from step 3 to 29 was one step off,
+# two substeps had no entry, and nothing noticed for three releases.
+def test_workflow_steps_doc_numbers_match_the_runtime():
+    import yaml
+    doc_path = os.path.join(AI, "claude", "dev-practices", "workflow-steps.md")
+    doc = {}
+    for line in _read(doc_path).splitlines():
+        m = re.match(r"^\*\*(\d+[a-z]?)\.\s+(.+?)\*\*", line)
+        if m:
+            doc[m.group(1)] = re.sub(r"\s*\(conditional\)\s*$", "", m.group(2)).strip()
+    catalog = yaml.safe_load(_read(os.path.join(ROOT, "tools", "workflow-catalog", "catalog.yaml")))
+    names = {s["key"]: s["name"] for s in catalog["spine"]["steps"]}
+    runtime = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    steps = runtime["workflows"]["development"]["steps"]
+    expected = {str(s["n"]): names[s["key"]] for s in steps}
+    assert doc == expected, (
+        "workflow-steps.md headings disagree with the runtime numbering:\n"
+        + "\n".join("  %s: doc %r, runtime %r" % (n, doc.get(n), expected.get(n))
+                    for n in sorted(set(doc) | set(expected),
+                                    key=lambda x: (int(re.match(r"\d+", x).group()), x))
+                    if doc.get(n) != expected.get(n)))
+
+
+def test_the_compact_step_list_and_the_example_change_file_follow_the_runtime():
+    """Two more copies of the numbering: the summary list in dev-practices/SKILL.md (what the model
+    reads) and the filled-in example change file the design skill points at. Both carried the
+    pre-#97 numbers — the list even had 32 steps. The sequence of step ids must be the runtime's."""
+    import yaml
+    runtime = yaml.safe_load(_read(os.path.join(AI, "shared", "workflows.yaml")))
+    steps = runtime["workflows"]["development"]["steps"]
+    want = [str(s["n"]) for s in steps]
+
+    skill = _read(os.path.join(AI, "claude", "dev-practices", "SKILL.md"))
+    block = skill[skill.index("## Workflow Summary"):]
+    block = block[block.index("```") + 3:]
+    block = block[:block.index("```")]
+    got = [m.group(1) for m in re.finditer(r"^(\d+[a-z]?)\.\s+", block, flags=re.M)]
+    assert got == want, "dev-practices/SKILL.md summary list: %s" % (
+        [(a, b) for a, b in zip(got, want) if a != b] or "length %d vs %d" % (len(got), len(want)))
+
+    example = yaml.safe_load(_read(os.path.join(AI, "shared", "templates", "GH-000-example.yaml")))
+    ex = [(str(s["n"]), s["key"]) for s in example["workflow"]["steps"]]
+    assert ex == [(str(s["n"]), s["key"]) for s in steps], "GH-000-example.yaml steps drift from the runtime"

@@ -51,7 +51,7 @@ Plus the cross-cutting cases:
 
 | Case | Asserts |
 |------|---------|
-| **19a substep** (development) | `hitl_current_n` returns `19a`; trail shows `▶ Architect Code Review` (full name, numberless) in banner, statusline, and library; ribbon shows `Verify ◐` |
+| **18a substep** (development) | `hitl_current_n` returns `18a`; trail shows `▶ Architect Code Review` (full name, numberless) in banner, statusline, and library; ribbon shows `Verify ◐` |
 | **skipped / starter** step in the window (First Pass, FR-29) | parser keeps `status: skipped`/`starter`; current still highlighted by full name; a skipped neighbour renders as `⊘<label>` and a starter as `◐<label>` — visually distinct from open (`·`) and never `✓` |
 | **branch mismatch** | `expected_branch` ≠ checked-out branch → soft `⚠` warning in both renderers; trail still renders the full current name (warn, not crash) |
 | **block-style YAML** (issue #15) | multi-line `- n:`/`key:`/`label:`/`status:`/`phase:` steps parse identically to flow-map style — both the trail **and** the phase ribbon match flow style |
@@ -90,6 +90,6 @@ Total: **238 assertions across 24 cases** (the position cases now cover the `doc
 ## Findings
 
 Running the matrix against the **current** (Phase-2) renderers: **238/238 pass, 0 renderer bugs
-surfaced.** The renderers correctly handle every workflow, the 19a substep (full name, numberless),
+surfaced.** The renderers correctly handle every workflow, the 18a substep (full name, numberless),
 skipped steps, branch mismatch, both YAML styles (trail **and** ribbon), the phase ribbon glyphs,
 the no-per-step-phase back-compat fallback, and the zero-steps/missing-file degrade paths.

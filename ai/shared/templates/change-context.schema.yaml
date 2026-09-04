@@ -239,11 +239,11 @@ workflow:
     type: array
     description: |
       Ordered list of steps, each written as a single-line YAML flow map so the awk-based
-      parser stays dependency-free. Substeps (e.g. 19a) appear as their own entry with a
+      parser stays dependency-free. Substeps (e.g. 18a) appear as their own entry with a
       string `n`; they do not increment `total`.
     items:
       n:
-        description: "Step identifier — integer, or a string like \"19a\" for a substep."
+        description: "Step identifier — integer, or a string like \"18a\" for a substep."
         example: 7
       key:
         type: string
@@ -281,7 +281,7 @@ current_step:
     Derived pointer to the current step in `workflow.steps`. Kept as a compatibility field so
     existing tooling (dev-switch-context, sync-step-to-issue) keeps working. The renderers take
     the trail + denominator from `workflow`; they use current_step only for the human-readable
-    name/phase shown in the header. For sub-steps (e.g. 19a) set number to the parent integer
+    name/phase shown in the header. For sub-steps (e.g. 18a) set number to the parent integer
     and substep to the letter.
   number:
     type: integer
@@ -289,7 +289,7 @@ current_step:
     example: 7
   substep:
     type: string
-    description: "Optional sub-step letter for steps like 19a (architect code review)."
+    description: "Optional sub-step letter for steps like 18a (architect code review)."
     example: "a"
   name:
     type: string

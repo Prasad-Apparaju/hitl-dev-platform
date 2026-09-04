@@ -90,7 +90,7 @@ graph TB
     a1 --> a2 --> ta1
   end
 
-  subgraph QA_PLAN["QA — Plan tests (step 7)"]
+  subgraph QA_PLAN["QA — Plan tests (step 6)"]
     q1["/hitl:qa-plan-tests"]
   end
 
@@ -108,8 +108,8 @@ graph TB
   end
 
   subgraph QA_REVIEW["QA — Review and verify"]
-    q2["/hitl:qa-review-tests — step 11"]
-    q3["/hitl:qa-verify-quality — step 22"]
+    q2["/hitl:qa-review-tests — step 10"]
+    q3["/hitl:qa-verify-quality — step 21"]
     q4["/hitl:qa-report-defect"]
     q2 --> q3
     q3 -->|"fail"| q4
@@ -204,7 +204,7 @@ graph TB
 | Command | When |
 |---|---|
 | `/hitl:architect-design-feature` | Feature-level HLD + LLD with approval gates |
-| `/hitl:architect-review-code` | Human code review at step 19a |
+| `/hitl:architect-review-code` | Human code review at step 18a |
 
 ### QA — across design and implementation
 

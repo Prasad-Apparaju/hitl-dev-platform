@@ -66,7 +66,7 @@ $(echo "$REQUIRED_EVIDENCE" | sed 's/^/- [ ] /')
 
 ## Next Steps
 
-Review the evidence checklist above and ensure all required items are complete before architect code review (step 19a).
+Review the evidence checklist above and ensure all required items are complete before architect code review (step 18a).
 
 Run \`/hitl:check-conventions\` to verify code quality before architect code review.
 

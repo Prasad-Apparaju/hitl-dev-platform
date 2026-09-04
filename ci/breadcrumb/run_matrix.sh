@@ -61,7 +61,7 @@ declare -a FAILED_CASES
 # emit_change_yaml <workflow_id> <current_n> [skip_n] [expected_branch]
 #   Reads the workflow's step list from workflows.yaml, marks every step before <current_n> done,
 #   the <current_n> step current, the rest open, and (if given) <skip_n> as skipped. Emits a full
-#   schema-v2 change file (flow-map style) on stdout. <current_n> may be a substep like "19a".
+#   schema-v2 change file (flow-map style) on stdout. <current_n> may be a substep like "18a".
 emit_change_yaml() {
   WF="$1" CUR="$2" SKIP="${3:-}" EB="${4:-}" STEPDOC="$STEPDOC" "$PY" - "$WORKFLOWS" <<'PY'
 import sys, re, os
@@ -337,51 +337,51 @@ for wf in "${WORKFLOWS_LIST[@]}"; do
 done
 
 # ── 2. development 19a SUBSTEP ───────────────────────────────────────────────────────────────────
-echo "── case: development 19a substep ─────────────────────────────"
-dir="$(new_case_dir "dev_19a" "issue/000-x")"
-emit_change_yaml development 19a "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
+echo "── case: development 18a substep ─────────────────────────────"
+dir="$(new_case_dir "dev_18a" "issue/000-x")"
+emit_change_yaml development 18a "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
 lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Architect Code Review")"
 cur_n="$(cd "$dir" && hitl_current_n .hitl/current-change.yaml)"
-assert_contains   "dev/19a: current_n is the substep" "$cur_n" "19a"
+assert_contains   "dev/18a: current_n is the substep" "$cur_n" "18a"
 # Phase 2: the current step is shown by its FULL name, numberless — "▶ Architect Code Review".
-assert_contains   "dev/19a: library trail shows ▶ Architect Code Review" "$lib_trail" "▶ Architect Code Review"
-assert_contains   "dev/19a: banner shows ▶ Architect Code Review"        "$banner" "▶ Architect Code Review"
-assert_contains   "dev/19a: statusline shows ▶ Architect Code Review"    "$status" "▶ Architect Code Review"
-# 19a lives in the Verify phase → ribbon shows "Verify ◐"
-assert_contains   "dev/19a: ribbon shows Verify ◐"                       "$banner" "Verify ◐"
-assert_no_global_counter "dev/19a"                                       "$combined"
-assert_no_error_leak     "dev/19a"                                       "$combined"
+assert_contains   "dev/18a: library trail shows ▶ Architect Code Review" "$lib_trail" "▶ Architect Code Review"
+assert_contains   "dev/18a: banner shows ▶ Architect Code Review"        "$banner" "▶ Architect Code Review"
+assert_contains   "dev/18a: statusline shows ▶ Architect Code Review"    "$status" "▶ Architect Code Review"
+# 18a lives in the Verify phase → ribbon shows "Verify ◐"
+assert_contains   "dev/18a: ribbon shows Verify ◐"                       "$banner" "Verify ◐"
+assert_no_global_counter "dev/18a"                                       "$combined"
+assert_no_error_leak     "dev/18a"                                       "$combined"
 
 # ── 3. SKIPPED step present in the trail (in the visible window) ─────────────────────────────────
 echo "── case: skipped step in trail ───────────────────────────────"
-# current at step 5 (Docs); mark step 3 (Impact) skipped — 3 is within the 3-back window of 5.
+# current at step 4 (Docs); mark step 3 (ROI) skipped — 3 is within the 3-back window of 4.
 dir="$(new_case_dir "dev_skip" "issue/000-x")"
-emit_change_yaml development 5 3 "issue/000-x" > "$dir/.hitl/current-change.yaml"
+emit_change_yaml development 4 3 "issue/000-x" > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
 lib_steps="$(cd "$dir" && hitl_steps .hitl/current-change.yaml)"
 lib_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Update Docs")"
 # hitl_steps now emits n|label|status|phase — skipped status is preserved (phase appended).
-assert_contains   "dev/skip: steps parse keeps skipped status" "$lib_steps" "3|Impact|skipped|Design"
+assert_contains   "dev/skip: steps parse keeps skipped status" "$lib_steps" "3|ROI|skipped|Design"
 assert_nonempty   "dev/skip: trail non-empty"                  "$lib_trail"
 # current step is shown numberless by its FULL name.
 assert_contains   "dev/skip: current still highlighted ▶ Update Docs" "$lib_trail" "▶ Update Docs"
 # First Pass (FR-29 CR-16): a skipped step renders with its own glyph "⊘" — visually DISTINCT from
 # open (·) and never done (✓). (Pre-FR-29 it shared the open glyph; now it is distinguishable.)
-assert_contains   "dev/skip: skipped step shown as ⊘Impact"    "$lib_trail" "⊘Impact"
-assert_not_contains "dev/skip: skipped step not marked done"   "$lib_trail" "✓Impact"
-assert_not_contains "dev/skip: skipped step not open glyph"    "$lib_trail" "·Impact"
+assert_contains   "dev/skip: skipped step shown as ⊘Impact"    "$lib_trail" "⊘ROI"
+assert_not_contains "dev/skip: skipped step not marked done"   "$lib_trail" "✓ROI"
+assert_not_contains "dev/skip: skipped step not open glyph"    "$lib_trail" "·ROI"
 assert_no_global_counter "dev/skip"                            "$combined"
 assert_no_error_leak     "dev/skip"                            "$combined"
 
 # ── 4. BRANCH MISMATCH soft-warning marker (must warn, must not crash) ───────────────────────────
 echo "── case: branch mismatch warning ─────────────────────────────"
 dir="$(new_case_dir "dev_mismatch" "totally-wrong-branch")"
-emit_change_yaml development 10 "" "issue/000-refund-flow" > "$dir/.hitl/current-change.yaml"
+emit_change_yaml development 9 "" "issue/000-refund-flow" > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
@@ -398,7 +398,7 @@ assert_no_error_leak     "dev/mismatch"                   "$combined"
 # ── 5. BLOCK-style YAML must parse identically to flow-style (issue #15) ─────────────────────────
 echo "── case: block-style YAML parse (issue #15) ──────────────────"
 dir="$(new_case_dir "dev_block" "issue/000-x")"
-emit_block_style development 14 > "$dir/.hitl/current-change.yaml"
+emit_block_style development 13 > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
@@ -406,7 +406,7 @@ block_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Gene
 block_ribbon="$(cd "$dir" && hitl_render_ribbon .hitl/current-change.yaml)"
 # compare against the flow-style equivalent (rendered the same way)
 dir2="$(new_case_dir "dev_flow_ref" "issue/000-x")"
-emit_change_yaml development 14 "" "issue/000-x" > "$dir2/.hitl/current-change.yaml"
+emit_change_yaml development 13 "" "issue/000-x" > "$dir2/.hitl/current-change.yaml"
 flow_trail="$(cd "$dir2" && hitl_render_trail .hitl/current-change.yaml "" "Generate Code (GREEN)")"
 flow_ribbon="$(cd "$dir2" && hitl_render_ribbon .hitl/current-change.yaml)"
 assert_nonempty   "dev/block: block trail non-empty"            "$block_trail"
@@ -431,7 +431,7 @@ assert_no_error_leak     "dev/block"                          "$combined"
 # ("<phase> ◐"), and the banner must still render the full trail without crashing.
 echo "── case: back-compat — steps without per-step phase ──────────"
 dir="$(new_case_dir "dev_nophase" "issue/000-x")"
-NOPHASE=1 emit_change_yaml development 14 "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
+NOPHASE=1 emit_change_yaml development 13 "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'
@@ -439,8 +439,8 @@ np_steps="$(cd "$dir" && hitl_steps .hitl/current-change.yaml)"
 np_ribbon="$(cd "$dir" && hitl_render_ribbon .hitl/current-change.yaml)"
 np_trail="$(cd "$dir" && hitl_render_trail .hitl/current-change.yaml "" "Generate Code (GREEN)")"
 # precondition: the seeded steps really have an EMPTY phase column (n|label|status|<empty>).
-assert_contains    "dev/nophase: steps carry no per-step phase" "$np_steps" "14|GREEN|current|"
-assert_not_contains "dev/nophase: no per-step Build phase"      "$np_steps" "14|GREEN|current|Build"
+assert_contains    "dev/nophase: steps carry no per-step phase" "$np_steps" "13|GREEN|current|"
+assert_not_contains "dev/nophase: no per-step Build phase"      "$np_steps" "13|GREEN|current|Build"
 # fallback: ribbon collapses to the single current_step.phase glyph "Build ◐" (not a full ribbon).
 assert_contains    "dev/nophase: ribbon falls back to Build ◐"  "$np_ribbon" "Build ◐"
 assert_not_contains "dev/nophase: ribbon is NOT the full ribbon" "$np_ribbon" "Requirements ✓"
@@ -490,7 +490,7 @@ echo "── case: a merged change is inactive (issue #19 stale-file gate) ─�
 # session gate — the next change has to go through intake, not inherit the old one.
 dir="$(new_case_dir "merged_inactive" "issue/000-x")"
 # conclude sets the top-level status to merged (replacing the working status)
-emit_change_yaml development 14 "" "issue/000-x" | sed 's/^status: .*/status: merged/' > "$dir/.hitl/current-change.yaml"
+emit_change_yaml development 13 "" "issue/000-x" | sed 's/^status: .*/status: merged/' > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"; status="$(run_statusline "$dir")"
 combined="$banner"$'\n'"$status"$'\n'"$(cat /tmp/_bc_welcome_err /tmp/_bc_status_err 2>/dev/null)"
 [[ $VERBOSE -eq 1 ]] && echo "$banner" | sed 's/^/    /'

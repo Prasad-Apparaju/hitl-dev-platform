@@ -78,7 +78,7 @@ See [progress-banners.md](progress-banners.md) for the full per-phase banner-tra
 
 ---
 
-## Phase 1 — Impact Analysis and Scope (Step 3)
+## Phase 1 — Impact Analysis and Scope (intake)
 
 ### 1a. Read and challenge the issue
 

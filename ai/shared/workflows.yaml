@@ -14,19 +14,19 @@
 # previously existed (welcome.sh / statusline-hitl.sh / workflow-steps.md / schema) impossible.
 #
 # Step fields:
-#   n      — step identifier. Integer for normal steps; string for substeps (e.g. "19a").
+#   n      — step identifier. Integer for normal steps; string for substeps (e.g. "18a").
 #   key    — STABLE identifier. Survives renumbering. dev-update remaps completion status by key.
 #   label  — short breadcrumb label (≤8 chars preferred) shown in the windowed trail.
 #   phase  — workflow phase this step belongs to (drives current_step.phase).
 #
 # `total` is the DENOMINATOR shown in the breadcrumb ("Step n / total") = the highest integer
-# step number. Substeps (19a) are part of their parent and do NOT increment the denominator.
+# step number. Substeps (18a) are part of their parent and do NOT increment the denominator.
 
 schema_version: "2.0"
 
 workflows:
 
-  # ── Development: the 31-step change workflow (+ 19a architect-review substep) ──────────────
+  # ── Development: the 31-step change workflow (+ 18a architect-review substep) ──────────────
   # Canonical source: ai/claude/dev-practices/workflow-steps.md. The lettered `cond:` substeps
   # (4a-4c, 27a) are activated per change by step_costs — findings, or a human declaring the change
   # security-sensitive at intake — and recorded not_applicable otherwise (#102).

@@ -623,11 +623,11 @@ Run when a design needs review before implementation. This replaces the `archite
 
 ---
 
-## Architect Code Review (Step 19a)
+## Architect Code Review (Step 18a)
 
-Run after the developer has generated code and before traceability is verified. This is step 19a in the 31-step workflow — it sits between spec conformance review and traceability verification.
+Run after the developer has generated code and before traceability is verified. This is step 18a in the 31-step workflow — it sits between spec conformance review and traceability verification.
 
-**Trigger:** User asks to "architect review code", "review the implementation", or "step 19a".
+**Trigger:** User asks to "architect review code", "review the implementation", or "step 18a".
 
 **Context required:** `.hitl/current-change.yaml` must exist with `status: conformance-review-pending` or later.
 
