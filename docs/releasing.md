@@ -104,8 +104,9 @@ git push origin hitl--vX.Y.Z
 ```
 
 The script runs both validators against the source repo, builds, commits `chore(release): build
-vX.Y.Z`, pins `marketplace.json` to that commit, tags `hitl--vX.Y.Z`, and commits the pin. Read
-the build commit's file list before pushing; it should be exactly the files the release changed.
+vX.Y.Z` and tags it `hitl--vX.Y.Z`. There is no marketplace pin: the `commit` field was dropped
+after 2.10.0 because installs ignore it, and the branch head is what is served. Read the build
+commit's file list before pushing; it should be exactly the files the release changed.
 
 ### 10. Install verify
 
@@ -118,7 +119,7 @@ find "$CLAUDE_CONFIG_DIR" -name plugin.json -path '*hitl*'
 
 Two files come back. `plugins/cache/hitl/hitl/<version>/.claude-plugin/plugin.json` is what was
 installed and must read `X.Y.Z`. `plugins/marketplaces/hitl/.claude-plugin/plugin.json` is the
-clone of the plugin repo's `main` and shows whatever `main` last pinned; it is not the install.
+clone of the plugin repo's `main` and shows whatever version `main` is at; it is not the install.
 Then exercise something: open a project with `.hitl/` and check the breadcrumb renders.
 
 ### 11. Announce
