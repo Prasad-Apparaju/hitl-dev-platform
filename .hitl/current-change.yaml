@@ -1,0 +1,57 @@
+schema_version: "2.0"
+hitl_version: "2.10.1"
+
+change_id: "GH-107-release-2.10.1"
+tier: 2
+status: planning
+expected_branch: "main"
+
+source_artifacts:
+  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/107
+  hld: n/a
+  lld: n/a
+
+allowed_paths: &id001
+- ai/
+- ci/
+- tools/
+- site/
+- CHANGELOG.md
+- .hitl/
+
+manifest:
+  domains:
+  - name: release-2.10.1
+    paths: *id001
+
+skips:
+  - { step: adversarial_review, crit: floor, actor: "pappar", ack_by: "pappar",
+      disposition: decline, waiver_ref: "W-003-release-2.10.1", resolved: false,
+      ts: "2026-09-04T17:00:00+00:00",
+      reason: "Documentation-only patch (three rows of the shipped step reference); adversarial
+        review declined by the owner's decision on 2026-09-04, same basis as W-002. Recorded in
+        .hitl/waivers.yaml as W-003, revisit 2026-09-18." }
+
+workflow:
+  id: "release"
+  version: "2.10.1"
+  total: 12
+  steps:
+    - { n: "1", key: "rc_scope", label: "Scope", phase: "Prepare", status: done, command: "manual" }
+    - { n: "2", key: "changelog", label: "Notes", phase: "Prepare", status: done, command: "manual" }
+    - { n: "3", key: "version_bump", label: "Bump", phase: "Prepare", status: done, command: "manual" }
+    - { n: "4", key: "gates", label: "Gates", phase: "Verify", status: current, command: "dev-validate" }
+    - { n: "5", key: "adversarial_review", label: "Adversarial", phase: "Gate", status: skipped, command: "manual" }
+    - { n: "6", key: "resolve_findings", label: "Resolve", phase: "Gate", status: open, command: "manual" }
+    - { n: "7", key: "build", label: "Build", phase: "Publish", status: open, command: "manual" }
+    - { n: "8", key: "publish", label: "Publish", phase: "Publish", status: open, command: "manual" }
+    - { n: "9", key: "tag", label: "Tag", phase: "Publish", status: open, command: "manual" }
+    - { n: "10", key: "install_verify", label: "Verify", phase: "Confirm", status: open, command: "manual" }
+    - { n: "11", key: "announce", label: "Announce", phase: "Confirm", status: open, command: "manual" }
+    - { n: "12", key: "retire", label: "Retire", phase: "Confirm", status: open, command: "manual" }
+
+current_step:
+  number: 4
+  name: "Gates"
+  phase: "Verify"
+  command: "dev-validate"

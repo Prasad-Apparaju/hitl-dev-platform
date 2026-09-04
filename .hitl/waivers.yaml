@@ -58,3 +58,21 @@ waivers:
       - "sizer `because` for an active cve_audit shows the needed_now sentence over the engages sentence (cosmetic)"
       - "#101 replace adversarial review: not decided"
       - "#96 statusLine repair: open"
+
+  - id: W-003-release-2.10.1
+    code: REVIEW_WAIVED
+    locus: adversarial_review
+    change_id: GH-107-release-2.10.1
+    owner: pappar
+    accepted: 2026-09-04
+    revisit: 2026-09-18
+    covers: ["2.10.1"]
+    reason: >-
+      Documentation-only patch: three rows of the shipped step reference edited after the 2.10.0
+      build. Same decision as W-002 (adversarial review declined by the owner on 2026-09-04); the
+      change is text, validated by the skill lint and the wiring suite, and the release exercises
+      the pin-less release.sh for the first time.
+    findings_of_record:
+      - docs/session-logs/2026-09-04-session-01.md
+    open_at_publish:
+      - "everything listed under W-002"

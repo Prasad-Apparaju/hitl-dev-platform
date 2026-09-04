@@ -4,6 +4,18 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [2.10.1] — 2026-09-04
+
+### Fixed
+
+- **The shipped step reference carries the release-table edits made after 2.10.0 was built.**
+  Three rows in `dev-practices/workflow-steps.md`: publish runs every validator that reads the
+  change file, not only the review gate; install-verify uses an isolated configuration; and the
+  waiver escape is named, with its `revisit` date. No code changes. This is also the first release
+  cut with the pin-less release script: one build commit, a tag, and pushing the branch publishes.
+
+---
+
 ## [2.10.0] — 2026-09-04
 
 ### Fixed
