@@ -1,14 +1,14 @@
 schema_version: "2.0"
-hitl_version: "2.9.0"
+hitl_version: "2.10.0"
 
-change_id: "GH-103-release-2.9.0"
+change_id: "GH-106-release-2.10.0"
 tier: 2
 status: planning
 expected_branch: "main"
 
 source_artifacts:
-  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/97
-  hld: docs/design/right-sizing/01-design.md
+  issue: https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/106
+  hld: n/a
   lld: n/a
 
 allowed_paths: &id001
@@ -17,29 +17,30 @@ allowed_paths: &id001
 - tools/
 - site/
 - CHANGELOG.md
+- .hitl/
 
 manifest:
   domains:
-  - name: release-2.9.0
+  - name: release-2.10.0
     paths: *id001
 
 skips:
   - { step: adversarial_review, crit: floor, actor: "pappar", ack_by: "pappar",
-      disposition: decline, waiver_ref: "W-001-release-2.9.0", resolved: false,
-      ts: "2026-09-03T00:44:47+00:00",
-      reason: "Three adversarial rounds returned DO NOT SHIP and the 2026-09-02 release review
-        found six items; one was fixed before publishing and five were accepted as known debt.
-        Recorded in .hitl/waivers.yaml, revisit 2026-09-16." }
+      disposition: decline, waiver_ref: "W-002-release-2.10.0", resolved: false,
+      ts: "2026-09-04T16:30:00+00:00",
+      reason: "Adversarial review declined by the owner's decision on 2026-09-04; a bounded
+        validation of affc690 ran in its place (full suite, live pipeline scenarios, breadcrumb
+        matrix). Recorded in .hitl/waivers.yaml as W-002, revisit 2026-09-18." }
 
 workflow:
   id: "release"
-  version: "2.9.0"
+  version: "2.10.0"
   total: 12
   steps:
-    - { n: "1", key: "rc_scope", label: "Scope", phase: "Prepare", status: current, command: "manual" }
-    - { n: "2", key: "changelog", label: "Notes", phase: "Prepare", status: open, command: "manual" }
-    - { n: "3", key: "version_bump", label: "Bump", phase: "Prepare", status: open, command: "manual" }
-    - { n: "4", key: "gates", label: "Gates", phase: "Verify", status: open, command: "dev-validate" }
+    - { n: "1", key: "rc_scope", label: "Scope", phase: "Prepare", status: done, command: "manual" }
+    - { n: "2", key: "changelog", label: "Notes", phase: "Prepare", status: done, command: "manual" }
+    - { n: "3", key: "version_bump", label: "Bump", phase: "Prepare", status: done, command: "manual" }
+    - { n: "4", key: "gates", label: "Gates", phase: "Verify", status: current, command: "dev-validate" }
     - { n: "5", key: "adversarial_review", label: "Adversarial", phase: "Gate", status: skipped, command: "manual" }
     - { n: "6", key: "resolve_findings", label: "Resolve", phase: "Gate", status: open, command: "manual" }
     - { n: "7", key: "build", label: "Build", phase: "Publish", status: open, command: "manual" }
@@ -50,7 +51,7 @@ workflow:
     - { n: "12", key: "retire", label: "Retire", phase: "Confirm", status: open, command: "manual" }
 
 current_step:
-  number: 1
-  name: "Scope"
-  phase: "Prepare"
-  command: "manual"
+  number: 4
+  name: "Gates"
+  phase: "Verify"
+  command: "dev-validate"

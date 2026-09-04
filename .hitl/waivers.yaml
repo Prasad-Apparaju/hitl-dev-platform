@@ -34,3 +34,27 @@ waivers:
       - "mid-change upgrade leaves two steps marked `current`"
       - "Step 8 re-enters apply-change and re-asks for plans just declined"
       - "round-3 lens findings never re-checked against HEAD"
+
+  - id: W-002-release-2.10.0
+    code: REVIEW_WAIVED
+    locus: adversarial_review
+    change_id: GH-106-release-2.10.0
+    owner: pappar
+    accepted: 2026-09-04
+    revisit: 2026-09-18
+    covers: ["2.10.0"]
+    reason: >-
+      Adversarial review declined by the owner's decision on 2026-09-04: the open-ended rounds have
+      been rabbit holes and token sinks (see #101). In its place a bounded validation of affc690
+      (#102) ran in a fresh context: full suite 863, wiring 232, skill lint, catalog verify, four
+      live pipeline scenarios (harmless / security-sensitive with pentest hand-marked / question
+      never asked / security-sensitive sized fast) each behaving as specified, breadcrumb matrix at
+      HEAD and HEAD~1. #103 and #104 shipped with live repros and e2e tests; the step-doc
+      renumbering is held by two wiring tests and the matrix (271/271).
+    findings_of_record:
+      - docs/session-logs/2026-09-04-session-01.md
+    open_at_publish:
+      - "W-001's five items remain open (changelog claims, mid-change upgrade, Step 8 re-entry, round-3 lenses unchecked)"
+      - "sizer `because` for an active cve_audit shows the needed_now sentence over the engages sentence (cosmetic)"
+      - "#101 replace adversarial review: not decided"
+      - "#96 statusLine repair: open"
