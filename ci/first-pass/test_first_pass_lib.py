@@ -515,3 +515,79 @@ def test_not_applicable_is_never_a_menu_option():
     human could pick it, and the ledger would record a rule that never fired."""
     for key in ("roi", "docs", "conventions"):
         assert "not_applicable" not in D.allowed_dispositions(CATALOG[key], 2)
+
+
+# ---------------------------------------------------------------- migrate_project: the change-file audit (#103)
+#
+# The audit used to coerce an unreadable change file to `{}` and then certify it "consistent" with
+# exit 0. On a python3 without PyYAML that was every dev-update run. Four states, kept apart:
+# absent and empty are clean; unreadable and not-a-mapping mean the audit did not run and must fail.
+
+def _migrate_root(tmp_path, change_text=None):
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
+    if change_text is not None:
+        (tmp_path / ".hitl").mkdir()
+        (tmp_path / ".hitl" / "current-change.yaml").write_text(change_text, encoding="utf-8")
+    return str(tmp_path)
+
+
+def test_migrate_absent_change_file_is_clean(tmp_path, capsys):
+    rc = M.main(["--root", _migrate_root(tmp_path)])
+    assert rc == 0
+    assert "change file" not in capsys.readouterr().out.lower().replace("active change file is", "")
+
+
+def test_migrate_empty_change_file_is_clean_and_says_empty(tmp_path, capsys):
+    rc = M.main(["--root", _migrate_root(tmp_path, "")])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "empty" in out and "consistent" not in out
+
+
+def test_migrate_lightened_change_is_advisory_exit_0(tmp_path, capsys):
+    txt = "change_id: GH-1\nskips:\n  - {step: red}\nworkflow:\n  steps:\n    - {key: red, status: skipped}\n"
+    rc = M.main(["--root", _migrate_root(tmp_path, txt)])
+    out = capsys.readouterr().out
+    assert rc == 0, "the lightened report is advisory — check_skips.py is the gate"
+    assert "1 skip record(s)" in out and "lightened step(s): red" in out
+    assert "consistent" not in out
+
+
+def test_migrate_first_pass_declared_is_consistent(tmp_path, capsys):
+    txt = "change_id: GH-1\nfirst_pass: true\nskips:\n  - {step: red}\n"
+    rc = M.main(["--root", _migrate_root(tmp_path, txt)])
+    assert rc == 0 and "consistent" in capsys.readouterr().out
+
+
+def test_migrate_invalid_yaml_fails_closed(tmp_path, capsys):
+    rc = M.main(["--root", _migrate_root(tmp_path, "change_id: [unclosed\n")])
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "could not read" in out and "did NOT run" in out
+    assert "consistent" not in out, "an unreadable file must never be certified"
+
+
+def test_migrate_non_mapping_fails_closed(tmp_path, capsys):
+    for txt in ("- a\n- b\n", "just a scalar\n", "42\n"):
+        rc = M.main(["--root", _migrate_root(tmp_path, txt)])
+        out = capsys.readouterr().out
+        assert rc == 1, txt
+        assert "not a mapping" in out and "consistent" not in out, txt
+        (tmp_path / ".hitl" / "current-change.yaml").unlink()
+        (tmp_path / ".hitl").rmdir()
+        (tmp_path / ".claude" / "settings.json").unlink()
+        (tmp_path / ".claude").rmdir()
+
+
+def test_migrate_without_pyyaml_reports_and_fails(tmp_path, capsys, monkeypatch):
+    # The reported symptom: Homebrew python3, no PyYAML. `sys.modules[name] = None` makes
+    # `import yaml` raise ImportError, which is exactly what the operator's interpreter did.
+    txt = "change_id: GH-1\nskips:\n  - {step: red}\n"
+    root = _migrate_root(tmp_path, txt)
+    monkeypatch.setitem(sys.modules, "yaml", None)
+    rc = M.main(["--root", root])
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "no PyYAML" in out and "did NOT run" in out
+    assert "consistent" not in out, "two real findings were silently certified clean before this fix"

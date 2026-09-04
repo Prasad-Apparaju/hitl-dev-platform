@@ -16,7 +16,9 @@ It does two things, both additive and both reversible:
    `skipped`/`starter`, or a populated `skips[]`, with `first_pass` absent. Those certified clean
    under the old validator because enforcement never engaged. After upgrading they will fail
    certification, which is intended, so this names them up front rather than letting the first
-   failure look like a regression.
+   failure look like a regression. That report is advisory (exit 0). A change file the audit
+   could not read — no PyYAML, invalid YAML, or not a mapping — is reported and exits 1: an audit
+   that did not run never prints the all-clear (#103).
 
 Lives under ci/first-pass/ because that directory is packaged into the plugin by a wildcard and
 copied into product repos by onboarding; a new top-level tool would need a build change in the
@@ -158,27 +160,55 @@ def main(argv=None):
                 print(f"  written to {spath}")
 
     # 2) in-flight change files
+    #
+    # Four states, kept apart on purpose (#103). Absent and empty mean there is nothing in flight
+    # to audit, so they are clean. Unreadable, or readable but not a mapping, mean the audit could
+    # not run — and an audit that did not run must say so and fail, never print the all-clear.
+    # The previous version coerced an unreadable file to `{}`, which has no skips and no lightened
+    # steps, so `audit_change_file` found nothing and the tool certified a file it never saw. On a
+    # python3 without PyYAML (the common Homebrew case) that happened on every dev-update run. Same
+    # ruling as check_skips.py (GH-488): an UNREADABLE record must not masquerade as an EMPTY one.
+    audit_failed = False
     if os.path.isfile(cpath):
+        change = None
         try:
             import yaml
-            change = yaml.safe_load(io.open(cpath, encoding="utf-8")) or {}
-        except Exception as e:
-            print(f"! could not read {cpath} ({e})")
-            change = {}
-        reasons = audit_change_file(change)
-        if reasons:
-            print("\n! this change was lightened without declaring `first_pass`:")
-            for r in reasons:
-                print(f"    {r}")
-            print("  It certified clean before because enforcement never engaged. It will now fail.")
-            print("  If the change really is running First Pass, add `first_pass: true`.")
-            print("  If not, restore the steps. Do not delete the records to make the check pass.")
+        except ImportError:
+            print(f"! could not read {cpath}: this interpreter ({sys.executable}) has no PyYAML.")
+            print("  The change-file audit did NOT run — nothing about the active change has been checked.")
+            print("  Install it (pip install pyyaml) or run the migrator with the project's venv, then re-run.")
+            audit_failed = True
         else:
-            print("= active change file is consistent")
+            try:
+                change = yaml.safe_load(io.open(cpath, encoding="utf-8"))
+            except Exception as e:
+                print(f"! could not read {cpath} ({e})")
+                print("  The change-file audit did NOT run — nothing about the active change has been checked.")
+                audit_failed = True
+        if not audit_failed:
+            if change is None:
+                print("= active change file is empty — nothing to audit")
+            elif not isinstance(change, dict):
+                print(f"! {cpath} parses to a {type(change).__name__}, not a mapping — the audit cannot run.")
+                print("  Fix the file by hand; a change file is a YAML mapping.")
+                audit_failed = True
+            else:
+                reasons = audit_change_file(change)
+                if reasons:
+                    print("\n! this change was lightened without declaring `first_pass`:")
+                    for r in reasons:
+                        print(f"    {r}")
+                    print("  It certified clean before because enforcement never engaged. It will now fail.")
+                    print("  If the change really is running First Pass, add `first_pass: true`.")
+                    print("  If not, restore the steps. Do not delete the records to make the check pass.")
+                else:
+                    print("= active change file is consistent")
 
     if changed and not a.apply:
         print("\n(dry run — re-run with --apply to write)")
-    return 0
+    # The lightened-step report above stays advisory (exit 0): check_skips.py is the gate that
+    # blocks it later. Only an audit that could not run at all fails here.
+    return 1 if audit_failed else 0
 
 
 if __name__ == "__main__":

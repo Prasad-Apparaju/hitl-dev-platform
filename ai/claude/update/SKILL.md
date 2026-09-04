@@ -125,19 +125,18 @@ If it changed after the cache bust, continue to Step 4.
 ## Step 3b — Migrate settings and audit the active change
 
 Onboarding writes `.claude/settings.json` **only if absent**, so a repo onboarded before a release
-keeps its old file and misses what shipped since. Dry-run the migrator, show the user what it
-proposes, then apply. Also refresh the validator copies — they are snapshots, not references, so
-without this new checks never reach the project they protect.
+keeps its old file and misses what shipped since. Dry-run the migrator, show what it proposes, then
+apply. Also refresh the validator copies — snapshots, not references — or new checks never arrive.
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
-MIG="ci/first-pass/migrate_project.py"
-[[ -f "$MIG" ]] || MIG="$ROOT/shared/ci/first-pass/migrate_project.py"
-if [[ -f "$MIG" ]]; then
-  python3 "$MIG" --root .                  # review, then:
-  python3 "$MIG" --root . --apply
+MIG="ci/first-pass/migrate_project.py"; [[ -f "$MIG" ]] || MIG="$ROOT/shared/ci/first-pass/migrate_project.py"
+PY=""; for c in python3 python py; do "$c" -c "import yaml" >/dev/null 2>&1 && { PY="$c"; break; }; done
+if [[ ! -f "$MIG" ]]; then echo "No migrator found in the project or the plugin — skipping the change-file migration."
+elif [[ -z "$PY" ]]; then echo "! No interpreter with PyYAML — migration and change-file audit did NOT run. pip install pyyaml, then re-run."
 else
-  echo "No migrator found in the project or the plugin — skipping the change-file migration."
+  "$PY" "$MIG" --root . || echo "! The migrator did not complete — the active change has NOT been audited."
+  "$PY" "$MIG" --root . --apply
 fi
 if [[ -d "$ROOT/shared/ci/first-pass" ]]; then
   mkdir -p ci/first-pass && cp "$ROOT/shared/ci/first-pass/"*.py ci/first-pass/
@@ -149,7 +148,8 @@ fi
 
 Permissions merge additively. The migrator also reports any active change lightened without
 declaring `first_pass`: those certified clean before because enforcement never engaged and will now
-fail. That is intended — say so, so it is not read as a regression.
+fail — intended, say so. A non-zero exit means the audit could not read the change file at all (no
+PyYAML, invalid YAML, not a mapping): say that plainly and never report the change as verified.
 
 ---
 
