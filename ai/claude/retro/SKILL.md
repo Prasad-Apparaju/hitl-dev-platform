@@ -1,5 +1,5 @@
 ---
-description: Write the closing retrospective for a change — what happened, what is still open, and how the sizing turned out. Reads the change file, the impact record and the review records; collects nothing new. Lands locally in .hitl/retro/<change_id>.md, publishes nothing, and needs no approval. Run it at the Retro step, once the change has shipped.
+description: Write the closing retrospective for a change — what happened, what is still open, and how the sizing turned out. Reads the change file, the impact record and the review records; collects nothing new. Lands locally in .hitl/retro/ as one file named after the change id, publishes nothing, and needs no approval. Run it at the Retro step, once the change has shipped.
 argument-hint: "[change id, or empty for the active change]"
 disable-model-invocation: true
 ---
