@@ -58,6 +58,24 @@ Using the affected component list from `.hitl/current-change.yaml` (Impact Analy
 
 > **Brownfield:** If the LLD being updated was produced by the baseline sprint rather than a previous change, verify it against the actual code before using it as a code-generation source. Baseline-sprint LLDs are drafts — they may not yet reflect the true behavior of the component.
 
+### 5a–5c: conditional design steps (activated by the impact record)
+
+These appear in a plan only when the impact record activates them — a finding, or the human
+declaring the change security-sensitive at intake (#102). Inactive, they are recorded as
+`not_applicable` with the reason. Active, `sec_design` and `cve_audit` are `floor` at tier 3.
+
+**5a. Baseline Measurement (conditional)** — use `/hitl:ops-measure-baseline`
+Activated by an API surface or a data migration. Measure the current behaviour before changing it,
+so "faster" is a number instead of a feeling.
+
+**5b. Security Design Review (conditional)** — use `/hitl:dev-review-security`
+Activated by a security-sensitive declaration, a changed public interface, or a data migration.
+Threat-model the design while it can still change cheaply.
+
+**5c. Dependency + CVE Audit (conditional)** — use `/hitl:ops-audit-dependencies`
+Activated by a dependency change or a security-sensitive declaration. Know which published
+vulnerabilities the version you are moving to carries.
+
 **6. Update IaC and Verify Ops Scripts**
 Using the IaC section of `.hitl/current-change.yaml` (Impact Analysis) and the LLD at `docs/02-design/technical/lld/<component>.md` (Update Docs): write Terraform/Kubernetes manifests, database migration scripts, rollback migrations, and deployment configs. Only if Impact Analysis identified IaC changes.
 
@@ -219,6 +237,10 @@ Ops executes this sequence — each step gates the next:
 Remaining slices that have not yet merged must rebase against main and rerun the Convention Checks through Code Review Round 2 steps before their own merge.
 
 > **First release:** Follow the direct-deploy plan approved at the Risk-Rated Rollout Plan step. Skip `/hitl:ops-monitor-canary` — run the smoke suite manually. Observability setup is still required even on first release.
+
+**28a. Penetration Test (conditional)** — use `/hitl:ops-pentest`
+Activated with the security steps (5b). `floor` at every tier once active: skipping it is a
+risk-accepted decision by the accountable role with a waiver, never a rule's.
 
 **29. Promote or Rollback**
 At each canary step, verify all go/no-go criteria from the approved plan (Risk-Rated Rollout Plan). If all met: promote to next tier. If any fail: pause and investigate before deciding — do not roll back automatically on noise. Lead makes the final call.

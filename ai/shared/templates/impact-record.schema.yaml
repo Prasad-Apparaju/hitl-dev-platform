@@ -105,6 +105,22 @@ findings:
       Does the change span more than one manifest area. Already a predicate in `step_costs`
       today; kept with the same meaning so existing rules do not change meaning under them.
 
+  security_sensitive:
+    type: boolean
+    description: |
+      Does this change touch authentication, authorization, secrets, personal or payment data, or
+      anything else where a mistake is a security incident rather than a bug. ASKED OF A HUMAN at
+      intake (provenance `human`); the analysis may propose an answer from what it read but never
+      sets it alone, and silence is not a no. A yes activates the security design review, the
+      dependency + CVE audit and the penetration test whatever the other findings say (#102).
+
+  dependencies_changed:
+    type: boolean
+    description: |
+      Does this change add, remove or change the version of a third-party dependency — a lockfile,
+      a requirements or package manifest, a base image. Read from the files the change touches.
+      Activates the dependency + CVE audit (#102).
+
   source_read_required:
     type: boolean
     description: |

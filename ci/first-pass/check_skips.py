@@ -82,8 +82,15 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 # an unmarked starter presented as complete is the "fabricated full artifact" ADR-6 forbids (codex-4)
                 "STARTER_MARK",
                 # a rule may not retire a load-bearing step. Only a human, by name, may (#97).
-                "RULE_OVER_FLOOR"}
+                "RULE_OVER_FLOOR",
+                # a `cond:` step marked not_applicable that the impact record does not show as
+                # inactive: the label says "the rules excluded it" and the evidence does not (#102)
+                "COND_UNCONFIRMED"}
 STARTER_MARKER = "needs-enhancement"
+# `cond:` labels whose activator reads `security_sensitive` (#102): sec_design and pentest are
+# `security`; cve_audit is `upgrade` but engages on the same answer. A step marked not_applicable
+# under one of these needs the question ANSWERED in the record, not merely absent.
+SECURITY_ASKED_CONDS = {"security", "upgrade"}
 
 
 def _list(x):   return x if isinstance(x, list) else []
@@ -174,6 +181,27 @@ def _actor_of(entry):
 
 def _f(code, msg):
     return {"code": code, "message": msg, "waivable": code not in NON_WAIVABLE}
+
+
+def _cond_unconfirmed(key, meta, record_outcomes, record_findings):
+    """Why a `cond:` step marked not_applicable cannot be taken as inactive — or None when the impact
+    record backs it. The record is the only evidence that an activator did not fire; the disposition
+    is a claim about that evidence, not the evidence (#102)."""
+    if record_outcomes is None:
+        return ("no readable impact record backs it — a conditional step is excluded by its "
+                "activator, and only the record shows whether that fired")
+    o = record_outcomes.get(key)
+    if o is None:
+        return "the impact record has no rule outcome for it"
+    if o.get("applies") is not False:
+        return ("the impact record shows its activator fired (applies: %r) — it was active, so a "
+                "person skips it with ack_by, or keeps it" % (o.get("applies"),))
+    # Silence is not a no. The sizer reads a missing `security_sensitive` as false, so the only
+    # place "nobody asked" can be caught is here, where the record is in hand.
+    if meta.get("cond") in SECURITY_ASKED_CONDS and "security_sensitive" not in (record_findings or {}):
+        return ("the impact record never answers `security_sensitive` — the question was not "
+                "asked, and silence is not a no")
+    return None
 
 
 def check(change, catalog, tier=None, rollup=None, change_dir="."):
@@ -339,6 +367,9 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
     #    nothing can be said about how the plan was sized. Not named at all is waivable, because
     #    every change file written before this feature is in that state and they are not wrong.
     _rec = _str(change.get("impact_record")).strip()
+    # What the record concluded per step, and the findings it rests on. None until a record is
+    # read; the conditional-step check below treats "no record" and "record says active" alike.
+    record_outcomes, record_findings = None, None
     if _rec:
         # The pointer is REPO-ROOT relative (".hitl/impact/<id>.yaml") because that is where both
         # skills write it and what the stub emits. `change_dir` is the directory CONTAINING the
@@ -378,6 +409,9 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
                 if _rwf and _cwf and _rwf != _cwf:
                     findings.append(_f("IMPACT_RECORD", f"impact record was sized against workflow "
                                                         f"'{_rwf}' but the plan is '{_cwf}'"))
+                record_findings = _body.get("findings") if isinstance(_body.get("findings"), dict) else {}
+                record_outcomes = {_str(o.get("step")): o for o in _list(_body.get("rule_outcomes"))
+                                   if isinstance(o, dict) and _str(o.get("step"))}
     # No `impact_record` at all is NOT reported. The design says a NAMED record that is missing or
     # empty blocks; it does not say every change must name one. Requiring it would be a larger claim
     # than the design makes and would fire on every change file written before this feature.
@@ -435,6 +469,24 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         meta = catalog[key]
         crit = resolve_crit(meta, tier)
         no_omit = bool(meta.get("no_omit"))
+        # A `cond:` step marked not_applicable was never activated for this change (#102): its
+        # activator did not fire, so it was never in the plan for the floor to protect. The floor
+        # governs how an ACTIVE step may be skipped. Any other disposition on a cond step (defer,
+        # decline, starter) means it WAS active, and the checks below apply in full.
+        #
+        # The label alone proves nothing: `pentest: not_applicable` hand-written on a change that
+        # touches payment data would walk a floor step past the gate on the strength of one word.
+        # So the exemption holds only when the impact record shows the activator did not fire,
+        # and — for the security steps — that the security question was actually asked. Without
+        # that evidence the step is treated as active AND the mismatch is reported.
+        inactive_cond = False
+        if meta.get("cond") and disp == "not_applicable":
+            problem = _cond_unconfirmed(key, meta, record_outcomes, record_findings)
+            if problem:
+                findings.append(_f("COND_UNCONFIRMED", f"step '{key}' is conditional and marked "
+                                                       f"not_applicable, but {problem}"))
+            else:
+                inactive_cond = True
 
         # NO_OMIT (NEG-5): a no_omit step may be starter, never defer/decline
         if no_omit and disp in ("defer", "decline"):
@@ -445,14 +497,14 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
         # the floor: any step could be dropped by asserting a rule excluded it, with no ack_by, no
         # waiver, and nobody's judgement on the record. A floor step is dropped by a named human
         # accepting the risk, or not at all.
-        if disp == "not_applicable" and (crit == "floor" or no_omit):
+        if disp == "not_applicable" and (crit == "floor" or no_omit) and not inactive_cond:
             what = "no_omit" if no_omit else "floor"
             findings.append(_f("RULE_OVER_FLOOR",
                                f"step '{key}' is {what} and cannot be marked not_applicable — a rule "
                                f"may not retire it. Use a risk-accepted skip with ack_by, or keep it"))
 
         # floor authority (NEG-3): floor skip needs ack_by
-        if crit == "floor":
+        if crit == "floor" and not inactive_cond:
             if not _str(s.get("ack_by")).strip():
                 findings.append(_f("FLOOR_NO_ACK", f"floor step '{key}' skipped with no ack_by (accountable role)"))
             # floor + hard gate needs a linked waiver (NEG-4)

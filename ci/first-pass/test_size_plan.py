@@ -155,9 +155,12 @@ def test_locked_steps_are_never_offered_as_exclusions():
     for findings, tier in ((SMALL, 1), (BIG, 3)):
         o = _size(findings, tier)
         locked = S.locked_keys(CATALOG, tier, resolve_crit)
+        # A `cond:` step whose activator did not fire is the one exception (#102): it was never in
+        # the plan for the floor to protect, and check_skips exempts exactly that case.
+        inactive_cond = {x["step"] for x in o if CATALOG[x["step"]].get("cond") and not x["applies"]}
         for opt in ("fast", "full"):
             dropped = {e["step"] for e in S.excluded(o, opt)}
-            assert not (dropped & locked), sorted(dropped & locked)
+            assert not (dropped & locked - inactive_cond), sorted(dropped & locked - inactive_cond)
 
 
 def test_a_step_with_no_rules_fails_closed():
@@ -322,3 +325,71 @@ def test_the_catalog_argument_is_optional():
         b = subprocess.run([sys.executable, gen, rec, WORKFLOWS, "1"], capture_output=True, text=True)
         assert a.returncode == 0 and b.returncode == 0, (a.stderr, b.stderr)
         assert json.loads(a.stdout)["plan"] == json.loads(b.stdout)["plan"]
+
+
+# ── conditional steps (#102) ─────────────────────────────────────────────────
+#
+# sec_design, cve_audit, pentest and baseline are `cond:` steps. They used to be dropped from the
+# runtime, so no plan could contain them and pentest was `floor` while unreachable. Now they are in
+# the runtime and ACTIVATED per change: the floor says how an active step may be skipped, it does
+# not conjure the step into changes it is not about.
+
+COND = ("baseline", "sec_design", "cve_audit", "pentest")
+
+
+def test_conditional_steps_are_in_the_runtime_and_inactive_by_default():
+    for k in COND:
+        assert k in CATALOG and CATALOG[k].get("cond"), k
+    out = {o["step"]: o for o in _size(SMALL, 3)}
+    # SMALL touches an api surface, which activates baseline; nothing else.
+    assert out["baseline"]["applies"] is True
+    for k in ("sec_design", "cve_audit", "pentest"):
+        assert out[k]["applies"] is False and out[k]["needed_now"] is False, k
+        assert out[k]["because"].startswith("conditional ("), out[k]["because"]
+
+
+def test_an_inactive_floor_conditional_is_not_locked_and_is_excluded_with_its_reason():
+    """pentest is floor at every tier. Inactive, it must NOT lock into the plan (that would put a
+    penetration test on every typo fix) and it must appear in the exclusions with the reason."""
+    outcomes = _size(SMALL, 3)
+    pt = next(o for o in outcomes if o["step"] == "pentest")
+    assert pt["locked"] is False and pt["applies"] is False
+    ex = {e["step"]: e["reason"] for e in S.excluded(outcomes, "full")}
+    assert "pentest" in ex and ex["pentest"].startswith("conditional (security) not activated")
+    assert "sec_design" in ex and "cve_audit" in ex
+    assert "pentest" not in S.plan(outcomes, "full")
+
+
+def test_a_security_declaration_activates_all_three_security_steps():
+    findings = dict(SMALL, security_sensitive=True)
+    out = {o["step"]: o for o in _size(findings, 2)}
+    for k in ("sec_design", "cve_audit", "pentest"):
+        assert out[k]["applies"] is True and out[k]["needed_now"] is True, k
+    # The reason names the finding for the two that are not locked at tier 2; pentest is floor at
+    # every tier, so once active its reason is the lock, as for any locked step.
+    for k in ("sec_design", "cve_audit"):
+        assert "security sensitive" in out[k]["because_applies"], out[k]["because_applies"]
+    # Once ACTIVE the floor applies: pentest is floor at every tier, sec_design/cve_audit at tier 3.
+    assert out["pentest"]["locked"] is True
+    out3 = {o["step"]: o for o in _size(findings, 3)}
+    assert out3["sec_design"]["locked"] and out3["cve_audit"]["locked"]
+    assert not out["sec_design"]["locked"], "sec_design is standard below tier 3"
+
+
+def test_findings_activate_security_steps_without_a_declaration():
+    out = {o["step"]: o for o in _size(BIG, 2)}      # interfaces changed + data migration
+    assert out["sec_design"]["applies"] and out["pentest"]["applies"]
+    assert out["cve_audit"]["applies"] is False, "an interface change is not a dependency change"
+
+
+def test_a_dependency_change_activates_the_cve_audit_only():
+    out = {o["step"]: o for o in _size(dict(SMALL, dependencies_changed=True), 2)}
+    assert out["cve_audit"]["applies"] is True
+    assert out["sec_design"]["applies"] is False and out["pentest"]["applies"] is False
+
+
+def test_a_conditional_answered_no_stays_inactive_on_old_records_too():
+    # Records written before these fields existed carry neither; a missing field is false.
+    old = {k: v for k, v in SMALL.items()}
+    out = {o["step"]: o for o in _size(old, 3)}
+    assert out["pentest"]["applies"] is False

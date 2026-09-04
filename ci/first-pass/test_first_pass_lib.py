@@ -505,6 +505,10 @@ def test_not_applicable_is_refused_on_a_load_bearing_step():
     A mutation that let it through was caught by nothing until this test existed."""
     assert D.is_allowed(CATALOG["roi"], 2, "not_applicable") is True
     assert D.is_allowed(CATALOG["deploy"], 2, "not_applicable") is False
+    # #102: a conditional step is the one floor step the rules may record not_applicable — when its
+    # activator did not fire it was never in the plan. Must agree with check_skips' exemption.
+    assert CATALOG["pentest"].get("cond") and D.is_allowed(CATALOG["pentest"], 3, "not_applicable") is True
+    assert D.is_allowed(CATALOG["pentest"], 3, "decline") is True, "active pentest may be declined (then FLOOR_NO_ACK applies)"
     assert D.is_allowed(CATALOG["red"], 1, "not_applicable") is False, "no_omit too"
     assert D.is_allowed(CATALOG["packet"], 3, "not_applicable") is False, "floor at tier 3"
     assert D.is_allowed(CATALOG["packet"], 2, "not_applicable") is True, "standard at tier 2"

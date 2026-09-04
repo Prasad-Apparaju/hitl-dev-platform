@@ -74,13 +74,36 @@ def _keys(profile, tags=None):
     return [s["key"] for s in derive.profile_steps(CATALOG, profile, tags)]
 
 
-def test_feature_profile_equals_base_spine():
-    # Feature activates nothing and excludes nothing: identical to the spine base view,
-    # which is what reproduces the runtime `development` workflow.
+def test_feature_profile_equals_base_spine_view():
+    # Feature activates nothing and excludes nothing: identical to the spine with no conditionals
+    # active. That is the advisory profile VIEW, not the runtime (#102, below).
     feature = _keys("feature")
     base = [s["key"] for s in derive.active_steps(CATALOG["spine"]["steps"], None)]
     assert feature == base
     assert "baseline" not in feature and "pentest" not in feature
+
+
+def test_the_runtime_spine_carries_every_step_including_conditionals():
+    """#102: `cond:` steps were dropped from the runtime `development` workflow, so four steps could
+    never appear in a plan and `pentest` was `floor` while unreachable — a governance claim with
+    nothing behind it. The runtime now carries them as lettered substeps; the sizer activates them."""
+    keys = [s["key"] for s in derive.workflow_steps(CATALOG, "spine")]
+    for k in ("baseline", "sec_design", "cve_audit", "pentest"):
+        assert k in keys, k
+    derived = {d["key"]: d for d in derive.derive_steps(derive.workflow_steps(CATALOG, "spine"))}
+    for k in ("baseline", "sec_design", "cve_audit", "pentest"):
+        assert not derived[k]["n"].isdigit(), "%s must be a lettered substep so the count stays 31" % k
+        assert derived[k].get("cond"), "%s must carry cond into the runtime" % k
+    assert derive.total_of(list(derived.values())) == 31
+
+
+def test_no_floor_step_is_unreachable():
+    """A step marked floor (at any tier) must be a step a plan can contain."""
+    runtime = {d["key"] for d in derive.derive_steps(derive.workflow_steps(CATALOG, "spine"))}
+    for st in CATALOG["spine"]["steps"]:
+        floor = st.get("crit") == "floor" or "floor" in (st.get("crit_by_tier") or {}).values()
+        if floor:
+            assert st["key"] in runtime, "%s is floor but never reaches the runtime" % st["key"]
 
 
 def test_security_profile_activates_sec_design_and_pentest():

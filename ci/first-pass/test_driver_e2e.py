@@ -280,3 +280,44 @@ def test_a_starter_outside_the_registry_refuses(gen, tmp_path):
         "choices": {"roi": {"disposition": "starter", "reason": "thin",
                             "starter_artifact": "roi.md"}}})
     assert rc != 0 and "no registered starter" in err
+
+
+# ── conditional steps (#102): the seam between sizer, generator and validator ──
+
+def test_a_rules_excluded_conditional_floor_step_flows_through_the_whole_pipeline(gen, tmp_path):
+    """The sizer excludes an inactive `cond:` step as not_applicable; intake hands that to the
+    generator; the validator certifies it. Each module passed its own tests while the generator
+    refused the record the sizer produced — `dispositions.is_allowed` still carried the floor rule
+    check_skips had been taught to exempt — so intake died on every ordinary change. Found by an
+    independent review of the working tree, not by any unit test. This is the missing test."""
+    choices = {"actor": "arch@team", "choices": {
+        k: {"disposition": "not_applicable",
+            "reason": "conditional (security) not activated: none of security sensitive, interfaces changed, data migration"}
+        for k in ("sec_design", "cve_audit", "pentest")}}
+    # The record the sizer would have written: every activator quiet, the security question asked.
+    (tmp_path / ".hitl" / "impact").mkdir(parents=True)
+    (tmp_path / ".hitl" / "impact" / "GH-1.yaml").write_text(yaml.safe_dump({
+        "change_id": "GH-1", "workflow": "development",
+        "findings": {"area": "billing", "security_sensitive": False, "dependencies_changed": False},
+        "rule_outcomes": [{"step": k, "applies": False, "needed_now": False, "because": "quiet"}
+                          for k in ("sec_design", "cve_audit", "pentest")]}))
+    for tier in (2, 3):
+        rc, doc, err = run_gen(gen, tmp_path, tier=tier, choices=choices)
+        assert rc == 0, "tier %d: %s" % (tier, err)
+        skipped = {s["key"] for s in doc["workflow"]["steps"] if s["status"] == "skipped"}
+        assert {"sec_design", "cve_audit", "pentest"} <= skipped
+        doc["impact_record"] = ".hitl/impact/GH-1.yaml"     # intake's stub names it; the generator carries it
+        assert C.check(doc, CATALOG, tier=tier, change_dir=str(tmp_path)) == [], "tier %d must certify" % tier
+        # And with the record gone, the same ledger is refused: the label is not the evidence.
+        codes = {f["code"] for f in C.check(doc, CATALOG, tier=tier)}
+        assert "COND_UNCONFIRMED" in codes, codes
+
+
+def test_an_active_conditional_declined_without_ack_is_still_blocked(gen, tmp_path):
+    """Any disposition but not_applicable on a cond step means it WAS active and a person is skipping
+    it; pentest is floor, so the floor checks apply in full."""
+    rc, doc, err = run_gen(gen, tmp_path, tier=2, choices={"actor": "dev@team", "choices": {
+        "pentest": {"disposition": "decline", "reason": "no time"}}})
+    assert rc == 0, err
+    codes = {f.code if hasattr(f, "code") else f.get("code") for f in C.check(doc, CATALOG, tier=2)}
+    assert "FLOOR_NO_ACK" in codes, codes

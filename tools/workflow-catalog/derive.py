@@ -33,7 +33,8 @@ DEFAULT_CATALOG = HERE / "catalog.yaml"
 DEFAULT_RUNTIME = HERE.parent.parent / "ai" / "shared" / "workflows.yaml"
 
 # Map a numberless catalog entry to its runtime workflow id.
-#   spine            -> development (Feature profile = spine with no conditional steps)
+#   spine            -> development (the whole spine; `cond:` steps ride along as lettered substeps
+#                       and are activated per change by the sizing rules, #102)
 #   workflows.<name> -> <name>, except greenfield -> prd
 RUNTIME_ID = {"spine": "development", "greenfield": "prd"}
 
@@ -85,7 +86,9 @@ def derive_steps(steps: list[dict]) -> list[dict]:
             "role": s.get("role", ""),
         }
         # First Pass (FR-29): criticality metadata passes through untouched (like name/command/role).
-        for f in ("crit", "crit_by_tier", "no_omit"):
+        # `cond` too (#102): the runtime must know a step is conditional, or the sizer locks a floor
+        # step like pentest into every plan instead of activating it.
+        for f in ("crit", "crit_by_tier", "no_omit", "cond"):
             if f in s:
                 step[f] = s[f]
         out.append(step)
@@ -107,8 +110,13 @@ def active_steps(steps: list[dict], active: set[str] | None) -> list[dict]:
 
 
 def workflow_steps(catalog: dict, name: str, active: set[str] | None = None) -> list[dict]:
+    """The steps a runtime workflow carries. For the spine that is EVERY step: `cond:` steps used to
+    be dropped here, which is why sec_design, cve_audit, pentest and baseline could never appear in
+    a plan and pentest was `floor` while unreachable (#102). Activation is the sizer's job now.
+    `active` still filters when a caller asks for a profile VIEW (advisory, see `profile_steps`)."""
     if name == "spine":
-        return active_steps(catalog["spine"]["steps"], active)
+        return active_steps(catalog["spine"]["steps"], active) if active is not None \
+            else list(catalog["spine"]["steps"])
     return catalog["workflows"][name]["steps"]
 
 
@@ -191,7 +199,7 @@ def verify(catalog: dict, runtime: dict) -> list[str]:
                     f"{name}->{rid}: phase '{d['phase']}' != runtime '{r.get('phase')}' (key {d['key']})")
             # First Pass criticality must stay in sync BOTH WAYS — comparing only `if f in d` let a DELETED
             # source field disappear the check (codex-5). Compare presence+value regardless of which side has it.
-            for f in ("crit", "no_omit", "crit_by_tier"):
+            for f in ("crit", "no_omit", "crit_by_tier", "cond"):
                 dv, rv = d.get(f), r.get(f)
                 if f == "no_omit":
                     dv, rv = bool(dv), bool(rv)

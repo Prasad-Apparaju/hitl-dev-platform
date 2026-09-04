@@ -77,6 +77,13 @@ behaviour those tests cover is. Record only the second kind. Rules keyed to the 
 answer for every change to an area, so a one-line fix in the best-documented code would draw the
 longest plan and documenting an area would tax every future change to it.
 
+**Two findings are declared, not derived.** `dependencies_changed`: read the lockfiles and package
+manifests the change touches. `security_sensitive`: ask the human **one** question — does this change
+touch authentication, authorization, secrets, personal or payment data? Record the answer with
+provenance `human`. A yes activates the security design review, the dependency + CVE audit and the
+penetration test whatever else was found (#102); they are conditional steps and appear in no plan
+otherwise. Do not infer a no from silence, and do not answer it yourself.
+
 **Write the record** to `.hitl/impact/<change_id>.yaml`, against
 `ai/shared/templates/impact-record.schema.yaml`: the findings, the provenance of each one, and what
 the rules concluded. Provenance matters because a finding resting on a hand-written manifest field

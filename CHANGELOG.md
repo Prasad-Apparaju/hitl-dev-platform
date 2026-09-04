@@ -4,6 +4,29 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Security design review, CVE audit and pentest can now appear in a plan** (#102). The catalog
+  dropped every `cond:` step on the way to the runtime, so a tier-3 change to authentication drew
+  none of them, and `pentest` was floor while unreachable. They are lettered substeps now (4a-4c,
+  27a), activated per change: a lockfile change, an interface change, a migration, or the human
+  answering yes to one intake question — does this touch auth, secrets, personal or payment data.
+  Inactive, the sizer records them `not_applicable` with the reason. The gate takes that from the
+  impact record, not the ledger: `COND_UNCONFIRMED` (non-waivable) blocks a conditional step marked
+  not_applicable when the record shows its activator fired, has no outcome for it, or never answers
+  the security question — silence is not a no.
+- **The change-file audit in `dev-update` fails closed** (#103). An unreadable change file was
+  coerced to `{}` and certified consistent; now no PyYAML, invalid YAML and a non-mapping each
+  report "audit did NOT run" and exit 1.
+- **Validator copies are co-owned, so the sync never blind-copies** (#104). `migrate_project.py
+  --sync-validators` installs what is absent, stays silent on identical files, shows a diff and asks
+  on a modified one, leaves repo-added files alone, and honours a per-directory `.hitl-optout`.
+- **`dev-retro`'s description read as an XML tag** and failed the skill lint on `main`.
+
+---
+
 ## [2.9.1] — 2026-09-02
 
 `/hitl:dev-retro` did not run for anyone who installed the plugin. 2.9.0 shipped it with

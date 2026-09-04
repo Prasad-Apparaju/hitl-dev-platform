@@ -27,8 +27,9 @@ schema_version: "2.0"
 workflows:
 
   # ── Development: the 31-step change workflow (+ 19a architect-review substep) ──────────────
-  # Canonical source: ai/claude/dev-practices/workflow-steps.md. There is NO standalone
-  # "Pentest" step — penetration testing lives inside the ops deploy sequence (step 28).
+  # Canonical source: ai/claude/dev-practices/workflow-steps.md. The lettered `cond:` substeps
+  # (4a-4c, 27a) are activated per change by step_costs — findings, or a human declaring the change
+  # security-sensitive at intake — and recorded not_applicable otherwise (#102).
   development:
     id: development
     title: "Development — deliver a change"
@@ -38,6 +39,9 @@ workflows:
       - { n: 2, key: figma, label: "Figma", phase: "Requirements", crit: ceremony, command: manual }
       - { n: 3, key: roi, label: "ROI", phase: "Design", crit: ceremony, command: guided }
       - { n: 4, key: docs, label: "Docs", phase: "Design", crit: standard, command: dev-generate-docs }
+      - { n: 4a, key: baseline, label: "Basln", phase: "Design", cond: perf, crit: standard, command: ops-measure-baseline }
+      - { n: 4b, key: sec_design, label: "SecDsn", phase: "Design", cond: security, crit: standard, crit_by_tier: { 3: floor }, command: dev-review-security }
+      - { n: 4c, key: cve_audit, label: "CVE", phase: "Design", cond: upgrade, crit: standard, crit_by_tier: { 3: floor }, command: ops-audit-dependencies }
       - { n: 5, key: iac, label: "IaC", phase: "Design", crit: standard, command: ops-apply-iac }
       - { n: 6, key: test_plan, label: "Tests", phase: "Design", crit: standard, command: qa-plan-tests }
       - { n: 7, key: training, label: "Train", phase: "Design", crit: ceremony, command: guided }
@@ -64,6 +68,7 @@ workflows:
       - { n: 25, key: integration_verify, label: "IntVfy", phase: "Ship", crit: standard, crit_by_tier: { 2: floor }, command: architect-verify-traceability }
       - { n: 26, key: figma_compare, label: "Figma2", phase: "Ship", crit: ceremony, command: manual }
       - { n: 27, key: deploy, label: "Deploy", phase: "Ship", crit: floor, command: ops-deploy }
+      - { n: 27a, key: pentest, label: "Pentest", phase: "Ship", cond: security, crit: floor, command: ops-pentest }
       - { n: 28, key: promote, label: "Promote", phase: "Ship", crit: floor, command: ops-post-deploy-monitor }
       - { n: 29, key: retro, label: "Retro", phase: "Post-Ship", crit: floor, command: dev-retro }
       - { n: 30, key: roi_30, label: "30dROI", phase: "Post-Ship", crit: ceremony, command: guided }
@@ -249,14 +254,13 @@ step_costs:
   sec_design:
     protects: "The threat model is considered while the design can still change cheaply."
     forgo_cost: high
-    engages: { any: [interfaces_changed, data_migration] }
-    needed_now: { any: [interfaces_changed, data_migration] }
+    engages: { any: [security_sensitive, interfaces_changed, data_migration] }
+    needed_now: { any: [security_sensitive, interfaces_changed, data_migration] }
   cve_audit:
-    # A hard gate, so `needed_now` may not be `never` — see conventions. It is unreachable today for
-    # a different reason (#102: `cond:` steps never resolve at runtime).
+    # A hard gate, so `needed_now` may not be `never` — see conventions.
     protects: "You know which published vulnerabilities the version you are moving to carries."
     forgo_cost: high
-    engages: { any: [surfaces:config, surfaces:infra] }
+    engages: { any: [dependencies_changed, security_sensitive] }
     needed_now: always
   adv_design:
     protects: "Someone with no stake in the design tries to break it while it is still cheap to change."
@@ -374,8 +378,8 @@ step_costs:
   pentest:
     protects: "Someone actively tried to abuse it before a customer could."
     forgo_cost: high
-    engages: { any: [interfaces_changed, data_migration] }
-    needed_now: { any: [interfaces_changed, data_migration] }
+    engages: { any: [security_sensitive, interfaces_changed, data_migration] }
+    needed_now: { any: [security_sensitive, interfaces_changed, data_migration] }
   promote:
     protects: "Production only ever receives what a person decided to send it."
     forgo_cost: high

@@ -11,7 +11,9 @@
 #   phase   — workflow phase this step belongs to (matches runtime exactly).
 #   substep — true for a sub-step that shares its parent's integer (e.g. 19a).
 #   parent  — for a substep, the `key` of the step it hangs off.
-#   cond    — conditional spine slot; included only when its activator is active.
+#   cond    — conditional spine step. In the runtime it is a lettered substep of its parent and is
+#             ACTIVATED per change by the sizing rules (findings, or the human declaring the change
+#             security-sensitive at intake); inactive, it is recorded not_applicable (#102).
 #   command — the skill/command that executes the step, or the literal `manual`
 #             (human-run, no command) or `guided` (driven by a ref doc, no skill).
 #             ADDITIVE: feeds the command-map view; does NOT affect derivation.
@@ -37,13 +39,13 @@ spine:
     # stays, with `never` rules, so nothing can select it back into a plan.
     - { key: roi,                name: "ROI Estimate",                 label: "ROI",      phase: "Design", command: guided,                       role: PM, crit: ceremony }
     - { key: docs,               name: "Update Docs",                  label: "Docs",     phase: "Design", command: dev-generate-docs,            role: Architect, crit: standard }
+    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", substep: true, parent: docs, cond: perf,     command: ops-measure-baseline,         role: Ops, crit: standard }
+    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", substep: true, parent: docs, cond: security, command: dev-review-security,          role: Architect, crit: standard, crit_by_tier: { 3: floor } }
+    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", substep: true, parent: docs, cond: upgrade,  command: ops-audit-dependencies,       role: Ops, crit: standard, crit_by_tier: { 3: floor } }
     - { key: iac,                name: "Update IaC",                   label: "IaC",      phase: "Design", command: ops-apply-iac,                role: Ops, crit: standard }
     - { key: test_plan,          name: "Test Case Planning",           label: "Tests",    phase: "Design", command: qa-plan-tests,                role: QA, crit: standard }
     - { key: training,           name: "Training Plan Stub",           label: "Train",    phase: "Design", command: guided,                       role: PM, crit: ceremony }
     - { key: packet,             name: "Package Decision Packet",      label: "Packet",   phase: "Design", command: manual,                       role: Architect, crit: standard, crit_by_tier: { 3: floor } }
-    - { key: baseline,           name: "Baseline Measurement",         label: "Basln",    phase: "Design", cond: perf,     command: ops-measure-baseline,         role: Ops, crit: standard }
-    - { key: sec_design,         name: "Security Design Review",       label: "SecDsn",   phase: "Design", cond: security, command: dev-review-security,          role: Architect, crit: standard, crit_by_tier: { 3: floor } }
-    - { key: cve_audit,          name: "Dependency + CVE Audit",       label: "CVE",      phase: "Design", cond: upgrade,  command: ops-audit-dependencies,       role: Ops, crit: standard, crit_by_tier: { 3: floor } }
     - { key: adv_design,         name: "Adversarial Design Review",    label: "AdvDsgn",  phase: "Design", substep: true, parent: packet, command: dev-adversarial-review, role: Architect, crit: ceremony }
     # ── Build (TDD cycle) ─────────────────────────────────────────
     - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build", command: dev-tdd,                      role: Dev, crit: standard, no_omit: true }
@@ -70,7 +72,7 @@ spine:
     - { key: integration_verify, name: "Integration Verification",     label: "IntVfy",   phase: "Ship", command: architect-verify-traceability, role: Architect, crit: standard, crit_by_tier: { 2: floor } }
     - { key: figma_compare,      name: "Figma Comparison",             label: "Figma2",   phase: "Ship", command: manual,                       role: QA, crit: ceremony }
     - { key: deploy,             name: "Build, Migrate, Apply, Deploy",label: "Deploy",   phase: "Ship", command: ops-deploy,                   role: Ops, crit: floor }
-    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   cond: security, command: ops-pentest,                 role: Ops, crit: floor }
+    - { key: pentest,            name: "Penetration Test",             label: "Pentest",  phase: "Ship",   substep: true, parent: deploy, cond: security, command: ops-pentest,                 role: Ops, crit: floor }
     - { key: promote,            name: "Promote or Rollback",          label: "Promote",  phase: "Ship", command: ops-post-deploy-monitor,      role: Ops, crit: floor }
     # ── Post-Ship ─────────────────────────────────────────────────
     - { key: retro,              name: "Closing Retrospective",         label: "Retro",    phase: "Post-Ship", command: dev-retro,                   role: Dev, crit: floor }
@@ -293,7 +295,11 @@ workflows:
 #
 #   `fix` excluding roi+training      has never removed a step from a real plan
 #   `chore` carrying tier: 0          has never set a tier
-#   `perf` activating baseline        has never turned that step on
+#
+# `cond:` steps used to ride on the same dead machinery (#102): sec_design, cve_audit, pentest and
+# baseline could never appear in a plan, and pentest was `floor` while unreachable. They are now
+# lettered substeps in the runtime, activated per change by their `step_costs` rules — findings, or
+# the human declaring the change security-sensitive at intake — and recorded not_applicable when not.
 #
 # Every change gets the same 31 numbered steps regardless of profile or tag. That is deliberate as
 # of now: right-sizing happens where a human can see it — the intake selection — rather than by a
@@ -418,14 +424,13 @@ step_costs:
   sec_design:
     protects: "The threat model is considered while the design can still change cheaply."
     forgo_cost: high
-    engages: { any: [interfaces_changed, data_migration] }
-    needed_now: { any: [interfaces_changed, data_migration] }
+    engages: { any: [security_sensitive, interfaces_changed, data_migration] }
+    needed_now: { any: [security_sensitive, interfaces_changed, data_migration] }
   cve_audit:
-    # A hard gate, so `needed_now` may not be `never` — see conventions. It is unreachable today for
-    # a different reason (#102: `cond:` steps never resolve at runtime).
+    # A hard gate, so `needed_now` may not be `never` — see conventions.
     protects: "You know which published vulnerabilities the version you are moving to carries."
     forgo_cost: high
-    engages: { any: [surfaces:config, surfaces:infra] }
+    engages: { any: [dependencies_changed, security_sensitive] }
     needed_now: always
   adv_design:
     protects: "Someone with no stake in the design tries to break it while it is still cheap to change."
@@ -543,8 +548,8 @@ step_costs:
   pentest:
     protects: "Someone actively tried to abuse it before a customer could."
     forgo_cost: high
-    engages: { any: [interfaces_changed, data_migration] }
-    needed_now: { any: [interfaces_changed, data_migration] }
+    engages: { any: [security_sensitive, interfaces_changed, data_migration] }
+    needed_now: { any: [security_sensitive, interfaces_changed, data_migration] }
   promote:
     protects: "Production only ever receives what a person decided to send it."
     forgo_cost: high

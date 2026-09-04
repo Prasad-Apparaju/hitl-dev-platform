@@ -48,13 +48,19 @@ def is_allowed(step_meta, tier, disposition):
 
     `not_applicable` (#97) is the RULES excluding a step, not a person declining it, so it is NOT a
     menu option — `allowed_dispositions` never offers it. It is valid as a ledger value on any step
-    the rules may decide about, which is anything not floor and not no_omit. check_skips enforces
-    that boundary independently with RULE_OVER_FLOOR, because a rule retiring a load-bearing step is
-    a hole straight through the floor.
+    the rules may decide about, which is anything not floor and not no_omit — plus a `cond:` step
+    (#102): a conditional step whose activator did not fire was never in the plan for the floor to
+    protect, so the rules may record it not_applicable even when it is floor (pentest). check_skips
+    enforces the same boundary independently with RULE_OVER_FLOOR, because a rule retiring a
+    load-bearing step is a hole straight through the floor. The two rules MUST agree: when this one
+    lagged behind check_skips, the generator refused the record the sizer produced and intake died on
+    every ordinary change.
     """
     if disposition == "keep":
         return True
     if disposition == "not_applicable":
+        if step_meta.get("cond"):
+            return True
         return not (_c.resolve_crit(step_meta, tier) == "floor" or step_meta.get("no_omit"))
     if disposition not in ("defer", "decline", "starter"):
         return False

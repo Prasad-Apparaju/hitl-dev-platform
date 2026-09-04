@@ -12,6 +12,9 @@ Each row is one step of the development delivery spine, with the command that ex
 | 2 | Figma Review | Requirements | manual | PM |
 | 3 | ROI Estimate | Design | guided | PM |
 | 4 | Update Docs | Design | dev-generate-docs | Architect |
+| 4a | Baseline Measurement | Design | ops-measure-baseline | Ops |
+| 4b | Security Design Review | Design | dev-review-security | Architect |
+| 4c | Dependency + CVE Audit | Design | ops-audit-dependencies | Ops |
 | 5 | Update IaC | Design | ops-apply-iac | Ops |
 | 6 | Test Case Planning | Design | qa-plan-tests | QA |
 | 7 | Training Plan Stub | Design | guided | PM |
@@ -38,6 +41,7 @@ Each row is one step of the development delivery spine, with the command that ex
 | 25 | Integration Verification | Ship | architect-verify-traceability | Architect |
 | 26 | Figma Comparison | Ship | manual | QA |
 | 27 | Build, Migrate, Apply, Deploy | Ship | ops-deploy | Ops |
+| 27a | Penetration Test | Ship | ops-pentest | Ops |
 | 28 | Promote or Rollback | Ship | ops-post-deploy-monitor | Ops |
 | 29 | Closing Retrospective | Post-Ship | dev-retro | Dev |
 | 30 | 30-Day ROI Check | Post-Ship | guided | PM |

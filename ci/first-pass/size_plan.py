@@ -130,6 +130,8 @@ def size(findings, catalog, costs, tier, resolve_crit):
             continue
         applies = evaluate(entry.get("engages", "always"), findings)
         needed = evaluate(entry.get("needed_now", "always"), findings)
+        meta = catalog.get(key) if isinstance(catalog.get(key), dict) else {}
+        cond = meta.get("cond")
         # BOTH sentences are kept, because the reason a step is in is not the reason it is out.
         # A single `because` field returned the `engages` sentence whenever `needed_now` was false,
         # so every fast-track exclusion carried an affirmative finding: `packet` was dropped with
@@ -137,7 +139,16 @@ def size(findings, catalog, costs, tier, resolve_crit):
         # reaches the roll-up, and what the retrospective reads back as what was left out and why.
         why_applies = why(entry.get("engages", "always"), findings)
         why_needed = why(entry.get("needed_now", "always"), findings)
-        if key in locked:
+        is_locked = key in locked
+        if cond and not applies:
+            # A conditional step is in the plan only when its activator fires (#102). The floor says
+            # how an ACTIVE step may be skipped; it does not conjure the step into changes it is not
+            # about — otherwise `pentest` (floor) would lock into every typo fix. Inactive, it is
+            # not locked, and it is excluded with the reason its activator did not fire.
+            needed = False
+            is_locked = False
+            reason = why_applies = why_needed = "conditional (%s) not activated: %s" % (cond, why_applies)
+        elif is_locked:
             # The floor is not up for rule-based removal. Say so in the same field, so the reason
             # shown to a person is the real one rather than whichever predicate happened to fire.
             applies = needed = True
@@ -146,7 +157,7 @@ def size(findings, catalog, costs, tier, resolve_crit):
             reason = why_needed if needed else why_applies
         out.append({"step": key, "applies": applies, "needed_now": needed,
                     "because": reason, "because_applies": why_applies, "because_needed": why_needed,
-                    "judged": False, "locked": key in locked})
+                    "judged": False, "locked": is_locked})
     return out
 
 

@@ -741,3 +741,96 @@ def test_a_record_sized_against_another_workflow_blocks():
         ch["impact_record"] = ".hitl/impact/x.yaml"
         assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG,
                                                    change_dir=_os.path.join(root, ".hitl")))
+
+
+# ── conditional steps (#102) ─────────────────────────────────────────────────
+
+def _with_record(ch, d, outcomes, findings=None):
+    """Write an impact record under `d` and point the change at it. `outcomes` is
+    {step: applies}; `findings` defaults to a change where the security question WAS asked."""
+    import os as _os
+    import yaml as _y
+    _os.makedirs(_os.path.join(d, ".hitl", "impact"), exist_ok=True)
+    body = {"change_id": ch["change_id"], "workflow": "development",
+            "findings": {"area": "billing", "security_sensitive": False} if findings is None else findings,
+            "rule_outcomes": [{"step": k, "applies": v, "needed_now": v,
+                               "because": "conditional not activated" if not v else "fired"}
+                              for k, v in outcomes.items()]}
+    _y.safe_dump(body, open(_os.path.join(d, ".hitl", "impact", "x.yaml"), "w"))
+    ch["impact_record"] = ".hitl/impact/x.yaml"
+    return ch
+
+
+def _na(step, cond="security"):
+    return base_skip(step, disposition="not_applicable",
+                     reason="conditional (%s) not activated: none of security sensitive, interfaces changed, data migration" % cond)
+
+
+def test_an_inactive_conditional_may_be_not_applicable_even_when_floor():
+    """pentest is `cond: security` and `floor`. When its activator did not fire the sizer records it
+    not_applicable — the step was never in the plan for the floor to protect. RULE_OVER_FLOOR and the
+    floor-authority checks must not fire on it; before #102 the step could not appear at all.
+    The exemption rests on the impact record saying the activator did not fire."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = _with_record(make_change([_na("pentest")], tier=3), d, {"pentest": False})
+        codes = blockers(C.check(ch, CATALOG, change_dir=d))
+        assert "RULE_OVER_FLOOR" not in codes and "FLOOR_NO_ACK" not in codes, codes
+        assert "COND_UNCONFIRMED" not in codes, codes
+
+
+def test_the_label_alone_does_not_exempt_a_conditional_floor_step():
+    """`pentest: not_applicable` hand-written on a change with no record is one word walking a floor
+    step past the gate. Without the record the step counts as active: the floor checks apply AND
+    the mismatch is named."""
+    ch = make_change([_na("pentest")], tier=3)
+    codes = blockers(C.check(ch, CATALOG))
+    assert "COND_UNCONFIRMED" in codes and "RULE_OVER_FLOOR" in codes, codes
+
+
+def test_a_record_showing_the_activator_fired_refutes_not_applicable():
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = _with_record(make_change([_na("pentest")], tier=3), d, {"pentest": True},
+                          findings={"area": "billing", "security_sensitive": True})
+        codes = blockers(C.check(ch, CATALOG, change_dir=d))
+        assert "COND_UNCONFIRMED" in codes and "RULE_OVER_FLOOR" in codes, codes
+
+
+def test_a_record_with_no_outcome_for_the_step_does_not_exempt_it():
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = _with_record(make_change([_na("pentest")], tier=3), d, {"deploy": True})
+        assert "COND_UNCONFIRMED" in blockers(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_silence_on_the_security_question_is_not_a_no():
+    """The sizer reads a missing `security_sensitive` as false, so a change nobody asked about sizes
+    exactly like a harmless one. The gate is where the record is in hand, so it is where "nobody
+    asked" is caught. A non-security conditional (baseline) does not need the answer."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        unasked = {"area": "billing"}
+        ch = _with_record(make_change([_na("sec_design")], tier=2), d, {"sec_design": False}, findings=unasked)
+        assert "COND_UNCONFIRMED" in blockers(C.check(ch, CATALOG, change_dir=d))
+        ch = _with_record(make_change([_na("cve_audit", "upgrade")], tier=2), d, {"cve_audit": False}, findings=unasked)
+        assert "COND_UNCONFIRMED" in blockers(C.check(ch, CATALOG, change_dir=d)), "cve_audit engages on the answer too"
+        ch = _with_record(make_change([_na("baseline", "perf")], tier=2), d, {"baseline": False}, findings=unasked)
+        assert "COND_UNCONFIRMED" not in codes(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_cond_unconfirmed_is_non_waivable():
+    assert "COND_UNCONFIRMED" in C.NON_WAIVABLE
+
+
+def test_an_active_conditional_is_protected_like_any_floor_step():
+    """Any disposition other than not_applicable means the step WAS active — a human is skipping it.
+    Then the floor applies in full: a floor skip needs ack_by."""
+    ch = make_change([base_skip("pentest", disposition="decline", reason="no time")], tier=3)
+    assert "FLOOR_NO_ACK" in blockers(C.check(ch, CATALOG))
+
+
+def test_the_conditional_exemption_does_not_leak_to_ordinary_floor_steps():
+    ch = make_change([base_skip("deploy", disposition="not_applicable")], tier=2)
+    assert "RULE_OVER_FLOOR" in blockers(C.check(ch, CATALOG))
+    assert not CATALOG["deploy"].get("cond")

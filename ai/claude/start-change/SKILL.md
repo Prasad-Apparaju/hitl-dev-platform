@@ -221,7 +221,12 @@ that back as what was left out and why.
 
 A rule may never retire a load-bearing step. `not_applicable` on a `floor` or `no_omit` step is a
 non-waivable block (`RULE_OVER_FLOOR`); those are dropped by a named person accepting the risk, or
-not at all. `size_plan.py` never offers them, so a plan built from it cannot produce that record.
+not at all. The one exception is a **conditional** step (`cond:` — security design review, CVE
+audit, penetration test, baseline) whose activator did not fire: it was never in the plan for the
+floor to protect, so the sizer records it `not_applicable` with the reason (#102). The gate takes
+that from the impact record, not the ledger: the record must carry `rule_outcomes` for the step
+with `applies: false`, and for the security steps must answer `security_sensitive` (silence is not
+a no), else `COND_UNCONFIRMED` (non-waivable). Active, it is protected like any other step.
 
 Pre-selected is not pre-recorded. **Nothing is written until the human confirms**, and doing nothing
 still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
