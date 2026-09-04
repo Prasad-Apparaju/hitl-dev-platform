@@ -25,6 +25,12 @@ Open a GitHub issue with:
 - Follow existing code style and conventions
 - If adding a new template or skill, include a brief usage example
 
+## Releasing
+
+Maintainers cut releases from `main` through the `release` workflow; the plugin repo's
+`scripts/release.sh` runs the review gate and the skip-ledger validator against this repo before
+it builds. The runbook is [`docs/releasing.md`](docs/releasing.md).
+
 ## Code of Conduct
 
 Be respectful and constructive. This project follows the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) code of conduct.

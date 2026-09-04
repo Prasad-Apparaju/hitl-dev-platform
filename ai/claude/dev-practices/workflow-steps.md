@@ -299,9 +299,9 @@ building. Twelve steps; the ones with teeth are marked.
 | 5 | `adversarial_review` | **floor** — `/hitl:dev-adversarial-review`. Independent, refuting, against the exact code being shipped |
 | 6 | `resolve_findings` | **floor** — fix every CRITICAL and HIGH, or accept it with a name against it. Fixing moves the code, so re-review: that is a new round |
 | 7 | `build` | Package it. Keep build output out of the tree, or `.gitignore` it before you start |
-| 8 | `publish` | **floor** — the irreversible one. Your publish script must run the gate and refuse on a non-zero exit; nothing else in HITL can stop you here |
+| 8 | `publish` | **floor** — the irreversible one. Your publish script must run the gate and refuse on a non-zero exit; nothing else in HITL can stop you here. Run every validator that reads the change file, not only the review gate: the skip-ledger validator too, or a record one accepts and the other refuses ships |
 | 9 | `tag` | Tag the source at the published commit |
-| 10 | `install_verify` | **floor** — install the published artifact clean and exercise its *behaviour*. "The version number is right" is not verification |
+| 10 | `install_verify` | **floor** — install the published artifact into an isolated configuration nobody has used (for a Claude Code plugin, a fresh `CLAUDE_CONFIG_DIR`) and exercise its *behaviour*. "The version number is right" is not verification, but it is the first thing to read |
 | 11 | `announce` | Tell the people affected, in their terms, not yours |
 | 12 | `retire` | Retire the change file. A finished change left active blocks the next person |
 
@@ -315,7 +315,13 @@ publishes with a script, add the gate to it:
 
 ```bash
 python3 ci/adversarial/check_review.py || exit 2
+python3 ci/first-pass/check_skips.py .hitl/current-change.yaml || exit 2
 ```
+
+The gate has one escape, and it is visible: a skip of `adversarial_review` with `ack_by` and a
+`waiver_ref` into `.hitl/waivers.yaml` lets the release through and prints `REVIEW_WAIVED` with the
+name and the reason at publish time. A waiver has a `revisit` date; the failure mode of a waiver is
+not being refused, it is being forgotten.
 
 If it publishes some other way, the gate has to go there instead. A gate that is not on the
 publishing path is documentation.

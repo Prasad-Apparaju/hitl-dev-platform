@@ -12,6 +12,7 @@
 | `design/` | Design — the **how**. Design packages (HLD, ADRs) for HITL's own evolution: `workflow-model/` (shipped as 2.0), `platform-bootstrap/` (issue #21, shipped 2.1.x), `compound-agentic-surface/` (EPIC #10, shipped 2.2.0), `agentic-design-advisor/` (EPIC #35, shipped 2.3.0), `first-pass/` (FR-29, shipped 2.4.0). Each package's *what* lives under `01-product/<feature>/requirements.md`. |
 | `announcements/` | Release announcements written for users, not contributors: what shipped, what it changes, how to use it |
 | `images/` | SVG and PNG assets used by the docs |
+| `releasing.md` | Maintainer runbook: how a version gets from this repo to `claude plugin install hitl@hitl` — the twelve release steps with the exact commands, the two gates, the waiver path, and what has gone wrong before |
 | `validation-guide.md` | Independent-reviewer / Codex guide to verifying a release: requirement→design→test map plus the exact checks to run |
 | `getting-started.md` | **Start here if you're a developer on a project that uses HITL.** One change walked end to end: the one command you need, what the breadcrumb means, and how to run a lighter process on small work |
 | `usage-guide.md` | Scenario reference: new project, brownfield, migration, enhancement, bug fix, incident |
