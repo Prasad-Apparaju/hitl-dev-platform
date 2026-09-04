@@ -126,23 +126,17 @@ If it changed after the cache bust, continue to Step 4.
 
 Onboarding writes `.claude/settings.json` **only if absent**, so a repo onboarded before a release
 keeps its old file and misses what shipped since. Dry-run the migrator, show what it proposes, then
-apply. Also refresh the validator copies — snapshots, not references — or new checks never arrive.
+apply. Prefer the migrator the plugin ships: the repo's copy may be the version being fixed.
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
-MIG="ci/first-pass/migrate_project.py"; [[ -f "$MIG" ]] || MIG="$ROOT/shared/ci/first-pass/migrate_project.py"
+MIG="$ROOT/shared/ci/first-pass/migrate_project.py"; [[ -f "$MIG" ]] || MIG="ci/first-pass/migrate_project.py"
 PY=""; for c in python3 python py; do "$c" -c "import yaml" >/dev/null 2>&1 && { PY="$c"; break; }; done
 if [[ ! -f "$MIG" ]]; then echo "No migrator found in the project or the plugin — skipping the change-file migration."
 elif [[ -z "$PY" ]]; then echo "! No interpreter with PyYAML — migration and change-file audit did NOT run. pip install pyyaml, then re-run."
 else
   "$PY" "$MIG" --root . || echo "! The migrator did not complete — the active change has NOT been audited."
   "$PY" "$MIG" --root . --apply
-fi
-if [[ -d "$ROOT/shared/ci/first-pass" ]]; then
-  mkdir -p ci/first-pass && cp "$ROOT/shared/ci/first-pass/"*.py ci/first-pass/
-  echo "  ✓ ci/first-pass/ validators refreshed from the plugin"
-else
-  echo "  ! Could not find the plugin's ci/first-pass — validators NOT refreshed."
 fi
 ```
 
@@ -232,51 +226,32 @@ in full — the generator, the diff, the confirmation prompt, and the promote/cl
 
 Some validators run via **project-relative paths**, so the repo carries its own copy of the plugin's CI
 tools (the plugin isn't present in CI). On upgrade, refresh them so an existing repo picks up new or fixed
-validators without re-onboarding — and **install** ones added after this repo was first onboarded (e.g. First
-Pass, FR-29, added in 2.4.x). Tool **code** is refreshed (plugin-owned); repo-owned files (waivers, the change
-ledger, customized `.github/workflows/*`) are preserved.
+validators without re-onboarding — and **install** ones added after this repo was first onboarded.
+
+These copies are **co-owned**, exactly like `.semgrep/` in Step 4.7. A repo that fixed a validator bug
+ahead of upstream is a co-owner, and a blind `cp` reverted such fixes five times in one downstream repo,
+including on runs with no version change (#104). So the migrator applies the 4.7 protocol per file:
+
+| Case | Action |
+|---|---|
+| Shipped file the repo does **not** have | install it |
+| Shipped file, byte-identical | leave alone, say nothing |
+| Shipped file the repo has **modified** | show the diff, **keep the repo's**, and ask |
+| File the repo added itself | never touched, never reported |
+| File listed in that directory's `.hitl-optout` | never installed — a deliberate removal stays removed |
+| `first-pass-check.yml`, `manifest-waivers.yaml` | installed once if absent, then the repo's outright |
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 if [[ -z "$ROOT" ]]; then
   echo "Plugin root not found — skipping CI-tool re-sync."
 else
-  # First Pass (FR-29): fail-closed skip-ledger validator + its co-located crit catalog + CI gate.
-  if [[ -d "$ROOT/shared/ci/first-pass" ]]; then
-    mkdir -p ci/first-pass
-    cp "$ROOT/shared/ci/first-pass/"*.py ci/first-pass/ 2>/dev/null
-    [[ -f "$ROOT/shared/workflows.yaml" ]] && cp "$ROOT/shared/workflows.yaml" ci/first-pass/workflows.yaml   # plugin-canonical crit; safe to refresh
-    if [[ -f "$ROOT/shared/ci-workflows/first-pass-check.yml" && ! -f .github/workflows/first-pass-check.yml ]]; then
-      mkdir -p .github/workflows && cp "$ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
-    fi
-    echo "  ✓ ci/first-pass/ (First Pass validator + catalog) synced"
-  fi
-  # Compound-agentic surface (#10): the system-manifest validator + posture-view generator, invoked
-  # repo-relative by pm-design-feature. Self-contained; PRESERVE the repo's own manifest-waivers.yaml.
-  if [[ -d "$ROOT/shared/ci/manifest-agentic" ]]; then
-    mkdir -p ci/manifest-agentic tools/manifest-agentic
-    cp "$ROOT/shared/ci/manifest-agentic/"*.py ci/manifest-agentic/ 2>/dev/null
-    # Report what actually happened: this claimed to have "kept" a file it had just created.
-    WAIVERS_NOTE="no waivers file"
-    if [[ -f ci/manifest-agentic/manifest-waivers.yaml ]]; then
-      WAIVERS_NOTE="kept your manifest-waivers.yaml"
-    elif [[ -f "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]]; then
-      cp "$ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
-      WAIVERS_NOTE="added a starter manifest-waivers.yaml"
-    fi
-    cp "$ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
-    echo "  ✓ ci/manifest-agentic/ (compound-agentic validator) synced — $WAIVERS_NOTE"
-  fi
-  # Release gate (#80): the adversarial-review validator, so a repo's own CI can run it.
-  if [[ -d "$ROOT/shared/ci/adversarial" ]]; then
-    mkdir -p ci/adversarial
-    cp "$ROOT/shared/ci/adversarial/"*.py ci/adversarial/ 2>/dev/null
-    echo "  ✓ ci/adversarial/ (release review gate) synced"
-  fi
-  # Manifest drift (already onboarded in most repos): refresh the checker code only if present.
-  if [[ -d "$ROOT/shared/ci/manifest-drift" && -d ci/manifest-drift ]]; then
-    cp "$ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/ 2>/dev/null
-    echo "  ✓ ci/manifest-drift/ refreshed"
+  MIG="$ROOT/shared/ci/first-pass/migrate_project.py"
+  PY=""; for c in python3 python py; do "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
+  if [[ -f "$MIG" && -n "$PY" ]]; then
+    "$PY" "$MIG" --root . --sync-validators "$ROOT" --apply
+  else
+    echo "  ! No shipped migrator or no python — validators NOT synced. Nothing was overwritten."
   fi
   # Remove dev-repo test suites that earlier versions synced in (plugin issue #29). They resolve
   # paths that exist only in the platform repo, so in a product repo they fail on collection and
@@ -336,8 +311,16 @@ layout. One of them (`test_driver_e2e.py`) extracts the Step 6 generator from `s
 a file no product repo has or should have — so it cannot be made to pass outside this repo. CI in a
 product repo runs the **validators**; the validators' tests belong with the validators' source.
 
+**If any file is listed as differing, STOP and ask**, per file, using the command the migrator printed:
+
+> `<path>` differs from the version shipped with v$NEW_VER. Overwrite it with the shipped copy, or keep
+> yours? (Your edits are lost if you overwrite; keeping yours means you miss any upstream fix.)
+
+Only on an explicit yes for that file run the printed `--overwrite <path>` command. Never overwrite a
+file nobody said yes to, and never "resolve" a difference by deleting the repo's copy.
+
 If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`.
-Say which tools were synced (or "CI validators already current").
+Say which tools were installed, which differ and were kept, or "CI validators already current".
 
 ---
 

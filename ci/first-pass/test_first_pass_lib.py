@@ -591,3 +591,137 @@ def test_migrate_without_pyyaml_reports_and_fails(tmp_path, capsys, monkeypatch)
     assert rc == 1
     assert "no PyYAML" in out and "did NOT run" in out
     assert "consistent" not in out, "two real findings were silently certified clean before this fix"
+
+
+# ---------------------------------------------------------------- migrate_project: validator sync (#104)
+#
+# dev-update used to `cp` the plugin's validators over the repo's copies. A repo that had fixed a
+# validator ahead of upstream lost the fix on the next update — five times downstream, including runs
+# with no version change. The sync is now the co-owned protocol Step 4.7 already applies to .semgrep/.
+
+def _plugin(tmp_path):
+    pr = tmp_path / "plugin"
+    (pr / "shared" / "ci" / "first-pass").mkdir(parents=True)
+    (pr / "shared" / "ci" / "first-pass" / "check_skips.py").write_text("SHIPPED v2\n")
+    (pr / "shared" / "ci" / "first-pass" / "permissions.py").write_text("SHIPPED perms\n")
+    (pr / "shared" / "ci" / "first-pass" / "test_check_skips.py").write_text("a test — must never ship\n")
+    (pr / "shared" / "workflows.yaml").write_text("workflows: shipped\n")
+    (pr / "shared" / "ci-workflows").mkdir()
+    (pr / "shared" / "ci-workflows" / "first-pass-check.yml").write_text("on: push  # shipped\n")
+    (pr / "shared" / "ci" / "manifest-agentic").mkdir()
+    (pr / "shared" / "ci" / "manifest-agentic" / "check_manifest_agentic.py").write_text("SHIPPED agentic\n")
+    (pr / "shared" / "ci" / "manifest-agentic" / "manifest-waivers.yaml").write_text("waivers: []  # starter\n")
+    (pr / "shared" / "ci" / "manifest-drift").mkdir()
+    (pr / "shared" / "ci" / "manifest-drift" / "check_manifest_drift.py").write_text("SHIPPED drift\n")
+    return pr
+
+
+def _project(tmp_path):
+    root = tmp_path / "repo"
+    (root / "ci" / "first-pass").mkdir(parents=True)
+    return root
+
+
+def test_sync_installs_absent_keeps_modified_and_ignores_repo_files(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    fp = root / "ci" / "first-pass"
+    (fp / "check_skips.py").write_text("SHIPPED v2\nplus the GH-488 fix the repo made\n")   # modified
+    (fp / "my_own_tool.py").write_text("ours\n")                                               # repo-added
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    out = capsys.readouterr().out
+    assert "ci/first-pass/permissions.py" in r["installed"]
+    assert (fp / "permissions.py").read_text() == "SHIPPED perms\n"
+    assert r["modified"] == ["ci/first-pass/check_skips.py"]
+    assert "GH-488 fix the repo made" in (fp / "check_skips.py").read_text(), "the repo's fix must survive"
+    assert "KEPT yours" in out and "+plus the GH-488 fix" not in out and "-plus the GH-488 fix" in out
+    assert "ASK, per file" in out and "--overwrite ci/first-pass/check_skips.py" in out
+    assert (fp / "my_own_tool.py").read_text() == "ours\n" and "my_own_tool" not in out
+
+
+def test_sync_dry_run_writes_nothing(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    (root / "ci" / "first-pass" / "check_skips.py").write_text("modified\n")
+    r = M.sync_validators(str(root), str(pr), apply=False)
+    out = capsys.readouterr().out
+    assert r["installed"] and not (root / "ci" / "first-pass" / "permissions.py").exists()
+    assert "would install" in out and "dry run" in out
+    assert (root / "ci" / "first-pass" / "check_skips.py").read_text() == "modified\n"
+
+
+def test_sync_identical_files_are_silent(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    M.sync_validators(str(root), str(pr), apply=True)
+    capsys.readouterr()
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    out = capsys.readouterr().out
+    assert not r["installed"] and not r["modified"]
+    assert "already current" in out and "check_skips" not in out
+
+
+def test_sync_overwrites_only_the_file_named(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    fp = root / "ci" / "first-pass"
+    (fp / "check_skips.py").write_text("modified A\n")
+    (fp / "permissions.py").write_text("modified B\n")
+    r = M.sync_validators(str(root), str(pr), apply=True, overwrite=["ci/first-pass/check_skips.py"])
+    assert r["overwritten"] == ["ci/first-pass/check_skips.py"]
+    assert (fp / "check_skips.py").read_text() == "SHIPPED v2\n"
+    assert (fp / "permissions.py").read_text() == "modified B\n", "a yes to one file is not a yes to another"
+    assert r["modified"] == ["ci/first-pass/permissions.py"]
+
+
+def test_sync_honours_the_optout_file(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    (root / "ci" / "first-pass" / ".hitl-optout").write_text("# removed on purpose\npermissions.py\n")
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    out = capsys.readouterr().out
+    assert not (root / "ci" / "first-pass" / "permissions.py").exists()
+    assert r["opted_out"] == ["ci/first-pass/permissions.py"] and "opted out" in out
+
+
+def test_sync_never_installs_tests(tmp_path):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    M.sync_validators(str(root), str(pr), apply=True)
+    assert not (root / "ci" / "first-pass" / "test_check_skips.py").exists()
+
+
+def test_sync_install_only_files_are_the_repos_after_install(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    M.sync_validators(str(root), str(pr), apply=True)
+    wf = root / ".github" / "workflows" / "first-pass-check.yml"
+    wv = root / "ci" / "manifest-agentic" / "manifest-waivers.yaml"
+    assert wf.read_text().startswith("on: push") and wv.exists()
+    wf.write_text("on: pull_request  # customised\n")
+    wv.write_text("waivers:\n  - id: W-1\n")
+    capsys.readouterr()
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    out = capsys.readouterr().out
+    assert wf.read_text().startswith("on: pull_request") and "W-1" in wv.read_text()
+    assert not r["modified"] and "first-pass-check" not in out and "waivers" not in out
+
+
+def test_sync_if_present_set_is_skipped_when_the_repo_lacks_it(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    assert not (root / "ci" / "manifest-drift").exists()
+    assert any("manifest-drift" in x for x in r["skipped_sets"])
+    (root / "ci" / "manifest-drift").mkdir()
+    capsys.readouterr()
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    assert "ci/manifest-drift/check_manifest_drift.py" in r["installed"]
+
+
+def test_sync_refuses_to_run_in_the_platform_repo(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    (root / "ai" / "claude" / "start-change").mkdir(parents=True)
+    (root / "ai" / "claude" / "start-change" / "SKILL.md").write_text("x")
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    assert not r["installed"] and "platform repo" in capsys.readouterr().out
+
+
+def test_sync_cli_is_a_separate_mode(tmp_path, capsys):
+    pr, root = _plugin(tmp_path), _project(tmp_path)
+    rc = M.main(["--root", str(root), "--sync-validators", str(pr), "--apply"])
+    out = capsys.readouterr().out
+    assert rc == 0 and "installed ci/first-pass/check_skips.py" in out
+    assert "permissions already current" not in out, "sync mode must not run the settings migration"
