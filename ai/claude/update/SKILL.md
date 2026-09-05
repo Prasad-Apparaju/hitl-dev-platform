@@ -132,10 +132,10 @@ apply. Prefer the migrator the plugin ships: the repo's copy may be the version 
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 MIG="$ROOT/shared/ci/first-pass/migrate_project.py"; [[ -f "$MIG" ]] || MIG="ci/first-pass/migrate_project.py"
 PY=""; for c in python3 python py; do "$c" -c "import yaml" >/dev/null 2>&1 && { PY="$c"; break; }; done
-if [[ ! -f "$MIG" ]]; then echo "No migrator found in the project or the plugin — skipping the change-file migration."
-elif [[ -z "$PY" ]]; then echo "! No interpreter with PyYAML — migration and change-file audit did NOT run. pip install pyyaml, then re-run."
+if [[ ! -f "$MIG" ]]; then echo "No migrator found in the project or the plugin: skipping the change-file migration."
+elif [[ -z "$PY" ]]; then echo "! No interpreter with PyYAML: migration and change-file audit did NOT run. pip install pyyaml, then re-run."
 else
-  "$PY" "$MIG" --root . || echo "! The migrator did not complete — the active change has NOT been audited."
+  "$PY" "$MIG" --root . || echo "! The migrator did not complete: the active change has NOT been audited."
   "$PY" "$MIG" --root . --apply
 fi
 ```
@@ -166,7 +166,7 @@ Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statu
 ```bash
 grep "CLAUDE_PROJECT_DIR" .claude/settings.json
 grep -q 'hooks/statusline-hitl.sh' .claude/settings.json \
-  || echo "statusLine missing or pointing at a stale script — re-create settings.json"
+  || echo "statusLine missing or pointing at a stale script: re-create settings.json"
 grep "hitl-gate" .claude/settings.json
 ```
 
@@ -183,9 +183,9 @@ If a legacy `.hitl/statusline.sh` is present, delete it during re-sync so nothin
 ```bash
 if [ -f .hitl/statusline.sh ]; then
   if git ls-files --error-unmatch .hitl/statusline.sh >/dev/null 2>&1; then
-    rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (tracked — recoverable from git)"
+    rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (tracked: recoverable from git)"
   else
-    echo "  .hitl/statusline.sh is UNTRACKED — leaving it alone. If it is HITL's legacy script," >&2
+    echo "  .hitl/statusline.sh is UNTRACKED: leaving it alone. If it is HITL's legacy script," >&2
     echo "  delete it yourself; if it is yours, move it out of .hitl/." >&2
   fi
 fi
@@ -244,14 +244,14 @@ including on runs with no version change (#104). So the migrator applies the 4.7
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 if [[ -z "$ROOT" ]]; then
-  echo "Plugin root not found — skipping CI-tool re-sync."
+  echo "Plugin root not found: skipping CI-tool re-sync."
 else
   MIG="$ROOT/shared/ci/first-pass/migrate_project.py"
   PY=""; for c in python3 python py; do "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
   if [[ -f "$MIG" && -n "$PY" ]]; then
     "$PY" "$MIG" --root . --sync-validators "$ROOT" --apply
   else
-    echo "  ! No shipped migrator or no python — validators NOT synced. Nothing was overwritten."
+    echo "  ! No shipped migrator or no python: validators NOT synced. Nothing was overwritten."
   fi
   # Remove dev-repo test suites that earlier versions synced in (plugin issue #29). They resolve
   # paths that exist only in the platform repo, so in a product repo they fail on collection and
@@ -266,7 +266,7 @@ else
   if [[ -f "ai/claude/start-change/SKILL.md" ]]; then
     :  # This is the HITL platform repo itself, where these tests are the real suite. Never touch them.
   elif [[ ! -f "$HASHES" ]]; then
-    echo "  (no retired-test manifest in this plugin build — skipping stale-test cleanup)"
+    echo "  (no retired-test manifest in this plugin build: skipping stale-test cleanup)"
   else
     removed=(); kept=()
     while IFS= read -r stale; do
@@ -274,7 +274,7 @@ else
       git ls-files --error-unmatch "$stale" >/dev/null 2>&1 || continue   # untracked => not ours
       if command -v shasum >/dev/null 2>&1; then h=$(shasum -a 256 "$stale" | awk '{print $1}')
       elif command -v sha256sum >/dev/null 2>&1; then h=$(sha256sum "$stale" | awk '{print $1}')
-      else echo "  (no sha256 tool — skipping stale-test cleanup; nothing was deleted)"; break; fi
+      else echo "  (no sha256 tool: skipping stale-test cleanup; nothing was deleted)"; break; fi
       # Match hash AND basename: the manifest is hash->basename, so hash alone would let content
       # shipped as file A delete a file at path B.
       if grep -qi "^$h  $(basename "$stale")$" "$HASHES"; then
@@ -293,7 +293,7 @@ else
       ci/agentic-advisor/test_render_map.py)
     for f in ${removed[@]+"${removed[@]}"}; do echo "  ✓ removed $f (HITL test that cannot run in this repo)"; done
     for f in ${kept[@]+"${kept[@]}"}; do
-      echo "  • kept $f — same name as a HITL test but different content, so it is yours or you edited it." >&2
+      echo "  • kept $f: same name as a HITL test but different content, so it is yours or you edited it." >&2
       echo "    If it is a leftover HITL test it will fail here; delete it yourself once you have looked." >&2
     done
   fi
@@ -346,7 +346,7 @@ every update. One path per line, `#` comments allowed (e.g. `best-practices/tena
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
-  echo "No shipped rule set found — skipping semgrep re-sync."
+  echo "No shipped rule set found: skipping semgrep re-sync."
 else
   new=(); changed=(); skipped=()
   while IFS= read -r src; do
@@ -383,8 +383,8 @@ else
   # there forever as dead config. Report, never auto-delete — the project may have edited it.
   for old in best-practices/pydantic-validation.yaml; do
     if [[ -f ".semgrep/$old" ]]; then
-      echo "  ! .semgrep/$old is superseded — it was renamed upstream and made framework-neutral."
-      echo "    Its rule could never fire — delete it once you are happy with the replacement."
+      echo "  ! .semgrep/$old is superseded: it was renamed upstream and made framework-neutral."
+      echo "    Its rule could never fire: delete it once you are happy with the replacement."
     fi
   done
 fi
@@ -405,7 +405,7 @@ Then stage what changed and verify the rule set still loads:
 [[ -d .semgrep ]] && git add .semgrep
 command -v semgrep >/dev/null 2>&1 && semgrep scan --config .semgrep/ --error . >/dev/null 2>&1 \
   && echo "  ✓ rule set loads and the repo is clean" \
-  || echo "  (semgrep not installed, or findings exist — run /hitl:dev-check-conventions)"
+  || echo "  (semgrep not installed, or findings exist: run /hitl:dev-check-conventions)"
 ```
 
 Commit with `git commit -m "chore(hitl): sync semgrep rules to v$NEW_VER"`.
@@ -435,9 +435,9 @@ elif [[ -f "$ROOT/.claude-plugin/plugin.json" ]]; then
   # dress a path defect up as a legitimate absence — which is exactly how the doubled-root bug
   # hid for a whole release (#82).
   echo "UNEXPECTED: plugin found at $ROOT but no block template at $BLOCK." >&2
-  echo "  The CLAUDE.md section was NOT installed. Report this — do not ignore it." >&2
+  echo "  The CLAUDE.md section was NOT installed. Report this: do not ignore it." >&2
 else
-  echo "No HITL block template in this plugin build — skipping."
+  echo "No HITL block template in this plugin build: skipping."
 fi
 ```
 
@@ -458,7 +458,7 @@ fi
 # Verify, do not assert. .gitignore has no effect on a file git already tracks, and outside a repo
 # check-ignore fails in a way that reads as "not ignored".
 if git check-ignore -q .hitl/people/ 2>/dev/null; then
-  echo "✓ .gitignore — .hitl/people/ excluded"
+  echo "✓ .gitignore: .hitl/people/ excluded"
 else
   echo "COULD NOT exclude .hitl/people/. Do not tell anyone a profile written here is local."
 fi

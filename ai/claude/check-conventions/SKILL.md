@@ -97,7 +97,7 @@ The checker derives its scan roots from the manifest's listed files, so no `--so
 if [[ -f ci/manifest-drift/check_manifest_drift.py ]]; then
   python ci/manifest-drift/check_manifest_drift.py
 else
-  echo "SKIPPED: ci/manifest-drift/check_manifest_drift.py not installed — run /hitl:dev-start-brownfield Step 3, or copy it from the plugin's shared/ci/manifest-drift/. Manifest drift was NOT checked."
+  echo "SKIPPED: ci/manifest-drift/check_manifest_drift.py not installed: run /hitl:dev-start-brownfield Step 3, or copy it from the plugin's shared/ci/manifest-drift/. Manifest drift was NOT checked."
 fi
 ```
 

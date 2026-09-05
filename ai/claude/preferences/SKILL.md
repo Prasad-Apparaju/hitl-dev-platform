@@ -191,7 +191,7 @@ def owner_of(text):
 
 if MODE == "show":
     if nb > 1 or ne > 1:
-        print("CLAUDE.md has %d begin / %d end markers — more than one preferences block. Showing "
+        print("CLAUDE.md has %d begin / %d end markers, so more than one preferences block. Showing "
               "the first; fix the file by hand, the other modes refuse to touch it." % (nb, ne))
     hit = SPAN.search(m)
     if not hit:
@@ -298,7 +298,7 @@ for i, k in enumerate(("length", "workings", "open_with", "disagreements"), star
     ANS[k] = v.replace("-->", "").replace("<!--", "")
 _t = " ".join((sys.argv[6] if len(sys.argv) > 6 else "").split())
 ANS["tone"] = "\n- **Tone:** " + (_t.replace("-->", "").replace("<!--", "") if _t
-                               else "plain English, short: no filler, no em dashes, numbers in a table (shared/plain-english.md)")
+                               else "plain English, short: no filler, no em dashes, numbers in a table (HITL's plain-english rule)")
 for k, v in ANS.items():
     BLOCK = BLOCK.replace("%(" + k + ")s", v)   # substitution, never formatting
 

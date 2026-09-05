@@ -120,6 +120,25 @@ def test_the_lines_skills_tell_the_model_to_say_are_plain_english():
     assert not offenders, "quoted lines speaking Claudish:\n  " + "\n  ".join(offenders[:40])
 
 
+# ── surface 2b: what a skill's embedded script prints ────────────────────────────────────────────
+
+def test_the_messages_skill_scripts_print_are_plain_english():
+    """A Python or bash script inside a skill's fenced block speaks to the person running it through
+    print(), SystemExit(...) and echo. Round-1 review of 2.12.0 found an em dash there that the
+    blockquote scan could not see."""
+    offenders = []
+    for p in _skill_files():
+        rel = os.path.relpath(p, ROOT)
+        for n, line in enumerate(_read(p).splitlines(), 1):
+            t = line.strip()
+            if not re.search(r"\b(print|SystemExit|echo)\b", t) or t.startswith("#"):
+                continue
+            for lit in re.findall(r'f?"((?:[^"\\]|\\.)*)"', t):
+                if _marks(lit):
+                    offenders.append("%s:%d %s -> %s" % (rel, n, ", ".join(_marks(lit)), lit[:80]))
+    assert not offenders, "skill scripts printing Claudish:\n  " + "\n  ".join(offenders[:40])
+
+
 # ── surface 3: the document templates ────────────────────────────────────────────────────────────
 
 TEMPLATE_DIRS = (os.path.join(AI, "shared", "templates"), os.path.join(AI, "claude", "generate-docs", "templates"))

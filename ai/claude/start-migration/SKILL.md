@@ -441,8 +441,8 @@ if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
   printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
 fi
 git check-ignore -q .hitl/people/ 2>/dev/null \
-  && echo "✓ .gitignore — .hitl/people/ excluded" \
-  || echo "COULD NOT exclude .hitl/people/ — say so before any profile is written here."
+  && echo "✓ .gitignore: .hitl/people/ excluded" \
+  || echo "COULD NOT exclude .hitl/people/: say so before any profile is written here."
 ```
 
 Output this exactly:

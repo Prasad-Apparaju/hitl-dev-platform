@@ -21,8 +21,9 @@ All notable changes to the HITL plugin are documented here.
   - The doc generator and the HLD, LLD and ADR templates carry the length ceilings.
   - A wiring lint (`ci/wiring/test_plain_english.py`) checks the text that reaches people: hook
     and breadcrumb messages, the lines skills tell the model to say, the document templates and the
-    preferences block. Around sixty shipped lines were reworded to pass it. The skills' own
-    instructions to the model are not linted.
+    preferences block, and the messages a skill's own script prints. Around three hundred shipped
+    lines were reworded to pass it. The skills' own instructions to the model are not linted.
+  - `getting-started.md` says 58 commands, which is what ships.
 
 ---
 

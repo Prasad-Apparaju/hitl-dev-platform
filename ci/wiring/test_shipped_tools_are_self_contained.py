@@ -1057,7 +1057,7 @@ FLOOR_REGIONS = {
         "f3051b8ffe17ae4850dd5b1c7a6d47f16d59958c9dcc8afa764cfbabf934b034"),
     "personas.md / where they live": (
         ('ai', 'shared', 'personas.md'), '## Where they live, and who can undo them',
-        "704907220b4d49f520196f9fab72389be6f223e711f2696b2383672a975df23b"),
+        "e4434c89f43d395efd8988cfd798396fac5d53292556554ceba13acfde23d931"),
     "personas.md / whose profile is it": (
         ('ai', 'shared', 'personas.md'), '## Whose profile is it',
         "529deec65e92b6c5faf7836a755cb167fac7cf79cda0510e32dbb77a01b6efb6"),

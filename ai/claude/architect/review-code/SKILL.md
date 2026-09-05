@@ -63,14 +63,14 @@ Before pushing, run these checks and stop if any fail:
 ```bash
 # Must not be on main/master
 branch=$(git branch --show-current)
-[[ "$branch" == "main" || "$branch" == "master" ]] && echo "ERROR: on protected branch $branch — create a feature branch first" && exit 1
+[[ "$branch" == "main" || "$branch" == "master" ]] && echo "ERROR: on protected branch $branch: create a feature branch first" && exit 1
 
 # Working tree must be clean (all changes committed)
-[[ -n "$(git status --short)" ]] && echo "ERROR: uncommitted changes — commit or stash before creating PR" && exit 1
+[[ -n "$(git status --short)" ]] && echo "ERROR: uncommitted changes: commit or stash before creating PR" && exit 1
 
 # PR must not already exist for this branch
 existing=$(gh pr view --json url --jq '.url' 2>/dev/null)
-[[ -n "$existing" ]] && echo "PR already exists: $existing — use that PR, do not create a duplicate" && exit 1
+[[ -n "$existing" ]] && echo "PR already exists: $existing: use that PR, do not create a duplicate" && exit 1
 ```
 
 If any check fails, stop and report the issue to the developer. Do not proceed.

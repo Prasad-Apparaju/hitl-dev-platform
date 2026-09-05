@@ -204,7 +204,7 @@ if [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/ci/manifest-drift/check_manif
     cp "$PLUGIN_ROOT/shared/ci/manifest-drift/"*.py ci/manifest-drift/
   echo "Manifest drift checker installed at ci/manifest-drift/."
 else
-  echo "Drift checker not found in the plugin — skip; /hitl:dev-check-conventions will note it is absent."
+  echo "Drift checker not found in the plugin: skip; /hitl:dev-check-conventions will note it is absent."
 fi
 
 # First Pass (FR-29): the fail-closed skip-ledger validator + its criticality catalog + the CI gate,
@@ -317,8 +317,8 @@ if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
   printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
 fi
 git check-ignore -q .hitl/people/ 2>/dev/null \
-  && echo "✓ .gitignore — .hitl/people/ excluded" \
-  || echo "COULD NOT exclude .hitl/people/ — say so before any profile is written here."
+  && echo "✓ .gitignore: .hitl/people/ excluded" \
+  || echo "COULD NOT exclude .hitl/people/: say so before any profile is written here."
 ```
 
 Then output this exactly:

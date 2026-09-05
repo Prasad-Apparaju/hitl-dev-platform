@@ -92,7 +92,7 @@ WF=$(python3 -c "import yaml;d=yaml.safe_load(open('.hitl/current-change.yaml'))
 if [[ "$WF" == "release" ]]; then
   GATE="ci/adversarial/check_review.py"
   [[ -f "$GATE" ]] || GATE="$ROOT/shared/ci/adversarial/check_review.py"
-  if [[ -f "$GATE" ]]; then python3 "$GATE"; else echo "release gate script not found — do not publish"; fi
+  if [[ -f "$GATE" ]]; then python3 "$GATE"; else echo "release gate script not found: do not publish"; fi
 fi
 ```
 

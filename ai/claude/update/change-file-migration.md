@@ -194,7 +194,7 @@ if block_m:
         oh = list(head)
         up_head(head, "id", wf_id); up_head(head, "version", f'"{new_ver}"'); up_head(head, "total", str(cat["total"]))
         if head != oh: block_changed = True
-        if block_style: print("  ⚠ block-style step(s) detected — those lines were NOT rewritten (numbering and status left as-is). Migration is incomplete; check the diff.")
+        if block_style: print("  ⚠ block-style step(s) detected: those lines were NOT rewritten (numbering and status left as-is). Migration is incomplete; check the diff.")
         nb = "\n".join(head + out_region);  nb += "" if nb.endswith("\n") else "\n"
         out = text[:block_m.start()] + nb + text[block_m.end():]
     else:
@@ -228,12 +228,12 @@ open(F + ".migrated", "w").write(out)
 print(f"Workflow: {wf_id}  →  {cat['total']} steps (was {wf.get('total','?')})")
 print("Step migration (remapped by key):"); print("\n".join(diff))
 if not block_changed:
-    print("\nCatalog unchanged — only version stamps updated; workflow block left byte-for-byte intact.")
+    print("\nCatalog unchanged: only version stamps updated; workflow block left byte-for-byte intact.")
 ud = list(difflib.unified_diff(text.splitlines(), out.splitlines(),
                                F, F + ".migrated", lineterm=""))
 newly = [k for k, v in is_new.items() if v]
 if newly:
-    print("\n--- steps added by this upgrade (all left OPEN — not done) ---")
+    print("\n--- steps added by this upgrade (all left OPEN: not done) ---")
     for k in newly:
         print("    %s" % k)
     print("    These were never offered on this change. Do them, or record a skip.")

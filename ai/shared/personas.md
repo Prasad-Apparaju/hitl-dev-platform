@@ -77,19 +77,19 @@ success is exactly the false assurance this section exists to prevent.
 cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
 mkdir -p .hitl/people
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
-  echo "NOT A GIT REPO — nothing here can make this file local. Say so before writing it."
+  echo "NOT A GIT REPO: nothing here can make this file local. Say so before writing it."
 else
   git check-ignore -q .hitl/people/ 2>/dev/null || \
     printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> .gitignore
   # Re-check. This is the line that turns a claim into a fact.
   if git check-ignore -q .hitl/people/ 2>/dev/null; then
-    echo "OK — .hitl/people/ is ignored; a profile written here stays local."
+    echo "OK: .hitl/people/ is ignored; a profile written here stays local."
   else
     echo "COULD NOT make .hitl/people/ ignored. Do not tell them it is local."
   fi
   TRACKED=$(git ls-files '.hitl/people/' 2>/dev/null)
   [ -n "$TRACKED" ] && {
-    echo "ALREADY TRACKED — the ignore rule does not cover these, and they are in git history:"
+    echo "ALREADY TRACKED: the ignore rule does not cover these, and they are in git history:"
     echo "$TRACKED" | sed 's/^/  /'
   }
 fi

@@ -45,6 +45,8 @@ if [[ "$(hitl_branch_reconcile "$HITL_FILE" "$CURRENT_BRANCH")" == "mismatch" ]]
   Resolve before doing any work:
     • /hitl:dev-switch-context     reload context for this branch's issue
     • /hitl:dev-start-change       select the correct change for this branch
+
+  Plain English, short: shared/plain-english.md applies to every reply and document.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DIRECTIVE
   exit 0
