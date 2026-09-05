@@ -1,0 +1,79 @@
+schema_version: '2.0'
+change_id: GH-101
+round: 1
+reviewed_sha: 1d20e4b3585683b96179add79b0b5c29ab43f3f0
+scope: 'git diff 143c864..1d20e4b — the whole #101 change'
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review (run by hand from the new skill's Step 3 brief)
+  brief: ten-item checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+lens: correctness
+checks:
+- check: Gate suite passes
+  command: python3 -m pytest ci/adversarial -q
+  result: pass
+  output: 58 passed, 1 skipped
+- check: A clean 2.0 record passes the gate
+  command: python3 ci/adversarial/check_review.py --root . --change <scratch>/change.yaml --reviews <scratch>/reviews
+  result: pass
+  output: verification review present, fresh, and cleared. exit=0
+- check: not-verified blocks; failed check with verified blocks
+  command: same, reviews_ns / reviews_fc
+  result: pass
+  output: VERDICT_NOT_SHIP exit=2; VERDICT_CONTRADICTED exit=2
+- check: Existing 1.0 record parses under its own rules
+  command: check_review.py --change change92.yaml --reviews .hitl/reviews --sha 699b87a
+  result: pass
+  output: no REVIEW_MALFORMED, no WRONG_STANCE (VERDICT_NOT_SHIP as that record says)
+- check: Step keys unchanged; GH-000 example certifies
+  command: 'grep -c ''key: adv_design|adv_code|adversarial_review'' ai/shared/workflows.yaml; check_skips.py GH-000-example.yaml'
+  result: pass
+  output: '3; First Pass skip ledger: clean.'
+- check: No reviewer agent carries refute
+  command: grep -il refute ai/claude/agents/*.md
+  result: pass
+  output: (empty)
+- check: Skill lint
+  command: python3 ci/skill-lint/check_skills.py
+  result: pass
+  output: 63/63 files pass all hard gates
+- check: Docs and runtime agree
+  command: pytest ci/wiring -k 'workflow_steps_doc or follow_the_runtime or reviewer_agent'
+  result: pass
+  output: 3 passed
+- check: Command map names the new command only
+  command: grep -c dev-verification-review / dev-adversarial-review docs/command-map.generated.md
+  result: pass
+  output: 2; 0
+- check: Skill consistent with itself and the template
+  command: 'read: SKILL.md, template, check_review.py 447-544'
+  result: pass
+  output: dispositions, classes and checks fields agree
+findings:
+- id: F1
+  class: decide
+  check: not-verified blocks; failed check with verified blocks
+  claim: An accepted-with-name finding over a failed check still blocked VERDICT_CONTRADICTED; the accept path the
+    gate promised could not be taken
+  evidence: 'record with checks[0].result: fail, findings[0].status: accepted, accepted_by set, verdict verified
+    -> [BLOCK] VERDICT_CONTRADICTED exit=2'
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: 'round 2 checks 2, 3, 5: named+signed -> exit 0; unnamed -> VERDICT_CONTRADICTED; fixed+resolved_by
+    -> exit 0'
+- id: F2
+  class: minor
+  claim: Record filename had no lens suffix, so two lenses in a round would collide
+  evidence: 'read: SKILL.md Step 6 and shared contract vs template ''each reviewer gets its own record'''
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: 'round 2 check 11: every record filename carries -<lens>'
+- id: F3
+  class: minor
+  claim: Offer example quoted half an hour for three lenses while a round is ten minutes
+  evidence: 'read: SKILL.md Step 2'
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: 'read: ''in parallel, still about ten minutes'''
+verdict: verified

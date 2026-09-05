@@ -51,6 +51,9 @@ checks: []
 findings: []
 #  - id: F1
 #    class: stops             # stops | decide | minor
+#    check: ""                # the `check:` text of the failed check this answers for, if any. A
+#                             # failed check with no resolved finding in the same record naming it
+#                             # contradicts a verified verdict (VERDICT_CONTRADICTED).
 #    claim: ""                # what fails, in one line
 #    evidence: ""             # the command and observed output. A finding nobody reproduced is a guess.
 #    status: open             # open | fixed | accepted

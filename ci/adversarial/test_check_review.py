@@ -759,3 +759,42 @@ def test_schema_version_is_matched_on_the_major_number(tmp_path):
     blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     # 2026 is not 2.x: read as a 1.0 record, which needs stance refute and severity findings
     assert "WRONG_STANCE" in _codes(blocks), blocks
+
+
+# ── round-2 validation points (#101) ──────────────────────────────────────────────────────────────
+
+def test_coverage_is_per_record_not_pooled_across_the_round(tmp_path):
+    """Round-2 probe A: lens B's resolved finding must not answer for lens A's failed check."""
+    chk = {"check": "install is 2.10.1", "command": "cat plugin.json", "result": "fail", "output": "2.10.0"}
+    a = _v2(lens="correctness", checks=[chk], findings=[])
+    b = _v2(lens="bypass", checks=[dict(chk, result="pass")],
+            findings=[{"id": "F1", "class": "decide", "check": "install is 2.10.1", "claim": "x",
+                       "status": "accepted", "accepted_by": "someone"}])
+    c, r = _setup(tmp_path, a)
+    _write(os.path.join(r, "GH-80-round1-bypass.yaml"), b)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "VERDICT_CONTRADICTED" in _codes(blocks), blocks
+
+
+def test_a_fixed_finding_covers_only_with_a_resolved_by(tmp_path):
+    """Round-2 probe B: the word `fixed` alone answers for nothing."""
+    chk = {"check": "install is 2.10.1", "command": "c", "result": "fail", "output": "o"}
+    bare = _v2(checks=[chk], findings=[{"id": "F1", "class": "stops", "check": "install is 2.10.1",
+                                        "claim": "x", "status": "fixed"}])
+    c, r = _setup(tmp_path / "bare", bare)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / "bare"))
+    assert "VERDICT_CONTRADICTED" in _codes(blocks), blocks
+    landed = _v2(checks=[chk], findings=[{"id": "F1", "class": "stops", "check": "install is 2.10.1",
+                                          "claim": "x", "status": "fixed", "resolved_by": "abc1234"}])
+    c, r = _setup(tmp_path / "landed", landed)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / "landed"))
+    assert blocks == [], blocks
+
+
+def test_check_text_matches_across_case_and_whitespace(tmp_path):
+    chk = {"check": "Install  is 2.10.1", "command": "c", "result": "fail", "output": "o"}
+    rec = _v2(checks=[chk], findings=[{"id": "F1", "class": "decide", "check": "install is 2.10.1",
+                                       "claim": "x", "status": "accepted", "accepted_by": "someone"}])
+    c, r = _setup(tmp_path, rec)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert blocks == [], blocks

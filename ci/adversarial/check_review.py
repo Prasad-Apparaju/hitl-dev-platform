@@ -80,6 +80,11 @@ def canonical_lens(raw):
     return LENS_ALIASES.get(lens, lens)
 
 
+def _norm(text):
+    """Check text as typed twice by a person: case and internal whitespace do not count."""
+    return re.sub(r"\s+", " ", str(text or "")).strip().casefold()
+
+
 def _fail(findings, code, msg):
     findings.append("[BLOCK] %s: %s" % (code, msg))
 
@@ -473,7 +478,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
                 _fail(out, "REVIEW_MALFORMED", "%s: checks[%d] result %r is not one of %s"
                       % (_p, i, c.get("result"), ", ".join(CHECK_RESULTS)))
             elif res == "fail":
-                failed_checks.append((os.path.basename(_p), str(c.get("check", "?")).strip()))
+                failed_checks.append((_p, _norm(c.get("check"))))
             elif res == "unknown":
                 warnings.append("[warn] UNKNOWN_CHECK: %s checks[%d] could not be run (%s). An "
                                 "unknown is not a pass." % (os.path.basename(_p), i,
@@ -533,9 +538,14 @@ def check(change_path, reviews_dir, sha=None, root="."):
         # A failed check is accounted for by a finding that names it (`check:`) and is resolved:
         # fixed, or accepted with a name. UNSIGNED_ACCEPTANCE above already catches the nameless
         # accept, so a covered check is one a person has actually answered for.
-        named = str(f.get("check", "")).strip()
-        if named and state in RESOLVED_STATES and (state != "accepted" or str(f.get("accepted_by", "")).strip()):
-            covered_checks.add(named)
+        # Coverage is per record (the finding lives in the record whose check failed — round-2
+        # point 1) and needs evidence: a signed acceptance, or a fix that names its commit
+        # (round-2 point 2). The word "fixed" alone covers nothing.
+        named = _norm(f.get("check"))
+        signed = state == "accepted" and str(f.get("accepted_by", "")).strip()
+        landed = state == "fixed" and str(f.get("resolved_by", "")).strip()
+        if named and (signed or landed):
+            covered_checks.add((fpath, named))
 
         if state == "accepted" and not str(f.get("accepted_by", "")).strip():
             _fail(out, "UNSIGNED_ACCEPTANCE",
@@ -551,14 +561,14 @@ def check(change_path, reviews_dir, sha=None, root="."):
               "%s: verdict is %r — the reviewer did not clear this for release"
               % (path, rec.get("verdict")))
     else:
-        uncovered = [(p_, c_) for p_, c_ in failed_checks if c_ not in covered_checks]
+        uncovered = [(p_, c_) for p_, c_ in failed_checks if (p_, c_) not in covered_checks]
         if uncovered:
             _fail(out, "VERDICT_CONTRADICTED",
                   "the round says %r but %d check(s) failed with no finding answering for them (%s). "
-                  "A failed check is resolved by a finding that names it in `check:` — fixed, or "
-                  "accepted with a name — not by the verdict."
+                  "A failed check is resolved by a finding IN THE SAME RECORD that names it in "
+                  "`check:` — fixed with a resolved_by, or accepted with a name — not by the verdict."
                   % (rec.get("verdict"), len(uncovered),
-                     "; ".join("%s: %s" % (p_, c_[:60]) for p_, c_ in uncovered[:3])))
+                     "; ".join("%s: %s" % (os.path.basename(p_), c_[:60]) for p_, c_ in uncovered[:3])))
 
     # Not a block: a genuinely clean change exists. But one round that found nothing, on a large
     # diff, is more often a shallow review than a flawless one — so say so.

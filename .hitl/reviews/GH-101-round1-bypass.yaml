@@ -1,0 +1,91 @@
+schema_version: '2.0'
+change_id: GH-101
+round: 1
+reviewed_sha: 1d20e4b3585683b96179add79b0b5c29ab43f3f0
+scope: 'git diff 143c864..1d20e4b -- ci/adversarial/check_review.py, the record template; claim: a 2.0 record cannot
+  pass more easily than a 1.0 record'
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review (run by hand from the new skill's Step 3 brief)
+  brief: ten-item checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+lens: bypass
+checks:
+- check: Base 2.0 record clears
+  command: check_review.py --sha 1d20e4b (case-1)
+  result: pass
+  output: exit 0, cleared
+- check: reviewer.context inherited blocks
+  command: case-2
+  result: pass
+  output: NOT_INDEPENDENT exit 2
+- check: Stale reviewed_sha blocks
+  command: case-3 (parent commit)
+  result: pass
+  output: REVIEW_STALE exit 2
+- check: stops/decide open block; minor does not
+  command: case-4a/4b/4c
+  result: pass
+  output: FINDING_OPEN, FINDING_OPEN, exit 0
+- check: Accepted without a name blocks
+  command: case-5
+  result: pass
+  output: UNSIGNED_ACCEPTANCE exit 2
+- check: Empty checks + empty findings
+  command: case-6
+  result: pass
+  output: exit 0 with NO_CHECKS and SHALLOW_REVIEW warnings (same posture as 1.0 zero-findings)
+- check: stance ignored on 2.0; required on 1.0
+  command: case-7a/7b/7c
+  result: pass
+  output: exit 0, exit 0, WRONG_STANCE exit 2
+- check: severity CRITICAL under 2.0 still blocks
+  command: case-8
+  result: pass
+  output: 'FINDING_OPEN: CRITICAL exit 2'
+- check: verdict ship on 2.0 and verified on 1.0 both clear
+  command: case-9, case-I
+  result: pass
+  output: exit 0 both; not a hole, neither word is weaker
+- check: Failed check with verified blocks
+  command: case-10
+  result: pass
+  output: VERDICT_CONTRADICTED exit 2
+findings:
+- id: F1
+  class: decide
+  check: Failed check with verified blocks
+  claim: 'VERDICT_CONTRADICTED could not be resolved the way its message said: accepted-by-name (G1) and fixed (G2)
+    failed checks still blocked; only rewriting fail to unknown passed'
+  evidence: 'G1/G2 -> exit 2 VERDICT_CONTRADICTED; G3 (result: unknown) -> exit 0'
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: round 2 checks 2-6
+- id: F2
+  class: minor
+  claim: 'class overrode severity on a 1.0 record: severity CRITICAL + class minor passed silently'
+  evidence: A1 -> exit 0, no warning
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: 'round 2 check 7: FINDING_OPEN'
+- id: F3
+  class: minor
+  claim: An unknown-only checks table suppressed SHALLOW_REVIEW
+  evidence: C -> exit 0, only UNKNOWN_CHECK
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: 'round 2 check 8: both warnings'
+- id: F4
+  class: minor
+  claim: 'stance is ignored on 2.0 records (by design in #101: the record attests what was run, not a stance; left
+    open as minor rather than accepted on someone''s behalf)'
+  evidence: 7a -> exit 0
+  status: open
+- id: F5
+  class: minor
+  claim: 'schema_version detection was a prefix test: ''2026'' read as 2.0'
+  evidence: J -> exit 0
+  status: fixed
+  resolved_by: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+  verified_by: 'round 2 check 9: read as 1.0, WRONG_STANCE'
+verdict: verified

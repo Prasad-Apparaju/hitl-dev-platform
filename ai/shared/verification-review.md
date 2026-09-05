@@ -239,7 +239,8 @@ Write `.hitl/reviews/<change-id>-round<N>-<lens>.yaml` (one per reviewer) from t
 `ai/shared/templates/verification-review-record.yaml`. The `reviewed_sha` is load-bearing: the
 release gate fails if the code has moved since, which is what stops a review of an early draft
 counting for a later one. The `checks` table is what makes the record a verification rather than an
-opinion.
+opinion. A finding that answers for a failed check names it in `check:`, in the same record; a
+failed check nobody answered for contradicts a `verified` verdict and the gate blocks.
 
 Findings are `open`, `fixed`, or `accepted`. Accepting one is a real decision and needs a name
 against it — that is what `accepted_by` is for, and the name has to belong to someone who actually
