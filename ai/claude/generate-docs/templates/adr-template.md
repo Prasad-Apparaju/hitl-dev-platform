@@ -1,11 +1,13 @@
 # ADR: [Title]
 
+<!-- Length: one page of prose is the ceiling (signatures, diagrams and tables are extra). A section with nothing to say reads "None." Rule: shared/plain-english.md -->
+
 | | |
 |---|---|
 | **Status** | Proposed |
 | **Date** | YYYY-MM-DD |
 | **Deciders** | [team/roles] |
-| **Supersedes** | — |
+| **Supersedes** | none |
 | **Related** | [links to related ADRs, HLDs, LLDs] |
 
 ---
@@ -66,4 +68,4 @@
 
 **Expected:** [original prediction]
 **Actual:** [measured result]
-**Verdict:** [ROI realized / Partial / Not realized — action taken]
+**Verdict:** [ROI realized / Partial / Not realized: action taken]

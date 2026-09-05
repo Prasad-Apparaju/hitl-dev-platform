@@ -1,4 +1,4 @@
-# Data Model Mapping — [Source DB] → [Target DB]
+# Data Model Mapping: [Source DB] → [Target DB]
 
 **Parent:** [Migration docs index]
 
@@ -37,8 +37,8 @@ graph LR
 |---------------|--------------|:-----------:|-------|
 | EntityA | EntityA | Rename/reshape | [what changed] |
 | EntityB + EntityC | EntityB | Merge | [why merged] |
-| — | EntityD | New | [why added] |
-| EntityE | — | Dropped | [why removed] |
+| none | EntityD | New | [why added] |
+| EntityE | none | Dropped | [why removed] |
 
 ---
 
@@ -91,9 +91,9 @@ For each entity migration:
 
 | Entity | Row count (est.) | Strategy | Downtime? |
 |--------|:----------------:|:--------:|:---------:|
-| EntityA | ~10K | Batch copy | No — dual-write during migration |
-| EntityB | ~500K | Stream copy | No — background job |
-| EntityC | ~1M | Incremental | No — paginated cursor |
+| EntityA | ~10K | Batch copy | No: dual-write during migration |
+| EntityB | ~500K | Stream copy | No: background job |
+| EntityC | ~1M | Incremental | No: paginated cursor |
 
 ### Data integrity checks (post-migration)
 
@@ -108,6 +108,6 @@ For each entity migration:
 ## 7. Rollback Plan
 
 If migration fails or data integrity checks fail:
-1. [How to revert — drop target tables? Restore from backup?]
-2. [What data might be lost — writes during migration window?]
+1. [How to revert: drop target tables? Restore from backup?]
+2. [What data might be lost: writes during migration window?]
 3. [How long rollback takes]

@@ -516,7 +516,7 @@ def test_the_persona_floor_is_stated_everywhere_it_could_be_forgotten():
         # committed to every teammate's CLAUDE.md.
         "the written block": (block.group(1), [
             "Always state a risk, a cost, an uncertainty, or a decision that is the reader's to "
-            "make — briefly if that is the setting, but never left out.",
+            "make, briefly if that is the setting, but never left out.",
             "cut the reasoning and keep the consequence",
         ]),
     }
@@ -1027,13 +1027,13 @@ import hashlib
 FLOOR_REGIONS = {
     "CLAUDE.md template / communication preferences": (
         ('ai', 'claude', 'generate-docs', 'templates', 'CLAUDE.md.template'), '## Communication Preferences',
-        "d3f10e4c1ca94fb57273bb5421fd3a5c1e40bb8be240d8089d9c8b054dee9ca3"),
+        "9a41a60cd799401b1acb5d8c4ce60be0525c8d5d0c5eb494cb27c5c5dc260d17"),
     "draft-for / find the person": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 1 — Find the person',
-        "e92fcbc99cf3ec943d0c1c91e7389aa32f980833d8a1379c9d63d474cb7f6eb4"),
+        "61e61fe498230501b0ecbad2199d557d9aa277faf783781e1b73ec0c0020e0bd"),
     "draft-for / hand it over": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 4 — Hand it over with its provenance',
-        "c21319895e3b33480f4552838531cf3ff17cfe82477b2a9d13bb926ca73124d6"),
+        "9ce45f0c1d15e2609a9954792fd24f3568221b5053964d360aca6be2996cfc20"),
     "draft-for / what this is not for": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## What this is not for',
         "0a764e69130523218f2a00fd66c5a5ad0197b7d4f1be70ceef61aa1e4d41adac"),
@@ -1042,7 +1042,7 @@ FLOOR_REGIONS = {
         "25dddd4c827233f7f8d054fc03eee363bcc092bcd479c256a1e879c43a638802"),
     "draft-for / write to the profile": (
         ('ai', 'claude', 'draft-for', 'SKILL.md'), '## Step 3 — Write to the profile',
-        "6ca55d129e0b9b0bda6bfc996d54b26e7112604d01ca269495d39fbd1b6121f4"),
+        "ea6506515c98e723c79f79014ea885fc42a1bb66d4ba9b451c96dd83c64b7a8b"),
     "generate-docs / phase R5 process setup": (
         ('ai', 'claude', 'generate-docs', 'SKILL.md'), '### Phase R5 — Process Setup (Day 5 equivalent)',
         "8b1b7b3743d269b8893051e8348433c640c100e1d2483c4e3eec9f7f127d6e96"),
@@ -1069,13 +1069,13 @@ FLOOR_REGIONS = {
         "348425cc4d5c719cf944190472a7fba9fdd5529757a21d741a8c2f4c081e77c1"),
     "preferences / setting up and adjusting": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## Setting up, and adjusting',
-        "d1c697a8bdd362091590dca2d86c805feb0155c183ab38320e9e056671fe751b"),
+        "6d342205022196ae6458403063f020fb04a3cd6e6f28dbe558365c0de7e2334b"),
     "preferences / the floor lives in the file": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## The floor, and why it lives in the file',
         "08b31fba29f94780e5bc2af96d89e9fc3e1372462f4e6c9f3dfd3284129ec36c"),
     "preferences / when to offer this": (
         ('ai', 'claude', 'preferences', 'SKILL.md'), '## When to offer this',
-        "dca62287136cccf5bbf55c9f0d25735288452896319f114dd38eecd221699b8d"),
+        "d7b5c85875ce80a2788e0503e08d582d88a2391d0c897581cc754a225193e7f9"),
 }
 
 
@@ -1116,7 +1116,7 @@ def test_the_floor_inside_the_emitted_block_is_unchanged():
         % (EMITTED_BLOCK_SHA, _emitted_block_hash()))
 
 
-EMITTED_BLOCK_SHA = "2cb9a0b67d187d682a78f6e9b29a6099f1af146882e6472ce221528348bf9f92"
+EMITTED_BLOCK_SHA = "7df23e58e1033aa56a72991adbe9565d30bacd7fb5e43c0de59a4aa1871fa618"
 
 
 if __name__ == "__main__":

@@ -44,7 +44,7 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 
 > No decision packet found for this change.
 >
-> Decision packets are created at the end of `/hitl:architect-design-feature` (Phase 10 — Step 9). They prove the change has an approved LLD, a test plan, and a scoped domain before code generation begins.
+> Decision packets are created at the end of `/hitl:architect-design-feature` (Phase 10: Step 9). They prove the change has an approved LLD, a test plan, and a scoped domain before code generation begins.
 >
 > Run `/hitl:architect-design-feature` first. Once the architect approves the packet, resume here.
 
@@ -151,7 +151,7 @@ Generate three categories of tests. All are written now (RED phase), but they ru
    });
    ```
 
-   > **Note on native mobile apps:** Playwright covers web browsers and mobile web (responsive/PWA). If the feature includes a native iOS or Android app, those require Appium or Detox — flag that in the test plan.
+   > **Note on native mobile apps:** Playwright covers web browsers and mobile web (responsive/PWA). If the feature includes a native iOS or Android app, those require Appium or Detox: flag that in the test plan.
 
 **D. Smoke suite contribution** — add this feature's happy-path user journey to `tests/e2e/smoke/journeys/<feature-name>.spec.ts`. The smoke suite runs a fresh new-customer flow on every build.
 
@@ -186,13 +186,13 @@ Generate three categories of tests. All are written now (RED phase), but they ru
 
    > **Tests need your review before I write any code. Work through this list:**
    >
-   > 1. **Unit coverage gaps** — I generated unit tests from the LLD. What domain knowledge or business rules aren't in the LLD? Add tests for those now.
-   > 2. **Integration contracts** — Does each facade API have an integration test that makes a real call? Are the contract assertions specific (exact field names, error codes)?
-   > 3. **E2E journeys** — Does each Playwright test follow what a real user would do? Are the assertions on visible UI outcomes, not internal state?
-   > 4. **Smoke suite** — Does the new journey in the smoke suite represent what the PM would demo? Does it start from a brand-new customer with no prior data?
-   > 5. **Incident registry** — Are past failure modes in this domain covered by a regression test?
-   > 6. **Security edge cases** — Unauthenticated access rejected? User A cannot access User B's data? Input at max/empty/null?
-   > 7. **Mobile coverage** — Are the Playwright tests running against both `iPhone 15` and `Pixel 7` device profiles?
+   > 1. **Unit coverage gaps**: I generated unit tests from the LLD. What domain knowledge or business rules aren't in the LLD? Add tests for those now.
+   > 2. **Integration contracts**: Does each facade API have an integration test that makes a real call? Are the contract assertions specific (exact field names, error codes)?
+   > 3. **E2E journeys**: Does each Playwright test follow what a real user would do? Are the assertions on visible UI outcomes, not internal state?
+   > 4. **Smoke suite**: Does the new journey in the smoke suite represent what the PM would demo? Does it start from a brand-new customer with no prior data?
+   > 5. **Incident registry**: Are past failure modes in this domain covered by a regression test?
+   > 6. **Security edge cases**: Unauthenticated access rejected? User A cannot access User B's data? Input at max/empty/null?
+   > 7. **Mobile coverage**: Are the Playwright tests running against both `iPhone 15` and `Pixel 7` device profiles?
    >
    > Remove tests that only verify implementation details (mock called once, internal method invoked).
    >

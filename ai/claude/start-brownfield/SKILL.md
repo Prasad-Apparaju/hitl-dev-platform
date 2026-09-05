@@ -294,7 +294,7 @@ The 31-step workflow (`/hitl:dev-practices`) gates every PR on a passing staging
 
 If no CI/CD config exists, or the build fails and cannot be quickly fixed, say:
 
-> "No working build pipeline found. This is a 🔴 concern — the 31-step workflow requires a passing build and a staging deploy path before a PR can be closed. Options:
+> "No working build pipeline found. This is a 🔴 concern: the 31-step workflow requires a passing build and a staging deploy path before a PR can be closed. Options:
 > - Scaffold a CI/CD config now: describe your hosting target (GitHub Actions → AWS/GCP/Azure/Railway/Fly.io) and I'll generate a starter pipeline
 > - Set it up manually and re-run this step when ready
 > - Proceed and accept that the build and deploy steps of the 31-step workflow will need manual execution until the pipeline exists"

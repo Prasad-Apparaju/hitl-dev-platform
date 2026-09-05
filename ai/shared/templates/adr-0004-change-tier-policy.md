@@ -2,17 +2,17 @@
 
 | | |
 |---|---|
-| **Status** | Draft — complete at project kickoff |
+| **Status** | Draft: complete at project kickoff |
 | **Date** | [fill in] |
 | **Deciders** | [fill in: tech lead, architect] |
-| **Supersedes** | — |
+| **Supersedes** | none |
 | **Related** | ADR-0001 (HITL adoption) |
 
 ---
 
 ## 1. Context
 
-The HITL workflow scales by tier — Tier 3+ changes require HLD review gates, security reviews, and architect sign-off that Tier 1–2 changes skip. Without project-specific tier definitions, developers make inconsistent classification calls, and high-risk changes may be under-processed.
+The HITL workflow scales by tier: Tier 3+ changes require HLD review gates, security reviews, and architect sign-off that Tier 1–2 changes skip. Without project-specific tier definitions, developers make inconsistent classification calls, and high-risk changes may be under-processed.
 
 The generic HITL tier definitions (in `/hitl:dev-practices`) are a starting point. This ADR customizes them for this project's specific risk profile.
 
@@ -20,39 +20,39 @@ The generic HITL tier definitions (in `/hitl:dev-practices`) are a starting poin
 
 Apply the following tier definitions for this project:
 
-> **How tiers actually work.** No tier skips `/hitl:dev-start-change` — the session-start gate blocks
+> **How tiers actually work.** No tier skips `/hitl:dev-start-change`: the session-start gate blocks
 > edits made through the Edit and Write tools until a change is active, and it does not read the tier.
 > (Writes made through the shell are not covered; that gap is tracked separately.) A low tier buys a
 > *shorter plan*, not an exemption, and the steps it drops are recorded rather than silently absent.
-> Tier 0 and 1 additionally require `tier_set_by` and `tier_reason`, because those tiers unlock the
+> Tier 0 and 1 additionally require `tier_set_by` and `tier_reason`, because those tiers open the
 > batch-decline path at intake. Note the floor demotion that matters is **3 → 2**, which takes five
 > steps off the protected floor and requires no justification. Fill in the examples below; do not
 > change that mechanism.
 
-### Tier 0 — Trivial (intake, then the lightest plan: ceremony steps pre-declined)
+### Tier 0: Trivial (intake, then the lightest plan: ceremony steps pre-declined)
 
-[fill in — examples of what qualifies as trivial for this project:]
+[fill in: examples of what qualifies as trivial for this project:]
 - Typo or comment fix
 - Config value change with no behavioral impact
 - Log message or error string wording
 
-### Tier 1 — Bug fix (lightest plan, TDD steps kept)
+### Tier 1: Bug fix (lightest plan, TDD steps kept)
 
-[fill in — examples:]
+[fill in: examples:]
 - Regression fix for a specific reported and reproducible bug
 - Minor behavioral correction within a single function
 - Dependency patch with no public API changes
 
-### Tier 2 — Normal feature (full workflow)
+### Tier 2: Normal feature (full workflow)
 
-[fill in — examples:]
+[fill in: examples:]
 - New API endpoint or UI screen within a single domain
 - Change touching 1–2 files within a bounded scope
 - Performance optimization with a clear, measurable target
 
-### Tier 3 — Non-trivial / high-risk (full workflow + HLD review gate + security review)
+### Tier 3: Non-trivial / high-risk (full workflow + HLD review gate + security review)
 
-**Always Tier 3 for this project — fill in the list that applies:**
+**Always Tier 3 for this project: fill in the list that applies:**
 - [ ] Any change to authentication or authorization logic
 - [ ] Any change to payment or billing processing
 - [ ] Any change to data models requiring a migration
@@ -60,9 +60,9 @@ Apply the following tier definitions for this project:
 - [ ] Any cross-domain change touching more than 2 domains
 - [ ] Any change to [fill in: project-specific high-risk area]
 
-### Tier 4 — Incident / P0 (fix first, full docs within 48 hours)
+### Tier 4: Incident / P0 (fix first, full docs within 48 hours)
 
-[fill in: define what constitutes a P0 for this project — e.g., "any outage affecting >X% of users or any data loss event"]
+[fill in: define what constitutes a P0 for this project: e.g., "any outage affecting >X% of users or any data loss event"]
 
 ### Tie-breaking rule
 
@@ -84,12 +84,12 @@ Maximum flexibility. Rejected because: under deadline pressure, developers consi
 - Clear criteria reduce debate in code review about "did this need an LLD?"
 
 ### Negative
-- Edge cases still require judgment — the tie-breaking rule handles them
+- Edge cases still require judgment: the tie-breaking rule handles them
 - The Tier 3 list must be kept current as the system evolves (add domains here when they become high-risk)
 
 ## 5. Implementation Notes
 
-The tier is recorded in `.hitl/current-change.yaml` at step 3 (`/hitl:dev-apply-change`). The 31-step workflow branches on this value — skipping or adding gates accordingly.
+The tier is recorded in `.hitl/current-change.yaml` at step 3 (`/hitl:dev-apply-change`). The 31-step workflow branches on this value: skipping or adding gates accordingly.
 
 Review this ADR whenever a new high-risk domain is added to `docs/system-manifest.yaml`.
 
@@ -106,12 +106,12 @@ Review this ADR whenever a new high-risk domain is added to `docs/system-manifes
 
 **Value dimension:** Risk / Quality
 **Expected outcome:** No Tier 3 change is accidentally processed as Tier 2
-**Baseline metric:** [fill in: if available — past incidents from under-processed high-risk changes]
+**Baseline metric:** [fill in: if available: past incidents from under-processed high-risk changes]
 **Expected cost:** One-time: ~1 hour team discussion | Ongoing: ~5 minutes per change to classify
-**Verification:** 30-day check [fill in date] | 90-day check [fill in date] — were there Tier 3 changes processed as Tier 2?
+**Verification:** 30-day check [fill in date] | 90-day check [fill in date]: were there Tier 3 changes processed as Tier 2?
 
 ## Actual Outcome (filled at 90-day checkpoint)
 
 **Expected:** [copy from above]
 **Actual:** [measured result]
-**Verdict:** [ROI realized / Partial / Not realized — action taken]
+**Verdict:** [ROI realized / Partial / Not realized: action taken]

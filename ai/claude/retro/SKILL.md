@@ -32,6 +32,8 @@ tier-1 one-line fix, which must not end with a confirmation prompt.
 
 ---
 
+**Length and voice.** `shared/plain-english.md` applies: plain words, and one page is the ceiling for the prose. A section with nothing to say reads "None."
+
 ## Step 1 — Find the records
 
 ```bash

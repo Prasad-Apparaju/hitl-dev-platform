@@ -34,7 +34,7 @@ Available at **all challenge levels**. Any time the PM is unsure of an answer, t
 
 The TODO list is informational — it does not block moving to the next phase. It surfaces what the PM still needs to resolve before the feature can be treated as fully justified.
 
-> **First Pass (FR-29).** When a change runs in First Pass, TODO Deferral generalizes to the whole workflow: a deferred design item is recorded in the durable **skip ledger** (`.hitl/current-change.yaml` + `.hitl/skip-ledger.yaml`), with the same stance — *surface the risk, respect the choice* — and it resurfaces at defined boundaries (the follow-up, the next overlapping change, incident review), never mid-build. See `ai/shared/first-pass/language.md`.
+> **First Pass (FR-29).** When a change runs in First Pass, TODO Deferral generalizes to the whole workflow: a deferred design item is recorded in the durable **skip ledger** (`.hitl/current-change.yaml` + `.hitl/skip-ledger.yaml`), with the same stance: *surface the risk, respect the choice*: and it resurfaces at defined boundaries (the follow-up, the next overlapping change, incident review), never mid-build. See `ai/shared/first-pass/language.md`.
 
 ---
 

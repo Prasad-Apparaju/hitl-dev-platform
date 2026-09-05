@@ -36,9 +36,9 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 Before step 1, ask:
 
 > "What level of challenge would you like?
-> - **Rigorous** — I'll push back until I have specific answers. Nothing gets drafted without justification.
-> - **Moderate** — I'll ask all questions and flag gaps, but won't block on every one.
-> - **Light** — I'll ask the essentials only and move fast.
+> - **Rigorous**: I'll push back until I have specific answers. Nothing gets drafted without justification.
+> - **Moderate**: I'll ask all questions and flag gaps, but won't block on every one.
+> - **Light**: I'll ask the essentials only and move fast.
 >
 > Default is **Moderate** if you don't specify."
 

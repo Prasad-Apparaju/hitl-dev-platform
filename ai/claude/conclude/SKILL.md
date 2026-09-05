@@ -34,6 +34,8 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 
 ---
 
+**Length and voice.** `shared/plain-english.md` applies: plain words, and one page for the ADR is the ceiling for the prose. A section with nothing to say reads "None."
+
 ## Step 1 — Read the thread
 
 1. **Find the thread** — use `Slack:slack_read_thread` if a URL or timestamp is provided, or `Slack:slack_search_public_and_private` to find the thread by topic

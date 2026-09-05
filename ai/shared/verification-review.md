@@ -35,9 +35,9 @@ two published versions and a data-loss bug in the field.
 Be brief, say what it costs, and make declining easy. Something like:
 
 > Design's done. Want me to run a verification review on it before we build? A round takes about
-> ten minutes and runs in the background while you keep working — it checks the design against
+> ten minutes and runs in the background while you keep working: it checks the design against
 > what it claims, case by case, and comes back with one page. If something fails there may be a
-> second round, and I'll show you what came back before I change anything. Or skip it — I'll note
+> second round, and I'll show you what came back before I change anything. Or skip it: I'll note
 > that we did.
 
 Things that must be true of the offer:

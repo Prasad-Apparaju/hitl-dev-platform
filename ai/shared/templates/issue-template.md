@@ -17,7 +17,7 @@ labels: []
 e.g., "Error rate drops by 50% within 30 days"
 
 **Baseline metric (before):**
-[Current measured value — not estimated]
+[Current measured value: not estimated]
 e.g., "Current error rate = 2.3% (last 30 days from dashboard)"
 
 **Expected cost:**
@@ -29,8 +29,8 @@ e.g., "Current error rate = 2.3% (last 30 days from dashboard)"
 [Which metric, which dashboard, when to check]
 
 **Verification checkpoints:**
-- [ ] 30-day check: YYYY-MM-DD — is the metric moving in the right direction?
-- [ ] 90-day check: YYYY-MM-DD — has the expected magnitude been achieved?
+- [ ] 30-day check: YYYY-MM-DD: is the metric moving in the right direction?
+- [ ] 90-day check: YYYY-MM-DD: has the expected magnitude been achieved?
 
 **Decision if ROI not realized:**
 [Revert / rearchitect / accept partial return]
@@ -53,7 +53,7 @@ e.g., "Current error rate = 2.3% (last 30 days from dashboard)"
 
 ## Training Plan
 
-[Link to training plan if new capability, or "Not required — no new capability"]
+[Link to training plan if new capability, or "Not required: no new capability"]
 
 ## Test Plan
 

@@ -6,7 +6,7 @@ negligent, careless, fault, blame, lazy, should have, sloppy* (linted in `ci/fir
 
 ## Recording a skip (neutral)
 
-> Recorded: **{step}** {disposition} for {change_id} — reason: "{reason}" (by {actor}, {ts}).
+> Recorded: **{step}** {disposition} for {change_id}, reason: "{reason}" (by {actor}, {ts}).
 
 For a floor skip, also:
 

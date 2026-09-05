@@ -8,14 +8,14 @@
 
 - [ ] **GitHub Issue**: Linked via `Fixes #NNN` or `Relates to #NNN`
 - [ ] **Manifest domains affected**: <!-- list domains from system-manifest.yaml -->
-- [ ] **HLD/LLD updated**: <!-- link to changed docs, or "no design change needed — explain why" -->
+- [ ] **HLD/LLD updated**: <!-- link to changed docs, or "no design change needed: explain why" -->
 - [ ] **ADR created/updated**: <!-- link, or "no new decision" -->
 - [ ] **Test plan**: <!-- link to test plan, or describe tests added -->
 - [ ] **Test registry updated**: <!-- link to docs/03-engineering/testing/test-registry.yaml change, or "no new tests" -->
-- [ ] **Incident registry checked**: <!-- "checked — no prior incidents in this domain" or "INC-NNN addressed" -->
+- [ ] **Incident registry checked**: <!-- "checked: no prior incidents in this domain" or "INC-NNN addressed" -->
 - [ ] **Impact brief**: <!-- link or inline §4 PM mental model update below -->
 - [ ] **Rollout plan**: <!-- Low/Medium/High/Critical + go/no-go criteria -->
-- [ ] **ROI estimate**: <!-- link, or "not required — change is < 1 day" -->
+- [ ] **ROI estimate**: <!-- link, or "not required: change is < 1 day" -->
 - [ ] **Convention checks passed locally**: <!-- semgrep, linter, syntax -->
 
 ## PM Mental Model Update (§4)

@@ -36,6 +36,8 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 
 ---
 
+**Length and voice.** `shared/plain-english.md` applies: plain words, and one page is the ceiling for the prose. A section with nothing to say reads "None."
+
 ## Step 1 — Gather context
 
 1. **Read `.hitl/current-change.yaml`** — get the change ID, tier, source artifacts, and manifest domain

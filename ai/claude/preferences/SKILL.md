@@ -23,7 +23,7 @@ whose settings are in force. Say so before writing, in the same breath as showin
 > One thing first: `CLAUDE.md` is committed, so this applies to anyone on the team who opens the
 > repo, not just you. I'll put your name on it so they know whose it is and can change it. If you'd
 > rather it stayed yours alone, keep it out of git and set it in your own `~/.claude/CLAUDE.md`
-> instead — that one is yours and HITL will not touch it.
+> instead: that one is yours and HITL will not touch it.
 
 Not a warning to recite and move past. If they would rather not impose it on the team, that is the
 end of it: write nothing here and tell them the machine-wide route. **Record who set it** in the
@@ -184,7 +184,8 @@ SPAN = re.compile(r"^<!-- HITL:PREFS:BEGIN(?:(?!^<!-- HITL:PREFS:BEGIN).)*?^<!--
 
 
 def owner_of(text):
-    hit = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by (.*?) \u2014", text, re.M)
+    # Blocks written before 2.12.0 delimit the name with an em dash; newer ones with a comma.
+    hit = re.search(r"^<!-- HITL:PREFS:BEGIN[^\n]*?set by (.*?)(?: \u2014|,) /hitl:dev-preferences", text, re.M)
     return hit.group(1).strip() if hit else ""
 
 
@@ -264,8 +265,8 @@ if not WHO:
                      "re-run. Nothing written.")
 
 
-BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
-## Response preferences for this project — set by %(who)s
+BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE, set by %(who)s, /hitl:dev-preferences to adjust, 'off' to pause, 'reset' to remove -->
+## Response preferences for this project, set by %(who)s
 
 **If the marker above reads `status: PAUSED`, ignore this whole block and behave as default HITL.**
 
@@ -274,8 +275,8 @@ BLOCK = """<!-- HITL:PREFS:BEGIN status: ACTIVE — set by %(who)s — /hitl:dev
 - **Open with:** %(open_with)s
 - **Disagreements:** %(disagreements)s%(tone)s
 
-Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make
-— briefly if that is the setting, but never left out. An icon is never the only thing carrying a
+Style only. Always state a risk, a cost, an uncertainty, or a decision that is the reader's to make,
+briefly if that is the setting, but never left out. An icon is never the only thing carrying a
 warning: drop every glyph and the sentences must still say the same things. If brevity and
 completeness conflict, cut the reasoning and keep the consequence. Drop this block for one session if anyone says "default mode".
 
@@ -296,7 +297,8 @@ for i, k in enumerate(("length", "workings", "open_with", "disagreements"), star
         raise SystemExit("Missing the %s answer. Pass all four; nothing written." % k)
     ANS[k] = v.replace("-->", "").replace("<!--", "")
 _t = " ".join((sys.argv[6] if len(sys.argv) > 6 else "").split())
-ANS["tone"] = ("\n- **Tone:** " + _t.replace("-->", "").replace("<!--", "")) if _t else ""
+ANS["tone"] = "\n- **Tone:** " + (_t.replace("-->", "").replace("<!--", "") if _t
+                               else "plain English, short: no filler, no em dashes, numbers in a table (shared/plain-english.md)")
 for k, v in ANS.items():
     BLOCK = BLOCK.replace("%(" + k + ")s", v)   # substitution, never formatting
 
@@ -359,10 +361,10 @@ for brevity would be self-defeating.
 
 > Four quick ones and I'll keep to them in this project:
 >
-> 1. **Length** — short (bullets, answer first) / standard / full?
-> 2. **My workings** — what I did and how I got there: only when you ask / a line or two / all of it
-> 3. **Open with** — the decision you need to make, the result, or the context?
-> 4. **Disagreements** — straight, or eased in? *(I'll still disagree either way — this is only how it opens.)*
+> 1. **Length**: short (bullets, answer first) / standard / full?
+> 2. **My workings**: what I did and how I got there: only when you ask / a line or two / all of it
+> 3. **Open with**: the decision you need to make, the result, or the context?
+> 4. **Disagreements**: straight, or eased in? *(I'll still disagree either way: this is only how it opens.)*
 >
 > Anything else? "plain text, no icons", "tables over prose", "I know this domain, skip the primer".
 
@@ -384,7 +386,7 @@ above a floor that contradicts them, and the contradiction is permanent.
 Reflect it back, record the part that is style, and say what you kept:
 
 > Taking that as: no hedging language, no "you may want to", no restating what you already know.
-> I'll still tell you when something is risky or is yours to decide — just plainly, without the
+> I'll still tell you when something is risky or is yours to decide: just plainly, without the
 > cushioning. Fair?
 
 If they genuinely want risks suppressed, that is not a preference this command can store. Say so
@@ -438,7 +440,7 @@ Do not advertise it. Offer once, when someone tells you something is wrong with 
 - "you don't need to explain all that"
 - they ask for more depth twice running
 
-> Want me to keep to that? `/hitl:dev-preferences` — four questions, this project only, and you can
+> Want me to keep to that? `/hitl:dev-preferences`: four questions, this project only, and you can
 > pause or remove it whenever.
 
 Once per session. If they decline, drop it and write nothing.

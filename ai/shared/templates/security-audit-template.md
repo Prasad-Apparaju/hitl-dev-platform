@@ -1,7 +1,7 @@
-# [Project Name] — Security Audit Report
+# [Project Name]: Security Audit Report
 
 **Date:** YYYY-MM
-**Scope:** [What was audited — design docs, source code, infrastructure config, deployed system]
+**Scope:** [What was audited: design docs, source code, infrastructure config, deployed system]
 **Findings:** N CRITICAL | N HIGH | N MEDIUM | N LOW
 
 ---
@@ -28,11 +28,11 @@
 
 ---
 
-## CRITICAL Findings — Detail
+## CRITICAL Findings: Detail
 
 ### C-1: [Finding Title]
 
-[Detailed description of the vulnerability — what it is, how it can be exploited, what data/systems are at risk.]
+[Detailed description of the vulnerability: what it is, how it can be exploited, what data/systems are at risk.]
 
 **Affected files/components:**
 - `path/to/file.py`
@@ -42,13 +42,13 @@
 1. [Specific fix step]
 2. [Specific fix step]
 
-**Verification:** [How to confirm the fix works — test to add, check to run]
+**Verification:** [How to confirm the fix works: test to add, check to run]
 
 **Status:** Open | In Progress | Fixed (PR #N)
 
 ---
 
-## HIGH Findings — Detail
+## HIGH Findings: Detail
 
 ### H-1: [Finding Title]
 
@@ -56,7 +56,7 @@
 
 ---
 
-## MEDIUM Findings — Detail
+## MEDIUM Findings: Detail
 
 ### M-1: [Finding Title]
 
@@ -64,7 +64,7 @@
 
 ---
 
-## LOW Findings — Detail
+## LOW Findings: Detail
 
 ### L-1: [Finding Title]
 
@@ -76,8 +76,8 @@
 
 | ID | Severity | Status | Fix PR | Regression Test | Verified |
 |----|:--------:|:------:|:------:|:---------------:|:--------:|
-| C-1 | CRITICAL | Open | — | — | — |
-| H-1 | HIGH | Open | — | — | — |
+| C-1 | CRITICAL | Open | none | none | none |
+| H-1 | HIGH | Open | none | none | none |
 
 ---
 

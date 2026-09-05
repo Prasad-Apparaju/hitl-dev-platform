@@ -72,7 +72,7 @@ if [[ -z "$PY" ]]; then
   echo "     • pip install pyyaml" >&2
   echo "     • or point HITL_PY at an interpreter that has it" >&2
   echo "" >&2
-  echo "   This is a tier ${TIER} production deploy. Unverifiable is treated as not ready, on purpose —" >&2
+  echo "   This is a tier ${TIER} production deploy. Unverifiable is treated as not ready, on purpose:" >&2
   echo "   the alternative is shipping on a check that silently did not run." >&2
   exit 2
 fi
@@ -178,7 +178,7 @@ try:
     kind = data.get("project_kind")
     if kind not in VALID_KINDS:
         blockers.append(f"register: project_kind {kind!r} is not valid (must be one of "
-                        f"{', '.join(VALID_KINDS)}) — run /hitl:ops-plan-platform derive")
+                        f"{', '.join(VALID_KINDS)}): run /hitl:ops-plan-platform derive")
 
     schema = data.get("schema_version")
     if schema != "1.0":
@@ -197,25 +197,25 @@ try:
             # Item identity is the waiver join key: it must exist and be unique. A
             # missing id is a schema violation, never a waivable "?" placeholder.
             if not isinstance(raw_id, str) or not raw_id.strip():
-                blockers.append(f"? ({layer}): {name} — item has no id (ids are required "
+                blockers.append(f"? ({layer}): {name}: item has no id (ids are required "
                                 "and are the waiver join key)")
                 continue
             iid = raw_id.strip()
             if iid in seen_ids:
                 blockers.append(f"{iid} ({layer}): duplicate item id (also in "
-                                f"{seen_ids[iid]}) — waiver coverage would be ambiguous")
+                                f"{seen_ids[iid]}): waiver coverage would be ambiguous")
                 continue
             seen_ids[iid] = layer
             expected_layer = (CANONICAL_LAYER.get(iid[0])
                               if iid in CORE_IDS + MIGRATION_IDS else None)
             if expected_layer and layer != expected_layer:
                 blockers.append(f"{iid} ({layer}): canonical item is in the wrong layer "
-                                f"(belongs in {expected_layer}) — the register is "
+                                f"(belongs in {expected_layer}): the register is "
                                 "mis-derived; re-run /hitl:ops-plan-platform derive")
                 continue
             status = it.get("status")
             if status not in VALID_STATUSES:
-                blockers.append(f"{iid} ({layer}): {name} — invalid status {status!r} "
+                blockers.append(f"{iid} ({layer}): {name}: invalid status {status!r} "
                                 f"(must be one of {', '.join(VALID_STATUSES)})")
                 continue
             if status == "na":
@@ -224,31 +224,31 @@ try:
                 # not apply in a given context, that is a recorded human decision — an
                 # accepted_gap with a waiver — never a status flip to na.
                 if iid in CORE_IDS:
-                    blockers.append(f"{iid} ({layer}): {name} — na is not allowed for a "
+                    blockers.append(f"{iid} ({layer}): {name}: na is not allowed for a "
                                     "canonical readiness item; record an accepted_gap "
                                     "with a waiver if it genuinely does not apply")
                 # The migration-only items are APPLICABLE on a migration: leaving them
                 # na would release a target whose parity/cutover was never proven.
                 elif kind == "migration" and (iid in MIGRATION_IDS or layer in MIGRATION_ONLY_LAYERS):
-                    blockers.append(f"{iid} ({layer}): {name} — na is not allowed on a "
+                    blockers.append(f"{iid} ({layer}): {name}: na is not allowed on a "
                                     "migration register; derive real statuses for the "
                                     "Parity and Cutover layers")
                 continue
             if status == "verified":
                 evidence = it.get("evidence")
                 if not isinstance(evidence, str) or not evidence.strip():
-                    blockers.append(f"{iid} ({layer}): {name} — verified without evidence "
+                    blockers.append(f"{iid} ({layer}): {name}: verified without evidence "
                                     "(the register contract requires evidence to verify)")
                 continue
             # status is gap or accepted_gap: an adequate waiver is the only release.
             if iid in duplicate_waivers:
                 blockers.append(f"{iid} ({layer}): multiple waiver entries for this item "
-                                "— ambiguous; keep exactly one")
+                                ", ambiguous; keep exactly one")
                 continue
             w = waivers.get(iid)
             if w is None:
                 kind_msg = "accepted_gap without a waiver" if status == "accepted_gap" else "open gap, no waiver"
-                blockers.append(f"{iid} ({layer}): {name} — {kind_msg}")
+                blockers.append(f"{iid} ({layer}): {name}: {kind_msg}")
                 continue
             problem = waiver_problem(w, tier)
             if problem:
@@ -261,7 +261,7 @@ try:
                  f"check this tier {tier} production deploy against."]
         if flag_ready:
             lines.append("  delivery_ready: true cannot be honored on an empty register "
-                         "— the flag is derived from items that are not there.")
+                         ", the flag is derived from items that are not there.")
         lines.append("  Run /hitl:ops-plan-platform derive to populate it.")
         block(*lines)
 
@@ -271,7 +271,7 @@ try:
     required = list(CORE_IDS) + (list(MIGRATION_IDS) if kind == "migration" else [])
     missing = [rid for rid in required if rid not in seen_ids]
     if missing:
-        blockers.append(f"register: canonical item(s) {', '.join(missing)} missing — the "
+        blockers.append(f"register: canonical item(s) {', '.join(missing)} missing: the "
                         "register is incomplete; re-run /hitl:ops-plan-platform derive")
 
     if not blockers:
@@ -279,7 +279,7 @@ try:
 
     if flag_ready:
         blockers.insert(0, "register: delivery_ready: true contradicts the findings below "
-                           "— the flag is derived, never hand-set; re-run "
+                           ", the flag is derived, never hand-set; re-run "
                            "/hitl:ops-plan-platform verify-ready")
 
     print(f"🔒 Deploy stopped: this project is not delivery-ready yet, and this is a tier {tier} "

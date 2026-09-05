@@ -5,14 +5,14 @@
 | **Status** | Accepted |
 | **Date** | [fill in: project start date] |
 | **Deciders** | [fill in: tech lead, architect] |
-| **Supersedes** | — |
+| **Supersedes** | none |
 | **Related** | ADR-0001 (HITL adoption), ADR-0003 (test strategy), ADR-0004 (change tier policy) |
 
 ---
 
 ## 1. Context
 
-AI coding assistants generate output from context: what is in the prompt and the files they can see. Without explicit design documents, AI generates code that matches local patterns but may not respect system-wide constraints, domain boundaries, or architectural intent. The result is code that works locally but causes drift at the system level — especially across multiple sessions where the original intent is no longer in context.
+AI coding assistants generate output from context: what is in the prompt and the files they can see. Without explicit design documents, AI generates code that matches local patterns but may not respect system-wide constraints, domain boundaries, or architectural intent. The result is code that works locally but causes drift at the system level: especially across multiple sessions where the original intent is no longer in context.
 
 ## 2. Decision
 
@@ -47,18 +47,18 @@ Rely on code comments and PR descriptions. Rejected because: insufficient contex
 ## 4. Consequences
 
 ### Positive
-- AI stays on track across sessions — LLD is the shared, approved context
+- AI stays on track across sessions: LLD is the shared, approved context
 - Architectural intent is reviewable before implementation begins
 - HLD/LLD provide the basis for impact analysis (`/hitl:dev-apply-change`) and test planning
 - Drift is caught at doc review (cheap) rather than at code review (expensive)
 
 ### Negative
-- Changes take longer to start — HLD and LLD must be written before code
+- Changes take longer to start: HLD and LLD must be written before code
 - Documentation maintenance is an ongoing cost
 - Team must resist the instinct to "just write the code quickly"
 
 ### Neutral
-- The LLD doubles as the spec for test case planning (`/hitl:qa-plan-tests`) — no separate test spec document needed
+- The LLD doubles as the spec for test case planning (`/hitl:qa-plan-tests`): no separate test spec document needed
 
 ## 5. Implementation Notes
 
@@ -90,4 +90,4 @@ Rely on code comments and PR descriptions. Rejected because: insufficient contex
 
 **Expected:** [copy from above]
 **Actual:** [measured result]
-**Verdict:** [ROI realized / Partial / Not realized — action taken]
+**Verdict:** [ROI realized / Partial / Not realized: action taken]

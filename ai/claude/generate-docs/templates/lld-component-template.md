@@ -1,5 +1,7 @@
 # [Component Name]
 
+<!-- Length: one page of prose is the ceiling (signatures, diagrams and tables are extra). A section with nothing to say reads "None." Rule: shared/plain-english.md -->
+
 > **Package:** `[category]/[component-name]`
 > **Type:** Controller | Service | Model | Security | Config
 > **Related HLD:** [Link to HLD document]
@@ -15,10 +17,10 @@
 ## 2. Class Diagram
 
 <!-- Mermaid classDiagram rules (enforced by /hitl:dev-validate):
-     • Single-level generics only — write ~List of Order~, never ~List~Order~~
+     • Single-level generics only: write ~List of Order~, never ~List~Order~~
        Wrong:  +getOrders() ResponseEntity~Page~Order~~
        Right:  +getOrders() ResponseEntity~Page of Order~
-     • No \n or <br/> in labels — keep member names on one line -->
+     • No \n or <br/> in labels: keep member names on one line -->
 ```mermaid
 classDiagram
     class ComponentName {
@@ -49,7 +51,7 @@ classDiagram
 |------|------|----------|-------------|
 | `param` | `Type` | Yes | [Description] |
 
-**Returns:** `ReturnType` — [Description of return value]
+**Returns:** `ReturnType`: [Description of return value]
 
 **Throws:**
 

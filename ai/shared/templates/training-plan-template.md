@@ -1,4 +1,4 @@
-# [Capability Name] — Training Plan
+# [Capability Name]: Training Plan
 
 > **Status:** Stub | Complete
 

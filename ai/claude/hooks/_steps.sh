@@ -263,11 +263,11 @@ hitl_branch_reconcile() {
 hitl_intake_directive() {
   cat <<'DIRECTIVE'
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ⛔ HITL — NO ACTIVE CHANGE FOR THIS BRANCH
+  ⛔ HITL: NO ACTIVE CHANGE FOR THIS BRANCH
 
   This is a HITL-enabled project. Before any real work (writing code, editing
   files) you MUST take the user through change intake. Intake itself is a normal
-  conversation — talking through the work and creating an issue is expected and
+  conversation. Talking through the work and creating an issue is expected and
   encouraged, not blocked:
 
     1. If the user has no issue yet, chat to shape the work, then create one
@@ -279,14 +279,17 @@ hitl_intake_directive() {
     4. Write + commit + push .hitl/current-change.yaml, then follow the breadcrumb.
 
   Run  /hitl:dev-start-change  to do all of this. You may freely discuss and create
-  the issue first — just don't start editing files until a change is active.
+  the issue first. Just don't start editing files until a change is active.
 
   If the user seems unfamiliar with HITL, say this to them in your own words before
-  anything else — everything above is addressed to you, not to them:
+  anything else. Everything above is addressed to you, not to them:
 
     This project uses HITL, so work starts by agreeing what we're changing and how
     far to take it. Run /hitl:dev-start-change and I'll walk you through it. For
     the tour, see /hitl:help or the getting-started guide.
+
+  Write for people: plain English, no filler, one page where one page will do.
+  The rule is shared/plain-english.md; it applies to every reply and every document.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DIRECTIVE
 }

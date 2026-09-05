@@ -1,4 +1,4 @@
-# Admin Guide — [Project Name]
+# Admin Guide: [Project Name]
 
 This guide is for admin users who manage the system day-to-day. No terminal or engineering skills required for most tasks.
 
@@ -11,7 +11,7 @@ This guide is for admin users who manage the system day-to-day. No terminal or e
 3. If you see an access denied message, your account needs admin access.
 
 **To grant admin access:**
-[Describe how — database command, API call, or another admin grants it via UI]
+[Describe how: database command, API call, or another admin grants it via UI]
 
 ---
 
@@ -21,7 +21,7 @@ Controls global product behavior. Changes take effect immediately.
 
 | Flag | What it does | Default | When to change |
 |------|-------------|:-------:|---------------|
-| [Flag name] | [One sentence — what it controls] | [On/Off] | [When/why an admin would toggle it] |
+| [Flag name] | [One sentence: what it controls] | [On/Off] | [When/why an admin would toggle it] |
 
 ---
 
@@ -42,7 +42,7 @@ If the system uses AI models, this section covers how to manage them.
 1. Go to Admin → Model Profiles
 2. Find the profile you want
 3. Click **Activate**
-4. New AI calls immediately use the new models — no restart needed
+4. New AI calls immediately use the new models: no restart needed
 
 ### Provider Health
 

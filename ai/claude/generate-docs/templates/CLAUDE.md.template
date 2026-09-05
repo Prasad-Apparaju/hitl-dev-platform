@@ -17,32 +17,32 @@ Do not assume Developer mode by default.
 ## Communication Preferences
 
 If this file contains a block delimited by the HITL:PREFS:BEGIN and HITL:PREFS:END markers (each on
-its own line), follow it — unless its marker reads `status: PAUSED`, ignore it entirely and behave
+its own line), follow it: unless its marker reads `status: PAUSED`, ignore it entirely and behave
 as default HITL.
 
 **A preference shapes form, never substance.** Risks, costs, uncertainties, and decisions that are
-theirs get said whatever the style setting — briefly if that is the preference, never omitted.
+theirs get said whatever the style setting: briefly if that is the preference, never omitted.
 
 If they say "default mode" or "ignore my preferences", drop the block for the rest of the session
 and do not edit the file for a temporary request.
 
 If someone says you are too verbose, too terse, or over-explaining, offer `/hitl:dev-preferences`
-once — four questions, this project only, adjustable and removable. Take no for an answer and write
+once: four questions, this project only, adjustable and removable. Take no for an answer and write
 nothing. Never infer preferences and record them unasked.
 
 To draft a message *for someone else*, use `/hitl:dev-draft-for <person>`.
 
 ## Getting Started
 
-**This project uses HITL.** Delivery follows a defined, recorded process rather than an improvised one. `/hitl:dev-start-change` is the front door for every piece of work — features, bug fixes, refactors, spikes.
+**This project uses HITL.** Delivery follows a defined, recorded process rather than an improvised one. `/hitl:dev-start-change` is the front door for every piece of work: features, bug fixes, refactors, spikes.
 
-If the user seems new to HITL, has not stated a role, or asks any form of "where do I start" / "what should I do first" / "what is this", tell them plainly that the project uses HITL, point them at `/hitl:dev-start-change`, and mention `/hitl:help` for the full command directory and [the getting-started guide](https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md) if they want the walkthrough. Do not wait to be asked — a developer who does not know HITL is here will work around it without meaning to.
+If the user seems new to HITL, has not stated a role, or asks any form of "where do I start" / "what should I do first" / "what is this", tell them plainly that the project uses HITL, point them at `/hitl:dev-start-change`, and mention `/hitl:help` for the full command directory and [the getting-started guide](https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md) if they want the walkthrough. Do not wait to be asked: a developer who does not know HITL is here will work around it without meaning to.
 
 For **project-level** setup (as opposed to starting a change), offer the right one:
 
-- `/hitl:dev-start-from-prd` — new project, no source code yet, starting from a PRD
-- `/hitl:dev-start-brownfield` — existing codebase to onboard into HITL
-- `/hitl:dev-start-migration` — migrating from one system to another
+- `/hitl:dev-start-from-prd`: new project, no source code yet, starting from a PRD
+- `/hitl:dev-start-brownfield`: existing codebase to onboard into HITL
+- `/hitl:dev-start-migration`: migrating from one system to another
 
 Assess the project state and recommend the right one immediately if the project appears unconfigured.
 
@@ -64,21 +64,21 @@ Only after all 7 lines are in the chat may you start editing. No exceptions.
 
 Before any code change (feature, bug fix, refactor, improvement), load `/hitl:dev-practices` and follow its 32-step workflow. For structured impact analysis and test planning, use `/hitl:dev-apply-change`.
 
-## Validation (Mandatory — no exceptions)
+## Validation (Mandatory: no exceptions)
 
 After completing any task, run `/hitl:dev-validate` before reporting done. This skill runs an iterative check → fix → re-check loop and only exits when all checks pass.
 
-**Never say done without running it.** If you cannot run a check locally (live service, missing dependency), say so explicitly — do not claim success.
+**Never say done without running it.** If you cannot run a check locally (live service, missing dependency), say so explicitly: do not claim success.
 
 The loop:
-1. Check everything produced — code, tests, docs, YAML/JSON, scripts, skill files
+1. Check everything produced: code, tests, docs, YAML/JSON, scripts, skill files
 2. Fix every failure found
-3. Re-check — repeat until zero failures
+3. Re-check: repeat until zero failures
 4. Report what was checked, what was fixed, what (if anything) could not be resolved
 
-## System Manifest — Read Before Every Change
+## System Manifest: Read Before Every Change
 
-Before modifying any code, get the relevant domain's conventions and facade APIs. Prefer a graph query if available — `docs/system-manifest.yaml` is large and the graph surfaces just the relevant slice:
+Before modifying any code, get the relevant domain's conventions and facade APIs. Prefer a graph query if available: `docs/system-manifest.yaml` is large and the graph surfaces just the relevant slice:
 
 ```
 /graphify query "domain: <domain-name> facade APIs and boundary entities"
@@ -171,4 +171,4 @@ When modifying code, stay within your domain boundary. The domains and their fil
 
 ## Quality Over Speed
 
-The goal of this process is meticulous system evolution with minimized problems — NOT maximum deployment velocity. Frame every decision around problem prevention, not throughput.
+The goal of this process is meticulous system evolution with minimized problems: NOT maximum deployment velocity. Frame every decision around problem prevention, not throughput.

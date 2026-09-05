@@ -1,7 +1,7 @@
-# [Project Name] — Infrastructure Cost Analysis
+# [Project Name]: Infrastructure Cost Analysis
 
 **Date:** YYYY-MM
-**Last verified:** [date — cloud pricing changes frequently]
+**Last verified:** [date: cloud pricing changes frequently]
 
 > Cloud pricing is dynamic. Spot/preemptible prices fluctuate. All prices are USD/month unless noted. Verify against provider pricing pages before committing.
 
@@ -107,7 +107,7 @@
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Primary cloud | [provider] | [why — pricing, GPU availability, team expertise] |
+| Primary cloud | [provider] | [why: pricing, GPU availability, team expertise] |
 | GPU strategy | [on-demand / spot / reserved] | [cost vs reliability tradeoff] |
 | Dev environment | [ephemeral / always-on] | [cost vs convenience] |
 | Commitment | [none / 1yr CUD / 3yr CUD] | [only after 3+ months of stable usage data] |

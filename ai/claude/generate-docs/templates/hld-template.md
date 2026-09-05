@@ -9,16 +9,16 @@
 
 ## 1. Executive Summary
 
-[1-2 paragraph description of the feature/system, its purpose, and the problem it solves.]
+[Three sentences at most: what this is, who it is for, the problem it solves. Two pages of prose is the ceiling for the whole document; diagrams and tables are extra. A section with nothing to say reads "None."]
 
 ---
 
 ## 2. System Architecture
 
-<!-- Mermaid rules (enforced by /hitl:dev-validate — violations block the PR):
-     • Node labels must be single-line: no \n, no <br/> — use a short descriptive label
+<!-- Mermaid rules (enforced by /hitl:dev-validate: violations block the PR):
+     • Node labels must be single-line: no \n, no <br/>: use a short descriptive label
      • Quote labels that contain (), -, or /  e.g.  Node["Auth Service (v2)"]
-     • classDiagram: single-level generics only — write ~List of Order~, never ~List~Order~~ -->
+     • classDiagram: single-level generics only: write ~List of Order~, never ~List~Order~~ -->
 ```mermaid
 graph TB
     subgraph External["External Systems"]

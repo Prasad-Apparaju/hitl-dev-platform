@@ -1,15 +1,15 @@
-# [Project Name] — Best Practices
+# [Project Name]: Best Practices
 
 **Date:** YYYY-MM
-**Status:** Living document — updated as practices evolve
+**Status:** Living document: updated as practices evolve
 
 This document captures all best practices, organized by category. Each practice is tagged with its origin so the team knows why it exists and whether it can be changed.
 
 **Origin tags:**
-- **(User)** — explicitly requested by a stakeholder (PM, architect, customer)
-- **(Design)** — derived from architecture decisions (ADRs)
-- **(Incident)** — added after a production incident (linked to incident registry)
-- **(Convention)** — industry standard or framework best practice
+- **(User)**: explicitly requested by a stakeholder (PM, architect, customer)
+- **(Design)**: derived from architecture decisions (ADRs)
+- **(Incident)**: added after a production incident (linked to incident registry)
+- **(Convention)**: industry standard or framework best practice
 
 ---
 
@@ -40,9 +40,9 @@ This document captures all best practices, organized by category. Each practice 
 
 ### 1.1 [Practice Name] (Origin)
 
-[One paragraph describing the practice — what to do and why.]
+[One paragraph describing the practice: what to do and why.]
 
-**Why:** [Rationale — what goes wrong without this practice. Link to ADR or incident if applicable.]
+**Why:** [Rationale: what goes wrong without this practice. Link to ADR or incident if applicable.]
 
 ### 1.2 [Practice Name] (Origin)
 

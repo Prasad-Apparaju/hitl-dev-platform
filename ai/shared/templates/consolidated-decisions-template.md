@@ -1,4 +1,4 @@
-# Design Decisions — Consolidated Reference
+# Design Decisions: Consolidated Reference
 
 **Parent:** [HLD Index](../hld/index.md)
 **Purpose:** Catalog of every architectural decision, organized by category. Use this for quick lookup; use individual ADR files for full context and rationale.
@@ -11,8 +11,8 @@
 |-------------|---------------------|
 | Quick reference during development | Full context for a specific decision |
 | "What did we decide about X?" | "Why did we decide X and what alternatives did we consider?" |
-| Onboarding — scan all decisions in 30 min | Deep dive into one decision |
-| Convention checker — derive rules from decisions | ROI tracking — 30/90 day verification |
+| Onboarding: scan all decisions in 30 min | Deep dive into one decision |
+| Convention checker: derive rules from decisions | ROI tracking: 30/90 day verification |
 
 **Maintenance rule:** Every accepted ADR gets a row in this catalog. Every row links back to its full ADR (if one exists). Small decisions that don't warrant a full ADR can live here alone.
 
@@ -25,10 +25,10 @@
 | | |
 |---|---|
 | **Chosen** | [What was chosen] |
-| **Rationale** | [One sentence — why this option] |
+| **Rationale** | [One sentence: why this option] |
 | **Alternatives** | [What was rejected and why, briefly] |
-| **Constraints** | [What forced this decision — budget, timeline, team expertise] |
-| **ADR** | [Link to full ADR if exists, or "—" if decision is small enough for this row only] |
+| **Constraints** | [What forced this decision: budget, timeline, team expertise] |
+| **ADR** | [Link to full ADR if exists, or ", " if decision is small enough for this row only] |
 
 ### D-1.2: [Decision Title]
 

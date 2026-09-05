@@ -44,7 +44,7 @@ phase=$(hitl_cs_field "$HITL_FILE" phase)
 # (issue #15: it was permanent noise on long-lived integration branches).
 warn=""
 if [[ "$(hitl_branch_reconcile "$HITL_FILE" "$CURRENT_BRANCH")" == "mismatch" ]]; then
-  warn="   ⚠ branch=${CURRENT_BRANCH} ≠ ${change_id} — context may be stale; run /hitl:dev-switch-context"
+  warn="   ⚠ branch=${CURRENT_BRANCH} ≠ ${change_id}. Context may be stale; run /hitl:dev-switch-context"
 fi
 
 # Render the trail only when the workflow block actually yields a current step. A workflow block
@@ -66,12 +66,13 @@ else
   # Back-compat: pre-v2 file (bare current_step, no workflow block) OR a workflow block that
   # couldn't be parsed into steps — either way, point the user at the migration.
   num=$(hitl_cs_field "$HITL_FILE" number)
-  printf "  HITL — %s  •  Step %s: %s\n" "${phase:-change}" "${num:-?}" "$step_name"
+  printf "  HITL · %s  •  Step %s: %s\n" "${phase:-change}" "${num:-?}" "$step_name"
   printf "  change: %s  •  tier: %s\n" "$change_id" "${tier:-?}"
   [[ -n "$warn" ]] && echo "$warn"
   echo ""
-  echo "  (step trail unavailable — run /hitl:dev-update to migrate this change to the"
+  echo "  (step trail unavailable. Run /hitl:dev-update to migrate this change to the"
   echo "   self-describing workflow format)"
 fi
+echo "  Plain English, short: shared/plain-english.md applies to every reply and document."
 echo "$SEP"
 exit 0

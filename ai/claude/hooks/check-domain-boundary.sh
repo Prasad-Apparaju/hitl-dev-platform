@@ -86,7 +86,7 @@ PYEOF
 PYEXIT=$?
 if [[ $PYEXIT -ne 0 ]]; then
   echo "⚠️  I could not read .hitl/current-change.yaml, so I cannot check this edit against the" >&2
-  echo "    paths your change declared. The file is probably malformed — worth a look before you" >&2
+  echo "    paths your change declared. The file is probably malformed. Worth a look before you" >&2
   echo "    keep going, since nothing is being checked until it parses." >&2
   exit 2
 fi
@@ -120,7 +120,7 @@ while IFS= read -r file; do
   if [[ "$MATCHED" == "false" ]]; then
     echo "🧭 Heads up: $file sits outside what $CHANGE_ID said it would touch." >&2
     echo "" >&2
-    echo "   The edit went through — this is a note, not a block. It matters because the scope you" >&2
+    echo "   The edit went through. This is a note, not a block. It matters because the scope you" >&2
     echo "   declared is what reviewers read to know where to look." >&2
     echo "" >&2
     echo "   Declared for this change:" >&2

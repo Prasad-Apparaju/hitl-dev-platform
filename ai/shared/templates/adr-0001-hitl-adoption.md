@@ -5,7 +5,7 @@
 | **Status** | Accepted |
 | **Date** | [fill in: project start date] |
 | **Deciders** | [fill in: tech lead, architect, stakeholders] |
-| **Supersedes** | — |
+| **Supersedes** | none |
 | **Related** | ADR-0002 (documentation-first), ADR-0004 (change tier policy) |
 
 ---
@@ -17,7 +17,7 @@ This project uses AI (Claude Code) heavily for software development. Without a s
 - Output that drifts from intent as context grows across sessions
 - Tests written after code, reducing their value as design feedback
 - Undocumented decisions that block future AI sessions from understanding why things are the way they are
-- No clear human approval gates — hard to know what the AI changed and why
+- No clear human approval gates: hard to know what the AI changed and why
 
 ## 2. Decision
 
@@ -47,8 +47,8 @@ Full AI autonomy, AI reviews its own output. Rejected because: current models re
 ### Positive
 - AI output stays aligned with approved design documents across sessions
 - Tests provide real design feedback (written before implementation)
-- Every decision is documented — future sessions and team members have context
-- Change risk is managed by tier — trivial changes are not over-processed
+- Every decision is documented: future sessions and team members have context
+- Change risk is managed by tier: trivial changes are not over-processed
 
 ### Negative
 - Initial ramp is slower: requires HLD/LLD before code
@@ -64,7 +64,7 @@ Full AI autonomy, AI reviews its own output. Rejected because: current models re
 |---|---|
 | Plugin | `claude plugin install hitl@hitl` |
 | Project setup | `/hitl:dev-start-from-prd` (or brownfield/migration variant) |
-| Hook wiring | `.hitl/hooks/` and `.claude/settings.json` — created by Step 0 |
+| Hook wiring | `.hitl/hooks/` and `.claude/settings.json`: created by Step 0 |
 | Change entry point | GitHub issue + `/hitl:dev-practices` |
 
 ## 6. Open Questions
@@ -78,7 +78,7 @@ Full AI autonomy, AI reviews its own output. Rejected because: current models re
 ## ROI Estimate
 
 **Value dimension:** Quality / Risk / Velocity
-**Expected outcome:** [fill in — e.g., "Reduce production incidents by X% within 6 months; maintain AI-assisted velocity after 4-week ramp"]
+**Expected outcome:** [fill in: e.g., "Reduce production incidents by X% within 6 months; maintain AI-assisted velocity after 4-week ramp"]
 **Baseline metric:** [fill in: current incident rate or rework time per change]
 **Expected cost:** Ramp: ~2–4 weeks | Ongoing: ~10–15% overhead per change from documentation
 **Verification:** 30-day check [fill in date] | 90-day check [fill in date]
@@ -88,4 +88,4 @@ Full AI autonomy, AI reviews its own output. Rejected because: current models re
 
 **Expected:** [copy from above]
 **Actual:** [measured result]
-**Verdict:** [ROI realized / Partial / Not realized — action taken]
+**Verdict:** [ROI realized / Partial / Not realized: action taken]

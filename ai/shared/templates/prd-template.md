@@ -1,4 +1,4 @@
-# [Product Name] — Product Requirements Document
+# [Product Name]: Product Requirements Document
 
 **Product:** [Name]
 **Version:** [Date]
@@ -41,7 +41,7 @@
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|------------|:--------:|---------------------|
-| FR-1 | [What the system must do] | Must Have | [How to verify it works — specific, testable] |
+| FR-1 | [What the system must do] | Must Have | [How to verify it works: specific, testable] |
 | FR-2 | [What the system must do] | Should Have | [How to verify] |
 | FR-3 | [What the system must do] | Nice to Have | [How to verify] |
 
@@ -52,12 +52,12 @@
 <!-- 
 TIPS FOR WRITING REQUIREMENTS AI CAN USE:
 
-1. Be specific — "Users can filter products by category" not "The system should be user-friendly"
-2. Include acceptance criteria — these become test cases. AI generates tests from them.
-3. Use "Must Have / Should Have / Nice to Have" — this determines build order.
-4. Describe WHAT, not HOW — "Users can log in with email and password" not "Use JWT with bcrypt"
+1. Be specific: "Users can filter products by category" not "The system should be user-friendly"
+2. Include acceptance criteria: these become test cases. AI generates tests from them.
+3. Use "Must Have / Should Have / Nice to Have": this determines build order.
+4. Describe WHAT, not HOW: "Users can log in with email and password" not "Use JWT with bcrypt"
    (the HOW belongs in ADRs and LLDs, decided by the architect)
-5. Include edge cases — "If the user enters an invalid email, show an error message"
+5. Include edge cases: "If the user enters an invalid email, show an error message"
    AI is good at the happy path but misses edge cases unless you specify them.
 -->
 
@@ -107,8 +107,8 @@ TIPS FOR WRITING REQUIREMENTS AI CAN USE:
 
 [Explicitly list what this PRD does NOT cover. This prevents scope creep and helps AI stay focused.]
 
-- [Feature X — deferred to Phase 2]
-- [Integration Y — separate PRD]
+- [Feature X: deferred to Phase 2]
+- [Integration Y: separate PRD]
 
 ---
 

@@ -142,14 +142,14 @@ required_evidence:
 ## Step 6 — Block or approve
 
 **Before approving, verify coverage was recorded:** Check `.hitl/current-change.yaml` under `required_evidence.coverage_pct`. If missing or below 90%, block:
-> "QA blocked — line coverage not recorded or below 90%. The developer must run the coverage tool from `/hitl:dev-tdd` Phase 6 and record the result before QA can approve."
+> "QA blocked: line coverage not recorded or below 90%. The developer must run the coverage tool from `/hitl:dev-tdd` Phase 6 and record the result before QA can approve."
 
 Also verify Step 5 evidence before approving:
 - `required_evidence.e2e_tests_pass` is `true`
 - `required_evidence.smoke_suite_pass` is `true`
 
 If either is missing or `false`, block:
-> "QA blocked — E2E tests or smoke suite did not pass. Resolve open defects from Step 5 before approving."
+> "QA blocked: E2E tests or smoke suite did not pass. Resolve open defects from Step 5 before approving."
 
 **If all criteria pass, no regressions reproduced, coverage ≥ 90%, E2E pass, and smoke suite pass:**
 Update `.hitl/current-change.yaml`:

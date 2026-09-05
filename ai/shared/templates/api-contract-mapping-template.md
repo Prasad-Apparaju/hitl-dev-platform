@@ -1,4 +1,4 @@
-# API Contract Mapping — [Current Framework] → [Target Framework]
+# API Contract Mapping: [Current Framework] → [Target Framework]
 
 **Parent:** [Migration docs index]
 
@@ -20,8 +20,8 @@
 |---------|--------|---------|
 | `POST /v1/auth/login` | `POST /v1/auth/login` | Same path. Response shape changes: [describe] |
 | `POST /v1/auth/register` | `POST /v1/auth/register` | Same. Adds `refresh_token` in response |
-| — | `POST /v1/auth/refresh` | **New** — [why added] |
-| `GET /v1/auth/session` | — | **Dropped** — replaced by [what] |
+| none | `POST /v1/auth/refresh` | **New**: [why added] |
+| `GET /v1/auth/session` | none | **Dropped**: replaced by [what] |
 
 **Frontend impact:** [What the frontend team needs to change for this domain]
 
@@ -44,7 +44,7 @@
 
 For endpoints where the shape changes, document the diff:
 
-### `POST /v1/auth/login` — Response
+### `POST /v1/auth/login`: Response
 
 **Current:**
 ```json
@@ -95,11 +95,11 @@ For endpoints where the shape changes, document the diff:
 
 | Change type | Count | Effort |
 |------------|:-----:|:------:|
-| Path changes only | N | Minimal — find/replace |
-| Response shape changes | N | Medium — update type definitions |
-| New endpoints | N | Medium — add API client methods |
-| Dropped endpoints | N | Low — remove dead code |
-| Auth mechanism change | 1 | High — replace auth library/flow |
+| Path changes only | N | Minimal: find/replace |
+| Response shape changes | N | Medium: update type definitions |
+| New endpoints | N | Medium: add API client methods |
+| Dropped endpoints | N | Low: remove dead code |
+| Auth mechanism change | 1 | High: replace auth library/flow |
 
 ---
 

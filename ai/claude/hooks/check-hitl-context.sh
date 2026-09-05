@@ -113,7 +113,7 @@ CONTEXT_FILE=".hitl/current-change.yaml"
 if ! hitl_change_active "$CONTEXT_FILE"; then
   echo "🔒 Nothing is tracked for this branch yet, so edits are paused." >&2
   echo "" >&2
-  echo "Tell me what you are working on — an issue number, or just describe it — and I will set it up." >&2
+  echo "Tell me what you are working on, an issue number or a description, and I will set it up." >&2
   echo "  • Claude Code: /hitl:dev-start-change" >&2
   echo "  • Codex: the Change Initialization workflow in AGENTS.md" >&2
   echo "" >&2
@@ -127,7 +127,7 @@ for field in "${REQUIRED_FIELDS[@]}"; do
   if ! grep -q "^${field}:" "$CONTEXT_FILE" 2>/dev/null; then
     echo "🔒 The change file is missing '${field}', so I cannot tell what you are working on." >&2
     echo "" >&2
-    echo "That file is .hitl/current-change.yaml. Run /hitl:dev-start-change to rebuild it —" >&2
+    echo "That file is .hitl/current-change.yaml. Run /hitl:dev-start-change to rebuild it;" >&2
     echo "your progress is read from the file, so check it over rather than starting again if" >&2
     echo "you were partway through." >&2
     exit 2
@@ -142,7 +142,7 @@ if [[ "$(hitl_branch_reconcile "$CONTEXT_FILE" "$CURRENT_BRANCH")" == "mismatch"
   if hitl_branch_gone "$CONTEXT_FILE"; then
     # Branch deleted on merge: the change is over, and telling someone to switch to a branch that
     # no longer exists is advice they cannot follow. Name the real remedy instead.
-    echo "✅ ${CHANGE_ID} looks finished — its branch '${EXPECTED}' is gone, which usually means it merged." >&2
+    echo "✅ ${CHANGE_ID} looks finished: its branch '${EXPECTED}' is gone, which usually means it merged." >&2
     echo "" >&2
     echo "It is still marked active, and an active change blocks edits everywhere else. To close it out:" >&2
     echo "  • Set  status: \"merged\"  in .hitl/current-change.yaml, then commit that." >&2
@@ -184,11 +184,11 @@ if [[ "$SOURCE_FILE_FOUND" == "true" ]]; then
   if [[ "$ALLOWED" == "false" ]]; then
     echo "🔒 The design for this change is not approved yet, so code edits are on hold." >&2
     echo "" >&2
-    echo "Docs and design files are still editable — it is only source code that waits." >&2
+    echo "Docs and design files are still editable. Only source code waits." >&2
     echo "Where you are: status is '${STATUS}'." >&2
     echo "  • Design still in progress? Keep going; the gate comes to you." >&2
     echo "  • Waiting on review? /hitl:ta-approve moves it along." >&2
-    echo "  • Blocked on a finding? It is written in .hitl/current-change.yaml — resolve that first." >&2
+    echo "  • Blocked on a finding? It is written in .hitl/current-change.yaml. Resolve that first." >&2
     exit 2
   fi
 fi

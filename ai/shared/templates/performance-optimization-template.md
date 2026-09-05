@@ -1,4 +1,4 @@
-# [Project Name] — Performance Optimization Plan
+# [Project Name]: Performance Optimization Plan
 
 **Date:** YYYY-MM
 **Context:** [Language/framework, key performance characteristics of the system]
@@ -33,7 +33,7 @@ Optimizations that should be in place from day one.
 
 ## Tier 2: Per-Phase Optimizations
 
-Add these as you build each vertical slice. Don't optimize prematurely — measure first.
+Add these as you build each vertical slice. Don't optimize prematurely: measure first.
 
 ### Phase/Slice 1: [Name]
 

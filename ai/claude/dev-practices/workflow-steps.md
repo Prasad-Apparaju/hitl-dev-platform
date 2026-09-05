@@ -38,7 +38,7 @@ If you have not done this yet, run `/hitl:dev-start-from-prd`, `/hitl:dev-start-
 **1. GitHub Issue**
 Describe the change, root cause, and proposed solution. If no issue exists, create one with `gh issue create` before proceeding. Use `/pm/add-feature` for features or `/pm/report-bug` for bugs.
 
-> **Brownfield:** PM skills apply identically once onboarded — `/hitl:pm-design-feature` and `/hitl:pm-add-feature` work the same way for new features on a brownfield project as on a greenfield one.
+> **Brownfield:** PM skills apply identically once onboarded: `/hitl:pm-design-feature` and `/hitl:pm-add-feature` work the same way for new features on a brownfield project as on a greenfield one.
 
 **2. Figma Review (conditional)**
 If a Figma design exists, the PM or developer reads the Figma file directly and adds requirements, interactions, and visual specs into the GitHub issue. No command — this is a manual extraction step.
@@ -55,7 +55,7 @@ If the Impact Analysis effort estimate exceeds 1 day, record the ROI section in 
 **4. Update Docs** — use `/hitl:dev-generate-docs`
 Using the affected component list from `.hitl/current-change.yaml` (Impact Analysis) and Figma specs from Figma Review (if available): create or update HLD at `docs/02-design/technical/hld/<feature>.md` and LLD at `docs/02-design/technical/lld/<component>.md`. Update ADRs for any new design decisions. Architect must approve the HLD before LLD generation begins. LLD must be approved before implementation starts.
 
-> **Brownfield:** If the LLD being updated was produced by the baseline sprint rather than a previous change, verify it against the actual code before using it as a code-generation source. Baseline-sprint LLDs are drafts — they may not yet reflect the true behavior of the component.
+> **Brownfield:** If the LLD being updated was produced by the baseline sprint rather than a previous change, verify it against the actual code before using it as a code-generation source. Baseline-sprint LLDs are drafts: they may not yet reflect the true behavior of the component.
 
 ### 5a–5c: conditional design steps (activated by the impact record)
 
@@ -155,7 +155,7 @@ At the end of Design (`9a`, after the decision packet) and at the end of Build (
 convention checks), **offer** an independent verification review before moving on. These are
 `ceremony` steps: ask once, accept the answer, do not ask again in the same step.
 
-> Design's done — want a verification review before we build? About ten minutes, runs in the
+> Design's done: want a verification review before we build? About ten minutes, runs in the
 > background while you keep working, and it looks for reasons this is wrong rather than reasons
 > it's right. Or skip it and I'll note that we did.
 
@@ -205,12 +205,12 @@ Developer has delivered a stable build with all tests passing and docs reconcile
 **22. Downstream Impact Brief** — use `/hitl:dev-impact-brief`
 `/hitl:dev-impact-brief` reads `.hitl/current-change.yaml`, `git diff main...HEAD`, `system-manifest.yaml`, incident registry, and test registry. Produces a 5-section brief. Section 5 contains the rollout strategy draft including risk tier and go/no-go criteria.
 
-> **Empty incident registry:** `/hitl:dev-impact-brief` will produce section 5 without historical failure context. The rollout strategy draft will be based on the change's risk tier alone — ops should add manual go/no-go criteria to compensate for the missing incident signal.
+> **Empty incident registry:** `/hitl:dev-impact-brief` will produce section 5 without historical failure context. The rollout strategy draft will be based on the change's risk tier alone: ops should add manual go/no-go criteria to compensate for the missing incident signal.
 
 **23. Risk-Rated Rollout Plan** — use `/hitl:ops-review-release`
 Ops reads the rollout strategy from the Downstream Impact Brief's section 5 and the incident registry for the affected domains. Reviews and approves canary tier and go/no-go criteria, or adjusts them. The approved plan must exist; it will be added to the open PR description at the Verify PR Completeness step.
 
-> **Empty incident registry:** Base the canary criteria on the change's risk tier and known failure modes from the LLD rather than historical incidents. Flag this in the rollout plan: "No incident history available — criteria are forward-looking only."
+> **Empty incident registry:** Base the canary criteria on the change's risk tier and known failure modes from the LLD rather than historical incidents. Flag this in the rollout plan: "No incident history available: criteria are forward-looking only."
 >
 > **First release (no prior version in production):** Canary over existing traffic is not possible. Use a direct deploy with a manual smoke-test gate: deploy to staging, run the acceptance criteria from the PRD (FR-<ID> linked in the issue), then promote to production. "Rollback" means tearing down the deployment; there is no prior version to restore. Document this explicitly in the rollout plan.
 
@@ -241,7 +241,7 @@ Build, migrate, apply IaC, configure observability and deploy. Ops executes this
 
 Remaining slices that have not yet merged must rebase against main and rerun the Convention Checks through Code Review Round 2 steps before their own merge.
 
-> **First release:** Follow the direct-deploy plan approved at the Risk-Rated Rollout Plan step. Skip `/hitl:ops-monitor-canary` — run the smoke suite manually. Observability setup is still required even on first release.
+> **First release:** Follow the direct-deploy plan approved at the Risk-Rated Rollout Plan step. Skip `/hitl:ops-monitor-canary`: run the smoke suite manually. Observability setup is still required even on first release.
 
 **27a. Penetration Test (conditional)** — use `/hitl:ops-pentest`
 Activated with the security steps (4b). `floor` at every tier once active: skipping it is a
@@ -268,7 +268,7 @@ Why retire rather than archive: the change file is one-per-active-change and the
 
 If rollback was performed: re-open the issue, investigate root cause, and re-run from the Verify PR Completeness step.
 
-> **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect — open a GitHub issue, fix it, and re-run from the Verify PR Completeness step.
+> **First release:** There is no prior version to restore. If the smoke-test gate fails, tear down the deployment and treat the failure as a blocking defect: open a GitHub issue, fix it, and re-run from the Verify PR Completeness step.
 
 ---
 

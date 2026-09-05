@@ -4,6 +4,28 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Plain English, and short, is the standard for everything HITL says or writes.** The rule is
+  `shared/plain-english.md`: no em dashes, none of the filler and inflation a model reaches for
+  ("It's worth noting", "leverage", "robust", "let me know if"), numbers in a table, and a
+  document as long as what it has to say. Ceilings for generated documents: an executive summary
+  is three sentences, an HLD two pages of prose, an LLD one page per component, an ADR one page, an
+  impact brief, retrospective or review report one page. A section with nothing to say reads
+  "None." Going over is allowed when the content needs it, said in one line at the top.
+  - Every prompt banner points at the rule, so it reaches every session in every skill.
+  - `/hitl:dev-preferences` defaults the tone to it; the block it writes into `CLAUDE.md` follows it
+    (the marker delimiter is now a comma; older blocks still parse).
+  - The doc generator and the HLD, LLD and ADR templates carry the length ceilings.
+  - A wiring lint (`ci/wiring/test_plain_english.py`) checks the text that reaches people: hook
+    and breadcrumb messages, the lines skills tell the model to say, the document templates and the
+    preferences block. Around sixty shipped lines were reworded to pass it. The skills' own
+    instructions to the model are not linted.
+
+---
+
 ## [2.11.0] — 2026-09-04
 
 ### Changed

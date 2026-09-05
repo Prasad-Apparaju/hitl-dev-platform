@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Draft — complete before the first Tier 2 change |
+| **Status** | Draft: complete before the first Tier 2 change |
 | **Date** | [fill in] |
 | **Deciders** | [fill in: dev lead, QA lead] |
-| **Supersedes** | — |
+| **Supersedes** | none |
 | **Related** | ADR-0001 (HITL adoption), ADR-0002 (documentation-first) |
 
 ---
@@ -23,27 +23,27 @@ The HITL workflow requires a defined test strategy before TDD begins (step 7: te
 | Unit | [fill in] | |
 | Integration | [fill in] | |
 | E2E | [fill in] | |
-| Contract | [fill in — or "N/A"] | |
+| Contract | [fill in, or "N/A"] | |
 
 ### Coverage gate
 
-[fill in — HITL default is ≥90% per changed component. Record your threshold here and whether it is enforced in CI or advisory only.]
+[fill in: HITL default is ≥90% per changed component. Record your threshold here and whether it is enforced in CI or advisory only.]
 
 ### Mocking policy
 
-[fill in — what gets mocked vs what must hit real infrastructure. Example: "External third-party APIs are mocked in unit and integration tests. Database uses a real testcontainer. File system operations use real temp directories."]
+[fill in: what gets mocked vs what must hit real infrastructure. Example: "External third-party APIs are mocked in unit and integration tests. Database uses a real testcontainer. File system operations use real temp directories."]
 
 ### CI gate
 
 | Gate | When it runs | Must pass to proceed |
 |------|-------------|---------------------|
-| Unit + integration | Every PR | Yes — blocks merge |
+| Unit + integration | Every PR | Yes: blocks merge |
 | E2E | [fill in] | [fill in] |
-| Coverage check | Every PR | [fill in — pass/advisory] |
+| Coverage check | Every PR | [fill in: pass/advisory] |
 
 ### Test naming convention
 
-[fill in — Example: "Test names describe behavior, not implementation. Format: `test_<verb>_<condition>_<expected_result>`."]
+[fill in: Example: "Test names describe behavior, not implementation. Format: `test_<verb>_<condition>_<expected_result>`."]
 
 ## 3. Alternatives Considered
 
@@ -61,7 +61,7 @@ The HITL workflow requires a defined test strategy before TDD begins (step 7: te
 
 Every test must be registered in `docs/03-engineering/testing/test-registry.yaml` (template: `test-registry-template.yaml`). Unregistered tests are invisible to impact analysis and `/hitl:dev-apply-change`.
 
-Tests are written before implementation in the HITL workflow — step 10 (`/hitl:dev-tdd`). QA reviews tests at step 11 (`/hitl:qa-review-tests`) before implementation begins.
+Tests are written before implementation in the HITL workflow: step 10 (`/hitl:dev-tdd`). QA reviews tests at step 11 (`/hitl:qa-review-tests`) before implementation begins.
 
 ## 6. Open Questions
 
@@ -83,4 +83,4 @@ Tests are written before implementation in the HITL workflow — step 10 (`/hitl
 
 **Expected:** [copy from above]
 **Actual:** [measured result]
-**Verdict:** [ROI realized / Partial / Not realized — action taken]
+**Verdict:** [ROI realized / Partial / Not realized: action taken]

@@ -138,8 +138,8 @@ All LLD-specified elements found and matching.
 For each ⚠️ diverged item, present the choice explicitly:
 
 > "The LLD specifies `method_name(user_id: str) -> User`. The implementation uses `method_name(user: UserDTO) -> UserResponse`. This is a design divergence. Options:
-> (a) **Update the LLD** — if the implementation reflects a better design. Requires architect approval before merge.
-> (b) **Fix the code** — if the implementation drifted unintentionally. Fix now.
+> (a) **Update the LLD**: if the implementation reflects a better design. Requires architect approval before merge.
+> (b) **Fix the code**: if the implementation drifted unintentionally. Fix now.
 > Which do you want to do?"
 
 Do NOT silently normalize divergence. Every deviation is either an intentional design improvement (update the LLD) or a mistake (fix the code). There is no third option.

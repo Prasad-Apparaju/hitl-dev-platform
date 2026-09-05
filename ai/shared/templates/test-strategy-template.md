@@ -1,4 +1,4 @@
-# [Project Name] — Test Strategy
+# [Project Name]: Test Strategy
 
 **Parent:** [link to engineering docs]
 **Derived from:** [HLD documents, requirements]
@@ -105,7 +105,7 @@ See [test-registry-template.yaml](test-registry-template.yaml) for the format.
 
 ## Maintenance
 
-- **Add tests before code** — TDD-as-design via `/hitl:tdd` skill
-- **Link every new test to the registry** — unregistered tests are invisible to impact analysis
-- **Review test coverage quarterly** — are there areas with no tests? Areas with brittle tests?
-- **When an incident occurs** — add a regression test BEFORE closing the incident (required by incident registry)
+- **Add tests before code**: TDD-as-design via `/hitl:tdd` skill
+- **Link every new test to the registry**: unregistered tests are invisible to impact analysis
+- **Review test coverage quarterly**: are there areas with no tests? Areas with brittle tests?
+- **When an incident occurs**: add a regression test BEFORE closing the incident (required by incident registry)

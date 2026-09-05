@@ -275,7 +275,7 @@ After HLD approval:
 2. For each decision that is not already documented in an existing ADR, create a stub at `docs/02-design/technical/adrs/<decision-slug>.md` using `shared/templates/adr-template.md`. Mark status as "DRAFT — architect to complete rationale."
 
 3. Ask the architect:
-   > "I've created stubs for [N] decisions I found in the HLD. Are there decisions being made here that aren't visible in the design — things the team discussed, constraints from legal or ops, or choices you ruled out?"
+   > "I've created stubs for [N] decisions I found in the HLD. Are there decisions being made here that aren't visible in the design: things the team discussed, constraints from legal or ops, or choices you ruled out?"
 
 4. Add any architect-supplied decisions as additional ADR stubs.
 

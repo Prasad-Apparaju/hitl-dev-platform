@@ -46,9 +46,9 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 Before Phase 1, ask:
 
 > "What level of challenge would you like?
-> - **Rigorous** — I'll push back until I have specific answers. Nothing gets drafted without justification.
-> - **Moderate** — I'll ask all questions and flag gaps, but won't block on every one.
-> - **Light** — I'll note gaps but move quickly. Good for rough drafts."
+> - **Rigorous**: I'll push back until I have specific answers. Nothing gets drafted without justification.
+> - **Moderate**: I'll ask all questions and flag gaps, but won't block on every one.
+> - **Light**: I'll note gaps but move quickly. Good for rough drafts."
 
 Wait for the answer. Apply it throughout.
 
@@ -132,20 +132,20 @@ Ask these questions one group at a time — do not dump them all at once:
 
 **Round 1 — The problem:**
 > 1. "What's the gap or problem you're trying to solve? What's happening today that shouldn't be, or what's missing that should be there?"
-> 2. "Who experiences this gap — which user, role, or team?"
+> 2. "Who experiences this gap: which user, role, or team?"
 > 3. "How often does it come up, and what's the impact when it does?"
 
 Wait for answers. Then:
 
 **Round 2 — The outcome:**
 > 4. "What should users be able to do after this enhancement that they can't do today?"
-> 5. "What does a successful outcome look like — how will you know this worked?"
+> 5. "What does a successful outcome look like: how will you know this worked?"
 > 6. "Is there anything about the current behavior that must stay exactly the same?"
 
 Wait for answers. Then:
 
 **Round 3 — Scope and constraints:**
-> 7. "Any constraints — timeline, technical, compliance, budget?"
+> 7. "Any constraints: timeline, technical, compliance, budget?"
 > 8. "Is this a standalone enhancement, or does it unblock something else?"
 
 At **rigorous** level: push back on any answer that is vague or unmeasurable. Examples:

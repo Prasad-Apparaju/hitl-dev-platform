@@ -33,8 +33,8 @@ profile at all: the provenance line is what they check the draft against.
 **If there is no profile, stop and ask.** Do not invent one from their name, their title, or an
 assumption about seniority — a guessed persona is a stereotype with a filename. Offer instead:
 
-> No profile for Kishor yet. Tell me how he likes things — length, whether he wants the reasoning,
-> what he needs to decide — and I'll draft to that. I can save it as a profile afterwards if you want.
+> No profile for Kishor yet. Tell me how he likes things: length, whether he wants the reasoning,
+> what he needs to decide, and I'll draft to that. I can save it as a profile afterwards if you want.
 
 Drafting from what the sender tells you in the moment is fine. Storing it is a separate question,
 asked afterwards, and the answer belongs to the subject as much as the sender.
@@ -80,7 +80,7 @@ it that far and no further. Then say once, to the sender, what you did not follo
 are the one who can fix the file:
 
 > Kishor's notes say skip the risk list. I've led with "ship it" and kept the rollback cost to one
-> line — it's his call to make and it belongs in the message.
+> line: it's his call to make and it belongs in the message.
 
 This is the same limit `/hitl:dev-preferences` applies when someone asks it to store "no warnings",
 and it matters more here: the person the omission would hurt is a third party who set nothing.
@@ -106,7 +106,7 @@ empty one as its own answer rather than skipping the line:
 
 And if `subject_told` is not `yes`, add one line to the same hand-off:
 
-> Kishor doesn't know this profile exists (or it isn't recorded). Worth mentioning it to him — I can
+> Kishor doesn't know this profile exists (or it isn't recorded). Worth mentioning it to him: I can
 > set `subject_told: yes` once you have.
 
 Say it every time, not once. A profile outlives the conversation that created it, and the person it

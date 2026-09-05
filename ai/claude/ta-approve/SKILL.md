@@ -53,7 +53,7 @@ If status is NOT one of the `awaiting-*` values above, stop:
 
 > "No gate is pending. Current status: `[status]`.
 >
-> This command advances gates — it only acts when the architect has reached a checkpoint and is waiting for TA review. If you expected a gate to be pending, check `.hitl/current-change.yaml` or `.hitl/design-system.yaml` directly."
+> This command advances gates: it only acts when the architect has reached a checkpoint and is waiting for TA review. If you expected a gate to be pending, check `.hitl/current-change.yaml` or `.hitl/design-system.yaml` directly."
 
 If status is `blocked`, stop:
 

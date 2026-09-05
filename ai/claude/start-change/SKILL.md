@@ -360,7 +360,7 @@ Show the resulting file to the user. Then complete the remaining required fields
 `ai/shared/templates/change-context.schema.yaml`, or note they will be filled by the
 workflow's own steps.
 
-> **The roll-up is written at Step 6b, below**, not here — the change file has to exist first. Entries
+> **The roll-up is written at Step 6b, below**, not here: the change file has to exist first. Entries
 > recorded before the workflow declares its area are marked project-wide; the `development` route
 > narrows them at its impact step.
 

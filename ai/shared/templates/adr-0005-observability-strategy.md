@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Draft — complete before the first Tier 2 change |
+| **Status** | Draft: complete before the first Tier 2 change |
 | **Date** | [fill in] |
 | **Deciders** | [fill in: architect, platform/ops lead] |
-| **Supersedes** | — |
+| **Supersedes** | none |
 | **Related** | ADR-0001 (HITL adoption), ADR-0003 (test strategy), ADR-0004 (change tier policy) |
 
 ---
@@ -14,7 +14,7 @@
 
 The HITL workflow gates every Tier 2+ deployment on observability: `/hitl:ops-setup-observability` must be run before `/hitl:ops-deploy`, and every go/no-go criterion in a rollout plan requires a named dashboard panel and active alert. Without a defined observability strategy, these gates cannot be configured consistently.
 
-Additionally, AI-assisted development introduces a second observability layer — **agentic observability** — covering token costs, AI session decisions, and audit trails. Without this, the cost and behaviour of AI agents in the development process are invisible.
+Additionally, AI-assisted development introduces a second observability layer: **agentic observability**: covering token costs, AI session decisions, and audit trails. Without this, the cost and behaviour of AI agents in the development process are invisible.
 
 ## 2. Decision
 
@@ -22,24 +22,24 @@ Additionally, AI-assisted development introduces a second observability layer �
 
 | Signal | Tool | Location / config | Notes |
 |---|---|---|---|
-| Structured logs | [fill in — e.g., CloudWatch / ELK / Datadog / Loki] | [fill in] | |
-| Metrics | [fill in — e.g., Prometheus + Grafana / CloudWatch / Datadog] | [fill in] | |
-| Distributed tracing | [fill in — e.g., OpenTelemetry + Jaeger / Datadog APM / none] | [fill in] | |
-| Error tracking | [fill in — e.g., Sentry / Rollbar / Datadog / none] | [fill in] | |
-| Primary dashboard | [fill in — URL or path] | | |
-| Alerting | [fill in — tool + on-call routing approach] | [fill in] | |
+| Structured logs | [fill in: e.g., CloudWatch / ELK / Datadog / Loki] | [fill in] | |
+| Metrics | [fill in: e.g., Prometheus + Grafana / CloudWatch / Datadog] | [fill in] | |
+| Distributed tracing | [fill in: e.g., OpenTelemetry + Jaeger / Datadog APM / none] | [fill in] | |
+| Error tracking | [fill in: e.g., Sentry / Rollbar / Datadog / none] | [fill in] | |
+| Primary dashboard | [fill in: URL or path] | | |
+| Alerting | [fill in: tool + on-call routing approach] | [fill in] | |
 
 ### Agentic observability
 
 | Signal | Location | Owner | Notes |
 |---|---|---|---|
-| Session logs | `docs/session-logs/` (gitignored) | Auto — `write-session-summary.sh` hook | Written at end of every Claude Code session |
+| Session logs | `docs/session-logs/` (gitignored) | Auto: `write-session-summary.sh` hook | Written at end of every Claude Code session |
 | Token cost registry | `docs/04-operations/token-cost-registry.yaml` | Dev lead | Updated at Step 31 of every change |
 | AI decision audit | HITL session logs + PR descriptions | Developer | Key AI recommendations and architect decisions are recorded in the PR |
 
 ### On-call routing
 
-[fill in — which team or rotation owns production incidents for each domain. Must be configured before the first Tier 2 production deploy.]
+[fill in: which team or rotation owns production incidents for each domain. Must be configured before the first Tier 2 production deploy.]
 
 | Domain | On-call rotation | Escalation path |
 |---|---|---|
@@ -47,17 +47,17 @@ Additionally, AI-assisted development introduces a second observability layer �
 
 ## 3. Alternatives Considered
 
-[fill in after team discussion — e.g., "Evaluated Datadog vs Prometheus + Grafana; chose Prometheus because we are already running it for infrastructure metrics."]
+[fill in after team discussion: e.g., "Evaluated Datadog vs Prometheus + Grafana; chose Prometheus because we are already running it for infrastructure metrics."]
 
 ## 4. Consequences
 
 ### Positive
 - Every deployment has a verified observability baseline before traffic is switched
-- Token cost is tracked per change — cost trends are visible over sprints
-- On-call routing is explicit — incidents are not silently swallowed
+- Token cost is tracked per change: cost trends are visible over sprints
+- On-call routing is explicit: incidents are not silently swallowed
 
 ### Negative
-- [fill in — e.g., "Datadog adds $X/month per host. Approved budget: ..."]
+- [fill in: e.g., "Datadog adds $X/month per host. Approved budget: ..."]
 
 ## 5. Implementation Notes
 
@@ -88,4 +88,4 @@ Additionally, AI-assisted development introduces a second observability layer �
 
 **Expected:** [copy from above]
 **Actual:** [measured result]
-**Verdict:** [ROI realized / Partial / Not realized — action taken]
+**Verdict:** [ROI realized / Partial / Not realized: action taken]

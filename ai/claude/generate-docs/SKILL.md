@@ -43,6 +43,14 @@ Otherwise → use **New Feature Mode** (Phase 1-2 below).
 
 ---
 
+## Length and voice
+
+Every document this skill writes follows `shared/plain-english.md`: plain words, and as long as
+what it has to say. Ceilings for the prose (diagrams, signatures and tables are extra): executive
+summary three sentences; HLD two pages; LLD one page per component; ADR one page. A section with
+nothing to say reads "None." on one line. Do not restate the issue; link it. Going over a ceiling is
+allowed when the content needs it; say so in one line at the top.
+
 ## New Feature Mode
 
 ### Phase 1 — High-Level Design (HLD)

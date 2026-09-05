@@ -120,13 +120,13 @@ For each decision identified in Phase 2, ask the following (group them — do no
 > [list decisions]"
 
 **Round 2 — Rationale (for deliberate choices only):**
-> "For the deliberate decisions — what problem was each solving at the time? What alternatives were considered?"
+> "For the deliberate decisions: what problem was each solving at the time? What alternatives were considered?"
 
 **Round 3 — Constraints and regrets:**
 > "Which of these decisions creates the most constraints on future changes? Are there any you would make differently today? Any that are actively causing pain?"
 
 **Round 4 — Unknown decisions:**
-> "Are there any significant architectural decisions I didn't surface that should be documented — things that would surprise a new team member or that every developer needs to know?"
+> "Are there any significant architectural decisions I didn't surface that should be documented: things that would surprise a new team member or that every developer needs to know?"
 
 Record answers alongside each decision.
 
@@ -187,9 +187,9 @@ Output this table:
 
 Then ask:
 
-> "These are the 8 baseline ADRs for this project. ADR-0001 and ADR-0002 are pre-filled — I'll confirm the dates are correct.
+> "These are the 8 baseline ADRs for this project. ADR-0001 and ADR-0002 are pre-filled: I'll confirm the dates are correct.
 >
-> For the remaining 6, which would you like to complete now? You can fill in all of them, pick a few to start, or defer them all. I'll pre-fill every field I can from the code and architecture review — you only need to answer what I can't infer."
+> For the remaining 6, which would you like to complete now? You can fill in all of them, pick a few to start, or defer them all. I'll pre-fill every field I can from the code and architecture review: you only need to answer what I can't infer."
 
 **Step 3 — Fill in whichever the architect selects:**
 
@@ -204,7 +204,7 @@ For each ADR the architect wants to complete:
 
 After filling in the selected ADRs, list any deferred stubs and what they gate:
 
-> "Still outstanding: [list]. These can be filled in at any time by re-running `/hitl:architect-review-existing`. Note that [ADR-XXXX] is needed before [gate] — flag this with the team."
+> "Still outstanding: [list]. These can be filled in at any time by re-running `/hitl:architect-review-existing`. [ADR-XXXX] is needed before [gate]; flag this with the team."
 
 ### 4b — Create ADRs for decisions from Phase 3
 

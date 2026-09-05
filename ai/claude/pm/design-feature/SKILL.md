@@ -39,9 +39,9 @@ Before Phase 1, ask:
 
 > "What level of challenge would you like for this session?
 >
-> - **Rigorous** — I'll push back on vague answers and won't proceed without specifics. Best for high-stakes or complex features.
-> - **Moderate** — I'll ask everything but accept reasonable answers. Best for most feature work.
-> - **Light** — I'll ask only the key framing questions and move fast. Best for well-understood or low-risk features.
+> - **Rigorous**: I'll push back on vague answers and won't proceed without specifics. Best for high-stakes or complex features.
+> - **Moderate**: I'll ask everything but accept reasonable answers. Best for most feature work.
+> - **Light**: I'll ask only the key framing questions and move fast. Best for well-understood or low-risk features.
 >
 > Say **Rigorous**, **Moderate**, or **Light** to set the level."
 
@@ -223,7 +223,7 @@ Present to the PM. Get explicit approval: "Agent design approved" before proceed
 
 Say to the PM:
 
-> "Let's prototype this with Claude Design now — I'll generate screens for each step we mapped in Phase 2. If you'd rather start from something you already have (Figma file, tool screenshot, hand-drawn sketch), share it and I'll annotate it instead. Otherwise, let's go."
+> "Let's prototype this with Claude Design now: I'll generate screens for each step we mapped in Phase 2. If you'd rather start from something you already have (Figma file, tool screenshot, hand-drawn sketch), share it and I'll annotate it instead. Otherwise, let's go."
 
 **Primary path — Claude Design (preferred):**
 1. Generate screens for every journey step from Phase 2.
