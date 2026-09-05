@@ -4,7 +4,7 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [Unreleased]
+## [2.11.0] — 2026-09-04
 
 ### Changed
 
@@ -28,6 +28,12 @@ All notable changes to the HITL plugin are documented here.
     command and what it printed; the refute line is gone, and a wiring test keeps it gone.
   - The lens catalog is kept, with each question phrased as something to run. Shared contract and
     template renamed to `verification-review.md` / `verification-review-record.yaml`.
+  - Tried on itself before shipping: two validation rounds on this change (one page each) found
+    that the gate blocked a failed check even after a named person accepted it, and then that the
+    first fix pooled coverage across records and let a bare `fixed` cover a failure. A finding now
+    names the check it answers for (`check:`), in the same record, fixed with a commit or accepted
+    with a name. This is also the first release whose review step passed on a review rather than
+    a waiver.
 
 ---
 
