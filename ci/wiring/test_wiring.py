@@ -797,3 +797,22 @@ def test_the_compact_step_list_and_the_example_change_file_follow_the_runtime():
     example = yaml.safe_load(_read(os.path.join(AI, "shared", "templates", "GH-000-example.yaml")))
     ex = [(str(s["n"]), s["key"]) for s in example["workflow"]["steps"]]
     assert ex == [(str(s["n"]), s["key"]) for s in steps], "GH-000-example.yaml steps drift from the runtime"
+
+
+# --- issue hygiene (#94) --------------------------------------------------------------------------
+def test_every_skill_that_files_issues_searches_first_or_follows_the_rule():
+    """Six of twelve issue-creating skills had no duplicate check, and they were the ones that file
+    several issues from one run. The onboarding skills are exempt: they create a project's first."""
+    offenders = []
+    for base, _d, files in os.walk(os.path.join(AI, "claude")):
+        for f in files:
+            if not f.endswith(".md"):
+                continue
+            p = os.path.join(base, f)
+            if "/start-" in p.replace("\\", "/") or f == "workflow-steps.md":
+                continue
+            txt = _read(p)
+            if "gh issue create" in txt and not ("gh issue list" in txt or "issue-hygiene.md" in txt):
+                offenders.append(os.path.relpath(p, ROOT))
+    assert not offenders, "skills that file issues with no duplicate check: %s" % offenders
+    assert os.path.isfile(os.path.join(AI, "shared", "issue-hygiene.md"))

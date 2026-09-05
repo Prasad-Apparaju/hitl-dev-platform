@@ -834,3 +834,14 @@ def test_the_conditional_exemption_does_not_leak_to_ordinary_floor_steps():
     ch = make_change([base_skip("deploy", disposition="not_applicable")], tier=2)
     assert "RULE_OVER_FLOOR" in blockers(C.check(ch, CATALOG))
     assert not CATALOG["deploy"].get("cond")
+
+
+# ── #111: departing upward from a light proposal is attributed too ────────────────────────────────
+
+def test_tier_above_a_light_proposal_needs_attribution():
+    ch = make_change([], tier=2); ch["tier_proposed"] = 1
+    assert "TIER_UNATTRIBUTED" in codes(C.check(ch, CATALOG))
+    ch["tier_set_by"] = "pm@team"; ch["tier_reason"] = "touches payments after all"
+    assert "TIER_UNATTRIBUTED" not in codes(C.check(ch, CATALOG))
+    ch2 = make_change([], tier=2); ch2["tier_proposed"] = 2
+    assert "TIER_UNATTRIBUTED" not in codes(C.check(ch2, CATALOG)), "agreeing with the proposal needs nothing"

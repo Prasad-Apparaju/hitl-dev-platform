@@ -22,7 +22,7 @@ To get started, run one of these commands in your project directory:
 
 **Input:** $ARGUMENTS (description of the change — feature, bug fix, refactor, etc.)
 
-**Refusal rule:** If no GitHub issue number is provided or discoverable in $ARGUMENTS, stop and say: "No GitHub issue found. Create one first with `gh issue create`, then re-run this skill with the issue number."
+**Refusal rule:** If no GitHub issue number is provided or discoverable in $ARGUMENTS, stop and say: "No GitHub issue found. Create one first with `gh issue create`, then re-run this skill with the issue number." (when creating one, follow `shared/issue-hygiene.md`)
 
 ---
 

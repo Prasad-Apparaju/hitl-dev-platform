@@ -330,6 +330,13 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
             findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_set_by` — a light path is a human's call, not the agent's"))
         if not _str(change.get("tier_reason")).strip():
             findings.append(_f("TIER_UNATTRIBUTED", f"tier {tier} is declared with no `tier_reason` — record why this change qualifies"))
+    # The other direction (#111): the analysis proposed a light tier and a heavier one was declared.
+    # That departure is attributed too, or the friction sits only on the correct answer.
+    tp = change.get("tier_proposed")
+    if isinstance(tier, int) and isinstance(tp, int) and tp <= 1 and tier > tp:
+        if not (_str(change.get("tier_set_by")).strip() and _str(change.get("tier_reason")).strip()):
+            findings.append(_f("TIER_UNATTRIBUTED", f"the analysis proposed tier {tp} and tier {tier} is declared with no "
+                                                     f"`tier_set_by`/`tier_reason` — departing upward from a light proposal is a human's call too"))
 
     # 0.4) INTAKE STUB (#97). Under right-sizing the plan does not exist until impact analysis has
     #    run, so intake writes a stub carrying the change id, the agreed requirement and a

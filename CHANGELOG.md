@@ -20,6 +20,22 @@ All notable changes to the HITL plugin are documented here.
   it with `--apply`. A missing or re-pointed `statusLine` is reported, not rewritten.
 - **The sizer names the activator for an active conditional step.** The CVE audit's reason read
   "applies to every change" when the only thing that put it in the plan was the security answer.
+- **Release gate: six validator gaps from the 2.8.0 review closed** (#92). A lens id loses a
+  numbering suffix only when what remains is a catalog id, and a letter suffix only behind a
+  separator, so `web` and `v2` stay themselves. `change_id` is matched regardless of case. An open
+  blocking finding in an earlier round now blocks until a record in that round or a later one lists
+  the same claim as fixed or accepted with a name (`FINDING_CARRIED`); a clean later round that
+  never mentions it is not a resolution. `--sha` on a commit that is not HEAD blocks
+  (`TARGET_NOT_HEAD`) instead of warning and exiting clean. The unparseable-record warning says what
+  it knows. The report-path instruction is the last item of the brief.
+- **Tier attribution works in both directions** (#111). Intake records the tier the analysis
+  proposed (`tier_proposed`); declaring a heavier tier over a light proposal needs `tier_set_by` and
+  `tier_reason`, the same as declaring a lighter one. Agreeing with the proposal needs nothing.
+- **Filing issues: search first, confirm batches, revisit after merge** (#94). `shared/issue-hygiene.md`
+  is the rule; the six skills that filed from review findings without a duplicate check now follow
+  it, an unattended drift check files one rollup issue at most, and the retrospective re-reads the
+  follow-ups a change's reviews filed against what merged. A wiring test holds every issue-filing
+  skill to it.
 
 ---
 

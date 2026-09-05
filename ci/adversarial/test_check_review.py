@@ -708,8 +708,9 @@ def test_a_bad_check_result_is_malformed(tmp_path):
 
 def test_old_and_new_shapes_mix_across_rounds(tmp_path):
     """A repo upgraded mid-change has a 1.0 round 1 and a 2.0 round 2. The newest round decides."""
+    # round 1's finding was fixed and its record says so, as the skill instructs; round 2 is clean.
     c, r = _setup(tmp_path, _record(round=1, verdict="do-not-ship",
-                                    findings=[{"id": "F1", "severity": "HIGH", "claim": "x", "status": "open"}]))
+                                    findings=[{"id": "F1", "severity": "HIGH", "claim": "x", "status": "fixed", "resolved_by": "abc"}]))
     _write(os.path.join(r, "GH-80-round2.yaml"), _v2(round=2))
     blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
@@ -798,3 +799,53 @@ def test_check_text_matches_across_case_and_whitespace(tmp_path):
     c, r = _setup(tmp_path, rec)
     blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
+
+
+import check_review as C  # noqa: E402
+
+
+# ── #92 validator items ───────────────────────────────────────────────────────────────────────────
+
+def test_canonical_lens_strips_only_real_numbering_suffixes():
+    assert C.canonical_lens("consequence-2") == "consequence"
+    assert C.canonical_lens("consequence2") == "consequence"
+    assert C.canonical_lens("data b") == "data"
+    assert C.canonical_lens("web") == "web", "a bare trailing b is part of the word"
+    assert C.canonical_lens("v2") == "v2", "digits stay when the base is not a lens"
+    assert C.canonical_lens("consequenceb") == "consequenceb", "a letter suffix needs a separator"
+
+
+def test_change_id_matches_regardless_of_case(tmp_path):
+    c, r = _setup(tmp_path, _record(change_id="gh-80"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "REVIEW_MISSING" not in _codes(blocks), blocks
+
+
+def test_an_open_blocking_finding_in_an_earlier_round_carries_forward(tmp_path):
+    c, r = _setup(tmp_path, _record(round=1, verdict="do-not-ship",
+                                    findings=[{"id": "F1", "severity": "CRITICAL", "claim": "deletes user data", "status": "open"}]))
+    _write(os.path.join(r, "GH-80-round2.yaml"), _record(round=2, findings=[]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "FINDING_CARRIED" in _codes(blocks), blocks
+    # resolved in a later round under the same claim -> clears
+    _write(os.path.join(r, "GH-80-round2.yaml"), _record(round=2, findings=[
+        {"id": "F1", "severity": "CRITICAL", "claim": "Deletes user data", "status": "fixed", "resolved_by": "abc"}]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "FINDING_CARRIED" not in _codes(blocks), blocks
+    # or resolved in its own record, as the skill instructs
+    _write(os.path.join(r, "GH-80-round1.yaml"), _record(round=1, verdict="do-not-ship",
+           findings=[{"id": "F1", "severity": "CRITICAL", "claim": "deletes user data", "status": "accepted", "accepted_by": "someone"}]))
+    _write(os.path.join(r, "GH-80-round2.yaml"), _record(round=2, findings=[]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "FINDING_CARRIED" not in _codes(blocks), blocks
+
+
+def test_a_stale_sha_target_blocks_instead_of_warning(tmp_path):
+    root = tmp_path
+    subprocess.run(["git", "init", "-q", "."], cwd=root, check=True)
+    subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "x"], cwd=root, check=True)
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
+    c, r = _setup(root, _record(reviewed_sha=head))
+    rc_head = C.main(["--root", str(root), "--change", c, "--reviews", r])
+    rc_other = C.main(["--root", str(root), "--change", c, "--reviews", r, "--sha", "b" * 40])
+    assert rc_head == 0 and rc_other == 2

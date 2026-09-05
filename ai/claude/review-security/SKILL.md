@@ -281,7 +281,7 @@ Non-blocking (document and schedule):
 Result: BLOCKED / FINDINGS / CLEAN
 ```
 
-Create a GitHub issue for each Critical or High finding (same format as `/hitl:ops-pentest`).
+Create a GitHub issue for each Critical or High finding (same format as `/hitl:ops-pentest`). Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once; an unattended run files at most one rollup.
 
 Update `.hitl/current-change.yaml`:
 ```yaml

@@ -145,7 +145,8 @@ there is a blocking error, because a second artifact is only safe when something
 
 ### The tier, from what the analysis found
 
-Propose one, say which finding drives it, and **wait for a human to confirm or correct it**. Record
+Propose one, say which finding drives it, and **wait for a human to confirm or correct it**. Keep the
+proposal: `export HITL_TIER_PROPOSED=<n>` for Step 6, which writes it as `tier_proposed`. Record
 `tier_set_by` and `tier_reason`, and clear `tier_provisional`. Leaving it set is a blocking error:
 it means nobody confirmed.
 
@@ -327,8 +328,8 @@ HITL_VERSION=$(cat "$ROOT/.claude-plugin/plugin.json" 2>/dev/null \
   | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 
 TIER=2                       # from Step 3b — never assume it
-TIER_SET_BY=""               # required when TIER <= 1: the human who made the call
-TIER_REASON=""               # required when TIER <= 1: one line on why it qualifies
+TIER_SET_BY=""               # required when TIER <= 1, OR when TIER is above a light proposal (#111)
+TIER_REASON=""               # one line on why; HITL_TIER_PROPOSED (Step 4) tells the generator the proposal
 CHOICES=".hitl/first-pass-choices.json"   # written by Step 4b; absent ⇒ full plan, no First Pass
 
 # Write via a temp file: a generator that dies partway through `> file` leaves a truncated change

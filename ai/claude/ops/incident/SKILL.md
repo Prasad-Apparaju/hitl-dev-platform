@@ -58,6 +58,8 @@ Determine severity based on user impact:
 | SEV-4 | Cosmetic issue or performance degradation with no user-visible functional impact |
 
 Create a GitHub issue for incident tracking:
+Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once; an unattended run files at most one rollup.
+
 ```bash
 gh issue create \
   --title "INC: <brief description> [SEV-<N>]" \

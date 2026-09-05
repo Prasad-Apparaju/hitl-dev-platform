@@ -136,6 +136,8 @@ Get confirmation before proceeding to Phase 2.
 
 **Create a draft GitHub issue immediately after Phase 1 is approved.** The feature needs to exist in the tracker before design work starts — the team should be able to see what's in progress:
 
+Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once.
+
 ```bash
 gh issue create \
   --title "feat: <feature name>" \

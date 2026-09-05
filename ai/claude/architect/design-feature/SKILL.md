@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 **Input:** $ARGUMENTS (GitHub issue number and/or feature description)
 
+Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once; an unattended run files at most one rollup.
+
 **Refusal rule:** If no GitHub issue number is provided or discoverable, stop and say: "No GitHub issue found. Create one first with `gh issue create`, then re-run with the issue number."
 
 ---

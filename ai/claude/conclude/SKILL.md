@@ -145,7 +145,7 @@ Once all artifacts are approved:
 1. **Create a branch** — `decision/<short-topic-name>`
 2. **Commit all artifacts** — ADR, HLD/LLD updates
 3. **Open a PR** — title: "Decision: [topic]", body links to the Slack thread and lists all artifacts
-4. **Create the GitHub issue** via `gh issue create`
+4. **Create the GitHub issue** via `gh issue create`. Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once; an unattended run files at most one rollup.
 5. **Post to the Slack thread** — reply with links:
 
 ```

@@ -97,6 +97,8 @@ At the start of each milestone — before questions or content — output a bann
 
 **Create a draft GitHub issue immediately after Step 1 is confirmed.** The feature needs to be tracked before design work starts:
 
+Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once.
+
 ```bash
 gh issue create \
   --title "feat: <feature description>" \

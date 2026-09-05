@@ -76,6 +76,20 @@ if not 0 <= tier <= 4:
 if tier <= 1 and not (tier_set_by.strip() and tier_reason.strip()):
     sys.exit("tier <= 1 needs TIER_SET_BY and TIER_REASON — a light path is a human's call, "
              "and it unlocks the batch-decline path at intake.")
+# The tier the analysis PROPOSED (#111). Attribution used to sit on the light path only: tier 0/1
+# needed a name, tier 2 needed nothing, so the friction was on the correct answer for a small change.
+# Both departures from the proposal are attributed now: going UP from a light proposal needs the
+# same name and reason as going down.
+_tp = os.environ.get("HITL_TIER_PROPOSED", "").strip()
+tier_proposed = None
+if _tp:
+    try:
+        tier_proposed = int(_tp)
+    except ValueError:
+        sys.exit(f"HITL_TIER_PROPOSED must be an integer 0-4, got {_tp!r}")
+    if tier_proposed <= 1 and tier > tier_proposed and not (tier_set_by.strip() and tier_reason.strip()):
+        sys.exit(f"the analysis proposed tier {tier_proposed} and tier {tier} was declared: departing "
+                 "upward from a light proposal needs TIER_SET_BY and TIER_REASON too (#111).")
 
 # Carry the stub's durable fields forward (#97). Step 6 replaces `.hitl/current-change.yaml` with
 # this output, so anything only the stub had is destroyed unless it is read back here: the agreed
@@ -195,7 +209,9 @@ lines = [
     f'change_id: {q(change_id)}',
     f'tier: {tier}',
 ]
-if tier <= 1:
+if tier_proposed is not None:
+    lines += [f'tier_proposed: {tier_proposed}']
+if tier <= 1 or (tier_set_by.strip() and tier_reason.strip()):
     lines += [f'tier_set_by: {q(tier_set_by)}', f'tier_reason: {q(tier_reason)}']
 lines += [
     'status: planning',

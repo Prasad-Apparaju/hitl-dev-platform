@@ -321,3 +321,18 @@ def test_an_active_conditional_declined_without_ack_is_still_blocked(gen, tmp_pa
     assert rc == 0, err
     codes = {f.code if hasattr(f, "code") else f.get("code") for f in C.check(doc, CATALOG, tier=2)}
     assert "FLOOR_NO_ACK" in codes, codes
+
+
+# ── #111 at the generator ─────────────────────────────────────────────────────────────────────────
+
+def test_the_generator_requires_attribution_when_a_light_proposal_is_raised(gen, tmp_path):
+    env = dict(os.environ, HITL_TIER_PROPOSED="1")
+    r = subprocess.run([sys.executable, gen, "development", "GH-1", "issue/1-x", "9.9.9", "2",
+                        str(tmp_path / "absent.json"), "", ""], capture_output=True, text=True, cwd=ROOT, env=env)
+    assert r.returncode != 0 and "departing upward" in r.stderr
+    r = subprocess.run([sys.executable, gen, "development", "GH-1", "issue/1-x", "9.9.9", "2",
+                        str(tmp_path / "absent.json"), "pm@team", "payments after all"], capture_output=True, text=True, cwd=ROOT, env=env)
+    assert r.returncode == 0, r.stderr
+    doc = yaml.safe_load(r.stdout)
+    assert doc["tier_proposed"] == 1 and doc["tier_set_by"] == "pm@team"
+    assert C.check(doc, CATALOG, tier=2) == [] or "TIER_UNATTRIBUTED" not in {f["code"] for f in C.check(doc, CATALOG, tier=2)}

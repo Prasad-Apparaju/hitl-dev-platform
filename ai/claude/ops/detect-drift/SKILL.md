@@ -199,6 +199,8 @@ drift_check:
 ```
 
 For **scheduled** runs (no active deployment): post findings to the team channel and open a GitHub issue for any HIGH or BLOCKER items:
+Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once; an unattended run files at most one rollup. The scheduled run is unattended: one rollup issue, appended to if one is open.
+
 ```bash
 gh issue create \
   --title "Config drift detected in <environment> [<severity>]" \

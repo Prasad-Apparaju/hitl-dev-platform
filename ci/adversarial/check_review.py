@@ -75,14 +75,23 @@ def canonical_lens(raw):
     downstream. Strip the disambiguating suffix people reach for, then apply the alias map.
     """
     lens = str(raw or "").strip().lower()
-    lens = re.sub(r"[\s_-]*\d+$", "", lens)
-    lens = re.sub(r"[\s_-]*(bis|b|two|second)$", "", lens)
+    # A numbering suffix is stripped only when what remains is a catalog id or alias, and a letter
+    # suffix only behind a separator (#92: `web` lost its b and `v2` its digits, and two distinct
+    # ids could be reported as one).
+    m = re.match(r"^(.+?)(?:[\s_-]*\d+|[\s_-]+(?:bis|b|two|second))$", lens)
+    if m and (m.group(1) in LENSES or m.group(1) in LENS_ALIASES):
+        lens = m.group(1)
     return LENS_ALIASES.get(lens, lens)
 
 
 def _norm(text):
     """Check text as typed twice by a person: case and internal whitespace do not count."""
     return re.sub(r"\s+", " ", str(text or "")).strip().casefold()
+
+
+def _same_id(a, b):
+    """change_id comparison. `gh-92` and `GH-92` name one change (#92: the record was ignored)."""
+    return str(a or "").strip().casefold() == str(b or "").strip().casefold()
 
 
 def _fail(findings, code, msg):
@@ -221,8 +230,7 @@ def _claimed_without_record(change, reviews_dir, change_id):
             doc, err = _load(os.path.join(reviews_dir, n))
             # Match the change_id FIELD, as every other lookup here does. Matching the filename
             # let a valid record be honoured and reported missing in the same run.
-            if not err and isinstance(doc, dict) and \
-                    str(doc.get("change_id", "")).strip() == change_id:
+            if not err and isinstance(doc, dict) and _same_id(doc.get("change_id"), change_id):
                 return []
     return [str(s.get("key")) for s in steps
             if isinstance(s, dict) and str(s.get("key", "")).startswith("adv_")
@@ -238,7 +246,7 @@ def _adverse_verdict(reviews_dir, change_id):
         if not name.endswith((".yaml", ".yml")):
             continue
         doc, err = _load(os.path.join(reviews_dir, name))
-        if not err and isinstance(doc, dict) and str(doc.get("change_id", "")).strip() != change_id:
+        if not err and isinstance(doc, dict) and not _same_id(doc.get("change_id"), change_id):
             continue
         if err or not isinstance(doc, dict):
             continue
@@ -331,12 +339,12 @@ def check(change_path, reviews_dir, sha=None, root="."):
             # A record we cannot read is not a record we can trust — but only if it is OURS.
             # Records are kept forever, so unrelated debris from a long-closed change must not
             # block every future release.
-            if os.path.basename(path).startswith(change_id + "-"):
+            if os.path.basename(path).casefold().startswith(change_id.casefold() + "-"):
                 _fail(out, "MALFORMED", "%s: %s" % (path, err))
             else:
                 warn_unreadable.append(path)
             continue
-        if str(doc.get("change_id", "")).strip() == change_id:
+        if _same_id(doc.get("change_id"), change_id):
             records.append((path, doc))
 
     if not records:
@@ -363,7 +371,9 @@ def check(change_path, reviews_dir, sha=None, root="."):
     adverse_in_round = [r for r in latest
                         if str(r[1].get("verdict", "")).strip().lower() not in PASS_VERDICTS]
     path, rec = (adverse_in_round[0] if adverse_in_round else latest[-1])
-    warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed (not this change — ignored)" % u
+    warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed. Its change_id is unknown, so it is "
+                "neither honoured nor attributed to this change; if it is this change's record, fix it and "
+                "name it <change_id>-round<N>-<lens>.yaml so a parse failure blocks." % u
                 for u in warn_unreadable]
 
     for key in dupes:
@@ -502,6 +512,43 @@ def check(change_path, reviews_dir, sha=None, root="."):
             continue
         findings.extend((_p, i, item) for i, item in enumerate(_f))
 
+    # An open blocking finding in an EARLIER round blocks until some record in that round or a later
+    # one lists the same claim as fixed or accepted-with-a-name (#92: a round-1 CRITICAL followed by
+    # a clean round 2 that never mentioned it shipped). Matching is by normalised claim text, the
+    # same key RECURRING_FINDING uses; nothing else is inferred across rounds.
+    def _claim_key(f):
+        return re.sub(r"[^a-z0-9 ]", "", str(f.get("claim", "")).lower()).strip()[:60]
+
+    def _is_blocking(f, v2):
+        if v2 and ("class" in f or "severity" not in f):
+            return str(f.get("class", "")).strip().lower() in BLOCKING_CLASSES
+        return str(f.get("severity", "")).strip().upper() in BLOCKING
+
+    def _is_resolved(f):
+        st = str(f.get("status", "open")).strip().lower()
+        return st == "fixed" or (st == "accepted" and str(f.get("accepted_by", "")).strip())
+
+    resolved_later = {}
+    for _p, _doc in records:
+        for f in (_doc.get("findings") or []):
+            if isinstance(f, dict) and _is_resolved(f) and _claim_key(f):
+                resolved_later.setdefault(_claim_key(f), set()).add(_round((_p, _doc)))
+    for _p, _doc in records:
+        n = _round((_p, _doc))
+        if n >= top:
+            continue
+        for f in (_doc.get("findings") or []):
+            if not isinstance(f, dict) or not _is_blocking(f, _is_v2(_doc)):
+                continue
+            if str(f.get("status", "open")).strip().lower() in OPEN_STATES:
+                key = _claim_key(f)
+                if not any(r >= n for r in resolved_later.get(key, ())):
+                    _fail(out, "FINDING_CARRIED",
+                          "round %d left %r open and no round since resolves it. Mark it fixed or "
+                          "accepted (with a name) in its own record or in a later round; a clean later "
+                          "round that does not mention it is not a resolution."
+                          % (n, str(f.get("claim", "?"))[:70]))
+
     unresolved = []
     covered_checks = set()
     for fpath, i, f in findings:
@@ -599,11 +646,14 @@ def main(argv=None):
         sys.stderr.write("[BLOCK] MALFORMED: unexpected error verifying the review gate: %s\n" % exc)
         return 2
 
+    not_head = False
     if args.sha:
         head = _head_sha(args.root)
         if head and not (head.startswith(args.sha) or args.sha.startswith(head)):
-            print("[warn] TARGET_NOT_HEAD: checked %s, but HEAD is %s. This is NOT a verdict on "
-                  "what would ship." % (args.sha[:12], head[:12]))
+            not_head = True
+            blocks = list(blocks) + ["[BLOCK] TARGET_NOT_HEAD: checked %s, but HEAD is %s. This is not "
+                                     "a verdict on what would ship, so it cannot exit clean (#92)."
+                                     % (args.sha[:12], head[:12])]
     for w in warns:
         print(w)
     for b in blocks:
