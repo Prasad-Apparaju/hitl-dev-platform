@@ -1,0 +1,81 @@
+schema_version: '2.0'
+change_id: GH-109-release-2.11.0
+round: 1
+lens: correctness
+reviewed_sha: 0dd84c9a807d4eb0798e2c64b597c8594b830db0
+scope: 'release 2.11.0 at 0dd84c9: the changelog''s testable claims, the suites, the gate on both record shapes,
+  the live release change'
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: twelve-item checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+checks:
+- check: Test suite
+  command: python3 -m pytest ci/ tools/ -q
+  result: pass
+  output: 881 passed, 1 skipped
+- check: Skill lint
+  command: python3 ci/skill-lint/check_skills.py
+  result: pass
+  output: 63/63 files pass all hard gates
+- check: Breadcrumb matrix
+  command: bash ci/breadcrumb/run_matrix.sh
+  result: pass
+  output: 271 passed, 0 failed
+- check: Catalog reproduces runtime
+  command: derive.py verify
+  result: pass
+  output: VERIFY OK
+- check: Old command remains one release
+  command: ls both SKILL.md; grep -c plugin.json
+  result: pass
+  output: both exist; 2; redirect names the new command
+- check: Step keys unchanged
+  command: 'grep -c key: adv_design|adv_code|adversarial_review workflows.yaml; grep -c adversarial_review check_skips.py'
+  result: pass
+  output: 3; 1 (HARD_GATE_STEPS)
+- check: Gate reads both shapes
+  command: check_review.py on a 1.0 ship record and a 2.0 verified record
+  result: pass
+  output: both exit 0 (1.0 with SHALLOW_REVIEW warning)
+- check: VERDICT_CONTRADICTED and a finding naming its check
+  command: check_review.py reviews_c / reviews_d
+  result: pass
+  output: 'C: VERDICT_CONTRADICTED exit 2; D: cleared exit 0'
+- check: Five reviewer agents verify, refute gone
+  command: grep -L 'Verify, do not confirm'; grep -il refute
+  result: pass
+  output: both empty
+- check: Docs agree with runtime; portal agrees with version
+  command: pytest ci/wiring -k 'workflow_steps_doc or follow_the_runtime or portal_agrees'; grep -c v2.11.0 site/index.html
+  result: pass
+  output: 3 passed; 1
+- check: Example change file and live release change certify
+  command: check_skips.py GH-000-example.yaml; check_skips.py .hitl/current-change.yaml
+  result: pass
+  output: clean, exit 0 both
+- check: Changelog vs git diff --stat 143c864..HEAD
+  command: read-only comparison, 39 files
+  result: pass
+  output: every claim maps to a changed file; four rename follow-through files unnamed
+findings:
+- id: F1
+  class: minor
+  claim: Changelog says the release's review step 'passed on a review' while at commit time step 5 was still open;
+    true only once this round clears
+  evidence: 'read: CHANGELOG.md 2.11.0 entry vs .hitl/current-change.yaml step 5 status: open'
+  status: open
+- id: F2
+  class: minor
+  claim: Four shipped files changed under ai/ (dev-practices SKILL.md, workflow-steps.md, start-change, validate)
+    and one wiring test are rename follow-through not named in the changelog
+  evidence: 'read: git diff --stat 143c864..HEAD vs the 2.11.0 entry'
+  status: open
+- id: F3
+  class: minor
+  claim: A 1.0 record with zero findings and no checks clears with only SHALLOW_REVIEW, as the changelog promises;
+    the two shapes coexist for a release
+  evidence: 'check 7 record A: exit 0 with SHALLOW_REVIEW'
+  status: open
+verdict: verified

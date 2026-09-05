@@ -1,0 +1,78 @@
+schema_version: '2.0'
+change_id: GH-109-release-2.11.0
+round: 1
+lens: upgrade
+reviewed_sha: 0dd84c9a807d4eb0798e2c64b597c8594b830db0
+scope: 'release 2.11.0 at 0dd84c9 built into a scratch clone of hitl-claude-plugin release/2.x (serving 2.10.1):
+  what an upgrading repo and a fresh install get'
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: ten-item checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+checks:
+- check: Build from source into a scratch clone
+  command: bash scripts/build.sh <src>
+  result: pass
+  output: all shared/ references resolve; Build complete.
+- check: New skill exists, old skill is a redirect
+  command: ls skills/dev-verification-review/SKILL.md skills/dev-adversarial-review/SKILL.md; grep -c dev-verification-review
+    in the redirect
+  result: pass
+  output: both; 3
+- check: New shared files exist; old ones absent from the build
+  command: ls shared/verification-review.md shared/templates/verification-review-record.yaml shared/ci/adversarial/check_review.py;
+    ls shared/adversarial-review.md shared/templates/adversarial-review-record.yaml
+  result: fail
+  output: 'new: all present. old: BOTH STILL PRESENT in the build (source has neither)'
+- check: Shipped gate identical to source
+  command: diff -q shared/ci/adversarial/check_review.py <src>/ci/adversarial/check_review.py
+  result: pass
+  output: identical
+- check: No bare shared/ paths in the built skill
+  command: grep -nE '(^|[^}/A-Za-z0-9_])shared/[a-z]' skills/dev-verification-review/SKILL.md
+  result: pass
+  output: (empty)
+- check: Version and changelog
+  command: plugin.json version; grep '^## \[2.11.0\]' CHANGELOG.md
+  result: pass
+  output: 2.11.0; line 7
+- check: Old 1.0 records parse under the new gate
+  command: check_review.py on .hitl/reviews/GH-92-release-2.8.0-round5-*.yaml --sha 699b87a
+  result: pass
+  output: no REVIEW_MALFORMED, no WRONG_STANCE; VERDICT_NOT_SHIP is that record's own content
+- check: Validator sync keeps a locally differing gate
+  command: migrate_project.py --sync-validators <plugin> (dry run) in a repo carrying the published 2.10.1 check_review.py
+  result: pass
+  output: differs from the shipped version — KEPT yours; not overwritten
+- check: Fresh install today is 2.10.1 without the new skill
+  command: CLAUDE_CONFIG_DIR=<scratch> claude plugin install hitl@hitl; ls cache
+  result: pass
+  output: 2.10.1; dev-adversarial-review only
+- check: No live references to the old filenames in source
+  command: grep -rn 'adversarial-review\.md|adversarial-review-record' ai/ ci/ tools/
+  result: pass
+  output: 'one hit: the wiring test keeping the .claude/commands redirect for one release'
+findings:
+- id: F1
+  class: decide
+  check: New shared files exist; old ones absent from the build
+  claim: 'The build shipped shared/adversarial-review.md and shared/templates/adversarial-review-record.yaml beside
+    their replacements: the copy loops only add, and the stale template lost its plugin-root prefix in the process'
+  evidence: ls in the scratch build -> both present; source has neither; git diff shows the stale template rewritten
+    to a bare shared/ path
+  status: fixed
+  resolved_by: hitl-claude-plugin 19f2c3ed6c8c854da8a72b193a236735cc17ab7f (scripts/build.sh sweeps shared/*.md
+    outside the allowlists and shared/templates/* absent from source)
+  verified_by: 're-ran build.sh in the same scratch clone: ''removed stale shared/templates/adversarial-review-record.yaml'',
+    ''removed stale shared/adversarial-review.md''; comm before/after: exactly those two files gone, none added'
+- id: F2
+  class: minor
+  claim: The only 1.0 records available carry do-not-ship, so 'an old record still passes the gate' was not exercised
+    by check 7
+  evidence: check 7 ended BLOCKED on content
+  status: fixed
+  resolved_by: n/a (verified, no code change)
+  verified_by: a 1.0 record with verdict ship, stance refute, findings [] at 0dd84c9 -> 'verification review present,
+    fresh, and cleared.' exit 0
+verdict: verified
