@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Conformance for the First Pass library (dispositions, starters, resurface, permissions).
 FR-29 test-plan §4-§9. Adversarial edges included."""
+import json
 import os
 import sys
 
@@ -729,3 +730,56 @@ def test_sync_cli_is_a_separate_mode(tmp_path, capsys):
     out = capsys.readouterr().out
     assert rc == 0 and "installed ci/first-pass/check_skips.py" in out
     assert "permissions already current" not in out, "sync mode must not run the settings migration"
+
+
+# ---------------------------------------------------------------- migrate_project: statusLine shape (#96)
+
+def _settings_root(tmp_path, statusline):
+    root = tmp_path / "proj"
+    (root / ".claude").mkdir(parents=True)
+    doc = {"permissions": {"allow": [], "deny": []}}
+    if statusline is not None:
+        doc["statusLine"] = statusline
+    (root / ".claude" / "settings.json").write_text(json.dumps(doc, indent=2) + "\n")
+    return root
+
+
+def test_a_string_statusline_is_wrapped_into_an_object_on_apply(tmp_path, capsys):
+    """The v2.6.3 re-wire wrote a bare string; the grep check saw the script name inside it and
+    passed. The migrator now wraps it, and only it."""
+    root = _settings_root(tmp_path, 'bash "$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh"')
+    rc = M.main(["--root", str(root), "--apply"])
+    out = capsys.readouterr().out
+    assert rc == 0 and "string form wrapped" in out and "written to" in out
+    doc = json.loads((root / ".claude" / "settings.json").read_text())
+    assert doc["statusLine"] == {"type": "command", "command": 'bash "$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh"'}
+    assert "permissions" in doc, "the rest of the file survives"
+
+
+def test_a_string_statusline_dry_run_reports_and_writes_nothing(tmp_path, capsys):
+    root = _settings_root(tmp_path, 'bash x.sh')
+    before = (root / ".claude" / "settings.json").read_text()
+    M.main(["--root", str(root)])
+    out = capsys.readouterr().out
+    assert "string form wrapped" in out and "not hooks/statusline-hitl.sh" in out and "dry run" in out
+    assert (root / ".claude" / "settings.json").read_text() == before
+
+
+def test_a_correct_statusline_is_left_alone_and_reported_current(tmp_path, capsys):
+    good = {"type": "command", "command": 'bash "$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh"'}
+    root = _settings_root(tmp_path, good)
+    M.main(["--root", str(root), "--apply"])
+    assert "= statusLine current" in capsys.readouterr().out
+    assert json.loads((root / ".claude" / "settings.json").read_text())["statusLine"] == good
+
+
+def test_a_missing_or_stale_statusline_is_reported_not_rewritten(tmp_path, capsys):
+    root = _settings_root(tmp_path, None)
+    M.main(["--root", str(root), "--apply"])
+    assert "statusLine is missing" in capsys.readouterr().out
+    stale = {"type": "command", "command": 'bash "$CLAUDE_PROJECT_DIR/.hitl/statusline.sh"'}
+    root2 = _settings_root(tmp_path / "b", stale)
+    M.main(["--root", str(root2), "--apply"])
+    out = capsys.readouterr().out
+    assert "statusLine points at" in out and "legacy" in out
+    assert json.loads((root2 / ".claude" / "settings.json").read_text())["statusLine"] == stale

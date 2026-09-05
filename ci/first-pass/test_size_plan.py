@@ -393,3 +393,35 @@ def test_a_conditional_answered_no_stays_inactive_on_old_records_too():
     old = {k: v for k, v in SMALL.items()}
     out = {o["step"]: o for o in _size(old, 3)}
     assert out["pentest"]["applies"] is False
+
+
+# ── #108: an interface change alone is not a security event ─────────────────────────────────────
+
+def _active(findings, tier=2):
+    from check_skips import resolve_crit
+    out = S.size(findings, CATALOG, COSTS, tier, resolve_crit)
+    return {o["step"] for o in out if o["applies"]}
+
+
+def test_an_interface_change_alone_does_not_activate_the_security_steps():
+    """The first change sized after 2.10.0 was a review skill and a YAML schema. `interfaces_changed`
+    was true (the schema is a published interface), `security_sensitive` was answered false, and
+    the sizer activated the security design review and locked the pentest as floor. The finding was
+    standing in for "security-relevant"; only the human's answer and a data migration are."""
+    quiet = _active({"area": "x", "interfaces_changed": True, "security_sensitive": False})
+    assert "sec_design" not in quiet and "pentest" not in quiet
+
+
+def test_the_security_answer_and_a_migration_still_activate_them():
+    assert {"sec_design", "pentest"} <= _active({"area": "x", "security_sensitive": True})
+    assert {"sec_design", "pentest"} <= _active({"area": "x", "data_migration": True, "security_sensitive": False})
+
+
+def test_an_active_conditional_step_says_which_activator_fired():
+    """cve_audit has `needed_now: always`, so its reason read "applies to every change" even when the
+    only thing that put it in the plan was the security answer. The reason shown to a person is the
+    activator (noted at the 2.10.0 validation, fixed here)."""
+    out = S.size({"area": "x", "security_sensitive": True}, CATALOG, COSTS, 2, resolve_crit)
+    cve = next(o for o in out if o["step"] == "cve_audit")
+    assert cve["applies"] and "security sensitive" in cve["because"], cve["because"]
+    assert "applies to every change" not in cve["because"]

@@ -4,6 +4,25 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **An interface change alone no longer activates the security design review or locks the
+  penetration test** (#108). The first change sized after 2.10.0 was a review skill and a YAML
+  schema; the schema counted as a published interface, the security question was answered no, and
+  the sizer still put both steps in the plan with the pentest as floor. The two rules now read the
+  human's answer and a data migration only. A change that touches auth, secrets or personal data
+  still gets both, because intake asks.
+- **`dev-update` repairs a string-form `statusLine`** (#96). The v2.6.3 re-wire wrote it as a bare
+  string; Claude Code wants an object, and the check was a grep for the script name, which the
+  string passes. The migrator that already runs on update wraps it, shows the change, and writes
+  it with `--apply`. A missing or re-pointed `statusLine` is reported, not rewritten.
+- **The sizer names the activator for an active conditional step.** The CVE audit's reason read
+  "applies to every change" when the only thing that put it in the plan was the security answer.
+
+---
+
 ## [2.12.0] — 2026-09-05
 
 ### Changed

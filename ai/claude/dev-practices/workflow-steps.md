@@ -68,7 +68,7 @@ Activated by an API surface or a data migration. Measure the current behaviour b
 so "faster" is a number instead of a feeling.
 
 **4b. Security Design Review (conditional)** — use `/hitl:dev-review-security`
-Activated by a security-sensitive declaration, a changed public interface, or a data migration.
+Activated by a security-sensitive declaration or a data migration; a changed interface alone does not activate it (#108).
 Threat-model the design while it can still change cheaply.
 
 **4c. Dependency + CVE Audit (conditional)** — use `/hitl:ops-audit-dependencies`

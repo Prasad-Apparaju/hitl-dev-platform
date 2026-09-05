@@ -118,12 +118,12 @@ Each brief must contain, in this order:
    is still exploring after the checklist is done is producing volume, not verification.
 6. **A verdict instruction** — VERIFIED or NOT VERIFIED, and if the latter, the one check that
    decides it.
-7. **Where the report goes.** *"Write your full report to `.hitl/reviews/incoming/<lens>-round<N>.md`
-   as your final action, then reply with that path and nothing else."* Say it last so it is the
-   instruction nearest the end of the brief.
-8. **Working rules** — scratch directories only, restore anything touched, never modify tracked
+7. **Working rules** — scratch directories only, restore anything touched, never modify tracked
    files. Writing its own report file is the one exception, and `.hitl/` is exempt from the gate's
    uncommitted-changes check for exactly this reason.
+8. **Where the report goes.** *"Write your full report to `.hitl/reviews/incoming/<lens>-round<N>.md`
+   as your final action, then reply with that path and nothing else."* Say it last so it is the
+   instruction nearest the end of the brief.
 
 ### What must not be in a brief
 

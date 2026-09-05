@@ -284,6 +284,35 @@ def sync_validators(root, plugin_root, apply=False, overwrite=()):
     return result
 
 
+STATUSLINE_SCRIPT = "hooks/statusline-hitl.sh"
+
+
+def repair_statusline(settings):
+    """(settings, action, message). Fixes the SHAPE of `statusLine` and reports its TARGET.
+
+    The v2.6.3 re-wire wrote `"statusLine": "bash ..."` as a bare string; Claude Code wants an
+    object, and every session since printed "Expected object, but received string" (#96). The
+    upgrade never touched settings.json, because the check was `grep statusline-hitl.sh`, which the
+    string form passes. Only the string-to-object wrap is done here: it is unambiguous. Anything
+    else (absent, or pointing somewhere else) is reported for the human, because the skill's rule
+    is to correct specific keys with the diff shown, never to rewrite the file.
+    """
+    sl = settings.get("statusLine")
+    if sl is None:
+        return settings, "missing", "! statusLine is missing: the breadcrumb will not render. Add it (see the update skill)."
+    if isinstance(sl, str):
+        fixed = dict(settings)
+        fixed["statusLine"] = {"type": "command", "command": sl}
+        note = "" if STATUSLINE_SCRIPT in sl else " It also points at %r, not %s." % (sl, STATUSLINE_SCRIPT)
+        return fixed, "wrapped", "+ statusLine: string form wrapped into {type: command, command: ...} (#96).%s" % note
+    if isinstance(sl, dict):
+        cmd = str(sl.get("command", ""))
+        if STATUSLINE_SCRIPT in cmd:
+            return settings, "ok", "= statusLine current"
+        return settings, "stale", "! statusLine points at %r, not %s: re-point it (a legacy .hitl/statusline.sh renders the wrong trail)." % (cmd, STATUSLINE_SCRIPT)
+    return settings, "unrecognised", "! statusLine is a %s, not an object: fix it by hand." % type(sl).__name__
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--root", default=".")
@@ -326,11 +355,17 @@ def main(argv=None):
             for k in ("allow", "deny"):
                 for e in added[k]:
                     print(f"    {k}: {e}")
-            if a.apply:
-                with io.open(spath, "w", encoding="utf-8") as fh:
-                    json.dump(merged, fh, indent=2)
-                    fh.write("\n")
-                print(f"  written to {spath}")
+        # statusLine shape (#96): a string where an object belongs is wrapped; anything else is
+        # reported and left for the human, per the skill's correct-only-what-is-wrong rule.
+        merged, action, msg = repair_statusline(merged)
+        print(msg)
+        if action == "wrapped":
+            changed = True
+        if changed and a.apply:
+            with io.open(spath, "w", encoding="utf-8") as fh:
+                json.dump(merged, fh, indent=2)
+                fh.write("\n")
+            print(f"  written to {spath}")
 
     # 2) in-flight change files
     #

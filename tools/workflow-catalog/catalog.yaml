@@ -424,8 +424,8 @@ step_costs:
   sec_design:
     protects: "The threat model is considered while the design can still change cheaply."
     forgo_cost: high
-    engages: { any: [security_sensitive, interfaces_changed, data_migration] }
-    needed_now: { any: [security_sensitive, interfaces_changed, data_migration] }
+    engages: { any: [security_sensitive, data_migration] }
+    needed_now: { any: [security_sensitive, data_migration] }
   cve_audit:
     # A hard gate, so `needed_now` may not be `never` — see conventions.
     protects: "You know which published vulnerabilities the version you are moving to carries."
@@ -548,8 +548,8 @@ step_costs:
   pentest:
     protects: "Someone actively tried to abuse it before a customer could."
     forgo_cost: high
-    engages: { any: [security_sensitive, interfaces_changed, data_migration] }
-    needed_now: { any: [security_sensitive, interfaces_changed, data_migration] }
+    engages: { any: [security_sensitive, data_migration] }
+    needed_now: { any: [security_sensitive, data_migration] }
   promote:
     protects: "Production only ever receives what a person decided to send it."
     forgo_cost: high

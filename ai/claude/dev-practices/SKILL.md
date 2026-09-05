@@ -91,7 +91,7 @@ Design
 3.  ROI Estimate           → if >1 day effort, record in `.hitl/current-change.yaml` under `roi_estimate`; post pointer comment on issue; see roi-estimation.md (conditional)
 4.  Update Docs            → /hitl:dev-generate-docs — HLD/LLD/ADR; architect approves HLD before LLD
 4a. Baseline Measurement   → /hitl:ops-measure-baseline — a before-measurement so "faster" is a number; activated by an API surface or a data migration (conditional)
-4b. Security Design Review → /hitl:dev-review-security --phase design — threat model + STRIDE; activated when the change is security-sensitive, changes an interface or migrates data; LLD cannot be architect-approved until Critical/High findings have mitigations (conditional)
+4b. Security Design Review → /hitl:dev-review-security --phase design — threat model + STRIDE; activated when the change is security-sensitive or migrates data (an interface change alone does not, #108); LLD cannot be architect-approved until Critical/High findings have mitigations (conditional)
 4c. Dependency + CVE Audit → /hitl:ops-audit-dependencies — published vulnerabilities of the versions being moved to; activated by a dependency change or a security-sensitive change (conditional)
 5.  Update IaC             → manifests, migrations, rollback migrations, configs; exit requires /hitl:ops-verify-scripts --level syntax
 6.  Test Case Planning     → /hitl:qa-plan-tests — QA queries incident history; QA scenarios acknowledged before TDD

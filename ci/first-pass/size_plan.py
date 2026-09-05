@@ -153,6 +153,10 @@ def size(findings, catalog, costs, tier, resolve_crit):
             # shown to a person is the real one rather than whichever predicate happened to fire.
             applies = needed = True
             reason = why_applies = why_needed = "locked at tier %s" % tier
+        elif cond:
+            # An active conditional step is in the plan BECAUSE its activator fired; say that,
+            # not "applies to every change" from a `needed_now: always` rule (cve_audit, 2.10.0).
+            reason = why_applies
         else:
             reason = why_needed if needed else why_applies
         out.append({"step": key, "applies": applies, "needed_now": needed,
