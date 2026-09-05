@@ -46,7 +46,7 @@ spine:
     - { key: test_plan,          name: "Test Case Planning",           label: "Tests",    phase: "Design", command: qa-plan-tests,                role: QA, crit: standard }
     - { key: training,           name: "Training Plan Stub",           label: "Train",    phase: "Design", command: guided,                       role: PM, crit: ceremony }
     - { key: packet,             name: "Package Decision Packet",      label: "Packet",   phase: "Design", command: manual,                       role: Architect, crit: standard, crit_by_tier: { 3: floor } }
-    - { key: adv_design,         name: "Adversarial Design Review",    label: "AdvDsgn",  phase: "Design", substep: true, parent: packet, command: dev-adversarial-review, role: Architect, crit: ceremony }
+    - { key: adv_design,         name: "Verification Review (Design)", label: "VfyDsn",  phase: "Design", substep: true, parent: packet, command: dev-verification-review, role: Architect, crit: ceremony }
     # ── Build (TDD cycle) ─────────────────────────────────────────
     - { key: red,                name: "AI Generates Tests (RED)",     label: "RED",      phase: "Build", command: dev-tdd,                      role: Dev, crit: standard, no_omit: true }
     - { key: test_review,        name: "Human Reviews Tests",          label: "TstRvw",   phase: "Build", command: qa-review-tests,              role: QA, crit: ceremony }
@@ -56,7 +56,7 @@ spine:
     - { key: verify_green,       name: "Verify GREEN",                 label: "VfyGRN",   phase: "Build", command: manual,                       role: Dev, crit: standard }
     - { key: refactor,           name: "Refactor",                     label: "Refact",   phase: "Build", command: manual,                       role: Dev, crit: ceremony }
     - { key: conventions,        name: "Convention Checks",            label: "Conv",     phase: "Build", command: dev-check-conventions,        role: Dev, crit: standard }
-    - { key: adv_code,           name: "Adversarial Code Review",      label: "AdvCode",  phase: "Build", substep: true, parent: conventions, command: dev-adversarial-review, role: Architect, crit: ceremony }
+    - { key: adv_code,           name: "Verification Review (Code)",  label: "VfyCode",  phase: "Build", substep: true, parent: conventions, command: dev-verification-review, role: Architect, crit: ceremony }
     # ── Verify ────────────────────────────────────────────────────
     - { key: review1,            name: "Code Review Round 1",          label: "Rvw1",     phase: "Verify", command: dev-review-lld-adherence,     role: Dev, crit: standard }
     - { key: review2,            name: "Code Review Round 2",          label: "Rvw2",     phase: "Verify", command: dev-review-security,          role: Dev, crit: standard }
@@ -213,8 +213,8 @@ workflows:
       crit: floor
       no_omit: true
     - key: adversarial_review
-      name: Independent Adversarial Review
-      label: Adversarial
+      name: Verification Review
+      label: Review
       phase: Gate
       command: manual
       role: Architect

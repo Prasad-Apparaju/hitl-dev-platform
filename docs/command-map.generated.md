@@ -19,7 +19,7 @@ Each row is one step of the development delivery spine, with the command that ex
 | 6 | Test Case Planning | Design | qa-plan-tests | QA |
 | 7 | Training Plan Stub | Design | guided | PM |
 | 8 | Package Decision Packet | Design | manual | Architect |
-| 8a | Adversarial Design Review | Design | dev-adversarial-review | Architect |
+| 8a | Verification Review (Design) | Design | dev-verification-review | Architect |
 | 9 | AI Generates Tests (RED) | Build | dev-tdd | Dev |
 | 10 | Human Reviews Tests | Build | qa-review-tests | QA |
 | 11 | Tests Improve the Design | Build | dev-tdd | Dev |
@@ -28,7 +28,7 @@ Each row is one step of the development delivery spine, with the command that ex
 | 14 | Verify GREEN | Build | manual | Dev |
 | 15 | Refactor | Build | manual | Dev |
 | 16 | Convention Checks | Build | dev-check-conventions | Dev |
-| 16a | Adversarial Code Review | Build | dev-adversarial-review | Architect |
+| 16a | Verification Review (Code) | Build | dev-verification-review | Architect |
 | 17 | Code Review Round 1 | Verify | dev-review-lld-adherence | Dev |
 | 18 | Code Review Round 2 | Verify | dev-review-security | Dev |
 | 18a | Architect Code Review | Verify | architect-review-code | Architect |

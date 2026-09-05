@@ -79,7 +79,7 @@ Run every applicable check below for each group. Record each result as **PASS** 
 
 ### Release gate (only when the active change is a `release`)
 
-A release must carry an adversarial review of the code being shipped. This is the check that makes
+A release must carry a verification review of the code being shipped. This is the check that makes
 that real rather than stated — without it the requirement is prose and a release proceeds exactly as
 it did before.
 

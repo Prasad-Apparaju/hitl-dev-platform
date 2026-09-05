@@ -238,8 +238,10 @@ def test_onboarding_exposes_every_flat_skill_it_should(tmp_path):
                        capture_output=True, text=True)
     assert p.returncode == 0, (p.stdout + p.stderr)[-2000:]
     cmds = target / ".claude" / "commands"
+    assert (cmds / "verification-review.md").exists(), (
+        "the verification-review command is not exposed; onboarded repos cannot run it")
     assert (cmds / "adversarial-review.md").exists(), (
-        "the adversarial-review command is not exposed; onboarded repos cannot run it")
+        "the old command name is kept as a redirect for one release (#101); it is gone")
     assert (target / "ci" / "adversarial" / "check_review.py").is_file(), (
         "the release gate validator was not installed")
 

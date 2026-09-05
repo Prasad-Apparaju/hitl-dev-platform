@@ -1,0 +1,61 @@
+# Verification review record — .hitl/reviews/<change-id>-round<N>.yaml
+#
+# Verified by ci/adversarial/check_review.py. The release workflow's `gates` step runs it via
+# /hitl:dev-validate; `publish` must not proceed while it reports a block.
+#
+# Honest scope: the gate cannot prove a review was independent or that the checks were really run.
+# Those are attestations. What it CAN enforce is that the record names the commit it reviewed and
+# that the commit still matches what is shipping — so you cannot review an early draft, keep
+# editing, and still pass. Everything else is bookkeeping around that.
+#
+# Records with schema_version "1.0" (the adversarial-review shape: severity, stance, ship) still
+# validate; the gate reads both. New records use this shape.
+schema_version: "2.0"
+change_id: "GH-000"          # must match .hitl/current-change.yaml
+round: 1                     # highest round decides; earlier rounds are history
+lens: ""                     # An id from the catalog in shared/verification-review.md: fitness |
+                             # correctness | consequence | upgrade | security | data | scalability |
+                             # operability | compatibility | bypass | interfaces | user | cost.
+                             # A round is a SET of lenses — each reviewer gets its own record and
+                             # its own lens. Do not number a second one (`consequence-2`): the gate
+                             # resolves that back to `consequence` and reports the duplicate.
+                             # If ANY lens in a round says not-verified, the round is not verified.
+reviewed_sha: ""             # the commit reviewed. MUST match what ships, or it blocks.
+reviewed_tree: ""            # git rev-parse HEAD^{tree} — lets a squash-merged review still
+                             # count when the content is byte-identical and the commit is gone.
+scope: ""                    # what was put in front of the reviewer, e.g. "diff v2.6.2..HEAD"
+
+reviewer:
+  model: ""                  # which model ran it
+  context: ""                 # clean | inherited. MUST be typed. 'clean' means a reviewer with no
+                             # history of building this. If that was you, in this session, it is
+                             # 'inherited' and the gate will refuse it — correctly.
+  spawned_by: ""             # what launched it
+  brief: ""                  # the checklist it was given, or where it is
+
+# The table from the report: one entry per check. A record with no checks is a review that ran
+# nothing; the gate warns on it. `result` is pass | fail | unknown — unknown is a check that could
+# not be run, and it is neither a pass nor a fail.
+checks: []
+#  - check: ""               # the claim being checked, in one line
+#    command: ""             # what was run (or "read: <file>" for a read-only check)
+#    result: pass            # pass | fail | unknown
+#    output: ""              # what it printed, enough to decide
+
+# DELETE this example block before use. The validator reads it as a real finding, so leaving it in
+# on a clean round blocks with an empty stops-it-working. An empty list is the correct clean value.
+# At most five, ranked. Three classes:
+#   stops   — it does not do what it claims; blocks until fixed or accepted with a name
+#   decide  — real, and someone has to choose; blocks until decided (fixed, or accepted with a name)
+#   minor   — worth knowing; never blocks
+findings: []
+#  - id: F1
+#    class: stops             # stops | decide | minor
+#    claim: ""                # what fails, in one line
+#    evidence: ""             # the command and observed output. A finding nobody reproduced is a guess.
+#    status: open             # open | fixed | accepted
+#    resolved_by: ""          # commit that fixed it
+#    verified_by: ""          # HOW YOU KNOW it is fixed: the check above, re-run, and what it printed
+#    accepted_by: ""          # required when status is 'accepted' — accepting is someone's decision
+
+verdict: not-verified        # verified | not-verified. Anything but 'verified' blocks the release.

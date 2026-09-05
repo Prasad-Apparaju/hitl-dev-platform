@@ -46,7 +46,7 @@ workflows:
       - { n: 6, key: test_plan, label: "Tests", phase: "Design", crit: standard, command: qa-plan-tests }
       - { n: 7, key: training, label: "Train", phase: "Design", crit: ceremony, command: guided }
       - { n: 8, key: packet, label: "Packet", phase: "Design", crit: standard, crit_by_tier: { 3: floor }, command: manual }
-      - { n: 8a, key: adv_design, label: "AdvDsgn", phase: "Design", crit: ceremony, command: dev-adversarial-review }
+      - { n: 8a, key: adv_design, label: "VfyDsn", phase: "Design", crit: ceremony, command: dev-verification-review }
       - { n: 9, key: red, label: "RED", phase: "Build", crit: standard, no_omit: true, command: dev-tdd }
       - { n: 10, key: test_review, label: "TstRvw", phase: "Build", crit: ceremony, command: qa-review-tests }
       - { n: 11, key: design_plus, label: "Dsn+", phase: "Build", crit: standard, command: dev-tdd }
@@ -55,7 +55,7 @@ workflows:
       - { n: 14, key: verify_green, label: "VfyGRN", phase: "Build", crit: standard, command: manual }
       - { n: 15, key: refactor, label: "Refact", phase: "Build", crit: ceremony, command: manual }
       - { n: 16, key: conventions, label: "Conv", phase: "Build", crit: standard, command: dev-check-conventions }
-      - { n: 16a, key: adv_code, label: "AdvCode", phase: "Build", crit: ceremony, command: dev-adversarial-review }
+      - { n: 16a, key: adv_code, label: "VfyCode", phase: "Build", crit: ceremony, command: dev-verification-review }
       - { n: 17, key: review1, label: "Rvw1", phase: "Verify", crit: standard, command: dev-review-lld-adherence }
       - { n: 18, key: review2, label: "Rvw2", phase: "Verify", crit: standard, command: dev-review-security }
       - { n: 18a, key: arch_review, label: "ArchRvw", phase: "Verify", crit: standard, crit_by_tier: { 3: floor }, command: architect-review-code }
@@ -187,7 +187,7 @@ workflows:
       - { n: 2,  key: changelog,           label: "Notes",       phase: "Prepare" , crit: standard, command: manual }
       - { n: 3,  key: version_bump,        label: "Bump",        phase: "Prepare" , crit: standard, command: manual }
       - { n: 4,  key: gates,               label: "Gates",       phase: "Verify"  , crit: floor, no_omit: true, command: dev-validate }
-      - { n: 5,  key: adversarial_review,  label: "Adversarial", phase: "Gate"    , crit: floor, command: manual }
+      - { n: 5,  key: adversarial_review,  label: "Review", phase: "Gate"    , crit: floor, command: manual }
       - { n: 6,  key: resolve_findings,    label: "Resolve",     phase: "Gate"    , crit: floor, command: manual }
       - { n: 7,  key: build,               label: "Build",       phase: "Publish" , crit: standard, command: manual }
       - { n: 8,  key: publish,             label: "Publish",     phase: "Publish" , crit: floor, no_omit: true, command: manual }

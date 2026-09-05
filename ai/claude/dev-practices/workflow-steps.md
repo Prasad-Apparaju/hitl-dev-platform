@@ -112,8 +112,8 @@ token_tracking:
 
 Do this before closing the session — the summary is not persisted anywhere else. Sum all session costs to get `token_tracking.actual.total_cost_usd`.
 
-**8a. Adversarial Design Review** — use `/hitl:dev-adversarial-review`
-Independent reviewers in a clean context are briefed to refute the design rather than confirm it; reproduced findings are put to you before anything is fixed, and the review record is written for the release gate. Ceremony: worth doing, never blocks shipping.
+**8a. Verification Review (Design)** — use `/hitl:dev-verification-review`
+An independent reviewer in a clean context is given a checklist built from the requirement and the design's own claims, runs what can be run, and returns one page: a table of checks and at most five ranked points. What failed is put to you before anything is fixed, and the review record is written for the release gate. Ceremony: worth doing, never blocks shipping.
 
 ---
 
@@ -149,13 +149,13 @@ Run `semgrep scan --config .semgrep/ --error` and manifest drift check against `
 
 ---
 
-### 9a / 17a: offer an adversarial review (optional)
+### 8a / 16a: offer a verification review (optional)
 
 At the end of Design (`9a`, after the decision packet) and at the end of Build (`17a`, after the
-convention checks), **offer** an independent adversarial review before moving on. These are
+convention checks), **offer** an independent verification review before moving on. These are
 `ceremony` steps: ask once, accept the answer, do not ask again in the same step.
 
-> Design's done — want an adversarial review before we build? About ten minutes, runs in the
+> Design's done — want a verification review before we build? About ten minutes, runs in the
 > background while you keep working, and it looks for reasons this is wrong rather than reasons
 > it's right. Or skip it and I'll note that we did.
 
@@ -163,13 +163,13 @@ Say one extra sentence when the change is destructive, irreversible, touches dat
 recover, or rests on an assumption about someone else's behaviour — that last class is where this
 pays best. Then drop it.
 
-Accepted → `/hitl:dev-adversarial-review`. Declined → record it as an ordinary skip with a name and
-the reason in their words. Detail in `shared/adversarial-review.md`.
+Accepted → `/hitl:dev-verification-review`. Declined → record it as an ordinary skip with a name and
+the reason in their words. Detail in `shared/verification-review.md`.
 
 ## Steps 17–21: Verify
 
-**16a. Adversarial Code Review** — use `/hitl:dev-adversarial-review`
-The same refuting review, run against the code once the TDD cycle is complete and before the review rounds. Ceremony: worth doing, never blocks shipping.
+**16a. Verification Review (Code)** — use `/hitl:dev-verification-review`
+The same checklist review, run against the code once the TDD cycle is complete and before the review rounds. Ceremony: worth doing, never blocks shipping.
 
 **17. Code Review Round 1** — use `/hitl:dev-review-lld-adherence`
 Uses the `spec-conformance-reviewer` agent. Reads implementation files plus the LLD at `docs/02-design/technical/lld/<component>.md` (Tests Improve the Design) and `system-manifest.yaml`. Reviews: structure, security, LLD adherence, naming conventions. Fix all CRITICAL and HIGH findings before proceeding. MEDIUM findings are documented for Round 2.
@@ -296,7 +296,7 @@ building. Twelve steps; the ones with teeth are marked.
 | 2 | `changelog` | Write the notes from that scope. Verify every claim against the tree; a release note is a promise |
 | 3 | `version_bump` | Patch for fixes, minor for new capability. Bump in one place only |
 | 4 | `gates` | **floor** — `/hitl:dev-validate`. Tests, lint, and anything else that fails fast, before anyone spends time reviewing |
-| 5 | `adversarial_review` | **floor** — `/hitl:dev-adversarial-review`. Independent, refuting, against the exact code being shipped |
+| 5 | `adversarial_review` | **floor** — `/hitl:dev-verification-review`. Independent, checklist-driven, run against the exact code being shipped; the step keeps its key from when it was adversarial |
 | 6 | `resolve_findings` | **floor** — fix every CRITICAL and HIGH, or accept it with a name against it. Fixing moves the code, so re-review: that is a new round |
 | 7 | `build` | Package it. Keep build output out of the tree, or `.gitignore` it before you start |
 | 8 | `publish` | **floor** — the irreversible one. Your publish script must run the gate and refuse on a non-zero exit; nothing else in HITL can stop you here. Run every validator that reads the change file, not only the review gate: the skip-ledger validator too, or a record one accepts and the other refuses ships |

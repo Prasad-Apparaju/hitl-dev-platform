@@ -17,7 +17,7 @@ Derived from `tools/workflow-catalog/catalog.yaml`. Do not edit by hand.
 | 6 | Design.4 | Tests | test_plan |
 | 7 | Design.5 | Train | training |
 | 8 | Design.6 | Packet | packet |
-| 8a | Design.6a | AdvDsgn | adv_design |
+| 8a | Design.6a | VfyDsn | adv_design |
 | 9 | Build.1 | RED | red |
 | 10 | Build.2 | TstRvw | test_review |
 | 11 | Build.3 | Dsn+ | design_plus |
@@ -26,7 +26,7 @@ Derived from `tools/workflow-catalog/catalog.yaml`. Do not edit by hand.
 | 14 | Build.6 | VfyGRN | verify_green |
 | 15 | Build.7 | Refact | refactor |
 | 16 | Build.8 | Conv | conventions |
-| 16a | Build.8a | AdvCode | adv_code |
+| 16a | Build.8a | VfyCode | adv_code |
 | 17 | Verify.1 | Rvw1 | review1 |
 | 18 | Verify.2 | Rvw2 | review2 |
 | 18a | Verify.2a | ArchRvw | arch_review |
@@ -136,7 +136,7 @@ Derived from `tools/workflow-catalog/catalog.yaml`. Do not edit by hand.
 | 2 | Prepare.2 | Notes | changelog |
 | 3 | Prepare.3 | Bump | version_bump |
 | 4 | Verify.1 | Gates | gates |
-| 5 | Gate.1 | Adversarial | adversarial_review |
+| 5 | Gate.1 | Review | adversarial_review |
 | 6 | Gate.2 | Resolve | resolve_findings |
 | 7 | Publish.1 | Build | build |
 | 8 | Publish.2 | Publish | publish |

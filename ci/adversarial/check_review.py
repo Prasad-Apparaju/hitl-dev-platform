@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed gate: a release must carry a fresh, independent adversarial review.
+"""Fail-closed gate: a release must carry a fresh, independent verification review.
 
     check_review.py [--change .hitl/current-change.yaml] [--reviews .hitl/reviews] [--sha <sha>]
 
@@ -7,7 +7,7 @@ Exit 0 = clean, 2 = blocked, 1 = usage error.
 
 WHAT THIS CAN AND CANNOT DO — read before trusting it.
 
-It cannot verify that a review was genuinely adversarial, or that the reviewer was genuinely
+It cannot verify that a review's checks were genuinely run, or that the reviewer was genuinely
 independent. Those are properties of an LLM's behaviour, and a record asserting them is an
 attestation, not proof. Anyone determined to fake this can.
 
@@ -33,12 +33,24 @@ except Exception:  # pragma: no cover - environment without PyYAML
     sys.stderr.write("[BLOCK] MALFORMED: PyYAML is required to verify the review gate\n")
     sys.exit(2)
 
+# Two record shapes are read. schema_version "1.0" is the adversarial-review record (severity,
+# stance: refute, verdict ship). schema_version "2.0" is the verification-review record (#101):
+# a `checks` table, findings in three classes, verdict verified. Old records keep validating — a
+# vocabulary that rejects them would be a reason to delete the gate rather than fix the record.
 BLOCKING = ("CRITICAL", "HIGH")
 SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
+CLASSES = ("stops", "decide", "minor")
+BLOCKING_CLASSES = ("stops", "decide")
+CHECK_RESULTS = ("pass", "fail", "unknown")
+PASS_VERDICTS = ("ship", "verified")
 OPEN_STATES = ("open",)
 RESOLVED_STATES = ("fixed", "accepted")
 
-# The lens vocabulary, mirrored from the catalog in ai/shared/adversarial-review.md. Kept here as
+
+def _is_v2(rec):
+    return str(rec.get("schema_version", "1.0")).strip().startswith("2")
+
+# The lens vocabulary, mirrored from the catalog in ai/shared/verification-review.md. Kept here as
 # data rather than read from a file on purpose: this validator is copied into product repos, and
 # `dev-update` copies only *.py into ci/adversarial/ — a catalog file would be absent in every
 # repo onboarded before it existed, which is the "ships to shared/ but nothing copies it in"
@@ -222,7 +234,7 @@ def _adverse_verdict(reviews_dir, change_id):
         if err or not isinstance(doc, dict):
             continue
         v = str(doc.get("verdict", "")).strip().lower()
-        if v and v != "ship":
+        if v and v not in PASS_VERDICTS:
             try:
                 n = int(doc.get("round", 0))
             except Exception:
@@ -282,7 +294,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
         if adverse:
             extra = ("\n        NOTE: a review of this change exists and its verdict is %r (%s). "
                      "The waiver is overriding it." % (adverse[1], os.path.basename(adverse[0])))
-        return [], ["[warn] REVIEW_WAIVED: %s is shipping WITHOUT an adversarial review.\n"
+        return [], ["[warn] REVIEW_WAIVED: %s is shipping WITHOUT a verification review.\n"
                     "        Acknowledged by %s: %s%s\n"
                     "        Recorded in the change file, and it stays there."
                     % (change_id, ack.get("by") or "?", ack.get("reason") or "no reason given", extra)]
@@ -294,8 +306,8 @@ def check(change_path, reviews_dir, sha=None, root="."):
 
     if not os.path.isdir(reviews_dir):
         _fail(out, "REVIEW_MISSING",
-              "no %s/ — an adversarial review is required before publishing %s.\n"
-              "        Run /hitl:dev-adversarial-review, or record an explicit acknowledgement "
+              "no %s/ — a verification review is required before publishing %s.\n"
+              "        Run /hitl:dev-verification-review, or record an explicit acknowledgement "
               "to ship without one." % (reviews_dir, change_id))
         return out, []
 
@@ -340,7 +352,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
     latest = [r for r in records if _round(r) == top]
     # Any lens saying do-not-ship decides the round. A second opinion is not a veto override.
     adverse_in_round = [r for r in latest
-                        if str(r[1].get("verdict", "")).strip().lower() != "ship"]
+                        if str(r[1].get("verdict", "")).strip().lower() not in PASS_VERDICTS]
     path, rec = (adverse_in_round[0] if adverse_in_round else latest[-1])
     warnings = ["[warn] UNREADABLE_RECORD: %s could not be parsed (not this change — ignored)" % u
                 for u in warn_unreadable]
@@ -351,7 +363,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
               "round %s has more than one record for lens %r (%s). Two reviewers in one round is "
               "expected — but on DIFFERENT lenses, or they find the same things twice. Names are "
               "resolved to the catalog id first, so `%s-2` counts as `%s`: pick a second lens from "
-              "the catalog in shared/adversarial-review.md instead of numbering this one."
+              "the catalog in shared/verification-review.md instead of numbering this one."
               % (n, lens or "(unset)", ", ".join(seen[key]), lens or "x", lens or "x"))
 
     # An unrecognised lens is information, never a block. Records written before the catalog
@@ -362,7 +374,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
         if raw and canonical_lens(raw) not in LENSES:
             warnings.append(
                 "[warn] UNKNOWN_LENS: %s uses lens %r, which is not in the catalog "
-                "(shared/adversarial-review.md). It still counts; the id is what lets the gate "
+                "(shared/verification-review.md). It still counts; the id is what lets the gate "
                 "group reviewers and what tells the next round what was already looked at."
                 % (os.path.basename(pth), raw))
 
@@ -426,10 +438,42 @@ def check(change_path, reviews_dir, sha=None, root="."):
               "%s: reviewer.context must be 'clean' — a reviewer that shares the author's context "
               "is not an independent check" % path)
 
-    if str(rec.get("stance", "")).strip().lower() != "refute":
+    # The old shape attested a stance; the new one attests what was run. A 1.0 record without
+    # `refute` is still refused, because that is what its schema promised.
+    if not _is_v2(rec) and str(rec.get("stance", "")).strip().lower() != "refute":
         _fail(out, "WRONG_STANCE",
               "%s: stance must be 'refute'. A reviewer setting out to confirm a design finds it "
               "confirmed" % path)
+
+    # The checks table (2.0). A verification with no checks ran nothing; a check that failed on a
+    # record that says verified is a contradiction the reviewer did not resolve.
+    failed_checks = []
+    for _p, _doc in latest:
+        if not _is_v2(_doc):
+            continue
+        _c = _doc.get("checks")
+        if _c is None:
+            _c = []
+        if not isinstance(_c, list):
+            _fail(out, "REVIEW_MALFORMED", "%s: checks must be a list" % _p)
+            continue
+        if not _c:
+            warnings.append("[warn] NO_CHECKS: %s has an empty checks table. A verification review "
+                            "that ran nothing is an opinion with a schema." % os.path.basename(_p))
+        for i, c in enumerate(_c):
+            if not isinstance(c, dict):
+                _fail(out, "REVIEW_MALFORMED", "%s: checks[%d] is not a mapping" % (_p, i))
+                continue
+            res = str(c.get("result", "")).strip().lower()
+            if res not in CHECK_RESULTS:
+                _fail(out, "REVIEW_MALFORMED", "%s: checks[%d] result %r is not one of %s"
+                      % (_p, i, c.get("result"), ", ".join(CHECK_RESULTS)))
+            elif res == "fail":
+                failed_checks.append("%s: %s" % (os.path.basename(_p), str(c.get("check", "?"))[:60]))
+            elif res == "unknown":
+                warnings.append("[warn] UNKNOWN_CHECK: %s checks[%d] could not be run (%s). An "
+                                "unknown is not a pass." % (os.path.basename(_p), i,
+                                                            str(c.get("check", "?"))[:60]))
 
     # EVERY record in the governing round, not just the one whose verdict was selected. Findings
     # were read off the selected record alone, so a second reviewer's unresolved CRITICAL shipped
@@ -454,18 +498,30 @@ def check(change_path, reviews_dir, sha=None, root="."):
         if not isinstance(f, dict):
             _fail(out, "REVIEW_MALFORMED", "%s: findings[%d] is not a mapping" % (fpath, i))
             continue
-        sev = str(f.get("severity", "")).strip().upper()
-        if sev not in SEVERITIES:
-            _fail(out, "REVIEW_MALFORMED",
-                  "%s: findings[%d] severity %r is not one of %s" % (fpath, i, f.get("severity"), ", ".join(SEVERITIES)))
-            continue
+        # A finding is classed (2.0: stops | decide | minor) or graded (1.0: CRITICAL..LOW).
+        # `stops` and `decide` block while open — a "worth deciding" point is exactly a decision
+        # nobody has made yet. `minor` never blocks.
+        if "class" in f or ("severity" not in f and _is_v2(rec)):
+            cls = str(f.get("class", "")).strip().lower()
+            if cls not in CLASSES:
+                _fail(out, "REVIEW_MALFORMED",
+                      "%s: findings[%d] class %r is not one of %s" % (fpath, i, f.get("class"), ", ".join(CLASSES)))
+                continue
+            blocking, label = cls in BLOCKING_CLASSES, cls
+        else:
+            sev = str(f.get("severity", "")).strip().upper()
+            if sev not in SEVERITIES:
+                _fail(out, "REVIEW_MALFORMED",
+                      "%s: findings[%d] severity %r is not one of %s" % (fpath, i, f.get("severity"), ", ".join(SEVERITIES)))
+                continue
+            blocking, label = sev in BLOCKING, sev
         state = str(f.get("status", "open")).strip().lower()
         if state not in OPEN_STATES + RESOLVED_STATES:
             _fail(out, "REVIEW_MALFORMED",
                   "%s: findings[%d] status %r is not open/fixed/accepted" % (fpath, i, f.get("status")))
             continue
-        if sev in BLOCKING and state in OPEN_STATES:
-            unresolved.append("%s: %s" % (sev, str(f.get("claim", "?"))[:80]))
+        if blocking and state in OPEN_STATES:
+            unresolved.append("%s: %s" % (label, str(f.get("claim", "?"))[:80]))
 
         if state == "accepted" and not str(f.get("accepted_by", "")).strip():
             _fail(out, "UNSIGNED_ACCEPTANCE",
@@ -476,17 +532,25 @@ def check(change_path, reviews_dir, sha=None, root="."):
         _fail(out, "FINDING_OPEN", "%s — fix it, or accept it explicitly with accepted_by" % u)
 
     verdict = str(rec.get("verdict", "")).strip().lower()
-    if verdict != "ship":
+    if verdict not in PASS_VERDICTS:
         _fail(out, "VERDICT_NOT_SHIP",
               "%s: verdict is %r — the reviewer did not clear this for release"
               % (path, rec.get("verdict")))
+    elif failed_checks:
+        _fail(out, "VERDICT_CONTRADICTED",
+              "the round says %r but %d check(s) failed (%s). A failed check is resolved as a "
+              "finding — fixed, or accepted with a name — not by the verdict."
+              % (rec.get("verdict"), len(failed_checks), "; ".join(failed_checks[:3])))
 
     # Not a block: a genuinely clean change exists. But one round that found nothing, on a large
     # diff, is more often a shallow review than a flawless one — so say so.
-    if _round((path, rec)) <= 1 and not findings:  # findings across the whole round
+    # A 2.0 record shows its work in `checks`; a full table with nothing found is the expected
+    # outcome of a sound change, not a shallow review. Warn only when there is nothing to show.
+    ran_checks = any(isinstance(_d.get("checks"), list) and _d.get("checks") for _, _d in latest)
+    if _round((path, rec)) <= 1 and not findings and not ran_checks:
         warnings.append(
-            "[warn] SHALLOW_REVIEW: %s is round 1 with zero findings. That happens, but it is also "
-            "what a review that did not really run looks like." % path)
+            "[warn] SHALLOW_REVIEW: %s is round 1 with zero findings and no checks. That happens, "
+            "but it is also what a review that did not really run looks like." % path)
 
     return out, warnings
 
@@ -515,13 +579,13 @@ def main(argv=None):
     for b in blocks:
         print(b)
     if blocks:
-        print("\nRelease gate: BLOCKED. An adversarial review of the exact code being shipped is "
+        print("\nRelease gate: BLOCKED. A verification review of the exact code being shipped is "
               "required before publishing.")
         return 2
     if any("REVIEW_WAIVED" in w for w in warns):
-        print("Release gate: PASSED ON A WAIVER — no adversarial review was honoured.")
+        print("Release gate: PASSED ON A WAIVER — no verification review was honoured.")
     else:
-        print("Release gate: adversarial review present, fresh, and cleared.")
+        print("Release gate: verification review present, fresh, and cleared.")
     return 0
 
 

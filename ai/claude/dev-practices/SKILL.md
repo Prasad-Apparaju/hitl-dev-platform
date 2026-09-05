@@ -97,7 +97,7 @@ Design
 6.  Test Case Planning     → /hitl:qa-plan-tests — QA queries incident history; QA scenarios acknowledged before TDD
 7.  Training Plan Stub     → if new capability introduced (conditional)
 8.  Package Decision Packet → architect assembles docs/decisions/issue-<N>.yaml; one per domain-independent slice
-8a. Adversarial Design Review → /hitl:dev-adversarial-review — clean-context reviewers briefed to refute the design; findings put to you before anything is fixed
+8a. Verification Review (Design) → /hitl:dev-verification-review — a clean-context reviewer runs a checklist against the design; one page back; what failed is put to you before anything is fixed
 
 Build (TDD)
 9.  Generate Tests (RED)   → /hitl:dev-tdd — unit tests + integration tests + Playwright E2E stubs (test.skip) + smoke journey; all written before any implementation
@@ -108,7 +108,7 @@ Build (TDD)
 14. Verify GREEN           → unit + integration pass; coverage ≥90% enforced (AI generates gap tests if needed); smoke runs
 15. Refactor               → rerun tests after each change; done when no further simplification possible
 16. Convention Checks      → /hitl:dev-check-conventions — zero violations required before proceeding
-16a. Adversarial Code Review → /hitl:dev-adversarial-review — the same refuting review against the code, before the review rounds
+16a. Verification Review (Code) → /hitl:dev-verification-review — the same checklist review against the code, before the review rounds
 
 Verify
 17. Code Review Round 1    → /hitl:dev-review-lld-adherence — reads implementation + LLD (Tests Improve the Design) + system-manifest.yaml

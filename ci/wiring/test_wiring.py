@@ -218,7 +218,7 @@ def test_the_onboarding_paths_agree_on_the_hook_list():
     assert all(v == first for v in lists.values()), f"onboarding paths disagree on hooks: {lists}"
 
 
-def test_every_reviewer_agent_carries_the_adversarial_stance():
+def test_every_reviewer_agent_carries_the_verification_stance():
     """A reviewer asked to confirm will confirm.
 
     Every HITL reviewer opened with "ensure X is sound" / "verify Y is sufficient" — questions
@@ -231,8 +231,13 @@ def test_every_reviewer_agent_carries_the_adversarial_stance():
                  if f.endswith("-reviewer.md")]
     assert reviewers, "no reviewer agents found — this check went blind"
     missing = [f for f in reviewers
-               if "Try to refute, not to confirm" not in _read(os.path.join(AI, "claude", "agents", f))]
-    assert not missing, f"reviewer agents without the adversarial stance: {sorted(missing)}"
+               if "Verify, do not confirm" not in _read(os.path.join(AI, "claude", "agents", f))]
+    assert not missing, f"reviewer agents without the verification stance: {sorted(missing)}"
+    # The 2.5.0 attack instruction must not survive alongside it (#101): a reviewer told both to
+    # refute and to verify does the louder one.
+    stale = [f for f in reviewers
+             if "refute" in _read(os.path.join(AI, "claude", "agents", f)).lower()]
+    assert not stale, f"reviewer agents still carrying the refute instruction: {sorted(stale)}"
 
 
 def test_findings_are_put_to_a_human_before_they_are_resolved():
@@ -247,9 +252,9 @@ def test_findings_are_put_to_a_human_before_they_are_resolved():
     notification rather than a decision. Asserted by position, not by presence, because a triage
     section that sits after the fixes reads identically and does nothing.
     """
-    body = _read(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    body = _read(os.path.join(AI, "claude", "verification-review", "SKILL.md"))
     heads = re.findall(r"(?m)^## Step \d+ — (.+)$", body)
-    assert heads, "no step headings in the adversarial-review skill — this check went blind"
+    assert heads, "no step headings in the verification-review skill — this check went blind"
 
     def _pos(pattern):
         m = re.search(r"(?m)^## Step \d+ — .*%s.*$" % pattern, body)
@@ -258,7 +263,7 @@ def test_findings_are_put_to_a_human_before_they_are_resolved():
     triage = _pos(r"[Pp]ut it to the user")
     verify = _pos(r"[Vv]erify")
     resolve = _pos(r"[Rr]esolve")
-    assert triage > 0, ("the adversarial-review skill has no step putting findings to the user; "
+    assert triage > 0, ("the verification-review skill has no step putting findings to the user; "
                         "`accepted_by` is unreachable and 'fix everything' is the only answer")
     assert verify > 0 and resolve > 0, "verify/resolve steps not found — the headings changed"
     assert verify < triage < resolve, (
@@ -273,8 +278,8 @@ def test_an_unanswered_finding_is_never_accepted_on_someones_behalf():
     decoration. Both the skill and the shared guidance have to carry the rule, because an agent
     running the command reads one and an agent doing it by hand reads the other.
     """
-    for rel in (os.path.join(AI, "claude", "adversarial-review", "SKILL.md"),
-                os.path.join(AI, "shared", "adversarial-review.md")):
+    for rel in (os.path.join(AI, "claude", "verification-review", "SKILL.md"),
+                os.path.join(AI, "shared", "verification-review.md")):
         txt = _flat(rel)
         assert re.search(r"(?i)not answered|unanswered|did not say", txt), (
             "%s does not say what happens to a finding nobody answered — the default has to be "
@@ -287,8 +292,8 @@ def test_the_review_cost_is_quoted_per_round_not_per_review():
     Quoting the round as the whole review is what makes the estimate stop being believed, and it is
     the sentence a user weighs the offer against.
     """
-    for rel in (os.path.join(AI, "claude", "adversarial-review", "SKILL.md"),
-                os.path.join(AI, "shared", "adversarial-review.md")):
+    for rel in (os.path.join(AI, "claude", "verification-review", "SKILL.md"),
+                os.path.join(AI, "shared", "verification-review.md")):
         # Normalise first. These files are hard-wrapped and the shared doc quotes the offer inside a
         # blockquote, so "ten minutes" is routinely split as "ten\n> minutes". A raw substring test
         # silently skips the file it is meant to check — the same blindness that let a broken link
@@ -316,7 +321,7 @@ def test_the_lens_catalog_and_the_gate_agree():
     finally:
         sys.path.pop(0)
 
-    doc = _read(os.path.join(AI, "shared", "adversarial-review.md"))
+    doc = _read(os.path.join(AI, "shared", "verification-review.md"))
     start = doc.find("## The lens catalog")
     assert start > 0, "the lens catalog section is gone — this check went blind"
     end = doc.find("### Older names", start)
@@ -351,7 +356,7 @@ def test_reviewers_hand_their_report_over_through_a_file():
     delivered nothing, never appeared in the subagent list, and did not answer a direct message.
     So the report has to arrive through a file, and the skill must not instruct a name.
     """
-    body = _flat(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    body = _flat(os.path.join(AI, "claude", "verification-review", "SKILL.md"))
     assert ".hitl/reviews/incoming/" in body, (
         "no file-based report path; the skill is back to hoping reports are returned")
     assert re.search(r"(?i)do not give the reviewers names|not give .{0,20}names", body), (
@@ -384,7 +389,7 @@ def test_reviewers_hand_their_report_over_through_a_file():
 def test_the_loop_stops_and_asks():
     """Two rounds then a human decision. Not a prohibition — this repo's own 2.7.x work ran to
     round 15 — but round 3 has to be a choice someone makes rather than a continuation."""
-    body = _flat(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    body = _flat(os.path.join(AI, "claude", "verification-review", "SKILL.md"))
     assert re.search(r"(?i)two rounds, then ask", body), "no stop condition on the fix loop"
     assert not re.search(r"(?i)keep going until a round comes back with nothing new", body), (
         "the unbounded 'keep going until convergence' rule is back")
@@ -395,7 +400,7 @@ def test_the_loop_stops_and_asks():
 def test_the_brief_asks_for_intra_file_consistency():
     """Two contradictory claims twenty lines apart survive every cross-file comparison, because
     every other document agrees with the stale half. Found at round 4 on GH-371."""
-    body = _flat(os.path.join(AI, "claude", "adversarial-review", "SKILL.md"))
+    body = _flat(os.path.join(AI, "claude", "verification-review", "SKILL.md"))
     assert re.search(r"(?i)each file against itself", body), (
         "the brief never asks a reviewer to check a file against itself first")
 

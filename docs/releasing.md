@@ -58,9 +58,9 @@ python3 ci/skill-lint/check_skills.py
 bash ci/breadcrumb/run_matrix.sh          # a bash harness outside pytest; it has caught what pytest could not
 ```
 
-### 5. Adversarial review, or its waiver
+### 5. Verification review, or its waiver
 
-Run `/hitl:dev-adversarial-review` against the exact commit being shipped. It writes the record
+Run `/hitl:dev-verification-review` against the exact commit being shipped. It writes the record
 the gate reads under `.hitl/reviews/`.
 
 If the review is declined, the decision is recorded, not skipped. Add a waiver to

@@ -4,6 +4,33 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **The adversarial review is now a verification review** (#101). Same independent reviewer in a
+  clean context; a different brief. Instead of "assume this is broken and find how", the reviewer
+  gets a checklist built from the requirement, the work's own claims and the lens questions, runs
+  what can be run, and returns one page: a table of checks with the command and result for each,
+  then at most five ranked points in three classes — stops it working, worth deciding, minor.
+  "It is right" is a real answer. Users found the attacking output unusable; the constrained brief
+  found more real defects in fewer lines during the right-sizing work, so the constraints stayed
+  and the attack went.
+  - `/hitl:dev-verification-review` replaces `/hitl:dev-adversarial-review`. The old command
+    remains for one release and tells you where it went.
+  - The step keys do not change (`adv_design`, `adv_code`, `adversarial_review`), so no change
+    file, skip record or waiver anywhere needs editing. Their names and labels do.
+  - The record has a new shape (`schema_version: "2.0"`: `checks`, `class`, `verdict: verified`).
+    The release gate reads both shapes; 1.0 records keep passing on their own rules. New gate
+    codes: `VERDICT_CONTRADICTED` (verified with a failed check), `NO_CHECKS` and `UNKNOWN_CHECK`
+    (warnings). The 1.0 `stance: refute` rule still applies to 1.0 records only.
+  - The five role reviewer agents open with "Verify, do not confirm" and are told a result is the
+    command and what it printed; the refute line is gone, and a wiring test keeps it gone.
+  - The lens catalog is kept, with each question phrased as something to run. Shared contract and
+    template renamed to `verification-review.md` / `verification-review-record.yaml`.
+
+---
+
 ## [2.10.1] — 2026-09-04
 
 ### Fixed

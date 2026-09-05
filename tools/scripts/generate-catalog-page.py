@@ -34,7 +34,7 @@ ORDER = [
     ("migration", "Migration — set up a target system", "run once per migration"),
     ("migration_review", "Migration Review — vet external docs", "architect gate before migration design"),
     ("platform", "Platform Bootstrap — onboarded to delivery-ready", "long-lived, per project; drives the readiness register"),
-    ("release", "Release — publish a version to users", "gated by an independent adversarial review bound to the shipped code"),
+    ("release", "Release — publish a version to users", "gated by an independent verification review bound to the shipped code"),
 ]
 
 

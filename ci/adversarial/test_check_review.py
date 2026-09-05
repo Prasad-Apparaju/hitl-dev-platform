@@ -247,13 +247,14 @@ def test_the_driver_skill_exists_and_ships_what_it_references():
     not package resolves in the source repo and points at nothing for every user.
     """
     root = os.path.join(HERE, "..", "..")
-    skill = os.path.join(root, "ai", "claude", "adversarial-review", "SKILL.md")
-    assert os.path.isfile(skill), "the adversarial-review skill is missing"
+    skill = os.path.join(root, "ai", "claude", "verification-review", "SKILL.md")
+    assert os.path.isfile(skill), "the verification-review skill is missing"
     body = io.open(skill, encoding="utf-8").read()
 
     # It must actually spawn independent reviewers, not just describe the idea.
     assert "clean-context" in body or "clean context" in body
-    assert "refute" in body.lower()
+    assert "checklist" in body.lower(), "a verification review is a checklist run, or it is an opinion"
+    assert "refute" not in body.lower(), "the attack instruction is back (#101)"
     assert "reproduc" in body.lower(), "the reproduction rule is what keeps this from being theatre"
     assert "reviewed_sha" in body, "the driver must write the field the gate binds to"
 
@@ -264,7 +265,7 @@ def test_the_driver_skill_exists_and_ships_what_it_references():
     import json
     reg = json.load(io.open(os.path.join(root, "ai", "claude", "plugin", "plugin.json"),
                             encoding="utf-8"))
-    assert "ai/claude/adversarial-review" in reg["skills"], "skill not registered in plugin.json"
+    assert "ai/claude/verification-review" in reg["skills"], "skill not registered in plugin.json"
 
     # Every shared/ file it points at must exist in the source tree that the build packages.
     import re
@@ -355,7 +356,7 @@ def test_built_plugin_resolves_the_skill_references(tmp_path):
     Skipped when the plugin repo is not checked out beside this one.
     """
     plugin = os.path.abspath(os.path.join(HERE, "..", "..", "..", "hitl-claude-plugin"))
-    skill = os.path.join(plugin, "skills", "dev-adversarial-review", "SKILL.md")
+    skill = os.path.join(plugin, "skills", "dev-verification-review", "SKILL.md")
     if not os.path.isfile(skill):
         pytest.skip("plugin repo not present")
     body = io.open(skill, encoding="utf-8").read()
@@ -619,3 +620,96 @@ def test_a_second_reviewers_open_critical_is_not_invisible(tmp_path):
     blocks, _ = check(str(root / ".hitl" / "current-change.yaml"),
                       str(root / ".hitl" / "reviews"), sha=SHA, root=str(root))
     assert "FINDING_OPEN" in _codes(blocks), blocks
+
+
+# ── the verification-review record (schema 2.0, #101) ────────────────────────────────────────────
+# Two shapes are read. The old one (severity, stance: refute, ship) keeps validating — every test
+# above still runs against it. The new one carries a checks table and three finding classes.
+
+def _v2(**over):
+    rec = {
+        "schema_version": "2.0",
+        "change_id": "GH-80",
+        "round": 1,
+        "reviewed_sha": SHA,
+        "scope": "diff v1.0.0..HEAD",
+        "reviewer": {"model": "fable", "context": "clean", "spawned_by": "hitl:verification-review"},
+        "checks": [{"check": "gate exits 0 on a clean record", "command": "python3 check_review.py",
+                    "result": "pass", "output": "exit 0"}],
+        "findings": [],
+        "verdict": "verified",
+    }
+    rec.update(over)
+    return rec
+
+
+def test_a_verified_record_with_checks_passes_and_needs_no_stance(tmp_path):
+    c, r = _setup(tmp_path, _v2())
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert blocks == [], blocks
+    assert not any("SHALLOW_REVIEW" in w for w in warns), "a full checks table with nothing found is the expected clean outcome"
+    assert "WRONG_STANCE" not in _codes(blocks)
+
+
+def test_a_1_0_record_still_requires_refute_and_ship(tmp_path):
+    c, r = _setup(tmp_path, _record(stance="verify"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "WRONG_STANCE" in _codes(blocks)
+
+
+def test_stops_and_decide_block_while_open_minor_never_does(tmp_path):
+    for cls, blocks_expected in (("stops", True), ("decide", True), ("minor", False)):
+        c, r = _setup(tmp_path / cls, _v2(findings=[{"id": "F1", "class": cls, "claim": "x",
+                                                     "evidence": "ran y: boom", "status": "open"}]))
+        blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / cls))
+        assert ("FINDING_OPEN" in _codes(blocks)) is blocks_expected, (cls, blocks)
+
+
+def test_a_decided_point_needs_a_name(tmp_path):
+    c, r = _setup(tmp_path, _v2(findings=[{"id": "F1", "class": "decide", "claim": "x",
+                                           "evidence": "e", "status": "accepted"}]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "UNSIGNED_ACCEPTANCE" in _codes(blocks)
+
+
+def test_an_unknown_class_is_malformed(tmp_path):
+    c, r = _setup(tmp_path, _v2(findings=[{"id": "F1", "class": "critical", "claim": "x", "status": "open"}]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "REVIEW_MALFORMED" in _codes(blocks)
+
+
+def test_not_verified_blocks(tmp_path):
+    c, r = _setup(tmp_path, _v2(verdict="not-verified"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "VERDICT_NOT_SHIP" in _codes(blocks)
+
+
+def test_a_failed_check_contradicts_a_verified_verdict(tmp_path):
+    c, r = _setup(tmp_path, _v2(checks=[{"check": "install is 2.10.1", "command": "cat plugin.json",
+                                         "result": "fail", "output": "2.10.0"}]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "VERDICT_CONTRADICTED" in _codes(blocks), blocks
+
+
+def test_no_checks_and_unknown_checks_warn_but_do_not_block(tmp_path):
+    c, r = _setup(tmp_path / "none", _v2(checks=[]))
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path / "none"))
+    assert blocks == [] and any("NO_CHECKS" in w for w in warns), (blocks, warns)
+    c, r = _setup(tmp_path / "unk", _v2(checks=[{"check": "x", "command": "y", "result": "unknown"}]))
+    blocks, warns = check(c, r, sha=SHA, root=str(tmp_path / "unk"))
+    assert blocks == [] and any("UNKNOWN_CHECK" in w for w in warns), (blocks, warns)
+
+
+def test_a_bad_check_result_is_malformed(tmp_path):
+    c, r = _setup(tmp_path, _v2(checks=[{"check": "x", "command": "y", "result": "ok"}]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "REVIEW_MALFORMED" in _codes(blocks)
+
+
+def test_old_and_new_shapes_mix_across_rounds(tmp_path):
+    """A repo upgraded mid-change has a 1.0 round 1 and a 2.0 round 2. The newest round decides."""
+    c, r = _setup(tmp_path, _record(round=1, verdict="do-not-ship",
+                                    findings=[{"id": "F1", "severity": "HIGH", "claim": "x", "status": "open"}]))
+    _write(os.path.join(r, "GH-80-round2.yaml"), _v2(round=2))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert blocks == [], blocks
