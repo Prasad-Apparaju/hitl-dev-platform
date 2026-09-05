@@ -235,7 +235,7 @@ get it repeated back to you.
 
 ## Recording the result
 
-Write `.hitl/reviews/<change-id>-round<N>.yaml` from the template at
+Write `.hitl/reviews/<change-id>-round<N>-<lens>.yaml` (one per reviewer) from the template at
 `ai/shared/templates/verification-review-record.yaml`. The `reviewed_sha` is load-bearing: the
 release gate fails if the code has moved since, which is what stops a review of an early draft
 counting for a later one. The `checks` table is what makes the record a verification rather than an

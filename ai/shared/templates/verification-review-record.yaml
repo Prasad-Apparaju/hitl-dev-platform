@@ -1,4 +1,4 @@
-# Verification review record — .hitl/reviews/<change-id>-round<N>.yaml
+# Verification review record — .hitl/reviews/<change-id>-round<N>-<lens>.yaml (one per reviewer)
 #
 # Verified by ci/adversarial/check_review.py. The release workflow's `gates` step runs it via
 # /hitl:dev-validate; `publish` must not proceed while it reports a block.

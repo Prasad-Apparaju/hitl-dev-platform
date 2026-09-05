@@ -61,8 +61,8 @@ message, a changelog line, a docstring), and the lens questions from the catalog
 
 > Design's done. Want a verification review before we build? I'd have it check **fitness** (does
 > this satisfy FR-12, case by case) and **consequence** (it rewrites records in place), plus
-> **security** since it touches the token store. Three lenses, about half an hour, runs in the
-> background. Swap or drop any of them.
+> **security** since it touches the token store. Three lenses, in parallel, still about ten
+> minutes, runs in the background. Swap or drop any of them.
 
 This is the same single question, carrying more information. **Do not add a second prompt for plan
 approval** — the offer is the plan. They can answer yes, or yes-with-changes, or no.
@@ -201,13 +201,14 @@ name into `accepted_by` that did not say the words.
 ## Step 6 — Write the record
 
 Copy `shared/templates/verification-review-record.yaml` to
-`.hitl/reviews/<change-id>-round<N>.yaml` and fill it in.
+`.hitl/reviews/<change-id>-round<N>-<lens>.yaml` and fill it in — one record per reviewer, so two
+lenses in a round do not overwrite each other.
 
 ```bash
 mkdir -p .hitl/reviews
 CHANGE=$(grep '^change_id:' .hitl/current-change.yaml | awk '{print $2}' | tr -d '"')
 SHA=$(git rev-parse HEAD)
-echo ".hitl/reviews/${CHANGE}-round1.yaml   reviewed_sha: ${SHA}"
+echo ".hitl/reviews/${CHANGE}-round1-<lens>.yaml   reviewed_sha: ${SHA}"
 ```
 
 Rules that matter:
@@ -219,7 +220,9 @@ Rules that matter:
 - **`checks` is the table from the report**, one entry per check: what was checked, the command,
   the result (`pass`, `fail`, `unknown`), and the output that decided it. A record with no checks
   is a review that did not run anything.
-- **Every finding carries its evidence**, verbatim, and its class.
+- **Every finding carries its evidence**, verbatim, and its class. A finding that answers for a
+  failed check names it in `check:` (the check's own text); a failed check with no resolved finding
+  naming it contradicts a verified verdict, and the gate says so.
 - **`verdict`** is the reviewer's call, not yours. If they said NOT VERIFIED and you fixed
   everything, that is a **new round**, not an edit to theirs.
 

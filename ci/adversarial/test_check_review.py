@@ -713,3 +713,49 @@ def test_old_and_new_shapes_mix_across_rounds(tmp_path):
     _write(os.path.join(r, "GH-80-round2.yaml"), _v2(round=2))
     blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
     assert blocks == [], blocks
+
+
+# ── round-1 validation points on the 2.0 gate (#101) ────────────────────────────────────────────
+
+def test_a_failed_check_answered_by_a_resolved_finding_that_names_it_passes(tmp_path):
+    """Both round-1 reviewers: the gate's own message said a failed check is resolved by a finding,
+    and the code blocked anyway. A finding that names the check and is fixed, or accepted with a
+    name, covers it. One that does not name it, or is accepted with no name, does not."""
+    chk = {"check": "install is 2.10.1", "command": "cat plugin.json", "result": "fail", "output": "2.10.0"}
+    ok = _v2(checks=[chk], findings=[{"id": "F1", "class": "decide", "check": "install is 2.10.1",
+                                      "claim": "x", "status": "accepted", "accepted_by": "someone"}])
+    c, r = _setup(tmp_path / "ok", ok)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / "ok"))
+    assert blocks == [], blocks
+    unnamed = _v2(checks=[chk], findings=[{"id": "F1", "class": "decide", "claim": "x",
+                                           "status": "accepted", "accepted_by": "someone"}])
+    c, r = _setup(tmp_path / "unnamed", unnamed)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / "unnamed"))
+    assert "VERDICT_CONTRADICTED" in _codes(blocks), blocks
+    unsigned = _v2(checks=[chk], findings=[{"id": "F1", "class": "decide", "check": "install is 2.10.1",
+                                            "claim": "x", "status": "accepted"}])
+    c, r = _setup(tmp_path / "unsigned", unsigned)
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path / "unsigned"))
+    assert {"UNSIGNED_ACCEPTANCE", "VERDICT_CONTRADICTED"} <= _codes(blocks), blocks
+
+
+def test_class_is_ignored_on_a_1_0_record(tmp_path):
+    """A 1.0 record with `severity: CRITICAL` and a stray `class: minor` must still block: the
+    record's schema picks the vocabulary, not whichever field is present."""
+    c, r = _setup(tmp_path, _record(findings=[{"id": "F1", "severity": "CRITICAL", "class": "minor",
+                                               "claim": "x", "status": "open"}]))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    assert "FINDING_OPEN" in _codes(blocks)
+
+
+def test_an_unknown_only_table_is_still_shallow(tmp_path):
+    c, r = _setup(tmp_path, _v2(checks=[{"check": "x", "command": "y", "result": "unknown"}]))
+    _, warns = check(c, r, sha=SHA, root=str(tmp_path))
+    assert any("SHALLOW_REVIEW" in w for w in warns), warns
+
+
+def test_schema_version_is_matched_on_the_major_number(tmp_path):
+    c, r = _setup(tmp_path, _v2(schema_version="2026"))
+    blocks, _ = check(c, r, sha=SHA, root=str(tmp_path))
+    # 2026 is not 2.x: read as a 1.0 record, which needs stance refute and severity findings
+    assert "WRONG_STANCE" in _codes(blocks), blocks

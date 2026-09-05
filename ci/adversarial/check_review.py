@@ -48,7 +48,11 @@ RESOLVED_STATES = ("fixed", "accepted")
 
 
 def _is_v2(rec):
-    return str(rec.get("schema_version", "1.0")).strip().startswith("2")
+    """schema_version major == 2. A prefix test read "2026" as 2.0 (round-1 point 5)."""
+    try:
+        return int(str(rec.get("schema_version", "1.0")).strip().split(".")[0]) == 2
+    except ValueError:
+        return False
 
 # The lens vocabulary, mirrored from the catalog in ai/shared/verification-review.md. Kept here as
 # data rather than read from a file on purpose: this validator is copied into product repos, and
@@ -469,7 +473,7 @@ def check(change_path, reviews_dir, sha=None, root="."):
                 _fail(out, "REVIEW_MALFORMED", "%s: checks[%d] result %r is not one of %s"
                       % (_p, i, c.get("result"), ", ".join(CHECK_RESULTS)))
             elif res == "fail":
-                failed_checks.append("%s: %s" % (os.path.basename(_p), str(c.get("check", "?"))[:60]))
+                failed_checks.append((os.path.basename(_p), str(c.get("check", "?")).strip()))
             elif res == "unknown":
                 warnings.append("[warn] UNKNOWN_CHECK: %s checks[%d] could not be run (%s). An "
                                 "unknown is not a pass." % (os.path.basename(_p), i,
@@ -494,14 +498,18 @@ def check(change_path, reviews_dir, sha=None, root="."):
         findings.extend((_p, i, item) for i, item in enumerate(_f))
 
     unresolved = []
+    covered_checks = set()
     for fpath, i, f in findings:
         if not isinstance(f, dict):
             _fail(out, "REVIEW_MALFORMED", "%s: findings[%d] is not a mapping" % (fpath, i))
             continue
         # A finding is classed (2.0: stops | decide | minor) or graded (1.0: CRITICAL..LOW).
         # `stops` and `decide` block while open — a "worth deciding" point is exactly a decision
-        # nobody has made yet. `minor` never blocks.
-        if "class" in f or ("severity" not in f and _is_v2(rec)):
+        # nobody has made yet. `minor` never blocks. Which vocabulary counts is the RECORD's
+        # schema, not whichever field is present: a 1.0 record carrying `class: minor` beside
+        # `severity: CRITICAL` was read as minor (round-1 point 2).
+        _rec_v2 = _is_v2(next(_d for _pp, _d in latest if _pp == fpath))
+        if _rec_v2 and ("class" in f or "severity" not in f):
             cls = str(f.get("class", "")).strip().lower()
             if cls not in CLASSES:
                 _fail(out, "REVIEW_MALFORMED",
@@ -522,6 +530,12 @@ def check(change_path, reviews_dir, sha=None, root="."):
             continue
         if blocking and state in OPEN_STATES:
             unresolved.append("%s: %s" % (label, str(f.get("claim", "?"))[:80]))
+        # A failed check is accounted for by a finding that names it (`check:`) and is resolved:
+        # fixed, or accepted with a name. UNSIGNED_ACCEPTANCE above already catches the nameless
+        # accept, so a covered check is one a person has actually answered for.
+        named = str(f.get("check", "")).strip()
+        if named and state in RESOLVED_STATES and (state != "accepted" or str(f.get("accepted_by", "")).strip()):
+            covered_checks.add(named)
 
         if state == "accepted" and not str(f.get("accepted_by", "")).strip():
             _fail(out, "UNSIGNED_ACCEPTANCE",
@@ -536,17 +550,23 @@ def check(change_path, reviews_dir, sha=None, root="."):
         _fail(out, "VERDICT_NOT_SHIP",
               "%s: verdict is %r — the reviewer did not clear this for release"
               % (path, rec.get("verdict")))
-    elif failed_checks:
-        _fail(out, "VERDICT_CONTRADICTED",
-              "the round says %r but %d check(s) failed (%s). A failed check is resolved as a "
-              "finding — fixed, or accepted with a name — not by the verdict."
-              % (rec.get("verdict"), len(failed_checks), "; ".join(failed_checks[:3])))
+    else:
+        uncovered = [(p_, c_) for p_, c_ in failed_checks if c_ not in covered_checks]
+        if uncovered:
+            _fail(out, "VERDICT_CONTRADICTED",
+                  "the round says %r but %d check(s) failed with no finding answering for them (%s). "
+                  "A failed check is resolved by a finding that names it in `check:` — fixed, or "
+                  "accepted with a name — not by the verdict."
+                  % (rec.get("verdict"), len(uncovered),
+                     "; ".join("%s: %s" % (p_, c_[:60]) for p_, c_ in uncovered[:3])))
 
     # Not a block: a genuinely clean change exists. But one round that found nothing, on a large
     # diff, is more often a shallow review than a flawless one — so say so.
     # A 2.0 record shows its work in `checks`; a full table with nothing found is the expected
     # outcome of a sound change, not a shallow review. Warn only when there is nothing to show.
-    ran_checks = any(isinstance(_d.get("checks"), list) and _d.get("checks") for _, _d in latest)
+    ran_checks = any(isinstance(_d.get("checks"), list) and any(
+        isinstance(c_, dict) and str(c_.get("result", "")).strip().lower() in ("pass", "fail")
+        for c_ in _d.get("checks")) for _, _d in latest)
     if _round((path, rec)) <= 1 and not findings and not ran_checks:
         warnings.append(
             "[warn] SHALLOW_REVIEW: %s is round 1 with zero findings and no checks. That happens, "
