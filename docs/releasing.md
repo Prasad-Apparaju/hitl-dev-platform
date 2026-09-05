@@ -63,11 +63,16 @@ bash ci/breadcrumb/run_matrix.sh          # a bash harness outside pytest; it ha
 Run `/hitl:dev-verification-review` against the exact commit being shipped. It writes the record
 the gate reads under `.hitl/reviews/`.
 
+The normal path: two lenses (`upgrade` and `correctness` at release), one clean-context reviewer
+each with a checklist, one page back, records in the 2.0 shape at
+`.hitl/reviews/<change-id>-round1-<lens>.yaml`. 2.11.0 shipped this way and the gate passed on the
+records; GH-109's two records are the precedent to copy.
+
 If the review is declined, the decision is recorded, not skipped. Add a waiver to
 `.hitl/waivers.yaml` (owner, `accepted`, `revisit`, `covers`, the reason, what was done instead,
 what is known to be open) and point the change file's skip record at it. The gate then prints
-`REVIEW_WAIVED` with the name and reason at publish time. 2.9.0, 2.9.1 and 2.10.0 all shipped this
-way; W-001 and W-002 are the precedents.
+`REVIEW_WAIVED` with the name and reason at publish time. 2.9.0 through 2.10.1 shipped this way;
+W-001 to W-003 are the precedents.
 
 ### 6. The release change file
 
