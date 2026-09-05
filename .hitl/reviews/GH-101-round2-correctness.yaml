@@ -1,0 +1,91 @@
+schema_version: '2.0'
+change_id: GH-101
+round: 2
+lens: correctness
+reviewed_sha: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae
+scope: git diff 1d20e4b..1376a5e — the round-1 fixes to ci/adversarial/check_review.py, the record template, the
+  skill and the contract; checks the fix could have disturbed
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review (run by hand from the new skill's Step 3 brief)
+  brief: eleven-item checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+checks:
+- check: Base 2.0 record clears
+  command: check_review.py --sha 1376a5e (case-1)
+  result: pass
+  output: cleared, exit 0
+- check: Failed check + finding naming it, accepted with a name -> clears
+  command: case-2
+  result: pass
+  output: exit 0
+- check: 'Same, finding without check: -> blocks'
+  command: case-3
+  result: pass
+  output: VERDICT_CONTRADICTED exit 2
+- check: Same, accepted with no name -> both codes
+  command: case-4
+  result: pass
+  output: UNSIGNED_ACCEPTANCE + VERDICT_CONTRADICTED
+- check: Same, fixed with resolved_by -> clears
+  command: case-5
+  result: pass
+  output: exit 0
+- check: Failed check, no findings, verified -> blocks
+  command: case-6
+  result: pass
+  output: VERDICT_CONTRADICTED exit 2
+- check: '1.0 record: severity CRITICAL beside class minor still blocks'
+  command: case-7
+  result: pass
+  output: 'FINDING_OPEN: CRITICAL'
+- check: unknown-only table warns UNKNOWN_CHECK and SHALLOW_REVIEW
+  command: case-8
+  result: pass
+  output: both warnings, exit 0
+- check: schema_version 2026 reads as 1.0
+  command: case-9
+  result: pass
+  output: WRONG_STANCE exit 2
+- check: Gate suite and review wiring tests
+  command: pytest ci/adversarial -q; pytest ci/wiring -k 'review or reviewer or lens or cost'
+  result: pass
+  output: 62 passed, 1 skipped; 5 passed
+- check: Every record filename carries -<lens>
+  command: grep -n 'round<N>' SKILL.md, contract, template
+  result: pass
+  output: all record filenames suffixed; only the incoming report path is lens-first, as intended
+findings:
+- id: F1
+  class: decide
+  claim: 'Coverage of a failed check was pooled across the round: lens B''s resolved finding answered for lens A''s
+    failed check with the same text (probe A)'
+  evidence: 'two records, A: result fail + findings []; B: result pass + resolved signed finding naming the check
+    -> cleared, exit 0'
+  status: fixed
+  resolved_by: 34e313b69da3fce959d29a150243d01cea52794a
+  verified_by: 'test_coverage_is_per_record_not_pooled_across_the_round: VERDICT_CONTRADICTED'
+- id: F2
+  class: decide
+  claim: 'status: fixed with no resolved_by covered a failed check (probe B); the word alone was enough'
+  evidence: 'finding {status: fixed} naming the check, no resolved_by -> cleared, exit 0'
+  status: fixed
+  resolved_by: 34e313b69da3fce959d29a150243d01cea52794a
+  verified_by: 'test_a_fixed_finding_covers_only_with_a_resolved_by: bare -> VERDICT_CONTRADICTED; with resolved_by
+    -> clean'
+- id: F3
+  class: minor
+  claim: 'The template''s findings example and the shared contract did not show the check: field; only the skill
+    mentioned it'
+  evidence: 'read: template lines 53-60; grep check: ai/shared/verification-review.md'
+  status: fixed
+  resolved_by: 34e313b69da3fce959d29a150243d01cea52794a
+  verified_by: 'grep -n ''check: ""'' template -> present; contract ''names it in `check:`, in the same record'''
+- id: F4
+  class: minor
+  claim: Coverage matched check text exactly (case, internal whitespace) though a person types it twice
+  evidence: 'read: check_review.py covered_checks'
+  status: fixed
+  resolved_by: 34e313b69da3fce959d29a150243d01cea52794a
+  verified_by: 'test_check_text_matches_across_case_and_whitespace: clean'
+verdict: verified
