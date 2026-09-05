@@ -1,0 +1,79 @@
+schema_version: '2.0'
+change_id: GH-110-release-2.12.0
+round: 1
+reviewed_sha: 3aa5ca2a8bc46049e43576f72674692c8dec99da
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+lens: upgrade
+scope: 'release 2.12.0 at 3aa5ca2 built into a scratch clone of release/2.x (serving 2.11.0): banners from built
+  hooks, old and new preferences blocks, fresh-install baseline, shared references'
+checks:
+- check: Build into scratch clone
+  command: bash scripts/build.sh <src>
+  result: pass
+  output: Build complete; no stale removals; only new file shared/plain-english.md
+- check: plain-english.md shipped and identical
+  command: diff -q
+  result: pass
+  output: identical
+- check: Pointer in both banner hooks
+  command: grep -c plain-english hooks/_steps.sh hooks/welcome.sh
+  result: pass
+  output: 1; 1
+- check: Banners rendered from built hooks, no em dash
+  command: welcome.sh in scratch project, empty .hitl and GH-000 example
+  result: pass
+  output: both end with the rule line; em dash count 0
+- check: 'Old em-dash block still parses: show/off/on'
+  command: extracted prefs.py show/off/on on an Ada Lovelace block
+  result: pass
+  output: setter named; PAUSED toggled; byte-identical restore
+- check: Fresh block uses comma marker and default tone
+  command: prefs.py write ... ""; grep
+  result: fail
+  output: 'status: ACTIVE, set by Bob, present; Tone line reads plain English but carries ${CLAUDE_PLUGIN_ROOT}/shared/plain-english.md
+    unexpanded'
+- check: Fresh install today is 2.11.0 without the rule
+  command: CLAUDE_CONFIG_DIR sandbox install
+  result: pass
+  output: 2.11.0; no shared/plain-english.md
+- check: Version and changelog
+  command: plugin.json; grep '^## [2.12.0]'
+  result: pass
+  output: 2.12.0; line 7
+- check: Shipped skills and agents resolve every shared/ file named
+  command: 21 unique refs checked
+  result: pass
+  output: no MISSING
+- check: Redirect skill still ships
+  command: ls skills | grep -c
+  result: pass
+  output: '2'
+findings:
+- id: F1
+  class: decide
+  check: Fresh block uses comma marker and default tone
+  claim: 'The default Tone line written into a user''s committed CLAUDE.md carried the literal ${CLAUDE_PLUGIN_ROOT}/shared/plain-english.md:
+    the build''s path rewriting reached a string that is not a plugin file'
+  evidence: built SKILL.md:301 and the written CLAUDE.md line 10 show the unexpanded variable
+  status: fixed
+  resolved_by: 3b35cdc40d19f9efb3e33c07ccd01fa4285dc10b
+  verified_by: source line names the rule without a path; plain-english lint 16 passed; round 2 rebuilds and checks
+    the written block
+- id: F2
+  class: minor
+  claim: The prefs script's multi-block warning and the changelog heading use an em dash
+  evidence: SKILL.md:194; CHANGELOG.md:7
+  status: fixed
+  resolved_by: 3b35cdc40d19f9efb3e33c07ccd01fa4285dc10b
+  verified_by: the warning is reworded and the new lint surface covers script messages; changelog headings keep
+    the repo's convention (not linted)
+- id: F3
+  class: minor
+  claim: Em dashes remain in model-facing skill prose (69 skill files, 59 shared, 6 agents)
+  evidence: grep counts in the build
+  status: open
+verdict: verified

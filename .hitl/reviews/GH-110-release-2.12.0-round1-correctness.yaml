@@ -1,0 +1,97 @@
+schema_version: '2.0'
+change_id: GH-110-release-2.12.0
+round: 1
+reviewed_sha: 3aa5ca2a8bc46049e43576f72674692c8dec99da
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+lens: correctness
+scope: 'release 2.12.0 at 3aa5ca2: the changelog''s claims, suites, lint coverage and non-vacuity, preferences parser,
+  doc ceilings, guide count, floor sentences'
+checks:
+- check: Full suite
+  command: pytest ci/ tools/
+  result: pass
+  output: 897 passed
+- check: Skill lint
+  command: check_skills.py
+  result: pass
+  output: 63/63
+- check: Breadcrumb matrix
+  command: run_matrix.sh
+  result: pass
+  output: 271 passed
+- check: Lint covers four surfaces
+  command: grep def test_ test_plain_english.py
+  result: pass
+  output: 5 tests naming hooks, quoted lines, templates, block, banner
+- check: Lint not vacuous
+  command: probe.py on _marks
+  result: pass
+  output: em dash + tell found; 'note that we did' clean; 'Note that' caught
+- check: No em dash in text that reaches people (banner)
+  command: welcome.sh in scratch project
+  result: pass
+  output: 0 em dashes; rule lines present
+- check: Preferences default tone present
+  command: grep 'plain English' preferences/SKILL.md
+  result: pass
+  output: line 301
+- check: Older blocks still parse
+  command: regex probe old/new headers
+  result: pass
+  output: alice | alice
+- check: Generator and templates carry ceilings
+  command: grep -c plain-english|ceiling
+  result: pass
+  output: 2,1,1,1
+- check: Guide says 58; 58 ship
+  command: grep; ls -d skills/*/ | wc -l
+  result: pass
+  output: 58; 58
+- check: Floor sentences survived
+  command: pytest -k floor; grep template
+  result: pass
+  output: 19 passed; 1
+- check: Changelog vs diff --stat
+  command: read-only, 74 files
+  result: pass
+  output: every claim maps; plugin.json, wiring pins, CLAUDE.md.template unnamed (follow-through)
+findings:
+- id: F1
+  class: decide
+  claim: 'One em dash reached people outside the four linted surfaces: the preferences `show` warning printed by
+    the skill''s own script; the lint had no surface for print()/echo strings in skill blocks'
+  evidence: git grep 'print(.*—' HEAD -- ai/claude/**/SKILL.md -> preferences/SKILL.md:194; hooks/write-session-summary.sh:46
+    writes an em-dash comment into the user's .gitignore
+  status: fixed
+  resolved_by: 3b35cdc40d19f9efb3e33c07ccd01fa4285dc10b
+  verified_by: lint gains test_the_messages_skill_scripts_print_are_plain_english (16 passed); 38 script messages
+    reworded; .gitignore comment reworded
+- id: F2
+  class: decide
+  claim: '''Every prompt banner points at the rule'': hitl-gate.sh''s mismatch banner did not'
+  evidence: grep plain-english hooks/hitl-gate.sh -> 0
+  status: fixed
+  resolved_by: 3b35cdc40d19f9efb3e33c07ccd01fa4285dc10b
+  verified_by: grep -c plain-english hooks/hitl-gate.sh -> 1
+- id: F3
+  class: minor
+  claim: getting-started count change not named in the changelog
+  evidence: read
+  status: fixed
+  resolved_by: 3b35cdc40d19f9efb3e33c07ccd01fa4285dc10b
+  verified_by: changelog line added
+- id: F4
+  class: minor
+  claim: Seven floor SHA pins re-pinned to reworded template bytes; changelog does not say so
+  evidence: read
+  status: open
+- id: F5
+  class: minor
+  claim: _marks reports one tell per line (first hit); affects the failure message only
+  evidence: probe
+  status: open
+verdict: verified

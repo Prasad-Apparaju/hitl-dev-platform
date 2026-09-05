@@ -36,10 +36,10 @@ workflow:
     - { n: "1", key: "rc_scope", label: "Scope", phase: "Prepare", status: done, command: "manual" }
     - { n: "2", key: "changelog", label: "Notes", phase: "Prepare", status: done, command: "manual" }
     - { n: "3", key: "version_bump", label: "Bump", phase: "Prepare", status: done, command: "manual" }
-    - { n: "4", key: "gates", label: "Gates", phase: "Verify", status: current, command: "dev-validate" }
-    - { n: "5", key: "adversarial_review", label: "Review", phase: "Gate", status: open, command: "manual" }
-    - { n: "6", key: "resolve_findings", label: "Resolve", phase: "Gate", status: open, command: "manual" }
-    - { n: "7", key: "build", label: "Build", phase: "Publish", status: open, command: "manual" }
+    - { n: "4", key: "gates", label: "Gates", phase: "Verify", status: done, command: "dev-validate" }
+    - { n: "5", key: "adversarial_review", label: "Review", phase: "Gate", status: done, command: "manual" }
+    - { n: "6", key: "resolve_findings", label: "Resolve", phase: "Gate", status: done, command: "manual" }
+    - { n: "7", key: "build", label: "Build", phase: "Publish", status: current, command: "manual" }
     - { n: "8", key: "publish", label: "Publish", phase: "Publish", status: open, command: "manual" }
     - { n: "9", key: "tag", label: "Tag", phase: "Publish", status: open, command: "manual" }
     - { n: "10", key: "install_verify", label: "Verify", phase: "Confirm", status: open, command: "manual" }
@@ -47,7 +47,7 @@ workflow:
     - { n: "12", key: "retire", label: "Retire", phase: "Confirm", status: open, command: "manual" }
 
 current_step:
-  number: 4
-  name: "Gates"
-  phase: "Verify"
-  command: "dev-validate"
+  number: 7
+  name: "Build"
+  phase: "Publish"
+  command: "manual"

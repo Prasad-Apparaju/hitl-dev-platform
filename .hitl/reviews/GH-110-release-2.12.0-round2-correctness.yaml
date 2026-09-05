@@ -1,0 +1,72 @@
+schema_version: '2.0'
+change_id: GH-110-release-2.12.0
+round: 2
+lens: correctness
+reviewed_sha: 3b35cdc40d19f9efb3e33c07ccd01fa4285dc10b
+scope: 'the round-1 fixes: preferences default tone and multi-block warning, the lint''s fifth surface, the 38 reworded
+  script messages, the mismatch banner pointer, the .gitignore comment; suites re-run'
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: ten-item checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+checks:
+- check: Build into scratch clone
+  command: build.sh
+  result: pass
+  output: Build complete
+- check: Built default tone string has no variable and no shared/ path
+  command: grep skills/dev-preferences/SKILL.md:301
+  result: pass
+  output: (HITL's plain-english rule); 0 matches for CLAUDE_PLUGIN_ROOT or shared/
+- check: Fresh block written by the built script
+  command: prefs.py write ... ""; grep Tone; grep -c em dash
+  result: pass
+  output: Tone line clean; 0 em dashes
+- check: show with a doubled block warns without an em dash
+  command: prefs.py show
+  result: pass
+  output: '''..., so more than one preferences block.'' exit 0; 0 em dashes'
+- check: Lint passes and has six tests
+  command: pytest test_plain_english.py; grep -c def test_
+  result: pass
+  output: 16 passed; 6
+- check: New surface not vacuous; no echo with em dash in SKILL.md
+  command: probe.py; grep
+  result: pass
+  output: '[''em dash''] / []; 0'
+- check: Rule pointer in three banners; no em dash written by write-session-summary
+  command: grep -c plain-english; grep printf
+  result: pass
+  output: 1/1/1; the two em-dash hits are trailing shell comments never printed
+- check: Wiring, skill lint, matrix
+  command: pytest ci/wiring; check_skills; run_matrix
+  result: pass
+  output: 250 passed; 63/63; 271/271
+- check: Full suite
+  command: pytest ci/ tools/
+  result: pass
+  output: 898 passed
+- check: Changed files outside the expected classes
+  command: git diff HEAD~1 --stat
+  result: pass
+  output: change-file-migration.md (three print messages reworded) and the re-pinned personas floor hash
+findings:
+- id: F1
+  class: minor
+  claim: The lint's fifth surface extracts double-quoted literals only; a single-quoted echo or a mark inside an
+    f-string expression would pass (none exist today)
+  evidence: 'grep over ai/ for echo/print with em dash: empty'
+  status: open
+- id: F2
+  class: minor
+  claim: The personas floor hash was re-pinned; the round-2 brief did not name it (the commit message does)
+  evidence: read
+  status: open
+- id: F3
+  class: minor
+  claim: Check 7's literal command matched two trailing shell comments; the intent (no em dash printed or written)
+    holds
+  evidence: write-session-summary.sh lines 5, 16
+  status: open
+verdict: verified
