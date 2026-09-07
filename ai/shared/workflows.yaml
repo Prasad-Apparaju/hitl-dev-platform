@@ -412,6 +412,17 @@ step_costs:
 #
 # Deliberately not a phase-order graph. Later-than is not depends-on, and a dependency for every
 # pair would make the check noise that people learn to click past.
+# ── Retired steps ──────────────────────────────────────────────────────────────────────────────
+# Steps HITL itself shipped and later removed. The change-file migrator (dev-update Step 4.5)
+# reads this to tell a retired HITL step from a step the team added themselves: a retired key is
+# dropped from the plan and reported; an unknown key is the team's own and is kept verbatim.
+# Without this list a retired key looked like a team step, was kept, and collided with the catalog
+# step that took its number (plugin #33). Add an entry whenever a `key` leaves any workflow.
+retired_steps:
+  impact:
+    since: "2.9.0"
+    note: "impact analysis left the plan in 2.9.0 (#97): it now runs at intake and produces the plan"
+
 step_requires:
   verify_red:
     needs: [red]

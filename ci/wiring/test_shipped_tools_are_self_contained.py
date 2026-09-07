@@ -342,6 +342,109 @@ def test_migration_keeps_a_teams_own_step():
     assert 'diff.append(f"  - removed  {k}")' not in src
 
 
+def _run_migration(tmp_path, change_text):
+    """Run the shipped migrator on a change file; return (process, migrated text or None)."""
+    mig = tmp_path / "mig.py"
+    mig.write_text(_migrator(), encoding="utf-8")
+    repo = tmp_path / "repo"
+    (repo / ".hitl").mkdir(parents=True)
+    (repo / ".hitl" / "current-change.yaml").write_text(change_text, encoding="utf-8")
+    p = subprocess.run([sys.executable, str(mig),
+                        os.path.join(ROOT, "ai", "shared", "workflows.yaml"), "9.9.9"],
+                       cwd=str(repo), capture_output=True, text=True)
+    out = repo / ".hitl" / "current-change.yaml.migrated"
+    return p, (out.read_text(encoding="utf-8") if out.exists() else None)
+
+
+def _pre_2_9_change(status, cur_n, extra=""):
+    """A 2.8.0-shaped development change: `impact` at n 3, everything after it one slot higher
+    than today's catalog, and `current_step.number` pointing by the OLD numbering."""
+    keys = ["issue", "figma", "impact", "roi", "docs", "iac", "test_plan", "training", "packet", "red"]
+    lines = ["    - { n: %d, key: %s, label: \"%s\", phase: \"Design\", status: %s }"
+             % (i + 1, k, k, status.get(k, "open")) for i, k in enumerate(keys)]
+    return ("schema_version: \"2.0\"\nhitl_version: \"2.8.0\"\nchange_id: \"GH-7\"\ntier: 3\n"
+            "status: planning\nworkflow:\n  id: development\n  version: \"2.8.0\"\n  total: 31\n"
+            "  steps:\n" + "\n".join(lines) + extra + "\n\ncurrent_step:\n  number: %s\n"
+            "  name: \"Decision packet\"\n  phase: \"Design\"\n" % cur_n)
+
+
+def _n_of(key):
+    import yaml as _y
+    rt = _y.safe_load(io.open(os.path.join(ROOT, "ai", "shared", "workflows.yaml"),
+                              encoding="utf-8"))["workflows"]["development"]
+    return str(next(s["n"] for s in rt["steps"] if s["key"] == key))
+
+
+def test_migration_drops_a_retired_hitl_step_instead_of_numbering_two_steps_3(tmp_path):
+    """`impact` left the catalog in 2.9.0. The keep-foreign rule read it as the team's own step,
+    kept it at n 3, and renumbered `roi` into n 3 beside it (plugin #33)."""
+    done = {k: "done" for k in ["issue", "figma", "impact", "roi", "docs", "iac", "test_plan", "training"]}
+    done["packet"] = "current"
+    own = "\n    - { n: 31b, key: legal_signoff, label: \"Legal\", phase: \"Post-Ship\", status: open, owner: legal }"
+    p, out = _run_migration(tmp_path, _pre_2_9_change(done, 9, own))
+    assert out is not None, p.stdout + p.stderr
+    assert "key: impact," not in out, "the retired step is still in the plan"
+    ns = re.findall(r"[{,]\s*n:\s*([0-9a-z]+)", out)
+    assert len(ns) == len(set(ns)), "two steps share a number: %s" % sorted(
+        n for n in set(ns) if ns.count(n) > 1)
+    assert "key: legal_signoff," in out and "owner: legal" in out, "the team's own step was dropped"
+    assert "retired" in p.stdout and "impact" in p.stdout, "the report must say HITL retired it"
+    assert "your own steps" not in p.stdout.split("impact")[0] or "legal_signoff" in p.stdout
+
+
+def test_migration_repoints_current_step_number_at_the_step_marked_current(tmp_path):
+    """Every step after `impact` shifted down by one; `current_step.number: 9` stayed and now named
+    RED while the step lines said Decision packet (plugin #33)."""
+    done = {k: "done" for k in ["issue", "figma", "impact", "roi", "docs", "iac", "test_plan", "training"]}
+    done["packet"] = "current"
+    p, out = _run_migration(tmp_path, _pre_2_9_change(done, 9))
+    assert out is not None, p.stdout + p.stderr
+    m = re.search(r"(?ms)^current_step:.*?(?=^\S|\Z)", out)
+    assert re.search(r"number:\s*%s\b" % _n_of("packet"), m.group(0)), m.group(0)
+    assert 'name: "Decision packet"' in m.group(0), "the user's prose was rewritten"
+    assert "pointer" in p.stdout and "packet" in p.stdout
+
+
+def test_migration_repoints_a_flow_style_current_step_too(tmp_path):
+    text = _pre_2_9_change({"packet": "current"}, 9)
+    text = re.sub(r"(?ms)^current_step:.*", 'current_step: { number: 9, name: "Decision packet", phase: "Design" }\n', text)
+    p, out = _run_migration(tmp_path, text)
+    assert out is not None, p.stdout + p.stderr
+    assert re.search(r"^current_step: \{ number: %s, name: \"Decision packet\"" % _n_of("packet"), out, re.M), out
+
+
+def test_migration_resumes_off_a_retired_step_rather_than_on_a_done_one(tmp_path):
+    """A change that was current ON `impact` has nowhere to be after the drop. It used to resolve
+    `current_step.number: 3` through today's catalog and land on `roi`, which is done."""
+    p, out = _run_migration(tmp_path, _pre_2_9_change({"issue": "done", "figma": "done", "roi": "done",
+                                                        "impact": "current"}, 3))
+    assert out is not None, p.stdout + p.stderr
+    cur = re.findall(r"key: (\w+), label: [^,]+, status: current", out)
+    assert cur == ["docs"], cur
+    assert re.search(r"number:\s*%s\b" % _n_of("docs"), out)
+
+
+def test_migration_refuses_two_steps_with_one_number(tmp_path):
+    """A team step numbered 4a, written before the catalog had a 4a, must not be spliced beside it."""
+    own = "\n    - { n: 4a, key: legal_signoff, label: \"Legal\", phase: \"Design\", status: open }"
+    p, out = _run_migration(tmp_path, _pre_2_9_change({"packet": "current"}, 9, own))
+    assert out is None, "wrote a proposal with a duplicate step number"
+    assert "ABORTED" in (p.stdout + p.stderr) and "4a" in (p.stdout + p.stderr)
+
+
+def test_catalog_lists_every_key_it_has_retired():
+    """The migrator can only drop what the catalog admits to removing. Any key present in a
+    shipped 2.x catalog and absent today must be under `retired_steps`."""
+    import yaml as _y
+    doc = _y.safe_load(io.open(os.path.join(ROOT, "ai", "shared", "workflows.yaml"), encoding="utf-8"))
+    retired = doc.get("retired_steps") or {}
+    assert "impact" in retired, "`impact` left the development workflow in 2.9.0 (#97)"
+    for k, v in retired.items():
+        assert v.get("since") and v.get("note"), "retired step %s needs `since` and `note`" % k
+        for wf in doc["workflows"].values():
+            assert k not in {s["key"] for s in wf["steps"]}, "%s is both retired and in %s" % (k, wf["id"])
+
+
 def test_dev_update_does_not_delete_settings_or_unowned_files():
     """Step 4.6 was hardened because a filename is not evidence of authorship. Ninety lines above
     it, the same skill deleted the team's whole settings file and an untracked script."""

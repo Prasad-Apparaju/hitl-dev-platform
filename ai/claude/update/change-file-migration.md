@@ -13,7 +13,8 @@ from **Step 4.5 — Migrate the change file to the current workflow schema**.
 | 1. Resolve status | Remap completion by stable `key`, so renumbering never loses progress |
 | 2. Enforce one `current` | Repairs both zero-current and duplicate-current (issue #22) |
 | 3. Emit step lines | One flow map per step, carrying project-authored keys across |
-| 4. Surgical splice | Rewrite step lines in place; comments and blank lines stay verbatim |
+| 4. Surgical splice | Rewrite step lines in place; comments and blank lines stay verbatim; drop retired HITL steps; refuse duplicate numbers |
+| 4b. Re-point `current_step` | Number and phase follow the step marked `current`; `name` is left alone |
 | 5. Version stamps | Upsert `schema_version` / `workflow.version` |
 | Diff and confirm | Print the unified diff, then apply **only** on explicit confirmation |
 
@@ -29,7 +30,11 @@ status survives renumbering. It is **surgical at the line level**: it rewrites e
 **every comment (trailing or standalone) and every non-catalog per-step field such as `owner:`** —
 untouched. Project-authored keys are carried across by `key`, not regenerated from the catalog (the
 catalog cannot represent them), so nothing the user added is silently dropped; `phase`/`substep` are
-refreshed from the catalog. Genuinely-new catalog steps are appended after the last existing step.
+refreshed from the catalog. A key the catalog lists under `retired_steps` is a step HITL itself
+removed (e.g. `impact`, gone in 2.9.0): its line is dropped and reported, so it cannot keep a
+number the catalog has reassigned (#33). Genuinely-new catalog steps are inserted where the catalog
+puts them. If two steps would still share a number the migration refuses. `current_step.number`
+and `.phase` are re-pointed at whichever step is `current` after the remap.
 If the catalog is unchanged the block is left byte-for-byte intact and only the version stamps move.
 The file is never round-tripped through a YAML dumper. It writes a proposed
 `.hitl/current-change.yaml.migrated`, prints the per-step table **and the actual unified diff**, and
@@ -61,7 +66,11 @@ catalog_path, new_ver = sys.argv[1], sys.argv[2]
 F = ".hitl/current-change.yaml"
 text = open(F).read()                       # raw text — preserved verbatim except the step lines we splice
 doc = yaml.safe_load(text) or {}            # parse is READ-ONLY (values only); we never dump the doc back
-catalog = yaml.safe_load(open(catalog_path))["workflows"]
+catalog_doc = yaml.safe_load(open(catalog_path))
+catalog = catalog_doc["workflows"]
+# Steps HITL itself shipped and later removed. Without this list a retired key looks exactly like a
+# team's own step, is kept verbatim, and collides with the catalog step that took its number (#33).
+retired = catalog_doc.get("retired_steps") or {}
 
 # Determine the workflow id.
 wf = doc.get("workflow", {}) or {}
@@ -100,7 +109,8 @@ if len(curr) != 1:
         canon = old_cur_key if old_cur_key in curr else max(curr, key=order.index)
     else:
         # Prefer the pointer the old file actually carried. current_step.number is authoritative
-        # in the pre-2.x format this migration exists to serve, where no step line says "current".
+        # ONLY in the pre-2.x format with no step lines. Once step lines exist the keys are the
+        # record and the number is a display pointer that renumbering leaves stale (#33).
         by_n = {}
         for st in cat["steps"]:
             if n_int(st["n"]):
@@ -108,7 +118,7 @@ if len(curr) != 1:
         canon = None
         if old_cur_key in status_by_key:
             canon = old_cur_key
-        elif isinstance(old_cur_n, int) and by_n.get(old_cur_n) in status_by_key:
+        elif not old_steps and isinstance(old_cur_n, int) and by_n.get(old_cur_n) in status_by_key:
             canon = by_n[old_cur_n]
         else:
             # Never resume ON a skip. skipped/starter are recorded decisions, not next actions.
@@ -152,7 +162,7 @@ if block_m:
     si = next((i for i, l in enumerate(lines) if re.match(r"^\s+steps:\s*$", l)), None)
     if si is not None:
         head, region = lines[:si+1], lines[si+1:]
-        out_region, seen, block_style, kept_foreign = [], set(), False, []
+        out_region, seen, block_style, kept_foreign, dropped_retired = [], set(), False, [], []
         for l in region:
             if step_re.match(l) and "{" in l:                        # a flow-map step line
                 km = key_re.search(l); k = km.group(1) if km else None
@@ -161,6 +171,11 @@ if block_m:
                     new_l = step_line(cat_by_key[k], trailing)
                     if new_l != l: block_changed = True
                     out_region.append(new_l); seen.add(k)
+                elif k in retired:
+                    # A step HITL shipped and later removed. Keeping the line leaves two steps
+                    # with the same n once its successor is renumbered into its slot (#33).
+                    block_changed = True
+                    dropped_retired.append((k, old_steps.get(k, {}).get("status", "?")))
                 else:
                     # A key the catalog does not know is the TEAM'S OWN step. Keep the line
                     # verbatim: dropping it silently deletes part of their governance record,
@@ -176,10 +191,27 @@ if block_m:
                      "rewritten in place, and %d step(s) would need adding. Nothing was written.\n"
                      "Re-seed with /hitl:dev-start-change, or convert steps to flow maps first."
                      % len(new_keys))
-        if new_keys:                                                 # append genuinely-new steps after last step line
+        def line_key(l):
+            if not (step_re.match(l) and "{" in l): return None
+            m = key_re.search(l); return m.group(1) if m else None
+        if new_keys:                                                 # insert genuinely-new steps in catalog order
             block_changed = True
-            last = max((i for i, l in enumerate(out_region) if step_re.match(l)), default=len(out_region)-1)
-            out_region = out_region[:last+1] + [step_line(cat_by_key[k]) for k in new_keys] + out_region[last+1:]
+            for k in new_keys:                                       # each lands after its catalog predecessor
+                pos = {line_key(l): i for i, l in enumerate(out_region) if line_key(l)}
+                prev = next((p for p in reversed(order[:order.index(k)]) if p in pos), None)
+                out_region.insert(pos[prev] + 1 if prev is not None else 0, step_line(cat_by_key[k]))
+        # Two steps sharing a number is exactly the corruption a retired key used to cause; a team
+        # step can still collide with a number the catalog has since taken. Refuse rather than write.
+        by_num = {}
+        for l in out_region:
+            nm = re.search(r"[{,]\s*n:\s*[\"']?([A-Za-z0-9]+)[\"']?", l) if line_key(l) else None
+            if nm: by_num.setdefault(nm.group(1), []).append(line_key(l))
+        dups = {n: ks for n, ks in by_num.items() if len(ks) > 1}
+        if dups:
+            sys.exit("MIGRATION ABORTED: two steps would share a number: %s. Nothing was written.\n"
+                     "A step of your own carries a number the catalog now uses. Renumber yours "
+                     "(a letter suffix the catalog does not use, e.g. 4z) and re-run dev-update."
+                     % "; ".join("n: %s -> %s" % (n, ", ".join(ks)) for n, ks in sorted(dups.items())))
         for s in cat["steps"]:
             k = s["key"]
             # "keep" on a status the repair CHANGED reads as if it came from the old file,
@@ -212,6 +244,33 @@ else:
     else:
         out = text.rstrip("\n") + "\n" + wb
 
+# 4b) Re-point `current_step` at the step that is current NOW. Its number is a display pointer that
+#     renumbering leaves stale: after `impact` left the catalog, number 9 meant Decision packet
+#     before and RED after, while the step lines still said packet (#33). `name` is the user's
+#     prose and is left alone; number and phase are derivable from the catalog.
+cur_key = next((k for k, v in status_by_key.items() if v == "current"), None)
+cs_note = []
+if cur_key and re.search(r"(?m)^current_step:", out):
+    cstep = cat_by_key[cur_key]
+    old_cs = doc.get("current_step") or {}
+    new_n, new_ph = str(cstep["n"]), cstep.get("phase")
+    if re.search(r"(?m)^current_step:\s*\{", out):                    # flow style on one line
+        out = re.sub(r"(?m)^(current_step:\s*\{[^\n]*?\bnumber:\s*)[^,}]+", lambda m: m.group(1) + new_n, out, count=1)
+        if new_ph:
+            out = re.sub(r"(?m)^(current_step:\s*\{[^\n]*?\bphase:\s*)(\"[^\"]*\"|[^,}]+)",
+                         lambda m: m.group(1) + '"%s"' % new_ph, out, count=1)
+    else:                                                          # block style
+        cs_m = re.search(r"(?ms)^current_step:.*?(?=^\S|\Z)", out)
+        blk = cs_m.group(0)
+        blk = re.sub(r"(?m)^(\s+number:\s*)[^#\n]*?(\s*(?:#.*)?)$", lambda m: m.group(1) + new_n + m.group(2), blk, count=1)
+        if new_ph:
+            blk = re.sub(r"(?m)^(\s+phase:\s*)[^#\n]*?(\s*(?:#.*)?)$", lambda m: m.group(1) + '"%s"' % new_ph + m.group(2), blk, count=1)
+        out = out[:cs_m.start()] + blk + out[cs_m.end():]
+    if str(old_cs.get("number")) != new_n:
+        cs_note.append("number %s -> %s (%s)" % (old_cs.get("number"), new_n, cur_key))
+    if new_ph and old_cs.get("phase") != new_ph:
+        cs_note.append("phase %s -> %s" % (old_cs.get("phase"), new_ph))
+
 # 5) Upsert the scalar version stamps (replace in place, or prepend if missing).
 def upsert(t, key, val):
     line = f'{key}: "{val}"'
@@ -237,10 +296,19 @@ if newly:
     for k in newly:
         print("    %s" % k)
     print("    These were never offered on this change. Do them, or record a skip.")
+if dropped_retired:
+    print("\n--- steps HITL retired since your version (removed from the plan) ---")
+    for k, st in dropped_retired:
+        r = retired.get(k) or {}
+        print("    %s (was %s): %s" % (k, st, r.get("note") or "retired in %s" % r.get("since", "a later release")))
+    print("    Their record stays in this file's git history.")
 if kept_foreign:
     print("\n--- your own steps, carried through (not in the HITL catalog) ---")
     for k in kept_foreign:
         print("    %s" % k)
+if cs_note:
+    print("\n--- current_step pointer re-pointed at the step marked current ---")
+    print("    " + "; ".join(cs_note))
 print("\n--- actual diff (review before confirming) ---")
 print("\n".join(ud) if ud else "(no changes)")
 PY

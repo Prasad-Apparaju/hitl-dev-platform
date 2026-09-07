@@ -36,6 +36,15 @@ All notable changes to the HITL plugin are documented here.
   it, an unattended drift check files one rollup issue at most, and the retrospective re-reads the
   follow-ups a change's reviews filed against what merged. A wiring test holds every issue-filing
   skill to it.
+- **Upgrading a change started before 2.9.0 no longer numbers two steps 3 or leaves the pointer
+  on the wrong step** (plugin #33). `impact` left the catalog in 2.9.0; the migrator read it as the
+  team's own step, kept it at 3, and renumbered `roi` into 3 beside it. And `current_step.number`
+  was never remapped, so a change held at the decision packet reported itself at RED. The catalog
+  now lists `retired_steps`; a retired key is dropped and reported, an unknown key is still the
+  team's own and kept. The number and phase under `current_step` follow whichever step is
+  `current` after the remap (`name` is left alone), and the number is trusted only on pre-2.x
+  files with no step lines. Two steps that would share a number abort the migration. New catalog
+  steps land where the catalog puts them (4a after 4, not after 31).
 
 ---
 
