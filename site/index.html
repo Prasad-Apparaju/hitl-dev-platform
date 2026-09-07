@@ -199,6 +199,31 @@
     <p>The principles above have been in place since 2.0. These are the capabilities added since, newest first. Full notes for every release are on <a href="https://github.com/Prasad-Apparaju/hitl-dev-platform/releases" target="_blank" rel="noopener">the releases page</a>.</p>
     <div class="prin-grid">
       <div class="prin">
+        <h3>Plain English, and short <span class="pill live">2.12</span></h3>
+        <p>One rule for everything HITL says or writes: no filler, numbers in a table, a document as long as what it has to say. Generated documents have ceilings: an executive summary is three sentences, an HLD two pages of prose, an ADR one page. A section with nothing to say reads "None." A lint checks the text that reaches people, and around three hundred shipped lines were reworded to pass it.</p>
+        <span class="mech">shared/plain-english.md · length ceilings · test_plain_english.py</span>
+      </div>
+      <div class="prin">
+        <h3>Reviews verify instead of attack <span class="pill live">2.11</span></h3>
+        <p>The adversarial review became a verification review. The same independent reviewer in a clean context now gets a checklist built from the requirement and the work's own claims, runs what can be run, and returns one page: a table of checks with the command and result for each, then at most five ranked points. "It is right" is a real answer. Step keys, skip records and waivers are unchanged, so nothing needs editing.</p>
+        <span class="mech">dev-verification-review · record schema 2.0 · gate reads both shapes</span>
+      </div>
+      <div class="prin">
+        <h3>Security steps a plan can reach <span class="pill live">2.10</span></h3>
+        <p>The security design review, CVE audit and penetration test were dropped on the way to the runtime, so a tier-3 change to authentication drew none of them. They are lettered substeps now, activated by what the change touches or by one intake question: does this touch auth, secrets, personal or payment data. Silence is not a no. The gate blocks a step marked not applicable when the record never answers the question.</p>
+        <span class="mech">substeps 4a-4c, 27a · COND_UNCONFIRMED · read from the impact record</span>
+      </div>
+      <div class="prin">
+        <h3>Right-sizing: the code decides the plan <span class="pill live">2.9</span></h3>
+        <p>Impact analysis stops being a step in the plan and becomes the thing that produces it. It reads what the change reaches, proposes a tier from those findings, and offers two options: fast track, the steps this change's own facts call for, or full scale. A one-line fix behind a flag draws about a third of the catalog. The statusline now shows the command to run at every step, and each step closes by saying what comes next.</p>
+        <span class="mech">.hitl/impact/&lt;change&gt;.yaml · not_applicable disposition · RULE_OVER_FLOOR</span>
+      </div>
+      <div class="prin">
+        <h3>Review findings reach you, and you decide <span class="pill live">2.8</span></h3>
+        <p>Reviewer reports were being written and never handed back. They now land as files the skill reads, and a missing report is unknown, never a pass. CRITICAL and HIGH findings come to you one at a time in plain English and you answer fix, accept or defer. A catalog of thirteen lenses picks where a review looks, and the gate reads every reviewer in a round, not one. The hooks also stopped talking like a compiler: every gate message says what happened and what to do next.</p>
+        <span class="mech">.hitl/reviews/incoming · lens catalog · two rounds, then it asks</span>
+      </div>
+      <div class="prin">
         <h3>How HITL talks to you <span class="pill live">2.7</span></h3>
         <p>Tune length, whether it narrates its process, and how it opens a disagreement — per project, adjustable any time. A companion command drafts a PR comment or status note for a named reader. A preference shapes <em>form</em>, never substance: a risk, a cost, or a decision that is yours to make is stated regardless, and that rule is pinned by hash.</p>
         <span class="mech">dev-preferences · dev-draft-for · marked CLAUDE.md block</span>

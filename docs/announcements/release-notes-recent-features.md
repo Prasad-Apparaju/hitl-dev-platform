@@ -1,13 +1,134 @@
-# What's new in HITL: the last 10 features
+# What's new in HITL: recent features
 
-Covers releases 2.2.0 through 2.7.1. Newest first. Each entry says what the feature is, and what
+Covers releases 2.2.0 through 2.12.0. Newest first. Each entry says what the feature is, and what
 you actually get out of it.
 
 To pick all of this up on an existing project, run `/hitl:dev-update` once.
 
 ---
 
-## 1. Tell HITL how to talk to you
+## 1. Plain English, and short, is the standard
+
+HITL 2.12.0
+
+One rule for everything HITL says or writes, `shared/plain-english.md`: no em dashes, none of the
+filler a model reaches for, numbers in a table, and a document as long as what it has to say. A
+section with nothing to say reads "None."
+
+**What you get:** generated documents with a ceiling. An executive summary is three sentences, an
+HLD two pages of prose, an LLD one page per component, an ADR one page, and an impact brief,
+retrospective or review report one page. Going over is allowed when the content needs it, said in
+one line at the top. Every prompt banner points at the rule, `/hitl:dev-preferences` defaults the
+tone to it, and a lint checks the text that reaches people: hook messages, the lines skills say to
+you, the templates. Around three hundred shipped lines were reworded to pass it.
+
+---
+
+## 2. The adversarial review became a verification review
+
+`/hitl:dev-verification-review`, HITL 2.11.0
+
+Same independent reviewer in a clean context, different brief. Instead of "assume this is broken
+and find how", the reviewer gets a checklist built from the requirement, the work's own claims and
+the lens questions, runs what can be run, and returns one page.
+
+**What you get:** a table of checks with the command and result for each, then at most five ranked
+points in three classes: stops it working, worth deciding, minor. "It is right" is a real answer.
+The attacking output was unusable in practice; the constrained brief found more real defects in
+fewer lines, so the constraints stayed and the attack went.
+
+**Nothing to migrate:** the step keys did not change, so no change file, skip record or waiver
+needs editing. The old command remains for one release and tells you where it went. The release
+gate reads both record shapes.
+
+---
+
+## 3. Security steps a plan can actually reach
+
+HITL 2.10.0
+
+The security design review, CVE audit and penetration test were dropped on the way to the runtime,
+so a tier-3 change to authentication drew none of them, and the pentest was a floor step that never
+appeared in a plan.
+
+**What you get:** the three are lettered substeps now, activated per change by a lockfile change, a
+data migration, or you answering yes to one intake question: does this touch auth, secrets,
+personal or payment data. Inactive, the sizer records them not applicable with the reason. Silence
+is not a no: the gate blocks a step marked not applicable when the record never answers the
+question.
+
+Also in 2.10.0: the change-file audit in `dev-update` fails closed on an unreadable file, validator
+copies in your repo are synced with a diff and a question rather than blind-copied, and the step
+docs number the steps the way the runtime does.
+
+---
+
+## 4. Right-sizing: the code decides the plan
+
+HITL 2.9.0
+
+Someone added one environment variable to a shell script and HITL ran eleven steps over three and
+a half hours. The plan was fixed at intake from the words in the issue, before any code was read.
+
+**What you get:** impact analysis stops being a step in the plan and becomes the thing that
+produces it. It always runs, reads what the change reaches, writes the findings with their
+provenance to `.hitl/impact/<change-id>.yaml`, and proposes a tier from them. You confirm the tier
+and pick one of two options: fast track, the steps this change's own facts call for, or full
+scale, everything that applies to a change of this shape. Every rule reads what the change touches,
+never what its area has, so documenting an area does not tax every future change to it.
+
+**What it replaces:** the pre-selection inside First Pass. First Pass is no longer opt-in; every
+change sees a proposal. A fourth disposition, `not_applicable`, separates "the rules excluded it"
+from "a person declined it", so the retrospective stops reading twenty declined steps nobody looked
+at. A rule cannot retire a load-bearing step; a named person can.
+
+---
+
+## 5. What to run, at every step
+
+HITL 2.9.0
+
+The catalog has declared commands all along. They were dropped in derivation, dropped again when
+the change file was written, and never shown.
+
+**What you get:** the statusline names the command for the current step, and every step closes by
+saying what comes next and how to start it. Steps with nothing to run say so rather than inventing
+one.
+
+---
+
+## 6. Review findings reach you, and you decide
+
+HITL 2.8.0
+
+Reviewer reports were being written and never handed back. On one change, ten reviewers produced
+full reports and not one was delivered.
+
+**What you get:** reports land as files the skill reads, and a missing report is unknown, never
+"the reviewer failed". CRITICAL and HIGH findings come to you one at a time in plain English: what
+breaks, what it costs, the recommendation. You answer fix, accept, or defer. That is what makes an
+accepted risk recordable; before, "fix everything" was the only answer an agent could give, and
+reviews became a loop. A catalog of thirteen lenses picks where a review looks. Two rounds, then
+round three is a decision someone makes. The gate reads every reviewer in a round, not one, and a
+name filed as `consequence-2` no longer hides a duplicate.
+
+---
+
+## 7. HITL stops talking like a compiler
+
+HITL 2.8.0
+
+The hooks used to interrupt you mid-edit and report internal state in capitals. Nobody has a
+context mismatch. Nobody realigns anything.
+
+**What you get:** all 46 gate messages across five hooks say what happened the way a colleague
+would and end with what to do next. Same gates, same exit codes. A small set of icons marks state
+and never celebrates. The portal also caught up with the plugin in this release; it had not moved
+since 2.1.1.
+
+---
+
+## 8. Tell HITL how to talk to you
 
 `/hitl:dev-preferences` — HITL 2.7.0
 
@@ -27,7 +148,7 @@ the tone and politely declines that one clause.
 
 ---
 
-## 2. Draft a message for a specific person
+## 9. Draft a message for a specific person
 
 `/hitl:dev-draft-for <person>` — HITL 2.7.0
 
@@ -44,7 +165,7 @@ profile exists, and both facts are disclosed on every draft.
 
 ---
 
-## 3. A workflow for shipping a release
+## 10. A workflow for shipping a release
 
 The `release` workflow — HITL 2.6.4, tightened in 2.6.5
 
@@ -60,7 +181,7 @@ the normal development workflow; declining either is recorded like any other ski
 
 ---
 
-## 4. Your project says out loud that it uses HITL
+## 11. Your project says out loud that it uses HITL
 
 Managed `CLAUDE.md` section + `docs/getting-started.md` — HITL 2.6.0
 
@@ -76,7 +197,7 @@ need. The block never overwrites your file; it creates, appends, refreshes, or s
 
 ---
 
-## 5. First Pass: ship a thin whole version, on the record
+## 12. First Pass: ship a thin whole version, on the record
 
 HITL 2.4.0, actually wired in 2.5.0
 
@@ -99,7 +220,7 @@ tried First Pass on 2.4.x and it felt like nothing happened, that's why.
 
 ---
 
-## 6. Brief mode
+## 13. Brief mode
 
 HITL 2.5.0
 
@@ -110,7 +231,7 @@ the single biggest source of "this makes me read too much", collapses to a phase
 
 ---
 
-## 7. Fewer permission prompts for reads you already approved
+## 14. Fewer permission prompts for reads you already approved
 
 HITL 2.5.0
 
@@ -124,20 +245,20 @@ rides along on any allowlist entry.
 
 ---
 
-## 8. Reviewers that try to prove you wrong
+## 15. Reviewers that try to prove you wrong
 
-HITL 2.5.0
+HITL 2.5.0, replaced in 2.11.0
 
-All five reviewer agents (PM, architect, QA, ops, spec conformance) now open with an instruction to
-refute rather than confirm.
+All five reviewer agents (PM, architect, QA, ops, spec conformance) opened with an instruction to
+refute rather than confirm. A reviewer that sets out to confirm a design finds it confirmed, every
+time, which is worth nothing.
 
-**What you get:** reviews that find things. A reviewer that sets out to confirm a design finds it
-confirmed, every time, which is worth nothing. This one line changed the character of the output
-more than anything else in the release.
+**Where it went:** the refute line is gone as of 2.11.0. The agents now open with "Verify, do not
+confirm" and are told a result is the command and what it printed. Item 2 has the reasoning.
 
 ---
 
-## 9. A front door for designing agentic systems
+## 16. A front door for designing agentic systems
 
 `hitl:agentic-intake` — HITL 2.3.0
 
@@ -151,12 +272,12 @@ as the design changes and it reconciles with what you decided last time rather t
 The same answers always produce the same report.
 
 **The boundary that matters:** the intake writes no field of your system manifest, not one. A human
-authors the manifest; the validator in item 10 checks it independently. That keeps the check honest
+authors the manifest; the validator in item 17 checks it independently. That keeps the check honest
 rather than grading its own homework.
 
 ---
 
-## 10. HITL governs systems, not just services
+## 17. HITL governs systems, not just services
 
 Compound-agentic delivery surface — HITL 2.2.0
 
@@ -189,7 +310,8 @@ blocker can be waived by a human with a recorded reason; a few can't be waived a
 
 ## And a note on the point releases
 
-2.4.3 through 2.4.8, 2.6.1 through 2.6.3, and 2.7.1 are fixes, not features, and most of them came
-from independent adversarial reviews or from people using this for real. If you're on
-anything older than 2.7.1, update: 2.6.4 could corrupt a change file on upgrade, and 2.6.2 had a
-cleanup step that could delete a test file your team wrote.
+2.4.3 through 2.4.8, 2.6.1 through 2.6.3, 2.7.1, 2.9.1 and 2.10.1 are fixes, not features, and
+most of them came from independent reviews or from people using this for real. If you're on
+anything older than 2.12.0, update: 2.9.0 shipped a retrospective step that failed for everyone who
+installed the plugin, 2.6.4 could corrupt a change file on upgrade, and 2.6.2 had a cleanup step
+that could delete a test file your team wrote.
