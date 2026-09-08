@@ -282,7 +282,7 @@ graphify .              # build graph from code + docs
 graphify hook install   # auto-rebuild on every git commit
 ```
 Then commit: `git add graphify-out/ && git commit -m "chore: add graphify knowledge graph"` (add `graphify-out/manifest.json` and `graphify-out/cost.json` to `.gitignore` first).
-If Graphify is not yet installed, install it now (`uv tool install graphifyy && graphify claude install`) or skip — HITL skills work without it but perform better with it. See `shared/graphify-setup.md`.
+If Graphify is not yet installed, install it now (`uv tool install graphifyy && graphify claude install`) or skip — HITL skills work without it but perform better with it.
 
 Come back here when the design docs exist — Step 5 stands up the platform.
 

@@ -16,6 +16,12 @@ All notable changes to the HITL plugin are documented here.
   synced validator HITL has released; a repo copy that matches one is updated, a copy that matches
   none is still kept and asked about. `/hitl:dev-verification-review` also checks the repo's gate
   copy before running it and says, in one line, when it is an older release and what to run.
+- **Every `shared/` file a shipped skill names is in the package.** Twenty skills closed with "the
+  way `ai/shared/next-step.md` describes", a source-repo path the build never rewrote, so the
+  installed skills pointed at a file that was not there; `shared/next-step.md` ships now and the
+  build fails on a source path that survives the rewrite. The onboarding skills' pointer to a
+  `graphify-setup.md` that never existed is gone; the install command was already inline. Found by
+  the 2.12.1 upgrade review.
 - **`dev-check-conventions` runs the drift checker the way CI does, and says what it did not run**
   (#113). It passed no flags, so an unlisted file was a warning and the exit was 0 while the same
   checker failed the same file in CI. It now passes `--require-manifest --strict`, and its report

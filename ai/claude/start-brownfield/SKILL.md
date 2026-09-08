@@ -400,7 +400,7 @@ git add graphify-out/ .gitignore
 git commit -m "chore: add graphify knowledge graph"
 ```
 
-**If not installed:** say "Graphify not found — skipping. Install it when convenient with `uv tool install graphifyy && graphify claude install`, then run `graphify .` in this repo. HITL skills fall back gracefully without it. See `shared/graphify-setup.md`." and continue to Step 8.
+**If not installed:** say "Graphify not found — skipping. Install it when convenient with `uv tool install graphifyy && graphify claude install`, then run `graphify .` in this repo. HITL skills fall back gracefully without it." and continue to Step 8.
 
 ---
 

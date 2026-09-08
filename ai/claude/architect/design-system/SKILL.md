@@ -363,7 +363,7 @@ Follow the instructions in Phase R5 of the `generate-docs` skill exactly. This s
 3. **Install the plugin or copy skills** — so `/architect/design-feature`, `/hitl:dev-tdd`, `/hitl:dev-generate-docs`, etc. are available
 4. **Copy CI actions** to `.github/workflows/`
 5. **Generate `.github/ISSUE_TEMPLATE/technical-change.md`** from `shared/templates/issue-template.md`
-6. **Set up Graphify** — for systems with 4+ domains, the doc set produced by this session will exceed context window limits on future queries. Install before team onboarding (see `shared/graphify-setup.md` for full instructions):
+6. **Set up Graphify** — for systems with 4+ domains, the doc set produced by this session will exceed context window limits on future queries. Install before team onboarding:
    ```bash
    uv tool install graphifyy        # install once per machine
    graphify claude install          # register /graphify skill with Claude Code
