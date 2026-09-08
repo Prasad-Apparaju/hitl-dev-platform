@@ -137,8 +137,14 @@ gh release create hitl--vX.Y.Z -R pappar/hitl-claude-plugin --title "hitl X.Y.Z"
 ```
 
 The notes lead with what changes for someone who uses HITL, then the changelog section. Close
-the issues the release fixes with a comment naming the version. Longer user-facing announcements
-go under `docs/announcements/`.
+the issues the release fixes with a comment naming the version. Post one comment on the users
+thread, https://github.com/pappar/hitl-claude-plugin/discussions/36, with what changed and what
+to run; that thread is the notification channel people opt into (#116). Longer user-facing
+announcements go under `docs/announcements/`.
+
+One thing the 2.12.1 reviews taught: the gate matches a finding carried across rounds by its
+claim text, normalised and cut at 60 characters. A reviewer who rewords a claim in round 2 leaves
+round 1's finding open as far as the gate can tell. Tell reviewers to copy claim strings verbatim.
 
 ### 12. Retire
 
