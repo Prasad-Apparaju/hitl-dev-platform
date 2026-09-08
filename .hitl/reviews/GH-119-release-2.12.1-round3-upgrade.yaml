@@ -1,0 +1,44 @@
+schema_version: '2.0'
+change_id: GH-119-release-2.12.1
+round: 3
+reviewed_sha: 6327d63127a1e093990d0d7aa3481e0a22bf5971
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: rebind round 2 to the final sha, two checks only, carry every finding forward, one page
+lens: upgrade
+scope: Source moved from 68cd2bf to 6327d63 after round 2; the only change is ci/shipped-validators.sha256 (four lines added, one removed, adding the 1.x plugin-tag hashes). Fresh clone of hitl-claude-plugin release/2.x at 64a4070 into scratchpad/review-upgrade/plugin3, built against the source working tree, which is clean at 6327d63.
+checks:
+- check: build completes from 6327d63
+  command: git -C hitl-dev-platform rev-parse HEAD; git status --short (clean); git clone -b release/2.x; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform; read plugin.json version
+  result: pass
+  output: HEAD 6327d63, working tree clean; exit 0; "all shared/ references resolve"; "Build complete."; version 2.12.1
+- check: shipped manifest matches source at 6327d63
+  command: git show 6327d63:ci/shipped-validators.sha256 > manifest-6327d63; diff plugin3/shared/ci/shipped-validators.sha256 manifest-6327d63
+  result: pass
+  output: diff clean; 44 hash lines, now including ci/first-pass/workflows.yaml under 1.0.28 and 1.1.0
+findings:
+- id: F1
+  class: decide
+  check: next-step.md ships and pointers rewritten
+  claim: Twenty shipped skills tell the model to close a step "the way ai/shared/next-step.md describes", which is the source repo's path and is not shipped, so an installed plugin has no such file to read.
+  evidence: 'round 2 at 68cd2bf: shared/next-step.md exists in the build and all 20 pointers read ${CLAUDE_PLUGIN_ROOT}/shared/next-step.md; 6327d63 touches only the manifest, so unchanged'
+  status: fixed
+  resolved_by: 68cd2bfbced812463f107e53a3518b88acb7b51f
+  verified_by: next-step.md ships and pointers rewritten (round 2)
+- id: F2
+  class: minor
+  check: next-step.md ships and pointers rewritten
+  claim: dev-start-from-prd points at shared/graphify-setup.md, a file that does not exist in the source repo or the build.
+  evidence: 'round 2 at 68cd2bf: 0 graphify-setup mentions in built skills, agents, commands; 6327d63 touches only the manifest, so unchanged'
+  status: fixed
+  resolved_by: 68cd2bfbced812463f107e53a3518b88acb7b51f
+  verified_by: next-step.md ships and pointers rewritten (round 2)
+- id: F3
+  class: minor
+  check: shared/ and ai/ paths in built skills, commands, agents
+  claim: dev-generate-docs lines 244 and 246 name a manual copy destination of .ai/claude/ai/claude/, which reads like a doubled path; the guard allowlists it by name rather than the text being checked.
+  evidence: skills/dev-generate-docs/SKILL.md:244 "copy skills to `.ai/claude/ai/claude/`"; build.sh case allowlist includes ai/claude/ai/claude/; unchanged at 6327d63
+  status: open
+verdict: verified

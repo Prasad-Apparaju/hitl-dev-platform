@@ -1,0 +1,70 @@
+schema_version: '2.0'
+change_id: GH-119-release-2.12.1
+round: 1
+reviewed_sha: cb02cb26ed8d30a8e5257478d7cadfc2c78b74a4
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+lens: correctness
+scope: "Release 2.12.1 at cb02cb2: shipped-validators manifest and dev-update refresh (plugin #35), verification-review Step 7 gate check, check-conventions drift flags and boundary (#113), version bump; every [2.12.1] changelog bullet traced to the tree"
+checks:
+- check: test suite at HEAD
+  command: "python3 -m pytest ci/ tools/ -q"
+  result: pass
+  output: "925 passed in 60.92s"
+- check: manifest parsing and sync branch (scratch cases)
+  command: "scratch t_migrate.py calling migrate_project._shipped_hashes and sync_validators against a fake plugin root and project root"
+  result: pass
+  output: "trailing '# version' comment parses; short hash, single field, blank line, uppercase hash and a garbage-only manifest are ignored without raising; a hash listed only under another path is kept as modified; apply=False prints 'would update' and leaves the file unchanged; no manifest gives shipped={} and every difference kept; apply=True replaces the older copy"
+- check: shipped-validators-hashes.py --check at HEAD
+  command: "python3 tools/scripts/shipped-validators-hashes.py --check; echo $?"
+  result: pass
+  output: "manifest current: every synced validator in the tree is listed; exit 0"
+- check: shipped-validators-hashes.py on a changed file (scratch copy of ci/ tools/ ai/)
+  command: "append one line to ci/adversarial/check_review.py; run --check; run twice without --check; wc -l on the manifest"
+  result: pass
+  output: "--check exit 1 and printed missing: ci/adversarial/check_review.py; first run appended one line ending in '# 2.12.1' (54 to 55 lines); second run printed manifest current and appended nothing (55)"
+- check: manifest paths, duplicates, 2.12.1 hashes
+  command: "awk/sort/uniq -d on ci/shipped-validators.sha256; shasum -a 256 of the six source files vs their 2.12.1 lines; parent dirs vs migrate_project.SYNC_SETS dst values"
+  result: pass
+  output: "0 duplicate (hash, path) pairs; all six 2.12.1 hashes match the tree (check_skips, gen_change, migrate_project, size_plan, workflows.yaml, check_review); every manifest path sits under ci/first-pass, ci/adversarial, ci/manifest-agentic, ci/manifest-drift or tools/manifest-agentic, all SYNC_SETS destinations"
+- check: manifest covers every version the plugin repo tagged
+  command: "python over git ls-tree of all 41 tags in ../hitl-claude-plugin, sha256 of each synced validator blob, set difference against the manifest"
+  result: pass
+  output: "38 unique (hash, path) pairs across tags, 36 present; the 2 absent are workflows.yaml under 1.x tags only (hitl--v1.0.28 to v1.0.31 and hitl--v1.1.0); every 2.x tagged version is listed; build.sh copies workflows.yaml and *.py with plain cp so source hashes equal shipped hashes"
+- check: check-conventions drift flags, boundary, description
+  command: "git diff cb02cb2^ cb02cb2 -- ai/claude/check-conventions/SKILL.md; grep -n in ci/workflows/convention-check.yml"
+  result: pass
+  output: "SKILL.md:101 and convention-check.yml:23 both run check_manifest_drift.py --require-manifest --strict; boundary paragraph at SKILL.md:132 sits inside Step 2 (lines 115 to 135); description on line 2 reads 'A useful pass before a PR, not a mirror of your CI'"
+- check: verification-review Step 7 block
+  command: "awk-extract the bash block to scratch; bash -n; run it minus the final python3 line in two simulated repos with ROOT pointed at a scratch plugin root"
+  result: pass
+  output: "bash -n OK (20 lines); with no manifest and a differing copy it prints the 'is yours. Using it.' note, keeps GATE=ci/adversarial/check_review.py, exit 0; with the manifest and the v2.10.0 source copy (hash 86b8fcf0, listed as 2.9.0) it prints the older-release lines and switches GATE to the shipped copy"
+- check: skill lint and plain-English lint
+  command: "python3 ci/skill-lint/check_skills.py; python3 -m pytest ci/wiring/test_plain_english.py -q"
+  result: pass
+  output: "63/63 files pass, 0 failures, 0 warnings; 16 passed"
+- check: changelog bullets vs tree
+  command: "grep per bullet"
+  result: pass
+  output: "#35 migrate_project.py:295 result[updated] plus four tests at test_first_pass_lib.py:806-847, build.sh:344, releasing.md:50; #113 SKILL.md:101,132; #108 test_size_plan.py:406,415; #96 migrate_project.py:328 statusLine; activator size_plan.py:138-144; #92 check_review.py:546 FINDING_CARRIED, :654 TARGET_NOT_HEAD; #111 gen_change.py:84 tier_proposed; #94 ai/shared/issue-hygiene.md and ci/wiring/test_wiring.py; #33 workflows.yaml:421 retired_steps"
+- check: version
+  command: "grep version ai/claude/plugin/plugin.json; grep -rhoE 'v2\\.[0-9]+\\.[0-9]+' site/*.html | sort -u"
+  result: pass
+  output: "plugin.json 2.12.1; site pages show only v2.12.1"
+findings:
+- id: F1
+  class: decide
+  check: manifest covers every version the plugin repo tagged
+  claim: "The manifest omits the two workflows.yaml versions shipped under 1.x plugin tags (hitl--v1.0.28 to v1.0.31 and hitl--v1.1.0), so a repo carrying a 1.x copy at ci/first-pass/workflows.yaml would be kept as an edit rather than updated."
+  evidence: "plugin repo git ls-tree over tags shows hashes 6caa3e9073ec and 7a386b1381de for shared/workflows.yaml, neither present in ci/shipped-validators.sha256, while the header says 'every version HITL has ever synced'. If 1.x never installed the file at that path, or the pre-2.x migration owns that case, this is a header wording fix only."
+  status: open
+- id: F2
+  class: minor
+  check: manifest covers every version the plugin repo tagged
+  claim: "The source tag v2.11.0 carries a workflows.yaml (ba36b69c) that no plugin tag ever shipped; the manifest carries what plugin tag hitl--v2.11.0 shipped (9a6533e9), so dev-update behaves correctly, but the two tags do not point at the same content."
+  evidence: "git show v2.11.0:ai/shared/workflows.yaml | shasum -a 256 gives ba36b69c; git show hitl--v2.11.0:shared/workflows.yaml in the plugin repo gives 9a6533e9; ba36b69c appears 0 times in the manifest"
+  status: open
+verdict: verified

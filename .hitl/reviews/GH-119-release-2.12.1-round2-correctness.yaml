@@ -1,0 +1,48 @@
+schema_version: '2.0'
+change_id: GH-119-release-2.12.1
+round: 2
+reviewed_sha: 6327d63127a1e093990d0d7aa3481e0a22bf5971
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: narrow round 2, re-check F1 fix and the two commits since round 1, about 5 calls
+lens: correctness
+scope: "Round 2 at 6327d63: manifest regenerated from every plugin tag on both lines (F1), graphify-setup pointer removed from three onboarding skills and the shared/next-step.md changelog bullet (68cd2bf)"
+checks:
+- check: 1.x workflows.yaml hashes are listed
+  command: "git show hitl--v1.0.28:shared/workflows.yaml and hitl--v1.1.0:shared/workflows.yaml | shasum -a 256, grep each against ci/shipped-validators.sha256; then the round 1 python over all 41 plugin tags"
+  result: pass
+  output: "6caa3e9073ec listed once under ci/first-pass/workflows.yaml (# 1.0.28), 7a386b1381de listed once; across all 41 tags 38 unique (hash, path) pairs, 0 missing; header lines 1-2 say both lines hitl--v1.* and hitl--v2.* plus the tree at each release"
+- check: manifest current and tests
+  command: "python3 tools/scripts/shipped-validators-hashes.py --check; python3 -m pytest ci/wiring/test_shipped_validators_manifest.py ci/first-pass/test_first_pass_lib.py -q"
+  result: pass
+  output: "manifest current, exit 0; 81 passed in 0.29s"
+- check: no duplicate pairs, paths are SYNC_SETS destinations
+  command: "awk/sort/uniq -d and parent-dir listing over ci/shipped-validators.sha256"
+  result: pass
+  output: "0 duplicates; 44 entries, 6 labelled 2.12.1; parent dirs are ci/adversarial ci/first-pass ci/manifest-agentic ci/manifest-drift tools/manifest-agentic"
+- check: graphify-setup pointer gone, install command kept, lints
+  command: "grep -c graphify-setup and grep -n install in the three SKILL.md files; python3 ci/skill-lint/check_skills.py; python3 -m pytest ci/wiring/test_plain_english.py -q"
+  result: pass
+  output: "0 graphify-setup hits in start-from-prd, start-brownfield, architect/design-system; install commands remain at start-from-prd:282 and start-brownfield:392 (graphify hook install) and design-system:368 (uv tool install graphifyy); skill lint 63/63, 0 failures; plain-English 16 passed"
+- check: new CHANGELOG bullet names things in the tree
+  command: "git diff cb02cb2 6327d63 -- CHANGELOG.md; ls ai/shared/next-step.md; grep next-step.md ../hitl-claude-plugin/scripts/build.sh; git branch --contains 64a4070 in the plugin repo"
+  result: pass
+  output: "bullet added at 68cd2bf; ai/shared/next-step.md exists; plugin build.sh:431 lists next-step.md in SHARED_PROSE and :601 documents the surviving-source-path check; plugin commit 64a4070 (build: ship next-step.md ...) is on release/2.x and touches scripts/build.sh"
+findings:
+- id: F1
+  class: decide
+  check: 1.x workflows.yaml hashes are listed
+  claim: "The manifest omits the two workflows.yaml versions shipped under 1.x plugin tags (hitl--v1.0.28 to v1.0.31 and hitl--v1.1.0), so a repo carrying a 1.x copy at ci/first-pass/workflows.yaml would be kept as an edit rather than updated."
+  evidence: "round 1: plugin tag hashes 6caa3e9073ec and 7a386b1381de absent from ci/shipped-validators.sha256; round 2: both present, every version under all 41 plugin tags listed, header rewritten"
+  status: fixed
+  resolved_by: 6327d63127a1e093990d0d7aa3481e0a22bf5971
+  verified_by: 1.x workflows.yaml hashes are listed
+- id: F2
+  class: minor
+  check: manifest covers every version the plugin repo tagged
+  claim: "The source tag v2.11.0 carries a workflows.yaml (ba36b69c) that no plugin tag ever shipped; the manifest carries what plugin tag hitl--v2.11.0 shipped (9a6533e9), so dev-update behaves correctly, but the two tags do not point at the same content."
+  evidence: "git show v2.11.0:ai/shared/workflows.yaml | shasum -a 256 gives ba36b69c; git show hitl--v2.11.0:shared/workflows.yaml in the plugin repo gives 9a6533e9; ba36b69c appears 0 times in the manifest"
+  status: open
+verdict: verified

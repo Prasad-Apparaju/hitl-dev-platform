@@ -1,0 +1,64 @@
+schema_version: '2.0'
+change_id: GH-119-release-2.12.1
+round: 1
+reviewed_sha: cb02cb26ed8d30a8e5257478d7cadfc2c78b74a4
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: checklist, evidence rule, one page, <=5 points in three classes, ~15 calls
+lens: upgrade
+scope: 'Cloned hitl-claude-plugin (release/2.x) plus the uncommitted build.sh to scratchpad/review-upgrade/plugin, ran build.sh against source cb02cb2, then exercised the built migrator, the built dev-update Step 4.6 and dev-verification-review Step 7 bash blocks, the manifest, shared/ refs, and claude plugin validate against a scratch product repo carrying 2.10.0, 2.11.0 and edited validator copies.'
+checks:
+- check: build
+  command: bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform (in scratch clone); diff shared/ci/shipped-validators.sha256 against source ci/shipped-validators.sha256; read .claude-plugin/plugin.json version
+  result: pass
+  output: 'exit 0, "Build complete."; manifest exists and diff is clean (54 lines); version 2.12.1'
+- check: upgrade path (plugin #35)
+  command: scratch repo with 2.10.0 check_review.py and 2.10.0 check_skips.py plus one appended line; python3 <built>/migrate_project.py --root . --sync-validators <built> --apply; cmp gate to shipped; tail check_skips.py
+  result: pass
+  output: '"^ updated ci/adversarial/check_review.py (an older shipped version, unmodified)"; "1 updated from an older release, 1 modified here and kept"; cmp clean; check_skips.py still ends with the repo edit and is listed under ASK with the --overwrite command'
+- check: older and newer gate copies (2.8.0, 2.11.0)
+  command: sha256 of hitl--v2.11.0 gate, grep in manifest, migrator --apply, cmp; plugin repo has no hitl--v2.8.0 tag, so sha256 of source tag v2.8.0 ci/adversarial/check_review.py, grep in manifest
+  result: pass
+  output: '2.11.0 hash 3007012... is listed, migrator prints "updated ... older shipped version", cmp clean; 2.8.0 hash 86b8fcf... is listed under the 2.9.0 entry (file unchanged between 2.8.0 and 2.9.0), so it takes the same update path; migrator not separately run on the 2.8.0 copy'
+- check: dev-update Step 4.6 block
+  command: extract the Step 4.6 bash block from built skills/dev-update/SKILL.md; git init scratch repo; CLAUDE_PLUGIN_ROOT=<built> bash step46.sh with a 2.10.0 gate in place
+  result: pass
+  output: 'exit 0; reached the migrator ("= 11 identical, 0 installed, 1 updated from an older release, 1 modified here and kept"); gate cmp clean against shipped afterwards; ci/adversarial staged'
+- check: verification-review Step 7 block
+  command: extract the Step 7 bash block from built skills/dev-verification-review/SKILL.md; run with CLAUDE_PLUGIN_ROOT=<built>, first with a 2.10.0 gate copy, then with the shipped copy plus one appended line
+  result: pass
+  output: 'stale copy: "Your repo''s copy of the gate is an older HITL release, not an edit. Reading with the shipped copy." then the shipped gate ran (BLOCK on missing current-change.yaml, expected in an empty repo); edited copy: "differs from the shipped copy and is not an older release, so it is yours. Using it."'
+- check: next-update safety
+  command: shasum -a 256 <built>/shared/ci/adversarial/check_review.py; grep hash in <built>/shared/ci/shipped-validators.sha256; cmp built gate to source ci/adversarial/check_review.py; script checking every shipped synced validator has its current hash listed
+  result: pass
+  output: 'e27689a5... listed as "ci/adversarial/check_review.py  # 2.12.1"; built gate identical to source; every shipped synced validator has its current hash under its own path'
+- check: shared/ paths in built skills and agents resolve
+  command: grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents | sort -u (56 refs), test -e each in the build
+  result: fail
+  output: 'two do not resolve: shared/next-step.md (20 skills say "close it the way ai/shared/next-step.md describes", a source-repo path; the build ships no next-step.md) and shared/graphify-setup.md (dev-start-from-prd; file exists in neither source nor build). Both also present in the hitl--v2.12.0 build, so not a 2.12.1 regression. build.sh''s own reachability check reported "all shared/ references resolve".'
+- check: fresh-install sanity
+  command: claude plugin validate <built>
+  result: pass
+  output: 'Validation passed'
+findings:
+- id: F1
+  class: decide
+  check: shared/ paths in built skills and agents resolve
+  claim: Twenty shipped skills tell the model to close a step "the way ai/shared/next-step.md describes", which is the source repo's path and is not shipped, so an installed plugin has no such file to read.
+  evidence: 'grep -c ai/shared/next-step.md <built>/skills/*/SKILL.md lists 20 skills; ls <built>/shared/next-step.md: No such file; source has ai/shared/next-step.md (2279 bytes); same reference present at hitl--v2.12.0:skills/dev-tdd/SKILL.md'
+  status: open
+- id: F2
+  class: minor
+  check: shared/ paths in built skills and agents resolve
+  claim: dev-start-from-prd points at shared/graphify-setup.md, a file that does not exist in the source repo or the build.
+  evidence: '<built>/skills/dev-start-from-prd/SKILL.md line 285; ls ai/shared/graphify-setup.md in source: No such file or directory'
+  status: open
+- id: F3
+  class: minor
+  check: older and newer gate copies (2.8.0, 2.11.0)
+  claim: The plugin repo carries no hitl--v2.8.0 tag, so the 2.8.0 gate could only be sourced from the platform repo's v2.8.0 tag; its hash is covered by the manifest's 2.9.0 line but the manifest names no 2.8.0 release.
+  evidence: 'git -C hitl-claude-plugin tag | grep 2.8 prints nothing; manifest line "86b8fcf0...  ci/adversarial/check_review.py  # 2.9.0"'
+  status: open
+verdict: not_verified

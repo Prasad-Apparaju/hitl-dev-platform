@@ -1,0 +1,56 @@
+schema_version: '2.0'
+change_id: GH-119-release-2.12.1
+round: 2
+reviewed_sha: 68cd2bfbced812463f107e53a3518b88acb7b51f
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand)
+  brief: narrow round 2 on round 1 F1 and F2, checklist, evidence rule, one page, ~6 calls
+lens: upgrade
+scope: 'Fresh clone of hitl-claude-plugin release/2.x at 64a4070 (build.sh committed) into scratchpad/review-upgrade/plugin2, built against source 68cd2bf; re-ran the shared/ and ai/ path checks over skills, commands and agents, exercised the build reachability guard in isolation with planted bad references, and repeated the round 1 migrator e2e on the new build.'
+checks:
+- check: rebuild from 64a4070
+  command: git clone -b release/2.x; git diff --quiet 64a4070 -- scripts/build.sh; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform
+  result: pass
+  output: 'build.sh identical to 64a4070; exit 0; "all shared/ references resolve"; "Build complete."; plugin.json version 2.12.1'
+- check: shared/ and ai/ paths in built skills, commands, agents
+  command: grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents commands | sort -u then test -e each; grep -rhoE 'ai/(shared|claude)/[A-Za-z0-9_./-]*' skills agents commands | sort -u
+  result: pass
+  output: '55 shared/ refs, 0 missing; ai/ paths are only the four dev-update platform-repo guards (ai/claude/start-change/SKILL.md, ai/claude/plugin/plugin.json, ai/shared/workflows.yaml, ai/claude/hooks/check-platform-ready.sh) plus bare directory mentions (ai/claude/, ai/claude/agents/, ai/shared/, and ai/claude/ai/claude/ in dev-generate-docs line 244 and 246 as a copy destination)'
+- check: next-step.md ships and pointers rewritten
+  command: ls shared/next-step.md; diff against source ai/shared/next-step.md; grep -rh 'shared/next-step.md' skills | sort | uniq -c; grep -rc graphify-setup skills agents commands
+  result: pass
+  output: 'shared/next-step.md ships (2276 bytes); only diff from source is line 57 where the build rewrote ai/shared/first-pass/language.md to shared/first-pass/language.md, which exists in the build; 20 skills carry "close it the way `${CLAUDE_PLUGIN_ROOT}/shared/next-step.md` describes" and no other form; 0 graphify-setup mentions'
+- check: build guard catches the class
+  command: extracted build.sh lines 589-621 (the reachability block) to guard.sh; appended "see ai/shared/does-not-exist.md" to built skills/dev-tdd/SKILL.md; PLUGIN_DIR=$PWD bash guard.sh; repeated with "see shared/does-not-exist.md"; then on the restored tree. A first attempt via a full rebuild was not a test, since build.sh regenerates skills/ from source and erased the planted line before the guard ran.
+  result: pass
+  output: 'planted ai/ path: "MISSING shared/does-not-exist.md", "SOURCE PATH ai/shared/does-not-exist.md", "Refusing to build: 2 shared/ path(s)...", exit 2; planted shared/ path: "MISSING shared/does-not-exist.md", exit 2; clean tree: "all shared/ references resolve", exit 0; skill restored, 0 planted lines remain'
+- check: migrator e2e (round 1 regression)
+  command: scratch repo with hitl--v2.10.0 check_review.py and check_skips.py plus one appended line; python3 plugin2/shared/ci/first-pass/migrate_project.py --root . --sync-validators plugin2 --apply; cmp gate; tail check_skips.py; grep shipped gate hash in manifest
+  result: pass
+  output: '"^ updated ci/adversarial/check_review.py (an older shipped version, unmodified)"; "1 updated from an older release, 1 modified here and kept"; cmp clean; check_skips.py still ends with "# repo edit" and is listed under ASK; e27689a5... listed as ci/adversarial/check_review.py # 2.12.1'
+findings:
+- id: F1
+  class: decide
+  check: next-step.md ships and pointers rewritten
+  claim: Twenty shipped skills told the model to close a step the way ai/shared/next-step.md describes, a source-repo path the build did not ship.
+  evidence: 'round 2: shared/next-step.md exists in the build and all 20 pointers read ${CLAUDE_PLUGIN_ROOT}/shared/next-step.md; grep for ai/shared/next-step.md in skills, commands, agents returns nothing'
+  status: fixed
+  resolved_by: 68cd2bfbced812463f107e53a3518b88acb7b51f
+  verified_by: next-step.md ships and pointers rewritten
+- id: F2
+  class: minor
+  check: next-step.md ships and pointers rewritten
+  claim: dev-start-from-prd pointed at shared/graphify-setup.md, a file that existed in neither source nor build.
+  evidence: 'round 2: grep -rc graphify-setup over built skills, agents, commands finds 0 mentions'
+  status: fixed
+  resolved_by: 68cd2bfbced812463f107e53a3518b88acb7b51f
+  verified_by: next-step.md ships and pointers rewritten
+- id: F3
+  class: minor
+  check: shared/ and ai/ paths in built skills, commands, agents
+  claim: dev-generate-docs lines 244 and 246 name a manual copy destination of .ai/claude/ai/claude/, which reads like a doubled path; the guard allowlists it by name rather than the text being checked.
+  evidence: 'skills/dev-generate-docs/SKILL.md:244 "copy skills to `.ai/claude/ai/claude/`"; build.sh case allowlist includes ai/claude/ai/claude/'
+  status: open
+verdict: verified
