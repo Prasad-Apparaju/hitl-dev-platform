@@ -1,4 +1,5 @@
-# sha256 of every version of every validator HITL has ever synced into a product repo.
+# sha256 of every version of every synced validator HITL has shipped, under every plugin tag on
+# both lines (hitl--v1.* and hitl--v2.*), plus the tree at each release since.
 #
 # dev-update (migrate_project.py --sync-validators) treats a repo copy that differs from the
 # shipped file as the repo's own edit and keeps it. That rule cannot tell an edit from an older
@@ -10,6 +11,8 @@
 #
 # Generated from the plugin repo's tags; tools/scripts/shipped-validators-hashes.py appends the
 # current tree at each release and a wiring test holds it current. Format: <sha256>  <path>  # <version>
+6caa3e9073ec2a8e0cc971636cd1803aa3c633453ea9d553fc6d94c4682c0e94  ci/first-pass/workflows.yaml  # 1.0.28
+7a386b1381ded9edc7c564e0789cf91e98e230df61f5ac7c28b15dc6f365d8c0  ci/first-pass/workflows.yaml  # 1.1.0
 228e3370fa58cae15bd6f6801720d37d03095416f1ae6c09175a4205bcd314cb  ci/first-pass/workflows.yaml  # 2.0.0
 0f731bc4a0448327c3373de79c4488001abccf130c593044de62fb86c38affba  ci/manifest-drift/check_manifest_drift.py  # 2.0.0
 8f9761e0842c99baa6995fef0d4e028ecb47430a1df7524e977d975ff951323f  ci/first-pass/workflows.yaml  # 2.2.0
