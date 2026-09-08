@@ -47,6 +47,7 @@ new gate code). Three places, all checked by tests:
 # ai/claude/plugin/plugin.json  -> "version": "X.Y.Z"
 sed -i '' 's/v<previous>/vX.Y.Z/' site/*.html        # a wiring test holds these to plugin.json
 python3 tools/scripts/generate-catalog-page.py       # site/catalog.html is generated
+python3 tools/scripts/shipped-validators-hashes.py   # ci/shipped-validators.sha256: every synced validator this version ships (plugin #35)
 ```
 
 ### 4. Gates

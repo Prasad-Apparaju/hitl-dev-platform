@@ -783,3 +783,72 @@ def test_a_missing_or_stale_statusline_is_reported_not_rewritten(tmp_path, capsy
     out = capsys.readouterr().out
     assert "statusLine points at" in out and "legacy" in out
     assert json.loads((root2 / ".claude" / "settings.json").read_text())["statusLine"] == stale
+
+
+# ---------------------------------------------------------------- migrate_project: older shipped copies (plugin #35)
+#
+# The co-owned rule "differs from shipped ⇒ the repo's edit ⇒ keep" cannot tell an edit from an
+# older shipped version, so a 2.10 review gate stayed in place under a 2.12 plugin and rejected every
+# record the new template produced. The plugin now ships the hash of every version it ever synced.
+
+def _plugin_with_manifest(tmp_path, older_bodies):
+    import hashlib
+    pr = _plugin(tmp_path)
+    (pr / "shared" / "ci" / "adversarial").mkdir()
+    (pr / "shared" / "ci" / "adversarial" / "check_review.py").write_text("SHIPPED gate v3\n")
+    lines = ["# manifest\n"]
+    for rel, body in older_bodies:
+        lines.append("%s  %s  # 2.10.0\n" % (hashlib.sha256(body.encode()).hexdigest(), rel))
+    (pr / "shared" / "ci" / "shipped-validators.sha256").write_text("".join(lines))
+    return pr
+
+
+def test_sync_updates_an_unmodified_older_release_and_keeps_a_real_edit(tmp_path, capsys):
+    pr = _plugin_with_manifest(tmp_path, [("ci/adversarial/check_review.py", "SHIPPED gate v2\n"),
+                                          ("ci/first-pass/check_skips.py", "SHIPPED v1\n")])
+    root = _project(tmp_path)
+    (root / "ci" / "adversarial").mkdir(parents=True)
+    (root / "ci" / "adversarial" / "check_review.py").write_text("SHIPPED gate v2\n")          # older, untouched
+    (root / "ci" / "first-pass" / "check_skips.py").write_text("SHIPPED v1\nplus our fix\n")  # older AND edited
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    out = capsys.readouterr().out
+    assert r["updated"] == ["ci/adversarial/check_review.py"]
+    assert (root / "ci" / "adversarial" / "check_review.py").read_text() == "SHIPPED gate v3\n"
+    assert r["modified"] == ["ci/first-pass/check_skips.py"]
+    assert (root / "ci" / "first-pass" / "check_skips.py").read_text() == "SHIPPED v1\nplus our fix\n"
+    assert "updated ci/adversarial/check_review.py (an older shipped version" in out
+    assert "KEPT yours" in out and "1 updated from an older release" in out
+
+
+def test_sync_dry_run_reports_an_update_without_writing(tmp_path, capsys):
+    pr = _plugin_with_manifest(tmp_path, [("ci/adversarial/check_review.py", "SHIPPED gate v2\n")])
+    root = _project(tmp_path)
+    (root / "ci" / "adversarial").mkdir(parents=True)
+    (root / "ci" / "adversarial" / "check_review.py").write_text("SHIPPED gate v2\n")
+    r = M.sync_validators(str(root), str(pr), apply=False)
+    out = capsys.readouterr().out
+    assert r["updated"] == ["ci/adversarial/check_review.py"]
+    assert (root / "ci" / "adversarial" / "check_review.py").read_text() == "SHIPPED gate v2\n"
+    assert "would update" in out and "dry run" in out
+
+
+def test_sync_without_a_manifest_keeps_every_difference_as_before(tmp_path, capsys):
+    pr = _plugin(tmp_path)
+    (pr / "shared" / "ci" / "adversarial").mkdir()
+    (pr / "shared" / "ci" / "adversarial" / "check_review.py").write_text("SHIPPED gate v3\n")
+    root = _project(tmp_path)
+    (root / "ci" / "adversarial").mkdir(parents=True)
+    (root / "ci" / "adversarial" / "check_review.py").write_text("SHIPPED gate v2\n")
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    assert r["updated"] == [] and r["modified"] == ["ci/adversarial/check_review.py"]
+    assert (root / "ci" / "adversarial" / "check_review.py").read_text() == "SHIPPED gate v2\n"
+
+
+def test_manifest_hash_matches_by_path_not_just_content(tmp_path):
+    """A body shipped as file A must not license overwriting file B that happens to hold the same bytes."""
+    pr = _plugin_with_manifest(tmp_path, [("ci/first-pass/permissions.py", "SHIPPED gate v2\n")])
+    root = _project(tmp_path)
+    (root / "ci" / "adversarial").mkdir(parents=True)
+    (root / "ci" / "adversarial" / "check_review.py").write_text("SHIPPED gate v2\n")
+    r = M.sync_validators(str(root), str(pr), apply=True)
+    assert r["updated"] == [] and r["modified"] == ["ci/adversarial/check_review.py"]

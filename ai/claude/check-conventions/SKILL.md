@@ -1,5 +1,5 @@
 ---
-description: Run convention checks (semgrep, secrets scan, manifest drift, Mermaid lint) against the current codebase and report violations. Use before creating a PR or when asked to verify code quality. Safe to run at any time — read-only except when the user asks to fix violations.
+description: Run four convention checks (semgrep, secrets scan, manifest drift, Mermaid lint) and report violations. A useful pass before a PR, not a mirror of your CI; it says at the end what it did not run. Safe to run at any time, read-only unless the user asks to fix violations.
 argument-hint: "[--only semgrep|secrets|manifest|mermaid]"
 disable-model-invocation: true
 ---
@@ -95,7 +95,10 @@ The checker derives its scan roots from the manifest's listed files, so no `--so
 
 ```bash
 if [[ -f ci/manifest-drift/check_manifest_drift.py ]]; then
-  python ci/manifest-drift/check_manifest_drift.py
+  # The same flags the shipped CI workflow uses (ci/workflows/convention-check.yml). Without
+  # --strict an unlisted file is a warning and the exit is 0, so this ran green locally and the
+  # identical checker failed in CI on the identical file (#113).
+  python ci/manifest-drift/check_manifest_drift.py --require-manifest --strict
 else
   echo "SKIPPED: ci/manifest-drift/check_manifest_drift.py not installed: run /hitl:dev-start-brownfield Step 3, or copy it from the plugin's shared/ci/manifest-drift/. Manifest drift was NOT checked."
 fi
@@ -123,6 +126,10 @@ Present the results grouped by status:
 
 **Passing:**
 - Summary count: "N checks passed"
+
+Then close with the boundary, every time, so a green result is never read as "CI will pass":
+
+> This ran four checks: semgrep, secrets, manifest drift, Mermaid. It did not run this project's CI. Gates that live only there (formatters, type checks, migrations, dependency audits, anything under `.github/workflows/`) were not checked.
 
 ---
 

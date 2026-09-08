@@ -254,7 +254,22 @@ Check where you stand:
 # CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 GATE="ci/adversarial/check_review.py"
-[[ -f "$GATE" ]] || GATE="$ROOT/shared/ci/adversarial/check_review.py"
+SHIPPED="$ROOT/shared/ci/adversarial/check_review.py"
+if [[ -f "$GATE" && -f "$SHIPPED" ]] && ! cmp -s "$GATE" "$SHIPPED"; then
+  # The repo's copy is the one that binds at publish time, and it may predate this record shape
+  # (plugin #35: a 2.10 gate kept under a 2.12 plugin rejected every record as malformed). If it is
+  # an unmodified older release, say so and run the shipped copy so this reading is true; the repo
+  # copy is refreshed by /hitl:dev-update Step 4.6, which must happen before the release script runs.
+  h=$( (shasum -a 256 "$GATE" 2>/dev/null || sha256sum "$GATE") | awk '{print $1}')
+  if grep -qi "^$h  ci/adversarial/check_review.py" "$ROOT/shared/ci/shipped-validators.sha256" 2>/dev/null; then
+    echo "Your repo's copy of the gate is an older HITL release, not an edit. Reading with the shipped copy."
+    echo "Run /hitl:dev-update to refresh ci/adversarial/check_review.py before publishing; the repo copy is what binds."
+    GATE="$SHIPPED"
+  else
+    echo "Note: ci/adversarial/check_review.py differs from the shipped copy and is not an older release, so it is yours. Using it."
+  fi
+fi
+[[ -f "$GATE" ]] || GATE="$SHIPPED"
 python3 "$GATE"
 ```
 

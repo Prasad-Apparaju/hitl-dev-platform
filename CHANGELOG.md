@@ -4,9 +4,23 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [Unreleased]
+## [2.12.1] — 2026-09-08
 
 ### Fixed
+
+- **`dev-update` now refreshes a validator copy left behind by an older release** (plugin #35). The
+  co-owned sync kept any repo copy that differed from the shipped file, on the rule that a
+  difference is the repo's edit. An older shipped version differs too, so a 2.10 review gate stayed
+  in place under a 2.12 plugin and rejected every record the 2.12 template produced as malformed.
+  The plugin now ships `shared/ci/shipped-validators.sha256`, the hash of every version of every
+  synced validator HITL has released; a repo copy that matches one is updated, a copy that matches
+  none is still kept and asked about. `/hitl:dev-verification-review` also checks the repo's gate
+  copy before running it and says, in one line, when it is an older release and what to run.
+- **`dev-check-conventions` runs the drift checker the way CI does, and says what it did not run**
+  (#113). It passed no flags, so an unlisted file was a warning and the exit was 0 while the same
+  checker failed the same file in CI. It now passes `--require-manifest --strict`, and its report
+  closes with the boundary: four checks ran, the project's CI did not. The description no longer
+  reads as a complete pre-PR gate.
 
 - **An interface change alone no longer activates the security design review or locks the
   penetration test** (#108). The first change sized after 2.10.0 was a review skill and a YAML

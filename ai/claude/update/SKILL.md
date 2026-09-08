@@ -236,6 +236,7 @@ including on runs with no version change (#104). So the migrator applies the 4.7
 |---|---|
 | Shipped file the repo does **not** have | install it |
 | Shipped file, byte-identical | leave alone, say nothing |
+| Shipped file the repo has, byte-identical to an **older release** | update it; an older version is not an edit (plugin #35) |
 | Shipped file the repo has **modified** | show the diff, **keep the repo's**, and ask |
 | File the repo added itself | never touched, never reported |
 | File listed in that directory's `.hitl-optout` | never installed — a deliberate removal stays removed |

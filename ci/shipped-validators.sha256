@@ -1,0 +1,54 @@
+# sha256 of every version of every validator HITL has ever synced into a product repo.
+#
+# dev-update (migrate_project.py --sync-validators) treats a repo copy that differs from the
+# shipped file as the repo's own edit and keeps it. That rule cannot tell an edit from an older
+# shipped version left behind by an earlier update, and plugin #35 was the result: a 2.10 review
+# gate kept in place under a 2.12 plugin, rejecting every record the new template produced.
+#
+# So: a repo copy that hashes to one of these lines is an unmodified older release and is
+# updated. A copy that hashes to none of them is the repo's and is kept, as before.
+#
+# Generated from the plugin repo's tags; tools/scripts/shipped-validators-hashes.py appends the
+# current tree at each release and a wiring test holds it current. Format: <sha256>  <path>  # <version>
+228e3370fa58cae15bd6f6801720d37d03095416f1ae6c09175a4205bcd314cb  ci/first-pass/workflows.yaml  # 2.0.0
+0f731bc4a0448327c3373de79c4488001abccf130c593044de62fb86c38affba  ci/manifest-drift/check_manifest_drift.py  # 2.0.0
+8f9761e0842c99baa6995fef0d4e028ecb47430a1df7524e977d975ff951323f  ci/first-pass/workflows.yaml  # 2.2.0
+d1d015b642bfd5d3c7326a2870b4589119e34807cd565c40fb7118ba2f4aeb71  ci/manifest-agentic/check_manifest_agentic.py  # 2.2.0
+422833532449f8cb768758fabec6af6d3556e6640923d78357cb28cb6b59bc62  tools/manifest-agentic/gen_baseline_evals.py  # 2.2.0
+5d2300049e2e1a94b1425685800ca229c71915c2fb20fb7bb4d9d9a7936e75e8  tools/manifest-agentic/generate_views.py  # 2.2.0
+eaee033790e9c6f2e900733977943f5da5e78c73a3c10694d57fbaa50cdf2f80  ci/first-pass/check_skips.py  # 2.4.0
+26f6cc23f5da7deacdd3e30442869d74f35df710c8e73f91378ca6d262166c45  ci/first-pass/dispositions.py  # 2.4.0
+b0846fa3b78287f3d2ae61914da02040cb9e8e5f63355777e2e08c6b5599b8b7  ci/first-pass/permissions.py  # 2.4.0
+c32ce332a46f635b91c8eaff05624e4960300e438131eb4d7e7e78e741f0d43d  ci/first-pass/resurface.py  # 2.4.0
+f24826f31e12e05bfe9bd037b93eda298b5e159a9f7228f187bdbb45e2c08dc0  ci/first-pass/starters.py  # 2.4.0
+4984a42f820708d8e0ad027080b07b1ac49f39b8388972742f10a1cc08b3e6d2  ci/first-pass/workflows.yaml  # 2.4.0
+d30fd10d00d7976a2dcba03e722071a78523f9db50a38ea47c9a61163e040598  ci/first-pass/check_skips.py  # 2.4.1
+28472126c23ef69b2f8f23c04e4c0a431d48d49c2324efad405000ef6f7df926  ci/first-pass/check_skips.py  # 2.4.3
+a344a21c6d4751ab616aaf90f7b71f790232a1b98774d9674677e9b593aeb1f4  ci/first-pass/permissions.py  # 2.4.3
+0a29a4ddf15c68bb068d7ddcc7f1a1d2d838d15a9dcefd9e072d2c105a0a834a  ci/first-pass/resurface.py  # 2.4.3
+be5dc293cb06bf882c7901cf621f1c80daa4d8e9fd7a6db56801b0211504c235  ci/first-pass/check_skips.py  # 2.7.0
+9f7af68c02afe18820234ecf13b9a02c73a0d92e550904ed301a20fd4246550f  ci/first-pass/dispositions.py  # 2.7.0
+98d6059c00a255201790eab18e7ae589d0dedf0f5c8299eecb5f705ce533d063  ci/first-pass/migrate_project.py  # 2.7.0
+3f4b041d1f297f62e1ae9d152049f4b2b14245e9c37cda07eba4752b57707518  ci/first-pass/resurface.py  # 2.7.0
+2bd5f44fe6f576515991caf950b11fba5ebcfe9a03787e07f6b358bb4a591bf7  ci/first-pass/workflows.yaml  # 2.7.0
+f7c21be4843ef18e4076159a072701353b742b54ee475df20e9206af0d690639  ci/adversarial/check_review.py  # 2.7.0
+a6945142efee2d2751bcb71b2d21b9ad60a2637dda02d0c2d903b59f8021c7ef  ci/first-pass/check_skips.py  # 2.9.0
+9002ce96058eac42bb68a1a4f11233a8a285118cee8b2345345f94e588686325  ci/first-pass/dispositions.py  # 2.9.0
+32f8417216950e7bf4c05ecd1796e6220fff91f03137f1df5246a09f45d9fe5e  ci/first-pass/gen_change.py  # 2.9.0
+18fd7cd1d389debbe5cd4423495977540a8729f0a0129e763ddb6fc35b6e1956  ci/first-pass/resurface.py  # 2.9.0
+463d099eadb7cb60daf7e75d3a989db3207f3ba926136bb8142e0eae49a372ec  ci/first-pass/size_plan.py  # 2.9.0
+990014ca8531d09e4707c85cd3f1e308fb153563746bce62472bd45f48f6b91c  ci/first-pass/workflows.yaml  # 2.9.0
+86b8fcf05fd4a5d0a81329b547eb69e4e5500b292a3ac755fb65d138b5cf320e  ci/adversarial/check_review.py  # 2.9.0
+3edb9360b28f58634ef24afcec63a48c1abe7c1edba1026e9f3c2148406fabde  ci/first-pass/check_skips.py  # 2.10.0
+188c2b538dd48c1a3f1220fe67a3eabd5b7297a4473b982d7f3bacea1a8c9dd7  ci/first-pass/dispositions.py  # 2.10.0
+55f3024eedcee98a9f5f214f5474b8c7d1c517e589b3a5c10afecdea806b3533  ci/first-pass/migrate_project.py  # 2.10.0
+8d5e8ed493ce11836e5e4adcdd4524f8f422cb1526af0cf64087cb6f30fdd2c6  ci/first-pass/size_plan.py  # 2.10.0
+a71f240bd80ac7d3c1c8023fb8222407eb80f08435d336d79d353507d156b2a0  ci/first-pass/workflows.yaml  # 2.10.0
+9a6533e9c02490d28d9ce61f1ddc7c2887068b67f9d8245549e4ce89271728ee  ci/first-pass/workflows.yaml  # 2.11.0
+300701210fa9f4fe4c0818c95a59bc21e42127a8c17dced0d23750da919a8cdf  ci/adversarial/check_review.py  # 2.11.0
+e7588cb90acf982566b07b6522457d80f1fc78e67141811d87c0b6e8a0ce5f18  ci/first-pass/check_skips.py  # 2.12.1
+f09b493cb22fd2f2ff7a48c1f6fcd1975bc49ddf34b8e5facdf3e7752caf59b1  ci/first-pass/gen_change.py  # 2.12.1
+c0659825653344baf54fc9bb1a3c65f029c997fadc8ef2a5d7e84d5814a2837e  ci/first-pass/migrate_project.py  # 2.12.1
+2804e69984fa134e3833b676f662861b2534d90a0d57f10138f09272da6428a3  ci/first-pass/size_plan.py  # 2.12.1
+2632228667f717729ba0919be28424f550581779210fad088a3ab5653b89cfda  ci/first-pass/workflows.yaml  # 2.12.1
+e27689a585923f3db2d851df4a7836bf65701e71a2d31a10c7bccd8dc10f398e  ci/adversarial/check_review.py  # 2.12.1

@@ -26,7 +26,9 @@ It does two things, both additive and both reversible:
    next update — five times in one downstream repo, including runs with no version change (#104).
    Now, per file: absent → install; byte-identical → nothing; **modified in the repo → show the
    diff and leave it alone** unless `--overwrite <path>` names that file; files the repo added →
-   never touched; files listed in the directory's `.hitl-optout` → never installed. Same protocol
+   never touched; files listed in the directory's `.hitl-optout` → never installed. A copy that is
+   byte-identical to a version HITL shipped EARLIER is updated, not kept: it is an older release, not
+   an edit (plugin #35; the hashes ship in shared/ci/shipped-validators.sha256). Same protocol
    the skill already applies to `.semgrep/`.
 
 Lives under ci/first-pass/ because that directory is packaged into the plugin by a wildcard and
@@ -43,6 +45,7 @@ import argparse
 import io
 import json
 import os
+import re
 import sys
 
 # This list is the source of truth for what HITL adds to a project's permissions. Short on
@@ -148,6 +151,30 @@ SYNC_SETS = (
     {"src": "shared/ci/manifest-drift",      "dst": "ci/manifest-drift",      "mode": "if-present", "glob": "*.py"},
 )
 OPTOUT_NAME = ".hitl-optout"
+SHIPPED_HASHES = "shared/ci/shipped-validators.sha256"   # every version HITL ever shipped, per path
+
+
+def _shipped_hashes(plugin_root):
+    """{project-relative path: {sha256, ...}} of every version of every synced validator HITL has
+    shipped (plugin #35). Lets the sync tell "an older release left this here" from "the repo edited
+    this": the first is updated, the second is kept. No manifest (older build) → empty → every
+    difference is treated as the repo's, which is the pre-#35 behaviour."""
+    out = {}
+    path = os.path.join(plugin_root, SHIPPED_HASHES)
+    if not os.path.isfile(path):
+        return out
+    for line in io.open(path, encoding="utf-8", errors="replace"):
+        line = line.split("#", 1)[0].strip()
+        parts = line.split()
+        if len(parts) >= 2 and re.fullmatch(r"[0-9a-f]{64}", parts[0]):
+            out.setdefault(parts[1].replace(os.sep, "/"), set()).add(parts[0])
+    return out
+
+
+def _sha256(path):
+    import hashlib
+    with io.open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
 DIFF_MAX_LINES = 60
 
 
@@ -216,7 +243,7 @@ def sync_validators(root, plugin_root, apply=False, overwrite=()):
     plugin_root = os.path.abspath(plugin_root)
     want = {os.path.normpath(o) for o in overwrite}
     result = {"installed": [], "identical": [], "modified": [], "overwritten": [],
-              "opted_out": [], "skipped_sets": []}
+              "updated": [], "opted_out": [], "skipped_sets": []}
     if not os.path.isdir(plugin_root):
         print(f"! plugin root {plugin_root} is not a directory — nothing synced.")
         return result
@@ -226,6 +253,7 @@ def sync_validators(root, plugin_root, apply=False, overwrite=()):
         print("  · this is the HITL platform repo itself — its validators are the source, nothing to sync")
         return result
 
+    shipped = _shipped_hashes(plugin_root)
     for spec in SYNC_SETS:
         got = _pairs(plugin_root, root, spec)
         if got is None:
@@ -258,6 +286,14 @@ def sync_validators(root, plugin_root, apply=False, overwrite=()):
                 print(f"  ! {'overwrote' if apply else 'would overwrite'} {rel} with the shipped version (named in --overwrite)")
                 result["overwritten"].append(rel)
                 continue
+            if _sha256(dst) in shipped.get(rel, ()):
+                # Byte-identical to a version HITL shipped earlier: an older release left it here and
+                # nobody touched it since. Not a co-owner edit, so it is brought current (plugin #35).
+                if apply:
+                    _copy(src, dst)
+                print(f"  ^ {'updated' if apply else 'would update'} {rel} (an older shipped version, unmodified)")
+                result["updated"].append(rel)
+                continue
             result["modified"].append(rel)
             print(f"  ~ {rel} differs from the shipped version — KEPT yours. Diff (this repo → shipped):")
             print(_diff(dst, src, rel))
@@ -267,10 +303,11 @@ def sync_validators(root, plugin_root, apply=False, overwrite=()):
         print(f"  · opted out ({OPTOUT_NAME}): " + " ".join(result["opted_out"]))
     for sset in result["skipped_sets"]:
         print(f"  · skipped, not in this build or not onboarded here: {sset}")
-    if not (result["installed"] or result["modified"] or result["overwritten"]):
+    if not (result["installed"] or result["modified"] or result["overwritten"] or result["updated"]):
         print(f"  ✓ validator copies already current ({n_id} file(s) identical)")
     else:
         print(f"  = {n_id} identical, {len(result['installed'])} {'installed' if apply else 'to install'}, "
+              f"{len(result['updated'])} {'updated' if apply else 'to update'} from an older release, "
               f"{len(result['modified'])} modified here and kept, {len(result['overwritten'])} overwritten by name")
     if result["modified"]:
         print("\n  ASK, per file, before doing anything else: overwrite with the shipped version, or keep yours?")
@@ -279,7 +316,7 @@ def sync_validators(root, plugin_root, apply=False, overwrite=()):
         me = os.path.abspath(__file__)
         for m in result["modified"]:
             print(f'    python3 "{me}" --root . --sync-validators "{plugin_root}" --apply --overwrite {m}')
-    if result["installed"] and not apply:
+    if (result["installed"] or result["updated"]) and not apply:
         print("\n(dry run — re-run with --apply to install)")
     return result
 
