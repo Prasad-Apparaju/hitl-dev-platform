@@ -1,8 +1,9 @@
-# Worked example — First Pass (FR-29)
+# Worked example: a lightened plan and its skip record (FR-29)
 
-A Tier-2 refund feature (`GH-123`, billing domain) run in **First Pass** — the thin-whole-first,
-skip-with-record mode. It shows the ledger, a starter artifact, the project roll-up, and how the change
-validates and renders.
+A tier-2 refund feature (`GH-123`, billing domain) whose team lightened three steps from the menu
+intake offers after Fast Track or Full Scale is picked. Every step left out is recorded, never
+silent. It shows the ledger, a starter artifact, the project roll-up, and how the change validates and
+renders.
 
 ## What the team lightened
 
@@ -25,7 +26,7 @@ Everything else (impact, RED/GREEN, reviews) runs as normal. TDD was **not** ski
 ```bash
 python3 ci/first-pass/check_skips.py docs/examples/first-pass/current-change.yaml \
     --rollup docs/examples/first-pass/skip-ledger.yaml
-# → "First Pass skip ledger: clean." (exit 0)
+# → reports the skip ledger clean (exit 0)
 ```
 
 The validator is fail-closed: drop the deploy `ack_by`, or set RED to `defer`, and it exits 2 with a
@@ -38,7 +39,7 @@ non-waivable blocker (`FLOOR_NO_ACK`, `NO_OMIT`).
 ```
 
 `⊘` = skipped (defer/decline), `◐` = starter (needs-enhancement) — visually distinct from open (`·`), so
-the trail *is* the First Pass shape at a glance (CR-16). When the deferred/started work later lands, its
+the trail shows what was lightened at a glance (CR-16). When the deferred/started work later lands, its
 glyph flips to `✓`.
 
 ## What comes next (iteration)

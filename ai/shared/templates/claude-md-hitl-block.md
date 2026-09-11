@@ -5,6 +5,8 @@ Delivery in this repo follows the HITL process: a defined, recorded sequence of 
 
 **Start every piece of work with `/hitl:dev-start-change`.** It helps you pick the issue, sizes the change, shows you the whole plan before anything gets written, and records it in `.hitl/current-change.yaml`. From then on a breadcrumb shows which step you're on.
 
+**Tell Claude your goal in one sentence and what done looks like. It proposes the fewest steps that get you there and says what it left out. Say "Fast Track" at any point during intake.** The failing test and making it pass always stay; deploy, promote and the retrospective are only dropped if someone accepts the risk by name. Riskier changes protect more steps. "Full Scale" runs everything that applies.
+
 | If you want to | Run |
 |---|---|
 | Start any piece of work | `/hitl:dev-start-change` |
@@ -12,7 +14,7 @@ Delivery in this repo follows the HITL process: a defined, recorded sequence of 
 | Switch to another issue or branch | `/hitl:dev-switch-context` |
 | Update the plugin | `/hitl:dev-update` |
 
-New to this? The [getting-started guide](https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md) walks one change end to end and explains how to run a lighter process on small work.
+New to this? The [getting-started guide](https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/getting-started.md) walks one change end to end and explains Fast Track and Full Scale.
 
 **If the commands above do nothing, the plugin isn't installed.** Install it once per machine, then restart Claude Code:
 

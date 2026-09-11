@@ -270,13 +270,15 @@ hitl_intake_directive() {
   conversation. Talking through the work and creating an issue is expected and
   encouraged, not blocked:
 
-    1. If the user has no issue yet, chat to shape the work, then create one
-       (gh issue create, /hitl:pm-add-feature, or /hitl:pm-report-bug). If they
-       already have an issue, help them choose it.
-    2. Determine the right HITL workflow for it (development / brownfield /
-       migration / prd) by reading the issue and confirming with the user.
-    3. Show the full ordered step plan for that workflow.
-    4. Write + commit + push .hitl/current-change.yaml, then follow the breadcrumb.
+    1. Ask for the goal in one sentence and what done looks like. If there is no
+       issue yet, shape one from that (gh issue create, /hitl:pm-add-feature, or
+       /hitl:pm-report-bug). If they already have an issue, help them choose it.
+    2. Restate the goal, scope and definition of done, and get it confirmed.
+    3. Determine the right HITL workflow for it (development / brownfield /
+       migration / prd) and confirm with the user.
+    4. For a development change, offer Fast Track (what this change needs now) or
+       Full Scale (everything that applies), and say what Fast Track leaves out.
+    5. Write + commit + push .hitl/current-change.yaml, then follow the breadcrumb.
 
   Run  /hitl:dev-start-change  to do all of this. You may freely discuss and create
   the issue first. Just don't start editing files until a change is active.
@@ -285,8 +287,12 @@ hitl_intake_directive() {
   anything else. Everything above is addressed to you, not to them:
 
     This project uses HITL, so work starts by agreeing what we're changing and how
-    far to take it. Run /hitl:dev-start-change and I'll walk you through it. For
-    the tour, see /hitl:help or the getting-started guide.
+    far to take it. Tell me your goal in one sentence and what done looks like. I'll
+    propose the fewest steps that get you there and say what I left out. Say
+    "Fast Track" at any point during intake. The failing test and making it pass
+    always stay; deploy, promote and the retrospective are only dropped if someone
+    accepts the risk by name. Run /hitl:dev-start-change and I'll walk you through
+    it. For the tour, see /hitl:help or the getting-started guide.
 
   Write for people: plain English, no filler, one page where one page will do.
   The rule is shared/plain-english.md; it applies to every reply and every document.

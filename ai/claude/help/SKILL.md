@@ -28,7 +28,8 @@ Output this exactly:
 
 | Command | When to use |
 |---|---|
-| `/hitl:dev-start-change` | **Start work on an issue** — pick the issue, choose the workflow, seed the change. The front door for every change. |
+| `/hitl:dev-start-change` | **Start work on an issue**: say the goal, pick the issue, choose the workflow, seed the change. The front door for every change. |
+| `/hitl:dev-start-change` → **Fast Track** | **The lightest process that gets a change to done.** Intake offers it for most changes; say "Fast Track" at any point during intake. The failing test and making it pass always stay. |
 | `/hitl:dev-start-from-prd` | New greenfield project — no code exists yet |
 | `/hitl:dev-start-brownfield` | Existing codebase you want to bring into HITL |
 | `/hitl:dev-start-migration` | Migrating from one system to another |
@@ -46,7 +47,7 @@ Output this exactly:
 
 | Command | When to use |
 |---|---|
-| `/hitl:dev-practices` | Reference for the full 31-step delivery workflow (after a change is started) |
+| `/hitl:dev-practices` | Reference for the full delivery workflow (after a change is started) |
 | `/hitl:dev-apply-change` | Analyze and plan a specific change before writing code |
 | `/hitl:dev-tdd` | Run the TDD Red→Green→Refactor cycle (after LLD is approved) |
 | `/hitl:dev-check-conventions` | Run semgrep, secrets scan, manifest drift, Mermaid lint |
@@ -64,7 +65,7 @@ Output this exactly:
 |---|---|
 | `/hitl:architect-design-system` | Design a new system from scratch (produces HLD, LLD, delivery plan) |
 | `/hitl:architect-design-feature` | Design a feature — impact analysis, HLD, LLD, decision packet |
-| `/hitl:architect-review-code` | Human architect code review (step 18a in the 31-step workflow) |
+| `/hitl:architect-review-code` | Human architect code review (the architect review step in the development workflow) |
 
 ### QA
 
@@ -152,6 +153,7 @@ Read `$ARGUMENTS` as a description of a situation, goal, or question. Match it a
 
 | If they say... | Recommend |
 |---|---|
+| the lightest process / less process / lighter process / Fast Track / too many steps / "just fix it" | `dev-start-change`, and pick **Fast Track** (see below) |
 | starting a new project | `dev-start-from-prd` |
 | onboarding existing code | `dev-start-brownfield` |
 | migrating a system | `dev-start-migration` |
@@ -192,3 +194,23 @@ Read `$ARGUMENTS` as a description of a situation, goal, or question. Match it a
 | penetration test | `ops-pentest` |
 | platform roadmap / delivery-ready / first pipeline or environment | `ops-plan-platform` |
 | production deploy blocked by platform gate | `ops-plan-platform` (status + waivers) |
+
+**When the match is Fast Track** (the lightest process, less or lighter process, too many steps),
+use this answer, and write the name exactly as **Fast Track**:
+
+---
+
+**Recommended:** `/hitl:dev-start-change`, then pick **Fast Track**
+
+Fast Track is the fewest steps that get this change to done, and HITL says what it left out. For
+most changes intake offers it next to **Full Scale** and recommends one; you can also say "Fast
+Track" at any point during intake.
+
+**What always stays:** the failing test and making it pass (they can be thin, never dropped).
+Deploy, promote and the retrospective are only dropped if someone accepts the risk by name, and
+riskier changes protect more steps.
+
+**Also consider:**
+- `/hitl:dev-preferences`: if what feels heavy is how much HITL *says*, not how many steps it runs.
+
+---

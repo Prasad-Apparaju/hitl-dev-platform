@@ -64,8 +64,8 @@ Read the stub at `.hitl/current-change.yaml` for the agreed requirement and defi
 **Which area owns this.** The workflow was already chosen at intake as a routing decision; do not
 revisit it. Answer which area of the manifest owns the work. If none does, say so and ask **one**
 question: is this genuinely outside the system, like a demo script or a CI config, or is the
-manifest missing an area? Outside means the fast track is the locked floor and nothing else. Missing
-means do not pretend it sized correctly — offer full scale or ask for the area.
+manifest missing an area? Outside means Fast Track keeps only the steps that can never be dropped.
+Missing means do not pretend it sized correctly: offer Full Scale or ask for the area.
 
 **What this change reaches.** Read top-down, cheapest source first: the manifest entry, then the
 design docs it points at, then source, and only where the declared picture is thin or the change

@@ -7,7 +7,8 @@
 #
 # Behaviour, deliberately narrow:
 #   - Not a HITL project, no active change, or `first_pass` not literally true → exit 0, say nothing.
-#     Normal prompting applies. First Pass is opt-in and this hook is silent outside it.
+#     Normal prompting applies. `first_pass` is set whenever intake left any step out (Fast Track, or
+#     a lightened Full Scale plan); it is no longer opt-in (2.9.0), but this hook is silent without it.
 #   - Under First Pass, ask decide() whether this action is routine and in scope. Only when it says
 #     "do not prompt" does the hook emit an `allow` decision. Anything else → exit 0 (ask as usual).
 #
@@ -41,7 +42,7 @@ def out(decision=None):
     if decision:
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse", "permissionDecision": decision,
-            "permissionDecisionReason": "First Pass: routine in-scope action (CR-15)"}}))
+            "permissionDecisionReason": "HITL: routine in-scope action on a lightened plan, so no prompt"}}))
     sys.exit(0)
 
 try:
@@ -62,7 +63,7 @@ except Exception:
 if not isinstance(change, dict):
     out()
 
-# Opt-in, and strictly: a non-bool `first_pass` is malformed, not permission to relax anything.
+# Only a literal `first_pass: true` relaxes anything: a non-bool value is malformed, not permission.
 if change.get("first_pass") is not True:
     out()
 if str(change.get("status", "")).strip() == "merged":

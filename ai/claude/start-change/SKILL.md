@@ -44,14 +44,15 @@ Only proceed when there is **no** active, branch-matched change.
 
 ## Step 2 — Choose the issue (insist)
 
-If `$ARGUMENTS` names an issue number, use it. Otherwise list open issues and ask the user to pick one:
+If `$ARGUMENTS` names an issue number, use it. Otherwise ask first: **"What's the goal, in one
+sentence, and what does done look like?"** Then list open issues and see whether one already covers it:
 
 ```bash
 gh issue list --state open --limit 30
 ```
 
-- If the user describes work that has **no issue**, do not proceed to planning. Offer to create one:
-  `/hitl:pm-add-feature` (feature) or `/hitl:pm-report-bug` (bug). A change must trace to an issue.
+- If the work has **no issue**, shape one from that sentence; do not proceed to planning without it.
+  Offer `/hitl:pm-add-feature` (feature) or `/hitl:pm-report-bug` (bug). A change must trace to an issue.
 - Do not invent an issue number. Require an explicit choice.
 
 Read the chosen issue in full:
@@ -60,36 +61,17 @@ Read the chosen issue in full:
 gh issue view <N> --json number,title,body,labels
 ```
 
----
-
-## Step 3 — Determine the workflow (read the issue, then confirm)
-
-Classify the work into exactly one workflow, **state your reasoning**, and confirm with the user
-before writing anything:
-
-| Workflow | Choose when | Routes to |
-|---|---|---|
-| `prd`        | Greenfield project being stood up from a PRD; no `docs/system-manifest.yaml` yet | `/hitl:dev-start-from-prd` |
-| `brownfield` | Existing codebase not yet onboarded to HITL (no manifest / registries) | `/hitl:dev-start-brownfield` |
-| `migration`  | Porting or consolidating a system from a source codebase into this target | `/hitl:dev-start-migration` |
-| `development`| **Most issues** — a feature, bug fix, or refactor in an already-documented component | `/hitl:dev-apply-change` |
-| `docs`       | The change touches **nothing but documentation** — no source, tests, or IaC | `/hitl:dev-generate-docs` |
-| `release`    | Publishing a version to users — the change *is* shipping, not building | **follow the 12-step release table in `dev-practices/workflow-steps.md`**; `/hitl:dev-verification-review` at step 5 |
-
-Heuristics from the issue: labels (`bug`/`enhancement` → development; `documentation`/`docs` → docs), wording ("migrate",
-"port", "consolidate" → migration; "onboard", "adopt HITL", "no docs yet" → brownfield), and
-whether `docs/system-manifest.yaml` exists (absent on a real project → prd/brownfield).
-
-**The `docs` workflow is only for changes that touch nothing but docs.** Docs *and* code is a `development` change (the spine already reconciles docs), which stops `docs` becoming a way to skip the gates on real code. Its `doc_review` gate is domain-routed: Architect for design docs, PM for product, Ops for runbooks. At its final `merge` step set top-level `status: merged` in `.hitl/current-change.yaml`, so the file does not linger and satisfy the gate for the next change.
-
-State: "This looks like a **<workflow>** change because …. Proceed with the <workflow> workflow?"
-Wait for confirmation (or correction) before Step 4.
+If the user says "Fast Track" here or at any later point in intake, note it as their preference and
+offer it at Step 4. After intake, switching means restarting intake. It does not skip the restatement or the analysis: those are what tell Fast Track which
+steps to leave out.
 
 ---
 
-## Step 3b — Restate what you understood, and write the stub
+## Step 3 — Restate what you understood, and write the stub
 
-**Before anything is read or planned.** Write back what you understood, in a fixed shape:
+**Before anything is read or planned, and before the workflow question.** The goal comes first
+because everything downstream, the workflow included, derives from it. Write back what you
+understood, in a fixed shape:
 
 | | |
 |---|---|
@@ -111,7 +93,7 @@ met. Say so, offer a sharper version, take whatever answer comes back, and if th
 record that it was flagged as unverifiable and accepted anyway, with a name and a date. That record
 does not require you to have been right about the wording, only to have asked.
 
-Then write the stub:
+Then write the stub. It needs the change id, branch and version, not the workflow:
 
 ```bash
 GEN="ci/first-pass/gen_change.py"; [[ -f "$GEN" ]] || GEN="$ROOT/shared/ci/first-pass/gen_change.py"
@@ -127,6 +109,31 @@ What it does is keep the agreed text if the session dies, feed the analysis, and
 **No tier question here.** The tier is proposed at Step 4 from what the analysis found. Asking now
 means asking before the evidence exists, which is what tiered a one-line shell script change up to a
 three and a half hour path (#97).
+
+---
+
+## Step 3b — Determine the workflow (read the issue, then confirm)
+
+Classify the work into exactly one workflow, **state your reasoning**, and confirm with the user
+before writing anything:
+
+| Workflow | Choose when | Routes to |
+|---|---|---|
+| `prd`        | Greenfield project being stood up from a PRD; no `docs/system-manifest.yaml` yet | `/hitl:dev-start-from-prd` |
+| `brownfield` | Existing codebase not yet onboarded to HITL (no manifest / registries) | `/hitl:dev-start-brownfield` |
+| `migration`  | Porting or consolidating a system from a source codebase into this target | `/hitl:dev-start-migration` |
+| `development`| **Most issues** — a feature, bug fix, or refactor in an already-documented component | `/hitl:dev-apply-change` |
+| `docs`       | The change touches **nothing but documentation** — no source, tests, or IaC | `/hitl:dev-generate-docs` |
+| `release`    | Publishing a version to users — the change *is* shipping, not building | **follow the 12-step release table in `dev-practices/workflow-steps.md`**; `/hitl:dev-verification-review` at step 5 |
+
+Heuristics from the issue: labels (`bug`/`enhancement` → development; `documentation`/`docs` → docs), wording ("migrate",
+"port", "consolidate" → migration; "onboard", "adopt HITL", "no docs yet" → brownfield), and
+whether `docs/system-manifest.yaml` exists (absent on a real project → prd/brownfield).
+
+**The `docs` workflow is only for changes that touch nothing but docs.** Docs *and* code is a `development` change (the spine already reconciles docs), which stops `docs` becoming a way to skip the gates on real code. Its `doc_review` gate is domain-routed: Architect for design docs, PM for product, Ops for runbooks. At its final `merge` step set top-level `status: merged` in `.hitl/current-change.yaml`, so the file does not linger and satisfy the gate for the next change.
+
+State: "This looks like a **<workflow>** change because …. Proceed with the <workflow> workflow?"
+Wait for confirmation (or correction) before Step 3c.
 
 ---
 
@@ -183,20 +190,21 @@ Show both, and the difference:
 ```
 This change reaches: 3 areas, 1 published interface, a data migration.
 
-  Fast track   21 steps — what this change's own facts call for
-  Full scale   31 steps — everything that applies to a change of this shape
+  Fast Track   21 steps   what this change's own facts call for
+  Full Scale   31 steps   everything that applies to a change of this shape
 
   The 10 extra: Figma, ROI, training, design review, code review, refactor,
   conventions, test review, and both ROI checkpoints.
 
-Recommended: fast track. Nothing it drops is protecting something this change touches.
+Recommended: Fast Track. Nothing it drops is protecting something this change touches.
 ```
 
-One line on which is recommended and why. **The recommendation is advice** — taking full scale
-instead is not recorded.
+One line on which is recommended and why. **The recommendation is advice** — taking Full Scale
+instead is not recorded. Write the two names exactly as shown, capitalized: they are what people ask for
+by name, and a different spelling each time is how a name stops being findable (#125).
 
-Say what each step protects when asked, from `protects` in the catalog. Order anything outside the
-fast track by `forgo_cost`, so the most consequential omission is the first one a person sees.
+Say what each step protects when asked, from `protects` in the catalog. Order anything outside
+Fast Track by `forgo_cost`, so the most consequential omission is the first one a person sees.
 
 **Print the full ordered list on request** ("show me every step"), and always in full for a workflow
 of 10 steps or fewer, where a phase summary would be longer than the list it replaces.
@@ -205,10 +213,11 @@ of 10 steps or fewer, where a phase summary would be longer than the list it rep
 
 ## Step 4b — Record the choice (First Pass, FR-29)
 
-**First Pass is how the choice at Step 4 is recorded.** It is not a separate offer and no longer
-opt-in: every change is shown a proposal and confirms or adjusts it. Full scale is simply the answer
-set where nothing is dropped. This is the third root cause in #97 — the one feature built for this
-problem had to be asked for by someone who already knew it existed.
+**First Pass is how the choice at Step 4 is recorded.** It is the internal name for the skip record
+and its validator; people see Fast Track and Full Scale, so never say "First Pass" to them. It is not
+a separate offer and no longer opt-in: every change is shown a proposal and confirms or adjusts it.
+Full Scale is simply the answer set where nothing is dropped. This is the third root cause in #97:
+the one feature built for this problem had to be asked for by someone who already knew it existed.
 
 **The pre-selection comes from the rules, not from the tier.** `size_plan.py` has already decided
 what applies and what is needed now, from what this change reaches. Present the steps outside the
@@ -216,7 +225,7 @@ chosen option pre-selected, each carrying the finding that decided it as its rea
 files in this change", "3 dependents". Let **one confirmation record the lot.**
 
 Those entries take the `not_applicable` disposition — the rules determined the step does not apply,
-which is a different fact from a person choosing to skip it. Without that distinction a fast track
+which is a different fact from a person choosing to skip it. Without that distinction Fast Track
 records a named human declining twenty-odd steps they never looked at, and the retrospective reads
 that back as what was left out and why.
 
@@ -279,7 +288,7 @@ If the validator is missing, say so **before** collecting any choices — the le
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 CHK="ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/first-pass/check_skips.py"
-[[ -f "$CHK" ]] || echo "⚠ First Pass validator not found: run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
+[[ -f "$CHK" ]] || echo "⚠ Skip-record validator not found: run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
 ```
 
 Certification happens in **Step 6b**, once the change file exists and there is something real to certify.
@@ -327,7 +336,7 @@ PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c
 HITL_VERSION=$(cat "$ROOT/.claude-plugin/plugin.json" 2>/dev/null \
   | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 
-TIER=2                       # from Step 3b — never assume it
+TIER=2                       # confirmed at Step 4 — never assume it
 TIER_SET_BY=""               # required when TIER <= 1, OR when TIER is above a light proposal (#111)
 TIER_REASON=""               # one line on why; HITL_TIER_PROPOSED (Step 4) tells the generator the proposal
 CHOICES=".hitl/first-pass-choices.json"   # written by Step 4b; absent ⇒ full plan, no First Pass
@@ -351,7 +360,7 @@ if [[ $rc -eq 0 && -s .hitl/current-change.yaml.tmp ]]; then
   rm -f .hitl/first-pass-choices.json     # consumed; the change file is now the record
 else
   rm -f .hitl/current-change.yaml.tmp
-  echo "Change file NOT written (generator exit $rc). Existing change file and your First Pass choices are untouched." >&2
+  echo "Change file NOT written (generator exit $rc). Existing change file and your step choices are untouched." >&2
   exit 1
 fi
 ```

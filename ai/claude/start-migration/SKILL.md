@@ -92,7 +92,7 @@ If not:
        mkdir -p .github/workflows
        [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
      fi
-     echo "First Pass installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
+     echo "Skip-record validator installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
    fi
    ```
 
@@ -101,7 +101,7 @@ If not:
    [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/semgrep/install.sh" ]] && bash "$PLUGIN_ROOT/shared/semgrep/install.sh"
    ```
 
-8. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, the First Pass validator in `ci/first-pass/`, and the semgrep rules in `.semgrep/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
+8. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, the skip-record validator in `ci/first-pass/`, and the semgrep rules in `.semgrep/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
 ---
 

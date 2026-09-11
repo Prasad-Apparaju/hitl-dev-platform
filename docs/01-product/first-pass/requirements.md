@@ -21,6 +21,20 @@ wrong. Iterate the first version through **fast-follows / follow-up tickets**.
 The name reflects the intent: this is not a *faster* method that implies the full method is "slow" — it is a
 **first pass** at v1 fidelity that you **deepen** over subsequent passes.
 
+> **Superseded for the user-facing name, 2026-09-10 (#125).** People now see **Fast Track** and
+> **Full Scale**; "First Pass" stays as the internal name for the skip record and its validator. The
+> speed framing above is accepted for the user-facing name because:
+>
+> 1. It is no longer an opt-in mode set against the normal plan. Since 2.9.0 it is the smaller of two
+>    sizes of the same plan, set by rules from what the change touches. Full Scale is longer, and
+>    saying so is accurate, not a judgement on it.
+> 2. It is what people already see. The intake menu has said "fast track" since 2.9.0.
+> 3. People reach for speed words. The shorthand that started #125 was "Fast Pass"; a name nobody
+>    remembers is a name nobody asks for.
+>
+> Fast means fewer steps, never quieter protection. Revisit if feedback shows the name makes the
+> default read as heavy.
+
 ## The model (seven principles)
 
 1. **Skip-with-record, never skip-in-silence.** A skipped step is always recorded — never quietly dropped.

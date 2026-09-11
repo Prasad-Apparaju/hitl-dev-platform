@@ -225,7 +225,7 @@ setup_tools() {
       [[ ! -f "$TARGET_DIR/.github/workflows/first-pass-check.yml" ]] && cp "$PLATFORM_ROOT/ci/workflows/first-pass-check.yml" "$TARGET_DIR/.github/workflows/"
     fi
     if [[ -f "$TARGET_DIR/ci/first-pass/check_skips.py" && -f "$TARGET_DIR/ci/first-pass/workflows.yaml" ]]; then
-      echo "✓ ci/first-pass/ (First Pass validator + catalog) + .github/workflows/first-pass-check.yml"
+      echo "✓ ci/first-pass/ (skip-record validator + catalog) + .github/workflows/first-pass-check.yml"
       (( copied++ )) || true
     else
       echo "✗ ci/first-pass/ install incomplete (check_skips.py / workflows.yaml missing)" >&2

@@ -73,12 +73,12 @@ a half hours. The plan was fixed at intake from the words in the issue, before a
 **What you get:** impact analysis stops being a step in the plan and becomes the thing that
 produces it. It always runs, reads what the change reaches, writes the findings with their
 provenance to `.hitl/impact/<change-id>.yaml`, and proposes a tier from them. You confirm the tier
-and pick one of two options: fast track, the steps this change's own facts call for, or full
-scale, everything that applies to a change of this shape. Every rule reads what the change touches,
+and pick one of two options: Fast Track, the steps this change's own facts call for, or Full
+Scale, everything that applies to a change of this shape. Every rule reads what the change touches,
 never what its area has, so documenting an area does not tax every future change to it.
 
-**What it replaces:** the pre-selection inside First Pass. First Pass is no longer opt-in; every
-change sees a proposal. A fourth disposition, `not_applicable`, separates "the rules excluded it"
+**What it replaces:** the step-by-step menu from 2.4.0 (item 12). The light path is no longer
+opt-in; every change sees a proposal. A fourth disposition, `not_applicable`, separates "the rules excluded it"
 from "a person declined it", so the retrospective stops reading twenty declined steps nobody looked
 at. A rule cannot retire a load-bearing step; a named person can.
 
@@ -197,12 +197,14 @@ need. The block never overwrites your file; it creates, appends, refreshes, or s
 
 ---
 
-## 12. First Pass: ship a thin whole version, on the record
+## 12. The skip record: ship a thin whole version, on the record
 
 HITL 2.4.0, actually wired in 2.5.0
 
-A mode you turn on at the start of any change. HITL proposes the plan, then you answer one menu:
-for each step, do it now / write an honest-minimal starter / defer / decline. Then you build.
+In 2.4.0 this was a mode you turned on at the start of a change, then called First Pass. HITL
+proposed the plan, then you answered one menu: for each step, do it now / write an honest-minimal
+starter / defer / decline. Since 2.9.0 the plan is sized for you (item 4) and this menu is how you
+lighten it further; the record below is how Fast Track keeps what it left out.
 
 **What you get:** a materially shorter path to something running, without pretending the skipped
 work doesn't exist. Every lightened step is written to a ledger with who, why and when, deferrals
@@ -216,7 +218,7 @@ can be thinned but never dropped. A fail-closed CI check enforces all of it.
 **Note on 2.4.0 vs 2.5.0:** 2.4.0 shipped the requirements, the validator and the skill. It turned
 out the driver never set the flag those mechanisms read, so in a real run most of them were
 unreachable. 2.5.0 connected them, and added a test suite for that whole class of defect. If you
-tried First Pass on 2.4.x and it felt like nothing happened, that's why.
+tried the light path on 2.4.x and it felt like nothing happened, that's why.
 
 ---
 
@@ -224,7 +226,8 @@ tried First Pass on 2.4.x and it felt like nothing happened, that's why.
 
 HITL 2.5.0
 
-With First Pass on, step output is trimmed to what you actually have to act on. The intake dump,
+When intake leaves any step out (Fast Track, since 2.9.0), step output is trimmed to what you
+actually have to act on. The intake dump,
 the single biggest source of "this makes me read too much", collapses to a phase summary.
 
 **What you get:** less to read per step, and the detail is still there if you ask for it.

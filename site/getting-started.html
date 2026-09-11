@@ -160,7 +160,7 @@
         <span><span class="g g-done">&#10003;</span><a href="#setup">Setup</a></span>
         <span class="is-here"><span class="g g-here">&#9654;</span><a href="#command">The one command</a></span>
         <span><span class="g g-open">&middot;</span><a href="#first">First change</a></span>
-        <span><span class="g g-open">&middot;</span><a href="#light">First Pass</a></span>
+        <span><span class="g g-open">&middot;</span><a href="#light">Fast Track</a></span>
         <span><span class="g g-skip">&#8856;</span><a href="#stops">When it stops you</a></span>
         <span><span class="g g-open">&middot;</span><a href="#keeps">What it keeps</a></span>
       </div>
@@ -194,8 +194,8 @@ claude plugin install hitl@hitl</code></pre>
 
     <p>It does four things:</p>
     <ol>
-      <li>Helps you pick or create the issue you're working on</li>
-      <li>Picks the right workflow and sizes it &mdash; a <strong>tier</strong>, 1 to 3</li>
+      <li>Asks for your goal and helps you pick or create the issue for it</li>
+      <li>Picks the right workflow, sizes it (a <strong>tier</strong>, 1 to 3), and offers <strong>Fast Track</strong> or <strong>Full Scale</strong></li>
       <li>Shows you the full ordered plan before anything is written</li>
       <li>Writes <code>.hitl/current-change.yaml</code>, which is what makes Claude follow it</li>
     </ol>
@@ -222,9 +222,11 @@ claude plugin install hitl@hitl</code></pre>
     <p>Say you're fixing a bug: the invoice total is wrong when a discount applies.</p>
 
     <h3>1. Start it</h3>
-    <p>Describe the work in your own words, or give Claude an issue number. If no issue exists, it helps you write one &mdash; that conversation is normal chat, and nothing is blocked while you have it.</p>
+    <p>Claude asks for the goal in one sentence and what done looks like. Answer in your own words, or give it an issue number. If no issue exists, it helps you write one from that sentence. That conversation is normal chat, and nothing is blocked while you have it.</p>
+    <p>Claude then says back what it understood: what you want, what's in and out of scope, and what counts as done. Correct it if it's wrong. This is the cheapest moment to catch a misread.</p>
 
     <h3>2. Agree on the size</h3>
+    <p>Claude works out what your change actually reaches (which areas, which interfaces, whether data moves) and proposes a <strong>tier</strong> from that, saying which finding drove it. For a contained bug fix it proposes tier 1:</p>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Tier</th><th>Roughly</th></tr></thead>
@@ -237,9 +239,14 @@ claude plugin install hitl@hitl</code></pre>
     </div>
     <p>If it guesses wrong, say so &mdash; you can set the tier yourself, and HITL records that you set it and why.</p>
 
-    <h3>3. Read the plan</h3>
-    <p>HITL shows the whole plan up front. The development workflow is 32 steps across 7 phases: Requirements, Design, Build, Verify, Assess, Ship, Post-Ship.</p>
-    <p>A 32-step plan for a one-line bug fix reads heavier than it is: most steps are quick, many won't apply to your change, and you can right-size the plan before you start.</p>
+    <h3>3. Pick Fast Track or Full Scale</h3>
+    <p>The development workflow has 34 steps across 7 phases (Requirements, Design, Build, Verify, Assess, Ship, Post-Ship), plus 4 that appear only when a change needs them: security design, dependency audit, penetration test, performance baseline.</p>
+    <p>Your change rarely needs all of them, so HITL offers two sizes of the same plan:</p>
+    <pre><code>  Fast Track   15 steps   what this change's own facts call for
+  Full Scale   25 steps   everything that applies to a change of this shape
+
+Recommended: Fast Track. Nothing it drops is protecting something this change touches.</code></pre>
+    <p>It lists what Fast Track leaves out, most consequential first, and tells you what any step protects if you ask. Taking Full Scale instead is fine. See <a href="#light">Fast Track</a> below for what always stays.</p>
 
     <h3>4. Watch the breadcrumb</h3>
     <pre><code>&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;
@@ -271,28 +278,42 @@ claude plugin install hitl@hitl</code></pre>
 
   <div class="group-label">Right-sizing</div>
   <section id="light">
-    <h2>First Pass: going light</h2>
-    <p>A one-line fix shouldn't carry the same process as a payments migration. First Pass is how you right-size the plan &mdash; before you start, rather than by quietly abandoning it halfway.</p>
+    <h2>Fast Track: the fewest steps</h2>
+    <p>A one-line fix shouldn't carry the same process as a payments migration. Fast Track is the fewest steps that get this change to done, and HITL tells you what it left out.</p>
+    <p>You don't have to ask for it. For a development change, intake offers Fast Track and Full Scale side by side and recommends one. You can also say &ldquo;Fast Track&rdquo; at any point during intake. Shorter workflows, like a docs-only change, skip the choice because they're already short.</p>
+    <p><strong>How it picks.</strong> Rules read what your change touches. A step drops out when your change gives it nothing to protect: no interface files, no callers, no UI. Each step it drops carries the finding that dropped it.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Always stays</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td>Write the failing test, make it pass</td><td>Always stay. They can be made thin (one test), never dropped</td></tr>
+          <tr><td>Deploy, promote, the retrospective</td><td>Dropped only if a named person accepts the risk</td></tr>
+          <tr><td>Integration check (tier 2 and up); design packet, architecture review, QA check and rollout plan (tier 3)</td><td>Same: a named person accepts the risk</td></tr>
+          <tr><td>Penetration test (any tier), security design review and dependency audit (tier 3), when the change touches security or dependencies</td><td>Same: a named person accepts the risk</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Lightening further.</strong> After you pick, you can lighten individual steps in one menu:</p>
     <div class="tablewrap">
       <table>
         <thead><tr><th>Choice</th><th>What happens</th></tr></thead>
         <tbody>
-          <tr><td><strong>Do now</strong></td><td>Normal</td></tr>
+          <tr><td><strong>Keep</strong></td><td>Normal. This is the default</td></tr>
           <tr><td><strong>Starter</strong> <span class="g-skip">&#9680;</span></td><td>HITL drafts an honest minimal version now; you enhance it later</td></tr>
-          <tr><td><strong>Defer</strong></td><td>Skipped now, becomes a fast-follow ticket</td></tr>
+          <tr><td><strong>Defer</strong></td><td>Skipped now, becomes a follow-up ticket</td></tr>
           <tr><td><strong>Decline</strong></td><td>Skipped deliberately, not coming back</td></tr>
         </tbody>
       </table>
     </div>
     <p>Three rules make this safe rather than a loophole:</p>
     <ol>
-      <li><strong>A skip is recorded, never silent.</strong> HITL can always tell you exactly what was skipped, by whom, when, and why.</li>
-      <li><strong>There's a floor.</strong> Load-bearing steps &mdash; irreversible operations, security work at higher tiers &mdash; need an explicit acknowledgement from the accountable person. You can still proceed; you just can't do it quietly.</li>
+      <li><strong>A skip is recorded, never silent.</strong> HITL can always tell you exactly what was left out, by whom, when, and why.</li>
+      <li><strong>There's a floor.</strong> The steps in the first table need an explicit acknowledgement from the accountable person, and sometimes a waiver. You can still proceed; you just can't do it quietly.</li>
       <li><strong>Skips come back politely.</strong> When a later change touches the same area, HITL reminds you what was skipped there. A reminder, not a lecture.</li>
     </ol>
-    <p>In a First Pass change Claude also talks less, and stops asking permission for routine in-scope reads and edits. Irreversible, out-of-scope and outward-facing actions still ask.</p>
+    <p>When anything is left out, Claude also talks less and stops asking permission for routine reads and edits inside the change's scope. Irreversible, out-of-scope and outward-facing actions still ask.</p>
     <div class="panel">
-      <p><strong>Think of it as a thin pass through the whole thing, which you then deepen</strong> &mdash; not a faster, worse method.</p>
+      <p><strong>Fast means fewer steps, never quieter protection.</strong></p>
     </div>
   </section>
 
@@ -341,7 +362,7 @@ claude plugin install hitl@hitl</code></pre>
           <tr><td>Switching to a different issue</td><td><code>/hitl:dev-switch-context</code></td></tr>
           <tr><td>You don't know which command</td><td><code>/hitl:help</code></td></tr>
           <tr><td>Picking up someone's half-finished change</td><td>Open the branch &mdash; the breadcrumb shows where they stopped</td></tr>
-          <tr><td>You want a lighter plan for this change</td><td>Restart intake and right-size it with First Pass</td></tr>
+          <tr><td>You want a lighter plan for this change</td><td>Say &ldquo;Fast Track&rdquo; during intake, or restart intake and pick it</td></tr>
           <tr><td>HITL feels wrong about your change</td><td>Say so. Tier and workflow are proposals, and it records the override</td></tr>
           <tr><td>Plugin seems out of date</td><td><code>/hitl:dev-update</code></td></tr>
         </tbody>
@@ -354,7 +375,7 @@ claude plugin install hitl@hitl</code></pre>
     <h2>The honest summary</h2>
     <p>HITL is a process your team agreed to, made legible to the AI so it stops improvising a different one each session.</p>
     <p>The cost is real: intake takes a few minutes, and some steps feel like overhead on small work. The return is that changes arrive with their requirements, design decisions, tests and review evidence attached &mdash; and that six months later, the reasoning is still there.</p>
-    <p>If it's too heavy for the work in front of you, that's what First Pass is for. Use it. Being honest about what you skipped is the point; skipping silently is the thing HITL exists to prevent.</p>
+    <p>If it's too heavy for the work in front of you, that's what Fast Track is for. Use it. Being honest about what you skipped is the point; skipping silently is the thing HITL exists to prevent.</p>
   </section>
 
   <footer>

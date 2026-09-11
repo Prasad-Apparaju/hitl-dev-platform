@@ -93,7 +93,10 @@ if hitl_change_active "$YAML_FILE"; then
     hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL: ${phase:-change} · Step ${num:-?} [${change_id} · T${tier}]${warn}  (run /hitl:dev-update for the step trail)"
   fi
 else
-  hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  ${COLOR_YELLOW}HITL: no active change — run /hitl:dev-start-change${COLOR_RESET}"
+  # The one place a person sees HITL directly without Claude relaying it (#125), so it carries the
+  # short form of the promise in the CLAUDE.md block: say the goal, and Fast Track exists. Keep it
+  # under ~110 characters; a statusline wider than the terminal is cut off, and the end is what goes.
+  hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  ${COLOR_YELLOW}HITL: no active change. Tell Claude your goal, or say \"Fast Track\" · /hitl:dev-start-change${COLOR_RESET}"
 fi
 
 # ── Platform chip: shown only while the project is not delivery-ready ──────────────────────

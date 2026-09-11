@@ -218,7 +218,7 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
     mkdir -p .github/workflows
     [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
   fi
-  echo "First Pass installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
+  echo "Skip-record validator installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
 fi
 
 # Compound-agentic surface (#10): the fail-closed system-manifest validator + posture-view generator,
