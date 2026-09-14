@@ -1,5 +1,5 @@
 ---
-description: Start work on a change the right way — pick a GitHub issue, determine the correct HITL workflow (development / brownfield / migration / prd), show its full step plan, seed and push the self-describing .hitl/current-change.yaml, then route into the workflow. This is the front door for every change; the session-start gate insists on it before any work.
+description: Start any change. Say your goal, then pick Fast Track (the fewest steps this change needs) or Full Scale, and tick steps back in or out. Also picks the issue and the HITL workflow (development / brownfield / migration / prd), seeds and pushes .hitl/current-change.yaml, and routes into the workflow. The front door for every change; the session-start gate insists on it before any work.
 argument-hint: "[issue number or description]"
 disable-model-invocation: true
 ---
@@ -185,29 +185,92 @@ against: you cannot ask whether a rule was right if nobody wrote down what it de
 It is written here, not by the analysis, because sizing needs the tier and the tier does not exist
 until this step.
 
-Show both, and the difference:
+Show both, and **list what Fast Track leaves out, one step per line, every time.** Do not wait to
+be asked. Two counts and a comma list read as a summary, not a choice: in a 2.12.1 session the
+person had to ask to see the steps before they could select or skip any, and was never shown a
+checkbox.
 
 ```
-This change reaches: 3 areas, 1 published interface, a data migration.
+This change reaches: 1 area, no dependents, no interface or data change.
 
-  Fast Track   21 steps   what this change's own facts call for
-  Full Scale   31 steps   everything that applies to a change of this shape
+  Fast Track   16 steps   what this change needs before it ships
+  Full Scale   26 steps   everything that applies to a change of this shape
 
-  The 10 extra: Figma, ROI, training, design review, code review, refactor,
-  conventions, test review, and both ROI checkpoints.
+  Fast Track leaves out (most consequential first):
+    Baseline measurement        a before-number, so "faster" is measured
+    Decision packet             the decision and alternatives, recorded
+    Design verification         someone tries to break the design early
+    Design update               the design catches up with what building taught
+    Code verification           someone tries to break the implementation
+    ROI estimate                a stated reason this is worth building
+    Test review                 a person checks the tests assert the right thing
+    Refactor                    code left in shape for the next person
+    30-day ROI check            whether it was worth building
+    90-day ROI check            the longer-term effect, looked at
+
+  Always stays: the failing test and making it pass, the integration check, deploy,
+  promote and the retrospective.
 
 Recommended: Fast Track. Nothing it drops is protecting something this change touches.
 ```
 
-One line on which is recommended and why. **The recommendation is advice** — taking Full Scale
-instead is not recorded. Write the two names exactly as shown, capitalized: they are what people ask for
-by name, and a different spelling each time is how a name stops being findable (#125).
+Each line is the step's name as a person would say it, not the catalog label (`VfyDsn`), and a
+short form of its `protects` line. Order by `forgo_cost`, then catalog order, so the most
+consequential omission is the first one a person sees. "Always stays" is every `locked` step from
+the sizer. One line on which is recommended and why. **The recommendation is advice**: taking Full
+Scale instead is not recorded. Write the two names exactly as shown, capitalized: they are what
+people ask for by name, and a different spelling each time is how a name stops being findable (#125).
 
-Say what each step protects when asked, from `protects` in the catalog. Order anything outside
-Fast Track by `forgo_cost`, so the most consequential omission is the first one a person sees.
+If the two options come out the same, say so and do not offer a choice.
 
-**Print the full ordered list on request** ("show me every step"), and always in full for a workflow
-of 10 steps or fewer, where a phase summary would be longer than the list it replaces.
+### Ask with checkboxes
+
+Then ask with the `AskUserQuestion` tool. It draws the options as a menu the person moves through
+with the arrow keys, and `multiSelect` draws checkboxes. Do not ask "which do you want?" in prose.
+
+**First, the plan.** One single-select question:
+
+| field | value |
+|---|---|
+| `header` | `Plan` |
+| `question` | `Which plan for <change_id>?` |
+| options | `Fast Track (Recommended)`, `Full Scale`, `Pick steps myself`, with the recommended one first and carrying "(Recommended)" |
+| `description` | Fast Track: "16 steps: what this change needs before it ships. You can tick any step back in next." Full Scale: "26 steps: everything that applies." Pick steps myself: "Start from Fast Track, then choose what to add back and what to leave out." |
+| `preview` | on Fast Track and Full Scale, that option's ordered step list with the left-out steps under it, so moving between the two shows the difference |
+
+**Then, for Fast Track and for Pick steps myself, the checkboxes.** One `multiSelect` call over every step Full Scale has and
+Fast Track does not:
+
+- `question`: `Fast Track leaves these out. Tick any you want to keep.` With more than one question,
+  number them (`... leaves these out (1 of 3). ...`): the tool rejects a call whose question texts
+  repeat, or whose option labels repeat within a question.
+- `header`: `Add back`, or `Add back 1` to `Add back 4` when there is more than one question.
+- One option per step, in the same order as the list. `label` is the step's name (five words at
+  most); `description` is its `protects` line and what leaving it out costs ("Leaving it out costs:
+  medium").
+- Four options per question, four questions per call: sixteen boxes. A question needs at least two
+  options, so split five as three and two, not four and one. Past sixteen, box the sixteen most
+  consequential, name the rest in the last question's text, and take names typed into the "Other"
+  box the tool adds.
+- Nothing ticked is Fast Track as proposed. A ticked step is kept. An unticked one is recorded
+  `not_applicable` with the rule's reason, in Step 4b.
+
+**For Pick steps myself, a second checkbox screen** after the "Add back" one: `Leave out any of these?`
+(header `Leave out`), over the steps in the plan a person may lighten. That is every step that is
+not `locked`, not `no_omit` and not `issue` (intake has already done it), lowest `forgo_cost` first, so the cheapest to drop comes first. A
+ticked step goes through the Step 4b menu below, which says what it becomes. Offer the same screen
+after Fast Track when someone says they want it lighter still.
+
+Full Scale asks nothing more.
+
+**Steps that always stay are never checkboxes.** Dropping one needs a named person to accept the
+risk, not a tick. List them, and say how to ask for a risk-accepted skip.
+
+If the `AskUserQuestion` tool is not available (a host without it, or a non-interactive run), print
+the same lists numbered and take the numbers typed back. Do not drop the list.
+
+**Print the full ordered plan on request** ("show me every step"), and always in full for a workflow
+of 10 steps or fewer.
 
 ---
 
@@ -242,11 +305,10 @@ Pre-selected is not pre-recorded. **Nothing is written until the human confirms*
 still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
 record is the person who confirmed, never the agent.
 
-**Present the disposition menu ONCE** (brief mode — not a step-by-step interview). Each step's `crit`
-(from the catalog, resolved against this change's `tier`) constrains its options:
-
-Steps the RULES excluded are pre-selected as `not_applicable` and are not part of this menu; the
-menu is for what a person is choosing to lighten beyond that.
+**The checkboxes in Step 4 are the menu.** Ask once (brief mode, not a step-by-step interview).
+Steps the RULES excluded are pre-selected as `not_applicable` and appear only as the "Add back"
+boxes. A step ticked under "Leave out" is a person choosing to lighten beyond that, and its `crit`
+(from the catalog, resolved against this change's `tier`) says what it can become:
 
 | step type | options offered |
 |---|---|
@@ -256,6 +318,10 @@ menu is for what a person is choosing to lighten beyond that.
 | `floor` | keep · *request risk-accepted skip* |
 
 \*starter offered only for steps in the registry (`ci/first-pass/starters.py`); `keep` is the default.
+
+For a ticked step, use its starter when it has one, otherwise `decline` for a ceremony step and
+`defer` with a follow-up for a standard one. Say which in one line per step ("Test plan: a thin
+version now, marked to enhance later"), and ask only if the person wants a different one.
 
 **This step elicits choices; it does not write the ledger.** The change file does not exist yet — Step 6
 creates it — so recording here would write to a stale or absent file that Step 6 then overwrites. Capture

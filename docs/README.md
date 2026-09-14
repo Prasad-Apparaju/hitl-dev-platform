@@ -15,6 +15,7 @@
 | `releasing.md` | Maintainer runbook: how a version gets from this repo to `claude plugin install hitl@hitl` — the twelve release steps with the exact commands, the two gates, the waiver path, and what has gone wrong before |
 | `validation-guide.md` | Independent-reviewer / Codex guide to verifying a release: requirement→design→test map plus the exact checks to run |
 | `getting-started.md` | **Start here if you're a developer on a project that uses HITL.** One change walked end to end: the one command you need, what the breadcrumb means, and how to run a lighter process on small work |
+| `fast-track.md` | Fast Track in screenshots: one real bug fix through intake, from the goal to the checkboxes for what Fast Track left out. Mirrored on the portal as `site/fast-track.html` |
 | `usage-guide.md` | Scenario reference: new project, brownfield, migration, enhancement, bug fix, incident |
 | `quick-start.md` | Setup for a *new* project, from the platform repo (see the note at its top — if you installed via `claude plugin install`, use `getting-started.md`) |
 | `customization-guide.md` | Full command-to-file map — where to edit every skill, agent, hook, and template |

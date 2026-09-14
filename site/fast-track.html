@@ -1,0 +1,285 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/hitl-icon.svg">
+<title>HITL: Fast Track, start to finish</title>
+<style>
+  :root {
+    --ground: #F5F8F6;
+    --panel: #FFFFFF;
+    --ink: #1F2823;
+    --ink-soft: #52645B;
+    --line: #D6E0DA;
+    --pine: #17453B;
+    --leaf: #2E7D64;
+    --leaf-wash: #E8F0EC;
+    --gate: #A66B1F;
+    --gate-wash: #F7EEDD;
+    --code-bg: #16211C;
+    --code-ink: #DDE7E1;
+    --mono: "Menlo", "SF Mono", "Consolas", monospace;
+    --display: "Avenir Next", "Seravek", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+      --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+      --gate: #D99A45; --gate-wash: #2A2115;
+      --code-bg: #0A100D; --code-ink: #D8E3DC;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1713; --panel: #17211C; --ink: #E5EDE8; --ink-soft: #9AB0A5;
+    --line: #2A3830; --pine: #57BD99; --leaf: #57BD99; --leaf-wash: #1C2A24;
+    --gate: #D99A45; --gate-wash: #2A2115;
+    --code-bg: #0A100D; --code-ink: #D8E3DC;
+  }
+  :root[data-theme="light"] {
+    --ground: #F5F8F6; --panel: #FFFFFF; --ink: #1F2823; --ink-soft: #52645B;
+    --line: #D6E0DA; --pine: #17453B; --leaf: #2E7D64; --leaf-wash: #E8F0EC;
+    --gate: #A66B1F; --gate-wash: #F7EEDD;
+    --code-bg: #16211C; --code-ink: #DDE7E1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink); font-family: var(--body);
+    margin: 0; padding: 48px 20px 80px; line-height: 1.55; font-size: 15px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  .sitenav { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    font-family: var(--mono); font-size: 11.5px; margin-bottom: 34px; }
+  .sitenav .navbrand { font-weight: 700; letter-spacing: 0.14em; color: var(--leaf); margin-right: 8px; }
+  .sitenav a { color: var(--ink-soft); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--pine); border-bottom-color: var(--leaf); }
+  .sitenav a.here { color: var(--pine); font-weight: 700; border-bottom: 1.5px solid var(--leaf); }
+  .sitenav a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+  .navlogo {
+    width: 18px; height: 18px; display: inline-block; vertical-align: -3px; margin-right: 7px;
+    background: url("assets/hitl-icon.svg") no-repeat center / contain;
+  }
+  @media (prefers-color-scheme: dark) { .navlogo { background-image: url("assets/hitl-icon-dark.svg"); } }
+  :root[data-theme="dark"] .navlogo { background-image: url("assets/hitl-icon-dark.svg"); }
+  :root[data-theme="light"] .navlogo { background-image: url("assets/hitl-icon.svg"); }
+
+  .brand {
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--leaf); margin-bottom: 18px;
+  }
+  h1 {
+    font-family: var(--display); font-size: 34px; font-weight: 600; margin: 0 0 12px;
+    letter-spacing: -0.01em; text-wrap: balance; max-width: 22ch;
+  }
+  .thesis { font-family: var(--display); font-size: 18px; color: var(--pine); margin: 0 0 14px; max-width: 60ch; }
+  .sub { color: var(--ink-soft); margin: 0 0 30px; max-width: 62ch; }
+
+  .group-label {
+    font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--leaf); margin: 40px 0 12px;
+  }
+
+  h2 { font-family: var(--display); font-size: 21px; font-weight: 600; margin: 0 0 10px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 24px 0 6px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol { max-width: 66ch; padding-left: 20px; margin: 0 0 14px; }
+  li { margin: 0 0 6px; }
+  a { color: var(--pine); }
+
+  section { scroll-margin-top: 20px; margin: 0 0 40px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px; border-top: 3px solid var(--leaf); margin: 0 0 20px;
+  }
+  .panel.attention { border-top-color: var(--gate); background: var(--gate-wash); }
+  .panel h2, .panel h3 { margin-top: 0; }
+  .panel p:last-child { margin-bottom: 0; }
+
+  .lead-cmd {
+    background: var(--leaf-wash); border: 1px solid var(--leaf); border-radius: 8px;
+    padding: 16px 18px; margin: 0 0 18px;
+  }
+  .lead-cmd code {
+    font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--pine);
+    background: none; border: 0; padding: 0;
+  }
+  .lead-cmd p { margin: 8px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  code {
+    font-family: var(--mono); font-size: 12.5px; background: var(--leaf-wash);
+    border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink); border-radius: 7px;
+    padding: 14px 16px; overflow-x: auto; margin: 0 0 16px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; color: inherit; }
+
+  .tablewrap { overflow-x: auto; margin: 0 0 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 440px; }
+  th, td { text-align: left; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700;
+  }
+  td code { white-space: nowrap; }
+
+  .trailbox {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px 16px; margin: 0 0 10px; overflow-x: auto;
+  }
+  .trailline { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; display: flex; gap: 16px; align-items: center; }
+  .trailbox a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid transparent; }
+  .trailbox a:hover { color: var(--ink); border-bottom-color: var(--leaf); }
+  .trailbox .is-here a { color: var(--ink); font-weight: 700; }
+  .g { font-weight: 700; margin-right: 4px; }
+  .g-done { color: var(--leaf); }
+  .g-here { color: var(--gate); }
+  .g-open { color: var(--ink-soft); }
+  .g-skip { color: var(--gate); }
+  .trailnote { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin: 0 0 34px; }
+  .glyphcell { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+
+  footer { margin-top: 44px; color: var(--ink-soft); font-size: 12px; font-family: var(--mono); border-top: 1px solid var(--line); padding-top: 18px; }
+  footer a { color: var(--leaf); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  figure { margin: 0 0 26px; }
+  figure img {
+    display: block; max-width: 100%; height: auto; border-radius: 10px;
+    border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(23,69,59,.10);
+  }
+  figcaption { font-size: 13px; color: var(--ink-soft); margin-top: 8px; max-width: 68ch; }
+  .step { display: inline-block; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--leaf); margin-right: 6px; }
+  .promise { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 0 0 30px; }
+  .promise .panel { margin: 0; }
+  .promise h3 { margin: 0 0 4px; }
+  .promise p { font-size: 14px; }
+
+</style>
+
+<div class="wrap">
+<nav class="sitenav"><span class="navbrand"><span class="navlogo" aria-hidden="true"></span>HITL</span><a href="index.html">Home</a><a href="getting-started.html">Getting started</a><a href="going-ai-native.html">The walkthrough</a><a href="architecture.html">Architecture</a><a href="catalog.html">Full catalog</a><a href="https://github.com/Prasad-Apparaju/hitl-dev-platform" style="margin-left:auto" target="_blank" rel="noopener">GitHub &#8599;</a></nav>
+
+  <header>
+    <div class="brand">HITL &middot; A REAL RUN</div>
+    <h1>Fast Track, start to finish</h1>
+    <p class="thesis">The fewest steps that get your change to done. You see every step it leaves out, and you can tick any of them back in.</p>
+    <p class="sub">This page follows one bug fix through intake. Every screenshot is from a real session: Claude Code 2.1.269 running HITL 2.13.0 on a small demo store called Shopfront. The only edit is the folder path, shortened to <code>~/shopfront</code>.</p>
+  </header>
+
+  <div class="promise">
+    <div class="panel"><h3>Sized by the code</h3><p>Rules read what the change touches. A step drops out only when the change gives it nothing to protect.</p></div>
+    <div class="panel"><h3>Nothing hidden</h3><p>Every step it leaves out is listed, and comes back as a checkbox with what it protects.</p></div>
+    <div class="panel"><h3>Nothing silent</h3><p>Every left-out step is recorded with who decided and why. Production steps need a named person.</p></div>
+  </div>
+
+  <div class="panel attention">
+    <p><strong>The bug (issue #42).</strong> A customer who clears the discount box and presses Pay gets a 500: <code>apply_discount(total, "")</code> raises <code>KeyError</code>. Done means a blank code leaves the total unchanged.</p>
+  </div>
+
+  <section id="goal">
+    <h2><span class="step">1</span>Say your goal</h2>
+    <p>With no change active, the status line says what to do.</p>
+    <figure>
+      <img src="assets/fast-track/01-statusline.png" width="960" alt="The status line with no active change reads: Tell Claude your goal, or say Fast Track.">
+    </figure>
+    <p>Give the goal in one sentence and what done looks like. Saying &ldquo;Fast Track&rdquo; is optional: intake offers it either way.</p>
+    <figure>
+      <img src="assets/fast-track/02-goal.png" width="960" alt="The developer types /hitl:dev-start-change followed by the goal and what done means.">
+    </figure>
+  </section>
+
+  <section id="restate">
+    <h2><span class="step">2</span>It checks the bug, then says back what it understood</h2>
+    <p>Before planning anything, Claude ran the code and confirmed the crash: a blank code raises <code>KeyError</code> and <code>None</code> raises <code>AttributeError</code>. Then it asks you to confirm its restatement, and settles the one open question: what an unknown code should do.</p>
+    <figure>
+      <img src="assets/fast-track/03-restate.png" width="960" alt="Claude reports the reproduced crash and asks whether its restatement is right, with options for how unknown codes behave.">
+    </figure>
+  </section>
+
+  <section id="impact">
+    <h2><span class="step">3</span>It works out what the change reaches</h2>
+    <p>The impact analysis reads the manifest, the design doc and the code, and looks for callers. Here it found one area, no dependents and no data change. The one thing it can&rsquo;t read from code is whether the change touches security, so it asks.</p>
+    <figure>
+      <img src="assets/fast-track/04-impact.png" width="960" alt="Claude summarizes the impact and asks whether the change touches authentication, secrets, personal or payment data.">
+    </figure>
+  </section>
+
+  <section id="tier">
+    <h2><span class="step">4</span>A tier from the findings, and the call it made for you</h2>
+    <p>Claude proposes Tier 1 and names the finding behind it. It also tells you the judgement it made that you might not share: it did not count accepting <code>None</code> as an interface change. If you disagree, three steps come back into the plan. Each tier option shows what it would do to the Fast Track step count.</p>
+    <figure>
+      <img src="assets/fast-track/05-tier.png" width="960" alt="Claude explains its interface judgement and proposes Tier 1; Tier 2 and Tier 3 show their Fast Track step counts.">
+    </figure>
+  </section>
+
+  <section id="plan">
+    <h2><span class="step">5</span>Fast Track or Full Scale</h2>
+    <p>Two sizes of the same plan. The preview lists every step in Fast Track and everything it leaves out; move down to Full Scale to see the other list. For this fix, Fast Track is 17 steps and Full Scale is 27.</p>
+    <figure>
+      <img src="assets/fast-track/06-plan.png" width="960" alt="The plan question with Fast Track recommended; the preview lists its 17 steps and the 10 it leaves out.">
+    </figure>
+  </section>
+
+  <section id="checkboxes">
+    <h2><span class="step">6</span>Tick anything back in</h2>
+    <p>Everything Fast Track left out comes back as checkboxes, most consequential first. Each one says what the step protects and what leaving it out costs. You don&rsquo;t have to ask for them.</p>
+    <figure>
+      <img src="assets/fast-track/07-checkboxes.png" width="960" alt="Checkboxes for the steps Fast Track left out, three of them ticked, each with what it protects.">
+    </figure>
+    <p>In this run the developer kept five: baseline, decision packet, design update, code verification and test review. Before submitting, you see every choice in one place.</p>
+    <figure>
+      <img src="assets/fast-track/08-review.png" width="960" alt="The review screen listing the steps ticked back in, before submitting.">
+    </figure>
+    <p>Want it lighter still? Pick &ldquo;Pick steps myself&rdquo; at the plan question and a second screen follows: the steps in the plan you could leave out, cheapest to drop first. The steps that always stay are not on it. A step you tick gets a lighter form: a thin starter, a deferral with a follow-up issue, or a decline. This screenshot is from a second run of the same fix, where Conventions check was deferred to a follow-up issue.</p>
+    <figure>
+      <img src="assets/fast-track/08b-leave-out.png" width="960" alt="The Leave out screen: steps in the plan that can be lightened, with Conventions check ticked.">
+    </figure>
+  </section>
+
+  <section id="recorded">
+    <h2><span class="step">7</span>Recorded, and on its way</h2>
+    <p>The plan, the tier and every left-out step go into <code>.hitl/current-change.yaml</code>, each with who decided and why. The breadcrumb shows a left-out step as &#8856;, so it is visibly skipped rather than gone. Claude also points out the one kept step that has little to do on a crash fix.</p>
+    <figure>
+      <img src="assets/fast-track/09-summary.png" width="960" alt="Claude's intake summary: what was recorded, two things to know, and the next command. The breadcrumb shows skipped steps.">
+    </figure>
+    <p>After the design doc step, the breadcrumb moves on and names the next command.</p>
+    <figure>
+      <img src="assets/fast-track/10-next.png" width="960" alt="After the docs step, Claude explains the next step and the breadcrumb shows Docs done and Baseline current.">
+    </figure>
+  </section>
+
+  <div class="group-label">What always stays</div>
+  <section id="stays">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Step</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td>Write the failing test, make it pass</td><td>Always stay. They can be made thin (one test), never dropped</td></tr>
+          <tr><td>Deploy, promote, the retrospective</td><td>Dropped only if a named person accepts the risk</td></tr>
+          <tr><td>Integration check (tier 2 and up); decision packet, architecture review, QA check and rollout plan (tier 3)</td><td>Same: a named person accepts the risk</td></tr>
+          <tr><td>Penetration test (any tier), security design review and dependency audit (tier 3), when the change touches security or dependencies</td><td>Same: a named person accepts the risk</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="group-label">What Fast Track is not</div>
+  <section id="not">
+    <ul>
+      <li><strong>Not quieter protection.</strong> Every left-out step is recorded with the finding that dropped it, and the retrospective reads that record back.</li>
+      <li><strong>Not a shortcut through intake.</strong> Intake still reads the code, reproduces the bug and asks what it can&rsquo;t know. Fast Track cuts the steps that come after.</li>
+    </ul>
+    <div class="lead-cmd">
+      <code>/hitl:dev-start-change</code>
+      <p>Run it and say your goal. The <a href="getting-started.html#light">getting-started guide</a> covers the rest of the workflow.</p>
+    </div>
+  </section>
+
+  <footer>
+    Next: <a href="getting-started.html">getting started</a> &middot; <a href="going-ai-native.html">the full walkthrough</a> &middot; <a href="catalog.html">every command</a><br>
+    Source: <a href="https://github.com/Prasad-Apparaju/hitl-dev-platform/blob/main/docs/fast-track.md" target="_blank" rel="noopener">this page in the repo</a>
+  </footer>
+</div>
