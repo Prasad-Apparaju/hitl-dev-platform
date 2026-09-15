@@ -41,6 +41,8 @@ claude plugin install hitl@hitl
 
 Restart Claude Code. That's the whole setup — it applies to every project on your machine, and the project itself needs no changes from you.
 
+Release notices are posted on the ["Who uses HITL" thread](https://github.com/pappar/hitl-claude-plugin/discussions/36) in the plugin repo; a comment there is how you subscribe, and onboarding offers to post one for you.
+
 ---
 
 ## The one command worth knowing
