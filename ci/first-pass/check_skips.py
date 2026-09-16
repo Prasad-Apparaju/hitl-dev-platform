@@ -9,6 +9,9 @@ are asserted by MUTATION in the test-plan):
   - FLOOR_NO_ACK    a floor skip has no accountable-role ack                     (CR-5)  [non-waivable]
   - FLOOR_NO_WAIVER a floor skip mapping to a hard gate has no linked waiver     (CR-4)  [non-waivable]
   - NO_OMIT         a no_omit step (TDD) was deferred/declined, not thinned      (CR-6)  [non-waivable]
+  - RECORD_UNIDENTIFIED  a named impact record carries no change_id or workflow (#124) [non-waivable]
+  - RECORD_CONTRADICTED  the record's rule outcome for a cond step disagrees with
+                         the sizing rules run on the record's own findings      (#124) [non-waivable]
 
 Plus consistency/quality checks: LEDGER_STEPS, STARTER_MARK, ROLLUP, and (catalog lint) CRIT_MONOTONIC.
 
@@ -85,7 +88,15 @@ NON_WAIVABLE = {"SILENT_SKIP", "FLOOR_NO_ACK", "FLOOR_NO_WAIVER", "NO_OMIT",
                 "RULE_OVER_FLOOR",
                 # a `cond:` step marked not_applicable that the impact record does not show as
                 # inactive: the label says "the rules excluded it" and the evidence does not (#102)
-                "COND_UNCONFIRMED"}
+                "COND_UNCONFIRMED",
+                # a named impact record with no `change_id` or `workflow`: identity used to be
+                # compared only when the record volunteered it, so a record that said nothing
+                # about who it was for was never checked at all (#124)
+                "RECORD_UNIDENTIFIED",
+                # the record's `rule_outcomes` for a `cond:` step disagree with what the sizing
+                # rules say for the record's own findings. The record is written in the same PR as
+                # the change file, so its claim about the rules is re-derived, not trusted (#124)
+                "RECORD_CONTRADICTED"}
 STARTER_MARKER = "needs-enhancement"
 # `cond:` labels whose activator reads `security_sensitive` (#102): sec_design and pentest are
 # `security`; cve_audit is `upgrade` but engages on the same answer. A step marked not_applicable
@@ -204,11 +215,62 @@ def _cond_unconfirmed(key, meta, record_outcomes, record_findings):
     return None
 
 
-def check(change, catalog, tier=None, rollup=None, change_dir="."):
-    """Validate a change record's skip ledger. Returns a list of findings (empty = clean)."""
+def load_costs(workflows_path):
+    """The `step_costs` table: the `engages` / `needed_now` rules the sizer reads. {} when absent,
+    which the sizer and the gate both treat as "every step applies" (fail closed)."""
+    import yaml
+    try:
+        d = yaml.safe_load(open(workflows_path))
+    except Exception:  # noqa: BLE001
+        return {}
+    costs = d.get("step_costs") if isinstance(d, dict) else None
+    return costs if isinstance(costs, dict) else {}
+
+
+def _record_contradictions(catalog, costs, record_outcomes, record_findings):
+    """RECORD_CONTRADICTED (#124): the record's `rule_outcomes` for every `cond:` step, re-derived.
+
+    `_cond_unconfirmed` takes `applies: false` in the record as proof an activator did not fire.
+    The record is written in the same PR as the change file, so that is a claim, not evidence,
+    until the gate runs the same rules on the same findings and gets the same answer. The findings
+    stay the human's answers (intake asks); what may not be self-declared is what the rules made
+    of them. Checked for every conditional step in the record, ledger entry or not, so a record
+    that lies about `pentest` is refused whether or not anyone has skipped it yet.
+    """
+    if not record_outcomes:
+        return []
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from size_plan import rule_applies
+    except Exception as e:  # noqa: BLE001 — without the rules nothing can be re-derived: fail closed
+        return [_f("MALFORMED", f"cannot load the sizing rules to check the impact record "
+                                f"({e.__class__.__name__}); size_plan.py must sit beside this file")]
+    out = []
+    for key, meta in (catalog.items() if isinstance(catalog, dict) else []):
+        if not (isinstance(meta, dict) and meta.get("cond")) or key not in record_outcomes:
+            continue
+        claimed = record_outcomes[key].get("applies")
+        expected = rule_applies(costs, key, record_findings or {})
+        if not isinstance(claimed, bool) or claimed is not expected:
+            out.append(_f("RECORD_CONTRADICTED",
+                          f"impact record says step '{key}' applies: {claimed!r}, but the sizing rules "
+                          f"say {str(expected).lower()} for its own findings. The record's rule outcomes "
+                          f"are re-derived, not trusted: re-run size_plan.py on this record and write "
+                          f"its outcomes back, or correct the findings"))
+    return out
+
+
+def check(change, catalog, tier=None, rollup=None, change_dir=".", costs=None):
+    """Validate a change record's skip ledger. Returns a list of findings (empty = clean).
+
+    `costs` is the catalog's `step_costs` table, used to re-derive the impact record's rule
+    outcomes (#124). Callers that pass only a catalog get the shipped table by the same resolver
+    every tool uses, so a direct `check()` call is held to the same rules as the CLI."""
     findings = []
     if not isinstance(change, dict):
         return [_f("SILENT_SKIP", "change record is not a mapping")]
+    if costs is None:
+        costs = load_costs(default_workflows())
     # `first_pass` gates enforcement, so its type is load-bearing: a falsey non-bool ([], {}, 0, "") must NOT
     # be read as an intentional `false` and disable the whole guarantee (codex-2). Enforce unless it is the
     # literal boolean False or genuinely absent; a present-but-non-bool value is MALFORMED *and* enforced.
@@ -406,19 +468,31 @@ def check(change, catalog, tier=None, rollup=None, change_dir="."):
                 # sizing evidence could belong to a different change or a different catalog and
                 # certify clean. A plan justified by the wrong record is worse than one justified by
                 # none, because it looks accounted for.
+                #
+                # The record must SAY who it is for (#124). The check used to be two-sided, so a
+                # record with no `change_id` or `workflow` was never compared, and the guard
+                # against "a record for a different change" fired only when the record volunteered
+                # an identity. A named record with neither is a claim about nothing in particular.
                 _rid = _str(_body.get("change_id")).strip()
                 _cid = _str(change.get("change_id")).strip()
-                if _rid and _cid and _rid != _cid:
-                    findings.append(_f("IMPACT_RECORD", f"impact record is for '{_rid}' but this "
-                                                        f"change is '{_cid}'"))
                 _rwf = _str(_body.get("workflow")).strip()
                 _cwf = _str((change.get("workflow") or {}).get("id")).strip()
-                if _rwf and _cwf and _rwf != _cwf:
+                _missing = [k for k, v in (("change_id", _rid), ("workflow", _rwf)) if not v]
+                if _missing:
+                    findings.append(_f("RECORD_UNIDENTIFIED",
+                                       f"impact record '{_rec}' does not say which change it is for: "
+                                       f"it has no {' or '.join(_missing)}. Add `change_id: {_cid or '<this change>'}` "
+                                       f"and `workflow: {_cwf or '<this workflow>'}` so the record and the plan can be matched"))
+                if _rid and _rid != _cid:
+                    findings.append(_f("IMPACT_RECORD", f"impact record is for '{_rid}' but this "
+                                                        f"change is '{_cid}'"))
+                if _rwf and _rwf != _cwf:
                     findings.append(_f("IMPACT_RECORD", f"impact record was sized against workflow "
                                                         f"'{_rwf}' but the plan is '{_cwf}'"))
                 record_findings = _body.get("findings") if isinstance(_body.get("findings"), dict) else {}
                 record_outcomes = {_str(o.get("step")): o for o in _list(_body.get("rule_outcomes"))
                                    if isinstance(o, dict) and _str(o.get("step"))}
+                findings += _record_contradictions(catalog, costs, record_outcomes, record_findings)
     # No `impact_record` at all is NOT reported. The design says a NAMED record that is missing or
     # empty blocks; it does not say every change must name one. Requiring it would be a larger claim
     # than the design makes and would fire on every change file written before this feature.
@@ -588,6 +662,7 @@ def run(change_path, workflows_path, rollup_path=None, tier=None):
         catalog = load_catalog(workflows_path, wid)
     except Exception:  # noqa: BLE001
         catalog = {}
+    costs = load_costs(workflows_path)
     rollup = None
     if rollup_path and os.path.exists(rollup_path):
         try:
@@ -596,7 +671,8 @@ def run(change_path, workflows_path, rollup_path=None, tier=None):
             rollup = {"entries": []}
     try:
         return lint_catalog(catalog) + check(change, catalog, tier=tier, rollup=rollup,
-                                             change_dir=os.path.dirname(os.path.abspath(change_path)))
+                                             change_dir=os.path.dirname(os.path.abspath(change_path)),
+                                             costs=costs)
     except Exception as e:  # noqa: BLE001 — fail CLOSED, never traceback
         return [_f("MALFORMED", f"validation crashed on malformed input: {e.__class__.__name__}: {e}")]
 
