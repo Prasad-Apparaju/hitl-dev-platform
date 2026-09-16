@@ -15,7 +15,7 @@ To get started, run one of these commands in your project directory:
   /hitl:dev-start-migration     migrate a system
 ```
 
-**If there are no product requirements yet:** if `docs/01-product/prd.md` is absent or lists no functional requirements (no `FR-` entries in §5), stop and output this, do not proceed:
+**If there are no product requirements yet:** if `docs/01-product/prd.md` is absent, stop and output this, do not proceed:
 
 ```
 No product requirements exist yet, so there is nothing here to work from.
@@ -23,6 +23,12 @@ Create the first requirement, then re-run this command:
 
   /hitl:pm-add-feature      capture a new requirement
   /hitl:pm-design-feature   design a user-facing feature
+```
+
+**If the PRD exists but has no `FR-` entries** (written before HITL, or in another form), do not stop. Say so in one line and continue, using the acceptance criteria on the GitHub issue, which the packet gate approved against:
+
+```
+The PRD has no FR- entries, so the acceptance criteria on the issue are used instead.
 ```
 
 ---
@@ -44,7 +50,7 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 
 ## Step 1 — Read the spec
 
-1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` at that requirement for the acceptance criteria. The PRD is the source of truth — the issue is a pointer.
+1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` at that requirement for the acceptance criteria. The PRD is the source of truth — the issue is a pointer. If the PRD has no `FR-` entries, the acceptance criteria on the issue are the source.
 2. Read the LLD at the path in `.hitl/current-change.yaml` (`source_artifacts.lld`) — note every method signature, error mode, precondition, and boundary entity
 3. Read the test plan from `.hitl/current-change.yaml` under `tests.plan` — this is what the developer committed to covering
 4. List the test files in `tests/` — read them

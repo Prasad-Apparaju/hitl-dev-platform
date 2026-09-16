@@ -1153,7 +1153,7 @@ FLOOR_REGIONS = {
         "ea6506515c98e723c79f79014ea885fc42a1bb66d4ba9b451c96dd83c64b7a8b"),
     "generate-docs / phase R5 process setup": (
         ('ai', 'claude', 'generate-docs', 'SKILL.md'), '### Phase R5 — Process Setup (Day 5 equivalent)',
-        "8b1b7b3743d269b8893051e8348433c640c100e1d2483c4e3eec9f7f127d6e96"),
+        "3999e1eeed16f46a4ebefcc391622557b0de1243ea26bcd56c3c8e664feb9af6"),
     "personas.md / offering it": (
         ('ai', 'shared', 'personas.md'), '## Offering it',
         "cba3c5b499aa96d9716a6df7977a890e44aef0fee4d0ac55586cca0772f8789f"),
