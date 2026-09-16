@@ -169,7 +169,7 @@ Build is ready for Ops handoff."
 ```
 
 **If any criterion fails, regression reproduced, E2E fails, or smoke suite fails:**
-Run `/hitl:qa-report-defect` for each blocking issue. Post a comment on the main feature issue linking all defects, then report to the team:
+Follow `/hitl:qa-report-defect` from its file (`skills/qa-report-defect/SKILL.md` under the plugin root) for each blocking issue. Post a comment on the main feature issue linking all defects, then report to the team:
 ```bash
 gh issue comment <issue-number> \
   --body "## 🚫 QA Blocked

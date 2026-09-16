@@ -84,10 +84,6 @@ Length comes from the change. A one-line fix has a one-line definition of done. 
 confirmation or a correction; this is the cheapest moment to catch a misread, because everything
 downstream derives from this text and a wrong plan is harder to argue with than a wrong sentence.
 
-**The definition of done is not the plan restated.** The plan is how the work gets done; this is
-what counts as delivered, in the requester's own words. A completed plan does not prove the thing
-does what was asked.
-
 **Flag a line you cannot check, do not block it.** "The system should be fast" cannot be shown to be
 met. Say so, offer a sharper version, take whatever answer comes back, and if the vague line stays,
 record that it was flagged as unverifiable and accepted anyway, with a name and a date. That record
@@ -137,13 +133,15 @@ Wait for confirmation (or correction) before Step 3c.
 
 ---
 
-## Step 3c — Run the impact analysis
+## Step 3c — Run the impact analysis, inside this intake
 
-Call `/hitl:dev-apply-change`. It reads the stub, works out what this change reaches, writes
-`.hitl/impact/<change_id>.yaml`, translates the definition of done into acceptance criteria, and
-returns. **It is not a step in the plan** — it is what produces the plan.
+Follow `dev-apply-change` Steps 2 and 3 from its file (`skills/dev-apply-change/SKILL.md` under the
+plugin root; `ai/claude/apply-change/SKILL.md` in source). Do not invoke the command: its frontmatter
+forbids model invocation, and handing it to the person splits intake in two (#130). Step 3 reads the
+stub, asks the one security question, writes `.hitl/impact/<change_id>.yaml` with the acceptance
+criteria, and resurfaces overlapping skips. **It is not a step in the plan**; it produces the plan.
 
-Do not continue until the record exists and is non-empty. A change file naming a record that is not
+Do not continue until the record exists and is non-empty: a change file naming a record that is not
 there is a blocking error, because a second artifact is only safe when something notices its absence.
 
 ---
@@ -447,11 +445,8 @@ workflow's own steps.
 Only meaningful once the change file exists. Run it **before** the Step 7 commit, so nothing
 uncertified is ever pushed:
 
-
-**No `--rollup` here, deliberately.** The roll-up is written at the impact step, once the change knows
-its own area — so at intake every skip would warn as missing from a ledger it cannot be in yet. A
-check that always warns teaches people to ignore it, and this is the check that would otherwise catch
-a genuinely missing ledger entry later.
+**Certify without `--rollup`.** The roll-up is appended after the check, below, so a check that read
+it first would warn on every intake, and a check that always warns gets ignored.
 
 It must exit 0. A silent skip, an unauthorized floor skip, a TDD omission, or a lightened step with no
 `first_pass` flag exits 2 and is non-waivable.
@@ -471,8 +466,8 @@ python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml
 ```
 
 With no area declared yet, entries record as **project-wide** and resurface at any later change until
-resolved. The `development` route re-runs this at its impact step, narrowing them to the real scope.
-Both runs are idempotent on `(change_id, step)`. If `ci/first-pass/` is absent, say so plainly and tell the
+resolved; the impact step reads them and does not append (`dev-apply-change` Step 3). The append is
+idempotent on `(change_id, step)`. If `ci/first-pass/` is absent, say so plainly and tell the
 user to run `/hitl:dev-update` — that state means the skip ledger is uncertified for **every** change on
 the project, not just this one.
 
@@ -494,7 +489,7 @@ git push -u origin "$BRANCH" 2>/dev/null || true   # push if a remote exists
 
 Hand off to the workflow's own skill and follow the breadcrumb from there:
 
-- `development` → **`/hitl:dev-apply-change <N>`** (impact analysis → plan; steps 1–9)
+- `development` → **`/hitl:dev-apply-change <N>`** (its Steps 4 to 8: doc plan, test plan, IaC review, summary; the impact analysis already ran at Step 3c)
 - `brownfield`  → **`/hitl:dev-start-brownfield`**
 - `migration`   → **`/hitl:dev-start-migration`**
 - `prd`         → **`/hitl:dev-start-from-prd`**
