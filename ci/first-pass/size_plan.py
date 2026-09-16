@@ -90,6 +90,21 @@ def why(rule, findings):
     return ", ".join(bits)
 
 
+def rule_applies(costs, key, findings):
+    """What `engages` says for one step: does it make sense for this change at all?
+
+    THE ONE PLACE this is answered. `size()` writes it into the record as `applies`, and
+    `check_skips` re-derives it from the record's findings and blocks when the record's
+    `rule_outcomes` disagree (#124): a record written in the same PR as the change file is a claim,
+    and the gate must not take a claim about the rules on trust when it can run the rules. A step
+    with no rules applies, so nothing nobody wrote a rule for is dropped.
+    """
+    entry = costs.get(key) if isinstance(costs, dict) else None
+    if not entry:
+        return True
+    return evaluate(entry.get("engages", "always"), findings)
+
+
 def locked_keys(catalog, tier, resolve_crit):
     """Steps a rule may never drop: the tier floor, the test-first cycle, and the retrospective.
 
@@ -119,6 +134,10 @@ def size(findings, catalog, costs, tier, resolve_crit):
     out = []
     for key in catalog:
         entry = costs.get(key)
+        meta = catalog.get(key) if isinstance(catalog.get(key), dict) else {}
+        # `cond` rides along so `excluded()` and `proposed()` can tell an active conditional step
+        # from one the rules left out without a second look at the catalog (#129).
+        cond = meta.get("cond") or None
         if not entry:
             # A step with no rules cannot be sized. Failing closed (treating it as needed) is right:
             # the alternative silently drops a step nobody wrote a rule for.
@@ -126,12 +145,10 @@ def size(findings, catalog, costs, tier, resolve_crit):
                         "because": "no rules declared for this step",
                         "because_applies": "no rules declared for this step",
                         "because_needed": "no rules declared for this step",
-                        "judged": False, "locked": key in locked})
+                        "judged": False, "locked": key in locked, "cond": cond})
             continue
-        applies = evaluate(entry.get("engages", "always"), findings)
+        applies = rule_applies(costs, key, findings)
         needed = evaluate(entry.get("needed_now", "always"), findings)
-        meta = catalog.get(key) if isinstance(catalog.get(key), dict) else {}
-        cond = meta.get("cond")
         # BOTH sentences are kept, because the reason a step is in is not the reason it is out.
         # A single `because` field returned the `engages` sentence whenever `needed_now` was false,
         # so every fast-track exclusion carried an affirmative finding: `packet` was dropped with
@@ -161,8 +178,13 @@ def size(findings, catalog, costs, tier, resolve_crit):
             reason = why_needed if needed else why_applies
         out.append({"step": key, "applies": applies, "needed_now": needed,
                     "because": reason, "because_applies": why_applies, "because_needed": why_needed,
-                    "judged": False, "locked": is_locked})
+                    "judged": False, "locked": is_locked, "cond": cond})
     return out
+
+
+def _active_conditional(o):
+    """A `cond:` step whose activator fired. The rules put it in the plan; only a person takes it out."""
+    return bool(o.get("cond")) and bool(o.get("applies"))
 
 
 def plan(outcomes, option):
@@ -184,8 +206,30 @@ def excluded(outcomes, option):
     # The reason must say why it is OUT, not why it applies. A step excluded from the fast track
     # was excluded by `needed_now`; a step excluded from full scale was excluded by `engages`.
     reason_field = "because_needed" if option == "fast" else "because_applies"
+    # An ACTIVE conditional step is never here (#129). `not_applicable` means the rules excluded
+    # it, and check_skips reads the record to confirm that: a `cond:` step whose activator fired
+    # shows `applies: true`, so recording it not_applicable is refused as COND_UNCONFIRMED. It
+    # belongs in `proposed()` instead, where a person confirms leaving it out.
     return [{"step": o["step"], "reason": o.get(reason_field) or o["because"]}
-            for o in outcomes if not o[field] and not o["locked"]]
+            for o in outcomes if not o[field] and not o["locked"] and not _active_conditional(o)]
+
+
+def proposed(outcomes, option):
+    """Active conditional steps the option leaves out, offered as a person's `defer` (#129).
+
+    `baseline` engages on an API change and is never needed before shipping, so Fast Track leaves
+    it out. The rules did not exclude it (its activator fired), so it cannot be `not_applicable`;
+    and it is not needed now, so Fast Track should not carry it. The honest record is a deferral
+    by the person who confirmed the menu, with the rule's reason. Like everything else Fast Track
+    leaves out it is offered in the add-back boxes, and nothing is written until they confirm.
+    """
+    if option not in ("fast", "full"):
+        raise ValueError("option must be 'fast' or 'full', got %r" % (option,))
+    if option == "full":
+        return []                       # full scale runs everything that applies
+    return [{"step": o["step"], "disposition": "defer",
+             "reason": o.get("because_needed") or o["because"]}
+            for o in outcomes if _active_conditional(o) and not o["needed_now"] and not o["locked"]]
 
 
 def main(argv):
@@ -269,6 +313,7 @@ def main(argv):
                       "unruled": unruled,
                       "plan": plan(outcomes, option),
                       "excluded": excluded(outcomes, option),
+                      "proposed": proposed(outcomes, option),
                       "outcomes": outcomes}, indent=2))
     return 0
 

@@ -425,3 +425,59 @@ def test_an_active_conditional_step_says_which_activator_fired():
     cve = next(o for o in out if o["step"] == "cve_audit")
     assert cve["applies"] and "security sensitive" in cve["because"], cve["because"]
     assert "applies to every change" not in cve["because"]
+
+
+# ── #129: an active conditional step is a person's defer, never the rules' not_applicable ────────
+
+def test_an_active_conditional_left_out_of_fast_track_is_proposed_not_excluded():
+    """SMALL touches an API, so `baseline` engages and is not needed before shipping. It used to
+    land in `excluded()` as not_applicable with "not required before this ships", and check_skips
+    refused it (COND_UNCONFIRMED): the record shows its activator fired. The rules did not
+    exclude it; a person leaves it out, as a defer they confirm."""
+    o = _size(SMALL, 1)
+    bl = next(x for x in o if x["step"] == "baseline")
+    assert bl["applies"] is True and bl["needed_now"] is False and bl["cond"] == "perf"
+    assert "baseline" not in {e["step"] for e in S.excluded(o, "fast")}
+    prop = {p["step"]: p for p in S.proposed(o, "fast")}
+    assert prop == {"baseline": {"step": "baseline", "disposition": "defer",
+                                 "reason": "not required before this ships"}}, prop
+    # Full Scale runs everything that applies, so it proposes nothing and still excludes nothing active.
+    assert S.proposed(o, "full") == []
+    assert "baseline" in S.plan(o, "full") and "baseline" not in S.plan(o, "fast")
+
+
+def test_inactive_conditionals_are_still_excluded_by_the_rules():
+    """The security steps did not fire on SMALL. They stay where #102 put them: excluded by the
+    rules, with the activator named, and never proposed as a person's choice."""
+    o = _size(SMALL, 1)
+    ex = {e["step"]: e["reason"] for e in S.excluded(o, "fast")}
+    for k in ("sec_design", "cve_audit", "pentest"):
+        assert k in ex and ex[k].startswith("conditional ("), (k, ex.get(k))
+    assert not {p["step"] for p in S.proposed(o, "fast")} & {"sec_design", "cve_audit", "pentest"}
+
+
+def test_no_active_conditional_is_ever_offered_as_not_applicable():
+    """Across both shapes and every tier: whatever `excluded()` returns, check_skips will accept
+    the not_applicable it becomes, because the record will show `applies: false` for any cond step."""
+    for findings in (SMALL, BIG, dict(SMALL, security_sensitive=True), dict(SMALL, dependencies_changed=True)):
+        for tier in (0, 1, 2, 3, 4):
+            o = _size(findings, tier)
+            by = {x["step"]: x for x in o}
+            for opt in ("fast", "full"):
+                for e in S.excluded(o, opt):
+                    x = by[e["step"]]
+                    assert not (x["cond"] and x["applies"]), (findings, tier, opt, e)
+                for p in S.proposed(o, opt):
+                    x = by[p["step"]]
+                    assert x["cond"] and x["applies"] and not x["needed_now"] and not x["locked"]
+                    assert p["disposition"] == "defer" and p["reason"].strip()
+
+
+def test_rule_applies_is_what_size_writes():
+    """One function decides `applies`; check_skips re-derives from it (#124). If `size()` ever
+    stopped using it the gate would compare records against a different rule table."""
+    for findings in (SMALL, BIG, dict(SMALL, security_sensitive=True)):
+        for o in _size(findings, 2):
+            if CATALOG[o["step"]].get("cond"):
+                assert o["applies"] is S.rule_applies(COSTS, o["step"], findings), o["step"]
+    assert S.rule_applies({}, "mystery", SMALL) is True, "no rules: applies, fail closed"
