@@ -122,7 +122,7 @@ Rationale: <one sentence>
 
 **WATCH** — all criteria within threshold but one or more showed ⚠️ trend. Recommend a follow-up check in 24h.
 
-**ROLLBACK** — one or more criteria exceeded threshold. Run `/hitl:ops-rollback`.
+**ROLLBACK** — one or more criteria exceeded threshold. Tell the person to run `/hitl:ops-rollback`.
 
 ---
 

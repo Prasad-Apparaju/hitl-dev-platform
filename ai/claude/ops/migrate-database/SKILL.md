@@ -69,11 +69,11 @@ Present the full migration summary before proceeding.
 
 ## Step 2 — Take a verified backup
 
-Run `/hitl:ops-backup-database backup <change-ID>` before proceeding. This creates a labeled, verified snapshot and records `database_backup.backup_path` in `.hitl/current-change.yaml`.
+Follow `/hitl:ops-backup-database backup <change-ID>` from its file (`skills/ops-backup-database/SKILL.md` under the plugin root) before proceeding. This creates a labeled, verified snapshot and records `database_backup.backup_path` in `.hitl/current-change.yaml`.
 
 **For additive-only migrations:** A backup taken within 24h is acceptable if one already exists and is recorded in `.hitl/current-change.yaml` under `database_backup`. If none is recorded, run the backup skill now.
 
-**For any destructive migration:** A fresh backup is mandatory — taken within the last 60 minutes. Run `/hitl:ops-backup-database backup <change-ID>` regardless of any prior backups.
+**For any destructive migration:** A fresh backup is mandatory — taken within the last 60 minutes. Follow `/hitl:ops-backup-database backup <change-ID>` again, regardless of any prior backups.
 
 Do not proceed to Step 3 until `database_backup.verified: true` is set in `.hitl/current-change.yaml`.
 

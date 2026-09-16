@@ -235,7 +235,7 @@ Update `.hitl/current-change.yaml` — set `current_step`:
   phase: "Brownfield Setup"
 ```
 
-Run `/hitl:architect-review-existing` to reconstruct the architectural decisions already in the codebase, interview the architect to confirm rationale and constraints, and document them as real ADRs before any incremental work begins.
+Follow `/hitl:architect-review-existing` from its file (`skills/architect-review-existing/SKILL.md` under the plugin root) to reconstruct the architectural decisions already in the codebase, interview the architect to confirm rationale and constraints, and document them as real ADRs before any incremental work begins.
 
 This step produces:
 - A tech stack summary

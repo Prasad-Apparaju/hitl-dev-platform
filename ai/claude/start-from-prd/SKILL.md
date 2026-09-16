@@ -325,7 +325,7 @@ Governance can gate changes, but nothing exists yet to verify, deliver, or opera
 no pipeline, no environment, no dashboards. That standup work is the **platform workflow**
 (onboarded → delivery-ready), tracked in `docs/04-operations/platform-readiness.yaml`.
 
-Run `/hitl:ops-plan-platform derive` now. It reads the PRD's NFRs and the HLD deployment
+Follow `/hitl:ops-plan-platform derive` now from its file (`skills/ops-plan-platform/SKILL.md` under the plugin root). It reads the PRD's NFRs and the HLD deployment
 view from Step 4 (SLOs → observability targets; user tiers → environment story; compliance
 → security items), writes the readiness register, and then generates the roadmap issues
 (`/hitl:ops-plan-platform roadmap`). Each roadmap issue is an ordinary HITL change.
