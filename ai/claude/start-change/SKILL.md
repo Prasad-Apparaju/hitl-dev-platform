@@ -252,8 +252,8 @@ Fast Track does not:
   options, so split five as three and two, not four and one. Past sixteen, box the sixteen most
   consequential, name the rest in the last question's text, and take names typed into the "Other"
   box the tool adds.
-- Nothing ticked is Fast Track as proposed. A ticked step is kept. An unticked one is recorded
-  `not_applicable` with the rule's reason, in Step 4b.
+- Nothing ticked is Fast Track as proposed. A ticked step is kept. An unticked one is recorded in
+  Step 4b: `not_applicable` with the rule's reason, or `defer` when the sizer lists it under `proposed`.
 
 **For Pick steps myself, a second checkbox screen** after the "Add back" one: `Leave out any of these?`
 (header `Leave out`), over the steps in the plan a person may lighten. That is every step that is
@@ -278,9 +278,7 @@ of 10 steps or fewer.
 
 **First Pass is how the choice at Step 4 is recorded.** It is the internal name for the skip record
 and its validator; people see Fast Track and Full Scale, so never say "First Pass" to them. It is not
-a separate offer and no longer opt-in: every change is shown a proposal and confirms or adjusts it.
-Full Scale is simply the answer set where nothing is dropped. This is the third root cause in #97:
-the one feature built for this problem had to be asked for by someone who already knew it existed.
+opt-in: every change is shown a proposal and confirms or adjusts it; Full Scale drops nothing (#97).
 
 **The pre-selection comes from the rules, not from the tier.** `size_plan.py` has already decided
 what applies and what is needed now, from what this change reaches. Present the steps outside the
@@ -294,20 +292,22 @@ that back as what was left out and why.
 
 A rule may never retire a load-bearing step. `not_applicable` on a `floor` or `no_omit` step is a
 non-waivable block (`RULE_OVER_FLOOR`); those are dropped by a named person accepting the risk, or
-not at all. The one exception is a **conditional** step (`cond:` — security design review, CVE
-audit, penetration test, baseline) whose activator did not fire: it was never in the plan for the
-floor to protect, so the sizer records it `not_applicable` with the reason (#102). The gate takes
-that from the impact record, not the ledger: the record must carry `rule_outcomes` for the step
-with `applies: false`, and for the security steps must answer `security_sensitive` (silence is not
-a no), else `COND_UNCONFIRMED` (non-waivable). Active, it is protected like any other step.
+not at all. The one exception is a **conditional** step (`cond:`) whose activator did not fire: it
+was never in the plan, so the sizer records it `not_applicable` (#102). The gate reads the impact
+record, not the ledger: it must name this change and workflow, its `rule_outcomes` must match the
+rules run on its own findings (#124) and show `applies: false`, and the security steps need
+`security_sensitive` answered (silence is not a no); else `COND_UNCONFIRMED`, `RECORD_UNIDENTIFIED`
+or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step.
 
 Pre-selected is not pre-recorded. **Nothing is written until the human confirms**, and doing nothing
 still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
 record is the person who confirmed, never the agent.
 
 **The checkboxes in Step 4 are the menu.** Ask once (brief mode, not a step-by-step interview).
-Steps the RULES excluded are pre-selected as `not_applicable` and appear only as the "Add back"
-boxes. A step ticked under "Leave out" is a person choosing to lighten beyond that, and its `crit`
+Steps the RULES excluded (`excluded`) are pre-selected `not_applicable`; an active conditional step
+Fast Track leaves out (`proposed`, e.g. baseline on an API change) is pre-selected `defer` by the
+confirming person, never `not_applicable` (#129). Both are "Add back" boxes only. A step ticked
+under "Leave out" is a person choosing to lighten beyond that, and its `crit`
 (from the catalog, resolved against this change's `tier`) says what it can become:
 
 | step type | options offered |

@@ -22,6 +22,26 @@ All notable changes to the HITL plugin are documented here.
   reached done, end with one share line: the two install commands and the walkthrough link.
   It appears in no hook, the breadcrumb or the statusline; a wiring test holds it out.
 
+### Fixed
+
+- **Fast Track certifies on an API change with nothing ticked** (#129). Baseline measurement
+  applies to any change that touches an API and is never required before shipping, so Fast Track
+  leaves it out. The sizer recorded that as "the rules excluded it", and the certification step
+  rightly refused: the record shows the step was active. The gate blocked most real changes unless
+  someone ticked Baseline back in, or recorded a decision nobody made. The sizer now lists such a
+  step under `proposed` as a deferral by the person who confirms the menu, with the reason "not
+  required before this ships". It is still an add-back box, and nothing is written until you
+  confirm. The security steps behave exactly as before.
+- **The certification step no longer takes the impact record's word for it** (#124). A record
+  written in the same PR as the change file could certify a penetration test as excluded by the
+  rules with no accountable name, in two ways. A record that did not say which change it was for
+  was never compared with the change file; it now must carry `change_id` and `workflow`, and both
+  must match (`RECORD_UNIDENTIFIED`). And what the record said the rules concluded was trusted; the
+  gate now runs the same rules on the record's own findings and blocks when a conditional step's
+  answer disagrees (`RECORD_CONTRADICTED`). Both are non-waivable. Your answers to intake's
+  questions are still yours; what may not be self-declared is what the rules made of them. A
+  conditional step the rules did exclude still needs no `ack_by`.
+
 ---
 
 ## [2.12.1] — 2026-09-08

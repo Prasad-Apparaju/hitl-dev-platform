@@ -242,7 +242,7 @@ def _record_contradictions(catalog, costs, record_outcomes, record_findings):
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from size_plan import rule_applies
-    except Exception as e:  # noqa: BLE001 — without the rules nothing can be re-derived: fail closed
+    except Exception as e:  # noqa: BLE001, without the rules nothing can be re-derived: fail closed
         return [_f("MALFORMED", f"cannot load the sizing rules to check the impact record "
                                 f"({e.__class__.__name__}); size_plan.py must sit beside this file")]
     out = []
