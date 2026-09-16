@@ -55,3 +55,5 @@ c0659825653344baf54fc9bb1a3c65f029c997fadc8ef2a5d7e84d5814a2837e  ci/first-pass/
 2804e69984fa134e3833b676f662861b2534d90a0d57f10138f09272da6428a3  ci/first-pass/size_plan.py  # 2.12.1
 2632228667f717729ba0919be28424f550581779210fad088a3ab5653b89cfda  ci/first-pass/workflows.yaml  # 2.12.1
 e27689a585923f3db2d851df4a7836bf65701e71a2d31a10c7bccd8dc10f398e  ci/adversarial/check_review.py  # 2.12.1
+b77baaa9b9b78fce2979af5015227faf1a3b552af81380eebd5e71c1906ec343  ci/first-pass/check_skips.py  # 2.13.0
+e178bee1c3a20e511ffb853cd32eacf12153b98c8c5f70710b9910a531684013  ci/first-pass/size_plan.py  # 2.13.0
