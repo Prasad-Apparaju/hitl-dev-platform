@@ -38,6 +38,8 @@ WHOLE_FILE = [
     "docs/announcements/first-pass.md",
     "docs/announcements/release-notes-recent-features.md",
     "docs/examples/first-pass/README.md",
+    "docs/fast-track.md",
+    "site/fast-track.html",
 ]
 
 NAMES = {"Fast Track": re.compile(r"\bfast[ -]track\b", re.I),
@@ -45,8 +47,8 @@ NAMES = {"Fast Track": re.compile(r"\bfast[ -]track\b", re.I),
 RETIRED = re.compile(r"\bfirst pass\b", re.I)
 RETIRED_OK = re.compile(r"\bcalled First Pass\b")
 
-# Link targets, anchors and inline code are addresses, not names: `#fast-track-the-fewest-steps`.
-_ADDRESSES = re.compile(r"\]\([^)]*\)|href=\"[^\"]*\"|id=\"[^\"]*\"|`[^`]*`")
+# Link targets, image sources, anchors and inline code are addresses, not names: `#fast-track-the-fewest-steps`.
+_ADDRESSES = re.compile(r"\]\([^)]*\)|(?:href|src|id)=\"[^\"]*\"|`[^`]*`")
 
 
 def _read(rel):

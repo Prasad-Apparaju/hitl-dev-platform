@@ -116,7 +116,7 @@ Your change rarely needs all of them, so HITL offers two sizes of the same plan:
 Recommended: Fast Track. Nothing it drops is protecting something this change touches.
 ```
 
-It lists what Fast Track leaves out, most consequential first, and tells you what any step protects if you ask. Taking Full Scale instead is fine. See [Fast Track](#fast-track-the-fewest-steps) below for what always stays.
+It lists what Fast Track leaves out, most consequential first, then asks with a menu: Fast Track, Full Scale, or pick steps yourself. After Fast Track, every step it left out comes back as a checkbox with what it protects, so you can tick any of them back in. Taking Full Scale instead is fine. See [Fast Track](#fast-track-the-fewest-steps) below for what always stays, and [Fast Track, start to finish](fast-track.md) for screenshots of a real run.
 
 ### 4. Watch the breadcrumb
 
@@ -174,7 +174,7 @@ You don't have to ask for it. For a development change, intake offers Fast Track
 | Integration check (tier 2 and up); design packet, architecture review, QA check and rollout plan (tier 3) | Same: a named person accepts the risk |
 | Penetration test (any tier), security design review and dependency audit (tier 3), when the change touches security or dependencies | Same: a named person accepts the risk |
 
-**Lightening further.** After you pick, you can lighten individual steps in one menu:
+**Lightening further.** Pick "Pick steps myself", or say you want it lighter, and a second set of checkboxes lists the steps you can leave out. A step you tick becomes one of these:
 
 | Choice | What happens |
 |---|---|
