@@ -673,11 +673,11 @@ def test_a_real_impact_record_certifies_clean():
     import yaml as _y
     with tempfile.TemporaryDirectory() as d:
         _os.makedirs(_os.path.join(d, ".hitl", "impact"))
-        _y.safe_dump({"change_id": "GH-1", "findings": {"area": "billing"}},
+        _y.safe_dump({"change_id": "GH-1", "workflow": "development", "findings": {"area": "billing"}},
                      open(_os.path.join(d, ".hitl", "impact", "x.yaml"), "w"))
         ch = make_change([], tier=2)
         ch["impact_record"] = ".hitl/impact/x.yaml"
-        assert not [c for c in codes(C.check(ch, CATALOG, change_dir=d)) if "IMPACT" in c]
+        assert not blockers(C.check(ch, CATALOG, change_dir=d))
 
 
 def test_a_change_naming_no_record_is_not_reported():
@@ -703,13 +703,13 @@ def test_the_impact_record_resolves_from_the_repo_root():
     with tempfile.TemporaryDirectory() as root:
         _os.makedirs(_os.path.join(root, ".hitl", "impact"))
         import yaml as _y
-        _y.safe_dump({"change_id": "GH-1", "findings": {"area": "b"}},
+        _y.safe_dump({"change_id": "GH-1", "workflow": "development", "findings": {"area": "b"}},
                      open(_os.path.join(root, ".hitl", "impact", "GH-1.yaml"), "w"))
         ch = make_change([], tier=2)
         ch["impact_record"] = ".hitl/impact/GH-1.yaml"
         # change_dir as run() computes it: the directory holding the change file
         found = C.check(ch, CATALOG, change_dir=_os.path.join(root, ".hitl"))
-        assert not [c for c in codes(found) if "IMPACT" in c], codes(found)
+        assert not blockers(found), codes(found)
 
 
 def test_a_record_for_a_different_change_blocks():
@@ -845,3 +845,116 @@ def test_tier_above_a_light_proposal_needs_attribution():
     assert "TIER_UNATTRIBUTED" not in codes(C.check(ch, CATALOG))
     ch2 = make_change([], tier=2); ch2["tier_proposed"] = 2
     assert "TIER_UNATTRIBUTED" not in codes(C.check(ch2, CATALOG)), "agreeing with the proposal needs nothing"
+
+
+# ── #124: the record must say who it is for, and what it says the rules did is re-derived ────────
+
+def _record_at(d, body):
+    import os as _os
+    import yaml as _y
+    _os.makedirs(_os.path.join(d, ".hitl", "impact"), exist_ok=True)
+    _y.safe_dump(body, open(_os.path.join(d, ".hitl", "impact", "x.yaml"), "w"))
+    return ".hitl/impact/x.yaml"
+
+
+# The issue's three-line record, verbatim: no identity, four conditional steps all "off".
+ISSUE_124_RECORD = {"findings": {"security_sensitive": False},
+                    "rule_outcomes": [{"step": k, "applies": False}
+                                      for k in ("pentest", "baseline", "sec_design", "cve_audit")]}
+
+
+def test_the_issue_124_record_blocks_and_the_same_record_with_identity_passes():
+    """A record that names no change certified a floor pentest skip with no ack_by, because the
+    identity check only ran when the record volunteered an identity. Now the record must say
+    who it is for. With identity, and outcomes that agree with its findings, it passes as before."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = make_change([_na("pentest")], tier=3)
+        ch["impact_record"] = _record_at(d, ISSUE_124_RECORD)
+        assert "RECORD_UNIDENTIFIED" in blockers(C.check(ch, CATALOG, change_dir=d))
+        ch["impact_record"] = _record_at(d, dict(ISSUE_124_RECORD, change_id="GH-1", workflow="development"))
+        found = C.check(ch, CATALOG, change_dir=d)
+        assert not blockers(found), codes(found)
+
+
+def test_each_identity_field_is_required_on_its_own():
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        for partial in ({"change_id": "GH-1"}, {"workflow": "development"}):
+            ch = make_change([], tier=2)
+            ch["impact_record"] = _record_at(d, dict(ISSUE_124_RECORD, **partial))
+            b = blockers(C.check(ch, CATALOG, change_dir=d))
+            assert "RECORD_UNIDENTIFIED" in b, (partial, b)
+        # And a stated identity that is WRONG is still the mismatch it always was.
+        ch["impact_record"] = _record_at(d, dict(ISSUE_124_RECORD, change_id="GH-2", workflow="development"))
+        assert "IMPACT_RECORD" in blockers(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_a_record_whose_outcomes_contradict_its_findings_blocks():
+    """`security_sensitive: true` with `pentest: applies: false` is a pair the sizer would never
+    write. The gate does not know who wrote the record, so it runs the rules itself. Checked with
+    and without a ledger entry for the step: a record that lies is refused before anyone skips."""
+    import tempfile
+    lying = dict(ISSUE_124_RECORD, change_id="GH-1", workflow="development",
+                 findings={"security_sensitive": True})
+    with tempfile.TemporaryDirectory() as d:
+        for ch in (make_change([_na("pentest")], tier=3), make_change([], tier=3)):
+            ch["impact_record"] = _record_at(d, lying)
+            found = C.check(ch, CATALOG, change_dir=d)
+            assert "RECORD_CONTRADICTED" in blockers(found), codes(found)
+            msgs = [f["message"] for f in found if f["code"] == "RECORD_CONTRADICTED"]
+            assert any("'pentest'" in m and "applies: False" in m for m in msgs), msgs
+            assert "baseline" not in " ".join(msgs), "baseline does not engage on the security answer"
+
+
+def test_outcomes_that_agree_with_the_findings_are_not_contradicted():
+    import tempfile
+    agreeing = {"change_id": "GH-1", "workflow": "development",
+                "findings": {"security_sensitive": True, "surfaces": ["api"]},
+                "rule_outcomes": [{"step": "pentest", "applies": True}, {"step": "sec_design", "applies": True},
+                                  {"step": "cve_audit", "applies": True}, {"step": "baseline", "applies": True},
+                                  {"step": "deploy", "applies": False}]}   # not a cond step: not re-derived
+    with tempfile.TemporaryDirectory() as d:
+        ch = make_change([], tier=3)
+        ch["impact_record"] = _record_at(d, agreeing)
+        assert "RECORD_CONTRADICTED" not in codes(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_a_record_with_findings_only_is_not_contradicted():
+    """Records written before `rule_outcomes` existed carry only findings; there is no claim about
+    the rules in them to check."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = make_change([], tier=2)
+        ch["impact_record"] = _record_at(d, {"change_id": "GH-1", "workflow": "development",
+                                             "findings": {"area": "billing"}})
+        assert not blockers(C.check(ch, CATALOG, change_dir=d))
+
+
+def test_a_rules_excluded_conditional_floor_step_still_needs_no_ack():
+    """#102 holds: when the record is identified and the rules agree the activator did not fire,
+    pentest is not_applicable with no ack_by and no waiver, and nothing blocks."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        ch = make_change([_na("pentest")], tier=3)
+        ch["impact_record"] = _record_at(d, dict(ISSUE_124_RECORD, change_id="GH-1", workflow="development"))
+        found = C.check(ch, CATALOG, change_dir=d)
+        assert not blockers(found), codes(found)
+        assert "FLOOR_NO_ACK" not in codes(found) and "RULE_OVER_FLOOR" not in codes(found)
+
+
+def test_the_cli_re_derives_too(tmp_path):
+    """`run()` builds its own catalog and costs; a `check()` that re-derives while the CLI passes
+    nothing would be the seam defect this directory keeps finding."""
+    import yaml as _y
+    (tmp_path / ".hitl").mkdir()
+    ch = make_change([], tier=3)
+    ch["impact_record"] = _record_at(str(tmp_path), dict(ISSUE_124_RECORD, change_id="GH-1", workflow="development",
+                                                        findings={"security_sensitive": True}))
+    p = tmp_path / ".hitl" / "current-change.yaml"
+    _y.safe_dump(ch, open(p, "w"))
+    assert "RECORD_CONTRADICTED" in blockers(C.run(str(p), WORKFLOWS))
+
+
+def test_record_codes_are_non_waivable():
+    assert {"RECORD_UNIDENTIFIED", "RECORD_CONTRADICTED"} <= C.NON_WAIVABLE
