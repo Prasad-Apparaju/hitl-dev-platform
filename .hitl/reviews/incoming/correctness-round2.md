@@ -1,39 +1,32 @@
-# Validation review, lens: correctness, round 2
+# Correctness review, round 2: HITL release 2.13.0 at `9998611`
 
-State under review: 1376a5edb108ae91a5fd77a2d3ab81a46b1fdeae (HEAD), `fix(review-gate): a failed check is answered by the finding that names it (#101 round 1)`.
-Reviewer: clean context. Scratch records under `<scratch>/vr-round2/case-*/` (change.yaml = `change_id: GH-101`, `reviews/GH-101-round1.yaml`), each run as
-`python3 ci/adversarial/check_review.py --root . --change <case>/change.yaml --reviews <case>/reviews --sha 1376a5e...`.
+Scope: round 1 verified `b5b1bed`. One fix landed since (`9998611`, "the shipped-validators manifest lists the built workflows.yaml hash"). This round checks that the fix does what it claims and nothing else moved. Commands ran from the worktree checkout of `9998611` (`git rev-parse HEAD` = `99986110a39804bc393f2ef54097a73393df1a19`); the main checkout is at the same commit and the two files under review hash identically in both.
 
-## Checklist
+## Checks
 
-| # | Check | Result | Deciding output line |
-|---|-------|--------|----------------------|
-| 1 | Base 2.0 record | pass | `Release gate: verification review present, fresh, and cleared.` exit=0 |
-| 2 | `result: fail` + finding F1 {class decide, check names it, accepted, accepted_by} + verified | pass | `Release gate: verification review present, fresh, and cleared.` exit=0 |
-| 3 | As 2, finding has no `check:` | pass | `[BLOCK] VERDICT_CONTRADICTED: the round says 'verified' but 1 check(s) failed with no finding answering for them (GH-101-round1.yaml: install is 2.10.1)` exit=2 |
-| 4 | As 2, `accepted` with no accepted_by | pass | `[BLOCK] UNSIGNED_ACCEPTANCE: ... findings[0] is accepted with no accepted_by` AND `[BLOCK] VERDICT_CONTRADICTED: ... 1 check(s) failed with no finding answering for them` exit=2 |
-| 5 | As 2, `status: fixed, resolved_by: abc` | pass | `Release gate: verification review present, fresh, and cleared.` exit=0 |
-| 6 | `result: fail`, findings [], verified | pass | `[BLOCK] VERDICT_CONTRADICTED: ... 1 check(s) failed with no finding answering for them (GH-101-round1.yaml: install is 2.10.1)` exit=2 |
-| 7 | 1.0 record, F1 severity CRITICAL + class minor, open, verdict ship | pass | `[BLOCK] FINDING_OPEN: CRITICAL: x — fix it, or accept it explicitly with accepted_by` exit=2 (class ignored on 1.0) |
-| 8 | 2.0, checks [{result: unknown}], findings [] | pass | `[warn] UNKNOWN_CHECK: GH-101-round1.yaml checks[0] could not be run (x). An unknown is not a pass.` then `[warn] SHALLOW_REVIEW: ... is round 1 with zero findings and no checks.` then `cleared.` exit=0 |
-| 9 | schema_version "2026" | pass | `[BLOCK] WRONG_STANCE: ... stance must be 'refute'.` exit=2 (read as 1.0) |
-| 10 | `python3 -m pytest ci/adversarial -q` / `python3 -m pytest ci/wiring -q -k "review or reviewer or lens or cost"` | pass | `62 passed, 1 skipped in 3.86s` (skip: `test_check_review.py:361: plugin repo not present`) / `5 passed, 229 deselected in 0.19s` |
-| 11 | `grep -n 'round<N>'` over SKILL.md, verification-review.md, record template | pass | Record filenames: `verification-review.md:238`, `SKILL.md:204`, template line 1 all read `<change-id>-round<N>-<lens>.yaml`. The only lens-less hits are `SKILL.md:97` and `:121`, both the incoming report path `.hitl/reviews/incoming/<lens>-round<N>.md`, which is fine as stated. No record filename without the lens suffix. |
+| # | Check | Command | Result | Deciding output |
+|---|-------|---------|--------|-----------------|
+| 1 | Only the fix changed | `git diff b5b1bed..9998611 --stat` | pass | `ci/shipped-validators.sha256 \| 1 +`, `tools/scripts/shipped-validators-hashes.py \| 19 ++++++++++++++++++-`; 2 files changed. Nothing under `.hitl/` in the range either. |
+| 2a | `built_form()` does one replacement, nothing else | `git show 9998611 -- tools/scripts/shipped-validators-hashes.py` | pass | Body is `text.replace("ai/claude/dev-practices/", "${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/")` on the utf-8 decode, re-encoded. No other transform. |
+| 2b | `current()` adds the built hash for the non-Python file only | same diff; `sed -n '12,26p'` of the script | pass | Guard is `if not path.endswith(".py")`; `SOURCES` has exactly one non-`.py` entry, `ai/shared/workflows.yaml -> ci/first-pass/workflows.yaml`. Dedupes with `if (built, rel) not in res`. |
+| 2c | Built-form hash is in the manifest on a `# 2.13.0` line | `python3 -c "...built_form(open('ai/shared/workflows.yaml','rb').read())..."`; `grep -n workflows.yaml ci/shipped-validators.sha256` | pass | Printed `191d6d02a42b80e7a80d1a3c87c2334c8c64d4739b6a6ba17c5ef4e1eaeb79af`; manifest line 60: `191d6d02...  ci/first-pass/workflows.yaml  # 2.13.0`. |
+| 3a | Build's rewrite composes to the script's replacement | `sed -n '470,560p' hitl-claude-plugin/scripts/build.sh` | pass | Pass 1: `s\|ai/claude/dev-practices/\|skills/dev-practices/\|g`; pass 2: `s\|skills/dev-practices/\|${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/\|g`. No other pass-1/2/3 pattern (`ai/shared/`, `shared/templates`, `skills/dev-`, `$VAR/shared/`, `CLAUDE_PLUGIN_ROOT`) occurs in `workflows.yaml` (grep exit 1). |
+| 3b | `ai/claude/dev-practices/` is the only source path the build rewrites in the file | `grep -n "ai/claude/" ai/shared/workflows.yaml` | pass, with a note | 7 hits. Line 30 is the rewritten one. Lines 78, 97, 114, 127, 141, 154 are `# Canonical source: ai/claude/start-brownfield/…`, `start-migration`, `migrate/review-external-docs`, `start-change`, `start-from-prd`, `ops/plan-platform` comment lines. None match any build pattern, and the plugin's shipped copy shows them verbatim, so `built_form()` leaving them alone is correct. See point 2. |
+| 3c | Byte-for-byte against a real build (beyond the checklist) | `shasum -a 256 hitl-claude-plugin/shared/workflows.yaml` (release/2.x, committed `efdad0c chore(release): build v2.12.1`, working tree clean for that file) | pass | `191d6d02a42b…79af`, identical to the manifest's 2.13.0 line. Source `ai/shared/workflows.yaml` hashes `2632228667…89cfda` (the 2.12.1 line) and last changed at `d59550e`, so 2.12.1 and 2.13.0 ship the same bytes. The plugin's uncommitted `build.sh` edit is one line in a skip-list `case` (drops an `ai/claude/ai/claude/` entry), not the rewrite block. |
+| 4a | Manifest check | `python3 tools/scripts/shipped-validators-hashes.py --check` | pass | `manifest current: every synced validator in the tree is listed`, exit 0. |
+| 4b | Full suites | `python3 -m pytest ci tools -q` | pass | `1119 passed, 6 skipped in 66.07s`. |
+| 4c | Skill lint | `python3 ci/skill-lint/check_skills.py` | pass | `63/63 files pass all hard gates; 0 failures, 0 warnings`, exit 0. |
+| 5 | Manifest matches dev-update install paths | `python3 -m pytest ci/wiring/test_shipped_validators_manifest.py -q -rs` | pass | In the worktree: `2 passed, 1 skipped` (skip: `plugin repo not checked out beside this one`, the build.sh-copies-manifest test). Re-run read-only against the main checkout's identical copy (`-p no:cacheprovider`, sibling plugin present): `3 passed`. |
+| 5b | Version label is not load-bearing (beyond the checklist) | `grep -n … ci/first-pass/migrate_project.py` | pass | `_shipped_hashes` parses `line.split("#", 1)[0].split()`; match is `_sha256(dst) in shipped.get(rel, ())` (line 289). Hash-set membership per path; the `# version` comment is discarded. |
 
-Eleven of eleven as expected. Two extra probes beyond the checklist, because the fix could have opened them:
+## Points
 
-- Probe A (two lens records, round 1): correctness record has `result: fail` and `findings: []`; bypass record has `result: pass` and the resolved, signed finding naming the check. Output: `Release gate: verification review present, fresh, and cleared.` exit=0. Coverage is pooled across all records in the round, not per record.
-- Probe B: `status: fixed` with no `resolved_by` and no `verified_by`, naming the check. Output: `cleared.` exit=0.
+1. **minor**: the manifest's `# 2.13.0` line for `workflows.yaml` is also the built form every 2.12.1 install holds (same source bytes). The consumer ignores the label, so behaviour is right; the label just under-describes which releases the line covers. No change needed.
+2. **minor**: six `# Canonical source: ai/claude/…` comment lines in `workflows.yaml` ship unrewritten and point at source-repo locations that do not exist in the installed plugin. Pre-existing, comments only, and correct for `built_form()` to leave alone since the build leaves them alone. Not part of this fix.
+3. **minor**: `built_form()` mirrors `build.sh` by hand, and the automated test with the sibling plugin present only checks that `build.sh` copies the manifest, not that the mirrored rewrite still matches. Today the release runbook's build step compares them, and 3c confirms they match now. A cheap hardening would be for that test, when the sibling is present, to assert the manifest contains the sha256 of the plugin's `shared/workflows.yaml`. Optional.
 
-## Points (ranked)
-
-1. **worth deciding** — Coverage is round-wide, not per-record (probe A). `covered_checks` is one set over every record in `latest`, and `uncovered` compares on the check text alone, so lens B's fixed finding answers for lens A's failed check with the same text. Defensible if the check is the same fact, but it means a reviewer's own record can say `fail` with nothing answering for it and still clear. Decide whether that is the intent; the tests in `test_check_review.py` only cover the single-record case.
-2. **worth deciding** — `status: fixed` covers a failed check with no `resolved_by` and no `verified_by` (probe B). The gate's own message says "fixed, or accepted with a name"; the accepted branch is signed (UNSIGNED_ACCEPTANCE) but the fixed branch requires nothing beyond the word. Same pre-existing looseness as FINDING_OPEN, now load-bearing for VERDICT_CONTRADICTED too.
-3. **minor** — The record template (`ai/shared/templates/verification-review-record.yaml`, findings example lines 53-60) does not list a `check:` field on a finding, and `ai/shared/verification-review.md` never mentions it; the only prose is `SKILL.md:224`. A reviewer filling in the template will not know the field exists until VERDICT_CONTRADICTED tells them.
-4. **minor** — Coverage matches on exact stripped text (case-sensitive, whitespace-internal). Not exercised here; noted because `check:` is free prose that the reviewer types twice.
-
-Nothing in the **stops it working** class. The five round-1 points are resolved as claimed and the behaviours that were meant to be unchanged (6, 7, 8, 9) are unchanged.
+The fix does what its commit message says, the manifest line matches a real build byte for byte, and nothing else in the range moved.
 
 ## Verdict
 
-VERIFIED.
+VERIFIED

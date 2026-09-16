@@ -1,0 +1,73 @@
+schema_version: "2.0"
+change_id: GH-132-release-2.13.0
+round: 1
+reviewed_sha: b5b1bedba0b1e1fe580205303cbca04b02ba269b
+reviewed_tree: ddaf440ffe084c824bebb7df664868ae47b91f59
+lens: upgrade
+scope: "Copied the plugin repo (release/2.x at efdad0c plus the uncommitted build.sh allowlist edit) to scratch and built it against source b5b1bed; eleven checks: build and source-path guard, shared/ and skills/ references resolve, sibling files ship, the shipped-validators manifest, the migrator on a 2.12.1 product repo, whether an in-flight 2.12.1 change is newly blocked by RECORD_UNIDENTIFIED or RECORD_CONTRADICTED, the built dev-update Step 4.10 and brownfield Step 11 blocks, claude plugin validate, the notes against the built files. Report: .hitl/reviews/incoming/upgrade-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eleven items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about fifteen calls, verdict instruction
+checks:
+- check: "the plugin builds from b5b1bed with the source-path guard clean and version 2.13.0"
+  command: cp -R hitl-claude-plugin <scratch>/plugin; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform
+  result: pass
+  output: "exit 0, Build complete.; plugin.json version 2.13.0; grep -c 'SOURCE PATH' = 0; 27 modified and 3 new files (release_notice.py, behavioral-inventory-template.md, legacy-statusline.md)"
+- check: "every shared/ reference in built skills, agents and commands resolves"
+  command: grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents commands | sed 's/[.,;:)`]*$//' | sort -u; test -e each
+  result: pass
+  output: "56 unique refs, 0 missing; release_notice.py, size_plan.py, check_skips.py present"
+- check: "every skills/<name>/SKILL.md reference in built skills resolves"
+  command: grep -rhoE 'skills/[a-z0-9-]+/SKILL\.md' skills | sort -u; test -e each
+  result: pass
+  output: "7 unique refs, 0 missing"
+- check: "the three sibling files ship and are named from their SKILL.md"
+  command: test -e and grep -c per file
+  result: pass
+  output: "legacy-statusline.md, behavioral-inventory-template.md, observability-survey.md present, each named once"
+- check: "the shipped-validators manifest is current for what ships"
+  command: diff built shared/ci/shipped-validators.sha256 against source; shasum -a 256 of built check_skips.py and size_plan.py; every ci/ path's built hash listed
+  result: fail
+  output: "diff clean; check_skips b77baaa9 and size_plan e178bee1 listed # 2.13.0; every .py built hash listed; the built shared/workflows.yaml (installs as ci/first-pass/workflows.yaml) hashes 191d6d02, which appears on no manifest line; the # 2.12.1 line carries the source hash 26322286 (build.sh rewrites one comment path)"
+- check: "the 2.12.1 upgrade path: older shipped copies are updated, a repo edit is kept"
+  command: scratch repo with 2.12.1 check_skips.py, size_plan.py, resurface.py plus one comment line; python3 <build>/shared/ci/first-pass/migrate_project.py --root . --sync-validators <build> --apply
+  result: pass
+  output: "check_skips.py and size_plan.py: updated (an older shipped version, unmodified), cmp equal to built; resurface.py: differs from the shipped version, KEPT yours; 2.12.1 built workflows.yaml: identical; 2.11.0 and 2.10.0 built copies: updated"
+- check: "a change in flight on 2.12.1 is not newly blocked by the two new codes"
+  command: git show v2.12.1:ai/shared/templates/impact-record.schema.yaml; git show v2.12.1:ai/claude/apply-change/SKILL.md (Step 3); check_skips.py on GH-000-example.yaml
+  result: pass
+  output: "schema lines 21 change_id and 26 workflow present in 2.12.1; the 2.12.1 skill writes the record against that schema; example change file: First Pass skip ledger: clean, exit 0; a 2.12.1 record that omitted workflow would get RECORD_UNIDENTIFIED naming the key to add"
+- check: "the built dev-update Step 4.10 block runs and posts nothing"
+  command: block extracted from built skills/dev-update/SKILL.md; CLAUDE_PLUGIN_ROOT=<build> HITL_HOME=/var/folders/f9/fsk0gtcj05g6g6_nb7xp2zbh0000gn/T/tmp.RJiB8CbWd4 bash block.sh
+  result: pass
+  output: "first line ask, then the two question texts, exit 0; grep -c confirmed = 0; isolated home empty"
+- check: "the built brownfield Step 11 block degrades cleanly with no installed plugin"
+  command: block extracted; HOME=/var/folders/f9/fsk0gtcj05g6g6_nb7xp2zbh0000gn/T/tmp.3DO13XcIe4 bash block.sh
+  result: pass
+  output: "release_notice.py is not in this build: skipping.; exit 0; no traceback"
+- check: "fresh-install sanity"
+  command: claude plugin validate <build>; find <build> -name '*.md' -path '*skills*' | wc -l; SKILL.md counts
+  result: pass
+  output: "Validation passed; 71 .md under skills; 58 SKILL.md in the build and 58 under source ai/claude/, none missing"
+- check: "the release notes match the built files"
+  command: grep release-notice.yaml release_notice.py; grep proposed size_plan.py
+  result: pass
+  output: "USER_FILE_NAME = release-notice.yaml under $HITL_HOME default ~/.hitl/; 'proposed' emitted at size_plan.py line 316"
+findings:
+- id: F1
+  class: decide
+  check: "the shipped-validators manifest is current for what ships"
+  claim: "The manifest has no line for the built workflows.yaml (hash 191d6d02), the file 2.12.1 and 2.13.0 actually install; the 2.12.1 line lists the source hash, which no repo ever holds, so the next release that changes workflows.yaml would report every 2.12.1 and 2.13.0 copy as modified here and keep it."
+  evidence: "shasum -a 256 <build>/shared/workflows.yaml = 191d6d02...; grep 191d6d02 ci/shipped-validators.sha256: no match; the # 2.12.1 line carries 26322286 (the source hash)"
+  status: fixed
+  resolved_by: 99986110a39804bc393f2ef54097a73393df1a19
+  verified_by: "tools/scripts/shipped-validators-hashes.py now mirrors the build's rewrite (built_form) and lists the built hash as well; run at 99986110a39804bc393f2ef54097a73393df1a19: 'appended ci/first-pass/workflows.yaml (2.13.0)' with hash 191d6d02, equal to the scratch build's shasum; --check passes; round 2 upgrade record re-checks it against a fresh build"
+- id: F2
+  class: minor
+  check: "the built dev-update Step 4.10 block runs and posts nothing"
+  claim: "On the ask path, state prints the verdict line and then the full text of both questions, more than the one verdict line the checklist described."
+  evidence: "observed output of the Step 4.10 block: 'ask' then Question 1 and Question 2"
+  status: open
+verdict: verified

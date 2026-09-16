@@ -1,0 +1,59 @@
+schema_version: "2.0"
+change_id: GH-132-release-2.13.0
+round: 2
+reviewed_sha: 99986110a39804bc393f2ef54097a73393df1a19
+reviewed_tree: 66760b4659e95cd289151489a28205fb55ed9b40
+lens: upgrade
+scope: "Narrow round on the round-1 fix (9998611: the shipped-validators manifest lists the built workflows.yaml hash): only-the-fix-changed, the manifest check and test, a fresh scratch build of the plugin repo (release/2.x plus the uncommitted build.sh edit), the built hash against the manifest, the build's rewrite against the script's mirror, a 2.12.1 repo's copy through the built migrator, the gates. Report: .hitl/reviews/incoming/upgrade-round2.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of six items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about ten calls, verdict instruction
+checks:
+- check: "only the fix changed since round 1"
+  command: git diff b5b1bed..9998611 --stat
+  result: pass
+  output: "ci/shipped-validators.sha256 | 1 +; tools/scripts/shipped-validators-hashes.py | 19 +-; nothing else"
+- check: "the manifest check and its test pass"
+  command: python3 tools/scripts/shipped-validators-hashes.py --check; python3 -m pytest ci/wiring/test_shipped_validators_manifest.py -q
+  result: pass
+  output: "manifest current: every synced validator in the tree is listed; 2 passed, 1 skipped (the sibling-repo test skips in a worktree; its assertion checked by hand: build.sh names shipped-validators.sha256 three times)"
+- check: "the manifest lists the hash of the built workflows.yaml and the built manifest equals the source manifest"
+  command: bash scripts/build.sh <source> in a scratch copy; shasum -a 256 <build>/shared/workflows.yaml; grep in the manifest; diff built and source manifests
+  result: pass
+  output: "Build complete.; built 191d6d02...; manifest line 60: 191d6d02...  ci/first-pass/workflows.yaml  # 2.13.0; diff empty"
+- check: "the script's mirror is the rewrite the build performs"
+  command: diff <build>/shared/workflows.yaml <source>/ai/shared/workflows.yaml; read built_form()
+  result: pass
+  output: "one hunk, line 30: ai/claude/dev-practices/workflow-steps.md -> ${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/workflow-steps.md; built_form() performs exactly that replacement, non-.py files only"
+- check: "a 2.12.1 repo's copy of workflows.yaml is recognised by the built migrator"
+  command: scratch repo with hitl--v2.12.1:shared/workflows.yaml at ci/first-pass/workflows.yaml; python3 <build>/shared/ci/first-pass/migrate_project.py --root . --sync-validators <build> --apply
+  result: pass
+  output: "= 1 identical, 14 installed, 0 updated from an older release, 0 modified here and kept; the 2.12.1 shipped file hashes 191d6d02, identical to the 2.13.0 build; cmp clean"
+- check: "gates"
+  command: python3 -m pytest ci tools -q; python3 ci/skill-lint/check_skills.py
+  result: pass
+  output: "1119 passed, 6 skipped; 63/63 files pass, 0 failures, 0 warnings"
+findings:
+- id: F1
+  class: decide
+  check: "the script's mirror is the rewrite the build performs"
+  claim: "built_form() mirrors one of build.sh's rewrite rules, not the rule set; if a later edit to workflows.yaml adds a path another rule rewrites, --check still passes and the manifest again carries a hash no repo holds, with no signal; the script's comment names a runbook compare step that does not exist."
+  evidence: "build.sh lines 474-530 apply six flattenings, a SHARED_PROSE loop and prefix passes to every .yaml under shared/; built_form() has one str.replace; docs/releasing.md has no compare step (grep shasum|compare|built finds prose only)"
+  status: fixed
+  resolved_by: "plugin repo scripts/release.sh, in the 2.13.0 build commit: after build.sh, every synced non-Python shared file's BUILT hash must be in the built manifest or the release exits 2 with the fix named"
+  verified_by: "fresh scratch build from 9998611 with the edited release.sh logic: PASS path, built hash 191d6d02 listed; after removing that manifest line the check returns exit 2; restored, passes again. The source repo's hashes script comment now points at this check only through the runbook's build step, which runs release.sh."
+- id: F2
+  class: minor
+  check: "the manifest check and its test pass"
+  claim: "test_the_manifest_ships_with_the_plugin_build locates the plugin repo as a sibling of the checkout and silently skips in any worktree."
+  evidence: "2 passed, 1 skipped in the reviewer's worktree; assertion verified by hand"
+  status: open
+- id: F3
+  class: minor
+  check: "a 2.12.1 repo's copy of workflows.yaml is recognised by the built migrator"
+  claim: "The manifest's # 2.12.1 line for workflows.yaml (source hash 26322286) was never held by any product repo; harmless since manifest lines are append-only and an extra hash matches nothing."
+  evidence: "built workflows.yaml is byte-identical between the 2.12.1 tag and the 2.13.0 build, both 191d6d02"
+  status: open
+verdict: verified

@@ -1,0 +1,93 @@
+schema_version: "2.0"
+change_id: GH-132-release-2.13.0
+round: 1
+reviewed_sha: b5b1bedba0b1e1fe580205303cbca04b02ba269b
+reviewed_tree: ddaf440ffe084c824bebb7df664868ae47b91f59
+lens: correctness
+scope: "diff v2.12.1..b5b1bed in a scratch clone; the CHANGELOG 2.13.0 section as the claim list; eleven checks covering #129, #124, #130, #114, #121, #116, the Step 4 checkbox menu, #125 names, file-against-itself in start-change, claim carriers, and the gates; mutation of #130 in a second scratch clone. Report: .hitl/reviews/incoming/correctness-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eleven items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about fifteen calls, verdict instruction
+checks:
+- check: "#129: on an API change, tier 1 Fast Track, the sizer proposes baseline as a defer and never records it not_applicable"
+  command: python3 ci/first-pass/size_plan.py rec.yaml 1 fast (record with surfaces [api], security_sensitive false)
+  result: pass
+  output: "proposed: [{'step': 'baseline', 'disposition': 'defer', 'reason': 'not required before this ships'}]; excluded baseline: []; outcome applies True, needed_now False"
+- check: "#129: the end-to-end test runs sizer output through gen_change into check_skips and passes"
+  command: python3 -m pytest ci/first-pass/test_129_api_fast_track_e2e.py -q
+  result: pass
+  output: "3 passed; asserts no non-waivable findings, baseline defer, actor dev@team, reason 'not required before this ships'; test 2 is the mutation (old sizer output blocks COND_UNCONFIRMED)"
+- check: "#129: the security steps are unchanged on security_sensitive true"
+  command: same record with security_sensitive true, tier 1 fast
+  result: pass
+  output: "sec_design / cve_audit / pentest: in plan True, applies True, needed_now True, not in proposed, not in excluded"
+- check: "#124: a record with no change_id or workflow blocks RECORD_UNIDENTIFIED"
+  command: python3 ci/first-pass/check_skips.py .hitl/current-change.yaml (pentest not_applicable skip, issue 124's three-line record)
+  result: pass
+  output: "[BLOCK] RECORD_UNIDENTIFIED: ... it has no change_id or workflow; exit 2"
+- check: "#124: a record whose rule outcomes disagree with its findings blocks RECORD_CONTRADICTED"
+  command: same with change_id, workflow, security_sensitive true, pentest applies false
+  result: pass
+  output: "[BLOCK] RECORD_CONTRADICTED: impact record says step 'pentest' applies: False, but the sizing rules say true; exit 2"
+- check: "#124: an identified record whose outcomes agree passes; both codes are non-waivable"
+  command: same with security_sensitive false and the issue's four-step rule_outcomes; read check_skips.py NON_WAIVABLE
+  result: pass
+  output: "exit 0, only [warn] DEFER_NO_FOLLOWUP (waivable, from the baseline defer); NON_WAIVABLE at check_skips.py:70-99 contains both codes"
+- check: "#130: Step 3c names the file to follow and never tells the model to call the command"
+  command: "read: ai/claude/start-change/SKILL.md lines 136-148"
+  result: pass
+  output: "names skills/dev-apply-change/SKILL.md, 'Steps 2 and 3', 'Do not invoke the command'; no call or invoke instruction"
+- check: "#130: the wiring test passes and fails under mutation"
+  command: python3 -m pytest ci/wiring/test_skill_calls_are_achievable.py -q; in a scratch clone insert 'Call `/hitl:dev-apply-change`.' under Step 3c and rerun
+  result: pass
+  output: "60 passed; mutated: AssertionError ... start-change/SKILL.md tells the model to call a command it cannot invoke ... line 138: /hitl:dev-apply-change (two tests fail)"
+- check: "start-change against itself: Step 6b prose matches its block; Step 8 agrees with Step 3c; apply-change Step 3 agrees with Step 6b on the roll-up"
+  command: "read: start-change 6b:443-475, Step 8:488-499; apply-change Step 3:85-107"
+  result: pass
+  output: "6b 'Certify without --rollup ... appended after the check' matches check_skips then resurface --append; Step 8 'Steps 4 to 8 ... already ran at Step 3c' agrees with 3c; apply-change 'Do not fold ... decided at intake's Step 4b' agrees with 6b 'reads them and does not append'"
+- check: "#114: absent PRD still stops; no stop clause mentions FR-; a PRD without FR- entries is named and the skill continues"
+  command: "read: lines 18-34 of the three qa skills; python3 -m pytest ci/wiring/test_qa_prd_precondition.py -q"
+  result: pass
+  output: "all three: absent PRD stops with no FR- in the stop clause; 'If the PRD exists but has no FR- entries ... do not stop. Say so in one line and continue'; 12 passed"
+- check: "#121: no doubled copy path reaches a reader; generate-docs names .claude/"
+  command: grep -rn "ai/claude/ai/claude" ai docs --include=*.md | grep -v session-logs; read generate-docs/SKILL.md:244-246
+  result: pass
+  output: "no output (grep exit 1); 'copy skills to .claude/', 'cp -r ai/claude/ <your-repo>/.claude/'"
+- check: "#116: state asks with default no, post refuses without a yes, body is exactly HITL 2.13.0, hooks carry no install command, tests pass"
+  command: HITL_HOME=/var/folders/f9/fsk0gtcj05g6g6_nb7xp2zbh0000gn/T/tmp.4PtwDJrV4Q; release_notice.py state / post --version 2.13.0 / body --version 2.13.0; grep -rn "plugin marketplace add" ai/claude/hooks/; pytest tools/hitl-onboarding ci/wiring/test_release_notice_wiring.py -q
+  result: pass
+  output: "state: ask, both questions '(yes / no, default no)'; post: 'Refusing to post: no recorded yes ... Nothing was sent.' exit 2, home empty; body: 'HITL 2.13.0' exactly; hooks grep empty; 76 passed"
+- check: "the Step 4 checkbox menu and the product names hold"
+  command: python3 -m pytest ci/wiring/test_step4_checkboxes.py ci/wiring/test_product_names.py -q; read start-change Step 4:149-274
+  result: pass
+  output: "48 passed; lists left-out steps every time, AskUserQuestion with Fast Track (Recommended) / Full Scale / Pick steps myself and previews, multiSelect over every left-out step, 'Steps that always stay are never checkboxes.'"
+- check: "every bold changelog claim under 2.13.0 has a carrier in the tree"
+  command: grep and read per claim
+  result: pass
+  output: "carriers named for every claim (claude-md-hitl-block.md:8, statusline-hitl.sh:99, help/SKILL.md, getting-started.md:106, start-change Step 4, docs/fast-track.md, release_notice.py and its four call sites, size_plan.py, check_skips.py:70-99/230-258/468-492, the three qa skills, generate-docs:244-246, migration-guide.md:123, greenfield README:11); sub-claim 'asks for the goal first' not read by the reviewer (unknown), the release owner read start-change line 47 (Step 2 asks 'What's the goal' before the issue) and line 72 (Step 3 restates it before the workflow question)"
+- check: "gates"
+  command: python3 -m pytest ci tools -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1119 passed, 6 skipped; 63/63 files pass, 0 failures, 0 warnings; VERIFY OK"
+findings:
+- id: F1
+  class: minor
+  check: "#129: the end-to-end test runs sizer output through gen_change into check_skips and passes"
+  claim: "The #129 e2e test drives check_skips.check() as a library, not the CLI, so the CLI's exit 0 is inferred from the same non-waivable set rather than observed."
+  evidence: "test_129_api_fast_track_e2e.py calls check_skips.check(); the CLI exits 2 iff a non-waivable finding exists (sys.exit(2 if blockers else 0))"
+  status: open
+- id: F2
+  class: minor
+  check: "#124: an identified record whose outcomes agree passes; both codes are non-waivable"
+  claim: "A record carrying only a pentest outcome blocks COND_UNCONFIRMED for sec_design and cve_audit on a tier-2 Fast Track change before reaching clean; the issue's full four-step rule_outcomes are needed for exit 0."
+  evidence: "check_skips on the reviewer's first repro: COND_UNCONFIRMED for sec_design and cve_audit; with the four-step rule_outcomes: exit 0"
+  status: open
+- id: F3
+  class: minor
+  check: "every bold changelog claim under 2.13.0 has a carrier in the tree"
+  claim: "The #125 sub-claim that dev-start-change asks for the goal first was not verified by the reviewer."
+  evidence: "reviewer read Step 4 and Step 3c, not Step 2; Step 2 is titled 'Choose the issue (insist)'"
+  status: open
+verdict: verified
