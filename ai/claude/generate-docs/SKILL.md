@@ -241,9 +241,9 @@ This mode reads the existing codebase and generates the full documentation basel
      - File content requirement → `file_contains`
    - Include all universal checks: `manifest_drift`, `mermaid_br_tags`, `inline_comments`
 
-3. **Install the plugin** (preferred) or copy skills to `.ai/claude/ai/claude/` if they don't exist:
+3. **Install the plugin** (preferred) or copy skills to `.claude/` if they don't exist:
    - Install: add this repo as a Claude Code plugin so skills are auto-discovered
-   - Manual copy: `cp -r ai/claude/ <your-repo>/.ai/claude/ai/claude/`
+   - Manual copy: `cp -r ai/claude/ <your-repo>/.claude/`
    - Key skills: `ai/claude/dev-practices/SKILL.md` — the 31-step workflow; `ai/claude/apply-change/SKILL.md` — impact analysis
 
 4. **Copy CI actions** to `.github/workflows/` if they don't exist:

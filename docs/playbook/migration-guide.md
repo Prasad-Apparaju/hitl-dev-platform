@@ -120,7 +120,7 @@ You have your existing codebase and access to hitl-dev-platform. You need to set
 
 ```bash
 # Copy the skills so every developer's Claude follows the same workflow
-cp -r hitl-dev-platform/ai/claude/ your-repo/.ai/claude/ai/claude/
+cp -r hitl-dev-platform/ai/claude/ your-repo/.claude/
 
 # Copy and customize CLAUDE.md
 cp hitl-dev-platform/ai/shared/templates/CLAUDE.md.template your-repo/CLAUDE.md

@@ -22,6 +22,19 @@ All notable changes to the HITL plugin are documented here.
   reached done, end with one share line: the two install commands and the walkthrough link.
   It appears in no hook, the breadcrumb or the statusline; a wiring test holds it out.
 
+### Fixed
+
+- **The QA skills no longer stop on a PRD that has no `FR-` entries** (#114). `qa-plan-tests`,
+  `qa-review-tests` and `qa-verify-quality` opened by stopping when `docs/01-product/prd.md` was
+  absent or had no `FR-` entries in its section 5. The second half blocked the gate on any repo
+  whose PRD predates HITL or is written in another form. An absent PRD still stops. A PRD with no
+  `FR-` entries now gets one line saying so, and the skill continues against the acceptance
+  criteria on the issue, which the packet gate approved against.
+- **`dev-generate-docs` names the real manual-copy destination** (#121). Step 3 of the repo setup
+  told a reader to copy skills to `.ai/claude/ai/claude/`, a path doubled when the source tree was
+  regrouped under `ai/`. It now says `.claude/`. The migration guide and the greenfield example
+  carried the same path and say the same now.
+
 ---
 
 ## [2.12.1] — 2026-09-08
