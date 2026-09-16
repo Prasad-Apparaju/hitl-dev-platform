@@ -22,7 +22,9 @@ def _read(rel):
 
 def _shipped_and_read():
     for top in ("ai", "docs"):
-        for base, _dirs, files in os.walk(os.path.join(ROOT, top)):
+        for base, dirs, files in os.walk(os.path.join(ROOT, top)):
+            # Session logs are git-ignored operational notes, not something a reader is sent to.
+            dirs[:] = [d for d in dirs if d != "session-logs"]
             for f in files:
                 if f.endswith((".md", ".yaml", ".yml", ".sh", ".json")):
                     yield os.path.relpath(os.path.join(base, f), ROOT)
