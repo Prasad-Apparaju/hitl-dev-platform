@@ -24,6 +24,18 @@ SOURCES = (
 )
 
 
+# The build rewrites source-repo paths inside shared files before they ship, so the copy a product
+# repo holds is the BUILT form. The 2.12.1 line for workflows.yaml carried the source hash, which no
+# repo ever had (2.13.0 upgrade review); the next edit to that file would have read every repo's
+# copy as its own. Mirror the build's rewrite for the one shipped non-Python file and list the built
+# hash as well as the source hash. If scripts/build.sh in the plugin repo changes how it rewrites
+# shared/workflows.yaml, this must change with it; the release runbook's build step compares them.
+def built_form(data):
+    text = data.decode("utf-8")
+    text = text.replace("ai/claude/dev-practices/", "${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/")
+    return text.encode("utf-8")
+
+
 def current():
     out = []
     for src, dst, is_dir in SOURCES:
@@ -39,7 +51,12 @@ def current():
     res = []
     for path, rel in out:
         with io.open(path, "rb") as f:
-            res.append((hashlib.sha256(f.read()).hexdigest(), rel))
+            data = f.read()
+        res.append((hashlib.sha256(data).hexdigest(), rel))
+        if not path.endswith(".py"):
+            built = hashlib.sha256(built_form(data)).hexdigest()
+            if (built, rel) not in res:
+                res.append((built, rel))
     return res
 
 
