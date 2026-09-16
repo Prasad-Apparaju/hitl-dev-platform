@@ -1,0 +1,61 @@
+schema_version: "2.0"
+change_id: GH-132-release-2.13.0
+round: 2
+reviewed_sha: 99986110a39804bc393f2ef54097a73393df1a19
+reviewed_tree: 66760b4659e95cd289151489a28205fb55ed9b40
+lens: correctness
+scope: "Narrow round on the round-1 fix (9998611): only-the-fix-changed, built_form() and current() against the commit message, the built-form hash against the manifest, the build's rewrite passes against the script's mirror, the manifest check, the full suites, skill lint, the install-path test; plus two checks beyond the checklist (a real build's file byte for byte; the version label is not load-bearing). Report: .hitl/reviews/incoming/correctness-round2.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of five items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about eight calls, verdict instruction
+checks:
+- check: "only the fix changed since round 1"
+  command: git diff b5b1bed..9998611 --stat
+  result: pass
+  output: "ci/shipped-validators.sha256 | 1 +; tools/scripts/shipped-validators-hashes.py | 19 +-; 2 files, nothing under .hitl/"
+- check: "built_form() does one replacement and current() adds the built hash for the non-Python file only"
+  command: git show 9998611 -- tools/scripts/shipped-validators-hashes.py
+  result: pass
+  output: "one str.replace of ai/claude/dev-practices/ to ${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/; guard if not path.endswith('.py'); one non-.py SOURCES entry; dedupe on (built, rel)"
+- check: "the built-form hash is in the manifest on a 2.13.0 line"
+  command: python3 -c "...built_form(open('ai/shared/workflows.yaml','rb').read())..."; grep -n workflows.yaml ci/shipped-validators.sha256
+  result: pass
+  output: "191d6d02...; manifest line 60: 191d6d02...  ci/first-pass/workflows.yaml  # 2.13.0"
+- check: "the build's rewrite passes compose to the script's replacement and touch nothing else in the file"
+  command: sed -n 470,560p hitl-claude-plugin/scripts/build.sh; grep -n ai/claude/ ai/shared/workflows.yaml
+  result: pass
+  output: "pass 1 ai/claude/dev-practices/ -> skills/dev-practices/, pass 2 prefixes ${CLAUDE_PLUGIN_ROOT}/; no other pattern occurs in the file; the six other ai/claude/ hits are Canonical source comments no rule matches and the shipped copy carries verbatim"
+- check: "byte for byte against a real build"
+  command: shasum -a 256 hitl-claude-plugin/shared/workflows.yaml (release/2.x at efdad0c)
+  result: pass
+  output: "191d6d02..., identical to the manifest's 2.13.0 line; source hashes 26322286 (the 2.12.1 line); 2.12.1 and 2.13.0 ship the same bytes"
+- check: "manifest check, full suites, skill lint, install-path test"
+  command: python3 tools/scripts/shipped-validators-hashes.py --check; python3 -m pytest ci tools -q; python3 ci/skill-lint/check_skills.py; python3 -m pytest ci/wiring/test_shipped_validators_manifest.py -q -rs
+  result: pass
+  output: "manifest current; 1119 passed, 6 skipped; 63/63 pass; 2 passed 1 skipped in the worktree and 3 passed against the main checkout with the sibling plugin present"
+- check: "the manifest's version label is not load-bearing"
+  command: grep -n _shipped_hashes ci/first-pass/migrate_project.py
+  result: pass
+  output: "line.split('#', 1)[0].split(); membership by hash per path at line 289; the label is discarded"
+findings:
+- id: F1
+  class: minor
+  check: "byte for byte against a real build"
+  claim: "The 2.13.0 manifest line for workflows.yaml is also the built form every 2.12.1 install holds; the label under-describes which releases it covers, and the consumer ignores the label."
+  evidence: "same bytes at the 2.12.1 tag and the 2.13.0 build, both 191d6d02"
+  status: open
+- id: F2
+  class: minor
+  check: "the build's rewrite passes compose to the script's replacement and touch nothing else in the file"
+  claim: "Six Canonical source comment lines in workflows.yaml ship unrewritten and name source-repo locations that do not exist in the installed plugin; pre-existing, comments only."
+  evidence: "grep -n ai/claude/ ai/shared/workflows.yaml lines 78, 97, 114, 127, 141, 154; shipped copy carries them verbatim"
+  status: open
+- id: F3
+  class: minor
+  check: "manifest check, full suites, skill lint, install-path test"
+  claim: "built_form() mirrors build.sh by hand and no automated test asserts the mirror still matches a real build; the plugin repo's release.sh now refuses a build whose workflows.yaml hash is not in the manifest, which is the same guarantee at the point that publishes."
+  evidence: "test_the_manifest_ships_with_the_plugin_build asserts only that build.sh copies the manifest; release.sh check added in the 2.13.0 build commit, proven on both paths in a scratch build"
+  status: open
+verdict: verified
