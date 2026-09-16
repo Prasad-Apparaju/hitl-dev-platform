@@ -8,6 +8,20 @@ All notable changes to the HITL plugin are documented here.
 
 ### Added
 
+- **The light path is called Fast Track, and intake starts from your goal** (#125). People missed
+  it because it had three names and was never mentioned where they look. The intake options are
+  Fast Track and Full Scale everywhere people read, and the CLAUDE.md block, the banner and the
+  statusline say the promise: state the goal, get the fewest steps and what was left out, say
+  "Fast Track" at any point during intake. `dev-start-change` asks for the goal first; the
+  restatement and the stub come before the workflow question. First Pass stays the internal name
+  of the skip record and its validator. Getting-started, the portal and `/hitl:help` describe the
+  2.9.0 model: 34 steps plus 4 conditional, and the full list of protected steps.
+- **Fast Track shows what it left out as checkboxes.** In a 2.12.1 session a developer had to ask
+  to see the steps before they could select or skip any, and never saw a checkbox. Step 4 now lists
+  what Fast Track leaves out every time, then asks: Fast Track, Full Scale, or pick steps yourself,
+  each with a preview of its plan. Every left-out step comes back as a checkbox you can tick back
+  in; picking steps yourself adds a leave-out screen. Protected steps are never checkboxes. One real
+  run, eleven screenshots: `docs/fast-track.md` and the portal's Fast Track page.
 - **Onboarding asks, once, whether you want a note when a new version ships** (#116). HITL is
   maintained by one person and had no way to reach anyone. The channel is the "Who uses HITL"
   thread in the plugin repo, https://github.com/pappar/hitl-claude-plugin/discussions/36: a
@@ -24,6 +38,12 @@ All notable changes to the HITL plugin are documented here.
 
 ### Fixed
 
+- **Intake runs the impact analysis itself, every time** (#130). `dev-start-change` Step 3c told
+  the model to call `dev-apply-change`, a command the model cannot invoke, so some runs read the
+  file and ran the analysis inline and others stopped and asked you to run it, splitting intake in
+  two. Step 3c now follows apply-change's analysis steps from its file and says so. A wiring test
+  fails on any skill sentence that tells the model to call a command it cannot invoke; five other
+  sites it found now follow the skill from its file or tell you what to run.
 - **The QA skills no longer stop on a PRD that has no `FR-` entries** (#114). `qa-plan-tests`,
   `qa-review-tests` and `qa-verify-quality` opened by stopping when `docs/01-product/prd.md` was
   absent or had no `FR-` entries in its section 5. The second half blocked the gate on any repo
