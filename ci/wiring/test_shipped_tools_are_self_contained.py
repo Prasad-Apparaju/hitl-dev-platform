@@ -451,6 +451,11 @@ def test_dev_update_does_not_delete_settings_or_unowned_files():
     s = io.open(UPDATE_SKILL, encoding="utf-8").read()
     assert "delete `.claude/settings.json` and re-create it" not in s
     assert "settings.json.bak" in s, "the settings file must be backed up before repair"
+    # The legacy-statusline sub-procedure moved one level deep (progressive disclosure, to keep
+    # the body under the 500-line gate); the skill must still point at it and it must still guard.
+    sibling = os.path.join(os.path.dirname(UPDATE_SKILL), "legacy-statusline.md")
+    assert "[legacy-statusline.md](legacy-statusline.md)" in s, "Step 4 no longer reaches the sub-procedure"
+    s += io.open(sibling, encoding="utf-8").read()
     assert "git ls-files --error-unmatch .hitl/statusline.sh" in s, (
         "an untracked statusline.sh must not be deleted on name alone")
 

@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Onboarding asks, once, whether you want a note when a new version ships** (#116). HITL is
+  maintained by one person and had no way to reach anyone. The channel is the "Who uses HITL"
+  thread in the plugin repo, https://github.com/pappar/hitl-claude-plugin/discussions/36: a
+  comment there subscribes you through GitHub's own notifications, and the maintainer posts each
+  release on it. At the end of onboarding, and once by `/hitl:dev-update` for projects onboarded
+  earlier, two questions, both default no: post one comment under your account (the comment is
+  the version number only, like `HITL 2.13.0`, shown before it is posted), and star the plugin
+  repo. The answers are kept per person in `~/.hitl/release-notice.yaml`, with no handle in it, so
+  nobody is asked twice and a teammate is still asked. With `gh` logged out the questions are
+  skipped with one line and asked next time. No is complete and never revisited; nothing is
+  posted without a yes. The closing message, and the first retrospective of a change that
+  reached done, end with one share line: the two install commands and the walkthrough link.
+  It appears in no hook, the breadcrumb or the statusline; a wiring test holds it out.
+
+---
+
 ## [2.12.1] — 2026-09-08
 
 ### Fixed

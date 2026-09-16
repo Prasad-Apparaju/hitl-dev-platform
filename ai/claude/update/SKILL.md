@@ -170,26 +170,7 @@ grep -q 'hooks/statusline-hitl.sh' .claude/settings.json \
 grep "hitl-gate" .claude/settings.json
 ```
 
-A repo onboarded before the `.hitl/hooks/` layout has a `statusLine` that runs a **pre-plugin standalone script**:
-
-```json
-"statusLine": { "type": "command",
-  "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/statusline.sh\"" }
-```
-
-A `grep "statusLine"` matches that happily, so the check passes and the stale script survives every subsequent upgrade. It hardcodes the 32-step development flow and cannot render any other workflow, so on a 6-step `docs` change it reports `Step 3/32` with a trail of steps the change does not contain — while the `UserPromptSubmit` breadcrumb from `welcome.sh` renders correctly. The human and the model then read two disagreeing status lines, which is very hard to diagnose from inside a session (plugin issue #23 item 1).
-
-If a legacy `.hitl/statusline.sh` is present, delete it during re-sync so nothing can be re-pointed at it:
-```bash
-if [ -f .hitl/statusline.sh ]; then
-  if git ls-files --error-unmatch .hitl/statusline.sh >/dev/null 2>&1; then
-    rm -f .hitl/statusline.sh && echo "Removed legacy .hitl/statusline.sh (tracked: recoverable from git)"
-  else
-    echo "  .hitl/statusline.sh is UNTRACKED: leaving it alone. If it is HITL's legacy script," >&2
-    echo "  delete it yourself; if it is yours, move it out of .hitl/." >&2
-  fi
-fi
-```
+A repo onboarded before the `.hitl/hooks/` layout has a `statusLine` that runs a **pre-plugin standalone script**, which a `grep "statusLine"` passes and which renders the wrong workflow (plugin issue #23 item 1). Read [legacy-statusline.md](legacy-statusline.md): it shows the stale entry and removes the script during re-sync so nothing can be re-pointed at it.
 
 If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent **or points anywhere other than `hooks/statusline-hitl.sh`**, the persistent HITL breadcrumb is missing or wrong. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases the file needs repair — but **do not delete it**. That template is a
 complete file, not a merge: deleting takes the team's `permissions`, `env`, MCP wiring and every
@@ -476,6 +457,26 @@ if [[ -n "$TRACKED" ]]; then
   echo "  Tell the people they describe."
 fi
 ```
+
+---
+
+## Step 4.10 — Ask about release notices, once per person
+
+Projects onboarded before this step existed were never asked. Same script as onboarding; it asks
+nobody twice, and there is no share line here.
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+RN="$ROOT/shared/tools/hitl-onboarding/release_notice.py"
+if [[ -f "$RN" ]]; then python3 "$RN" state; else echo "release_notice.py is not in this build: skipping."; fi
+```
+
+The first line of the output is the verdict. On `already-answered` or `gh-logged-out`, say the
+second line to the person and move on. On `ask`, put question 1 in front of the person word for
+word and wait; then question 2 and wait. An empty answer is no. Then record both answers:
+`python3 "$RN" record --notice <yes|no> --star <yes|no|skipped>`. If the first answer was yes,
+show the output of `python3 "$RN" body` (the exact comment) and only then run
+`python3 "$RN" post --confirmed`. If the second was yes, run `python3 "$RN" star --confirmed`.
 
 ---
 

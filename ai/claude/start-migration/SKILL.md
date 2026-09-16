@@ -279,55 +279,10 @@ Ask: "Where is the source system's code?"
    /graphify query "API endpoints domain services data models integrations auth"
    ```
 
-3. Produce `docs/00-migration/source-behavioral-inventory.md`:
-
-```markdown
-# Source Behavioral Inventory — [Source System Name]
-
-**Extracted from:** [repo path or URL]
-**Extraction date:** [today's date]
-**Status:** DRAFT — review with source system owner before use as migration target
-
-## API surface
-
-| ID | Endpoint / contract | Type | Domain | Notes |
-|---|---|---|---|---|
-| BI-001 | GET /users/{id} | REST | User | Returns user profile |
-
-## Core behaviors
-
-| ID | Behavior | Domain | Source location | Notes |
-|---|---|---|---|---|
-| BI-010 | Calculate order total with tax | Order | OrderService.java:45 | Includes promotional discount logic |
-
-## Data contracts
-
-| ID | Entity | Storage | Key fields | Notes |
-|---|---|---|---|---|
-| BI-020 | User | users table (PostgreSQL) | id, email, tenant_id | Multi-tenant — tenant_id on every query |
-
-## Integration contracts
-
-| ID | Integration | Direction | Protocol | Notes |
-|---|---|---|---|---|
-| BI-030 | Payment gateway | Outbound | REST | Stripe v3, async webhook confirmation |
-
-## Background jobs
-
-| ID | Job | Schedule / trigger | Domain | Notes |
-|---|---|---|---|---|
-| BI-040 | Invoice generation | Nightly 02:00 UTC | Billing | |
-
-## Auth and access control
-
-| ID | Rule | Scope | Notes |
-|---|---|---|---|
-| BI-050 | Admins can delete any user | Admin role | Non-admins see 403 |
-
-## Known gaps
-
-[Behaviors that could not be determined from code alone — require source system owner clarification]
-```
+3. Produce `docs/00-migration/source-behavioral-inventory.md` from the template in
+   [behavioral-inventory-template.md](behavioral-inventory-template.md): one `BI-NNN` row per
+   API, core behavior, data contract, integration, background job and access rule, and a
+   *Known gaps* section for what the code alone could not settle.
 
 Ask: "Does this inventory capture everything the source system does? Anything I missed or got wrong?"
 
@@ -445,6 +400,22 @@ git check-ignore -q .hitl/people/ 2>/dev/null \
   || echo "COULD NOT exclude .hitl/people/: say so before any profile is written here."
 ```
 
+**Release notice and star, once per person, default no.** HITL has no other way to tell anyone a
+new version exists. The script decides whether to ask; nothing is posted without a yes.
+
+```bash
+PLUGIN_ROOT=$(python3 -c "import json,os,sys;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) or sys.exit(0) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null)
+RN="$PLUGIN_ROOT/shared/tools/hitl-onboarding/release_notice.py"
+if [[ -f "$RN" ]]; then python3 "$RN" state; else echo "release_notice.py is not in this build: skipping."; fi
+```
+
+The first line of the output is the verdict. On `already-answered` or `gh-logged-out`, say the
+second line to the person and move on. On `ask`, put question 1 in front of the person word for
+word and wait; then question 2 and wait. An empty answer is no. Then record both answers:
+`python3 "$RN" record --notice <yes|no> --star <yes|no|skipped>`. If the first answer was yes,
+show the output of `python3 "$RN" body` (the exact comment) and only then run
+`python3 "$RN" post --confirmed`. If the second was yes, run `python3 "$RN" star --confirmed`.
+
 Output this exactly:
 
 ---
@@ -494,5 +465,13 @@ Each resulting slice is then handed to developers via the standard 31-step workf
 **Slice criterion for migration:** every slice must be **observable** — either user-visible (PM can demo it) or verifiable (ops/QA can confirm via record counts, data consistency checks, or performance comparison).
 
 **Migration is complete when:** every BI entry in `docs/00-migration/source-behavioral-inventory.md` has status `Complete` or `Descoped` in the migration brief's coverage matrix, **and** the readiness register's Parity and Cutover layers are green — parity proven against the legacy system, cutover executed, legacy sunset recorded. Ported code with the legacy still running is not a finished migration.
+
+If HITL helped, this is what to send someone:
+
+```
+claude plugin marketplace add pappar/hitl-claude-plugin
+claude plugin install hitl@hitl
+```
+The walkthrough is at https://prasad-apparaju.github.io/hitl-dev-platform/
 
 ---

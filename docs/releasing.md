@@ -36,7 +36,8 @@ Read it. The release note is written from this, not from memory.
 
 Fixes land under `## [Unreleased]` in `CHANGELOG.md` as they are committed. Cutting the release
 turns that header into `## [X.Y.Z] — YYYY-MM-DD`. Every claim in the section must match the tree;
-the 2.9.0 notes shipped with four that did not.
+the 2.9.0 notes shipped with four that did not. The notes link to the users thread,
+https://github.com/pappar/hitl-claude-plugin/discussions/36, where the release is announced (step 11).
 
 ### 3. Bump
 
