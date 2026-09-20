@@ -1,10 +1,10 @@
 # Data Layer: Requirements
 
 > **What** HITL must produce and keep current for the data a system holds: a business ontology, source
-> mappings and lineage, derived from evidence, next to the system manifest. Product one-liner: **FR-TBD**
-> in the [PRD](../prd.md); the number is assigned when FR-30 is settled (it is claimed by both
-> [#105](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/105) and
-> [#118](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/118)). The **how** (adapters,
+> mappings and lineage, derived from evidence, next to the system manifest. Product one-liner: **FR-31**
+> in the [PRD](../prd.md) backlog table (§5.7), assigned 2026-09-19; FR-30 is
+> [#105](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/105) and FR-32 is
+> [#118](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/118). The **how** (adapters,
 > file schemas, validators, the hook) is the design package at `docs/design/data-layer/`, not started.
 > Status: **draft v1 (2026-09-14)**, restructured from EPIC
 > [#131](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/131) after its first review (§12).
