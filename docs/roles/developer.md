@@ -81,7 +81,7 @@ The decision packet (`docs/decisions/issue-<N>.yaml`) contains your GitHub issue
 
 1. Open your assigned GitHub issue — find the "Ready for Development" comment and copy the starting prompt
 2. Run `/hitl:tdd` with that prompt — Claude reads the decision packet, loads the LLD, and confirms what you're building before writing any tests
-3. Run `/hitl:apply-change` — initialize the change context
+3. Run `/hitl:dev-start-change` to create the change context, then `/hitl:apply-change` for impact analysis
 4. Continue the TDD cycle — tests, review, then implementation code
 5. Run `/hitl:check-conventions` — fix violations
 6. Run `/hitl:dev-check-implementation` — two-round spec conformance review against the LLD

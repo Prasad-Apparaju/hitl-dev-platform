@@ -6,6 +6,14 @@ All notable changes to the HITL plugin are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`dev-switch-context` and `impact-brief` no longer send people to `dev-apply-change` to create a
+  branch or change file** (#136). Both moved to intake in 2.9.0; the stale advice skipped the
+  restatement, the tier proposal and the Fast Track choice, and in one session led to a change file
+  seeded by hand with the full-length plan. Both messages now name `/hitl:dev-start-change N`. A
+  wiring test fails on any skill that points at apply-change for either job. Three docs corrected.
+
 ### Changed
 
 - **A skipped step is one line at the top of the issue, not a ticket each.** A user found two or

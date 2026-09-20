@@ -24,7 +24,7 @@ What HITL has today, and why it is not enough:
 | What exists | What it does | What it misses |
 |---|---|---|
 | Intake, step 1 | Refuses to start a second change on a branch that already has one | Only intake checks. The PM skills do not. |
-| The switch command | Saves your uncommitted work, moves you to another issue's branch, reloads context | It never goes to main. It never gives your saved work back. |
+| The switch command | Saves your uncommitted work, moves you to another issue's branch, reloads context | It never goes to main. It never gives your saved work back. Until 2026-09-20 it also told people to create a missing branch with the wrong command (fixed under #136, see the version table). |
 | The gate, first rule | On a branch with no active change, blocks every edit except HITL's own files | Main has no active change, so the PRD edit this feature needs is blocked too. |
 | The gate, second rule | Blocks edits when the branch and the change file disagree | Says nothing when they agree but the work is for a different issue. |
 
@@ -111,6 +111,7 @@ Requirement IDs are `BC-<n>`.
 
 | Version | Date | Change |
 |---|---|---|
+| draft v1 + fix | 2026-09-20 | The switch command and the impact brief pointed at `dev-apply-change` to create a branch or change file; both now name `dev-start-change`, with a wiring test. Fixed ahead of the rest of FR-34 because it is a two-line defect on a shipped path. |
 | draft v1 | 2026-09-20 | First draft from the discussion on 2026-09-20. Three open choices settled as defaults: command-triggered with one nudge (BC-2, BC-7); second working copy when you have edits, switch when you do not (BC-3); creating an issue never needs main (BC-1). Rewritten in plain English the same day. Not reviewed. |
 
 ## 10. Where to look

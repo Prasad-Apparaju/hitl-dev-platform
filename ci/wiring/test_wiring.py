@@ -832,3 +832,21 @@ def test_skipped_steps_are_one_line_on_the_issue_not_a_ticket_each():
     for rel in ("start-change/SKILL.md", "verification-review/SKILL.md", "retro/SKILL.md"):
         txt = _read(os.path.join(AI, "claude", rel))
         assert not re.search(r"seed (a |an )?(linked )?fast-follow", txt, re.I), rel
+
+
+def test_no_skill_sends_people_to_apply_change_to_create_a_branch_or_change_file():
+    """Since right-sizing (2.9.0) the branch and the change file are created by intake
+    (dev-start-change). dev-switch-context and impact-brief still pointed at dev-apply-change on
+    2.13.0 (#136, 2026-09-20), which skips the restatement, the tier proposal and the Fast Track
+    choice. Any skill telling someone to run apply-change to create or initialise either is stale."""
+    stale = re.compile(r"(created by|creates|initiali[sz]e[sd]?|to initiali[sz]e)[^\n]{0,80}`/hitl:(dev-)?apply-change"
+                       r"|`/hitl:(dev-)?apply-change[^`]*`[^\n]{0,60}\bto (initiali[sz]e|create)\b", re.I)
+    offenders = []
+    for base, _d, files in os.walk(os.path.join(AI, "claude")):
+        for f in files:
+            if f.endswith(".md"):
+                p = os.path.join(base, f)
+                for m in stale.finditer(_read(p)):
+                    offenders.append("%s: %s" % (os.path.relpath(p, ROOT), m.group(0)[:80]))
+    assert not offenders, "stale pointer to apply-change for branch/change-file creation: %s" % offenders
+

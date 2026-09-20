@@ -59,15 +59,16 @@ git branch --list "issue/${N}-*"
   ```
   Say: "Switched to issue #N branch."
 - **No branch found:** stop and say:
-  > No branch found for issue #N. The per-issue branch is created by `/hitl:dev-apply-change`.
-  > Run `/hitl:dev-apply-change GH-N` first to initialise the branch and context for this issue.
+  > No branch found for issue #N. The branch and the change file are created by intake.
+  > Run `/hitl:dev-start-change N` first; it restates the goal, proposes the tier, and offers
+  > Fast Track or Full Scale before creating either.
 
 ---
 
 ## Step 4 — Load the HITL context file
 
 Read `.hitl/current-change.yaml`. If it does not exist:
-- Say: "No current-change.yaml on this branch. Run `/hitl:dev-apply-change GH-N` to initialise."
+- Say: "No current-change.yaml on this branch. Run `/hitl:dev-start-change N` to create it."
 - Stop.
 
 Extract:
