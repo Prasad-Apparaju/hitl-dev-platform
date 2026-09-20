@@ -137,6 +137,7 @@ acceptance criteria. Detail lives in each feature's requirements doc.
 | FR-31 | **Data layer**: an evidence-based business ontology, source mappings and lineage next to the manifest, derived on brownfield, authored forward on greenfield, kept current per change | Backlog | [#131](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/131) | [data-layer/requirements.md](data-layer/requirements.md) |
 | FR-32 | **Team Pulse**: a per-person and per-epic page of what is moving, what is waiting on someone, and who can unblock it, generated from GitHub with no manual edits | Backlog | [#118](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/118) | in the issue |
 | FR-33 | **Single developer mode**: team shape as a plan input, no handoffs to oneself, clean-context substitution recorded where a second reader is lost, questions for the architect and PM batched with assumption-and-proceed, floor unchanged | Backlog | [#135](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/135) | [single-developer-mode/requirements.md](single-developer-mode/requirements.md) |
+| FR-34 | **Branch context**: writes that belong to no active change (a new issue's PRD entry, backlog, design docs) go to main, never to another change's branch; one check at the writing command, park or sibling worktree, one way back, issue creation alone never moves a branch | Backlog | [#136](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/136) | [branch-context/requirements.md](branch-context/requirements.md) |
 
 ---
 
