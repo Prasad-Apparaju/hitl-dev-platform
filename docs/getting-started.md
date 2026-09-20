@@ -182,7 +182,7 @@ You don't have to ask for it. For a development change, intake offers Fast Track
 |---|---|
 | **Keep** | Normal. This is the default |
 | **Starter** (`◐`) | HITL drafts an honest minimal version now; you enhance it later |
-| **Defer** | Skipped now, becomes a follow-up ticket |
+| **Defer** | Skipped now, listed in one line at the top of the issue; comes back at the next change in this area |
 | **Decline** | Skipped deliberately, not coming back |
 
 Three rules make this safe rather than a loophole:

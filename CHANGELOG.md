@@ -4,6 +4,24 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **A skipped step is one line at the top of the issue, not a ticket each.** A user found two or
+  three new issues after every run and could not tell where they came from. They came from intake:
+  every deferred step seeded a follow-up ticket at plan confirm, behind a line that said "a thin
+  version now, marked to enhance later" and never mentioned an issue. Verification review did the
+  same on a deferred finding. Now the generator points a defer at the change's own issue
+  (`followup_ref: issue:<N>`), Step 6b writes one line between markers at the top of that issue's
+  body naming every step left out (`ci/first-pass/skipped_line.py`, regenerated from the ledger,
+  idempotent, blame-filtered), and plan confirm says "N steps left out. No issues opened." A ticket
+  is opened only when someone says "file this one". The hygiene wiring test now also catches prose
+  that files ("seed a fast-follow ticket"), which is how three skills bypassed search-first and
+  batch-confirm. Decision recorded on #112 and plugin #34. CR-7 and First Pass LLD §6.1 amended.
+
+---
+
 ## [2.13.0] — 2026-09-16
 
 ### Added

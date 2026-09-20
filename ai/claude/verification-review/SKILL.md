@@ -184,7 +184,7 @@ Then take one of three answers per finding:
 |---|---|---|
 | **fix** | it belongs to this change | `status: fixed`, once the fix exists |
 | **accept** | real, and this change is not the place | `status: accepted` + `accepted_by:` their name |
-| **defer** | later, on the record | `status: accepted` + `accepted_by:`, and seed a fast-follow |
+| **defer** | later, on the record | `status: accepted` + `accepted_by:`; a ticket only if they say "file this one" (`shared/issue-hygiene.md`) |
 
 `accepted_by` is the whole point of this step. The gate requires it, and a "worth deciding" point
 is exactly a decision — so if nobody is asked, *fix everything* is the only answer you can reach.

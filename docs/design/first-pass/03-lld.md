@@ -158,9 +158,12 @@ Every starter artifact is written with the marker header and is recorded as `dis
 
 Three triggers, escalating by criticality; persuade at boundaries, never mid-build.
 
-### 6.1 At the follow-up ticket (defer + starter)
-On defer/starter, seed (or link) a follow-up issue whose body embeds the skip record and, for a starter, links
-the `needs-enhancement` artifact. Title/body use neutral language (§6.3).
+### 6.1 On the change's own issue (defer + starter)
+On defer/starter, `skipped_line.py` writes one line between markers at the top of the change's issue body,
+regenerated from the ledger and idempotent, naming each step left out with its disposition and reason
+(§6.3 voice). No follow-up issue is seeded; a ticket is opened only when the person asks for that step,
+and its ref then replaces `issue:<N>` in `followup_ref`. *Amended 2026-09-19; as first shipped this
+section seeded one follow-up issue per deferred step.*
 
 ### 6.2 At the next change touching the same area
 When `dev-start-change` initializes a new change, it reads `.hitl/skip-ledger.yaml` and surfaces any **unresolved**

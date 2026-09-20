@@ -393,12 +393,12 @@ skips:
       type: string
       enum: [defer, decline, starter]
       description: |
-        defer = come back later (seeds a follow-up ticket); decline = deliberately not doing it;
+        defer = come back later (listed on the change's issue; a ticket only on request); decline = deliberately not doing it;
         starter = an honest-minimal artifact produced now, marked needs-enhancement (CR-6/CR-13).
     followup_ref:
       type: string
-      description: "Issue ref for the fast-follow, set when disposition=defer (CR-7). Optional otherwise."
-      example: "GH-456"
+      description: "Where the deferral is tracked (CR-7): `issue:<N>` for the one-line notice on the change's own issue (the generator's default), or a ticket ref when someone asked for one. Optional otherwise."
+      example: "issue:123"
     starter_artifact:
       type: string
       description: "Path to the needs-enhancement artifact, set when disposition=starter (CR-13)."

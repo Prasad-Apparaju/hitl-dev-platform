@@ -14,7 +14,7 @@ per-workflow-step). Do not fork it (ADR-3).
 | `reason` | yes | why, in neutral language (non-empty) |
 | `ts` | yes | ISO-8601 timestamp |
 | `disposition` | yes | `defer \| decline \| starter` |
-| `followup_ref` | when `defer` | fast-follow ticket ref |
+| `followup_ref` | when `defer` | `issue:<N>` (listed on the change's own issue, one line) or a ticket ref when one was asked for |
 | `starter_artifact` | when `starter` | path to the `needs-enhancement` artifact |
 | `waiver_ref` | when `floor` + hard gate | linked waiver id (skip ≠ waiver) |
 | `ack_by` | when `floor` | accountable role that risk-accepted |

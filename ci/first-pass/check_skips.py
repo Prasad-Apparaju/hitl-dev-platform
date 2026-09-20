@@ -622,9 +622,10 @@ def check(change, catalog, tier=None, rollup=None, change_dir=".", costs=None):
                     if not any(ln.lstrip().lower().startswith(STARTER_MARKER) for ln in content.splitlines()):
                         findings.append(_f("STARTER_MARK", f"starter '{key}': artifact '{art}' has no '{STARTER_MARKER}' line"))
 
-        # defer seeds a follow-up (CR-7) — warn if missing (waivable)
+        # a defer is never silent (CR-7): it is listed on the change's issue (`issue:<N>`, one line
+        # written by skipped_line.py) or linked to a ticket someone asked for — warn if neither (waivable)
         if disp == "defer" and not _str(s.get("followup_ref")).strip():
-            findings.append(_f("DEFER_NO_FOLLOWUP", f"deferred '{key}': no followup_ref (fast-follow not linked)"))
+            findings.append(_f("DEFER_NO_FOLLOWUP", f"deferred '{key}': no followup_ref (not listed on the issue, no ticket)"))
 
     # 3) ROLLUP (NEG-9): every per-change skip present in the project roll-up
     if rollup is not None:

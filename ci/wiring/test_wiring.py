@@ -812,7 +812,23 @@ def test_every_skill_that_files_issues_searches_first_or_follows_the_rule():
             if "/start-" in p.replace("\\", "/") or f == "workflow-steps.md":
                 continue
             txt = _read(p)
-            if "gh issue create" in txt and not ("gh issue list" in txt or "issue-hygiene.md" in txt):
+            files = "gh issue create" in txt
+            # Prose that files without the command escaped this check (2026-09-19 user report: two or
+            # three unannounced issues per run from "seed a fast-follow ticket" in three skills).
+            files = files or re.search(r"seed (a |an )?(linked )?(fast-follow|follow-up)( ticket| issue)?", txt, re.I) is not None
+            if files and not ("gh issue list" in txt or "issue-hygiene.md" in txt):
                 offenders.append(os.path.relpath(p, ROOT))
     assert not offenders, "skills that file issues with no duplicate check: %s" % offenders
     assert os.path.isfile(os.path.join(AI, "shared", "issue-hygiene.md"))
+
+
+def test_skipped_steps_are_one_line_on_the_issue_not_a_ticket_each():
+    """A defer lists on the change's issue (skipped_line.py, wired into start-change Step 6b); no
+    skill seeds a follow-up ticket per skip. Wiring-defect class: the tool must be invoked, not described."""
+    sc = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    assert "skipped_line.py" in sc and "--apply" in sc, "start-change does not write the skipped line"
+    assert "No issues opened" in sc, "plan confirm no longer says nothing is filed"
+    assert os.path.isfile(os.path.join(ROOT, "ci", "first-pass", "skipped_line.py"))
+    for rel in ("start-change/SKILL.md", "verification-review/SKILL.md", "retro/SKILL.md"):
+        txt = _read(os.path.join(AI, "claude", rel))
+        assert not re.search(r"seed (a |an )?(linked )?fast-follow", txt, re.I), rel

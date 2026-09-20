@@ -318,8 +318,11 @@ under "Leave out" is a person choosing to lighten beyond that, and its `crit`
 \*starter offered only for steps in the registry (`ci/first-pass/starters.py`); `keep` is the default.
 
 For a ticked step, use its starter when it has one, otherwise `decline` for a ceremony step and
-`defer` with a follow-up for a standard one. Say which in one line per step ("Test plan: a thin
-version now, marked to enhance later"), and ask only if the person wants a different one.
+`defer` for a standard one. Say which in one line per step ("Test plan: a thin version now, marked
+to enhance later"), and ask only if the person wants a different one. Then say, once, what happens
+to the set: **"N steps left out. No issues opened. One line at the top of #N lists them, and they
+come back at the next change in this area."** Nothing is filed for a skip unless the person says
+"file this one", and then it is one ticket, for that step, with the skip record in its body.
 
 **This step elicits choices; it does not write the ledger.** The change file does not exist yet — Step 6
 creates it — so recording here would write to a stale or absent file that Step 6 then overwrites. Capture
@@ -343,8 +346,11 @@ Rules that still apply when collecting the choices:
 1. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
    step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver. Put both in the entry.
 2. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
-   version of the system"), mark it `needs-enhancement`, record its path; seed a fast-follow to *enhance* it.
-3. **Defer** — seed a linked fast-follow ticket and put its ref in `followup_ref`.
+   version of the system"), mark it `needs-enhancement`, record its path. It is listed on the issue's
+   skipped line like a defer; no ticket unless asked for.
+3. **Defer** — leave `followup_ref` out and the generator sets it to `issue:<N>`, the change's own
+   issue, where Step 6b writes the one-line notice. Put a ticket ref there only when the person
+   asked for that step to be filed.
 
 If the validator is missing, say so **before** collecting any choices — the ledger is unenforced without it:
 
@@ -463,7 +469,15 @@ CHK="ci/first-pass/check_skips.py"; RS="ci/first-pass/resurface.py"
 [[ -f "$RS" ]] || RS="$ROOT/shared/ci/first-pass/resurface.py"
 python3 "$CHK" .hitl/current-change.yaml
 python3 "$RS" --change .hitl/current-change.yaml --rollup .hitl/skip-ledger.yaml --append
+SL="ci/first-pass/skipped_line.py"
+[[ -f "$SL" ]] || SL="$ROOT/shared/ci/first-pass/skipped_line.py"
+python3 "$SL" --change .hitl/current-change.yaml --apply
 ```
+
+The last line is the notice the person was promised in Step 4b: one line between markers at the top
+of the issue body naming every step left out, regenerated from the ledger, idempotent. Nothing else
+is posted or filed for a skip. If it exits 3, `gh` could not edit the issue: say so in one line and
+carry on; the ledger is still the record.
 
 With no area declared yet, entries record as **project-wide** and resurface at any later change until
 resolved; the impact step reads them and does not append (`dev-apply-change` Step 3). The append is

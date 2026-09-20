@@ -29,7 +29,7 @@ system," a skeleton design), then deepen via slices and the fast-follow enhancem
 | `challenge-stance.md` **TODO Deferral** (defer + record + surface-before-ship, design phase only) | Generalized to the whole workflow and given teeth (fast-follows, active resurfacing). The record format converges. |
 | **Agentic Advisor skip** (FR-28): `{control, owner, reason}`, never silent, skip ≠ waiver | The **skip-record schema** — one dialect across FR-28 and FR-29. |
 | **Waivers** (`ci/manifest-agentic/manifest-waivers.yaml`, #10) | A **floor** skip that maps to a fail-closed gate links to (and requires) the human-authored waiver. |
-| The **issue/ticket model** | Deferred steps seed **fast-follow tickets**. |
+| The **issue/ticket model** | Deferred steps are listed in **one line on the change's issue**; a ticket only on request (amended 2026-09-19, LLD §6.1). |
 | Claude Code **permission modes** | First Pass maps to a scoped `acceptEdits`-style policy with a critical-action list that still prompts (ADR-7). |
 
 ## 3. Components
@@ -81,7 +81,7 @@ graph TD
    `needs-enhancement`, and record it as the enhancement target.
 5. **Proceed to build** — the remaining (kept) steps run as today; skipped steps are `skipped` in the
    breadcrumb, visibly distinct from `done`/`open`.
-6. **Seed fast-follows** — deferred steps (and starters' enhancement) become follow-up tickets linked back.
+6. **Notice on the issue** — deferred steps and starters are listed in one line at the top of the change's issue; a follow-up ticket only when asked for (amended 2026-09-19).
 7. **Resurface** — at the follow-up, the next overlapping change, and any incident, HITL brings the record back
    politely, escalating by criticality (§6).
 

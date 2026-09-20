@@ -26,7 +26,7 @@ After you pick, you can lighten individual steps further in one menu:
 |---|---|
 | **keep** | the default; nothing changes |
 | **starter** | write the honest-minimal version now, enhance later |
-| **defer** | not now; a linked follow-up ticket is created |
+| **defer** | not now; listed in one line at the top of the issue, no ticket unless you ask |
 | **decline** | not for this change, on the record |
 
 A tier-2 refund feature in the [worked example](../examples/first-pass/README.md) declined ROI,

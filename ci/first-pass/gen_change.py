@@ -14,7 +14,7 @@ Writes the change file to stdout. The caller redirects to a temp file and moves 
 on a clean exit, because a generator that dies partway through `> file` leaves a truncated change
 file behind, and a truncated change file reads as "no active change" to the gate.
 """
-import sys, os, json, yaml
+import sys, os, re, json, yaml
 from datetime import datetime, timezone
 
 # ── stub mode (#97) ────────────────────────────────────────────────────────────────────────────
@@ -240,6 +240,12 @@ if choices:
         crit = resolve_crit(by_key[key], tier)
         entry = (f'  - {{ step: {key}, crit: {crit}, actor: {q(actor)}, reason: {q(ch.get("reason"))}, '
                  f'ts: "{ts}", disposition: {ch["disposition"]}, resolved: false')
+        # A defer with no ticket is listed on the change's own issue (one line, skipped_line.py),
+        # not filed as a follow-up each. The ref names where the notice lives.
+        if ch["disposition"] == "defer" and not ch.get("followup_ref"):
+            _m = re.search(r"(\d+)\s*$", str(change_id))
+            if _m:
+                ch = dict(ch, followup_ref=f"issue:{_m.group(1)}")
         for opt in ("followup_ref", "ack_by", "waiver_ref", "starter_artifact"):
             if ch.get(opt):
                 entry += f', {opt}: {q(ch[opt])}'
