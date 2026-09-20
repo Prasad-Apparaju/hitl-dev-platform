@@ -1,72 +1,69 @@
 # Branch Context: Requirements
 
-> **What** HITL must do when work that belongs to no active change starts while the working tree is
-> on another change's branch: notice at the command that would write, move the work to main (a
-> switch when the tree is clean, a sibling worktree when it is not), offer the way back, and let the
-> few writes that legitimately belong to no change (shaping an issue, the PRD, the backlog) happen on
-> main without an active change. Product one-liner: **FR-34** in the [PRD](../prd.md) backlog table
-> (§5.7); ticket [#136](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/136), status Backlog. The **how** (the context check, the worktree layout, the gate allowance, the return path)
-> is a design package at `docs/design/branch-context/`, not started. Status: **draft v1
-> (2026-09-20)**. Related: FR-33 single developer mode (a solo developer hops tasks constantly),
-> FR-30 multi-repo workspace (already leans on sibling worktrees), `/hitl:dev-switch-context`,
-> intake Step 1 (do not clobber an active change), the pre-tool-use gate.
+> **What this is.** When you start work that is not part of the change on your current branch, HITL
+> should move that work to main and keep your current work safe. The clearest case: you are on the
+> branch for one task and you ask for a new task. This is **FR-34** in the [PRD](../prd.md) backlog
+> table (§5.7), ticket [#136](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/136),
+> status Backlog. The design (how it is built) goes in `docs/design/branch-context/`, not started.
+> Status: **draft v1 (2026-09-20)**, not reviewed. Related: FR-33 single developer mode, FR-30
+> multi-repo workspace, the `/hitl:dev-switch-context` command, and the edit gate.
 
-## 1. Problem
+## 1. The problem
 
-A change lives on its own branch with its own change file, and the gate keeps source edits on that
-branch tied to that change. Nothing keeps *other* work off it. Shaping a new issue while on the
-branch for issue 123 is harmless until one step later, when the PM skill writes the new requirement
-into the PRD and the design skill writes design docs: those land on 123's branch, ship with 123 or
-disappear when its branch is deleted after merge. The person did nothing wrong. They asked HITL for
-a new task while standing where their last task left them, which is where everyone stands.
+Every change has its own branch and its own change file. The gate makes sure code edits on that
+branch belong to that change. Nothing stops other work from landing there.
 
-What exists today and why it is not enough:
+Here is how it goes wrong. You finish a task on the branch for issue 123. You stay on that branch,
+because that is where you are. You ask HITL for a new task. Creating the issue is fine. Then the PM
+skill writes the new requirement into the PRD, and the design skill writes design docs. Those files
+are now on 123's branch. They either ship with 123, or vanish when 123's branch is deleted after
+merge. You did nothing wrong.
 
-| Mechanism | What it does | Gap |
+What HITL has today, and why it is not enough:
+
+| What exists | What it does | What it misses |
 |---|---|---|
-| Intake Step 1 | Refuses to start a second change on a branch that already has one | Only intake; the PM skills do not check |
-| `/hitl:dev-switch-context` | Stashes, checks out another **issue** branch, reloads context | Never goes to main; never restores the stash it made |
-| The gate, layer 1 | With no active change on the branch, blocks **all** edits except `.hitl/` and `.claude/` | On main there is no active change, so the PRD write this feature needs is blocked too |
-| The gate, layer 2 | Blocks edits when branch and change file disagree | Says nothing when branch and change agree but the work is someone else's |
+| Intake, step 1 | Refuses to start a second change on a branch that already has one | Only intake checks. The PM skills do not. |
+| The switch command | Saves your uncommitted work, moves you to another issue's branch, reloads context | It never goes to main. It never gives your saved work back. |
+| The gate, first rule | On a branch with no active change, blocks every edit except HITL's own files | Main has no active change, so the PRD edit this feature needs is blocked too. |
+| The gate, second rule | Blocks edits when the branch and the change file disagree | Says nothing when they agree but the work is for a different issue. |
 
-**Delivery surface.** A shared context check invoked by the PM skills, intake and the switch command;
-a gate allowance for a named set of no-change paths; a return path. No new workflow, no UI.
+**What we deliver.** One shared check that the writing commands call. A short list of files that may
+be edited on main with no active change. A way back to where you were. No new workflow. No screen.
 
-## 2. Users
+## 2. Who needs it
 
-| User | What they need |
+| Who | What they need |
 |---|---|
-| **Developer** | To say "new task" from wherever they are and have the new work land on main, with what they were doing kept intact and one step from resuming |
-| **PM** | To add or change a requirement without knowing or caring what branch the developer's tree is on |
-| **Architect** | Design docs for a new issue on a branch cut from main, never on another change's branch |
-| **HITL maintainer** | One rule, one check, reused by every skill that writes outside a change |
+| Developer | Say "new task" from wherever you are. The new work lands on main. Your current work is kept and one command away. |
+| PM | Add or change a requirement without knowing which branch the developer's tree is on. |
+| Architect | Design docs for a new issue on a branch cut from main, never on another change's branch. |
+| HITL maintainer | One rule and one check, shared by every skill that writes outside a change. |
 
 ## 3. Scope
 
-**In scope.** The PM skills that write to the repo (`pm-add-feature`, `pm-report-bug`,
-`pm-design-feature`, `pm-update-requirement` and the like), `dev-start-change`,
-`dev-switch-context`, the pre-tool-use gate's no-change allowance, and a return path.
+**In.** The PM skills that write files (add feature, report bug, design feature, update
+requirement), the intake command, the switch command, the gate's rule for main, and the way back.
 
-**Out of scope.** Detecting that a *conversation* has drifted to another topic. Any change to what
-a change's branch may contain once the work is the change's. Multi-repo layouts (FR-30 owns the
-worktree layout across repositories; this feature must fit it, not define it).
+**Out.** Guessing from the conversation that you have changed subject. Any change to what a branch
+may hold once the work belongs to that change. How worktrees are laid out across several repos,
+which FR-30 owns.
 
 **Slices.**
 
-| Slice | Delivers | Requirements |
+| Slice | What it delivers | Requirements |
 |---|---|---|
-| 1 The rule and the check | The context check at the writing commands; the three options; the gate allowance | BC-1 to BC-4 |
-| 2 The way back | Stash restore and worktree return; the switch command learns main | BC-5, BC-6 |
-| 3 The nudge | A soft prompt when an edit request names a different issue | BC-7 |
+| 1 The rule and the check | The check at the writing commands, the three choices, the gate rule for main | BC-1 to BC-4, BC-8 |
+| 2 The way back | Restore saved work, return from a worktree, teach the switch command about main | BC-5, BC-6 |
+| 3 The nudge | A one-line prompt when you name a different issue | BC-7 |
 
 ## 4. Goals
 
-1. A PRD or design write for a new issue never lands on another change's branch.
-2. The person loses nothing: uncommitted work on the change branch is kept and restored by one
-   command, and a dirty tree is never stashed when a worktree would do.
-3. Creating an issue alone never forces a branch move.
-4. No new prompts on the normal path: a developer on main, or on the branch of the change they are
-   working, sees nothing new.
+1. A PRD or design file for a new issue never lands on another change's branch.
+2. You lose nothing. Uncommitted work is kept and comes back with one command.
+3. Creating an issue never moves you off your branch.
+4. Nothing new appears on the normal path. On main, or on the branch of the change you are working
+   on, you see no new question.
 
 ## 5. Requirements
 
@@ -74,58 +71,56 @@ Requirement IDs are `BC-<n>`.
 
 | ID | Requirement | Priority | Slice |
 |---|---|---|---|
-| **BC-1** | **The rule: writes that belong to no active change happen on main.** "Main" means the repository's default branch, or a branch cut from it for the new work. A write belongs to the active change when the change file on the current branch is active and the write is part of that change's plan. Everything else, the PRD, the backlog table, a new issue's design docs, is no-change work and goes to main. Creating or editing a GitHub issue is not a write to the repo and is never gated by branch. | Must | 1 |
-| **BC-2** | **The check runs at the command, not on the conversation.** Before its first repo write, each PM skill, intake, and any "new task" entry point runs one shared context check: is there an active change on this branch, and is this write part of it? If the tree is on main or the write belongs to the active change, nothing is said. HITL does not classify chat topics; a wrong guess that moves someone off their branch mid-thought is the interruption this feature exists to prevent. | Must | 1 |
-| **BC-3** | **One question, three answers, a default that never loses work.** When the check fires, HITL asks once: *(a) park this change and go to main*, *(b) open a sibling worktree on main for the new work and leave this tree untouched*, *(c) this belongs to the current change after all*. The recommended default is (b) when the working tree is dirty and (a) when it is clean, with one line saying why. (a) commits nothing on the person's behalf: it stashes with a named message, checks out main, pulls, and records the stash and the branch it came from in a local file so BC-5 can find them. | Must | 1 |
-| **BC-4** | **The gate allows no-change writes on main to a named set of paths.** With no active change on the default branch, the gate permits writes to the PRD, the product requirements folder, the backlog and the `.hitl/` bootstrap paths it already allows, and nothing else. Source and design paths stay blocked until a change is active. The set is declared in one place the gate and the skills both read, so adding a path is one edit. On a branch that is not the default branch, layer 1 is unchanged. | Must | 1 |
-| **BC-5** | **The way back is one command.** After the no-change work is done, HITL offers "back to #N?" For a parked change that means checkout of the recorded branch and `git stash pop` of the recorded stash, reporting a conflict rather than resolving it silently. For a worktree it means naming the original tree's path and, if the worktree was created for this one task, offering to remove it once its work is committed or discarded. `/hitl:dev-switch-context` gains `main` as a target and restores a stash it made when returning to a branch it left. | Must | 2 |
-| **BC-6** | **Worktrees are first class in HITL state.** Every skill and hook resolves the repository root from git, never from the current directory, so a sibling worktree gets its own `.hitl/` state and never reads or writes the original tree's. A worktree on main carries no change file and is subject to BC-4. The layout must fit the sibling-worktree convention FR-30 already uses. | Must | 2 |
-| **BC-7** | **A soft nudge when the ask names a different issue.** When a request to edit files names an issue number that is not the active change's, HITL says so in one line and offers the BC-3 question, but proceeds if the person says it is the same work. This is the only heuristic trigger, it is off the normal path, and it is a Should because a wrong nudge costs one line and a wrong silence costs a misplaced write. | Should | 3 |
-| **BC-8** | **Records stay minimal.** Parking, returning and worktree creation write nothing to the change file and post nothing to any issue. The only durable trace is the local park record BC-3 keeps for BC-5, which is deleted on return. | Must | 1 |
+| **BC-1** | **Work that belongs to no change goes on main.** "Main" is the default branch, or a new branch cut from it. A file edit belongs to a change when the current branch has an active change and the edit is part of that change's plan. Everything else is no-change work: the PRD, the backlog table, a new issue's design docs. Creating or editing a GitHub issue is not a file edit. It never depends on the branch. | Must | 1 |
+| **BC-2** | **The check runs when a command is about to write, never on the chat.** Each PM skill, the intake command, and any "new task" entry point runs the same check before its first file edit. The check asks two things: is there an active change on this branch, and is this edit part of it? If you are on main, or the edit belongs to the change, HITL says nothing. HITL does not read the conversation for a change of subject. A wrong guess that pulls you off your branch mid-thought is the interruption this feature exists to remove. | Must | 1 |
+| **BC-3** | **One question, three answers, and no lost work.** When the check fires, HITL asks once. The answers: (a) park this change and go to main; (b) open a second working copy on main, next to this one, and leave this one alone; (c) this belongs to the current change after all. HITL recommends (b) when you have uncommitted edits and (a) when your tree is clean, and says why in one line. Parking never commits for you. It saves your edits with a named stash, moves to main, pulls, and writes the stash name and the branch to a small local file so BC-5 can find them. | Must | 1 |
+| **BC-4** | **On main, the gate allows edits to a short, named list of files.** With no active change on the default branch, the gate lets you edit the PRD, the product requirements folder, the backlog, and HITL's own files. Nothing else. Code and design files stay blocked until a change is active. The list lives in one place that both the gate and the skills read, so adding a path is one edit. On any other branch the gate's first rule does not change. | Must | 1 |
+| **BC-5** | **The way back is one command.** When the no-change work is done, HITL asks "back to #N?" For a parked change, HITL checks out the saved branch and restores the stash. If the stash conflicts, HITL says so and stops. It does not resolve the conflict for you. For a second working copy, HITL names the path of the first one and, if it made the copy for this one task, offers to remove the copy once its work is committed or thrown away. The switch command learns two things: main is a valid target, and it restores a stash it made when you return to that branch. | Must | 2 |
+| **BC-6** | **A second working copy has its own HITL state.** Every skill and hook finds the repository root through git, never through the current folder. A second working copy then gets its own `.hitl/` folder and never reads or writes the first copy's. A second copy on main has no change file, so BC-4 applies to it. The layout must fit the side-by-side convention that FR-30 already uses. | Must | 2 |
+| **BC-7** | **A one-line nudge when you name a different issue.** If you ask to edit files and name an issue number that is not the active change's, HITL says so in one line and offers the BC-3 question. If you say it is the same work, HITL goes on. This is the only guess HITL makes, it is off the normal path, and it is a Should: a wrong nudge costs one line, a wrong silence costs a misplaced file. | Should | 3 |
+| **BC-8** | **Almost nothing is recorded.** Parking, returning, and making a second working copy write nothing to the change file and post nothing to any issue. The only trace is the small local file from BC-3, and it is deleted when you return. | Must | 1 |
 
-## 6. Constraints
+## 6. Rules the design must keep
 
-- **No topic detection.** The trigger is a command that is about to write, plus BC-7's explicit
-  issue-number mention. Nothing reads the conversation for drift.
-- **Never commit on the person's behalf.** Parking stashes; it does not commit. A commit is the
-  person's decision.
-- **The gate stays fail-closed.** BC-4 widens what main allows with no active change to a declared
-  list and nothing more. A write outside that list on main is still blocked, and nothing on a change
-  branch changes.
-- **One check, shared.** The context check is one shared step every writing skill invokes, wired
-  the way Step 6b of intake wires its scripts, so the wiring suite can assert each skill calls it.
-- **Plain English.** Everything said to the person follows `ai/shared/plain-english.md`.
+- HITL never guesses from the chat. The trigger is a command about to write, plus the issue number
+  you typed in BC-7.
+- HITL never commits for you. Parking saves your edits. Committing is your decision.
+- The gate stays strict. BC-4 adds a short list of files that main allows with no active change,
+  and nothing more. Any other file on main is still blocked. Change branches do not change.
+- One check, shared. Every writing skill calls the same check, wired the way intake step 6b wires
+  its scripts, so the wiring tests can prove each skill calls it.
+- Everything HITL says here follows `ai/shared/plain-english.md`.
 
-## 7. Non-goals
+## 7. Not doing
 
-- Guessing from chat that the person has changed subject.
-- Auto-switching without the BC-3 question. The person always chooses.
-- Managing more than one active change per tree. One tree, one change, is unchanged.
-- Cleaning up worktrees the person made themselves.
+- Guessing from the chat that you changed subject.
+- Switching without asking. You always choose.
+- More than one active change in one working copy.
+- Cleaning up working copies you made yourself.
 
-## 8. Success measures
+## 8. How we know it worked
 
 | Measure | Target |
 |---|---|
-| PRD or design writes that land on another change's branch | zero, checked by a wiring test that runs the PM skill's write path with an active change on a non-default branch |
-| Work lost when parking | zero: every park has a named stash and a record, every return pops it or reports the conflict |
-| New prompts on the normal path (main, or the active change's own branch) | zero |
-| Time from "new task" to the PRD write landing on main | one question and one confirmation, no manual git |
+| PRD or design files that land on another change's branch | Zero. A wiring test runs the PM skill's write path with an active change on a non-default branch and checks where the file went. |
+| Work lost when parking | Zero. Every park has a named stash and a record. Every return restores it or reports the conflict. |
+| New questions on the normal path | Zero. |
+| From "new task" to the PRD edit landing on main | One question and one confirmation. No git by hand. |
 
 ## 9. Version
 
 | Version | Date | Change |
 |---|---|---|
-| draft v1 | 2026-09-20 | First draft from the discussion on 2026-09-20. Three forks settled as defaults: command-triggered with one soft nudge (BC-2, BC-7); worktree when dirty, switch when clean (BC-3); issue creation alone never needs main (BC-1). Not reviewed. |
+| draft v1 | 2026-09-20 | First draft from the discussion on 2026-09-20. Three open choices settled as defaults: command-triggered with one nudge (BC-2, BC-7); second working copy when you have edits, switch when you do not (BC-3); creating an issue never needs main (BC-1). Rewritten in plain English the same day. Not reviewed. |
 
-## 10. References
+## 10. Where to look
 
-- `ai/claude/switch-context/SKILL.md` (stash and checkout today; no main target, no restore)
-- `ai/claude/start-change/SKILL.md` Step 1 (do not clobber an active change)
-- `ai/claude/hooks/check-hitl-context.sh` (gate layers; layer 1 blocks all edits with no active change)
-- `ai/claude/pm/add-feature/SKILL.md` step 7 (the PRD write this feature must route to main)
-- `docs/01-product/single-developer-mode/requirements.md` (FR-33)
-- `docs/01-product/prd.md` §5.7 (FR-30 multi-repo workspace, sibling worktrees)
+- `ai/claude/switch-context/SKILL.md`: saves and switches today; no main target, no restore
+- `ai/claude/start-change/SKILL.md`, step 1: refuses to start a second change on a busy branch
+- `ai/claude/hooks/check-hitl-context.sh`: the gate; its first rule blocks every edit with no active change
+- `ai/claude/pm/add-feature/SKILL.md`, step 7: the PRD edit this feature must send to main
+- `docs/01-product/single-developer-mode/requirements.md`: FR-33
+- `docs/01-product/prd.md`, §5.7: FR-30 multi-repo workspace, side-by-side working copies
 
 ## 11. Review history
 
