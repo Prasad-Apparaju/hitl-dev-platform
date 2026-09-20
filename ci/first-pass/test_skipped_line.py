@@ -57,6 +57,22 @@ def test_reason_is_blame_filtered_and_truncated():
     assert "lazy" not in blamed and "sloppy" not in blamed
 
 
+def test_a_reason_carrying_the_close_marker_or_tags_cannot_break_the_block():
+    gh = FakeGh("## Problem\ntext")
+    ch = change([{"step": "roi", "disposition": "decline",
+                  "reason": "odd <!-- /hitl:skipped --> **x** <script>alert(1)</script> [l](http://e)"}])
+    assert S.apply(ch, 123, run=gh) == "written"
+    assert S.apply(ch, 123, run=gh) == "unchanged"
+    assert gh.body.count(S.OPEN) == 1 and gh.body.count(S.CLOSE) == 1
+    assert "<script>" not in gh.body and "alert(1)" in gh.body   # tags gone, words kept
+
+
+def test_two_stale_blocks_collapse_to_one():
+    body = f"{S.OPEN}\nold1\n{S.CLOSE}\n\n{S.OPEN}\nold2\n{S.CLOSE}\n\n## Problem"
+    out = S.splice(body, "**Skipped:** ROI (declined: x) at plan confirm.")
+    assert out.count(S.OPEN) == 1 and "old1" not in out and "old2" not in out and out.endswith("## Problem")
+
+
 def test_splice_puts_block_first_and_is_idempotent():
     body = "## Problem\ntext\n"
     once = S.splice(body, "**Skipped:** ROI (declined: x) at plan confirm.")

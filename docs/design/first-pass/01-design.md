@@ -40,7 +40,7 @@ graph TD
   B --> C{disposition?}
   C -->|do now| D[run the step as today]
   C -->|starter| E[starter generator: honest-minimal artifact]
-  C -->|defer| F[fast-follow ticket]
+  C -->|defer| F[one line on the change's issue]
   C -->|decline| G[recorded, deliberate]
   C -->|floor step| H[require accountable-role ack + waiver link]
   E --> L[skip ledger in current-change.yaml]
@@ -48,7 +48,7 @@ graph TD
   G --> L
   H --> L
   L --> R[resurfacing engine]
-  R -->|follow-up ticket| T1[ticket body]
+  R -->|the change's issue| T1[skipped line]
   R -->|next change, same area| T2[start-change reminder]
   R -->|incident/postmortem| T3[incident skill]
 ```
@@ -116,7 +116,7 @@ work — never "bypass all safety." Starters are always marked incomplete.
 | CR-4 skip ≠ waiver | §3.6, §7; ADR-4; LLD §7 |
 | CR-5 floor protected | §3.6, §7; ADR-4 |
 | CR-6 defer/decline/starter | §4; LLD §4–5 |
-| CR-7 fast-follows | §3, §4.6; LLD §6 |
+| CR-7 notice on the issue | §3, §4.6; LLD §6 |
 | CR-8 resurface at triggers | §3.5; ADR-5; LLD §6 |
 | CR-9 polite language | ADR-5; LLD §6 |
 | CR-10 durable ledger | §3.3; LLD §4 |

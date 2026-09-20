@@ -82,7 +82,7 @@ green happy path is not acceptance). Current suite: **51 tests** (validator + li
 
 ## 6. Resurfacing (CR-7, CR-8, CR-9)
 
-- **RESURF-1** a deferred/starter step seeds/links a follow-up ticket embedding the skip record.
+- **RESURF-1** a deferred/starter step is listed in one line at the top of the change's issue (`skipped_line.py`), regenerated from the ledger and idempotent; no ticket is filed unless asked for. *Amended 2026-09-19; was: seeds/links a follow-up ticket.*
 - **RESURF-2** a new change whose `domains ∩ prior.domains ≠ ∅` **or** `paths ∩ prior.paths ≠ ∅` surfaces the unresolved prior skip; a non-overlapping change surfaces nothing.
 - **RESURF-3** escalation: `ceremony` not resurfaced at next-change; `standard` gentle; `floor` clear + waiver revisit date.
 - **RESURF-4** language: record voice is neutral; resurfacing voice is respectful-persuasive and contains no blaming/shaming tokens (lint against a denylist).

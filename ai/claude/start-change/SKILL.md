@@ -477,7 +477,10 @@ python3 "$SL" --change .hitl/current-change.yaml --apply
 The last line is the notice the person was promised in Step 4b: one line between markers at the top
 of the issue body naming every step left out, regenerated from the ledger, idempotent. Nothing else
 is posted or filed for a skip. If it exits 3, `gh` could not edit the issue: say so in one line and
-carry on; the ledger is still the record.
+carry on; the ledger is still the record. If it exits 2, the change has no issue number (its id is
+not `GH-N`, so the generator left `followup_ref` empty and the certify step warned
+`DEFER_NO_FOLLOWUP`): say that the left-out steps are recorded in the ledger only, and re-run with
+`--issue N` if there is an issue to write to.
 
 With no area declared yet, entries record as **project-wide** and resurface at any later change until
 resolved; the impact step reads them and does not append (`dev-apply-change` Step 3). The append is

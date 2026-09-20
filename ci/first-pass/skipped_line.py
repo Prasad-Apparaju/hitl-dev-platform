@@ -47,8 +47,17 @@ def _label(change, key):
     return str(key)
 
 
+_UNSAFE = re.compile(r"<!--|-->|[<>]")
+
+
+def _safe(text):
+    """User-supplied text goes inside an HTML comment block and onto a rendered page: no comment
+    markers (they would close the block and defeat idempotency) and no tags."""
+    return _UNSAFE.sub("", str(text or ""))
+
+
 def _reason(text):
-    t = " ".join(str(text or "").split())
+    t = " ".join(_safe(text).split())
     t = _clean(t)
     if len(t) > REASON_MAX:
         t = t[:REASON_MAX - 1].rstrip() + "…"
@@ -84,7 +93,7 @@ def render_line(change):
         if ref and not ref.lower().startswith("issue:"):
             item += f", ticket {ref}"
         parts.append(item + ")")
-        a = _clean(str(s.get("actor") or "")).strip()
+        a = _clean(_safe(s.get("actor"))).strip()
         if a and a not in actors:
             actors.append(a)
     who = f", chosen by {', '.join(actors)}" if actors else ""
@@ -94,7 +103,7 @@ def render_line(change):
 def splice(body, line):
     """Return the body with the block replaced (or removed when line is empty), block first."""
     body = body or ""
-    rest = _BLOCK.sub("", body, count=1).lstrip("\n")
+    rest = _BLOCK.sub("", body).lstrip("\n")   # every block: a stale duplicate must not survive
     if not line:
         return rest
     return f"{OPEN}\n{line}\n{CLOSE}\n\n{rest}"

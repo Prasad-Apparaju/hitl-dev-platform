@@ -52,8 +52,9 @@ non-zero and can't be waived.
 
 It comes back, deliberately.
 
-- **Follow-ups.** A deferral seeds a linked ticket, so it's in the backlog rather than in someone's
-  memory.
+- **Follow-ups.** A deferral is listed in one line at the top of the change's issue and comes back
+  at the next change in that area, so it's on the record rather than in someone's memory. Ask for
+  a ticket when you want one.
 - **Starters are marked.** A minimal artifact is recorded as `needs-enhancement` with its path, so
   "we wrote a thin one" is visible rather than indistinguishable from "we wrote a real one."
 - **Resurfacing.** At the start of a later change, unresolved skips in the same area are raised

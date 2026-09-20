@@ -69,9 +69,10 @@ and test review. Before submitting, you see every choice in one place.
 
 Want it lighter still? Pick "Pick steps myself" at the plan question and a second screen follows:
 the steps in the plan you could leave out, cheapest to drop first. The steps that always stay are
-not on it. A step you tick gets a lighter form: a thin starter, a deferral with a follow-up issue,
-or a decline. This screenshot is from a second run of the same fix, where Conventions check was
-deferred to a follow-up issue.
+not on it. A step you tick gets a lighter form: a thin starter, a deferral listed in one line at the top
+of the issue, or a decline. This screenshot is from a second run of the same fix, where Conventions check was
+deferred. At the time a deferral opened a follow-up issue; it is now one line at the top of the
+change's issue.
 
 ![The Leave out screen: steps in the plan that can be lightened, with Conventions check ticked](images/fast-track/08b-leave-out.png)
 

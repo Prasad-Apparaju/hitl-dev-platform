@@ -208,7 +208,7 @@ lighten it further; the record below is how Fast Track keeps what it left out.
 
 **What you get:** a materially shorter path to something running, without pretending the skipped
 work doesn't exist. Every lightened step is written to a ledger with who, why and when, deferrals
-seed follow-up tickets, and skips resurface later (at the follow-up, at the next change touching
+are listed in one line at the top of the change's issue, and skips resurface later (at the next change touching
 the same area, at incident review) in neutral language that never assigns blame.
 
 **What you can't skip:** load-bearing steps for the change's tier need the accountable person's

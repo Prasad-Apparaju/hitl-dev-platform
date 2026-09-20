@@ -16,7 +16,8 @@ a durable, referable trail of what was decided and what was deferred.
 The ask: after HITL understands what the team is trying to accomplish and determines the workflow, let the team
 **skip the steps they choose to**, **proceed to building**, and **keep a polite, durable record** of what was
 skipped — so they can come back to it, decline it deliberately, or be reminded of it if something later goes
-wrong. Iterate the first version through **fast-follows / follow-up tickets**.
+wrong. Iterate the first version through **fast-follows**: the skipped line on the issue, and a ticket
+when you ask for one.
 
 The name reflects the intent: this is not a *faster* method that implies the full method is "slow" — it is a
 **first pass** at v1 fidelity that you **deepen** over subsequent passes.
@@ -45,7 +46,7 @@ The name reflects the intent: this is not a *faster* method that implies the ful
 3. **First Pass extends tiers, it does not replace them.** HITL still tiers the change; First Pass lets a team
    skip *within or below* what the tier prescribes, on their own recorded authority, bounded by the floor.
 4. **The record has teeth.** Skipped steps resurface **politely and proactively** at defined trigger points
-   (the follow-up ticket, the next change touching the same area, and incident/postmortem), with an intensity
+   (the change's own issue, the next change touching the same area, and incident/postmortem), with an intensity
    that scales with the step's criticality. The intent is to *convince*, never to coerce or shame.
 5. **Ship v1, iterate deliberately.** First Pass is built for "basic version now, refine later": a deferred step
    becomes a tracked follow-up, so the first version ships without the deferred rigor being lost.
@@ -81,7 +82,7 @@ This gives the disposition rule its principle:
 - Make every skip a durable, neutral-language record: what, who, why, when, and deferred-vs-declined.
 - Protect a load-bearing floor so First Pass can never silently omit a safety/security/irreversible gate.
 - Resurface skipped choices proactively, politely, and proportionately — so deferred rigor is not forgotten.
-- Support iteration via fast-follows / follow-up tickets seeded from the skip record.
+- Support iteration via fast-follows: the skip record is listed on the change's issue; a ticket is opened on request.
 - Let HITL, at any later point (especially an incident), point precisely to what was skipped, by whom, and why.
 
 ## Non-goals
@@ -109,11 +110,11 @@ This gives the disposition rule its principle:
 | **CR-5** | **The floor is protected.** A `floor` step can never be skipped by the light path. Skipping it requires an explicit **risk-accepted** acknowledgment by the **accountable role** for that step (e.g., a security gate → the security/TA owner), captured in the record. HITL will not let a `floor` step be omitted without it. | Must |
 | **CR-6** | **Disposition: defer, decline, or starter.** A skipped step's disposition is explicit and recorded: **defer** (intend to return), **decline** (choose never to do it), or **starter** (accept an honest minimal version now, enhance later — CR-13). Disposition is later changeable (a declined step can be re-opened; a starter can be enhanced). A step may **restrict** its allowed dispositions: a step marked *no-omit* (e.g. the TDD RED/GREEN steps — test-first is a HITL cornerstone) may be thinned to a **starter** but never deferred or declined. | Must |
 | **CR-7** | **Deferred steps are never lost.** A deferred step is recorded in the skip ledger and listed in **one line at the top of the change's own issue**, regenerated from the ledger; it resurfaces at the next change touching the area (CR-8). A ticket is opened only when a person asks for that step to be scheduled. *Amended 2026-09-19: as first shipped, every defer seeded a follow-up ticket, which produced two or three unannounced issues per Fast Track run (plugin #34 note, #112).* | Must |
-| **CR-8** | **Skips resurface proactively, at defined triggers.** HITL raises recorded skips — politely, escalating by criticality — at: (a) the follow-up ticket, (b) the **next change touching the same code/domain**, and (c) an **incident/postmortem** on the affected area. The intent is to convince, never to block or blame. | Must |
+| **CR-8** | **Skips resurface proactively, at defined triggers.** HITL raises recorded skips — politely, escalating by criticality — at: (a) the change's own issue, (b) the **next change touching the same code/domain**, and (c) an **incident/postmortem** on the affected area. The intent is to convince, never to block or blame. | Must |
 | **CR-9** | **Polite, non-judgmental language throughout.** The skip record and every resurfacing use respectful, neutral language when recording and respectful-but-persuasive language when reminding. No blaming, no shaming; reconciled with the framework's challenge-stance (surface the risk, respect the choice). | Must |
 | **CR-10** | **The skip ledger is durable and referable.** All skips for a change (and across a project) are queryable. At any later point — especially an incident — HITL can point to exactly which steps were skipped, their disposition, actor, reason, and timestamp. | Must |
 | **CR-11** | **Authority scales with criticality.** Who may skip a step scales with its criticality: `ceremony`/`standard` skips are the team's to make; a `floor` skip requires the accountable role's acknowledgment (CR-5). The actor is always captured. | Should |
-| **CR-12** | **Iteration is first-class.** First Pass explicitly supports "ship a basic v1, then iterate": the skip ledger is the deferred-rigor backlog, and fast-follows / follow-up tickets are the mechanism to work it down over subsequent changes. | Should |
+| **CR-12** | **Iteration is first-class.** First Pass explicitly supports "ship a basic v1, then iterate": the skip ledger is the deferred-rigor backlog, and fast-follows (the skipped line on the issue, resurfacing, and a ticket when asked for) are the mechanism to work it down over subsequent changes. | Should |
 | **CR-13** | **Prefer a starter over an omission.** For an artifact-producing step, First Pass offers a **`starter`** disposition: an **honest minimal** version now — never a fabricated full artifact — marked **needs-enhancement** and recorded. For **acceptance criteria** the starter is the single criterion **"a working version of the system exists and runs"** (a v1 "it works" bar); the specific behavioral / edge-case criteria are deferred to the enhancement pass. The fast-follow (CR-7) *enhances* the starter. A step with no honest minimal starter falls back to defer/decline. | Should |
 | **CR-14** | **Brief communication, menu-driven.** In First Pass, HITL keeps interaction terse — minimal narration, short prompts, no restating of what it is about to do, and it does not re-ask a question already answered. Dispositions are collected through a **single menu** presented once (the whole plan, each step's allowed options pre-set by its criticality) — not a step-by-step interview. It surfaces only what the team must decide (a disposition, a floor acknowledgment) and the record it kept. Verbosity is not the governance; the record is. | Should |
 | **CR-15** | **Minimal permission friction — critical-only prompts.** In First Pass, routine, reversible, **in-scope** operations (reading the project, editing project files within the change's scope) proceed **without per-action permission prompts**. HITL still prompts for the genuinely **critical**: irreversible or destructive actions, anything outside the project/change scope, and outward-facing actions (deploys, external sends, force-push, secret access). This mirrors the floor (CR-2/CR-5): friction is removed from ceremony, never from the critical. First Pass **never** means "bypass all safety." | Should |
@@ -134,7 +135,7 @@ This gives the disposition rule its principle:
 - **Waivers (#10)** remain the mechanism for a hard-gate exception; a floor skip links to a waiver (CR-4).
 - **The workflow model** (`workflows.yaml` + `workflow.steps[]` in `.hitl/current-change.yaml`) is where step
   criticality and skip state live; the change-record schema gains a skip ledger.
-- **The issue/ticket model** provides fast-follows (CR-7).
+- **The issue model** carries the skipped line (CR-7); tickets only on request.
 
 ## Open questions (for the design phase — HOW, not WHAT)
 

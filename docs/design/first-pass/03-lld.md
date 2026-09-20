@@ -270,7 +270,7 @@ for each step the team lightened:
     write skip entry (per-change ledger + roll-up)   # §4, never silent
     set steps[].status = skipped | starter           # §4.1 breadcrumb
     if disposition == starter: generate from registry (§5), mark needs-enhancement
-    if disposition in (defer, starter): seed/link follow-up ticket (§6.1)
+    if disposition in (defer, starter): write the one-line notice on the change's issue (§6.1)
 proceed to build (kept steps run as today; brief mode + permission policy on)
 ```
 
@@ -303,7 +303,7 @@ missing/null is `INVALID_STATUS` (codex-3).
 
 **Waivable (surfaced, not blocking):** `LEDGER_STEPS` (ledger↔steps inconsistency), `ROLLUP` (a per-change skip
 missing from the auxiliary `.hitl/skip-ledger.yaml`, or a malformed roll-up — resurfacing degraded, change not
-blocked), `DEFER_NO_FOLLOWUP` (a deferred step with no linked fast-follow).
+blocked), `DEFER_NO_FOLLOWUP` (a deferred step listed nowhere: no issue line, no ticket).
 
 **Permission classifier** (`ci/first-pass/permissions.py`, §9) and the **resurfacing voice**
 (`ci/first-pass/resurface.py`, §6) were hardened in the same rounds: reads/edits auto-allow only within the
