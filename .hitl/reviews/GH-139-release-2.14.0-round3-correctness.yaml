@@ -1,0 +1,78 @@
+schema_version: "2.0"
+change_id: GH-139-release-2.14.0
+round: 3
+reviewed_sha: 2de5aee9acc867b94490df6a6add9584863d5730
+reviewed_tree: 525ee7016c3dcfc2e4a2d269cec051d96eda8b9b
+lens: correctness
+scope: "Narrow round at the fix commit 2de5aee (numbered 3 so it governs alongside the upgrade lens; round 1 was verified with one decide): only-the-fix-changed, the Team Pulse tests including the new number-link test, a live render of both pages against this repository counting unlinked numbers, the four gates, the skill's ROOT line against intake Step 6b, the CHANGELOG wording. Report: .hitl/reviews/incoming/correctness-round3.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of six items with the command and the passing output for each, evidence rule, one page, verdict instruction, round-1 claims copied verbatim
+checks:
+- check: "only the fix changed since round 1"
+  command: git diff --stat 66304b1..2de5aee
+  result: pass
+  output: "tools/team-pulse/pulse.py, tools/team-pulse/test_pulse.py, ai/claude/skills/team-pulse/SKILL.md, CHANGELOG.md, four review records under .hitl/reviews"
+- check: "Team Pulse tests pass and the number-link test exists"
+  command: python3 -m pytest tools/team-pulse -q
+  result: pass
+  output: "13 passed; test_every_number_on_the_page_is_a_link at test_pulse.py:137"
+- check: "live: every number on both pages is a link"
+  command: pulse.py collect --repo Prasad-Apparaju/hitl-dev-platform --config /nonexistent; render --audience team; render --audience leads; count numbers outside anchors
+  result: pass
+  output: "0 unlinked numbers on team.html (10 numbers) and leads.html (16 numbers); tallies link to GitHub search URLs; the slice count links to the epic issue"
+- check: "gates"
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1154 passed; 64/64; VERIFY OK"
+- check: "the skill's ROOT line equals intake Step 6b's"
+  command: diff of the two lines
+  result: pass
+  output: "byte-identical"
+- check: "the changelog says four docs"
+  command: grep -n 'docs corrected' CHANGELOG.md
+  result: pass
+  output: "line 32: Four docs corrected."
+findings:
+- id: F1
+  class: decide
+  check: "live: every number on both pages is a link"
+  claim: "Every number and event links to its GitHub source"
+  evidence: "this round: 0 unlinked numbers on either page; tallies link to the GitHub search that produces each count; slice count links to the epic"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "this round, live render and the new test"
+- id: F2
+  class: minor
+  check: "the skill's ROOT line equals intake Step 6b's"
+  claim: "the skill's $ROOT line is the same shape as in start-change Step 6b"
+  evidence: "byte-identical this round"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "this round"
+- id: F3
+  class: minor
+  check: "the changelog says four docs"
+  claim: "Three docs corrected."
+  evidence: "CHANGELOG line 32 now reads Four docs corrected."
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "this round"
+- id: F4
+  class: minor
+  check: "Team Pulse tests pass and the number-link test exists"
+  claim: "the attention strip lists exactly the epics with a flag and the PRs past the thresholds"
+  evidence: "PR items asserted as a set at test_pulse.py:191-192"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "this round"
+- id: F5
+  class: minor
+  check: "only the fix changed since round 1"
+  claim: "Decision recorded on #112 and plugin #34."
+  evidence: "the plugin #34 comment is at https://github.com/pappar/hitl-claude-plugin/issues/34#issuecomment-5747448847"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-22): the comment exists; round 1 queried the wrong repository"
+verdict: verified

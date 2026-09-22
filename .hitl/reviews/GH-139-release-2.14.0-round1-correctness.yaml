@@ -1,0 +1,90 @@
+schema_version: "2.0"
+change_id: GH-139-release-2.14.0
+round: 1
+reviewed_sha: 66304b10527cdc187193868f335dabdd484b1054
+reviewed_tree: e93a446d8d0a9a7eac7fd7d34566530a60a90b74
+lens: correctness
+scope: "The CHANGELOG 2.14.0 section as the claim list; nine checks: the four gates, the Team Pulse tests mapped to the #118 acceptance list, a live collect/notes/render against this repository for both audiences, the skill's flags against the CLI, the skipped line end to end with a marker injected into a reason, the #136 grep and wiring tests, claim carriers, PRD placement of FR-32 to FR-34, plain English. Report: .hitl/reviews/incoming/correctness-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of nine items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about eighteen calls, verdict instruction
+checks:
+- check: "gates"
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1153 passed; Skill lint: 64/64 files pass all hard gates; VERIFY OK"
+- check: "Team Pulse tests pass and map to the #118 acceptance list"
+  command: python3 -m pytest tools/team-pulse -q; read test_pulse.py
+  result: pass
+  output: "12 passed; asserted: hook/gate comments never human (d), Hours valid bar and invalid ignored (e), leads section never on team and team subset of leads (f); events link (b, events only); strip exact for epics, presence only for PRs (c); one-run e2e (a, partly); publish file not asserted (g, a skill-level key)"
+- check: "Team Pulse live against this repository: both pages, no leads section on team, team links subset of leads, self-contained, strip matches the printed items"
+  command: pulse.py collect --repo Prasad-Apparaju/hitl-dev-platform --config /nonexistent; notes; render --audience team; render --audience leads
+  result: pass
+  output: "3 people, 2 epics, 3 attention items; Planning (leads only) 0 on team, 1 on leads; 27 distinct <a href in team, 0 missing from leads; <script 0, src= 0, @import 0; strip = the 3 printed items"
+- check: "every flag the skill passes exists in the CLI; the $ROOT line has the Step 6b shape"
+  command: pulse.py {collect,notes,render} --help vs ai/claude/skills/team-pulse/SKILL.md
+  result: pass
+  output: "collect --out, notes --data, render --data --notes --audience all exist; render output default matches the skill's prose; $ROOT line lacks the plugin.json isfile filter (F2)"
+- check: "skipped line end to end, including a close marker injected into a reason"
+  command: gen_change.py development GH-321 issue/321-x 2.14.0 2 choices.json; check_skips.py; skipped_line.py --apply x3; inject <!-- /hitl:skipped --> into the reason; x3
+  result: pass
+  output: "followup_ref: issue:321; ledger clean exit 0; written / unchanged / unchanged, one open and one close marker; after injection the same, marker neutralised to /hitl:skipped"
+- check: "#136: no skill or doc points at apply-change to create a branch or change file; wiring tests pass"
+  command: grep -rn -i "created by `/hitl:\(dev-\)\?apply-change\|apply-change.*to initiali" ai/claude docs --include=*.md | grep -v session-logs; python3 -m pytest ci/wiring/test_wiring.py -q -k apply_change
+  result: pass
+  output: "grep empty; 2 passed, 57 deselected"
+- check: "every bold changelog claim under 2.14.0 has a carrier"
+  command: grep and read per claim
+  result: pass
+  output: "Team Pulse: skill:4-5,28, shared/team-pulse.md:4, docs/team-pulse.md, prd.md:103, 12 tests; numbers-link sub-claim carried for events only (F1). #136: switch-context:63,71, impact-brief:29, test_wiring.py:838; 'three docs' undercounts (F3). Skipped line: start-change:311,433-462, skipped_line.py, gen_change.py:245, test_wiring.py:818, requirements.md:112, 03-lld.md:161; #112 comment found, plugin #34 not confirmed by the reviewer's query (F5)"
+- check: "PRD: FR-32 once in 5.4 after FR-16 with acceptance; FR-33 and FR-34 in 5.7"
+  command: grep docs/01-product/prd.md
+  result: pass
+  output: "FR-32 at line 103 in 5.4 directly after FR-16, not in 5.7; FR-33 line 139, FR-34 line 140"
+- check: "plain English on what the new skill says"
+  command: python3 -m pytest ci/wiring/test_plain_english.py -q
+  result: pass
+  output: "16 passed"
+findings:
+- id: F1
+  class: decide
+  check: "every bold changelog claim under 2.14.0 has a carrier"
+  claim: "Every number and event links to its GitHub source"
+  evidence: "live team.html renders <p class='tally'>32 commits · 1 PRs opened · 1 merged · 30 comments · 16 issues opened</p> and <span class='tally'>1/9 slices done · owner none</span> (pulse.py:485) with no anchor; the only link test covers events; FR-32 acceptance says every event and number links"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "tools/team-pulse/pulse.py links tallies to the GitHub search that produces each count, the slice count to the epic, last-active to the latest event, session hours and review load; test_every_number_on_the_page_is_a_link walks every number on both pages; round 3 correctness record re-checks the live page"
+- id: F2
+  class: minor
+  check: "every flag the skill passes exists in the CLI; the $ROOT line has the Step 6b shape"
+  claim: "the skill's $ROOT line is the same shape as in start-change Step 6b"
+  evidence: "ai/claude/skills/team-pulse/SKILL.md:40 lacks the .claude-plugin/plugin.json isfile filter that start-change carries at lines 344 and 450"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "the line was replaced with start-change's line verbatim; round 3 compares the two"
+- id: F3
+  class: minor
+  check: "every bold changelog claim under 2.14.0 has a carrier"
+  claim: "Three docs corrected."
+  evidence: "git show --stat 8ba3118 lists four docs plus the branch-context requirements"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "CHANGELOG now says Four docs corrected"
+- id: F4
+  class: minor
+  check: "Team Pulse tests pass and map to the #118 acceptance list"
+  claim: "the attention strip lists exactly the epics with a flag and the PRs past the thresholds"
+  evidence: "the test asserts set equality for epics but only presence for the three PR items; a fourth, wrong PR item would pass"
+  status: fixed
+  resolved_by: 2de5aee9acc867b94490df6a6add9584863d5730
+  verified_by: "test_attention_strip_is_exactly_flags_and_threshold_breaches now asserts the PR items as a set"
+- id: F5
+  class: minor
+  check: "every bold changelog claim under 2.14.0 has a carrier"
+  claim: "Decision recorded on #112 and plugin #34."
+  evidence: "#112 comment found; plugin #34 not confirmed by gh issue view 34 --repo Prasad-Apparaju/hitl (empty; wrong slug)"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-22): the comment exists at https://github.com/pappar/hitl-claude-plugin/issues/34#issuecomment-5747448847; the reviewer queried the wrong repository"
+verdict: verified
