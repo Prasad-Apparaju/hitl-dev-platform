@@ -440,6 +440,19 @@ def _a(text, url):
     return f'<a href="{_h(url)}">{_h(text)}</a>' if url else _h(text)
 
 
+def tally_url(repo, login, kind):
+    """The GitHub search that produces one tally, so the number can be checked in one click."""
+    base = f"https://github.com/{repo}"
+    q = {"commit": f"{base}/commits?author={login}",
+         "pr_opened": f"{base}/pulls?q=is%3Apr+author%3A{login}",
+         "pr_merged": f"{base}/pulls?q=is%3Apr+is%3Amerged+author%3A{login}",
+         "review": f"{base}/pulls?q=is%3Apr+reviewed-by%3A{login}",
+         "comment": f"{base}/issues?q=commenter%3A{login}",
+         "issue_opened": f"{base}/issues?q=is%3Aissue+author%3A{login}",
+         "review_load": f"{base}/pulls?q=is%3Apr+is%3Aopen+review-requested%3A{login}"}
+    return q.get(kind, base)
+
+
 CSS = """
 :root{--ink:#1c2430;--mut:#5c6a78;--rule:#d9dfe5;--paper:#f7f8f9;--card:#fff;--warn:#a8661a;--warn-soft:#f6ecdd;--ok:#2b7a4b;--acc:#1f6f8b}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px 28px 56px}
@@ -481,8 +494,9 @@ def render(data, notes=None, audience="team", view=None):
         out.append("<p class='sub'>No open epics found (label <code>epic</code> or a title starting with <code>Epic:</code>).</p>")
     for ep in view["epics"]:
         n = en.get(str(ep["number"])) or {}
+        owners = ", ".join(_a(o, 'https://github.com/' + o) for o in ep['owners']) or 'none'
         out.append(f"<div class='card'><h3>{_a('#' + str(ep['number']) + ' ' + (ep['title'] or ''), ep['url'])} "
-                   f"<span class='tally'>{ep['done']}/{ep['total']} slices done · owner {', '.join(ep['owners']) or 'none'}</span></h3>")
+                   f"<span class='tally'>{_a(str(ep['done']) + '/' + str(ep['total']) + ' slices done', ep['url'])} · owner {owners}</span></h3>")
         if n.get("summary"):
             out.append(f"<p class='now'>{_h(n['summary'])}</p>")
         if ep["flags"]:
@@ -503,10 +517,12 @@ def render(data, notes=None, audience="team", view=None):
     out.append("<h2>People</h2><div class='grid'>")
     for p in view["people"]:
         t = p["tally"]
-        tally = " · ".join(f"{t[k]} {label}" for k, label in (("commit", "commits"), ("pr_opened", "PRs opened"), ("pr_merged", "merged"),
-                                                            ("review", "reviews"), ("comment", "comments"), ("issue_opened", "issues opened")) if t.get(k))
-        out.append(f"<div class='card'><h3>{_a(p['login'], 'https://github.com/' + p['login'])} <span class='tally'>last active {p['last_days']}d ago</span></h3>")
-        out.append(f"<p class='tally'>{_h(tally) or 'no activity in the window'}</p>")
+        tally = " · ".join(_a(f"{t[k]} {label}", tally_url(data['repo'], p['login'], k))
+                           for k, label in (("commit", "commits"), ("pr_opened", "PRs opened"), ("pr_merged", "merged"),
+                                            ("review", "reviews"), ("comment", "comments"), ("issue_opened", "issues opened")) if t.get(k))
+        last_url = p["latest"][0]["url"] if p["latest"] else None
+        out.append(f"<div class='card'><h3>{_a(p['login'], 'https://github.com/' + p['login'])} <span class='tally'>{_a('last active ' + str(p['last_days']) + 'd ago', last_url)}</span></h3>")
+        out.append(f"<p class='tally'>{tally or 'no activity in the window'}</p>")
         if pn.get(p["login"]):
             out.append(f"<p class='now'>{_h(pn[p['login']])}</p>")
         if p["open_prs"]:
@@ -532,7 +548,9 @@ def render(data, notes=None, audience="team", view=None):
             for ep in view["epics"]:
                 if p["login"] in ep["owners"] and any(f.startswith("epic untouched") for f in ep["flags"]):
                     flags.append(f"owner of untouched epic #{ep['number']}")
-            out.append(f"<tr><td>{_h(p['login'])}</td><td>{hr['session_total']:g}</td><td>{ms or '—'}</td><td>{p['review_load']}</td><td class='flag'>{_h(', '.join(flags))}</td></tr>")
+            sess_url = tally_url(data['repo'], p['login'], 'comment')
+            out.append(f"<tr><td>{_a(p['login'], 'https://github.com/' + p['login'])}</td><td>{_a(format(hr['session_total'], 'g'), sess_url)}</td><td>{ms or '—'}</td>"
+                       f"<td>{_a(str(p['review_load']), tally_url(data['repo'], p['login'], 'review_load'))}</td><td class='flag'>{_h(', '.join(flags))}</td></tr>")
         out.append("</tbody></table>")
 
     out.append("<p class='foot'>Every number and event links to its GitHub source. Hook and gate comments are not counted as activity. "

@@ -134,6 +134,25 @@ def test_every_event_links_to_its_source():
     assert data["events"] and all(e["url"] and e["url"].startswith("https://") for e in data["events"])
 
 
+def test_every_number_on_the_page_is_a_link():
+    """FR-32 acceptance: every event AND number links to its GitHub source. Tallies, slice counts,
+    last-active ages, session hours and review load are anchors, not plain text."""
+    data, _ = collected()
+    for audience in ("team", "leads"):
+        page = P.render(data, None, audience)
+        for m in re.finditer(r">(\d+(?:\.\d+)?(?:/\d+)?[^<]*?)<", page):
+            text = m.group(1)
+            if text.strip() in ("—",):
+                continue
+            start = page.rfind("<a ", 0, m.start())
+            end = page.find("</a>", m.start())
+            assert start != -1 and (page.rfind("</a>", 0, m.start()) < start), f"{audience}: number not linked: {text!r}"
+    team = P.render(data, None, "team")
+    assert "commits?author=ann" in team and "1/4 slices done</a>" in team
+    leads = P.render(data, None, "leads")
+    assert "review-requested%3Abob" in leads
+
+
 def test_unattributed_commit_is_flagged_not_counted():
     data, _ = collected()
     assert [c["sha"] for c in data["unattributed_commits"]] == ["bbb1234"]
@@ -169,6 +188,8 @@ def test_attention_strip_is_exactly_flags_and_threshold_breaches():
     epic_items = [t for t in texts if t.startswith("Epic #")]
     flagged = {f"Epic #{e['number']}: {f}" for e in view["epics"] for f in e["flags"]}
     assert set(epic_items) == flagged
+    pr_items = {t for t in texts if t.startswith(("PR #", "Draft PR #"))}
+    assert pr_items == {"PR #20 needs a reviewer (5d)", "Draft PR #21 idle 16d", "PR #22 merged by its author with no review"}
     assert all(a["url"] for a in view["attention"])
 
 

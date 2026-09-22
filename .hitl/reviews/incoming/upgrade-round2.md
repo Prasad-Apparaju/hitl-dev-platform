@@ -1,29 +1,33 @@
-# Upgrade lens, round 2: HITL 2.13.0 at `9998611`
-
-Reviewer: clean-context agent (Fable 5.1), 2026-09-16. Source under review: `/Users/Prasad_1/Projects/hitl-dev-platform` at `9998611` (checked out detached in an agent worktree for the test runs; the main checkout's tracked files under `ci/`, `tools/`, `ai/` are unmodified). Plugin: `/Users/Prasad_1/Projects/hitl-claude-plugin` on `release/2.x` plus the one uncommitted `scripts/build.sh` edit (drops `ai/claude/ai/claude/` from a case list), copied to scratch and built there. Nothing tracked in either repo was modified.
-
-## Checks
-
-| # | Check | Command | Result | Deciding output |
-|---|---|---|---|---|
-| 1 | Only the fix changed | `git diff b5b1bed..9998611 --stat` | pass | `ci/shipped-validators.sha256 | 1 +`, `tools/scripts/shipped-validators-hashes.py | 19 ++++++++++++++++++-`; 2 files. Nothing else. |
-| 2a | Manifest check | `python3 tools/scripts/shipped-validators-hashes.py --check` | pass | `manifest current: every synced validator in the tree is listed`, exit 0 |
-| 2b | Manifest test | `python3 -m pytest ci/wiring/test_shipped_validators_manifest.py -q` | pass | `2 passed, 1 skipped`. The skip is `test_the_manifest_ships_with_the_plugin_build` (looks for the plugin repo beside the checkout; a worktree has no sibling). Its one assertion checked by hand: `grep -c shipped-validators.sha256 <plugin>/scripts/build.sh` = 3. |
-| 3a | Build | `cp -R <plugin> <scratch>/plugin; bash scripts/build.sh <source>` | pass | `✔ Validation passed` ... `all shared/ references resolve` ... `Build complete.`, exit 0 |
-| 3b | Manifest lists the built hash | `shasum -a 256 <build>/shared/workflows.yaml` vs `grep workflows.yaml <source>/ci/shipped-validators.sha256` | pass | built = `191d6d02a42b...eaeb79af`; manifest line 60: `191d6d02a42b...eaeb79af  ci/first-pass/workflows.yaml  # 2.13.0` |
-| 3c | Built manifest == source manifest | `diff <build>/shared/ci/shipped-validators.sha256 <source>/ci/shipped-validators.sha256` | pass | no output, exit 0 |
-| 4a | Build rewrite of workflows.yaml | `diff <build>/shared/workflows.yaml <source>/ai/shared/workflows.yaml` | pass | one hunk, line 30: `ai/claude/dev-practices/workflow-steps.md` -> `${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/workflow-steps.md`. Nothing else differs. |
-| 4b | `built_form()` mirrors it | read `tools/scripts/shipped-validators-hashes.py` (diff above) | pass | one `str.replace("ai/claude/dev-practices/", "${CLAUDE_PLUGIN_ROOT}/skills/dev-practices/")`, applied only to non-`.py` files; source hash kept, built hash appended when different. Exactly the rewrite the diff shows, no other. See point 1 for what it does not mirror. |
-| 5 | 2.12.1 repo's copy recognised | scratch repo, `git show hitl--v2.12.1:shared/workflows.yaml > ci/first-pass/workflows.yaml`, commit, `python3 <build>/shared/ci/first-pass/migrate_project.py --root . --sync-validators <build> --apply` | pass | `= 1 identical, 14 installed, 0 updated from an older release, 0 modified here and kept, 0 overwritten by name`, exit 0. The 2.12.1 shipped file hashes to `191d6d02...` (identical to the 2.13.0 build), so the "identical" branch is the real path here; `cmp` against the built file afterwards is clean. |
-| 6a | Tests | `python3 -m pytest ci tools -q` | pass | `1119 passed, 6 skipped in 65.64s` |
-| 6b | Skill lint | `python3 ci/skill-lint/check_skills.py` | pass | `Skill lint: 63/63 files pass all hard gates; 0 failures, 0 warnings.`, exit 0 |
-
-## Points
-
-1. **Worth deciding.** `built_form()` mirrors one of build.sh's rewrite rules (`ai/claude/dev-practices/`), not the rule set. build.sh (lines 474-530 in the scratch copy) applies six pass-1 flattenings (`ai/shared/templates/`, `ai/claude/generate-docs/templates/`, `ai/claude/dev-practices/`, `ai/claude/apply-change/`, `ai/shared/first-pass/`, `ai/shared/agentic/`), a `SHARED_PROSE` loop, and pass-2/3 prefixing, to every `.yaml` under `shared/`. Today workflows.yaml contains exactly one path build.sh touches (its other `Canonical source:` comments name `ai/claude/start-*/SKILL.md` paths that no rule matches; the diff in 4a confirms only line 30 moves), so the listed hash is correct for 2.13.0. But if a later edit to workflows.yaml adds, say, an `ai/shared/first-pass/` reference, build.sh rewrites it, `built_form()` does not, `--check` still prints `manifest current`, and the manifest again carries a hash no repo holds: the round-1 defect class returns with no signal. The script's own comment says "the release runbook's build step compares them", but `docs/releasing.md` has no such step (`grep -n -i 'shasum\|compare\|built' docs/releasing.md` finds only prose at lines 11 and 163; step 3 only regenerates the manifest). Either add the compare to the runbook's build step, or make the wiring test build (or apply build.sh's sed block to) `ai/shared/workflows.yaml` and assert its hash is in the manifest. Not blocking for this release; the shipped hash is verified.
-2. **Minor.** `test_the_manifest_ships_with_the_plugin_build` locates the plugin repo as a sibling of the source checkout, so it silently skips in any worktree. Verified by hand this round; an env-var override (or a path from the release runbook) would let it run where the gate runs.
-3. **Minor, observation only.** Built workflows.yaml is byte-identical between the 2.12.1 tag and this 2.13.0 build (both `191d6d02...`), so the `# 2.12.1` line `2632228...` was never held by any product repo. Harmless (manifest lines are append-only, an extra hash matches nothing) and consistent with the round-1 finding.
+# Upgrade review, round 2: HITL 2.14.0 (source 66304b1, plugin release/2.x + uncommitted build.sh edit)
 
 ## Verdict
 
-VERIFIED. The fix does what round 1 asked: the manifest now carries the hash of the built `workflows.yaml`, the built manifest equals the source manifest, a 2.12.1 repo's copy is read as identical rather than as a local edit, nothing outside the two fix files changed, and all gates are green.
+**Verified.** With `team-pulse.md` on the SHARED_PROSE allowlist, `bash scripts/build.sh` exits 0 with "Build complete", every shared/ and skills/ reference in the package resolves, the stale sweep removed nothing, plugin validate passes, and the changed-file list is round 1's twenty entries plus `shared/team-pulse.md`.
+
+Scratch: `/private/tmp/claude-501/-Users-Prasad-1-Projects-hitl-dev-platform/e2e18ebd-e633-40b2-8e01-d93500ee8242/scratchpad/ru2/plugin` (`<P>` below), a fresh copy. Build log at `../build.log`. Only diff in the copy before building: `scripts/build.sh` (team-pulse tools block + `SHARED_PROSE=(... next-step.md team-pulse.md)`). Source HEAD `66304b1`, unchanged.
+
+## Checks
+
+| # | Check | Command | Result | Output |
+|---|-------|---------|--------|--------|
+| 1 | Build | `cp -R hitl-claude-plugin <P>`; `git status --short` = ` M scripts/build.sh`; `bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform` | pass | `EXIT=0`; log line 217 `Build complete.`; reachability check prints `all shared/ references resolve`; no `MISSING`, no `Refusing`. plugin.json version `2.14.0`. `grep -rc "SOURCE PATH"` non-zero only in `scripts/build.sh:1` (script text, not shipped). |
+| 2 | team-pulse.md ships | `test -f shared/team-pulse.md`; `cmp` against `ai/shared/team-pulse.md` | pass | `OK shared/team-pulse.md`; "Syncing shared prose" lists it eighth; `team-pulse.md identical to source`. |
+| 3 | Team Pulse skill and generator | `test -f skills/team-pulse/SKILL.md`; `test -f shared/tools/team-pulse/pulse.py`; `ls shared/tools/team-pulse/`; `python3 "$ROOT/shared/tools/team-pulse/pulse.py" --help` | pass | Both `OK`; directory holds `pulse.py` only (no tests); `--help` exit 0. |
+| 4 | Every shared/ and skills/ reference resolves | `grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents commands \| sed ... \| sort -u` then `test -e` each; same for `skills/<name>/SKILL.md` | pass | 59 unique shared/ refs, 0 missing (round 1: 1 missing). 7 unique skills/ refs, 0 missing. |
+| 5 | Stale sweep deleted nothing else | `ls shared/*.md`; `git status --short \| grep '^ D'` | pass | 14 top-level shared/*.md present = 8 SHARED_PROSE (challenge-stance, verification-review, skip-record, personas, plain-english, issue-hygiene, next-step, team-pulse) + 6 SHARED_DOCS (getting-started, command-map, usage-guide, workflow-prd, workflow-brownfield, workflow-migration). `none deleted`; no tracked file shows as `D`. |
+| 6 | Plugin validate | `claude plugin validate <P>` | pass | `✔ Validation passed` (also inside build.sh). |
+| 7 | Changed-file list vs round 1 | `git status --short \| wc -l` and list | pass | 21 entries: the same 17 modified and 3 untracked as round 1 (plugin.json, CHANGELOG.md, scripts/build.sh, check_skips.py, gen_change.py, retired-tests.sha256, shipped-validators.sha256, getting-started.md, skip-record.md, change-context.schema.yaml, usage-guide.md, dev-impact-brief, dev-start-change, dev-switch-context, dev-update, dev-verification-review, help; skipped_line.py, shared/tools/team-pulse/, skills/team-pulse/) plus one new untracked `?? shared/team-pulse.md`. Nothing outside the release. |
+
+Not rerun this round (source unchanged, checks read files the allowlist fix does not touch): Step 6b apply call, manifest hashes, the 2.13.0 migrate_project path, retired-tests entry. Round-1 results stand.
+
+## Round-1 findings, disposition
+
+1. **stops → fixed** — Claim: `build.sh refuses to build 2.14.0 because shared/team-pulse.md is named by the team-pulse skill but is not in the SHARED_PROSE allowlist.` Evidence now: `SHARED_PROSE` at scripts/build.sh:440 ends with `team-pulse.md`; build exits 0; file present and byte-identical to source; `shared/usage-guide.md` link `[team-pulse.md](team-pulse.md)` resolves.
+
+2. **minor → accepted** — Claim: `shipped-validators.sha256 carries a second 2.14.0 hash for skipped_line.py (0025330c…) that matches pre-release commit bff41fd, not any shipped build.` Unchanged; accepted by the lead as minor.
+
+3. **decide → accepted** — Claim: `The build only reaches the reachability check with the uncommitted build.sh team-pulse block; release/2.x as committed does not ship pulse.py.` Lead's disposition: release.sh commits the plugin working tree as the build commit, as 2.13.0's allowlist edit did. Still uncommitted in the working copy at review time (`M scripts/build.sh`); the release commit must include it.
+
+4. **minor → accepted** — Claim: `retired-tests.sha256 lists two hashes for test_skipped_line.py, one of which (d54444cf…) is not the 66304b1 file.` Unchanged; accepted by the lead as minor.
+
+No new findings. Nothing failed.

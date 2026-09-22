@@ -1,0 +1,84 @@
+schema_version: "2.0"
+change_id: GH-139-release-2.14.0
+round: 1
+reviewed_sha: 66304b10527cdc187193868f335dabdd484b1054
+reviewed_tree: e93a446d8d0a9a7eac7fd7d34566530a60a90b74
+lens: upgrade
+scope: "Copied the plugin repo (release/2.x at a5ee227 plus the uncommitted build.sh team-pulse block) to scratch and built it against source 66304b1; ten checks: build and source-path guard, Team Pulse at the skill's paths (no dev- prefix, generator at the fallback path, no tests riding along, conventions file), every shared/ and skills/ reference resolves, the skipped line ships and Step 6b calls it, the shipped-validators manifest against built hashes, the 2.13.0 upgrade path through the built migrator (update, deliver, keep a local edit), stale-test cleanup, claude plugin validate, the notes against the built files, the build commit file list. Report: .hitl/reviews/incoming/upgrade-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of ten items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about eighteen calls, verdict instruction
+checks:
+- check: "the plugin builds from 66304b1 with the source-path guard clean and version 2.14.0"
+  command: cp -R hitl-claude-plugin <scratch>/plugin; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform
+  result: fail
+  output: "EXIT=2, no 'Build complete'; 'Reachability check: shared/ paths named by shipped skills / MISSING shared/team-pulse.md / Refusing to build: 1 shared/ path(s) named by a shipped skill are not in the package.'; plugin.json reads 2.14.0; SOURCE PATH appears only in build.sh's own text"
+- check: "Team Pulse ships where the skill looks: skills/team-pulse (no dev- prefix), generator at the fallback path, no tests, conventions file"
+  command: test -f skills/team-pulse/SKILL.md; test -f shared/tools/team-pulse/pulse.py; ls shared/tools/team-pulse/test_*.py; test -f shared/team-pulse.md; python3 "$ROOT/shared/tools/team-pulse/pulse.py" --help
+  result: fail
+  output: "SKILL.md OK; pulse.py OK and --help exits 0 (usage: pulse.py [-h] {collect,notes,render}); no test files; MISSING shared/team-pulse.md; no dev- prefix because remap_skill_path maps a first component of skills to $rest (build.sh:64), the rule that placed agentic-intake"
+- check: "every shared/ reference in built skills, agents and commands resolves; every skills/<name>/SKILL.md reference resolves"
+  command: grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents commands | sed 's/[.,;:)`]*$//' | sort -u; test -e each; same for skills/ refs
+  result: fail
+  output: "59 unique shared/ refs, 1 missing: shared/team-pulse.md; 7 skills/ refs, all resolve"
+- check: "the skipped line ships and the built dev-start-change Step 6b calls it through the fallback path"
+  command: test -f shared/ci/first-pass/skipped_line.py; sed -n 433,480p skills/dev-start-change/SKILL.md
+  result: pass
+  output: "present; lines 456-458: SL=ci/first-pass/skipped_line.py, fallback $ROOT/shared/ci/first-pass/skipped_line.py, python3 \"$SL\" --change .hitl/current-change.yaml --apply"
+- check: "the shipped-validators manifest lists the built hashes of skipped_line.py, check_skips.py, gen_change.py and the built workflows.yaml"
+  command: shasum -a 256 of each built file; grep -c <hash> shared/ci/shipped-validators.sha256
+  result: pass
+  output: "all four present once: skipped_line e1f70f0f (2.14.0), check_skips 922e2101 (2.14.0), gen_change d308ae6f (2.14.0), built workflows.yaml 191d6d02 (2.13.0 line, unchanged); extra second skipped_line.py 2.14.0 line 0025330c matches bff41fd, not a build (F2)"
+- check: "the 2.13.0 upgrade path: older shipped copies are updated, skipped_line.py is delivered, a repo edit is kept"
+  command: scratch repo with v2.13.0 check_skips.py, gen_change.py, resurface.py; python3 <build>/shared/ci/first-pass/migrate_project.py --root . --sync-validators <build> --apply; then edit gen_change.py, commit, rerun
+  result: pass
+  output: "run 1: check_skips.py and gen_change.py updated (an older shipped version, unmodified), skipped_line.py installed, resurface.py identical; '1 identical, 13 installed, 2 updated from an older release, 0 modified here and kept'; run 2: gen_change.py differs from the shipped version, KEPT yours, with the per-file --overwrite instruction"
+- check: "stale test cleanup: the source test_skipped_line.py hash is in retired-tests and dev-update names the file"
+  command: git show 66304b1:ci/first-pass/test_skipped_line.py | shasum -a 256; grep in shared/ci/retired-tests.sha256 and skills/dev-update/SKILL.md
+  result: pass
+  output: "hash 604c6e74 is line 33 of retired-tests (line 32 d54444cf also names the file, F4); dev-update SKILL.md:270 removal list includes ci/first-pass/test_skipped_line.py"
+- check: "claude plugin validate"
+  command: claude plugin validate <scratch>/plugin
+  result: pass
+  output: "Validation passed (also ran inside build.sh before the reachability refusal)"
+- check: "every bold changelog claim under 2.14.0 has a carrier in the built package or is source-repo-only"
+  command: read CHANGELOG.md [2.14.0]; grep the built tree
+  result: pass
+  output: "Team Pulse: skills/team-pulse/SKILL.md, shared/tools/team-pulse/pulse.py, shared/usage-guide.md row, skills/help/SKILL.md; shared/team-pulse.md claimed but not in the package (F1); docs/team-pulse.md and the tests are source-only. #136 fix: dev-switch-context:63,71 and dev-impact-brief name /hitl:dev-start-change N; getting-started.md and usage-guide.md in the package. Skipped line: skipped_line.py, gen_change.py, check_skips.py, dev-start-change Step 6b, dev-verification-review, skip-record.md, change-context.schema.yaml; CR-7, LLD and the #112 decision are source-only"
+- check: "the build commit file list is exactly the release's files"
+  command: git -C <scratch>/plugin status --short
+  result: pass
+  output: "20 entries, 17 modified and 3 untracked (skipped_line.py, shared/tools/team-pulse/, skills/team-pulse/); every one maps to git diff --stat v2.13.0..66304b1"
+findings:
+- id: F1
+  class: stops
+  check: "the plugin builds from 66304b1 with the source-path guard clean and version 2.14.0"
+  claim: "build.sh refuses to build 2.14.0 because shared/team-pulse.md is named by the team-pulse skill but is not in the SHARED_PROSE allowlist."
+  evidence: "exit 2, MISSING shared/team-pulse.md; scripts/build.sh:440 lists seven prose files, none team-pulse.md; ai/shared/team-pulse.md exists in source; the built shared/usage-guide.md also links team-pulse.md; the stale sweep at build.sh:448-460 deletes any top-level shared/*.md not on the list, so a hand copy would not survive"
+  status: fixed
+  resolved_by: "plugin repo scripts/build.sh:440, team-pulse.md added to SHARED_PROSE, committed in the 2.14.0 build commit on release/2.x; source unchanged at 66304b1"
+  verified_by: "round 2 upgrade record re-builds from a fresh scratch copy and re-checks the reachability list"
+- id: F2
+  class: minor
+  check: "the shipped-validators manifest lists the built hashes of skipped_line.py, check_skips.py, gen_change.py and the built workflows.yaml"
+  claim: "shipped-validators.sha256 carries a second 2.14.0 hash for skipped_line.py (0025330c…) that matches pre-release commit bff41fd, not any shipped build."
+  evidence: "git show bff41fd:ci/first-pass/skipped_line.py hashes to 0025330c; the built file hashes to e1f70f0f, also listed"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-22): a dead manifest line matches no product repo's file; manifest lines are append-only; removing it would move the reviewed commit"
+- id: F3
+  class: decide
+  check: "the plugin builds from 66304b1 with the source-path guard clean and version 2.14.0"
+  claim: "The build only reaches the reachability check with the uncommitted build.sh team-pulse block; release/2.x as committed does not ship pulse.py."
+  evidence: "git diff scripts/build.sh in the scratch copy is the only source of the shared/tools/team-pulse copy"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-22): release.sh commits the plugin repo's working tree as the build commit, which is how the 2.13.0 allowlist edit shipped; the block lands in the 2.14.0 build commit together with the F1 fix"
+- id: F4
+  class: minor
+  check: "stale test cleanup: the source test_skipped_line.py hash is in retired-tests and dev-update names the file"
+  claim: "retired-tests.sha256 lists two hashes for test_skipped_line.py, one of which (d54444cf…) is not the 66304b1 file."
+  evidence: "lines 32-33 of shared/ci/retired-tests.sha256"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-22): the file is append-only by design (every version ever synced); the extra hash matches an intermediate commit no repo received"
+verdict: not verified

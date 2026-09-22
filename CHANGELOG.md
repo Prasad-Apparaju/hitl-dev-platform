@@ -29,7 +29,7 @@ All notable changes to the HITL plugin are documented here.
   branch or change file** (#136). Both moved to intake in 2.9.0; the stale advice skipped the
   restatement, the tier proposal and the Fast Track choice, and in one session led to a change file
   seeded by hand with the full-length plan. Both messages now name `/hitl:dev-start-change N`. A
-  wiring test fails on any skill that points at apply-change for either job. Three docs corrected.
+  wiring test fails on any skill that points at apply-change for either job. Four docs corrected.
 
 ### Changed
 

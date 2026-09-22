@@ -37,7 +37,7 @@ This is not a change step. It writes nothing to the change file and posts nothin
 
 ```bash
 # CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
-ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[])]" 2>/dev/null | head -1)}"
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 PULSE="tools/team-pulse/pulse.py"
 [[ -f "$PULSE" ]] || PULSE="$ROOT/shared/tools/team-pulse/pulse.py"
 [[ -f "$PULSE" ]] || echo "team-pulse: generator not found; run /hitl:dev-update"
