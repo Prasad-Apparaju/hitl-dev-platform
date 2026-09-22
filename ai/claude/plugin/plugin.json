@@ -48,6 +48,7 @@
     "ai/claude/review-lld-adherence",
     "ai/claude/review-security",
     "ai/claude/skills/agentic-intake",
+    "ai/claude/skills/team-pulse",
     "ai/claude/start-brownfield",
     "ai/claude/start-change",
     "ai/claude/start-from-prd",

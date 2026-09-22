@@ -155,9 +155,8 @@ proposal: `export HITL_TIER_PROPOSED=<n>` for Step 6, which writes it as `tier_p
 `tier_set_by` and `tier_reason`, and clear `tier_provisional`. Leaving it set is a blocking error:
 it means nobody confirmed.
 
-The evidence is in the record now, so the proposal cites it rather than the issue's wording. Three
-dependent areas and a data migration is a different change from one flagged file with no callers,
-and the words in the title do not distinguish them.
+The evidence is in the record now, so the proposal cites it rather than the issue's wording: three
+dependent areas and a data migration is a different change from one flagged file with no callers.
 
 Where protection actually changes, from the catalog: **3 → 2** takes `packet`, `arch_review`,
 `qa_verify` and `rollout` off `floor`; **2 → 1** moves only `integration_verify`. `deploy`,
@@ -176,17 +175,13 @@ SZ="ci/first-pass/size_plan.py"; [[ -f "$SZ" ]] || SZ="$ROOT/shared/ci/first-pas
 ```
 
 **Write the outcomes back into the record.** `size_plan` returns `outcomes` — what each rule decided
-and why. Append it to `.hitl/impact/<change_id>.yaml` as `rule_outcomes`. Without it the record says
-what was found and never what was concluded from it, and the retrospective has nothing to compare
-against: you cannot ask whether a rule was right if nobody wrote down what it decided.
-
-It is written here, not by the analysis, because sizing needs the tier and the tier does not exist
-until this step.
+and why. Append it to `.hitl/impact/<change_id>.yaml` as `rule_outcomes`; without it the retrospective
+cannot ask whether a rule was right. It is written here, not by the analysis, because sizing needs the
+tier and the tier does not exist until this step.
 
 Show both, and **list what Fast Track leaves out, one step per line, every time.** Do not wait to
-be asked. Two counts and a comma list read as a summary, not a choice: in a 2.12.1 session the
-person had to ask to see the steps before they could select or skip any, and was never shown a
-checkbox.
+be asked: two counts and a comma list read as a summary, not a choice (a 2.12.1 session never showed
+a checkbox until the person asked).
 
 ```
 This change reaches: 1 area, no dependents, no interface or data change.
@@ -213,11 +208,10 @@ Recommended: Fast Track. Nothing it drops is protecting something this change to
 ```
 
 Each line is the step's name as a person would say it, not the catalog label (`VfyDsn`), and a
-short form of its `protects` line. Order by `forgo_cost`, then catalog order, so the most
-consequential omission is the first one a person sees. "Always stays" is every `locked` step from
-the sizer. One line on which is recommended and why. **The recommendation is advice**: taking Full
-Scale instead is not recorded. Write the two names exactly as shown, capitalized: they are what
-people ask for by name, and a different spelling each time is how a name stops being findable (#125).
+short form of its `protects` line, ordered by `forgo_cost` then catalog order. "Always stays" is every
+`locked` step from the sizer. One line on which is recommended and why; **the recommendation is
+advice**, and taking Full Scale is not recorded. Write the two names exactly as shown, capitalized:
+a different spelling each time is how a name stops being findable (#125).
 
 If the two options come out the same, say so and do not offer a choice.
 
@@ -257,15 +251,12 @@ Fast Track does not:
 (header `Leave out`), over the steps in the plan a person may lighten. That is every step that is
 not `locked`, not `no_omit` and not `issue` (intake has already done it), lowest `forgo_cost` first, so the cheapest to drop comes first. A
 ticked step goes through the Step 4b menu below, which says what it becomes. Offer the same screen
-after Fast Track when someone says they want it lighter still.
-
-Full Scale asks nothing more.
+after Fast Track when someone says they want it lighter still. Full Scale asks nothing more.
 
 **Steps that always stay are never checkboxes.** Dropping one needs a named person to accept the
-risk, not a tick. List them, and say how to ask for a risk-accepted skip.
-
-If the `AskUserQuestion` tool is not available (a host without it, or a non-interactive run), print
-the same lists numbered and take the numbers typed back. Do not drop the list.
+risk, not a tick. List them, and say how to ask for a risk-accepted skip. Without the
+`AskUserQuestion` tool (a host without it, a non-interactive run), print the same lists numbered and
+take the numbers typed back; never drop the list.
 
 **Print the full ordered plan on request** ("show me every step"), and always in full for a workflow
 of 10 steps or fewer.
@@ -274,9 +265,8 @@ of 10 steps or fewer.
 
 ## Step 4b — Record the choice (First Pass, FR-29)
 
-**First Pass is how the choice at Step 4 is recorded.** It is the internal name for the skip record
-and its validator; people see Fast Track and Full Scale, so never say "First Pass" to them. It is not
-opt-in: every change is shown a proposal and confirms or adjusts it; Full Scale drops nothing (#97).
+**First Pass is how the choice at Step 4 is recorded**: the internal name for the skip record and its
+validator. People see Fast Track and Full Scale; never say "First Pass" to them. Not opt-in (#97).
 
 **The pre-selection comes from the rules, not from the tier.** `size_plan.py` has already decided
 what applies and what is needed now, from what this change reaches. Present the steps outside the
@@ -284,9 +274,8 @@ chosen option pre-selected, each carrying the finding that decided it as its rea
 files in this change", "3 dependents". Let **one confirmation record the lot.**
 
 Those entries take the `not_applicable` disposition — the rules determined the step does not apply,
-which is a different fact from a person choosing to skip it. Without that distinction Fast Track
-records a named human declining twenty-odd steps they never looked at, and the retrospective reads
-that back as what was left out and why.
+which is a different fact from a person choosing to skip it; otherwise Fast Track would record a named
+human declining twenty-odd steps they never looked at.
 
 A rule may never retire a load-bearing step. `not_applicable` on a `floor` or `no_omit` step is a
 non-waivable block (`RULE_OVER_FLOOR`); those are dropped by a named person accepting the risk, or
@@ -297,16 +286,15 @@ rules run on its own findings (#124) and show `applies: false`, and the security
 `security_sensitive` answered (silence is not a no); else `COND_UNCONFIRMED`, `RECORD_UNIDENTIFIED`
 or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step.
 
-Pre-selected is not pre-recorded. **Nothing is written until the human confirms**, and doing nothing
-still runs the full plan — `keep` remains the default disposition (CR-1). The actor on every resulting
-record is the person who confirmed, never the agent.
+Pre-selected is not pre-recorded. **Nothing is written until the human confirms**; doing nothing runs
+the full plan (`keep` is the default, CR-1), and the actor on every record is the person who confirmed.
 
 **The checkboxes in Step 4 are the menu.** Ask once (brief mode, not a step-by-step interview).
 Steps the RULES excluded (`excluded`) are pre-selected `not_applicable`; an active conditional step
 Fast Track leaves out (`proposed`, e.g. baseline on an API change) is pre-selected `defer` by the
-confirming person, never `not_applicable` (#129). Both are "Add back" boxes only. A step ticked
-under "Leave out" is a person choosing to lighten beyond that, and its `crit`
-(from the catalog, resolved against this change's `tier`) says what it can become:
+confirming person, never `not_applicable` (#129). Both are "Add back" boxes only. A step ticked under
+"Leave out" is a person lightening beyond that; its `crit` (catalog, resolved against the `tier`) says
+what it can become:
 
 | step type | options offered |
 |---|---|
@@ -319,10 +307,9 @@ under "Leave out" is a person choosing to lighten beyond that, and its `crit`
 
 For a ticked step, use its starter when it has one, otherwise `decline` for a ceremony step and
 `defer` for a standard one. Say which in one line per step ("Test plan: a thin version now, marked
-to enhance later"), and ask only if the person wants a different one. Then say, once, what happens
-to the set: **"N steps left out. No issues opened. One line at the top of #N lists them, and they
-come back at the next change in this area."** Nothing is filed for a skip unless the person says
-"file this one", and then it is one ticket, for that step, with the skip record in its body.
+to enhance later"), and ask only if the person wants a different one. Then say once: **"N steps
+left out. No issues opened. One line at the top of #N lists them; they come back at the next change
+in this area."** A ticket is filed only when the person says "file this one" (one, for that step).
 
 **This step elicits choices; it does not write the ledger.** The change file does not exist yet — Step 6
 creates it — so recording here would write to a stale or absent file that Step 6 then overwrites. Capture
@@ -346,11 +333,10 @@ Rules that still apply when collecting the choices:
 1. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
    step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver. Put both in the entry.
 2. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
-   version of the system"), mark it `needs-enhancement`, record its path. It is listed on the issue's
-   skipped line like a defer; no ticket unless asked for.
-3. **Defer** — leave `followup_ref` out and the generator sets it to `issue:<N>`, the change's own
-   issue, where Step 6b writes the one-line notice. Put a ticket ref there only when the person
-   asked for that step to be filed.
+   version of the system"), mark it `needs-enhancement`, record its path. Listed on the issue's skipped
+   line like a defer; no ticket unless asked for.
+3. **Defer** — leave `followup_ref` out; the generator sets `issue:<N>` (the change's own issue, where
+   Step 6b writes the notice). A ticket ref goes there only when the person asked for one.
 
 If the validator is missing, say so **before** collecting any choices — the ledger is unenforced without it:
 
@@ -360,8 +346,6 @@ CHK="ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || echo "⚠ Skip-record validator not found: run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
 ```
-
-Certification happens in **Step 6b**, once the change file exists and there is something real to certify.
 
 Run the change under **brief mode** ([`shared/first-pass/brief.md`](../../shared/first-pass/brief.md) —
 say less, ask less, never re-ask what intake already settled) and the **reduced-friction permission policy**
@@ -474,13 +458,11 @@ SL="ci/first-pass/skipped_line.py"
 python3 "$SL" --change .hitl/current-change.yaml --apply
 ```
 
-The last line is the notice the person was promised in Step 4b: one line between markers at the top
-of the issue body naming every step left out, regenerated from the ledger, idempotent. Nothing else
-is posted or filed for a skip. If it exits 3, `gh` could not edit the issue: say so in one line and
-carry on; the ledger is still the record. If it exits 2, the change has no issue number (its id is
-not `GH-N`, so the generator left `followup_ref` empty and the certify step warned
-`DEFER_NO_FOLLOWUP`): say that the left-out steps are recorded in the ledger only, and re-run with
-`--issue N` if there is an issue to write to.
+The last line is the Step 4b notice: one line between markers at the top of the issue body naming every
+step left out, regenerated from the ledger, idempotent; nothing else is posted or filed for a skip. Exit
+3: `gh` could not edit the issue; say so and carry on, the ledger is the record. Exit 2: no issue number
+(id not `GH-N`, so `followup_ref` is empty and certify warned `DEFER_NO_FOLLOWUP`); say the left-out
+steps are in the ledger only, and re-run with `--issue N` if there is an issue.
 
 With no area declared yet, entries record as **project-wide** and resurface at any later change until
 resolved; the impact step reads them and does not append (`dev-apply-change` Step 3). The append is

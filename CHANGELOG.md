@@ -6,6 +6,23 @@ All notable changes to the HITL plugin are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Team Pulse** (#118, FR-32): `/hitl:team-pulse` writes one page from GitHub that shows who is
+  on what, what is waiting on someone else, and who can unblock it. Per person: last activity,
+  tallies, open PRs with draft flag and idle age, latest events, one sentence. Per epic: the
+  checkbox list read as a slice tree with a state per slice, flags, one summary and one nudge. An
+  attention strip lists every epic flag, draft PRs and unreviewed PRs past the thresholds, PRs
+  merged by their author with no review, and commits not linked to a GitHub account. Hook and
+  gate comments never count as human activity. A self-reported `Hours:` line renders a milestone
+  bar on the leads page only. Two audiences, asked once: `team` (default, the same page for
+  everyone) and `leads` (adds a planning section; the team page is still written). Every number
+  and event links to its GitHub source; the notes are model-written from the collected data only
+  under a facts-only wording rule. `gh` only, no other dependency; file output under
+  `docs/04-operations/`, artifact publishing when the tool is available. Conventions in
+  `shared/team-pulse.md`, user doc with a scheduling recipe in `docs/team-pulse.md`, generator
+  `tools/team-pulse/pulse.py` with 12 tests.
+
 ### Fixed
 
 - **`dev-switch-context` and `impact-brief` no longer send people to `dev-apply-change` to create a

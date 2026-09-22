@@ -25,6 +25,7 @@ of the above. Instead this file checks three specific properties:
 Run: python3 -m pytest ci/wiring -q
 """
 import io
+import json
 import os
 import re
 import shutil
@@ -849,4 +850,19 @@ def test_no_skill_sends_people_to_apply_change_to_create_a_branch_or_change_file
                 for m in stale.finditer(_read(p)):
                     offenders.append("%s: %s" % (os.path.relpath(p, ROOT), m.group(0)[:80]))
     assert not offenders, "stale pointer to apply-change for branch/change-file creation: %s" % offenders
+
+
+def test_team_pulse_skill_invokes_the_generator_it_ships_with():
+    """FR-32: the skill runs tools/team-pulse/pulse.py (collect, notes, render), the generator exists
+    with its tests, the conventions file it cites ships, and the skill is registered (wiring-defect class)."""
+    sk = _read(os.path.join(AI, "claude", "skills", "team-pulse", "SKILL.md"))
+    for cmd in ("collect", "notes", "render"):
+        assert re.search(r'"\$PULSE" %s' % cmd, sk), "skill does not run pulse.py %s" % cmd
+    assert "shared/tools/team-pulse/pulse.py" in sk
+    assert os.path.isfile(os.path.join(ROOT, "tools", "team-pulse", "pulse.py"))
+    assert os.path.isfile(os.path.join(ROOT, "tools", "team-pulse", "test_pulse.py"))
+    assert "shared/team-pulse.md" in sk and os.path.isfile(os.path.join(AI, "shared", "team-pulse.md"))
+    reg = json.load(io.open(os.path.join(AI, "claude", "plugin", "plugin.json"), encoding="utf-8"))
+    assert "ai/claude/skills/team-pulse" in reg["skills"]
+    assert "Never post the page" in sk, "the no-posting rule is the surveillance guard; it must stay"
 
