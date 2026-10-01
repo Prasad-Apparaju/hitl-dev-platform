@@ -26,6 +26,15 @@ from dl_common import (EXIT_OK, EXIT_REFUSED, EXIT_UNREADABLE, authorization_ok,
                        find_source, load_yaml, log_run, parse_ts, set_source_status, write_evidence)
 
 
+WRITE_METHOD_NAMES = ("insert", "insert_one", "insert_many", "update", "update_one", "update_many", "replace_one",
+                      "delete", "delete_one", "delete_many", "write", "execute", "executemany", "save", "drop",
+                      "create", "bulk_write", "commit")
+
+
+class RefusedFetch(Exception):
+    """A live fetch object that could write. Raised before any call is made."""
+
+
 class ReadOnlyFetch(Protocol):
     """The only interface a live driver implements. There is no write method to call."""
 
@@ -248,8 +257,11 @@ def live_fetch(driver: str, dsn: str):
 
 def run_live(data_dir: str, source: str, fetch: ReadOnlyFetch, sample_rows: int, keys, at, no_samples: bool, src: dict) -> tuple[int, str]:
     """Profile a live store through `fetch`. The caller has already checked authorization."""
-    assert not any(hasattr(fetch, m) for m in ("insert", "update", "delete", "write", "execute")), "a fetch with a write method is refused"
     env = src.get("environment", "unknown")
+    writers = [m for m in WRITE_METHOD_NAMES if hasattr(fetch, m)]
+    if writers:
+        log_run(data_dir, "profile_adapter", source, "live", env, True, None, "refused", "write_method:%s" % ",".join(writers), at=at)
+        raise RefusedFetch("a fetch object with a write method is refused: %s" % ", ".join(writers))
     stores = fetch.stores()
     items = profile(fetch, stores, sample_rows, keys, lambda s: "%s/%s" % (source, s), no_samples)
     access = {"mode": "live", "environment": env, "read_only": True,

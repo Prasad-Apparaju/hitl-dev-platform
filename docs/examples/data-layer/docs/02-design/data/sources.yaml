@@ -17,7 +17,7 @@ sources:
 - id: src:orders-db
   kind: relational
   declared_from:
-  - docker-compose.yml:3
+  - docker-compose.yml:4
   - app/settings.py:3
   environment: offline-export
   in_scope: true
@@ -29,7 +29,7 @@ sources:
 - id: src:shipments-db
   kind: document
   declared_from:
-  - docker-compose.yml:7
+  - docker-compose.yml:8
   - app/settings.py:4
   environment: offline-export
   in_scope: true

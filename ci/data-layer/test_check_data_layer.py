@@ -399,3 +399,23 @@ def test_question_needing_an_unknown_id_is_a_warning(fx):
     findings, code = run(root, data)
     hit = [f for f in findings if f["code"] == "QUESTION_NEEDS_UNKNOWN"]
     assert hit and hit[0]["waivable"] and hit[0]["locus"] == "q:1" and code == 0
+
+
+def test_fix3_every_template_parses_and_carries_only_schema_keys():
+    tdir = os.path.join(ROOT, "ai", "shared", "templates", "data-layer")
+    schema = yaml.safe_load(open(SCHEMA))
+    files = schema["files"]
+    for name in ("sources.yaml", "questions.yaml", "ontology.yaml", "mappings.yaml", "lineage.yaml", "findings.yaml"):
+        d = yaml.safe_load(open(os.path.join(tdir, name)))
+        assert set(d) <= set(files[name]["top"]), name
+        spec = files[name]
+        if "entries" in spec:
+            for e in d[spec["entries"]]:
+                assert set(e) <= set(spec["entry"]["keys"]), (name, set(e) - set(spec["entry"]["keys"]))
+        else:
+            for a in d["activities"]:
+                assert set(a) <= set(spec["activity"]["keys"])
+            for e in d["edges"]:
+                assert set(e) <= set(spec["edge"]["keys"])
+    d = yaml.safe_load(open(os.path.join(tdir, "interpretation.yaml")))
+    assert set(d) <= set(files["interpretation"]["top"]) and set(d["proposed"]) <= set(files["interpretation"]["proposed"]["keys"])

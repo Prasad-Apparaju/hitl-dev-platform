@@ -54,6 +54,11 @@ def test_scan1_proposes_every_declared_source_with_its_kind_and_no_values(fx):
     by = {s["id"]: s for s in doc["sources"]}
     assert by["src:app"]["kind"] == "code"
     assert by["src:orders-db"]["kind"] == "relational" and "docker-compose.yml:12" in by["src:orders-db"]["declared_from"]
+    # M4: the committed sources.yaml rows carry the lines the scan writes
+    committed = {s["id"]: s for s in load(os.path.join(fx, DATA, "sources.yaml"))["sources"]}
+    for sid in ("src:orders-db", "src:shipments-db"):
+        for where in committed[sid]["declared_from"]:
+            assert where in by[sid]["declared_from"], "%s: %s is not what the scan proposes" % (sid, where)
     assert by["src:shipments-db"]["kind"] == "document"
     assert by["src:warehouse"]["kind"] == "unknown" and "app/settings.py:5" in by["src:warehouse"]["declared_from"]
     # a bare env-var reference folds into the source its connection string named, not a duplicate
@@ -232,8 +237,10 @@ def test_auth2_a_fetch_with_a_write_method_is_refused(fx):
     class Bad(FakeFetch):
         def insert(self, *a):
             pass
-    with pytest.raises(AssertionError):
+    with pytest.raises(P.RefusedFetch):
         P.run_live(os.path.join(fx, DATA), "src:warehouse", Bad(), 500, [], AT, False, src)
+    assert "result=refused reason=write_method:insert" in open(os.path.join(fx, DATA, "run.log")).read().splitlines()[-1]
+    assert not os.path.exists(os.path.join(fx, DATA, "evidence", "warehouse"))
 
 
 def test_auth3_environment_mismatch_is_refused(fx):

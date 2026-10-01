@@ -1,7 +1,8 @@
 name: Data layer
 
 # Checks the data layer (FR-31) on every PR: the validator over docs/02-design/data/ and the scorecard
-# against the committed baseline. Advisory by default: findings are printed and the job passes. With
+# against the BASE branch's scorecard.yaml (the PR's own file is what the run just wrote, so diffing
+# against it could never show a regression the run produced). Advisory by default: findings are printed and the job passes. With
 # `data_layer: { blocking: true }` in .hitl/config.yaml the validator's blocking findings and a
 # scorecard regression fail the build. A repo without docs/02-design/data/ passes with one line.
 #
@@ -26,11 +27,18 @@ jobs:
             echo "data layer: absent, nothing to check."
             exit 0
           fi
-          blocking=$(python3 -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print(str((d or {}).get('data_layer',{}).get('blocking',False)).lower())")
+          blocking=$(python3 -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print(str(((d or {}).get('data_layer') or {}).get('blocking',False)).lower())")
           set +e
           python3 ci/data-layer/check_data_layer.py --data-dir docs/02-design/data --manifest docs/system-manifest.yaml --waivers ci/data-layer/data-layer-waivers.yaml
           v=$?
-          base=""; [ -f docs/02-design/data/scorecard.yaml ] && base="--baseline docs/02-design/data/scorecard.yaml"
+          base=""
+          if [ -n "$GITHUB_BASE_REF" ]; then
+            git fetch -q --depth=1 origin "$GITHUB_BASE_REF" 2>/dev/null
+            if git show "origin/$GITHUB_BASE_REF:docs/02-design/data/scorecard.yaml" > /tmp/base-scorecard.yaml 2>/dev/null; then
+              base="--baseline /tmp/base-scorecard.yaml"
+            fi
+          fi
+          [ -z "$base" ] && [ -f docs/02-design/data/scorecard.yaml ] && base="--baseline docs/02-design/data/scorecard.yaml"
           python3 ci/data-layer/scorecard.py --data-dir docs/02-design/data $base --no-write --strict
           s=$?
           set -e
