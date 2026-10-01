@@ -1,0 +1,29 @@
+schema_version: '1.0'
+entity: ent:carrier
+inputs:
+- evidence/slices/carrier.yaml
+- ai/shared/templates/data-layer/data-layer.schema.yaml
+- ai/shared/templates/data-layer/interpretation.yaml
+written_by:
+  model: claude
+  at: '2026-09-30T10:10:00Z'
+proposed:
+  ontology:
+    id: ent:carrier
+    name: Carrier
+    definition: The company moving a shipment. Referenced by code; no store holds it.
+    synonyms:
+    - courier
+    catalog_term: null
+    relationships: []
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/carrier.yaml
+      item: ev:app/code/0004
+  mappings: []
+  lineage:
+    activities: []
+    edges: []
+  findings: []
+open_questions:
+- No store holds a carrier; carrier_ref is empty on every row.

@@ -1,17 +1,21 @@
 # Data Layer (EPIC #131): Implementation Plan
 
-> Status: **draft v0 (2026-09-15)**, written from
-> [requirements v1](../../01-product/data-layer/requirements.md) before the rest of this design package
-> exists. Phase 0 produces the HLD, ADRs, LLD and test plan, then revises this file so every phase traces
-> to an LLD section, the way [first-pass/05-implementation-plan.md](../first-pass/05-implementation-plan.md)
-> does. Slice 1 is planned in detail, slice 2 in outline, slices 3 to 5 as placeholders. Nothing here is
-> built.
+> Status: **draft v1 (2026-09-30)**. Phase 0 is written: HLD [`01-design.md`](01-design.md), ADRs
+> [`02-adrs.md`](02-adrs.md), LLD [`03-lld.md`](03-lld.md), test plan [`04-test-plan.md`](04-test-plan.md),
+> from [requirements v1.1](../../01-product/data-layer/requirements.md). The open assumptions in §2 are
+> settled by the ADRs named there. Slice 1 is planned in detail, slice 2 in outline, slices 3 to 5 as
+> placeholders. Nothing here is built. Phase 0 closes with the validation review of the package.
+>
+> **Slice order is open.** The 2026-09-25 edit of #131 lists eight slices S1 to S8 with business-rule
+> extraction (Part B, FR-35) first and data-layer adapters at S5. This plan designs the data-layer core
+> and the evidence core both parts share (ADR-13). Which family is built first is the owner's
+> release-planning call; the Phase A schema work is needed by either.
 
 ## 1. What the plan rides on (verified in the repo)
 
 | Mechanism | Where | Used for |
 |---|---|---|
-| Manifest generator | `tools/generate-manifest/generator.py` | Shape of the adapters: a script that scans and writes YAML, human fields preserved across re-runs |
+| Manifest generator | `tools/generate-manifest/generator.py` | Shape of the adapters: a script that scans and writes YAML (it overwrites on re-run, so the manifest tie is re-run after it) |
 | Manifest drift checker | `ci/manifest-drift/check_manifest_drift.py` | Shape of the validator: exit 0/1, `--strict`, run by Conventions and by a CI workflow template |
 | Validator install and update | `start-brownfield` Step 3 copy block; `dev-update --sync-validators`; `ci/shipped-validators.sha256` | Getting `ci/data-layer/` and `tools/data-layer/` into product repos and keeping them current |
 | Conditional steps | `cond:` plus `engages:` predicates in `ai/shared/workflows.yaml`; `tools/workflow-catalog/derive.py verify` | The slice-2 `data_layer` step |
@@ -20,9 +24,9 @@
 | Fail-closed validator discipline | `ci/first-pass/check_skips.py`, NEG cases proven by mutation | The data-layer validator |
 | Issue hygiene, skip record, plain English | `ai/shared/issue-hygiene.md`, `ai/shared/skip-record.md`, `ai/shared/plain-english.md` | Findings as tickets (DL-9), Fast Track leaving the step out (DL-11), the scorecard text |
 
-## 2. Things the requirements assume that the repo does not yet provide
+## 2. Things the requirements assumed that the repo did not provide (settled in Phase 0)
 
-Settle these in Phase 0. Each is an ADR or a requirements amendment, not a build task.
+Each item keeps its original text for the record; the decision is the ADR named in bold at its end.
 
 1. **`boundary_entities` is not a generated field.** DL-6 ties the ontology to the manifest's boundary
    entities. The template `ai/shared/templates/system-manifest-template.yaml` has no such field and the
@@ -32,30 +36,37 @@ Settle these in Phase 0. Each is an ADR or a requirements amendment, not a build
    DRAFT `boundary_entities` block per domain; or the ontology becomes the source and the fold step
    back-fills the manifest; or DL-6 also reads the names in `entity_crossing`. Recommendation: the
    ontology is the source and Fold writes the manifest block, since the ontology has evidence and the
-   generator's guess does not.
+   generator's guess does not. **Settled: ADR-1, a script (`manifest_tie.py`) derives the block from
+   mappings and the manifest's domain file lists.**
 2. **DL-11 asks a new intake question; the impact record already answers it.** `surfaces: data` and
    `data_migration` exist and drive `baseline` and `sec_design` today. The step should engage on
    `{ any: [surfaces:data, data_migration] }` and ask nothing new. Keep a question only for the case the
-   rules cannot see: an entity or derivation changed without a persisted-shape change.
+   rules cannot see: an entity or derivation changed without a persisted-shape change. **Settled: ADR-2.**
 3. **A brownfield onboarding step is a catalog change.** The `brownfield` workflow is numbered 1 to 11
    in `workflows.yaml` and mirrored in `tools/workflow-catalog/catalog.yaml`. Adding a step changes
    `total` and every open onboarding. Slice 1 therefore ships the skill standalone, pointed to from
-   Step 3 and Step 7 prose. The catalog step lands with slice 2's migration.
+   Step 3 and Step 7 prose. The catalog step lands with slice 2's migration. **Settled: ADR-10.**
 4. **The field project's evidence cannot be the test fixture.** It is client data and this repo is
    public. Slice 1 needs a synthetic fixture: a small app with an ORM, a driver call and a nightly job,
    plus offline exports standing in for a document store and a relational database. The field project
-   remains the private acceptance run the user performs.
+   remains the private acceptance run the user performs. **Settled: ADR-11; the fixture's contents
+   are listed there and in test plan §1.**
 5. **Interpret needs a model; CI cannot run it.** Extract, Fold, Validate and the scorecard are scripts
    and are tested in CI from fixture interpretations. Interpret is exercised by the skill run on the
    fixture during the validation review, and its isolation is checked mechanically (each interpretation
-   declares `inputs:` and the validator rejects a citation outside them).
+   declares `inputs:` and the validator rejects a citation outside them). **Settled: ADR-5, ADR-12.**
 6. **Answerability (DL-2) needs a mechanical definition.** Proposed: a question record lists the entity,
    mapping and edge IDs it needs; it is answerable when every ID exists at a confidence other than
-   `needs-review`. The model drafts the needs list at intake; a person confirms it.
+   `needs-review`. The model drafts the needs list at intake; a person confirms it. **Settled: ADR-6.**
+7. **The issue's adoption model arrived after the requirements.** The 2026-09-25 edit of #131 says off
+   by default, advisory by default, blocking per repo. Requirements v1 DL-10 and DL-11 said "cannot
+   close". **Settled: ADR-9; requirements v1.1 amends DL-10 and DL-11 to "with blocking on".**
+8. **Part B shares the evidence model.** The rule layer (FR-35) is to share FR-31's evidence model and
+   scorecard. **Settled: ADR-13; the schema is a shared core plus a rule table per file family.**
 
-Also open: the FR number (FR-30 is claimed by #105 and #118); the design package refers to DL-n until it
-is settled, and the PRD row is a release precondition. The requirements branch
-`issue/131-data-layer-requirements` is committed and not pushed.
+The FR number is settled: FR-31 (PRD §5.7, 2026-09-19). FR-35 is registered to the business-rule layer
+in the same table on 2026-09-30, because #131's PRD delta claims it and the registry assigns numbers at
+proposal, in order. The requirements branch merged on 2026-09-15.
 
 ## 3. Principles (carried from #10, #35, FR-29)
 
@@ -81,13 +92,13 @@ is settled, and the PRD row is a release precondition. The requirements branch
 
 | Phase | Deliverable | Depends | Requirements | Key tests | Size |
 |---|---|---|---|---|---|
-| **0** | **Design package.** `01-design.md` (HLD: the five stages, the six files, the evidence folder, the manifest tie), `02-adrs.md` (the decisions in §2 and §7), `03-lld.md` (file schemas field by field, adapter contracts, validator rules, scorecard metrics and diff), `04-test-plan.md` (NEG families), this file revised. One validation review of the package before Phase A. | requirements merged | all DL-1..9 | review record | M |
-| **A** | **Schemas + fixture.** `ai/shared/templates/data-layer/`: `sources.yaml`, `questions.yaml`, `ontology.yaml`, `mappings.yaml`, `lineage.yaml`, `findings.yaml` templates plus one `data-layer.schema.yaml` in the style of `change-context.schema.yaml` (confidence enum, evidence types, PROV edge terms, `inputs:` on interpretations). Synthetic worked example `docs/examples/data-layer/`: the small app, offline evidence exports, interpretations, the four files, a scorecard baseline, one collision, one negative finding, one declared-not-extracted source. | 0 | DL-1, DL-3, DL-5 | schema round-trips; the example validates clean | M |
-| **B** | **Validator + scorecard.** `ci/data-layer/check_data_layer.py` (fail-closed, table-driven): ontology entry naming a service, job, file or endpoint; negative finding written as an edge; fourth confidence value; assertion with no evidence entry; citation outside the interpretation's declared `inputs`; boundary entity absent from the ontology; source declared-not-extracted whose dependants are not `needs-review`. `ci/data-layer/scorecard.py`: the DL-7 metrics, `--baseline` diff, answerability per DL-2, a plain-English report. `ci/workflows/data-layer-check.yml` template. | A | DL-2, DL-4, DL-5, DL-6, DL-7 | NEG-1..7 by mutation; SCORE-*; BASE-* (diff never hides a regression) | L |
-| **C** | **Adapters** under `tools/data-layer/`: `intake_scan.py` (connection strings, ORM and driver configs, dbt project, DAG files, IaC, env names, proposed `sources.yaml`); `code_adapter.py` (Python first, AST: ORM entities, repository reads and writes, driver calls, joins and keys, evidence type `code`); `profile_adapter.py` (document store and relational: counts, field presence, key overlap; **offline export mode first**, live mode the same code behind a read-only fetch layer that requires an authorization record in `sources.yaml`). Every run writes `evidence/<source>/<type>-<timestamp>.yaml` and `run.log` with the access used. Optional drivers imported lazily; a missing driver is recorded as access not obtained, never a crash. | A | DL-1, DL-3, DL-8 | scan finds every fixture source; fake client asserts no write method called (AUTH-1); no authorization record, no live run (AUTH-2); missing driver recorded (SRC-1) | L |
-| **D** | **Skill** `ai/claude/map-data-layer/SKILL.md`, `/hitl:dev-map-data-layer`, five stages with banners and `.hitl/current-change.yaml` step tracking as `start-brownfield` does: 1 Intake (scan, confirm, competency questions, per-source environment and **AUTHORIZED** reply before any live read); 2 Extract (scripts only); 3 Interpret (one sub-agent per entity, handed only that entity's evidence paths, writing `interpretations/<entity>.yaml` with `inputs:`); 4 Fold (a sub-agent handed interpretations only, writing the four files and the manifest `boundary_entities` block per ADR); 5 Validate (validator, scorecard, findings offered as tickets under issue hygiene, filed only on confirmation). Re-runnable per stage. Registered in `plugin.json`; passes skill-lint; report text passes the plain-English lint. | B, C | DL-1, DL-2, DL-4, DL-8, DL-9 | skill-lint; wiring test that every stage names only its inputs; plain-English on the report | L |
-| **E** | **Integration.** `start-brownfield` Step 3 copies `ci/data-layer/` and `tools/data-layer/` next to the other validators and Step 7 points to the skill; `check-conventions` Step 1 runs the validator and scorecard, reporting absent as SKIPPED; `dev-update --sync-validators` and `ci/shipped-validators.sha256` cover the new files (the wiring test holds it); build script sweeps the new `shared/` paths; `help` skill entry; CHANGELOG; `docs/README.md` design row; `docs/examples/README` row. | D | DL-6, DL-7 | `ci/wiring` suite; fresh sandbox install runs the example end to end | M |
-| **F** | **Validation + release.** One clean-context validation review with the acceptance scenarios 1 to 6 from requirements §8.2 as the checklist, run on the fixture in a `CLAUDE_CONFIG_DIR` sandbox, one page, no adversarial pass. Separately the user runs the skill on the field project and reports the scorecard against the hand-built baseline. Release as a minor on 2.x per `docs/releasing.md`: release change file, review records, install verify. | E | all slice 1 | full suite plus the two runs | M |
+| **0** | **Design package.** Written 2026-09-30: `01-design.md` (HLD: the five stages, the six files, the evidence folder, the manifest tie), `02-adrs.md` (13 ADRs; the decisions in §2 and §7), `03-lld.md` (file schemas field by field, adapter contracts, validator rules, scorecard metrics and diff), `04-test-plan.md` (NEG-1 to NEG-25 and the suites per phase), this file revised. Remaining: one validation review of the package before Phase A. | requirements merged | all DL-1..9 | review record | M |
+| **A** | **DONE 2026-09-30.** **Schemas + fixture.** `ai/shared/templates/data-layer/`: `sources.yaml`, `questions.yaml`, `ontology.yaml`, `mappings.yaml`, `lineage.yaml`, `findings.yaml` templates plus one `data-layer.schema.yaml` in the style of `change-context.schema.yaml` (confidence enum, evidence types, PROV edge terms, `inputs:` on interpretations). Synthetic worked example `docs/examples/data-layer/`: the small app, offline evidence exports, interpretations, the four files, a scorecard baseline, one collision, one negative finding, one declared-not-extracted source. | 0 | DL-1, DL-3, DL-5 | schema round-trips; the example validates clean | M |
+| **B** | **DONE 2026-09-30** (76 tests; the scorecard found a second collision, a natural-key one, which the baseline now carries). **Validator + scorecard.** `ci/data-layer/check_data_layer.py` (fail-closed, table-driven): ontology entry naming a service, job, file or endpoint; negative finding written as an edge; fourth confidence value; assertion with no evidence entry; citation outside the interpretation's declared `inputs`; boundary entity absent from the ontology; source declared-not-extracted whose dependants are not `needs-review`. `ci/data-layer/scorecard.py`: the DL-7 metrics, `--baseline` diff, answerability per DL-2, a plain-English report. `ci/workflows/data-layer-check.yml` template. | A | DL-2, DL-4, DL-5, DL-6, DL-7 | NEG-1..7 by mutation; SCORE-*; BASE-* (diff never hides a regression) | L |
+| **C** | **DONE 2026-09-30** (25 tests; the committed fixture evidence and slices are what the scripts produce; `slice_evidence.py`, `assign_ids.py` and `manifest_tie.py` ship here too). **Adapters** under `tools/data-layer/`: `intake_scan.py` (connection strings, ORM and driver configs, dbt project, DAG files, IaC, env names, proposed `sources.yaml`); `code_adapter.py` (Python first, AST: ORM entities, repository reads and writes, driver calls, joins and keys, evidence type `code`); `profile_adapter.py` (document store and relational: counts, field presence, key overlap; **offline export mode first**, live mode the same code behind a read-only fetch layer that requires an authorization record in `sources.yaml`). Every run writes `evidence/<source>/<type>-<timestamp>.yaml` and `run.log` with the access used. Optional drivers imported lazily; a missing driver is recorded as access not obtained, never a crash. | A | DL-1, DL-3, DL-8 | scan finds every fixture source; fake client asserts no write method called (AUTH-1); no authorization record, no live run (AUTH-2); missing driver recorded (SRC-1) | L |
+| **D** | **DONE 2026-09-30** (skill lint clean; the Interpret and Fold briefs are delimited so the wiring test reads them). **Skill** `ai/claude/map-data-layer/SKILL.md`, `/hitl:dev-map-data-layer`, five stages with banners and `.hitl/current-change.yaml` step tracking as `start-brownfield` does: 1 Intake (scan, confirm, competency questions, per-source environment and **AUTHORIZED** reply before any live read); 2 Extract (scripts only); 3 Interpret (one sub-agent per entity, handed only that entity's evidence paths, writing `interpretations/<entity>.yaml` with `inputs:`); 4 Fold (a sub-agent handed interpretations only, writing the four files and the manifest `boundary_entities` block per ADR); 5 Validate (validator, scorecard, findings offered as tickets under issue hygiene, filed only on confirmation). Re-runnable per stage. Registered in `plugin.json`; passes skill-lint; report text passes the plain-English lint. | B, C | DL-1, DL-2, DL-4, DL-8, DL-9 | skill-lint; wiring test that every stage names only its inputs; plain-English on the report | L |
+| **E** | **DONE 2026-09-30** (brownfield Step 3 and 7, Conventions fifth block, dev-update lists, migrator sync sets, hash manifest, init-project.sh, plugin build.sh, help, usage guide, CI template, user doc, six wiring tests; plugin builds with 60 skills). **Integration.** `start-brownfield` Step 3 copies `ci/data-layer/` and `tools/data-layer/` next to the other validators and Step 7 points to the skill; `check-conventions` Step 1 runs the validator and scorecard, reporting absent as SKIPPED; `dev-update --sync-validators` and `ci/shipped-validators.sha256` cover the new files (the wiring test holds it); build script sweeps the new `shared/` paths; `help` skill entry; CHANGELOG; `docs/README.md` design row; `docs/examples/README` row. | D | DL-6, DL-7 | `ci/wiring` suite; fresh sandbox install runs the example end to end | M |
+| **F** | **Review DONE 2026-09-30 (verified; findings applied). Remaining: the owner's field-project run, then the release.** **Validation + release.** One clean-context validation review with the acceptance scenarios 1 to 6 from requirements §8.2 as the checklist, run on the fixture in a `CLAUDE_CONFIG_DIR` sandbox, one page, no adversarial pass. Separately the user runs the skill on the field project and reports the scorecard against the hand-built baseline. Release as a minor on 2.x per `docs/releasing.md`: release change file, review records, install verify. | E | all slice 1 | full suite plus the two runs | M |
 
 ### The load-bearing two
 
@@ -138,19 +149,32 @@ Rides the 2.9.0 and 2.10.0 precedent: a catalog change with a migration for open
   target; `export_schema.py` emits the extraction schema pinned to the release, validated against one named
   open-source extractor's schema input (open question 4 in #131).
 
-## 7. Decisions for the Phase 0 ADRs
+## 7. The Phase 0 ADRs (written; see `02-adrs.md`)
 
-1. Manifest tie: ontology as source, Fold writes `boundary_entities` (§2.1).
-2. Activator: impact-record findings, no new question (§2.2).
-3. Skill boundary: one skill with five re-runnable stages, no modes flag (open question 1 in #131).
-4. Adapter dependencies: pure Python plus lazy optional drivers, offline export mode is the tested path.
-5. Stage isolation: sub-agent per entity from a file list, `inputs:` recorded, validator-enforced.
-6. Answerability: all needed IDs present at a confidence other than `needs-review`.
-7. Findings to tickets: offered under issue hygiene, filed on confirmation, never seeded into the incident
-   registry directly (open question 3 in #131).
-8. Where the files live: `docs/02-design/data/`, beside the LLDs the mappings cite.
+| ADR | Decision | Was |
+|---|---|---|
+| 1 | manifest tie: ontology as source, `manifest_tie.py` writes `boundary_entities` | §2.1 |
+| 2 | activator: impact-record findings, no new question in the common case | §2.2 |
+| 3 | one skill, five re-runnable stages, no modes flag | #131 open question 1 |
+| 4 | adapters: pure Python, lazy drivers, offline export mode is the tested path | sizing risk |
+| 5 | stage isolation by file list, `inputs:` recorded, validator-enforced | DL-4 |
+| 6 | answerability: every needed ID at a confidence other than `needs-review`, needs list confirmed | §2.6 |
+| 7 | findings to tickets under issue hygiene, never into the incident registry | #131 open question 3 |
+| 8 | files at `docs/02-design/data/` | §4 of #131 |
+| 9 | off by default, advisory by default, blocking per repo (**owner to confirm**) | #131 edit of 2026-09-25 |
+| 10 | slice 1 ships the skill standalone, no catalog step | §2.3 |
+| 11 | synthetic fixture; field project is the private acceptance run (**owner to confirm**) | §2.4 |
+| 12 | Interpret runs only in the skill; isolation tested mechanically | §2.5 |
+| 13 | one evidence core for both layers (**owner to confirm**) | Part B of #131 |
 
-## 8. Sizing
+## 8. Review history
+
+| Round | Date | Lens | Verdict | Applied |
+|---|---|---|---|---|
+| 1 | 2026-09-30 | design validation (one clean-context reviewer, checklist of seven items) | verified with changes | S1 per-entity evidence slices; S2 complete handed lists for Fold and Validate; S3 own waiver file; S4 IDs assigned by a script after Fold; D1 advisory exit 2 listed as a Warning; D2 token match rule for implementation names; D3 alternatives on ADR-11 and ADR-13; all minors. Report: `.hitl/reviews/incoming/GH-131-phase0-round1-design.md` |
+| 2 | 2026-09-30 | slice 1 correctness (one clean-context reviewer, the six §8.2 scenarios reproduced on a scratch fixture, suites run, built plugin checked) | verified | D1 CI template baselines against the base branch; M1 empty `data_layer:` key tolerated; M2 a fetch with a write method is an explicit logged refusal; M3 FIX-3 test added; M4 fixture source lines are what the scan writes. Report: `.hitl/reviews/incoming/GH-131-slice1-round1-correctness.md` |
+
+## 9. Sizing
 
 Relative, not hours. Slice 1 is roughly the size of First Pass (nine phases, four review rounds there;
 seven phases and one validation review here) with two large pieces the platform has not built before: a

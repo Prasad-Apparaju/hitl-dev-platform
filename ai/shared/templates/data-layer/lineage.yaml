@@ -1,0 +1,20 @@
+# Data layer: lineage (DL-5, DL-10). How one dataset is made from another, in PROV terms. Every
+# activity cites files; a change touching a cited file marks its edges needs-review (slice 2).
+# `rule` is prose, never code. Edges carry no id until assign_ids.py numbers them after Fold.
+schema_version: "1.0"
+activities:
+  - id: act:<kebab-name>
+    kind: job                   # job | pipeline-step | handler | view | manual
+    files: ["<repo path>"]
+    schedule: null
+    owner: null
+edges:
+  - id: lin:1
+    relation: wasGeneratedBy    # used (act -> map|ent) | wasGeneratedBy (map|ent -> act) | wasDerivedFrom (map|ent -> map|ent)
+    subject: map:<id>
+    object: act:<id>
+    rule: "<the derivation in one or two plain sentences>"
+    freshness: { cadence: null, observed_max_age_hours: null }
+    consumers: []
+    confidence: inferred
+    evidence: []

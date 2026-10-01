@@ -1,0 +1,36 @@
+schema_version: '1.0'
+candidates:
+- entity: ent:carrier
+  classes: []
+  stores: []
+  fields:
+  - carrier_ref
+- entity: ent:delivery-slot
+  classes: []
+  stores:
+  - delivery_slots
+  fields: []
+- entity: ent:eta
+  classes: []
+  stores:
+  - eta_cache
+  fields: []
+- entity: ent:order
+  classes:
+  - Order
+  stores:
+  - orders
+  fields: []
+- entity: ent:order-line
+  classes:
+  - OrderLine
+  stores:
+  - order_lines
+  fields: []
+- entity: ent:shipment
+  classes: []
+  stores:
+  - shipments
+  fields: []
+note: Proposed by slice_evidence.py --propose; the person added ent:carrier (a thing
+  the code names but no store holds).

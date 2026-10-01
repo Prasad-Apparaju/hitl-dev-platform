@@ -6,8 +6,9 @@
 > [#105](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/105) and FR-32 is
 > [#118](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/118). The **how** (adapters,
 > file schemas, validators, the hook) is the design package at `docs/design/data-layer/`, not started.
-> Status: **draft v1 (2026-09-14)**, restructured from EPIC
-> [#131](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/131) after its first review (§12).
+> Status: **draft v1.1 (2026-09-30)**, restructured from EPIC
+> [#131](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/131) after its first review, then amended
+> for the adoption model the issue gained on 2026-09-25 (§12).
 > Related: plugin [#24](https://github.com/pappar/hitl-claude-plugin/issues/24) (brownfield produces
 > no data model), plugin [#16](https://github.com/pappar/hitl-claude-plugin/issues/16) (manifest as a
 > living artifact), FR-17, FR-18, FR-19, FR-29.
@@ -67,6 +68,9 @@ Negative and cross-cutting findings are annotations in a fourth file, never edge
 confidence (`confirmed`, `inferred`, `needs-review`) and cites evidence.
 
 This is an EPIC delivered in slices. Slice 1 is what the field project already did, made repeatable.
+The issue's own list (edited 2026-09-25) numbers eight slices S1 to S8 across both parts of #131; the
+business-rule layer (FR-35, Part B) shares this document's evidence model and scorecard and has no
+requirements doc yet. The table below is the data-layer part only.
 
 | Slice | Delivers | Requirements |
 |---|---|---|
@@ -100,8 +104,8 @@ Requirement IDs are `DL-<n>`.
 | **DL-7** | **A scorecard says how good the layer is, and diffs against the last run.** Verification rate of entities, fields and edges; entities with no mapping; negative findings stored as edges; age spread of evidence snapshots; sources declared but not extracted; open high-severity findings; competency questions answerable (DL-2); entities whose synonyms or natural keys collide with another entity. `--baseline` diffs two runs; `/hitl:dev-check-conventions` reports it. | Must | 1 |
 | **DL-8** | **Adapters are read-only and run under the person's own credentials, with authorization stated before any live-store access.** Before an adapter touches a live store, the person names the environment and confirms they are authorized to read it, the same way the penetration-test skill requires authorization before an active scan. Nothing writes to any source. Air-gapped sources are run by hand and their output dropped into `evidence/` (FR-24). | Must | 1 |
 | **DL-9** | **Model-assisted, human-confirmed.** A model writes the interpretation; a person, or a verification against the store, promotes an entry to `confirmed`. Catalog entries are evidence with a confidence like any other source: a definition untouched for two years is `inferred`. Where the catalog, the code and the store disagree about a key, that is a finding, not a merge. Findings are offered as tickets with their evidence attached and filed only when a person confirms (issue hygiene applies). | Must | 1 |
-| **DL-10** | **Drift is caught at the change.** Every lineage edge cites files. When a change's diff touches a cited file, the edge is marked `needs-review` and Reconcile lists it. Reconcile cannot close with a `needs-review` edge citing a changed file; the edge is re-confirmed or re-derived. Where a steward is named for the dataset, they are the reviewer. | Must | 2 |
-| **DL-11** | **The layer ships with the feature.** Intake asks one question: does the change add or alter an entity, field, store, relationship or derivation? Yes activates a conditional `data_layer` step and the impact record lists the affected entities and edges. The Docs step writes a delta at status `proposed`, reviewed with the LLD. The Conventions check fails on a store name in code with no mapping, or a job reading or writing datasets with no lineage edge. Reconcile folds the delta into the four files, and the scorecard must not regress against the baseline. Fast Track can leave the step out with a record (FR-29). | Must | 2 |
+| **DL-10** | **Drift is caught at the change.** Every lineage edge cites files. When a change's diff touches a cited file, the edge is marked `needs-review` and Reconcile lists it. With blocking on (§6), Reconcile cannot close with a `needs-review` edge citing a changed file until it is re-confirmed or re-derived; otherwise the list is a comment on the change. Where a steward is named for the dataset, they are the reviewer. | Must | 2 |
+| **DL-11** | **The layer ships with the feature.** Intake asks one question: does the change add or alter an entity, field, store, relationship or derivation? Yes activates a conditional `data_layer` step and the impact record lists the affected entities and edges. The Docs step writes a delta at status `proposed`, reviewed with the LLD. The Conventions check flags a store name in code with no mapping, or a job reading or writing datasets with no lineage edge, and fails on it only with blocking on. Reconcile folds the delta into the four files; a scorecard regression against the baseline is reported, and blocks only with blocking on. Fast Track can leave the step out with a record (FR-29). | Must | 2 |
 | **DL-12** | **A catalog is an input first, a destination second.** Where one exists it is harvested before code is read: its glossary sets the vocabulary, entities adopt its term IDs rather than inventing parallel names, and its stewards become the owners DL-10 routes to. Export back is a delta: application-side lineage, mappings for stores the catalog cannot crawl, and findings, as valid OpenLineage plus glossary links. Git is authoritative; the catalog is a projection; re-export overwrites. | Should | 3 |
 | **DL-13** | **One adapter per source type, each stating what it needs and what it yields.** Warehouse (schema, view SQL, observed lineage from query history where the grant allows, sampled profiling), dbt (model lineage, tests, owners), orchestrator (static lineage from DAG code, OpenLineage events if enabled), BI tools (which datasets feed which dashboards), ERP or SaaS metadata, document corpora (candidate definitions and synonyms, evidence type `document`, never a mapping or an edge on their own). Each adapter records the access it did not get. Observed and static lineage that disagree are a finding. | Should | 3 |
 | **DL-14** | **Greenfield authors the same files forward.** After system design (FR-17) the PRD's nouns become a deliberately small ontology, aligned to a standard where one exists. Mappings are designed in the LLD with evidence type `design` and promoted to `confirmed` only by verification against a real environment (DL-16). Lineage edges are declared in each pipeline's LLD before code exists; the Conventions check holds code to them. The ontology is the source of the manifest's boundary entities from day one. | Should | 4 |
@@ -111,6 +115,7 @@ Requirement IDs are `DL-<n>`.
 
 ## 6. Constraints
 
+- **Off by default, advisory by default.** Nothing in HITL depends on the layer; a repo without the files runs every workflow unchanged and creates none of them. Every check on a change comments by default and blocks only when the team sets `data_layer: { blocking: true }` in `.hitl/config.yaml`. The files themselves, once present, must be valid: the validator rejects a malformed or rule-breaking file whatever the mode (design ADR-9). Turning the layer off keeps the files and stops refreshing them. Brownfield onboarding mentions the layer once and never prompts for it again.
 - **Governs, does not run.** Output is documents, adapters and validators. No graph database, agent, query layer, catalog UI, embeddings, chunk store or retrieval loop.
 - **Read-only by construction.** No adapter writes to a source (DL-8).
 - **Reuse existing mechanisms.** The manifest and its drift checker, the conditional-step pattern (`cond:` in `workflows.yaml`), the impact record, the skip record (FR-29), `dev-check-conventions`, issue hygiene, the offline distribution (FR-24).
@@ -172,4 +177,5 @@ code; HITL consumes what they hold and produces what they lack. The rationale is
 
 | Version | Date | Change |
 |---|---|---|
+| v1.1 | 2026-09-30 | Adoption model from the 2026-09-25 issue edit: off by default, advisory by default, blocking per repo (§6); DL-10 and DL-11 reworded to "with blocking on"; §3 notes the issue's eight-slice list and Part B (FR-35) sharing the evidence model; design package Phase 0 written (`docs/design/data-layer/`). |
 | v1 | 2026-09-14 | Restructured from #131. Findings applied: linked plugin #24 and #16, which cover the same gap and the same drift mechanism; split one FR with a fifteen-clause acceptance cell into an epic with five slices, slice 1 being what the field project already did; moved the adapter table, file schemas and per-step lifecycle to design input; replaced the unverified "per-session named-environment confirmation HITL already uses" with an authorization requirement (DL-8); removed agent tool definitions and prompt fragments from the publish step (§7); left the FR number open until FR-30 is settled; added competency questions (DL-2), stage isolation (DL-4) and the collision metric (DL-7) from the video review. |

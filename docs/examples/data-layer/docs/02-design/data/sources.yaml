@@ -1,0 +1,51 @@
+schema_version: '1.0'
+written_by:
+  stage: intake
+  at: '2026-09-30T08:50:00Z'
+sources:
+- id: src:app
+  kind: code
+  declared_from:
+  - docker-compose.yml:9
+  environment: dev
+  in_scope: true
+  access:
+    granted: read_only
+    mode: offline
+  status: extracted
+  notes: the repository itself
+- id: src:orders-db
+  kind: relational
+  declared_from:
+  - docker-compose.yml:4
+  - app/settings.py:3
+  environment: offline-export
+  in_scope: true
+  access:
+    granted: read_only
+    mode: offline
+  status: extracted
+  notes: exports/orders.jsonl, exports/order_lines.jsonl, exports/orders-schema.sql
+- id: src:shipments-db
+  kind: document
+  declared_from:
+  - docker-compose.yml:8
+  - app/settings.py:4
+  environment: offline-export
+  in_scope: true
+  access:
+    granted: read_only
+    mode: offline
+  status: extracted
+  notes: exports/shipments.jsonl, exports/eta_cache.jsonl
+- id: src:warehouse
+  kind: warehouse
+  declared_from:
+  - app/settings.py:5
+  environment: prod
+  in_scope: true
+  access:
+    granted: none
+    mode: live
+  status: declared-not-extracted
+  notes: analysts' warehouse; the person replied SKIP at intake

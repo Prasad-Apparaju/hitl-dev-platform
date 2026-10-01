@@ -1,0 +1,86 @@
+schema_version: '1.0'
+entity: ent:order-line
+inputs:
+- evidence/slices/order-line.yaml
+- ai/shared/templates/data-layer/data-layer.schema.yaml
+- ai/shared/templates/data-layer/interpretation.yaml
+written_by:
+  model: claude
+  at: '2026-09-30T10:10:00Z'
+proposed:
+  ontology:
+    id: ent:order-line
+    name: Order line
+    definition: One part and quantity requested on an order.
+    synonyms:
+    - line item
+    catalog_term: null
+    relationships: []
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/order-line.yaml
+      item: ev:app/code/0002
+    - file: evidence/slices/order-line.yaml
+      item: ev:orders-db/schema/0002
+  mappings:
+  - id: map:order-line/orders-db.order_lines
+    entity: ent:order-line
+    store:
+      source: src:orders-db
+      kind: table
+      name: order_lines
+      naming_template: null
+    fields:
+    - name: id
+      type: integer
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order-line.yaml
+        item: ev:orders-db/schema/0002
+    - name: order_id
+      type: integer
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order-line.yaml
+        item: ev:orders-db/schema/0002
+      - file: evidence/slices/order-line.yaml
+        item: ev:orders-db/profile/0002
+    - name: part_id
+      type: text
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order-line.yaml
+        item: ev:orders-db/schema/0002
+    - name: qty
+      type: integer
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order-line.yaml
+        item: ev:orders-db/schema/0002
+    natural_key:
+    - id
+    scope: tenant
+    owner: orders-team
+    counts:
+      rows: 46
+      taken_at: '2026-09-30T09:40:00Z'
+      sampled: false
+    written_by:
+    - app/models/order.py
+    read_by: []
+    verified_at: null
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/order-line.yaml
+      item: ev:app/code/0002
+    - file: evidence/slices/order-line.yaml
+      item: ev:orders-db/profile/0001
+  lineage:
+    activities: []
+    edges: []
+  findings: []
+open_questions: []

@@ -4,6 +4,27 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Data layer, slice 1** (#131, FR-31): `/hitl:dev-map-data-layer` writes an existing system's data
+  layer with evidence under `docs/02-design/data/`: declared sources with authorization before any
+  live read, competency questions as the layer's acceptance criteria, code evidence (Python) and
+  store profiles (exports, or PostgreSQL and MongoDB through a read-only fetch layer), one
+  interpretation per entity in its own context handed only that entity's evidence slice, and the
+  four files (ontology, mappings, lineage in PROV terms, findings) folded from the interpretations.
+  `ci/data-layer/check_data_layer.py` fails closed on an ontology entry that names a store, job,
+  file or endpoint, a negative written as an edge, a fourth confidence value, an assertion with no
+  evidence, a confirmed entry nobody promoted, a citation outside an interpretation's inputs, a
+  mapping on an unextracted source at any confidence but needs-review, and a live read with no
+  authorization. `scorecard.py` reports verification rates, entities without a mapping, unextracted
+  sources, evidence age, open high findings, answerable questions and name collisions, and diffs
+  against the last run. Off by default; advisory by default; `data_layer: { blocking: true }` in
+  `.hitl/config.yaml` makes Conventions and the CI template fail. The manifest's boundary entities
+  are derived from mappings. Conventions in `shared/data-layer.md`, user doc `docs/data-layer.md`,
+  a synthetic worked example at `docs/examples/data-layer/`, 101 tests by mutation.
+
 ## [2.14.0] — 2026-09-22
 
 ### Added

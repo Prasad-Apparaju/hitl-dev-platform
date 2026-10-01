@@ -1,6 +1,6 @@
 ---
 description: Run four convention checks (semgrep, secrets scan, manifest drift, Mermaid lint) and report violations. A useful pass before a PR, not a mirror of your CI; it says at the end what it did not run. Safe to run at any time, read-only unless the user asks to fix violations.
-argument-hint: "[--only semgrep|secrets|manifest|mermaid]"
+argument-hint: "[--only semgrep|secrets|manifest|mermaid|data-layer]"
 disable-model-invocation: true
 ---
 
@@ -22,7 +22,7 @@ To get started, run one of these commands in your project directory:
 
 Run convention checks against the current codebase and report violations in-chat. Uses semgrep for code rules and standalone scripts for secrets detection, manifest drift, and Mermaid checks.
 
-**Input:** $ARGUMENTS (optional — `--only semgrep|secrets|manifest|mermaid` to run a subset)
+**Input:** $ARGUMENTS (optional — `--only semgrep|secrets|manifest|mermaid|data-layer` to run a subset)
 
 ---
 
@@ -38,7 +38,7 @@ This skill shells out to external CLIs. If a check's tool is not installed, repo
 
 ## Step 1 — Run the checks
 
-Run all four checks (or a subset if `--only` is specified):
+Run all five checks (or a subset if `--only` is specified):
 
 ### Semgrep (code conventions)
 
@@ -110,6 +110,28 @@ fi
 find docs/ -name "*.md" -exec python scripts/fix_mermaid_br_tags.py --check {} +
 ```
 
+### Data layer
+
+The validator and the scorecard over `docs/02-design/data/` (FR-31). Absent layer or absent script
+is reported as SKIPPED, never as passed. Advisory unless the repo set blocking on:
+
+```bash
+if [[ ! -d docs/02-design/data ]]; then
+  echo "SKIPPED: no docs/02-design/data/ (no data layer in this repo; /hitl:dev-map-data-layer builds one)"
+elif [[ ! -f ci/data-layer/check_data_layer.py ]]; then
+  echo "SKIPPED: ci/data-layer/check_data_layer.py not installed: run /hitl:dev-update. The data layer was NOT checked."
+else
+  BLOCKING=$(python3 -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print(str(((d or {}).get('data_layer') or {}).get('blocking',False)).lower())")
+  STRICT=""; [[ "$BLOCKING" == "true" ]] && STRICT="--strict"
+  python3 ci/data-layer/check_data_layer.py --data-dir docs/02-design/data --manifest docs/system-manifest.yaml --waivers ci/data-layer/data-layer-waivers.yaml $STRICT
+  BASE=""; [[ -f docs/02-design/data/scorecard.yaml ]] && BASE="--baseline docs/02-design/data/scorecard.yaml"
+  python3 ci/data-layer/scorecard.py --data-dir docs/02-design/data $BASE --no-write $STRICT
+fi
+```
+
+A validator exit 2 or a scorecard regression goes under **Violations** when `BLOCKING` is `true`, and
+under **Warnings** with the words "data layer: advisory mode" otherwise.
+
 ---
 
 ## Step 2 — Report results
@@ -129,7 +151,7 @@ Present the results grouped by status:
 
 Then close with the boundary, every time, so a green result is never read as "CI will pass":
 
-> This ran four checks: semgrep, secrets, manifest drift, Mermaid. It did not run this project's CI. Gates that live only there (formatters, type checks, migrations, dependency audits, anything under `.github/workflows/`) were not checked.
+> This ran five checks: semgrep, secrets, manifest drift, Mermaid, data layer. It did not run this project's CI. Gates that live only there (formatters, type checks, migrations, dependency audits, anything under `.github/workflows/`) were not checked.
 
 ---
 

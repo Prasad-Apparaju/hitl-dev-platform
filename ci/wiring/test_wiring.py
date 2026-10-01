@@ -866,3 +866,92 @@ def test_team_pulse_skill_invokes_the_generator_it_ships_with():
     assert "ai/claude/skills/team-pulse" in reg["skills"]
     assert "Never post the page" in sk, "the no-posting rule is the surveillance guard; it must stay"
 
+
+
+# ── Data layer (FR-31, #131): the skill is wired to what it ships with, and isolation is in the text ──
+
+def _dl_skill():
+    return _read(os.path.join(AI, "claude", "map-data-layer", "SKILL.md"))
+
+
+def _brief(sk, name):
+    m = re.search(r"<!-- brief:%s -->(.*?)<!-- /brief -->" % name, sk, re.S)
+    assert m, "the %s brief is not delimited" % name
+    return m.group(1)
+
+
+def test_data_layer_skill_runs_every_script_it_ships_with():
+    """Every tool the skill invokes exists with its tests, the conventions file ships, the skill is registered."""
+    sk = _dl_skill()
+    for tool in ("intake_scan.py", "code_adapter.py", "profile_adapter.py", "slice_evidence.py", "assign_ids.py", "manifest_tie.py"):
+        assert '"$DL/%s"' % tool in sk, "skill does not run %s" % tool
+        assert os.path.isfile(os.path.join(ROOT, "tools", "data-layer", tool))
+    for tool in ("check_data_layer.py", "scorecard.py"):
+        assert '"$CK/%s"' % tool in sk and os.path.isfile(os.path.join(ROOT, "ci", "data-layer", tool))
+    assert "shared/tools/data-layer" in sk and "shared/ci/data-layer" in sk and "shared/templates/data-layer" in sk
+    assert os.path.isfile(os.path.join(ROOT, "tools", "data-layer", "test_adapters.py"))
+    assert os.path.isfile(os.path.join(ROOT, "ci", "data-layer", "test_check_data_layer.py"))
+    assert "shared/data-layer.md" in sk and os.path.isfile(os.path.join(AI, "shared", "data-layer.md"))
+    assert "shared/issue-hygiene.md" in sk
+    reg = json.load(io.open(os.path.join(AI, "claude", "plugin", "plugin.json"), encoding="utf-8"))
+    assert "ai/claude/map-data-layer" in reg["skills"]
+
+
+def test_data_layer_interpret_brief_names_one_slice_and_no_source_evidence():
+    """WIRE-1 (DL-4, ADR-5): an Interpret sub-agent is handed its slice, the schema and the template only."""
+    b = _brief(_dl_skill(), "interpret")
+    assert "evidence/slices/<name>.yaml" in b
+    assert "data-layer.schema.yaml" in b and "interpretation.yaml" in b
+    assert "nothing else" in b
+    for forbidden in ("evidence/<", "evidence/app", "/code-", "/profile-", "interpretations/\n", "ontology.yaml", "mappings.yaml", "lineage.yaml", "findings.yaml"):
+        assert forbidden not in b.replace("interpretations/<name>.yaml", ""), "the Interpret brief names %r" % forbidden
+    assert "never `confirmed`" in b and "carry no `id`" in b
+
+
+def test_data_layer_fold_brief_names_interpretations_and_the_two_previous_files_only():
+    """WIRE-1: the Fold sub-agent reads interpretations/, the previous lineage and findings, the schema and templates."""
+    b = _brief(_dl_skill(), "fold")
+    assert "docs/02-design/data/interpretations/" in b
+    assert ".hitl/data-layer/previous/lineage.yaml" in b and ".hitl/data-layer/previous/findings.yaml" in b
+    assert "nothing else" in b
+    assert "evidence/" not in b.replace("source evidence", "").replace("evidence citation", ""), "the Fold brief names an evidence path"
+    assert "never" in b and "without an `id`" in b
+
+
+def test_data_layer_authorization_precedes_every_live_read():
+    """WIRE-2 (DL-8): the AUTHORIZED / SKIP exchange appears before any --live command in the skill."""
+    sk = _dl_skill()
+    auth = sk.index("**AUTHORIZED**")
+    assert "**SKIP**" in sk
+    assert auth < sk.index("--live"), "a live read is described before the authorization exchange"
+    assert "Never read a live store before the AUTHORIZED reply" in sk
+
+
+def test_data_layer_shipped_file_sets_agree():
+    """WIRE-4: the brownfield copy block, dev-update, the migrator, the hash generator and the build name the same set."""
+    bf = _read(os.path.join(AI, "claude", "start-brownfield", "SKILL.md"))
+    up = _read(os.path.join(AI, "claude", "update", "SKILL.md"))
+    mig = _read(os.path.join(ROOT, "ci", "first-pass", "migrate_project.py"))
+    gen = _read(os.path.join(ROOT, "tools", "scripts", "shipped-validators-hashes.py"))
+    init = _read(os.path.join(ROOT, "tools", "scripts", "init-project.sh"))
+    for needle in ("shared/ci/data-layer", "shared/tools/data-layer", "data-layer-waivers.yaml", "data-layer-check.yml"):
+        assert needle in bf, "brownfield Step 3 lacks %s" % needle
+    assert "ci/data-layer" in up and "tools/data-layer" in up and "data-layer-check.yml" in up
+    for t in ("test_check_data_layer.py", "test_scorecard.py", "test_adapters.py"):
+        assert t in up, "dev-update removal list lacks %s" % t
+    assert '"shared/ci/data-layer"' in mig and '"shared/tools/data-layer"' in mig and "data-layer-check.yml" in mig
+    assert '"ci/data-layer"' in gen and '"tools/data-layer"' in gen and "data-layer.schema.yaml" in gen
+    assert 'hitl_copy_tools "$PLATFORM_ROOT/ci/data-layer"' in init and 'hitl_copy_tools "$PLATFORM_ROOT/tools/data-layer"' in init
+    build = os.path.join(ROOT, "..", "hitl-claude-plugin", "scripts", "build.sh")
+    if os.path.isfile(build):
+        b = _read(build)
+        for needle in ("ci/data-layer", "tools/data-layer", "data-layer-check.yml", "templates/data-layer", "data-layer.md"):
+            assert needle in b, "plugin build.sh lacks %s" % needle
+
+
+def test_data_layer_adds_no_workflow_step_in_slice_one():
+    """WIRE-5 (ADR-10): the catalog carries no data_layer step yet; slice 1 is a standalone skill."""
+    cat = _read(os.path.join(AI, "shared", "workflows.yaml"))
+    assert "data_layer" not in cat
+    conv = _read(os.path.join(AI, "claude", "check-conventions", "SKILL.md"))
+    assert "check_data_layer.py" in conv and "SKIPPED" in conv and "advisory mode" in conv

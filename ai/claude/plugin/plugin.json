@@ -1,7 +1,7 @@
 {
   "name": "hitl",
   "version": "2.14.0",
-  "description": "HITL AI-Driven Development. Set up a project with /hitl:dev-start-from-prd, /hitl:dev-start-brownfield, or /hitl:dev-start-migration. Then run /hitl:dev-start-change to start work on an issue — it picks the workflow, shows the step plan, and drives the breadcrumb. Run /hitl:help to find the right command for any situation.",
+  "description": "HITL AI-Driven Development. Set up a project with /hitl:dev-start-from-prd, /hitl:dev-start-brownfield, or /hitl:dev-start-migration. Then run /hitl:dev-start-change to start work on an issue \u2014 it picks the workflow, shows the step plan, and drives the breadcrumb. Run /hitl:help to find the right command for any situation.",
   "skills": [
     "ai/claude/adversarial-review",
     "ai/claude/apply-change",
@@ -16,6 +16,7 @@
     "ai/claude/generate-docs",
     "ai/claude/help",
     "ai/claude/impact-brief",
+    "ai/claude/map-data-layer",
     "ai/claude/migrate/review-external-docs",
     "ai/claude/ops/apply-iac",
     "ai/claude/ops/backup-database",

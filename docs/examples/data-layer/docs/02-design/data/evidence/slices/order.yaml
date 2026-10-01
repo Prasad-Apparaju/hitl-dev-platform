@@ -1,0 +1,173 @@
+schema_version: '1.0'
+evidence_type: slice
+source: src:app
+taken_at: '2026-09-30T10:00:00Z'
+adapter:
+  name: slice_evidence.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+entity: ent:order
+items:
+- id: ev:app/code/0001
+  kind: orm_entity
+  locator: app/models/order.py:8
+  data:
+    class: Order
+    table: orders
+    fields:
+    - id
+    - order_no
+    - tenant_id
+    - promised_date
+    - status
+    keys:
+    - id
+    relationships:
+    - to: OrderLine
+      kind: one-to-many
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0001
+- id: ev:app/code/0002
+  kind: orm_entity
+  locator: app/models/order.py:18
+  data:
+    class: OrderLine
+    table: order_lines
+    fields:
+    - id
+    - order_id
+    - part_id
+    - qty
+    keys:
+    - id
+    foreign_keys:
+    - field: order_id
+      to: orders.id
+    relationships:
+    - to: Order
+      kind: many-to-one
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0002
+- id: ev:app/code/0005
+  kind: join
+  locator: app/repo/shipments.py:12
+  data:
+    left: orders
+    right: shipments
+    keys:
+      left: order_no
+      right: order_no
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0005
+- id: ev:app/code/0008
+  kind: read
+  locator: jobs/nightly_eta.py:11
+  data:
+    store: orders
+    method: select
+    fields:
+    - order_no
+    - promised_date
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0008
+- id: ev:orders-db/profile/0004
+  kind: count
+  locator: exports/orders.jsonl
+  data:
+    store: orders
+    rows: 20
+    sampled: false
+  origin:
+    file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0004
+- id: ev:orders-db/profile/0005
+  kind: field_presence
+  locator: exports/orders.jsonl
+  data:
+    store: orders
+    sample: 20
+    present_pct:
+      id: 100.0
+      order_no: 100.0
+      tenant_id: 100.0
+      promised_date: 95.0
+      status: 100.0
+  origin:
+    file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0005
+- id: ev:orders-db/profile/0006
+  kind: key_candidates
+  locator: exports/orders.jsonl
+  data:
+    store: orders
+    unique_fields:
+    - id
+    - order_no
+  origin:
+    file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0006
+- id: ev:orders-db/schema/0001
+  kind: ddl
+  locator: exports/orders-schema.sql:1
+  data:
+    table: orders
+    columns:
+    - - id
+      - integer
+    - - order_no
+      - text
+    - - tenant_id
+      - text
+    - - promised_date
+      - date
+    - - status
+      - text
+    primary_key:
+    - id
+    unique:
+    - - order_no
+      - tenant_id
+  origin:
+    file: evidence/orders-db/schema-20260930T0930.yaml
+    item: ev:orders-db/schema/0001
+- id: ev:orders-db/schema/0002
+  kind: ddl
+  locator: exports/orders-schema.sql:9
+  data:
+    table: order_lines
+    columns:
+    - - id
+      - integer
+    - - order_id
+      - integer
+    - - part_id
+      - text
+    - - qty
+      - integer
+    primary_key:
+    - id
+    foreign_keys:
+    - field: order_id
+      to: orders.id
+  origin:
+    file: evidence/orders-db/schema-20260930T0930.yaml
+    item: ev:orders-db/schema/0002
+- id: ev:shipments-db/profile/0007
+  kind: key_overlap
+  locator: exports/shipments.jsonl
+  data:
+    left: orders.order_no
+    right: shipments.order_no
+    left_rows: 20
+    matched: 18
+    share: 0.9
+  origin:
+    file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0007

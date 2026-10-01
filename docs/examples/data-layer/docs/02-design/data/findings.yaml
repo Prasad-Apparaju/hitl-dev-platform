@@ -1,0 +1,53 @@
+schema_version: '1.0'
+findings:
+- id: fnd:1
+  kind: negative
+  severity: high
+  about:
+  - map:shipment/shipments-db.shipments
+  - act:nightly-eta
+  statement: The nightly job and the shipments repository both read shipments.carrier_ref; the field is
+    empty on every one of the 18 profiled rows, so carrier lag is never computed from it.
+  confidence: confirmed
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0004
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0009
+  - file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0005
+  confirmed_by:
+    who: verification:profile_adapter 2026-09-30T09:45:00Z
+    at: '2026-09-30T09:45:00Z'
+    how: verification
+  status: open
+- id: fnd:2
+  kind: collision
+  severity: medium
+  about:
+  - ent:shipment
+  - ent:delivery-slot
+  statement: Shipment and Delivery slot both carry the synonym "delivery"; a document that says "delivery"
+    cannot be linked to one entity.
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0003
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0006
+  status: open
+- id: fnd:3
+  kind: unextracted
+  severity: low
+  about:
+  - ent:delivery-slot
+  - map:delivery-slot/warehouse.delivery_slots
+  statement: The warehouse was declared and not extracted (no authorization given), so the delivery slot
+    mapping is from code only.
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0006
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0007
+  status: open

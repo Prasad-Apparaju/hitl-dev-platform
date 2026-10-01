@@ -36,6 +36,7 @@ Output this exactly:
 | `/hitl:dev-update` | Update the HITL plugin to the latest version |
 | `/hitl:help` | This command — find the right command for any situation |
 | `/hitl:team-pulse` | **Who is on what, what is waiting on someone, who can unblock it**: one page from GitHub, per person and per epic, every number linked to its source |
+| `/hitl:dev-map-data-layer` | **Write an existing system's data layer down with evidence**: sources, competency questions, code and store evidence, one interpretation per entity, ontology, mappings, lineage, findings and a scorecard under `docs/02-design/data/` |
 
 ### Working with HITL day to day
 

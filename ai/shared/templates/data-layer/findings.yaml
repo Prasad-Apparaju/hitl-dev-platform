@@ -1,0 +1,13 @@
+# Data layer: findings (DL-5, DL-9). Negative and cross-cutting findings as annotations, never edges.
+# A finding has an `about` list and no subject, object or relation. Tickets only through issue
+# hygiene, on a person's confirmation; the status then becomes ticketed:#N.
+schema_version: "1.0"
+findings:
+  - id: fnd:1
+    kind: negative              # negative | disagreement | collision | unextracted | dead-code | stale
+    severity: medium            # high | medium | low
+    about: []                   # IDs the finding is about
+    statement: "<what is wrong, with the numbers>"
+    confidence: inferred
+    evidence: []
+    status: open                # open | ticketed:#N | resolved | accepted

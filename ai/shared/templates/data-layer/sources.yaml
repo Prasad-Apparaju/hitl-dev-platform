@@ -1,0 +1,14 @@
+# Data layer: declared sources (DL-1, DL-8). Written at Intake from intake_scan.py's proposal plus the
+# person's confirmation. `status` is written by Extract only. A live source needs `authorization`
+# before any adapter reads it; without one it is recorded `declared-not-extracted`.
+schema_version: "1.0"
+written_by: { stage: intake, at: "<timestamp>" }
+sources:
+  - id: src:<name>
+    kind: relational            # relational | document | warehouse | dbt | orchestrator | catalog | bi | saas | code | documents
+    declared_from: ["<file>:<line>"]
+    environment: dev            # dev | staging | prod | offline-export
+    in_scope: true
+    access: { granted: read_only, mode: offline }   # granted: read_only | none; mode: offline | live
+    status: declared            # declared | extracted | declared-not-extracted
+    notes: ""

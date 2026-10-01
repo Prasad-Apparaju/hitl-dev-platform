@@ -1,0 +1,72 @@
+schema_version: '1.0'
+questions:
+- id: q:1
+  text: Why is the ETA on an order what it is?
+  asked_by: ops lead
+  from: problem-statement
+  needs:
+    entities:
+    - ent:order
+    - ent:shipment
+    - ent:eta
+    mappings:
+    - map:eta/shipments-db.eta_cache
+    edges:
+    - lin:1
+  confirmed_by:
+    who: ta@team
+    at: '2026-09-30T08:55:00Z'
+    how: human
+- id: q:2
+  text: Which job writes the ETA cache, and how often?
+  asked_by: developer
+  from: ticket:#12
+  needs:
+    entities:
+    - ent:eta
+    mappings:
+    - map:eta/shipments-db.eta_cache
+    edges:
+    - lin:1
+  confirmed_by:
+    who: ta@team
+    at: '2026-09-30T08:55:00Z'
+    how: human
+- id: q:3
+  text: Which stores hold a shipment?
+  asked_by: developer
+  from: person
+  needs:
+    entities:
+    - ent:shipment
+    mappings:
+    - map:shipment/shipments-db.shipments
+    edges: []
+  confirmed_by:
+    who: ta@team
+    at: '2026-09-30T08:55:00Z'
+    how: human
+- id: q:4
+  text: Where is a delivery slot stored, and who owns it?
+  asked_by: ops lead
+  from: problem-statement
+  needs:
+    entities:
+    - ent:delivery-slot
+    mappings:
+    - map:delivery-slot/warehouse.delivery_slots
+    edges: []
+  confirmed_by:
+    who: ta@team
+    at: '2026-09-30T08:55:00Z'
+    how: human
+- id: q:5
+  text: What does an order line reference?
+  asked_by: developer
+  from: person
+  needs:
+    entities:
+    - ent:order-line
+    - ent:order
+    mappings: []
+    edges: []

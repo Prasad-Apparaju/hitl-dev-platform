@@ -1,0 +1,13 @@
+# Fulfilment example app (synthetic; HITL data-layer fixture). No real system behind it.
+services:
+  orders-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: orders
+  shipments-db:
+    image: mongo:7
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://app@orders-db/orders
+      MONGO_URI: mongodb://shipments-db/fulfilment

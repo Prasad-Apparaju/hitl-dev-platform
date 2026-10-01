@@ -702,7 +702,9 @@ def test_sync_install_only_files_are_the_repos_after_install(tmp_path, capsys):
     r = M.sync_validators(str(root), str(pr), apply=True)
     out = capsys.readouterr().out
     assert wf.read_text().startswith("on: pull_request") and "W-1" in wv.read_text()
-    assert not r["modified"] and "first-pass-check" not in out and "waivers" not in out
+    # the two install-only files this fake plugin ships are never reported again; a sync set the fake
+    # build does not carry (the data-layer waiver file) is listed as skipped, which is not a report on them
+    assert not r["modified"] and "first-pass-check" not in out and "manifest-waivers" not in out
 
 
 def test_sync_if_present_set_is_skipped_when_the_repo_lacks_it(tmp_path, capsys):

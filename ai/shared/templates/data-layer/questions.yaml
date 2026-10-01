@@ -1,0 +1,10 @@
+# Data layer: competency questions (DL-2). Collected at Intake before anything is derived. The needs
+# list is drafted by the model and confirmed by a person; a question is answerable when every ID it
+# needs exists at a confidence other than needs-review (ADR-6).
+schema_version: "1.0"
+questions:
+  - id: q:1
+    text: "<the question, as the person asked it>"
+    asked_by: "<role or name>"
+    from: problem-statement     # problem-statement | ticket:#N | person | document:<path>
+    needs: { entities: [], mappings: [], edges: [] }

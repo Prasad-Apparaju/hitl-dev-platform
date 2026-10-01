@@ -216,6 +216,14 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
   [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
   cp "$PLUGIN_ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
 fi
+# Data layer (FR-31): validator, scorecard, schema, adapters; the waiver file and the CI template once.
+if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/data-layer" ]]; then
+  mkdir -p ci/data-layer tools/data-layer .github/workflows
+  cp "$PLUGIN_ROOT/shared/ci/data-layer/"*.py "$PLUGIN_ROOT/shared/ci/data-layer/data-layer.schema.yaml" ci/data-layer/ 2>/dev/null
+  cp "$PLUGIN_ROOT/shared/tools/data-layer/"*.py tools/data-layer/ 2>/dev/null
+  [[ ! -f ci/data-layer/data-layer-waivers.yaml ]] && cp "$PLUGIN_ROOT/shared/ci/data-layer/data-layer-waivers.yaml" ci/data-layer/ 2>/dev/null
+  [[ ! -f .github/workflows/data-layer-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/data-layer-check.yml" .github/workflows/ 2>/dev/null
+fi
 
 # Semgrep convention rules (issue #47): the rule set /hitl:dev-check-conventions scans with.
 # Installs only what is absent — .semgrep/ is co-owned; /hitl:dev-update updates it with a diff.
@@ -345,6 +353,10 @@ For each component:
 - Say: "I'll generate an HLD and LLD for [component]. Run `/hitl:dev-generate-docs` or I can do it now — which do you prefer?"
 - If they want it now, run `/hitl:dev-generate-docs` for that component.
 - Note: this is incremental — you do not need to document everything before starting work.
+
+**The data layer.** Nothing above records what the data means, where it lives or how it is derived.
+Once the manifest is confirmed, `/hitl:dev-map-data-layer` builds that from evidence into
+`docs/02-design/data/`. Optional, off until run; say this once here and never ask again.
 
 ---
 

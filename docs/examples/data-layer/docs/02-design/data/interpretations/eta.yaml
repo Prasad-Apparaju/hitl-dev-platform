@@ -1,0 +1,121 @@
+schema_version: '1.0'
+entity: ent:eta
+inputs:
+- evidence/slices/eta.yaml
+- ai/shared/templates/data-layer/data-layer.schema.yaml
+- ai/shared/templates/data-layer/interpretation.yaml
+written_by:
+  model: claude
+  at: '2026-09-30T10:10:00Z'
+proposed:
+  ontology:
+    id: ent:eta
+    name: Estimated arrival
+    definition: The date the business expects an open order to arrive, recomputed nightly from the promised
+      date and recent carrier lag.
+    synonyms:
+    - ETA
+    catalog_term: null
+    relationships: []
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/eta.yaml
+      item: ev:app/code/0011
+    - file: evidence/slices/eta.yaml
+      item: ev:shipments-db/profile/0001
+  mappings:
+  - id: map:eta/shipments-db.eta_cache
+    entity: ent:eta
+    store:
+      source: src:shipments-db
+      kind: collection
+      name: eta_cache
+      naming_template: null
+    fields:
+    - name: order_no
+      type: text
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/eta.yaml
+        item: ev:app/code/0012
+      - file: evidence/slices/eta.yaml
+        item: ev:shipments-db/profile/0002
+    - name: eta
+      type: date
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/eta.yaml
+        item: ev:app/code/0011
+      - file: evidence/slices/eta.yaml
+        item: ev:shipments-db/profile/0002
+    - name: computed_at
+      type: timestamp
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/eta.yaml
+        item: ev:app/code/0011
+      - file: evidence/slices/eta.yaml
+        item: ev:shipments-db/profile/0002
+    natural_key:
+    - order_no
+    scope: global
+    owner: orders-team
+    counts:
+      rows: 18
+      taken_at: '2026-09-30T09:45:00Z'
+      sampled: false
+    written_by:
+    - jobs/nightly_eta.py
+    read_by: []
+    verified_at: null
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/eta.yaml
+      item: ev:app/code/0010
+    - file: evidence/slices/eta.yaml
+      item: ev:shipments-db/profile/0001
+  lineage:
+    activities:
+    - id: act:nightly-eta
+      kind: job
+      files:
+      - jobs/nightly_eta.py
+      schedule: nightly 02:00
+      owner: orders-team
+    edges:
+    - relation: wasGeneratedBy
+      subject: map:eta/shipments-db.eta_cache
+      object: act:nightly-eta
+      rule: ETA is the promised date plus the median carrier lag over the last 30 days, for every open
+        order, recomputed nightly.
+      freshness:
+        cadence: nightly
+        observed_max_age_hours: 26
+      consumers:
+      - ent:order
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/eta.yaml
+        item: ev:app/code/0011
+      - file: evidence/slices/eta.yaml
+        item: ev:shipments-db/profile/0002
+    - relation: wasDerivedFrom
+      subject: ent:eta
+      object: ent:shipment
+      rule: The carrier lag that moves an ETA comes from recent shipments.
+      freshness:
+        cadence: nightly
+        observed_max_age_hours: null
+      consumers:
+      - ent:order
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/eta.yaml
+        item: ev:app/code/0009
+      - file: evidence/slices/eta.yaml
+        item: ev:app/code/0011
+  findings: []
+open_questions: []

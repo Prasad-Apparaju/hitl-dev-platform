@@ -1,0 +1,52 @@
+schema_version: '1.0'
+evidence_type: schema
+source: src:orders-db
+taken_at: '2026-09-30T09:30:00Z'
+adapter:
+  name: profile_adapter.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+items:
+- id: ev:orders-db/schema/0001
+  kind: ddl
+  locator: exports/orders-schema.sql:1
+  data:
+    table: orders
+    columns:
+    - - id
+      - integer
+    - - order_no
+      - text
+    - - tenant_id
+      - text
+    - - promised_date
+      - date
+    - - status
+      - text
+    primary_key:
+    - id
+    unique:
+    - - order_no
+      - tenant_id
+- id: ev:orders-db/schema/0002
+  kind: ddl
+  locator: exports/orders-schema.sql:9
+  data:
+    table: order_lines
+    columns:
+    - - id
+      - integer
+    - - order_id
+      - integer
+    - - part_id
+      - text
+    - - qty
+      - integer
+    primary_key:
+    - id
+    foreign_keys:
+    - field: order_id
+      to: orders.id

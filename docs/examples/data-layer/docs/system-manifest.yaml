@@ -1,0 +1,37 @@
+version: '1.0'
+generated_at: '2026-09-30T08:40:00Z'
+generator: tools/generate-manifest/generator.py
+domains:
+  orders:
+    description: Orders and order lines
+    files:
+    - app/models/order.py
+    - app/repo/orders.py
+    imports_from: []
+    boundary_entities:
+      Order:
+        shape: 'id: integer
+
+          order_no: text
+
+          tenant_id: text
+
+          promised_date: date
+
+          status: text
+
+          '
+        consumed_by:
+        - fulfilment
+  fulfilment:
+    description: Shipments, ETA recomputation and delivery slots
+    files:
+    - app/repo/shipments.py
+    - app/repo/slots.py
+    - jobs/nightly_eta.py
+    imports_from:
+    - orders
+interaction_matrix:
+  fulfilment -> orders:
+    description: fulfilment reads open orders
+    entity_crossing: Order

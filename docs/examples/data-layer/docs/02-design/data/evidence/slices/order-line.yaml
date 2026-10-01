@@ -1,0 +1,92 @@
+schema_version: '1.0'
+evidence_type: slice
+source: src:app
+taken_at: '2026-09-30T10:00:00Z'
+adapter:
+  name: slice_evidence.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+entity: ent:order-line
+items:
+- id: ev:app/code/0002
+  kind: orm_entity
+  locator: app/models/order.py:18
+  data:
+    class: OrderLine
+    table: order_lines
+    fields:
+    - id
+    - order_id
+    - part_id
+    - qty
+    keys:
+    - id
+    foreign_keys:
+    - field: order_id
+      to: orders.id
+    relationships:
+    - to: Order
+      kind: many-to-one
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0002
+- id: ev:orders-db/profile/0001
+  kind: count
+  locator: exports/order_lines.jsonl
+  data:
+    store: order_lines
+    rows: 46
+    sampled: false
+  origin:
+    file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0001
+- id: ev:orders-db/profile/0002
+  kind: field_presence
+  locator: exports/order_lines.jsonl
+  data:
+    store: order_lines
+    sample: 46
+    present_pct:
+      id: 100.0
+      order_id: 100.0
+      part_id: 100.0
+      qty: 100.0
+  origin:
+    file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0002
+- id: ev:orders-db/profile/0003
+  kind: key_candidates
+  locator: exports/order_lines.jsonl
+  data:
+    store: order_lines
+    unique_fields:
+    - id
+    - part_id
+  origin:
+    file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0003
+- id: ev:orders-db/schema/0002
+  kind: ddl
+  locator: exports/orders-schema.sql:9
+  data:
+    table: order_lines
+    columns:
+    - - id
+      - integer
+    - - order_id
+      - integer
+    - - part_id
+      - text
+    - - qty
+      - integer
+    primary_key:
+    - id
+    foreign_keys:
+    - field: order_id
+      to: orders.id
+  origin:
+    file: evidence/orders-db/schema-20260930T0930.yaml
+    item: ev:orders-db/schema/0002

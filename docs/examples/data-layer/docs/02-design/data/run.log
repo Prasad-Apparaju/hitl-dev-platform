@@ -1,0 +1,5 @@
+2026-09-30T09:00:00Z code_adapter src:app mode=offline env=dev read_only=true calls=scan result=ok
+2026-09-30T09:30:00Z profile_adapter src:orders-db mode=offline env=offline-export read_only=true calls=schema result=ok
+2026-09-30T09:40:00Z profile_adapter src:orders-db mode=offline env=offline-export read_only=true calls=count,sample(500) result=ok
+2026-09-30T09:45:00Z profile_adapter src:shipments-db mode=offline env=offline-export read_only=true calls=count,sample(500) result=ok
+2026-09-30T09:46:00Z profile_adapter src:warehouse mode=live env=prod read_only=true result=refused reason=no_authorization

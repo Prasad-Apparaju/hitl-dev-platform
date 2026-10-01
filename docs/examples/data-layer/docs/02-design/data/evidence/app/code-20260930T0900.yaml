@@ -1,0 +1,139 @@
+schema_version: '1.0'
+evidence_type: code
+source: src:app
+taken_at: '2026-09-30T09:00:00Z'
+adapter:
+  name: code_adapter.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: dev
+  read_only: true
+coverage:
+  languages:
+  - python
+  files_scanned: 6
+  files_skipped:
+    other_language: 0
+items:
+- id: ev:app/code/0001
+  kind: orm_entity
+  locator: app/models/order.py:8
+  data:
+    class: Order
+    table: orders
+    fields:
+    - id
+    - order_no
+    - tenant_id
+    - promised_date
+    - status
+    keys:
+    - id
+    relationships:
+    - to: OrderLine
+      kind: one-to-many
+- id: ev:app/code/0002
+  kind: orm_entity
+  locator: app/models/order.py:18
+  data:
+    class: OrderLine
+    table: order_lines
+    fields:
+    - id
+    - order_id
+    - part_id
+    - qty
+    keys:
+    - id
+    foreign_keys:
+    - field: order_id
+      to: orders.id
+    relationships:
+    - to: Order
+      kind: many-to-one
+- id: ev:app/code/0003
+  kind: store_literal
+  locator: app/repo/shipments.py:7
+  data:
+    store: shipments
+    how: db["shipments"]
+    template: null
+- id: ev:app/code/0004
+  kind: read
+  locator: app/repo/shipments.py:12
+  data:
+    store: shipments
+    method: find
+    fields:
+    - order_no
+    - carrier_ref
+    - eta
+- id: ev:app/code/0005
+  kind: join
+  locator: app/repo/shipments.py:12
+  data:
+    left: orders
+    right: shipments
+    keys:
+      left: order_no
+      right: order_no
+- id: ev:app/code/0006
+  kind: store_literal
+  locator: app/repo/slots.py:6
+  data:
+    store: delivery_slots
+    how: warehouse.table("delivery_slots")
+    template: null
+- id: ev:app/code/0007
+  kind: read
+  locator: app/repo/slots.py:7
+  data:
+    store: delivery_slots
+    method: select
+    fields:
+    - slot_id
+    - order_no
+    - window_start
+- id: ev:app/code/0008
+  kind: read
+  locator: jobs/nightly_eta.py:11
+  data:
+    store: orders
+    method: select
+    fields:
+    - order_no
+    - promised_date
+- id: ev:app/code/0009
+  kind: read
+  locator: jobs/nightly_eta.py:14
+  data:
+    store: shipments
+    method: find
+    fields:
+    - order_no
+    - carrier_ref
+    - shipped_at
+- id: ev:app/code/0010
+  kind: store_literal
+  locator: jobs/nightly_eta.py:18
+  data:
+    store: eta_cache
+    how: db["eta_cache"]
+    template: null
+- id: ev:app/code/0011
+  kind: write
+  locator: jobs/nightly_eta.py:20
+  data:
+    store: eta_cache
+    method: update
+    fields:
+    - order_no
+    - eta
+    - computed_at
+- id: ev:app/code/0012
+  kind: key_use
+  locator: jobs/nightly_eta.py:19
+  data:
+    store: eta_cache
+    field: order_no
