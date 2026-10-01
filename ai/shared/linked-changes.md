@@ -22,7 +22,7 @@ field when it is not.
 
 | Point | Check | Waits for |
 |---|---|---|
-| `dev-tdd`, `dev-apply-change` | `linked.py need docs-approved` | every `docs` partner approved: its record says `implementation-approved`, or its issue carries `## ✅ Ready for Development` or `## ✅ Gate Approved`, or its PR merged |
+| `dev-tdd`, `dev-apply-change` | `linked.py need docs-approved` | every `docs` partner approved: its record says `implementation-approved`, or its issue carries `## ✅ Ready for Development` or `## ✅ Gate Approved`, or its PR merged (a PR counts when it sits on the `issue/<n>-` branch, kept on the PR after the branch is deleted, or names the change id or `#<n>` as a whole word) |
 | the CI traceability gate | `check_change.py` | the decision packet and the LLD or ADR found in the `docs` partner's PR when none is local |
 | `ops-deploy` | `linked.py need provider-deployed --env <target>` | every `provider` merged and carrying `## 🚀 Deployed to <target>` on its issue |
 | `dev-conclude` (fold) | `linked.py need code-merged` | every `code` partner merged; folding earlier is asked and recorded as `fold_before_partners` |

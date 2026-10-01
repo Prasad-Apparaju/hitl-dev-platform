@@ -115,7 +115,8 @@ def test_gate6_a_loose_search_hit_is_ignored_and_a_pull_read_failure_is_an_error
     assert not cc.check_decision_packet(["app/orders/api.py"], "12").passed
     monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], title="wiring (GH-40)", ref="other"))
     assert cc.check_decision_packet(["app/orders/api.py"], "12").passed
-    monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], fail=("repos/org/docs/pulls/7\n",)))
+    monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], title="design packet (#40)", ref="other"))
+    assert cc.check_decision_packet(["app/orders/api.py"], "12").passed
     h = Host(files=["docs/decisions/issue-40.yaml"])
     orig = h.__call__
 

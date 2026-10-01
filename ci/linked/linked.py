@@ -47,9 +47,13 @@ class NotFound(Exception):
     """The partner's issue does not exist on the host: a wrong link, not an unreadable host."""
 
 
-def mentions(text, change_id: str) -> bool:
-    """The change id as a whole word (GH-14 must not match GH-142 or a PR that never names it)."""
-    return re.search(r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(str(change_id)), str(text or "")) is not None
+def mentions(text, change_id: str, issue: int | None = None) -> bool:
+    """The change id as a whole word (GH-14 must not match GH-142 or a PR that never names it), or the
+    host's own cross-reference form `#<n>` (every merged issue-branch PR in the field uses it)."""
+    t = str(text or "")
+    if re.search(r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(str(change_id)), t):
+        return True
+    return issue is not None and re.search(r"(?<![A-Za-z0-9])#%d(?![0-9])" % issue, t) is not None
 
 
 class Malformed(Exception):
@@ -192,12 +196,27 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
         except HostError:
             pass
     try:
-        found = gh_json(run, "search/issues?q=repo:%s+is:pr+%s" % (repo, p["change_id"]))
-        # the search matches loosely (GH-14 found a PR that never names it): keep a hit only when the
-        # change id is a whole word in its title or body
-        for x in (found or {}).get("items", []) if isinstance(found, dict) else []:
-            if isinstance(x, dict) and (mentions(x.get("title"), p["change_id"]) or mentions(x.get("body"), p["change_id"])):
-                prs.append(x)
+        # the search matches loosely (GH-14 found a PR that never names it): a hit counts only when its
+        # head branch is the partner's issue branch (kept on the PR after the branch is deleted) or the
+        # change id, or the host's #<n> form, is a whole word in its title or body
+        seen = {x.get("number") for x in prs if isinstance(x, dict)}
+        for q in (p["change_id"], "%d" % n):
+            found = gh_json(run, "search/issues?q=repo:%s+is:pr+%s" % (repo, q))
+            for x in (found or {}).get("items", []) if isinstance(found, dict) else []:
+                if not isinstance(x, dict) or x.get("number") in seen:
+                    continue
+                named = mentions(x.get("title"), p["change_id"], n) or mentions(x.get("body"), p["change_id"], n)
+                if not named:
+                    try:
+                        pr = gh_json(run, "repos/%s/pulls/%s" % (repo, x.get("number")))
+                        named = str(((pr or {}).get("head") or {}).get("ref", "")).startswith("issue/%d-" % n)
+                        if named and pr.get("merged_at"):
+                            x = dict(x, pull_request=dict(x.get("pull_request") or {}, merged_at=pr["merged_at"]))
+                    except HostError:
+                        named = False
+                if named:
+                    seen.add(x.get("number"))
+                    prs.append(x)
     except HostError as e:
         if not prs:
             raise e

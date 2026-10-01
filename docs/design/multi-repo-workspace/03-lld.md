@@ -44,7 +44,7 @@ host could not be read (and which read). Nothing is cached between runs.
 | branch | `gh api repos/R/branches?per_page=100` filtered to `issue/<n>-*` (first match) | none |
 | record | `gh api repos/R/contents/.hitl/current-change.yaml?ref=<branch>` (base64 body), `status` and `linked_changes` | unreadable: record `none`, continue with comments |
 | issue state and comments | `gh api repos/R/issues/<n>` and `gh api repos/R/issues/<n>/comments --paginate` | unreadable: exit 3 |
-| PRs | `gh api "repos/R/pulls?state=all&head=<owner>:<branch>"` plus `gh api "search/issues?q=repo:R+is:pr+<change_id>"` | unreadable: exit 3 |
+| PRs | `gh api "repos/R/pulls?state=all&head=<owner>:<branch>"` plus `search/issues?q=repo:R+is:pr+<change_id>` and `...+<n>`; a search hit counts only when its head ref starts with `issue/<n>-` (read from `repos/R/pulls/<number>`, kept after the branch is deleted) or its title or body carries the change id or `#<n>` as a whole word | unreadable: exit 3 |
 | approved | record `status: implementation-approved`, else a comment whose first line is `## ✅ Ready for Development` or starts with `## ✅ Gate Approved`, else a merged PR | |
 | merged | any PR with `merged_at` set | |
 | deployed | every environment named by a comment whose first line starts with `## 🚀 Deployed to ` | |

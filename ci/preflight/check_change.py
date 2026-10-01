@@ -82,15 +82,22 @@ def _partner_pr_files(partner: dict) -> tuple[list[tuple[str, str]], str | None]
     """([(path, head_sha)], error). Every file of every PR for the partner's issue branch or change id."""
     import json as _json
     repo = partner["repo"]
-    code, out = GH_RUN(["api", "search/issues?q=repo:%s+is:pr+%s" % (repo, partner["change_id"])])
-    if code != 0:
-        return [], "could not list %s pull requests for %s (gh exit %d)" % (repo, partner["change_id"], code)
-    try:
-        items = (_json.loads(out or "{}") or {}).get("items", [])
-    except _json.JSONDecodeError:
-        return [], "unreadable pull request list for %s" % repo
+    items = []
+    seen = set()
+    for q in (partner["change_id"], "%d" % partner["issue"]):
+        code, out = GH_RUN(["api", "search/issues?q=repo:%s+is:pr+%s" % (repo, q)])
+        if code != 0:
+            return [], "could not list %s pull requests for %s (gh exit %d)" % (repo, partner["change_id"], code)
+        try:
+            page = (_json.loads(out or "{}") or {}).get("items", [])
+        except _json.JSONDecodeError:
+            return [], "unreadable pull request list for %s" % repo
+        for it in page:
+            if isinstance(it, dict) and it.get("number") not in seen:
+                seen.add(it.get("number"))
+                items.append(it)
     files: list[tuple[str, str]] = []
-    word = re.compile(r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(partner["change_id"]))
+    word = re.compile(r"(?<![A-Za-z0-9])(?:%s|#%d(?![0-9]))(?![A-Za-z0-9])" % (re.escape(partner["change_id"]), partner["issue"]))
     for it in items:
         n = it.get("number") if isinstance(it, dict) else None
         if not n:

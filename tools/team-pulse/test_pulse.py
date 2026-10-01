@@ -267,7 +267,7 @@ def test_gh_failure_is_reported_not_swallowed(tmp_path, capsys):
     assert rc == 3 and "HTTP 401" in capsys.readouterr().err
 
 
-def test_change_id_prefix_falls_back_to_the_repository_setting(tmp_path):
+def test_pfx2_change_id_prefix_falls_back_to_the_repository_setting(tmp_path):
     """FR-30 slice 0: a top-level change_id_prefix in .hitl/config.yaml is Team Pulse's default."""
     import pulse as P
     cfg = tmp_path / "config.yaml"

@@ -300,6 +300,32 @@ def test_neg10_a_search_hit_that_never_names_the_change_id_does_not_approve(tmp_
 def test_mentions_is_a_whole_word_match():
     assert L.mentions("fixes GH-14 today", "GH-14") and L.mentions("(GH-14)", "GH-14") and L.mentions("GH-14", "GH-14")
     assert not L.mentions("GH-142", "GH-14") and not L.mentions("GH-14a", "GH-14") and not L.mentions("", "GH-14")
+    assert L.mentions("wrapper drift (#60)", "GH-60", 60) and not L.mentions("fixes #601", "GH-60", 60) and not L.mentions("#60", "GH-60")
+
+
+def test_neg11_a_merged_pr_on_a_deleted_branch_is_found_by_its_hash_form_or_head_ref(tmp_path, capsys):
+    """Round 2 N1: GH-60's PR #64 merged from issue/60-wrapper-drift, branch deleted, title says #60."""
+    p = change(tmp_path / "c.yaml", [{"repo": DOCS, "change_id": "GH-60", "role": "docs"}])
+    base = {
+        "repos/%s/branches" % DOCS: [{"name": "main"}],
+        "repos/%s/issues/60/comments" % DOCS: [],
+        "repos/%s/issues/60" % DOCS: {"state": "closed"},
+        "search/issues?q=repo:%s+is:pr+GH-60" % DOCS: {"items": []},
+    }
+    routes = dict(base)
+    routes["search/issues?q=repo:%s+is:pr+60" % DOCS] = {"items": [{"number": 64, "title": "wrapper drift (#60)", "body": "", "pull_request": {"merged_at": "2026-08-01T00:00:00Z"}}]}
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 0
+    assert "approved=yes merged=yes" in capsys.readouterr().out
+    # head ref alone, title silent, body silent: the pull read tells the branch
+    routes = dict(base)
+    routes["search/issues?q=repo:%s+is:pr+60" % DOCS] = {"items": [{"number": 64, "title": "wrapper drift", "body": "", "pull_request": {}}]}
+    routes["repos/%s/pulls/64" % DOCS] = {"head": {"ref": "issue/60-wrapper-drift"}, "merged_at": "2026-08-01T00:00:00Z"}
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 0
+    # a PR for #601 on another branch is not GH-60's
+    routes = dict(base)
+    routes["search/issues?q=repo:%s+is:pr+60" % DOCS] = {"items": [{"number": 70, "title": "fixes #601", "body": "", "pull_request": {"merged_at": "2026-08-01T00:00:00Z"}}]}
+    routes["repos/%s/pulls/70" % DOCS] = {"head": {"ref": "issue/601-x"}, "merged_at": "2026-08-01T00:00:00Z"}
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 2
 
 
 def test_d1_a_missing_partner_issue_is_exit_2_not_found(tmp_path, capsys):

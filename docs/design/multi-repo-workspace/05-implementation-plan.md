@@ -43,3 +43,5 @@
 
 | Round | Date | Lens | Verdict | Applied |
 |---|---|---|---|---|
+| 1 | 2026-10-01 | correctness, on the real host (this repository and the plugin repository as partners) | not verified | S1 the PR search approved an unrelated PR: hits now count only on the partner's issue branch or when the change id is a whole word in the title or body, in both readers, with NEG-10 and GATE-6; S2 a trailing comment the build rewrote into a bare plugin root; D1 a missing partner issue is exit 2 "not found"; D2 a pull read failure fails the gate; D3 state lines show the issue state and why no record; M1 PFX-1 tests; M2 lowercase commit pins. Report: `.hitl/reviews/incoming/GH-105-slice0-round1-correctness.md` |
+| 2 | 2026-10-01 | correctness, on the real host | verified | every round-1 item fixed; N1 a merged partner PR on a deleted branch was invisible unless its title said `GH-<n>`: the host's `#<n>` form and the head ref kept on the PR now count (NEG-11, GATE-6); N2 dead test line; M1's PFX-2 tag added. Report: `.hitl/reviews/incoming/GH-105-slice0-round2-correctness.md` |
