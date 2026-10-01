@@ -4,7 +4,7 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [Unreleased]
+## [2.16.0] — 2026-10-01
 
 ### Added
 
@@ -20,8 +20,8 @@ All notable changes to the HITL plugin are documented here.
   `.hitl/config.yaml`, default `GH`) and shows in the breadcrumb, Team Pulse and the retro; `issues:`
   names where epics and slices are filed and intake links a slice under its epic as a sub-issue.
   Single-repository projects are unchanged. Conventions in `shared/linked-changes.md`, user doc
-  `docs/linked-changes.md`, design package `docs/design/multi-repo-workspace/`, 34 tests against a
-  fake host plus 6 gate tests.
+  `docs/linked-changes.md`, design package `docs/design/multi-repo-workspace/`, 40 tests against a
+  fake host plus 7 gate tests, two validation rounds on the real host.
 
 ## [2.15.0] — 2026-09-30
 
