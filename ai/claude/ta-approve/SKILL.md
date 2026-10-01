@@ -159,9 +159,9 @@ blocker:
   rejected_at: "[ISO 8601 timestamp]"
 ```
 
-Post a GitHub issue comment (if change_id is present and in GH-N format):
+Post a GitHub issue comment (if change_id ends in an issue number, whatever its prefix):
 ```bash
-ISSUE_NUM="${CHANGE_ID#GH-}"
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')   # the digits at the end: GH-12, SVC-3, EMAIL-14
 gh issue comment "$ISSUE_NUM" --body "## ❌ Gate Rejected — [gate name]
 
 **Finding:** [TA's finding]
@@ -206,11 +206,11 @@ Update the context file:
    - `awaiting-packet-approval` → set `approvals.architecture: approved` and `approvals.product: approved`
 3. Clear any previous `blocker` field (set to null or remove)
 
-Post a GitHub issue comment (if change_id is present and in GH-N format).
+Post a GitHub issue comment (if change_id ends in an issue number, whatever its prefix).
 
 **If the approved gate is `awaiting-packet-approval`** (the final design gate — developers start now):
 ```bash
-ISSUE_NUM="${CHANGE_ID#GH-}"
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')   # the digits at the end: GH-12, SVC-3, EMAIL-14
 gh issue comment "$ISSUE_NUM" \
   --body "## ✅ Ready for Development
 
@@ -232,7 +232,7 @@ what domain I am in, and what the test plan requires me to cover.
 
 **For all other gates** (scope, HLD, LLD — architect continues):
 ```bash
-ISSUE_NUM="${CHANGE_ID#GH-}"
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')   # the digits at the end: GH-12, SVC-3, EMAIL-14
 gh issue comment "$ISSUE_NUM" \
   --body "## ✅ Gate Approved — [gate name]
 

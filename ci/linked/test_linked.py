@@ -57,8 +57,10 @@ def docs_partner(status="planning", comments=(), merged=False, backlink=False, b
     routes = {
         "repos/%s/branches" % DOCS: [{"name": "main"}, {"name": "issue/41-other"}] + ([{"name": "issue/40-scm-design"}] if branch else []),
         "repos/%s/contents/.hitl/current-change.yaml" % DOCS: {"content": b64(yaml.safe_dump(rec)), "encoding": "base64"},
-        "repos/%s/issues/40/comments" % DOCS: [{"body": c} for c in comments],
+        "repos/%s/issues/40/comments" % DOCS: [{"body": c, "user": {"login": "maintainer"}} for c in comments],
         "repos/%s/issues/40" % DOCS: {"state": "open", "id": 4040},
+        "repos/%s/collaborators/maintainer/permission" % DOCS: {"permission": "write"},
+        "repos/%s/collaborators/stranger/permission" % DOCS: {"permission": "read"},
         "repos/%s/pulls?" % DOCS: [{"number": 7, "merged_at": "2026-09-30T00:00:00Z"}] if merged else [{"number": 7, "merged_at": None}],
         "search/issues": {"items": []},
     }
@@ -117,7 +119,7 @@ def test_chk6_branch_absent_falls_back_to_comments(tmp_path, capsys):
     p = change(tmp_path / "c.yaml", [{"repo": DOCS, "change_id": "GH-40", "role": "docs"}])
     h = Host(docs_partner(branch=False, comments=["## ✅ Ready for Development"]))
     assert L.main(["state", "--change", p], run=h) == 0
-    assert "record=none (no issue/40- branch) approved=yes" in capsys.readouterr().out
+    assert "record=none (no issue/40- branch, no merged PR) approved=yes" in capsys.readouterr().out
 
 
 def test_chk2_state_shows_backlink(tmp_path, capsys):
@@ -147,8 +149,9 @@ def provider(merged=True, deployed=("prod",)):
     return {
         "repos/%s/branches" % SVC: [{"name": "issue/14-endpoint"}],
         "repos/%s/contents/.hitl/current-change.yaml" % SVC: {"content": b64("change_id: EMAIL-14\nstatus: merged\n"), "encoding": "base64"},
-        "repos/%s/issues/14/comments" % SVC: [{"body": "## 🚀 Deployed to %s\n\n**Deployed at:** x" % e} for e in deployed],
+        "repos/%s/issues/14/comments" % SVC: [{"body": "## 🚀 Deployed to %s\n\n**Deployed at:** x" % e, "user": {"login": "maintainer"}} for e in deployed],
         "repos/%s/issues/14" % SVC: {"state": "closed"},
+        "repos/%s/collaborators/maintainer/permission" % SVC: {"permission": "admin"},
         "repos/%s/pulls?" % SVC: [{"number": 3, "merged_at": "2026-09-30T00:00:00Z" if merged else None}],
         "search/issues": {"items": []},
     }
@@ -314,6 +317,7 @@ def test_neg11_a_merged_pr_on_a_deleted_branch_is_found_by_its_hash_form_or_head
     }
     routes = dict(base)
     routes["search/issues?q=repo:%s+is:pr+60" % DOCS] = {"items": [{"number": 64, "title": "wrapper drift (#60)", "body": "", "pull_request": {"merged_at": "2026-08-01T00:00:00Z"}}]}
+    routes["repos/%s/pulls/64" % DOCS] = {"head": {"ref": "issue/60-wrapper-drift"}, "merged_at": "2026-08-01T00:00:00Z"}
     assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 0
     assert "approved=yes merged=yes" in capsys.readouterr().out
     # head ref alone, title silent, body silent: the pull read tells the branch
@@ -355,3 +359,64 @@ def test_pfx1_a_prefixed_change_id_still_yields_its_issue_number(tmp_path):
     steps = os.path.join(root, "ai", "claude", "hooks", "_steps.sh")
     r = subprocess.run(["bash", "-c", "source '%s'; hitl_branch_reconcile '%s' issue/12-x; hitl_branch_reconcile '%s' issue/13-x" % (steps, f, f)], capture_output=True, text=True)
     assert r.stdout.split() == ["match", "mismatch"], r.stdout + r.stderr
+
+
+# ---------------------------------------------------------------------------
+# 2.16.1: #146 approver permission, #144 deployments from the record and the merge commit, #145 resolve
+# ---------------------------------------------------------------------------
+
+def test_neg12_a_marker_from_a_non_writer_does_not_approve(tmp_path, capsys):
+    """#146 item 2: a hand-typed Gate Approved from anyone must not approve a design."""
+    p = change(tmp_path / "c.yaml", [{"repo": DOCS, "change_id": "GH-40", "role": "docs"}])
+    routes = docs_partner()
+    routes["repos/%s/issues/40/comments" % DOCS] = [{"body": "## ✅ Gate Approved — LLD", "user": {"login": "stranger"}}]
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 2
+    assert "ignored-markers=1" in capsys.readouterr().out
+    # the permission read failing is not a pass either
+    routes["repos/%s/issues/40/comments" % DOCS] = [{"body": "## ✅ Gate Approved — LLD", "user": {"login": "nobody"}}]
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 2
+    # a writer's marker approves
+    routes["repos/%s/issues/40/comments" % DOCS] = [{"body": "## ✅ Gate Approved — LLD", "user": {"login": "maintainer"}}]
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 0
+
+
+def test_chk11_deployments_in_the_record_count_without_a_comment(tmp_path, capsys):
+    """#144: ops-deploy writes deployments: [{environment}] and the consumer's gate reads it."""
+    p = change(tmp_path / "c.yaml", [{"repo": SVC, "change_id": "EMAIL-14", "role": "provider"}])
+    routes = provider(deployed=())
+    routes["repos/%s/contents/.hitl/current-change.yaml" % SVC] = {"content": b64("change_id: EMAIL-14\nstatus: merged\ndeployments:\n  - { environment: qa, artifact: a, at: x }\n  - { environment: prod, artifact: a, at: y }\n"), "encoding": "base64"}
+    assert L.main(["need", "provider-deployed", "--env", "qa", "--change", p], run=Host(routes)) == 0
+    assert L.main(["need", "provider-deployed", "--env", "staging", "--change", p], run=Host(routes)) == 2
+    # a deploy step done with no environment recorded says so plainly and does not pass
+    routes["repos/%s/contents/.hitl/current-change.yaml" % SVC] = {"content": b64("change_id: EMAIL-14\nworkflow:\n  steps:\n    - { n: 27, key: deploy, status: done }\n"), "encoding": "base64"}
+    assert L.main(["need", "provider-deployed", "--env", "qa", "--change", p], run=Host(routes)) == 2
+    assert "deploy step done but no environment recorded" in capsys.readouterr().out
+
+
+def test_chk12_the_record_is_read_at_the_merge_commit_once_the_branch_is_gone(tmp_path, capsys):
+    """#144: after merge the issue branch is deleted; the record lives at the PR's merge commit."""
+    p = change(tmp_path / "c.yaml", [{"repo": SVC, "change_id": "EMAIL-14", "role": "provider"}])
+    routes = provider(deployed=())
+    routes["repos/%s/branches" % SVC] = [{"name": "main"}]                      # branch gone
+    routes["repos/%s/pulls?" % SVC] = []
+    routes["search/issues"] = {"items": [{"number": 3, "title": "EMAIL-14 endpoint", "body": "", "pull_request": {"merged_at": "2026-09-30T00:00:00Z"}}]}
+    routes["repos/%s/pulls/3" % SVC] = {"head": {"ref": "issue/14-endpoint"}, "merged_at": "2026-09-30T00:00:00Z", "merge_commit_sha": "feedface0000"}
+    del routes["repos/%s/contents/.hitl/current-change.yaml" % SVC]
+    routes["repos/%s/contents/.hitl/current-change.yaml?ref=feedface0000" % SVC] = {"content": b64("change_id: EMAIL-14\nstatus: merged\ndeployments:\n  - { environment: prod, artifact: a, at: y }\n"), "encoding": "base64"}
+    assert L.main(["need", "provider-deployed", "--env", "prod", "--change", p], run=Host(routes)) == 0
+    assert "record=merged@feedfac" in capsys.readouterr().out
+
+
+def test_resolve_prefixed_ids(tmp_path, capsys):
+    cfg = tmp_path / "config.yaml"
+    cfg.write_text("repo: org/svc\nchange_id_prefix: SVC\nprefixes:\n  DOCS: org/docs\n")
+    chg = change(tmp_path / "c.yaml", [{"repo": "org/email", "change_id": "EMAIL-14", "role": "provider"}])
+    assert L.main(["resolve", "SVC-3", "--config", str(cfg), "--change", chg]) == 0
+    assert capsys.readouterr().out.strip() == "3"
+    assert L.main(["resolve", "DOCS-7", "--config", str(cfg), "--change", chg]) == 0
+    assert capsys.readouterr().out.strip() == "-R org/docs 7"
+    assert L.main(["resolve", "EMAIL-9", "--config", str(cfg), "--change", chg]) == 0
+    assert capsys.readouterr().out.strip() == "-R org/email 9"
+    assert L.main(["resolve", "7", "--config", str(cfg), "--change", chg]) == 2
+    assert "ambiguous" in capsys.readouterr().out
+    assert L.main(["resolve", "XYZ-1", "--config", str(cfg), "--change", chg]) == 2

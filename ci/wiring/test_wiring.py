@@ -1008,3 +1008,19 @@ def test_linked_changes_add_no_workflow_step_and_ship_everywhere():
     if os.path.isfile(build):
         b = _read(build)
         assert "ci/linked" in b and "linked-changes.md" in b
+
+
+def test_issue_numbers_come_from_the_trailing_digits_not_a_literal_gh_prefix():
+    """#146: ta-approve and the step hook stripped a literal GH-, so a repository with its own
+    change_id_prefix posted no approval or progress comments and the linked-changes checker lost
+    two of its three signals."""
+    offenders = []
+    for base, _d, files in os.walk(os.path.join(AI, "claude")):
+        for fn in files:
+            if fn.endswith((".md", ".sh")):
+                p = os.path.join(base, fn)
+                if "#GH-}" in _read(p):
+                    offenders.append(os.path.relpath(p, ROOT))
+    assert not offenders, "a literal GH- strip derives the issue number in: %s" % offenders
+    for p in ("ta-approve/SKILL.md", "hooks/sync-step-to-issue.sh"):
+        assert "[0-9][0-9]*" in _read(os.path.join(AI, "claude", p)), "%s does not take the trailing digits" % p
