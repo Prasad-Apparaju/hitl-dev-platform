@@ -1,6 +1,6 @@
 ---
 description: Start any change. Say your goal, then pick Fast Track (the fewest steps this change needs) or Full Scale, and tick steps back in or out. Also picks the issue and the HITL workflow (development / brownfield / migration / prd), seeds and pushes .hitl/current-change.yaml, and routes into the workflow. The front door for every change; the session-start gate insists on it before any work.
-argument-hint: "[issue number or description]"
+argument-hint: "[change id, e.g. SVC-3, or issue number, or description]"
 disable-model-invocation: true
 ---
 
@@ -44,7 +44,7 @@ Only proceed when there is **no** active, branch-matched change.
 
 ## Step 2 — Choose the issue (insist)
 
-If `$ARGUMENTS` names an issue number, use it. Otherwise ask first: **"What's the goal, in one
+If `$ARGUMENTS` names an issue, use it. With a `change_id_prefix` in `.hitl/config.yaml` the form is `<PREFIX>-<n>` (`SVC-3`); a bare number is ambiguous across linked repositories, so refuse it and say which form to use ("Use SVC-3, or DOCS-3 for the docs repository"). An id with another repository's prefix is that repository's issue, not a change to start here: resolve it with `python3 "$LINKED" resolve <id>` and say so. Without a prefix configured, a bare number is fine as before. Otherwise ask first: **"What's the goal, in one
 sentence, and what does done look like?"** Then list open issues and see whether one already covers it:
 
 ```bash
@@ -281,7 +281,7 @@ was never in the plan, so the sizer records it `not_applicable` (#102). The gate
 record, not the ledger: it must name this change and workflow, its `rule_outcomes` must match the
 rules run on its own findings (#124) and show `applies: false`, and the security steps need
 `security_sensitive` answered (silence is not a no); else `COND_UNCONFIRMED`, `RECORD_UNIDENTIFIED`
-or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step.
+or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step. One floor pair is pre-filled rather than asked for twice: when the impact record says `reaches_production: false`, offer `deploy` and `promote` under Leave out as `decline`, reason "does not reach production (impact record)", `ack_by` the person confirming the plan, so the one confirmation records the accepted risk (#146).
 
 Pre-selected is not pre-recorded. **Nothing is written until the human confirms**; doing nothing runs
 the full plan (`keep` is the default, CR-1), and the actor on every record is the person who confirmed.
@@ -489,7 +489,7 @@ git push -u origin "$BRANCH" 2>/dev/null || true   # push if a remote exists
 
 Hand off to the workflow's own skill and follow the breadcrumb from there:
 
-- `development` → **`/hitl:dev-apply-change <N>`** (its Steps 4 to 8: doc plan, test plan, IaC review, summary; the impact analysis already ran at Step 3c)
+- `development` → **`/hitl:dev-apply-change <CHANGE_ID>`** (its Steps 4 to 8: doc plan, test plan, IaC review, summary; the impact analysis already ran at Step 3c)
 - `brownfield`  → **`/hitl:dev-start-brownfield`**
 - `migration`   → **`/hitl:dev-start-migration`**
 - `prd`         → **`/hitl:dev-start-from-prd`**

@@ -39,9 +39,11 @@ waiting on: org/docs GH-40 is not approved (record status planning, no approval 
 ```
 
 A partner counts as approved when its record says `implementation-approved`, or its issue carries
-the Ready for Development or Gate Approved comment HITL posts, or its PR merged. A provider counts as
-shipped when its PR merged and its issue carries the Deployed comment for the environment you are
-deploying to. When the host cannot be read, the check stops and says which read failed. It never
+the Ready for Development or Gate Approved comment HITL posts (from someone with write access to
+that repository; anyone else's is ignored), or its PR merged. A provider counts as shipped when its
+PR merged and its record lists a deployment to the environment you are deploying to, or its issue
+carries the Deployed comment for it. The record is read from the provider's branch, or from the
+merge commit once the branch is gone. When the host cannot be read, the check stops and says which read failed. It never
 passes on silence.
 
 ## Building against a design in another repository
@@ -66,9 +68,11 @@ issues:
   slices: org/svc             # where slices, bugs and follow-ups are filed
 ```
 
-The prefix shows in the breadcrumb, Team Pulse and the retro. Skills that file issues read the
-`issues` block, and intake links a new slice issue under its epic as a sub-issue where the host
-supports it.
+The prefix shows in the breadcrumb, Team Pulse, the retro and every issue comment HITL posts. With
+a prefix configured, give skills the full id (`SVC-3`); a bare number is refused because it could be
+any repository's. Add `prefixes: { DOCS: org/docs }` so a partner's id resolves to its repository.
+Skills that file issues read the `issues` block, and intake links a new slice issue under its epic as
+a sub-issue where the host supports it.
 
 ## Limits
 

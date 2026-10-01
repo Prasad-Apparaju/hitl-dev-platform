@@ -1,6 +1,6 @@
 ---
 description: Switch HITL context to a different issue within the current session. Switches git branch, stashes in-progress work, reloads all artifacts for the target issue, and outputs a context-reset block. Use when context-switching between GitHub issues without starting a new Claude Code session.
-argument-hint: "[issue number, e.g. 42 or GH-42]"
+argument-hint: "[change id, e.g. GH-42 or SVC-3, or issue number]"
 disable-model-invocation: true
 ---
 
@@ -45,6 +45,9 @@ Report: "Stashed uncommitted changes on [current-branch]."
 If the working tree is clean, say: "Working tree clean — no stash needed."
 
 ---
+
+The target may be a change id (`GH-42`, `SVC-3`): `N` is the digits at the end of it; a bare number
+is fine where no `change_id_prefix` is configured.
 
 ## Step 3 — Switch to the target branch
 

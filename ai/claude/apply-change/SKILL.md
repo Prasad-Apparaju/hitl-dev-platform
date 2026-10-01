@@ -1,6 +1,6 @@
 ---
 description: Apply the HITL dev-practices workflow to analyze and plan a change before writing any code. Use when a developer is about to start implementing a feature, bug fix, or refactor and needs to produce an impact analysis, documentation plan, test plan, and execution order. Refuses to proceed if no GitHub issue exists.
-argument-hint: "[change description or issue number]"
+argument-hint: "[change id, e.g. SVC-3, or description]"
 disable-model-invocation: true
 ---
 
@@ -46,7 +46,7 @@ Before any analysis, locate and confirm these exist:
 - **HLD/LLD** — path(s) that describe this area (or note they need to be created)
 - **System manifest domain** — which domain in `docs/system-manifest.yaml` is affected
 
-If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first."
+If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first." A decision packet the ledger shows as skipped or not applicable (Fast Track) is not required here either; a packet given as a pinned reference is fetched like an LLD.
 
 An LLD approved in another repository is a pinned reference, `owner/repo@<commit>:<path>`. Resolve the checker, then fetch it and record the reference, not the path; with a `linked_changes` entry of `role: docs` in `.hitl/current-change.yaml`, run the approval check first and stop on exit 2 (quote its verdict line) or exit 3 (the host could not be read; say which read failed):
 

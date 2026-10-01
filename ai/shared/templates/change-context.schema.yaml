@@ -444,3 +444,16 @@ fold_before_partners:
   by:     { type: string, example: "pm@team" }
   at:     { type: string, example: "2026-09-30T12:00:00Z" }
   reason: { type: string }
+
+deployments:
+  type: list[object]
+  required: false
+  description: |
+    Every deploy of this change, appended by ops-deploy (or by a CI deploy that mirrors it), one
+    entry per environment and run. A consumer change in another repository reads this through
+    `linked.py need provider-deployed --env <env>` (#144): the provider counts as deployed to <env>
+    when an entry names it, or when its issue carries the `## 🚀 Deployed to <env>` comment.
+  item:
+    environment: { type: string, example: "qa" }
+    artifact:    { type: string, example: "svc:1.4.2" }
+    at:          { type: string, example: "2026-10-01T12:00:00Z" }

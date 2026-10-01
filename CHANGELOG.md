@@ -4,6 +4,26 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Linked changes, from the first two-repo run** (#144, #145, #146). A provider counts as deployed
+  from its record (`deployments: [{environment, artifact, at}]`, which `ops-deploy` now appends on
+  every deploy) as well as from the issue comment, and the record is read from the PR's merge commit
+  once the branch is gone; a deploy step marked done with no environment is reported plainly and
+  does not pass. An approval or deploy comment counts only from an author with write access on the
+  repository. Every place that turns a change id into an issue number takes the digits at the end,
+  so a prefixed id (`SVC-3`) posts progress, approval and deploy comments like `GH-3` did; before
+  this, a prefixed repository lost two of the three approval signals. Skills take `<PREFIX>-<n>`,
+  refuse a bare number when a prefix is configured, and `linked.py resolve DOCS-7` maps a partner's
+  id to its repository through `prefixes:` in `.hitl/config.yaml`. `dev-tdd` and `dev-apply-change`
+  honour a certified skip of the decision packet (every Fast Track change deadlocked at TDD) and
+  accept a packet by pinned reference. When intake records that the change does not reach
+  production, Deploy and Promote are offered pre-filled as declined with the confirming person's
+  acceptance, so one confirmation records the risk instead of a second round; a floor step is still
+  never dropped by a rule alone.
+
 ## [2.16.0] — 2026-10-01
 
 ### Added

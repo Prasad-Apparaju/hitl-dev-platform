@@ -10,6 +10,7 @@ through `gh`, never from its code, and answers:
     linked.py fetch      owner/repo@<commit>:<path>  [--out-dir .hitl/linked]
     linked.py issue-repo epic | slice | bug | followup  [--config .hitl/config.yaml]
     linked.py link-sub   owner/repo#<epic> owner/repo#<child>
+    linked.py resolve    <PREFIX>-<n>   -> prints "-R owner/repo <n>" from .hitl/config.yaml prefixes and the partners
 
 Exit codes: 0 satisfied; 2 not satisfied, or the record is malformed; 3 the host could not be read
 (which read is printed). Unreadable is never a pass.
@@ -35,6 +36,7 @@ ROLES = ("docs", "provider", "consumer", "code")
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 REF_RE = re.compile(r"^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([0-9a-f]{7,40}):(.+)$")
 APPROVED_MARKERS = ("## ✅ Ready for Development", "## ✅ Gate Approved")
+APPROVER_PERMISSIONS = ("admin", "maintain", "write")
 DEPLOYED_MARKER = "## 🚀 Deployed to "
 EXIT_OK, EXIT_NO, EXIT_HOST = 0, 2, 3
 
@@ -159,17 +161,17 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
                 break
     except HostError:
         branch = None  # the record read is optional; comments decide
-    record, backlink = None, None
+    record, backlink, record_ref = None, None, None
+
+    def _read_record(ref):
+        doc = gh_json(run, "repos/%s/contents/.hitl/current-change.yaml?ref=%s" % (repo, ref))
+        body = base64.b64decode((doc or {}).get("content", "") or "").decode("utf-8", "replace")
+        rec = yaml.safe_load(body)
+        return rec if isinstance(rec, dict) else None
+
     if branch:
         try:
-            doc = gh_json(run, "repos/%s/contents/.hitl/current-change.yaml?ref=%s" % (repo, branch))
-            body = base64.b64decode((doc or {}).get("content", "") or "").decode("utf-8", "replace")
-            rec = yaml.safe_load(body)
-            if isinstance(rec, dict):
-                record = rec
-                if own_repo and own_change_id:
-                    backlink = any(isinstance(x, dict) and x.get("repo") == own_repo and str(x.get("change_id")) == str(own_change_id)
-                                   for x in (rec.get("linked_changes") or []) if isinstance(rec.get("linked_changes"), list))
+            record, record_ref = _read_record(branch), branch
         except (HostError, yaml.YAMLError, ValueError):
             record = None
     code, out = run(["api", "repos/%s/issues/%d" % (repo, n)])
@@ -183,11 +185,33 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
     except json.JSONDecodeError:
         raise HostError("gh api repos/%s/issues/%d returned something that is not JSON" % (repo, n))
     comments = gh_json(run, "repos/%s/issues/%d/comments?per_page=100" % (repo, n), paginate=True) or []
-    firsts = [_first_line(c.get("body")) for c in comments if isinstance(c, dict)]
+    # a marker counts only from an author with write access on the repository (#146): a hand-typed
+    # "Gate Approved" from anyone must not approve a design
+    perm_cache: dict = {}
+
+    def _approver(login) -> bool:
+        if not login:
+            return False
+        if login not in perm_cache:
+            try:
+                d = gh_json(run, "repos/%s/collaborators/%s/permission" % (repo, login))
+                perm_cache[login] = (d or {}).get("permission") in APPROVER_PERMISSIONS
+            except HostError:
+                perm_cache[login] = False
+        return perm_cache[login]
+
+    approved_firsts, ignored = [], []
+    for c in comments:
+        if not isinstance(c, dict):
+            continue
+        f = _first_line(c.get("body"))
+        if f == APPROVED_MARKERS[0] or f.startswith(APPROVED_MARKERS[1]) or f.startswith(DEPLOYED_MARKER):
+            if _approver(((c.get("user") or {}).get("login"))):
+                approved_firsts.append(f)
+            else:
+                ignored.append(f)
     approved_by = None
-    if record is not None and record.get("status") == "implementation-approved":
-        approved_by = "record"
-    elif any(f == APPROVED_MARKERS[0] or f.startswith(APPROVED_MARKERS[1]) for f in firsts):
+    if any(f == APPROVED_MARKERS[0] or f.startswith(APPROVED_MARKERS[1]) for f in approved_firsts):
         approved_by = "comment"
     prs = []
     if branch:
@@ -221,24 +245,63 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
         if not prs:
             raise e
     merged = any(isinstance(x, dict) and (x.get("merged_at") or (x.get("pull_request") or {}).get("merged_at")) for x in prs)
+    if record is None and merged:
+        # the branch is gone after merge: the record lives at the PR's merge commit (#144)
+        for x in prs:
+            if not isinstance(x, dict) or not (x.get("merged_at") or (x.get("pull_request") or {}).get("merged_at")):
+                continue
+            sha = x.get("merge_commit_sha")
+            if not sha and x.get("number"):
+                try:
+                    sha = (gh_json(run, "repos/%s/pulls/%s" % (repo, x["number"])) or {}).get("merge_commit_sha")
+                except HostError:
+                    sha = None
+            if sha:
+                try:
+                    record, record_ref = _read_record(sha), sha[:7]
+                    if record is not None:
+                        break
+                except (HostError, yaml.YAMLError, ValueError):
+                    record = None
+    if record is not None and own_repo and own_change_id:
+        backlink = any(isinstance(y, dict) and y.get("repo") == own_repo and str(y.get("change_id")) == str(own_change_id)
+                       for y in (record.get("linked_changes") or []) if isinstance(record.get("linked_changes"), list))
+    if record is not None and record.get("status") == "implementation-approved":
+        approved_by = "record"
     if merged and approved_by is None:
         approved_by = "merged"
-    deployed = sorted({f[len(DEPLOYED_MARKER):].strip().strip("`*") for f in firsts if f.startswith(DEPLOYED_MARKER)})
+    # deployments: the record's list first, then the issue comment (#144)
+    deployed = set()
+    for d in (record or {}).get("deployments") or []:
+        if isinstance(d, dict) and d.get("environment"):
+            deployed.add(str(d["environment"]))
+    deploy_step_done = any(isinstance(st, dict) and st.get("key") == "deploy" and st.get("status") == "done"
+                           for st in ((record or {}).get("workflow") or {}).get("steps") or []) if record else False
+    deployed |= {f[len(DEPLOYED_MARKER):].strip().strip("`*") for f in approved_firsts if f.startswith(DEPLOYED_MARKER)}
+    deployed = sorted(deployed)
     return {
         "repo": repo, "change_id": p["change_id"], "role": p["role"], "issue": n, "branch": branch,
+        "record_ref": record_ref,
         "issue_state": (issue or {}).get("state") if isinstance(issue, dict) else None,
         "status": (record or {}).get("status") if record else None,
         "approved": approved_by is not None, "approved_by": approved_by,
-        "merged": merged, "deployed": deployed, "backlink": backlink,
+        "merged": merged, "deployed": deployed, "deploy_step_done": deploy_step_done,
+        "ignored_markers": len(ignored), "backlink": backlink,
     }
 
 
 def fmt(s: dict) -> str:
-    rec = s["status"] or ("none (no issue/%d- branch)" % s["issue"] if not s.get("branch") else "none")
+    if s["status"]:
+        rec = "%s@%s" % (s["status"], s.get("record_ref") or "?")
+    else:
+        rec = "none (no issue/%d- branch, no merged PR)" % s["issue"] if not s.get("branch") else "none"
+    extra = "" if s["backlink"] is None else " backlink=%s" % ("yes" if s["backlink"] else "no")
+    if s.get("ignored_markers"):
+        extra += " ignored-markers=%d(not from a writer)" % s["ignored_markers"]
     return "%-8s %-10s %-28s issue=%s record=%s approved=%s merged=%s deployed=%s%s" % (
         s["role"], s["change_id"], s["repo"], s.get("issue_state") or "?", rec,
         "yes" if s["approved"] else "no", "yes" if s["merged"] else "no",
-        "[%s]" % ",".join(s["deployed"]), "" if s["backlink"] is None else " backlink=%s" % ("yes" if s["backlink"] else "no"))
+        "[%s]" % ",".join(s["deployed"]), extra)
 
 
 # ---------------------------------------------------------------------------
@@ -278,7 +341,8 @@ def cmd_need(run, what: str, env: str | None, change_path: str, own_repo: str | 
             if not s["merged"]:
                 waiting.append("%s %s has no merged PR" % (s["repo"], s["change_id"]))
             elif env not in s["deployed"]:
-                waiting.append("%s %s is not deployed to %s (deployed: %s)" % (s["repo"], s["change_id"], env, ", ".join(s["deployed"]) or "nowhere"))
+                how = "deploy step done but no environment recorded (add deployments: [{environment: %s}] to its record, or the Deployed comment)" % env if s.get("deploy_step_done") else ("deployed: %s" % ", ".join(s["deployed"]) if s["deployed"] else "no deployment recorded")
+                waiting.append("%s %s is not deployed to %s (%s)" % (s["repo"], s["change_id"], env, how))
         elif what == "code-merged" and not s["merged"]:
             waiting.append("%s %s has not merged" % (s["repo"], s["change_id"]))
     if waiting:
@@ -328,6 +392,42 @@ def cmd_issue_repo(kind: str, config_path: str) -> int:
     return EXIT_OK
 
 
+def cmd_resolve(ident: str, config_path: str, change_path: str) -> int:
+    """<PREFIX>-<n> -> "-R owner/repo <n>" from config `prefixes:` (and `repo`/`change_id_prefix`) and the partners."""
+    m = re.fullmatch(r"([A-Za-z][A-Za-z0-9]*)-(\d+)", ident.strip())
+    if not m:
+        if ident.strip().isdigit():
+            print("ambiguous: a bare number; use <PREFIX>-%s" % ident.strip())
+        else:
+            print("not a change id: %s" % ident)
+        return EXIT_NO
+    prefix, n = m.group(1), m.group(2)
+    cfg = load_config(config_path)
+    table = {}
+    own = cfg.get("change_id_prefix") or "GH"
+    if isinstance(cfg.get("repo"), str) and REPO_RE.match(cfg["repo"]):
+        table[str(own).upper()] = cfg["repo"]
+    for k, v in (cfg.get("prefixes") or {}).items() if isinstance(cfg.get("prefixes"), dict) else []:
+        if isinstance(v, str) and REPO_RE.match(v):
+            table[str(k).upper()] = v
+    try:
+        for p in partners(load_change(change_path)):
+            pm = re.match(r"([A-Za-z][A-Za-z0-9]*)-\d+$", p["change_id"])
+            if pm:
+                table.setdefault(pm.group(1).upper(), p["repo"])
+    except Malformed:
+        pass
+    if prefix.upper() == str(own).upper():
+        print(n)      # this repository, no -R needed
+        return EXIT_OK
+    repo = table.get(prefix.upper())
+    if repo is None:
+        print("unknown prefix %s; add prefixes: { %s: owner/repo } to .hitl/config.yaml" % (prefix, prefix))
+        return EXIT_NO
+    print("-R %s %s" % (repo, n))
+    return EXIT_OK
+
+
 def cmd_link_sub(run, epic: str, child: str) -> int:
     m1, m2 = re.match(r"^(.+)#(\d+)$", epic), re.match(r"^(.+)#(\d+)$", child)
     if not (m1 and m2 and REPO_RE.match(m1.group(1)) and REPO_RE.match(m2.group(1))):
@@ -357,6 +457,7 @@ def main(argv=None, run=gh_run) -> int:
     f = sub.add_parser("fetch"); f.add_argument("ref"); f.add_argument("--out-dir", default=".hitl/linked")
     i = sub.add_parser("issue-repo"); i.add_argument("kind", choices=["epic", "slice", "bug", "followup"]); i.add_argument("--config", default=".hitl/config.yaml")
     l = sub.add_parser("link-sub"); l.add_argument("epic"); l.add_argument("child")
+    r = sub.add_parser("resolve"); r.add_argument("id"); r.add_argument("--config", default=".hitl/config.yaml"); r.add_argument("--change", default=".hitl/current-change.yaml")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "state":
@@ -372,6 +473,8 @@ def main(argv=None, run=gh_run) -> int:
             return cmd_issue_repo(a.kind, a.config)
         if a.cmd == "link-sub":
             return cmd_link_sub(run, a.epic, a.child)
+        if a.cmd == "resolve":
+            return cmd_resolve(a.id, a.config, a.change)
     except Malformed as e:
         print("MALFORMED: %s" % e)
         return EXIT_NO

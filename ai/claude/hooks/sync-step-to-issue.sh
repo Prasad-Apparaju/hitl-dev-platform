@@ -47,9 +47,10 @@ PHASE=$(echo "$CS_BLOCK" | awk -F'"' '/phase:/{print $2}')
 # Skip placeholder change_id written before the GitHub issue is created
 [[ "$CHANGE_ID" == "migration-setup" || -z "$CHANGE_ID" ]] && exit 0
 
-# Extract numeric issue number from GH-N format
-ISSUE_NUM="${CHANGE_ID#GH-}"
-[[ "$ISSUE_NUM" == "$CHANGE_ID" || -z "$ISSUE_NUM" ]] && exit 0  # not GH-N format
+# The issue number is the digits at the end of the change id, whatever the prefix (GH-12, SVC-3):
+# a repository with its own change_id_prefix (FR-30) posts progress like any other (#146).
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')
+[[ -z "$ISSUE_NUM" ]] && exit 0  # no issue number in the change id
 
 # Step advancement check — only post when the step number actually increases
 CACHE_FILE="${TMPDIR:-${TMP:-/tmp}}/hitl-last-step-${CHANGE_ID}"
