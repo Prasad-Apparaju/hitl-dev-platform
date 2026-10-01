@@ -232,6 +232,21 @@ setup_tools() {
     fi
   fi
 
+  # Data layer (FR-31): validator, scorecard, schema and adapters; the waiver file and the CI template once.
+  if [[ -d "$PLATFORM_ROOT/ci/data-layer" ]]; then
+    mkdir -p "$TARGET_DIR/ci/data-layer" "$TARGET_DIR/tools/data-layer"
+    hitl_copy_tools "$PLATFORM_ROOT/ci/data-layer" "$TARGET_DIR/ci/data-layer"
+    [[ -f "$PLATFORM_ROOT/ci/data-layer/data-layer.schema.yaml" ]] && cp "$PLATFORM_ROOT/ci/data-layer/data-layer.schema.yaml" "$TARGET_DIR/ci/data-layer/"
+    [[ ! -f "$TARGET_DIR/ci/data-layer/data-layer-waivers.yaml" && -f "$PLATFORM_ROOT/ci/data-layer/data-layer-waivers.yaml" ]] && cp "$PLATFORM_ROOT/ci/data-layer/data-layer-waivers.yaml" "$TARGET_DIR/ci/data-layer/"
+    hitl_copy_tools "$PLATFORM_ROOT/tools/data-layer" "$TARGET_DIR/tools/data-layer"
+    if [[ -f "$PLATFORM_ROOT/ci/workflows/data-layer-check.yml" ]]; then
+      mkdir -p "$TARGET_DIR/.github/workflows"
+      [[ ! -f "$TARGET_DIR/.github/workflows/data-layer-check.yml" ]] && cp "$PLATFORM_ROOT/ci/workflows/data-layer-check.yml" "$TARGET_DIR/.github/workflows/"
+    fi
+    echo "✓ ci/data-layer/ + tools/data-layer/ (data-layer validator, scorecard, adapters) + .github/workflows/data-layer-check.yml"
+    (( copied++ )) || true
+  fi
+
   # Compound-agentic surface (#10): the system-manifest validator + posture-view generator, invoked
   # repo-relative by pm-design-feature. Self-contained; PRESERVE the repo's manifest-waivers.yaml.
   if [[ -d "$PLATFORM_ROOT/ci/manifest-agentic" ]]; then

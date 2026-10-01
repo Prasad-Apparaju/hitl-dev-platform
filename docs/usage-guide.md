@@ -366,5 +366,6 @@ This stashes uncommitted work, checks out the `issue/42-*` branch, reloads all a
 | Validate all session work | `/hitl:dev-validate` |
 | Switch to a different issue | `/hitl:dev-switch-context [issue-number]` |
 | See who is on what and what is waiting on someone | `/hitl:team-pulse` (see [team-pulse.md](team-pulse.md)) |
+| Write a system's data layer down with evidence | `/hitl:dev-map-data-layer` (see [data-layer.md](data-layer.md)) |
 | Update the plugin | `/hitl:dev-update` |
 | Find the right command | `/hitl:help [describe your situation]` |

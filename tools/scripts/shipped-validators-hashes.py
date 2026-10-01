@@ -21,6 +21,9 @@ SOURCES = (
     ("tools/manifest-agentic", "tools/manifest-agentic", True),
     ("ci/adversarial", "ci/adversarial", True),
     ("ci/manifest-drift", "ci/manifest-drift", True),
+    ("ci/data-layer", "ci/data-layer", True),
+    ("ci/data-layer/data-layer.schema.yaml", "ci/data-layer/data-layer.schema.yaml", False),
+    ("tools/data-layer", "tools/data-layer", True),
 )
 
 
