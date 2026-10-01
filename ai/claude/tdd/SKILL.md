@@ -38,6 +38,15 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 >
 > Do not start the TDD cycle until status is `implementation-approved`.
 
+**Refusal rule — linked docs partner unapproved (FR-30 slice 0):** If `.hitl/current-change.yaml` has a `linked_changes` entry with `role: docs`, run the checker before anything else and stop on a non-zero exit, quoting its verdict line:
+
+```bash
+LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"
+python3 "$LINKED" need docs-approved     # 0 approved; 2 waiting (quote the line); 3 the host could not be read: stop, say which read failed
+```
+
+Rules in `shared/linked-changes.md`. A design in another repository is given as a pinned reference, `owner/repo@<commit>:<path>`; run `python3 "$LINKED" fetch <ref>` and read the path it prints, but cite the reference, never the cached path.
+
 **Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/hitl:dev-generate-docs` — this skill generates tests FROM the spec, not without one."
 
 **Refusal rule — no decision packet:** Before generating any tests, check `.hitl/current-change.yaml` for `source_artifacts.decision_packet`. If the field is missing or the file at that path does not exist on disk, stop:

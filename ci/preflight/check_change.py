@@ -43,6 +43,91 @@ def _git_changed_files(base_ref: str = "origin/main") -> list[str]:
     return [f for f in result.stdout.strip().splitlines() if f]
 
 
+# ---------------------------------------------------------------------------
+# Linked changes (FR-30 slice 0): a `docs` partner in another repository can hold the decision
+# packet and the LLD this change is built against. Read through gh only; a read that fails is a
+# failed check, never a pass.
+# ---------------------------------------------------------------------------
+
+CHANGE_FILE = ".hitl/current-change.yaml"
+
+
+def GH_RUN(args: list[str]) -> tuple[int, str]:
+    """The one way to the host; tests replace it."""
+    if shutil.which("gh") is None:
+        return 127, ""
+    r = _run(["gh"] + args)
+    return r.returncode, r.stdout
+
+
+def _docs_partners() -> list[dict]:
+    """`docs` partners from the change record, validated loosely (linked.py is the strict reader)."""
+    if yaml is None or not os.path.exists(CHANGE_FILE):
+        return []
+    try:
+        with open(CHANGE_FILE) as f:
+            d = yaml.safe_load(f) or {}
+    except Exception:
+        return []
+    out = []
+    for e in (d.get("linked_changes") or []) if isinstance(d, dict) else []:
+        if isinstance(e, dict) and e.get("role") == "docs" and isinstance(e.get("repo"), str) and "/" in e["repo"]:
+            m = re.search(r"(\d+)\s*$", str(e.get("issue") or e.get("change_id") or ""))
+            if m:
+                out.append({"repo": e["repo"], "change_id": str(e.get("change_id")), "issue": int(m.group(1))})
+    return out
+
+
+def _partner_pr_files(partner: dict) -> tuple[list[tuple[str, str]], str | None]:
+    """([(path, head_sha)], error). Every file of every PR for the partner's issue branch or change id."""
+    import json as _json
+    repo = partner["repo"]
+    code, out = GH_RUN(["api", "search/issues?q=repo:%s+is:pr+%s" % (repo, partner["change_id"])])
+    if code != 0:
+        return [], "could not list %s pull requests for %s (gh exit %d)" % (repo, partner["change_id"], code)
+    try:
+        items = (_json.loads(out or "{}") or {}).get("items", [])
+    except _json.JSONDecodeError:
+        return [], "unreadable pull request list for %s" % repo
+    files: list[tuple[str, str]] = []
+    for it in items:
+        n = it.get("number") if isinstance(it, dict) else None
+        if not n:
+            continue
+        code, out = GH_RUN(["api", "repos/%s/pulls/%d" % (repo, n)])
+        head = ""
+        try:
+            head = (_json.loads(out or "{}") or {}).get("head", {}).get("sha", "") if code == 0 else ""
+        except _json.JSONDecodeError:
+            head = ""
+        code, out = GH_RUN(["api", "repos/%s/pulls/%d/files?per_page=100" % (repo, n), "--paginate", "--slurp"])
+        if code != 0:
+            return [], "could not read the files of %s#%d (gh exit %d)" % (repo, n, code)
+        try:
+            pages = _json.loads(out or "[]")
+        except _json.JSONDecodeError:
+            return [], "unreadable file list for %s#%d" % (repo, n)
+        rows = [x for pg in pages for x in (pg if isinstance(pg, list) else [pg])] if pages and isinstance(pages[0], list) else pages
+        for row in rows:
+            if isinstance(row, dict) and row.get("filename"):
+                files.append((row["filename"], head))
+    return files, None
+
+
+def _partner_file(partner: dict, path: str, ref: str) -> dict | None:
+    import base64 as _b64
+    import json as _json
+    code, out = GH_RUN(["api", "repos/%s/contents/%s?ref=%s" % (partner["repo"], path, ref)])
+    if code != 0 or yaml is None:
+        return None
+    try:
+        body = _b64.b64decode((_json.loads(out) or {}).get("content", "") or "").decode("utf-8", "replace")
+        data = yaml.safe_load(body)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
 def _is_source_file(path: str) -> bool:
     return any(path.endswith(ext) for ext in (".py", ".ts", ".js", ".go", ".java", ".rs"))
 
@@ -254,6 +339,9 @@ def check_decision_packet(changed: list[str], issue: str | None = None, *, stric
 
     packets = _resolve_packets_to_validate(changed, issue)
     if not packets:
+        partner_result = _check_packet_in_partner(issue)
+        if partner_result is not None:
+            return partner_result
         return CheckResult(
             "decision-packet", False,
             "Manifest-domain files changed but no decision packet found. "
@@ -344,6 +432,29 @@ def check_decision_packet(changed: list[str], issue: str | None = None, *, stric
     return CheckResult("decision-packet", True, f"Found and validated {len(packets)} decision packet(s).")
 
 
+def _check_packet_in_partner(issue: str | None) -> CheckResult | None:
+    """With a `docs` partner declared, its PR may carry the packet. None when no partner is declared."""
+    partners = _docs_partners()
+    if not partners:
+        return None
+    for p in partners:
+        files, err = _partner_pr_files(p)
+        if err:
+            return CheckResult("decision-packet", False, "linked docs partner %s %s: %s" % (p["repo"], p["change_id"], err))
+        want = [(f, ref) for f, ref in files if f.startswith("docs/decisions/issue-") and f.endswith(".yaml")]
+        if not want:
+            continue
+        for f, ref in want:
+            data = _partner_file(p, f, ref or "HEAD")
+            if not data:
+                return CheckResult("decision-packet", False, "linked docs partner %s: %s could not be read at %s" % (p["repo"], f, ref or "HEAD"))
+            missing = [k for k in ("issue", "domains", "source_docs", "rollout") if not data.get(k)]
+            if missing:
+                return CheckResult("decision-packet", False, "linked docs partner %s: %s is missing %s" % (p["repo"], f, ", ".join(missing)))
+        return CheckResult("decision-packet", True, "Decision packet found in linked docs partner %s (%s): %s" % (p["repo"], p["change_id"], ", ".join(f for f, _ in want)))
+    return CheckResult("decision-packet", False, "No decision packet in this changeset or in the linked docs partner(s) %s." % ", ".join("%s %s" % (p["repo"], p["change_id"]) for p in partners))
+
+
 def check_lld_adr_for_api(changed: list[str]) -> CheckResult:
     """If API/controller files changed, LLD or ADR must also be updated."""
     api_files = [f for f in changed if _is_api_or_controller(f)]
@@ -353,6 +464,13 @@ def check_lld_adr_for_api(changed: list[str]) -> CheckResult:
     doc_updates = [f for f in changed if _is_doc_lld_or_adr(f)]
     if doc_updates:
         return CheckResult("lld-adr-update", True, "API files changed and LLD/ADR docs updated.")
+    for p in _docs_partners():
+        files, err = _partner_pr_files(p)
+        if err:
+            return CheckResult("lld-adr-update", False, "linked docs partner %s %s: %s" % (p["repo"], p["change_id"], err))
+        hits = [f for f, _ in files if _is_doc_lld_or_adr(f)]
+        if hits:
+            return CheckResult("lld-adr-update", True, "API files changed; LLD/ADR updated in linked docs partner %s (%s)." % (p["repo"], ", ".join(hits[:3])))
     return CheckResult(
         "lld-adr-update", False,
         "API/controller files changed but no LLD or ADR doc was updated in this changeset.",

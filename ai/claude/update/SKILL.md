@@ -274,7 +274,8 @@ else
       ci/agentic-advisor/test_advisor_e2e.py ci/agentic-advisor/test_catalog_lint.py \
       ci/agentic-advisor/test_compose.py ci/agentic-advisor/test_records.py \
       ci/agentic-advisor/test_render_map.py \
-      ci/data-layer/test_check_data_layer.py ci/data-layer/test_scorecard.py tools/data-layer/test_adapters.py)
+      ci/data-layer/test_check_data_layer.py ci/data-layer/test_scorecard.py tools/data-layer/test_adapters.py \
+      ci/linked/test_linked.py)
     for f in ${removed[@]+"${removed[@]}"}; do echo "  ✓ removed $f (HITL test that cannot run in this repo)"; done
     for f in ${kept[@]+"${kept[@]}"}; do
       echo "  • kept $f: same name as a HITL test but different content, so it is yours or you edited it." >&2
@@ -284,7 +285,7 @@ else
 
   # stage ONLY the paths that exist — a single `git add` over an absent optional path errors on the whole
   # pathspec and (with `|| true`) would silently stage NOTHING (codex-7).
-  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift ci/adversarial ci/data-layer tools/data-layer .github/workflows/first-pass-check.yml .github/workflows/data-layer-check.yml; do
+  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift ci/adversarial ci/data-layer tools/data-layer ci/linked .github/workflows/first-pass-check.yml .github/workflows/data-layer-check.yml; do
     [[ -e "$p" ]] && git add "$p"
   done
 fi

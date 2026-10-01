@@ -160,6 +160,10 @@ if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
 fi
 # HITL copies Python validators in, so pytest/import will produce bytecode next to them. Without
 # this the consumer commits __pycache__ built on whichever machine ran onboarding.
+if ! grep -q "^\.hitl/linked/" "$GITIGNORE" 2>/dev/null; then
+  printf '.hitl/linked/\n' >> "$GITIGNORE"
+  echo "✓ .gitignore — .hitl/linked/ excluded (pinned designs fetched from other repositories)"
+fi
 if ! grep -q "__pycache__" "$GITIGNORE" 2>/dev/null; then
   printf '\n# Python bytecode\n__pycache__/\n*.pyc\n' >> "$GITIGNORE"
   echo "✓ .gitignore — __pycache__/ excluded"
@@ -230,6 +234,13 @@ setup_tools() {
     else
       echo "✗ ci/first-pass/ install incomplete (check_skips.py / workflows.yaml missing)" >&2
     fi
+  fi
+
+  # Linked changes (FR-30 slice 0): the partner-state checker the TDD, deploy and conclude steps run.
+  if [[ -d "$PLATFORM_ROOT/ci/linked" ]]; then
+    hitl_copy_tools "$PLATFORM_ROOT/ci/linked" "$TARGET_DIR/ci/linked"
+    echo "✓ ci/linked/ (linked-changes checker)"
+    (( copied++ )) || true
   fi
 
   # Data layer (FR-31): validator, scorecard, schema and adapters; the waiver file and the CI template once.

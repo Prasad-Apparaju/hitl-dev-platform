@@ -77,7 +77,10 @@ def load_config(path=".hitl/config.yaml"):
     try:
         import yaml  # noqa
         data = yaml.safe_load(io.open(path, encoding="utf-8")) or {}
-        block = data.get("team_pulse") or {}
+        block = dict(data.get("team_pulse") or {})
+        # FR-30 slice 0: the repository's own change_id_prefix (top level) is the default here.
+        if "change_id_prefix" not in block and isinstance(data.get("change_id_prefix"), str):
+            block["change_id_prefix"] = data["change_id_prefix"]
     except Exception:
         current = None
         for raw in io.open(path, encoding="utf-8"):
@@ -87,6 +90,8 @@ def load_config(path=".hitl/config.yaml"):
             key, _s, val = line.strip().partition(":")
             if not line.startswith(" "):
                 current = key.strip() if val.strip() == "" else None
+                if key.strip() == "change_id_prefix" and val.strip() and "change_id_prefix" not in block:
+                    block["change_id_prefix"] = val.strip().strip("'\"")
             elif current == "team_pulse":
                 block[key.strip()] = val.strip().strip("'\"")
     for k, v in (block or {}).items():

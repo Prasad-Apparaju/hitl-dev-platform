@@ -32,6 +32,7 @@ Check that generated code strictly matches what the LLD specifies. Run this befo
 2. List every source file that was added or modified
 3. For each file, look up its governing LLD via `docs/system-manifest.yaml`
 4. If a modified file has no LLD entry → flag immediately: "⚠️ [file] has no LLD. Either add it to the manifest and create an LLD, or confirm with the architect that this file is exempt."
+5. An `lld:` value of the form `owner/repo@<commit>:<path>` is a pinned reference to another repository: run `python3 ci/linked/linked.py fetch <ref>` (or `$ROOT/shared/ci/linked/linked.py`) and read the path it prints; cite the reference (`shared/linked-changes.md`).
 
 ---
 

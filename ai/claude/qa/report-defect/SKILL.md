@@ -70,7 +70,7 @@ If a duplicate exists, add a comment to the existing issue with your specific re
 ## Step 4 — File the defect
 
 ```bash
-gh issue create \
+gh issue create $(python3 ci/linked/linked.py issue-repo bug 2>/dev/null) \
   --title "defect(<severity>): <short description>" \
   --label "defect,qa-block" \
   --body "<structured body>"

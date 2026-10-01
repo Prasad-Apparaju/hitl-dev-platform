@@ -48,6 +48,8 @@ Before any analysis, locate and confirm these exist:
 
 If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first."
 
+An LLD approved in another repository is a pinned reference, `owner/repo@<commit>:<path>`: run `python3 "$LINKED" fetch <ref>` (`LINKED` resolves as in `shared/linked-changes.md`) and record the reference, not the path. With a `linked_changes` entry of `role: docs` in `.hitl/current-change.yaml`, run `python3 "$LINKED" need docs-approved` first and stop on exit 2 (quote its verdict line) or exit 3 (the host could not be read; say which read failed).
+
 ### Step 2a: (removed — the branch belongs to intake)
 
 `start-change` creates the branch after the plan is agreed. Creating one here, before the change has
