@@ -124,6 +124,8 @@ def _map(d, i=0):
 NEG = [
     ("NEG-1", "ontology.yaml", lambda d: _ent(d).__setitem__("definition", "Rows written by jobs/nightly_eta.py"), "ONTOLOGY_NAMES_IMPLEMENTATION"),
     ("NEG-2", "ontology.yaml", lambda d: _ent(d)["synonyms"].append("eta_cache"), "ONTOLOGY_NAMES_IMPLEMENTATION"),
+    ("NEG-1b", "ontology.yaml", lambda d: _ent(d).__setitem__("definition", "The request a customer places, served by the orders-service over gRPC"), "ONTOLOGY_NAMES_IMPLEMENTATION"),
+    ("NEG-1c", "ontology.yaml", lambda d: _ent(d, 2).__setitem__("synonyms", ["fulfilment"]), "ONTOLOGY_NAMES_IMPLEMENTATION"),
     ("NEG-3", "lineage.yaml", lambda d: d["edges"][0].__setitem__("negative", True), "NEGATIVE_AS_EDGE"),
     ("NEG-3b", "ontology.yaml", lambda d: _ent(d)["relationships"][0].__setitem__("polarity", "absent"), "NEGATIVE_AS_EDGE"),
     ("NEG-4", "findings.yaml", lambda d: d["findings"][0].update({"subject": "ent:order", "object": "ent:eta"}), "FINDING_SHAPED_AS_EDGE"),

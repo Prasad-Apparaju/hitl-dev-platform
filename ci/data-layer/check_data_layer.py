@@ -562,14 +562,16 @@ class Checker:
                 if isinstance(p, str):
                     basenames.add(os.path.basename(p.split(":")[0]).lower())
         impl_ids = {k.split(":", 1)[1].lower() for k in self.ids if _prefix(k) in ("act", "src")} | {k.lower() for k in self.ids if _prefix(k) in ("act", "src")}
+        domain_ids = self._manifest_domains()     # a manifest domain or service name, unless it is this entity's own store or name
         for eid, e in self.entities.items():
             texts = [("name", e.get("name")), ("definition", e.get("definition"))] + \
                     [("synonym", s) for s in (e.get("synonyms") or [])]
             for label, t in texts:
                 if not isinstance(t, str):
                     continue
-                if any(mk in t for mk in self.core["implementation_markers"]):
-                    self.add("ONTOLOGY_NAMES_IMPLEMENTATION", eid, "%s %r carries a path, URL or file extension" % (label, t))
+                tl = t.lower()
+                if any(mk in tl for mk in self.core["implementation_markers"]):
+                    self.add("ONTOLOGY_NAMES_IMPLEMENTATION", eid, "%s %r carries a path, URL, file extension or service name" % (label, t))
             tokens = [("name", e.get("name"))] + [("synonym", s) for s in (e.get("synonyms") or [])]
             for label, t in tokens:
                 if not isinstance(t, str):
@@ -580,6 +582,9 @@ class Checker:
                     self.add("ONTOLOGY_NAMES_IMPLEMENTATION", eid, "%s %r is another entity's store name" % (label, t))
                 if tl in impl_ids or tl in basenames:
                     self.add("ONTOLOGY_NAMES_IMPLEMENTATION", eid, "%s %r is an activity, source or file name" % (label, t))
+                own = {k for k, v in store_names.items() if eid in v} | {str(e.get("name", "")).strip().lower()}
+                if tl in domain_ids and tl not in own:
+                    self.add("ONTOLOGY_NAMES_IMPLEMENTATION", eid, "%s %r is a manifest domain or service name" % (label, t))
 
     # -- interpretations --------------------------------------------------------
     def check_interpretations(self):
@@ -628,6 +633,22 @@ class Checker:
                 if "id" in f:
                     self.add("ID_PROPOSED_BY_MODEL", fl, "an interpretation finding carries an id; assign_ids.py numbers findings after Fold")
                 self.assertion(f, fl, in_four=False, inputs=inputs, model_written=True)
+
+    def _manifest_domains(self) -> set:
+        """Domain and service names from the manifest, case-folded; empty when it cannot be read."""
+        if getattr(self, "_domains", None) is not None:
+            return self._domains
+        self._domains = set()
+        if self.manifest_path and os.path.exists(self.manifest_path):
+            try:
+                man = load_yaml(self.manifest_path, os.path.dirname(os.path.abspath(self.manifest_path)))
+                for key in ("domains", "services"):
+                    block = man.get(key)
+                    if isinstance(block, dict):
+                        self._domains |= {str(k).lower() for k in block}
+            except Malformed:
+                pass
+        return self._domains
 
     # -- manifest ---------------------------------------------------------------
     def check_manifest(self):

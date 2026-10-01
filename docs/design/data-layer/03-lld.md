@@ -347,7 +347,7 @@ Config, under `data_layer:` in `.hitl/config.yaml`, every key optional: `blockin
 | `ID_DUPLICATE` | the same ID twice across the six files | no | all |
 | `ID_MISSING` | an edge or finding in the four files with no `id` (Fold ran, `assign_ids.py` did not) | no | all |
 | `ID_PROPOSED_BY_MODEL` | an interpretation edge or finding carrying an `id` | no | DL-4 |
-| `ONTOLOGY_NAMES_IMPLEMENTATION` | `name` or a synonym equals, case-folded, a store name, activity ID, source ID or file basename anywhere in mappings, lineage or sources, except the entity's own mapped stores; or `name`, `definition` or a synonym contains a path separator, a URL scheme or a code-file extension | no | DL-5 |
+| `ONTOLOGY_NAMES_IMPLEMENTATION` | `name` or a synonym equals, case-folded, a store name, activity ID, source ID, file basename or manifest domain anywhere in mappings, lineage, sources or the manifest, except the entity's own mapped stores; or `name`, `definition` or a synonym contains a path separator, a URL scheme, a code-file extension, a service-shaped token (`-service`, `_service`, `-svc`, `grpc`, `endpoint`) or a manifest domain name | no | DL-5 |
 | `NEGATIVE_AS_EDGE` | a relationship or edge with a `polarity`, `negative`, `absent` or `missing` key | no | DL-5 |
 | `FINDING_SHAPED_AS_EDGE` | a finding with `subject`, `object`, `relation`, `from` or `to` | no | DL-5 |
 | `EDGE_TERM_UNKNOWN` | a relation outside the PROV three | no | DL-5 |

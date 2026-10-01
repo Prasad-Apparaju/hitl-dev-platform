@@ -14,6 +14,7 @@ Each row takes the clean fixture, applies the mutation, and requires the named c
 | ID | Mutation of the fixture | Required outcome | DL |
 |---|---|---|---|
 | **NEG-1** | an ontology entity whose definition names `jobs/nightly_eta.py` | `ONTOLOGY_NAMES_IMPLEMENTATION` | DL-5 |
+| **NEG-1b** | a definition reading "served by the orders-service over gRPC"; a synonym equal to a manifest domain name | `ONTOLOGY_NAMES_IMPLEMENTATION` | DL-5 |
 | **NEG-2** | an ontology synonym equal to another entity's store name (`eta_cache` on `Order`); and, as the pass case, `orders` as a synonym of `Order` whose own table is `orders` must NOT fire | `ONTOLOGY_NAMES_IMPLEMENTATION` | DL-5 |
 | **NEG-3** | a lineage edge with `negative: true` | `NEGATIVE_AS_EDGE` | DL-5 |
 | **NEG-4** | a finding carrying `subject` and `object` | `FINDING_SHAPED_AS_EDGE` | DL-5 |

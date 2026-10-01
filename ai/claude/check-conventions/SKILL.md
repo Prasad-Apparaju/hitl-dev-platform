@@ -123,14 +123,16 @@ elif [[ ! -f ci/data-layer/check_data_layer.py ]]; then
 else
   BLOCKING=$(python3 -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print(str(((d or {}).get('data_layer') or {}).get('blocking',False)).lower())")
   STRICT=""; [[ "$BLOCKING" == "true" ]] && STRICT="--strict"
-  python3 ci/data-layer/check_data_layer.py --data-dir docs/02-design/data --manifest docs/system-manifest.yaml --waivers ci/data-layer/data-layer-waivers.yaml $STRICT
+  python3 ci/data-layer/check_data_layer.py --data-dir docs/02-design/data --manifest docs/system-manifest.yaml --waivers ci/data-layer/data-layer-waivers.yaml
   BASE=""; [[ -f docs/02-design/data/scorecard.yaml ]] && BASE="--baseline docs/02-design/data/scorecard.yaml"
   python3 ci/data-layer/scorecard.py --data-dir docs/02-design/data $BASE --no-write $STRICT
 fi
 ```
 
 A validator exit 2 or a scorecard regression goes under **Violations** when `BLOCKING` is `true`, and
-under **Warnings** with the words "data layer: advisory mode" otherwise.
+under **Warnings** with the words "data layer: advisory mode" otherwise. The validator's own `warn`
+lines (a question with an unconfirmed needs list, an edge whose rule reads as code) are Warnings in
+both modes; only its `BLOCK` lines are violations.
 
 ---
 

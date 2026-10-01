@@ -347,7 +347,7 @@ JSON
     # Flat skills
     for skill in start-from-prd start-brownfield start-migration dev-practices apply-change \
                  check-conventions impact-brief tdd generate-docs conclude review-lld-adherence \
-                 adversarial-review verification-review; do
+                 adversarial-review verification-review map-data-layer; do
       local src="$PLATFORM_ROOT/ai/claude/$skill/SKILL.md"
       [[ -f "$src" ]] && ln -sf "$src" "$CMDS_DIR/$skill.md"
     done

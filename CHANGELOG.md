@@ -23,7 +23,7 @@ All notable changes to the HITL plugin are documented here.
   against the last run. Off by default; advisory by default; `data_layer: { blocking: true }` in
   `.hitl/config.yaml` makes Conventions and the CI template fail. The manifest's boundary entities
   are derived from mappings. Conventions in `shared/data-layer.md`, user doc `docs/data-layer.md`,
-  a synthetic worked example at `docs/examples/data-layer/`, 101 tests by mutation.
+  a synthetic worked example at `docs/examples/data-layer/`, 104 tests by mutation.
 
 ### Changed
 

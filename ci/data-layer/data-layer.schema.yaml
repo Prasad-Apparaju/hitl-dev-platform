@@ -23,7 +23,7 @@ core:
   edge_shaped_keys: [subject, object, relation, from, to]
   negative_rule_words: [never, not, "no ", missing, empty]
   code_rule_markers: ["```", "SELECT ", "select ", "def ", "{"]
-  implementation_markers: ["/", "://", ".py", ".js", ".ts", ".sql", ".yaml", ".yml", ".json"]
+  implementation_markers: ["/", "://", ".py", ".js", ".ts", ".sql", ".yaml", ".yml", ".json", "-service", "_service", "-svc", "grpc", "endpoint"]
   id_prefixes: [src, ent, map, act, lin, fnd, q, ev]
   source_kinds: [relational, document, warehouse, dbt, orchestrator, catalog, bi, saas, code, documents]
   environments: [dev, staging, prod, offline-export]
