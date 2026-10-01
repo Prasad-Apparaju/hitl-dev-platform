@@ -24,7 +24,7 @@ written from the repo root.
 | `lin:` | a lineage edge | `lin:7` | integer, never reused |
 | `fnd:` | a finding | `fnd:3` | integer, never reused |
 | `q:` | a competency question | `q:2` | integer |
-| `ev:` | an evidence item inside one evidence file | `ev:code/0041` | `<type>/<4 digits>`, unique within the file; a slice copies items under their original IDs |
+| `ev:` | an evidence item | `ev:orders-db/profile/0004` | `<source>/<type>/<4 digits>`, unique across all evidence files; a slice copies items under their original IDs |
 
 Every ID is unique across all six files (`ID_DUPLICATE`, §4).
 
@@ -38,7 +38,7 @@ confidence:
   enum: [confirmed, inferred, needs-review]      # exactly three; a fourth value is CONFIDENCE_UNKNOWN
 evidence:
   type: list[ref]                                 # empty list is NO_EVIDENCE
-  ref: { file: "evidence/<source>/<type>-<ts>.yaml", item: "ev:<type>/<nnnn>" }
+  ref: { file: "evidence/<source>/<type>-<ts>.yaml", item: "ev:<source>/<type>/<nnnn>" }
 confirmed_by:                                     # required when confidence is confirmed
   who: string                                     # a person, or "verification:<adapter run>"
   at: timestamp
@@ -73,8 +73,9 @@ sources:
 ```
 
 Rules. `status` is written only by Extract: `extracted` when an evidence file exists for the source,
-`declared-not-extracted` otherwise. A `live` source with an incomplete `authorization` is
-`LIVE_WITHOUT_AUTHORIZATION` (§4) and the adapter refuses to run before the validator ever sees it.
+`declared-not-extracted` otherwise. A `live` source with read access granted and an incomplete
+`authorization` is `LIVE_WITHOUT_AUTHORIZATION` (§4), and the adapter refuses to run before the
+validator ever sees it. A source the person declined (`granted: none`) needs no authorization.
 
 ### 2.2 `questions.yaml` (DL-2, ADR-6)
 
@@ -104,10 +105,10 @@ entities:
     catalog_term: null                     # "glossary:<id>" when adopted from a catalog (slice 3)
     relationships:
       - { name: has, target: ent:order-line, cardinality: one-to-many,
-          confidence: confirmed, evidence: [{ file: evidence/app/code-20260930T0900.yaml, item: ev:code/0007 }],
+          confidence: confirmed, evidence: [{ file: evidence/app/code-20260930T0900.yaml, item: ev:app/code/0007 }],
           confirmed_by: { who: "ta@team", at: 2026-09-30T11:00:00Z, how: human } }
     confidence: inferred
-    evidence: [{ file: evidence/app/code-20260930T0900.yaml, item: ev:code/0001 }]
+    evidence: [{ file: evidence/app/code-20260930T0900.yaml, item: ev:app/code/0001 }]
 ```
 
 Rules. `name`, `definition` and `synonyms` may not contain a path separator, a URL scheme or a code-file
@@ -207,7 +208,7 @@ adapter: { name: code_adapter.py, version: "1.0.0" }
 access: { mode: offline, environment: offline-export, read_only: true }     # live adds authorization: { by, at }
 coverage: { languages: [python], files_scanned: 212, files_skipped: { other_language: 14 } }
 items:
-  - id: ev:code/0001
+  - id: ev:app/code/0001
     kind: orm_entity                        # per adapter, §3
     locator: "app/models/order.py:12"       # file:line, or "<export>#<row>" for profiles
     data: { class: Order, table: orders, fields: [id, order_no, promised_date] }
@@ -357,13 +358,15 @@ Config, under `data_layer:` in `.hitl/config.yaml`, every key optional: `blockin
 | `MAPPING_ENTITY_UNKNOWN`, `EDGE_ENTITY_UNKNOWN`, `FINDING_ABOUT_UNKNOWN`, `QUESTION_NEEDS_UNKNOWN` | a reference to an ID that exists nowhere | no (question: yes) | DL-5, DL-2 |
 | `SOURCE_UNKNOWN` | a mapping store on a source not in `sources.yaml` | no | DL-1 |
 | `UNEXTRACTED_SOURCE_NOT_REVIEW` | a mapping or field on a `declared-not-extracted` source, or an entity all of whose mappings are on such sources, at a confidence other than `needs-review` | no | DL-1 |
-| `LIVE_WITHOUT_AUTHORIZATION` | an evidence file with `access.mode: live` and no `authorization`, or a live source in `sources.yaml` without one, or an `authorization.environment` that differs from the source's `environment` | no | DL-8 |
-| `WRITE_ACCESS_RECORDED` | `access.read_only` false, or a `run.log` line with a call outside `stores,count,sample,schema` | no | DL-8 |
+| `LIVE_WITHOUT_AUTHORIZATION` | an evidence file with `access.mode: live` and no `authorization`, or a live source with read access in `sources.yaml` without one, or an `authorization.environment` that differs from the source's `environment` | no | DL-8 |
+| `WRITE_ACCESS_RECORDED` | `access.read_only` false, or a `run.log` line with a call outside `stores,count,sample,schema,scan` | no | DL-8 |
 | `BOUNDARY_NOT_IN_ONTOLOGY` | a manifest `boundary_entities` name with no ontology entity of that name or synonym | yes, `(boundary_not_in_ontology, <kebab-name>)` | DL-6 |
 | `QUESTION_NEEDS_UNCONFIRMED` | a question whose needs list has no `confirmed_by` | yes | DL-2 |
+| `FILE_MISSING` | one of the six files is absent while the directory exists; its rules are not checked | yes | all |
 
 With no `docs/02-design/data/` directory the validator prints one line, `data layer: absent`, and exits 0;
-Conventions reports it as SKIPPED.
+Conventions reports it as SKIPPED. A missing `confidence` is `CONFIDENCE_UNKNOWN` and a missing `evidence`
+is `NO_EVIDENCE`, not `MALFORMED`, so the finding names the rule that was broken.
 
 ## 5. Scorecard, `ci/data-layer/scorecard.py` (DL-7, DL-2)
 

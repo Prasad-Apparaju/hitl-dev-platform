@@ -1,0 +1,128 @@
+schema_version: '1.0'
+entity: ent:shipment
+inputs:
+- evidence/slices/shipment.yaml
+- ai/shared/templates/data-layer/data-layer.schema.yaml
+- ai/shared/templates/data-layer/interpretation.yaml
+written_by:
+  model: claude
+  at: '2026-09-30T10:10:00Z'
+proposed:
+  ontology:
+    id: ent:shipment
+    name: Shipment
+    definition: A consignment a carrier moves against an order; may be partial.
+    synonyms:
+    - delivery
+    - consignment
+    catalog_term: null
+    relationships:
+    - name: carried by
+      target: ent:carrier
+      cardinality: many-to-one
+      confidence: needs-review
+      evidence:
+      - file: evidence/slices/shipment.yaml
+        item: ev:app/code/0004
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/shipment.yaml
+      item: ev:app/code/0003
+    - file: evidence/slices/shipment.yaml
+      item: ev:shipments-db/profile/0001
+  mappings:
+  - id: map:shipment/shipments-db.shipments
+    entity: ent:shipment
+    store:
+      source: src:shipments-db
+      kind: collection
+      name: shipments
+      naming_template: null
+    fields:
+    - name: order_no
+      type: text
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/shipment.yaml
+        item: ev:app/code/0004
+      - file: evidence/slices/shipment.yaml
+        item: ev:shipments-db/profile/0002
+    - name: carrier_ref
+      type: text
+      present_pct: 0.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/shipment.yaml
+        item: ev:app/code/0004
+      - file: evidence/slices/shipment.yaml
+        item: ev:shipments-db/profile/0002
+    - name: eta
+      type: date
+      present_pct: 88.9
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/shipment.yaml
+        item: ev:shipments-db/profile/0002
+    - name: shipped_at
+      type: date
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/shipment.yaml
+        item: ev:app/code/0007
+      - file: evidence/slices/shipment.yaml
+        item: ev:shipments-db/profile/0002
+    natural_key:
+    - order_no
+    scope: global
+    owner: null
+    counts:
+      rows: 18
+      taken_at: '2026-09-30T09:45:00Z'
+      sampled: false
+    written_by: []
+    read_by:
+    - app/repo/shipments.py
+    - jobs/nightly_eta.py
+    verified_at: null
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/shipment.yaml
+      item: ev:app/code/0003
+    - file: evidence/slices/shipment.yaml
+      item: ev:shipments-db/profile/0001
+  lineage:
+    activities: []
+    edges:
+    - relation: used
+      subject: act:nightly-eta
+      object: map:shipment/shipments-db.shipments
+      rule: Reads each shipment's carrier reference and shipped date to compute carrier lag.
+      freshness:
+        cadence: nightly
+        observed_max_age_hours: null
+      consumers: []
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/shipment.yaml
+        item: ev:app/code/0007
+  findings:
+  - kind: negative
+    severity: high
+    about:
+    - map:shipment/shipments-db.shipments
+    - act:nightly-eta
+    statement: The nightly job and the shipments repository both read shipments.carrier_ref; the field
+      is empty on every one of the 18 profiled rows, so carrier lag is never computed from it.
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/shipment.yaml
+      item: ev:app/code/0004
+    - file: evidence/slices/shipment.yaml
+      item: ev:app/code/0007
+    - file: evidence/slices/shipment.yaml
+      item: ev:shipments-db/profile/0002
+    status: open
+open_questions:
+- Who writes shipments? No write in the repo; a carrier feed is likely.

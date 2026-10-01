@@ -1,0 +1,88 @@
+schema_version: '1.0'
+entity: ent:delivery-slot
+inputs:
+- evidence/slices/delivery-slot.yaml
+- ai/shared/templates/data-layer/data-layer.schema.yaml
+- ai/shared/templates/data-layer/interpretation.yaml
+written_by:
+  model: claude
+  at: '2026-09-30T10:10:00Z'
+proposed:
+  ontology:
+    id: ent:delivery-slot
+    name: Delivery slot
+    definition: A booked time window for handing a shipment to the customer.
+    synonyms:
+    - delivery
+    - slot
+    catalog_term: null
+    relationships: []
+    confidence: needs-review
+    evidence:
+    - file: evidence/slices/delivery-slot.yaml
+      item: ev:app/code/0011
+  mappings:
+  - id: map:delivery-slot/warehouse.delivery_slots
+    entity: ent:delivery-slot
+    store:
+      source: src:warehouse
+      kind: table
+      name: delivery_slots
+      naming_template: null
+    fields:
+    - name: slot_id
+      type: unknown
+      present_pct: null
+      confidence: needs-review
+      evidence:
+      - file: evidence/slices/delivery-slot.yaml
+        item: ev:app/code/0012
+    - name: order_no
+      type: unknown
+      present_pct: null
+      confidence: needs-review
+      evidence:
+      - file: evidence/slices/delivery-slot.yaml
+        item: ev:app/code/0012
+    - name: window_start
+      type: unknown
+      present_pct: null
+      confidence: needs-review
+      evidence:
+      - file: evidence/slices/delivery-slot.yaml
+        item: ev:app/code/0012
+    natural_key: []
+    scope: null
+    owner: null
+    counts:
+      rows: null
+      taken_at: null
+      sampled: false
+    written_by: []
+    read_by:
+    - app/repo/slots.py
+    verified_at: null
+    confidence: needs-review
+    evidence:
+    - file: evidence/slices/delivery-slot.yaml
+      item: ev:app/code/0011
+  lineage:
+    activities: []
+    edges: []
+  findings:
+  - kind: unextracted
+    severity: low
+    about:
+    - ent:delivery-slot
+    - map:delivery-slot/warehouse.delivery_slots
+    statement: The warehouse was declared and not extracted (no authorization given), so the delivery
+      slot mapping is from code only.
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/delivery-slot.yaml
+      item: ev:app/code/0011
+    - file: evidence/slices/delivery-slot.yaml
+      item: ev:app/code/0012
+    status: open
+open_questions:
+- The warehouse was not extracted; types and counts are unknown.

@@ -1,0 +1,16 @@
+# Data layer: one entity's interpretation (DL-3, DL-4, DL-9). Written by an Interpret sub-agent that
+# was handed exactly the files in `inputs` and nothing else. Every citation under `proposed` must name
+# a file in `inputs`. Nothing under `proposed` may be confirmed. Edges and findings carry no id.
+schema_version: "1.0"
+entity: ent:<kebab-name>
+inputs:
+  - evidence/slices/<kebab-name>.yaml
+  - ai/shared/templates/data-layer/data-layer.schema.yaml
+  - ai/shared/templates/data-layer/interpretation.yaml
+written_by: { model: "<model>", at: "<timestamp>" }
+proposed:
+  ontology: {}                  # one entity entry as in ontology.yaml
+  mappings: []                  # entries as in mappings.yaml
+  lineage: { activities: [], edges: [] }
+  findings: []
+open_questions: []

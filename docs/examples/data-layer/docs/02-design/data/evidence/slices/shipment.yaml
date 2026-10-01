@@ -1,0 +1,97 @@
+schema_version: '1.0'
+evidence_type: slice
+source: src:app
+taken_at: '2026-09-30T10:00:00Z'
+adapter:
+  name: slice_evidence.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+entity: ent:shipment
+items:
+- id: ev:app/code/0003
+  kind: store_literal
+  locator: app/repo/shipments.py:7
+  data:
+    store: shipments
+    how: db["shipments"]
+    template: null
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0003
+- id: ev:app/code/0004
+  kind: read
+  locator: app/repo/shipments.py:12
+  data:
+    store: shipments
+    method: find
+    fields:
+    - order_no
+    - carrier_ref
+    - eta
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0004
+- id: ev:app/code/0005
+  kind: join
+  locator: app/repo/shipments.py:12
+  data:
+    left: orders
+    right: shipments
+    keys:
+      left: order_no
+      right: order_no
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0005
+- id: ev:app/code/0007
+  kind: read
+  locator: jobs/nightly_eta.py:14
+  data:
+    store: shipments
+    method: find
+    fields:
+    - order_no
+    - carrier_ref
+    - shipped_at
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0007
+- id: ev:shipments-db/profile/0001
+  kind: count
+  locator: exports/shipments.jsonl
+  data:
+    store: shipments
+    rows: 18
+    sampled: false
+  origin:
+    file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0001
+- id: ev:shipments-db/profile/0002
+  kind: field_presence
+  locator: exports/shipments.jsonl
+  data:
+    store: shipments
+    sample: 18
+    present_pct:
+      order_no: 100.0
+      carrier_ref: 0.0
+      eta: 88.9
+      shipped_at: 100.0
+  origin:
+    file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0002
+- id: ev:shipments-db/profile/0004
+  kind: key_overlap
+  locator: exports/shipments.jsonl
+  data:
+    left: orders.order_no
+    right: shipments.order_no
+    left_rows: 20
+    matched: 18
+    share: 0.9
+  origin:
+    file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0004

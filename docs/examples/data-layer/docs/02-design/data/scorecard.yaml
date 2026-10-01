@@ -1,0 +1,30 @@
+schema_version: '1.0'
+run_at: '2026-09-30T12:00:00Z'
+mode: advisory
+metrics:
+  verification_rate:
+    entities: 0.167
+    fields: 0.105
+    edges: 0.25
+  entities_without_mapping:
+  - ent:carrier
+  sources_not_extracted:
+  - src:warehouse
+  evidence_age_days:
+    oldest: 0
+    newest: 0
+    median: 0
+  open_high_findings: 1
+  negative_edges: 0
+  answerable:
+    'yes': 3
+    'no': 1
+    unconfirmed: 1
+    total: 5
+  collisions:
+  - - ent:delivery-slot
+    - ent:shipment
+    - 'synonym: delivery'
+  - - ent:eta
+    - ent:shipment
+    - natural key ['order_no'] in src:shipments-db

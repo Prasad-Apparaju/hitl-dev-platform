@@ -1,0 +1,137 @@
+schema_version: '1.0'
+entity: ent:order
+inputs:
+- evidence/slices/order.yaml
+- ai/shared/templates/data-layer/data-layer.schema.yaml
+- ai/shared/templates/data-layer/interpretation.yaml
+written_by:
+  model: claude
+  at: '2026-09-30T10:10:00Z'
+proposed:
+  ontology:
+    id: ent:order
+    name: Order
+    definition: A customer's request to buy, from placement until it is fulfilled or cancelled. One per
+      order number within a tenant.
+    synonyms:
+    - purchase order
+    - PO
+    - orders
+    catalog_term: null
+    relationships:
+    - name: has
+      target: ent:order-line
+      cardinality: one-to-many
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:app/code/0001
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/schema/0002
+    - name: fulfilled by
+      target: ent:shipment
+      cardinality: one-to-many
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:app/code/0005
+      - file: evidence/slices/order.yaml
+        item: ev:shipments-db/profile/0004
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/order.yaml
+      item: ev:app/code/0001
+    - file: evidence/slices/order.yaml
+      item: ev:orders-db/schema/0001
+    - file: evidence/slices/order.yaml
+      item: ev:orders-db/profile/0001
+  mappings:
+  - id: map:order/orders-db.orders
+    entity: ent:order
+    store:
+      source: src:orders-db
+      kind: table
+      name: orders
+      naming_template: null
+    fields:
+    - name: id
+      type: integer
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/schema/0001
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/profile/0002
+    - name: order_no
+      type: text
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/schema/0001
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/profile/0004
+    - name: tenant_id
+      type: text
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/schema/0001
+    - name: promised_date
+      type: date
+      present_pct: 95.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/schema/0001
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/profile/0002
+    - name: status
+      type: text
+      present_pct: 100.0
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:orders-db/schema/0001
+    natural_key:
+    - order_no
+    scope: tenant
+    owner: orders-team
+    counts:
+      rows: 20
+      taken_at: '2026-09-30T09:40:00Z'
+      sampled: false
+    written_by:
+    - app/models/order.py
+    read_by:
+    - jobs/nightly_eta.py
+    - app/repo/shipments.py
+    verified_at: null
+    confidence: inferred
+    evidence:
+    - file: evidence/slices/order.yaml
+      item: ev:app/code/0001
+    - file: evidence/slices/order.yaml
+      item: ev:orders-db/schema/0001
+    - file: evidence/slices/order.yaml
+      item: ev:orders-db/profile/0001
+  lineage:
+    activities: []
+    edges:
+    - relation: used
+      subject: act:nightly-eta
+      object: map:order/orders-db.orders
+      rule: Reads order number and promised date of every open order.
+      freshness:
+        cadence: nightly
+        observed_max_age_hours: null
+      consumers: []
+      confidence: inferred
+      evidence:
+      - file: evidence/slices/order.yaml
+        item: ev:app/code/0006
+  findings: []
+open_questions:
+- Is order_no unique per tenant or global? The export has one tenant.

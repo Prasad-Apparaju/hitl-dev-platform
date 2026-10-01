@@ -1,0 +1,13 @@
+# Data layer: business ontology (DL-5). What the things are. Never a store, job, file or endpoint name;
+# those live in mappings.yaml and lineage.yaml. Relationships here are semantic; derivations are edges
+# in lineage.yaml; negatives are findings.
+schema_version: "1.0"
+entities:
+  - id: ent:<kebab-name>
+    name: "<Name>"
+    definition: "<one or two sentences a business reader would accept>"
+    synonyms: []
+    catalog_term: null
+    relationships: []           # { name, target: ent:<id>, cardinality, confidence, evidence }
+    confidence: inferred        # confirmed | inferred | needs-review; a model never writes confirmed
+    evidence: []                # { file: evidence/<source>/<type>-<ts>.yaml, item: ev:<source>/<type>/<nnnn> }

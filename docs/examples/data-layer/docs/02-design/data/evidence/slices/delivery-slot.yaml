@@ -1,0 +1,36 @@
+schema_version: '1.0'
+evidence_type: slice
+source: src:app
+taken_at: '2026-09-30T10:00:00Z'
+adapter:
+  name: slice_evidence.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+entity: ent:delivery-slot
+items:
+- id: ev:app/code/0011
+  kind: store_literal
+  locator: app/repo/slots.py:6
+  data:
+    store: delivery_slots
+    how: warehouse.table("delivery_slots")
+    template: null
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0011
+- id: ev:app/code/0012
+  kind: read
+  locator: app/repo/slots.py:7
+  data:
+    store: delivery_slots
+    method: select
+    fields:
+    - slot_id
+    - order_no
+    - window_start
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0012

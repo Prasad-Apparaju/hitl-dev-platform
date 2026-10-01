@@ -1,0 +1,129 @@
+# HITL Data Layer schema (FR-31, EPIC #131). Design: docs/design/data-layer/03-lld.md §2.
+# The validator (ci/data-layer/check_data_layer.py) reads THIS file for every enum and key list; a key
+# not listed here is SCHEMA_UNKNOWN_FIELD, a confidence not listed is CONFIDENCE_UNKNOWN. The shipped
+# copy next to the validator must be identical to this one (tested).
+#
+# The shared core (ADR-13): every assertion in every family carries `confidence`, `evidence` and, when
+# confirmed, `confirmed_by`. The business-rule layer (FR-35) reuses this core unchanged.
+
+schema_version: "1.0"
+
+core:
+  confidence: [confirmed, inferred, needs-review]
+  evidence_types: [schema, query_history, catalog, dbt_manifest, code, profile, document, design, human, slice]
+  prov_relations: [used, wasGeneratedBy, wasDerivedFrom]
+  # subject and object ID prefixes allowed per relation (LLD §2.5)
+  edge_types:
+    used:           { subject: [act], object: [map, ent] }
+    wasGeneratedBy: { subject: [map, ent], object: [act] }
+    wasDerivedFrom: { subject: [map, ent], object: [map, ent] }
+  # keys that would turn an edge or relationship into a negative statement; never allowed (DL-5)
+  negative_keys: [polarity, negative, absent, missing]
+  # keys that would turn a finding into an edge; never allowed (DL-5)
+  edge_shaped_keys: [subject, object, relation, from, to]
+  negative_rule_words: [never, not, "no ", missing, empty]
+  code_rule_markers: ["```", "SELECT ", "select ", "def ", "{"]
+  implementation_markers: ["/", "://", ".py", ".js", ".ts", ".sql", ".yaml", ".yml", ".json"]
+  id_prefixes: [src, ent, map, act, lin, fnd, q, ev]
+  source_kinds: [relational, document, warehouse, dbt, orchestrator, catalog, bi, saas, code, documents]
+  environments: [dev, staging, prod, offline-export]
+  access_granted: [read_only, none]
+  access_modes: [offline, live]
+  source_status: [proposed, declared, extracted, declared-not-extracted]
+  finding_kinds: [negative, disagreement, collision, unextracted, dead-code, stale]
+  severities: [high, medium, low]
+  activity_kinds: [job, pipeline-step, handler, view, manual]
+  confirmed_how: [human, verification]
+  read_only_calls: [stores, count, sample, schema]
+  evidence_ref: { keys: [file, item], required: [file, item] }
+  confirmed_by: { keys: [who, at, how], required: [who, at, how] }
+
+files:
+  sources.yaml:
+    top: [schema_version, written_by, sources]
+    required: [schema_version, sources]
+    entries: sources
+    entry:
+      keys: [id, kind, declared_from, environment, in_scope, access, status, authorization, notes]
+      required: [id, kind, environment, in_scope, access, status]
+      id_prefix: src
+      access: { keys: [granted, mode], required: [granted, mode] }
+      authorization: { keys: [by, at, environment, statement], required: [by, at, environment, statement] }
+
+  questions.yaml:
+    top: [schema_version, questions]
+    required: [schema_version, questions]
+    entries: questions
+    entry:
+      keys: [id, text, asked_by, from, needs, confirmed_by]
+      required: [id, text, needs]
+      id_prefix: q
+      needs: { keys: [entities, mappings, edges] }
+
+  ontology.yaml:
+    top: [schema_version, entities]
+    required: [schema_version, entities]
+    entries: entities
+    entry:
+      keys: [id, name, definition, synonyms, catalog_term, relationships, confidence, evidence, confirmed_by]
+      required: [id, name, definition, confidence, evidence]
+      id_prefix: ent
+      relationship:
+        keys: [name, target, cardinality, confidence, evidence, confirmed_by]
+        required: [name, target, confidence, evidence]
+
+  mappings.yaml:
+    top: [schema_version, mappings]
+    required: [schema_version, mappings]
+    entries: mappings
+    entry:
+      keys: [id, entity, store, fields, natural_key, scope, owner, counts, written_by, read_by, verified_at, confidence, evidence, confirmed_by]
+      required: [id, entity, store, fields, confidence, evidence]
+      id_prefix: map
+      store: { keys: [source, kind, name, naming_template], required: [source, kind, name] }
+      field:
+        keys: [name, type, present_pct, confidence, evidence, confirmed_by]
+        required: [name, confidence, evidence]
+      counts: { keys: [rows, taken_at, sampled] }
+
+  lineage.yaml:
+    top: [schema_version, activities, edges]
+    required: [schema_version, activities, edges]
+    activity:
+      keys: [id, kind, files, schedule, owner]
+      required: [id, kind, files]
+      id_prefix: act
+    edge:
+      keys: [id, relation, subject, object, rule, freshness, consumers, confidence, evidence, confirmed_by]
+      required: [id, relation, subject, object, rule, confidence, evidence]
+      id_prefix: lin
+      freshness: { keys: [cadence, observed_max_age_hours] }
+
+  findings.yaml:
+    top: [schema_version, findings]
+    required: [schema_version, findings]
+    entries: findings
+    entry:
+      keys: [id, kind, severity, about, statement, confidence, evidence, confirmed_by, status]
+      required: [id, kind, severity, about, statement, confidence, evidence, status]
+      id_prefix: fnd
+
+  interpretation:
+    top: [schema_version, entity, inputs, written_by, proposed, open_questions]
+    required: [schema_version, entity, inputs, proposed]
+    proposed: { keys: [ontology, mappings, lineage, findings] }
+    written_by: { keys: [model, at] }
+
+  evidence:
+    top: [schema_version, evidence_type, source, taken_at, adapter, access, coverage, items, entity]
+    required: [schema_version, evidence_type, source, taken_at, adapter, access, items]
+    adapter: { keys: [name, version], required: [name, version] }
+    access: { keys: [mode, environment, read_only, authorization], required: [mode, environment, read_only] }
+    item:
+      keys: [id, kind, locator, data, origin]
+      required: [id, kind, locator, data]
+      id_prefix: ev
+
+  scorecard.yaml:
+    top: [schema_version, run_at, mode, metrics]
+    required: [schema_version, run_at, mode, metrics]

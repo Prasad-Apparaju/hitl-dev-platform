@@ -1,0 +1,72 @@
+schema_version: '1.0'
+activities:
+- id: act:nightly-eta
+  kind: job
+  files:
+  - jobs/nightly_eta.py
+  schedule: nightly 02:00
+  owner: orders-team
+edges:
+- id: lin:1
+  relation: wasGeneratedBy
+  subject: map:eta/shipments-db.eta_cache
+  object: act:nightly-eta
+  rule: ETA is the promised date plus the median carrier lag over the last 30 days, for every open order,
+    recomputed nightly.
+  freshness:
+    cadence: nightly
+    observed_max_age_hours: 26
+  consumers:
+  - ent:order
+  confidence: confirmed
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0009
+  - file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0005
+  confirmed_by:
+    who: ta@team
+    at: '2026-09-30T11:00:00Z'
+    how: human
+- id: lin:2
+  relation: used
+  subject: act:nightly-eta
+  object: map:order/orders-db.orders
+  rule: Reads order number and promised date of every open order.
+  freshness:
+    cadence: nightly
+    observed_max_age_hours: null
+  consumers: []
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0006
+- id: lin:3
+  relation: used
+  subject: act:nightly-eta
+  object: map:shipment/shipments-db.shipments
+  rule: Reads each shipment's carrier reference and shipped date to compute carrier lag.
+  freshness:
+    cadence: nightly
+    observed_max_age_hours: null
+  consumers: []
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0007
+- id: lin:4
+  relation: wasDerivedFrom
+  subject: ent:eta
+  object: ent:shipment
+  rule: The carrier lag that moves an ETA comes from recent shipments.
+  freshness:
+    cadence: nightly
+    observed_max_age_hours: null
+  consumers:
+  - ent:order
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0007
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0009

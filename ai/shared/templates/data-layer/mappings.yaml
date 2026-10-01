@@ -1,0 +1,17 @@
+# Data layer: source mappings (DL-5, DL-9). Where each entity lives. A mapping on a source that was
+# declared but not extracted must be needs-review, and so must every field in it.
+schema_version: "1.0"
+mappings:
+  - id: map:<entity>/<source>.<store>
+    entity: ent:<kebab-name>
+    store: { source: src:<name>, kind: table, name: "<store>", naming_template: null }
+    fields: []                  # { name, type, present_pct, confidence, evidence }
+    natural_key: []
+    scope: null                 # global | tenant | region | null
+    owner: null                 # steward; slice 2 routes drift here
+    counts: { rows: null, taken_at: null, sampled: false }
+    written_by: []              # repo paths from code evidence
+    read_by: []
+    verified_at: null
+    confidence: inferred
+    evidence: []

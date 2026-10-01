@@ -1,0 +1,9 @@
+# Data-layer waiver store (FR-31, LLD §4). Only BOUNDARY_NOT_IN_ONTOLOGY can be waived; every other
+# code is the framework's guarantee. A row suppresses a finding when (code, locus) match, the locus is
+# the kebab-cased entity name, tier_limit >= the run's --tier (default 3) and revisit is not past.
+# A lapsed or tier-exceeded row does not suppress. Human-authored.
+schema_version: "1.0"
+waivers: []
+  # - { code: BOUNDARY_NOT_IN_ONTOLOGY, locus: invoice, owner: orders-team,
+  #     reason: "manifest names Invoice; billing is onboarded next quarter (#NNN)",
+  #     tier_limit: 3, revisit: 2026-12-31 }

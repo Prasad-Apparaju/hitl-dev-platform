@@ -1,0 +1,117 @@
+schema_version: '1.0'
+entities:
+- id: ent:order
+  name: Order
+  definition: A customer's request to buy, from placement until it is fulfilled or cancelled. One per
+    order number within a tenant.
+  synonyms:
+  - purchase order
+  - PO
+  - orders
+  catalog_term: null
+  relationships:
+  - name: has
+    target: ent:order-line
+    cardinality: one-to-many
+    confidence: confirmed
+    evidence:
+    - file: evidence/app/code-20260930T0900.yaml
+      item: ev:app/code/0001
+    - file: evidence/orders-db/schema-20260930T0930.yaml
+      item: ev:orders-db/schema/0002
+    confirmed_by:
+      who: ta@team
+      at: '2026-09-30T11:00:00Z'
+      how: human
+  - name: fulfilled by
+    target: ent:shipment
+    cardinality: one-to-many
+    confidence: inferred
+    evidence:
+    - file: evidence/app/code-20260930T0900.yaml
+      item: ev:app/code/0005
+    - file: evidence/shipments-db/profile-20260930T0945.yaml
+      item: ev:shipments-db/profile/0004
+  confidence: confirmed
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0001
+  - file: evidence/orders-db/schema-20260930T0930.yaml
+    item: ev:orders-db/schema/0001
+  - file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0001
+  confirmed_by:
+    who: ta@team
+    at: '2026-09-30T11:00:00Z'
+    how: human
+- id: ent:order-line
+  name: Order line
+  definition: One part and quantity requested on an order.
+  synonyms:
+  - line item
+  catalog_term: null
+  relationships: []
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0002
+  - file: evidence/orders-db/schema-20260930T0930.yaml
+    item: ev:orders-db/schema/0002
+- id: ent:shipment
+  name: Shipment
+  definition: A consignment a carrier moves against an order; may be partial.
+  synonyms:
+  - delivery
+  - consignment
+  catalog_term: null
+  relationships:
+  - name: carried by
+    target: ent:carrier
+    cardinality: many-to-one
+    confidence: needs-review
+    evidence:
+    - file: evidence/app/code-20260930T0900.yaml
+      item: ev:app/code/0004
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0003
+  - file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0001
+- id: ent:eta
+  name: Estimated arrival
+  definition: The date the business expects an open order to arrive, recomputed nightly from the promised
+    date and recent carrier lag.
+  synonyms:
+  - ETA
+  catalog_term: null
+  relationships: []
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0009
+  - file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0003
+- id: ent:delivery-slot
+  name: Delivery slot
+  definition: A booked time window for handing a shipment to the customer.
+  synonyms:
+  - delivery
+  - slot
+  catalog_term: null
+  relationships: []
+  confidence: needs-review
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0011
+- id: ent:carrier
+  name: Carrier
+  definition: The company moving a shipment. Referenced by code; no store holds it.
+  synonyms:
+  - courier
+  catalog_term: null
+  relationships: []
+  confidence: inferred
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0004

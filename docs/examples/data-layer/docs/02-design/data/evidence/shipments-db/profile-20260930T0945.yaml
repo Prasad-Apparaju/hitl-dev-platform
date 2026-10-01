@@ -1,0 +1,56 @@
+schema_version: '1.0'
+evidence_type: profile
+source: src:shipments-db
+taken_at: '2026-09-30T09:45:00Z'
+adapter:
+  name: profile_adapter.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+items:
+- id: ev:shipments-db/profile/0001
+  kind: count
+  locator: exports/shipments.jsonl
+  data:
+    store: shipments
+    rows: 18
+    sampled: false
+- id: ev:shipments-db/profile/0002
+  kind: field_presence
+  locator: exports/shipments.jsonl
+  data:
+    store: shipments
+    sample: 18
+    present_pct:
+      order_no: 100.0
+      carrier_ref: 0.0
+      eta: 88.9
+      shipped_at: 100.0
+- id: ev:shipments-db/profile/0003
+  kind: count
+  locator: exports/eta_cache.jsonl
+  data:
+    store: eta_cache
+    rows: 18
+    sampled: false
+- id: ev:shipments-db/profile/0004
+  kind: key_overlap
+  locator: exports/shipments.jsonl
+  data:
+    left: orders.order_no
+    right: shipments.order_no
+    left_rows: 20
+    matched: 18
+    share: 0.9
+- id: ev:shipments-db/profile/0005
+  kind: field_presence
+  locator: exports/eta_cache.jsonl
+  data:
+    store: eta_cache
+    sample: 18
+    present_pct:
+      order_no: 100.0
+      eta: 100.0
+      computed_at: 100.0
