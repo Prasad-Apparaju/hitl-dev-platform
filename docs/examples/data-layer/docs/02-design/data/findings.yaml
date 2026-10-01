@@ -13,9 +13,9 @@ findings:
   - file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0004
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0007
+    item: ev:app/code/0009
   - file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0002
+    item: ev:shipments-db/profile/0005
   confirmed_by:
     who: verification:profile_adapter 2026-09-30T09:45:00Z
     at: '2026-09-30T09:45:00Z'
@@ -34,7 +34,7 @@ findings:
   - file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0003
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0011
+    item: ev:app/code/0006
   status: open
 - id: fnd:3
   kind: unextracted
@@ -47,7 +47,7 @@ findings:
   confidence: inferred
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0011
+    item: ev:app/code/0006
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0012
+    item: ev:app/code/0007
   status: open

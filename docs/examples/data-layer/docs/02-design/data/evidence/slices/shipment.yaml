@@ -46,7 +46,7 @@ items:
   origin:
     file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0005
-- id: ev:app/code/0007
+- id: ev:app/code/0009
   kind: read
   locator: jobs/nightly_eta.py:14
   data:
@@ -58,8 +58,8 @@ items:
     - shipped_at
   origin:
     file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0007
-- id: ev:shipments-db/profile/0001
+    item: ev:app/code/0009
+- id: ev:shipments-db/profile/0004
   kind: count
   locator: exports/shipments.jsonl
   data:
@@ -68,8 +68,8 @@ items:
     sampled: false
   origin:
     file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0001
-- id: ev:shipments-db/profile/0002
+    item: ev:shipments-db/profile/0004
+- id: ev:shipments-db/profile/0005
   kind: field_presence
   locator: exports/shipments.jsonl
   data:
@@ -82,8 +82,19 @@ items:
       shipped_at: 100.0
   origin:
     file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0002
-- id: ev:shipments-db/profile/0004
+    item: ev:shipments-db/profile/0005
+- id: ev:shipments-db/profile/0006
+  kind: key_candidates
+  locator: exports/shipments.jsonl
+  data:
+    store: shipments
+    unique_fields:
+    - order_no
+    - shipped_at
+  origin:
+    file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0006
+- id: ev:shipments-db/profile/0007
   kind: key_overlap
   locator: exports/shipments.jsonl
   data:
@@ -94,4 +105,4 @@ items:
     share: 0.9
   origin:
     file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0004
+    item: ev:shipments-db/profile/0007

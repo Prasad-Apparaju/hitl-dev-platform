@@ -36,7 +36,7 @@ proposed:
       - file: evidence/slices/order.yaml
         item: ev:app/code/0005
       - file: evidence/slices/order.yaml
-        item: ev:shipments-db/profile/0004
+        item: ev:shipments-db/profile/0007
     confidence: inferred
     evidence:
     - file: evidence/slices/order.yaml
@@ -44,7 +44,7 @@ proposed:
     - file: evidence/slices/order.yaml
       item: ev:orders-db/schema/0001
     - file: evidence/slices/order.yaml
-      item: ev:orders-db/profile/0001
+      item: ev:orders-db/profile/0004
   mappings:
   - id: map:order/orders-db.orders
     entity: ent:order
@@ -62,7 +62,7 @@ proposed:
       - file: evidence/slices/order.yaml
         item: ev:orders-db/schema/0001
       - file: evidence/slices/order.yaml
-        item: ev:orders-db/profile/0002
+        item: ev:orders-db/profile/0005
     - name: order_no
       type: text
       present_pct: 100.0
@@ -71,7 +71,7 @@ proposed:
       - file: evidence/slices/order.yaml
         item: ev:orders-db/schema/0001
       - file: evidence/slices/order.yaml
-        item: ev:orders-db/profile/0004
+        item: ev:orders-db/profile/0006
     - name: tenant_id
       type: text
       present_pct: 100.0
@@ -87,7 +87,7 @@ proposed:
       - file: evidence/slices/order.yaml
         item: ev:orders-db/schema/0001
       - file: evidence/slices/order.yaml
-        item: ev:orders-db/profile/0002
+        item: ev:orders-db/profile/0005
     - name: status
       type: text
       present_pct: 100.0
@@ -116,7 +116,7 @@ proposed:
     - file: evidence/slices/order.yaml
       item: ev:orders-db/schema/0001
     - file: evidence/slices/order.yaml
-      item: ev:orders-db/profile/0001
+      item: ev:orders-db/profile/0004
   lineage:
     activities: []
     edges:
@@ -131,7 +131,7 @@ proposed:
       confidence: inferred
       evidence:
       - file: evidence/slices/order.yaml
-        item: ev:app/code/0006
+        item: ev:app/code/0008
   findings: []
 open_questions:
 - Is order_no unique per tenant or global? The export has one tenant.

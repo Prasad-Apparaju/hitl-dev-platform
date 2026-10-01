@@ -12,12 +12,38 @@ access:
 items:
 - id: ev:orders-db/profile/0001
   kind: count
+  locator: exports/order_lines.jsonl
+  data:
+    store: order_lines
+    rows: 46
+    sampled: false
+- id: ev:orders-db/profile/0002
+  kind: field_presence
+  locator: exports/order_lines.jsonl
+  data:
+    store: order_lines
+    sample: 46
+    present_pct:
+      id: 100.0
+      order_id: 100.0
+      part_id: 100.0
+      qty: 100.0
+- id: ev:orders-db/profile/0003
+  kind: key_candidates
+  locator: exports/order_lines.jsonl
+  data:
+    store: order_lines
+    unique_fields:
+    - id
+    - part_id
+- id: ev:orders-db/profile/0004
+  kind: count
   locator: exports/orders.jsonl
   data:
     store: orders
     rows: 20
     sampled: false
-- id: ev:orders-db/profile/0002
+- id: ev:orders-db/profile/0005
   kind: field_presence
   locator: exports/orders.jsonl
   data:
@@ -29,14 +55,7 @@ items:
       tenant_id: 100.0
       promised_date: 95.0
       status: 100.0
-- id: ev:orders-db/profile/0003
-  kind: count
-  locator: exports/order_lines.jsonl
-  data:
-    store: order_lines
-    rows: 46
-    sampled: false
-- id: ev:orders-db/profile/0004
+- id: ev:orders-db/profile/0006
   kind: key_candidates
   locator: exports/orders.jsonl
   data:
@@ -44,14 +63,3 @@ items:
     unique_fields:
     - id
     - order_no
-- id: ev:orders-db/profile/0005
-  kind: field_presence
-  locator: exports/order_lines.jsonl
-  data:
-    store: order_lines
-    sample: 46
-    present_pct:
-      id: 100.0
-      order_id: 100.0
-      part_id: 100.0
-      qty: 100.0

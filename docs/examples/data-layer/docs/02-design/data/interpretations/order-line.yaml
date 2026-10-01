@@ -46,7 +46,7 @@ proposed:
       - file: evidence/slices/order-line.yaml
         item: ev:orders-db/schema/0002
       - file: evidence/slices/order-line.yaml
-        item: ev:orders-db/profile/0005
+        item: ev:orders-db/profile/0002
     - name: part_id
       type: text
       present_pct: 100.0
@@ -78,7 +78,7 @@ proposed:
     - file: evidence/slices/order-line.yaml
       item: ev:app/code/0002
     - file: evidence/slices/order-line.yaml
-      item: ev:orders-db/profile/0003
+      item: ev:orders-db/profile/0001
   lineage:
     activities: []
     edges: []

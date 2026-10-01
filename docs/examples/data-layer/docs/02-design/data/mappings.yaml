@@ -16,7 +16,7 @@ mappings:
     - file: evidence/orders-db/schema-20260930T0930.yaml
       item: ev:orders-db/schema/0001
     - file: evidence/orders-db/profile-20260930T0940.yaml
-      item: ev:orders-db/profile/0002
+      item: ev:orders-db/profile/0005
     confirmed_by:
       who: ta@team
       at: '2026-09-30T11:00:00Z'
@@ -29,7 +29,7 @@ mappings:
     - file: evidence/orders-db/schema-20260930T0930.yaml
       item: ev:orders-db/schema/0001
     - file: evidence/orders-db/profile-20260930T0940.yaml
-      item: ev:orders-db/profile/0004
+      item: ev:orders-db/profile/0006
     confirmed_by:
       who: ta@team
       at: '2026-09-30T11:00:00Z'
@@ -49,7 +49,7 @@ mappings:
     - file: evidence/orders-db/schema-20260930T0930.yaml
       item: ev:orders-db/schema/0001
     - file: evidence/orders-db/profile-20260930T0940.yaml
-      item: ev:orders-db/profile/0002
+      item: ev:orders-db/profile/0005
   - name: status
     type: text
     present_pct: 100.0
@@ -78,7 +78,7 @@ mappings:
   - file: evidence/orders-db/schema-20260930T0930.yaml
     item: ev:orders-db/schema/0001
   - file: evidence/orders-db/profile-20260930T0940.yaml
-    item: ev:orders-db/profile/0001
+    item: ev:orders-db/profile/0004
   confirmed_by:
     who: ta@team
     at: '2026-09-30T11:00:00Z'
@@ -106,7 +106,7 @@ mappings:
     - file: evidence/orders-db/schema-20260930T0930.yaml
       item: ev:orders-db/schema/0002
     - file: evidence/orders-db/profile-20260930T0940.yaml
-      item: ev:orders-db/profile/0005
+      item: ev:orders-db/profile/0002
   - name: part_id
     type: text
     present_pct: 100.0
@@ -138,7 +138,7 @@ mappings:
   - file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0002
   - file: evidence/orders-db/profile-20260930T0940.yaml
-    item: ev:orders-db/profile/0003
+    item: ev:orders-db/profile/0001
 - id: map:shipment/shipments-db.shipments
   entity: ent:shipment
   store:
@@ -155,7 +155,7 @@ mappings:
     - file: evidence/app/code-20260930T0900.yaml
       item: ev:app/code/0004
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0002
+      item: ev:shipments-db/profile/0005
   - name: carrier_ref
     type: text
     present_pct: 0.0
@@ -164,23 +164,23 @@ mappings:
     - file: evidence/app/code-20260930T0900.yaml
       item: ev:app/code/0004
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0002
+      item: ev:shipments-db/profile/0005
   - name: eta
     type: date
     present_pct: 88.9
     confidence: inferred
     evidence:
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0002
+      item: ev:shipments-db/profile/0005
   - name: shipped_at
     type: date
     present_pct: 100.0
     confidence: inferred
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0007
+      item: ev:app/code/0009
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0002
+      item: ev:shipments-db/profile/0005
   natural_key:
   - order_no
   scope: global
@@ -199,7 +199,7 @@ mappings:
   - file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0003
   - file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0001
+    item: ev:shipments-db/profile/0004
 - id: map:eta/shipments-db.eta_cache
   entity: ent:eta
   store:
@@ -214,27 +214,27 @@ mappings:
     confidence: inferred
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0010
+      item: ev:app/code/0012
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0005
+      item: ev:shipments-db/profile/0002
   - name: eta
     type: date
     present_pct: 100.0
     confidence: inferred
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0009
+      item: ev:app/code/0011
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0005
+      item: ev:shipments-db/profile/0002
   - name: computed_at
     type: timestamp
     present_pct: 100.0
     confidence: inferred
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0009
+      item: ev:app/code/0011
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0005
+      item: ev:shipments-db/profile/0002
   natural_key:
   - order_no
   scope: global
@@ -250,9 +250,9 @@ mappings:
   confidence: inferred
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0008
+    item: ev:app/code/0010
   - file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0003
+    item: ev:shipments-db/profile/0001
 - id: map:delivery-slot/warehouse.delivery_slots
   entity: ent:delivery-slot
   store:
@@ -267,21 +267,21 @@ mappings:
     confidence: needs-review
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0012
+      item: ev:app/code/0007
   - name: order_no
     type: unknown
     present_pct: null
     confidence: needs-review
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0012
+      item: ev:app/code/0007
   - name: window_start
     type: unknown
     present_pct: null
     confidence: needs-review
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
-      item: ev:app/code/0012
+      item: ev:app/code/0007
   natural_key: []
   scope: null
   owner: null
@@ -296,4 +296,4 @@ mappings:
   confidence: needs-review
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0011
+    item: ev:app/code/0006

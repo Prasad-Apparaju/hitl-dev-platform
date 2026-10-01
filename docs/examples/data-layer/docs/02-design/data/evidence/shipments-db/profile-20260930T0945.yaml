@@ -12,12 +12,37 @@ access:
 items:
 - id: ev:shipments-db/profile/0001
   kind: count
+  locator: exports/eta_cache.jsonl
+  data:
+    store: eta_cache
+    rows: 18
+    sampled: false
+- id: ev:shipments-db/profile/0002
+  kind: field_presence
+  locator: exports/eta_cache.jsonl
+  data:
+    store: eta_cache
+    sample: 18
+    present_pct:
+      order_no: 100.0
+      eta: 100.0
+      computed_at: 100.0
+- id: ev:shipments-db/profile/0003
+  kind: key_candidates
+  locator: exports/eta_cache.jsonl
+  data:
+    store: eta_cache
+    unique_fields:
+    - order_no
+    - eta
+- id: ev:shipments-db/profile/0004
+  kind: count
   locator: exports/shipments.jsonl
   data:
     store: shipments
     rows: 18
     sampled: false
-- id: ev:shipments-db/profile/0002
+- id: ev:shipments-db/profile/0005
   kind: field_presence
   locator: exports/shipments.jsonl
   data:
@@ -28,14 +53,15 @@ items:
       carrier_ref: 0.0
       eta: 88.9
       shipped_at: 100.0
-- id: ev:shipments-db/profile/0003
-  kind: count
-  locator: exports/eta_cache.jsonl
+- id: ev:shipments-db/profile/0006
+  kind: key_candidates
+  locator: exports/shipments.jsonl
   data:
-    store: eta_cache
-    rows: 18
-    sampled: false
-- id: ev:shipments-db/profile/0004
+    store: shipments
+    unique_fields:
+    - order_no
+    - shipped_at
+- id: ev:shipments-db/profile/0007
   kind: key_overlap
   locator: exports/shipments.jsonl
   data:
@@ -44,13 +70,3 @@ items:
     left_rows: 20
     matched: 18
     share: 0.9
-- id: ev:shipments-db/profile/0005
-  kind: field_presence
-  locator: exports/eta_cache.jsonl
-  data:
-    store: eta_cache
-    sample: 18
-    present_pct:
-      order_no: 100.0
-      eta: 100.0
-      computed_at: 100.0

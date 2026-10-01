@@ -31,7 +31,7 @@ entities:
     - file: evidence/app/code-20260930T0900.yaml
       item: ev:app/code/0005
     - file: evidence/shipments-db/profile-20260930T0945.yaml
-      item: ev:shipments-db/profile/0004
+      item: ev:shipments-db/profile/0007
   confidence: confirmed
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
@@ -39,7 +39,7 @@ entities:
   - file: evidence/orders-db/schema-20260930T0930.yaml
     item: ev:orders-db/schema/0001
   - file: evidence/orders-db/profile-20260930T0940.yaml
-    item: ev:orders-db/profile/0001
+    item: ev:orders-db/profile/0004
   confirmed_by:
     who: ta@team
     at: '2026-09-30T11:00:00Z'
@@ -77,7 +77,7 @@ entities:
   - file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0003
   - file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0001
+    item: ev:shipments-db/profile/0004
 - id: ent:eta
   name: Estimated arrival
   definition: The date the business expects an open order to arrive, recomputed nightly from the promised
@@ -89,9 +89,9 @@ entities:
   confidence: inferred
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0009
+    item: ev:app/code/0011
   - file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0003
+    item: ev:shipments-db/profile/0001
 - id: ent:delivery-slot
   name: Delivery slot
   definition: A booked time window for handing a shipment to the customer.
@@ -103,7 +103,7 @@ entities:
   confidence: needs-review
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
-    item: ev:app/code/0011
+    item: ev:app/code/0006
 - id: ent:carrier
   name: Carrier
   definition: The company moving a shipment. Referenced by code; no store holds it.

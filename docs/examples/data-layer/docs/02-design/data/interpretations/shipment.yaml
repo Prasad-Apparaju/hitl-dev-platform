@@ -29,7 +29,7 @@ proposed:
     - file: evidence/slices/shipment.yaml
       item: ev:app/code/0003
     - file: evidence/slices/shipment.yaml
-      item: ev:shipments-db/profile/0001
+      item: ev:shipments-db/profile/0004
   mappings:
   - id: map:shipment/shipments-db.shipments
     entity: ent:shipment
@@ -47,7 +47,7 @@ proposed:
       - file: evidence/slices/shipment.yaml
         item: ev:app/code/0004
       - file: evidence/slices/shipment.yaml
-        item: ev:shipments-db/profile/0002
+        item: ev:shipments-db/profile/0005
     - name: carrier_ref
       type: text
       present_pct: 0.0
@@ -56,23 +56,23 @@ proposed:
       - file: evidence/slices/shipment.yaml
         item: ev:app/code/0004
       - file: evidence/slices/shipment.yaml
-        item: ev:shipments-db/profile/0002
+        item: ev:shipments-db/profile/0005
     - name: eta
       type: date
       present_pct: 88.9
       confidence: inferred
       evidence:
       - file: evidence/slices/shipment.yaml
-        item: ev:shipments-db/profile/0002
+        item: ev:shipments-db/profile/0005
     - name: shipped_at
       type: date
       present_pct: 100.0
       confidence: inferred
       evidence:
       - file: evidence/slices/shipment.yaml
-        item: ev:app/code/0007
+        item: ev:app/code/0009
       - file: evidence/slices/shipment.yaml
-        item: ev:shipments-db/profile/0002
+        item: ev:shipments-db/profile/0005
     natural_key:
     - order_no
     scope: global
@@ -91,7 +91,7 @@ proposed:
     - file: evidence/slices/shipment.yaml
       item: ev:app/code/0003
     - file: evidence/slices/shipment.yaml
-      item: ev:shipments-db/profile/0001
+      item: ev:shipments-db/profile/0004
   lineage:
     activities: []
     edges:
@@ -106,7 +106,7 @@ proposed:
       confidence: inferred
       evidence:
       - file: evidence/slices/shipment.yaml
-        item: ev:app/code/0007
+        item: ev:app/code/0009
   findings:
   - kind: negative
     severity: high
@@ -120,9 +120,9 @@ proposed:
     - file: evidence/slices/shipment.yaml
       item: ev:app/code/0004
     - file: evidence/slices/shipment.yaml
-      item: ev:app/code/0007
+      item: ev:app/code/0009
     - file: evidence/slices/shipment.yaml
-      item: ev:shipments-db/profile/0002
+      item: ev:shipments-db/profile/0005
     status: open
 open_questions:
 - Who writes shipments? No write in the repo; a carrier feed is likely.

@@ -20,7 +20,7 @@ proposed:
     confidence: needs-review
     evidence:
     - file: evidence/slices/delivery-slot.yaml
-      item: ev:app/code/0011
+      item: ev:app/code/0006
   mappings:
   - id: map:delivery-slot/warehouse.delivery_slots
     entity: ent:delivery-slot
@@ -36,21 +36,21 @@ proposed:
       confidence: needs-review
       evidence:
       - file: evidence/slices/delivery-slot.yaml
-        item: ev:app/code/0012
+        item: ev:app/code/0007
     - name: order_no
       type: unknown
       present_pct: null
       confidence: needs-review
       evidence:
       - file: evidence/slices/delivery-slot.yaml
-        item: ev:app/code/0012
+        item: ev:app/code/0007
     - name: window_start
       type: unknown
       present_pct: null
       confidence: needs-review
       evidence:
       - file: evidence/slices/delivery-slot.yaml
-        item: ev:app/code/0012
+        item: ev:app/code/0007
     natural_key: []
     scope: null
     owner: null
@@ -65,7 +65,7 @@ proposed:
     confidence: needs-review
     evidence:
     - file: evidence/slices/delivery-slot.yaml
-      item: ev:app/code/0011
+      item: ev:app/code/0006
   lineage:
     activities: []
     edges: []
@@ -80,9 +80,9 @@ proposed:
     confidence: inferred
     evidence:
     - file: evidence/slices/delivery-slot.yaml
-      item: ev:app/code/0011
+      item: ev:app/code/0006
     - file: evidence/slices/delivery-slot.yaml
-      item: ev:app/code/0012
+      item: ev:app/code/0007
     status: open
 open_questions:
 - The warehouse was not extracted; types and counts are unknown.

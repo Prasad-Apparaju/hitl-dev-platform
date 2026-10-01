@@ -24,7 +24,20 @@ items:
   origin:
     file: evidence/app/code-20260930T0900.yaml
     item: ev:app/code/0004
-- id: ev:shipments-db/profile/0002
+- id: ev:app/code/0009
+  kind: read
+  locator: jobs/nightly_eta.py:14
+  data:
+    store: shipments
+    method: find
+    fields:
+    - order_no
+    - carrier_ref
+    - shipped_at
+  origin:
+    file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0009
+- id: ev:shipments-db/profile/0005
   kind: field_presence
   locator: exports/shipments.jsonl
   data:
@@ -37,4 +50,4 @@ items:
       shipped_at: 100.0
   origin:
     file: evidence/shipments-db/profile-20260930T0945.yaml
-    item: ev:shipments-db/profile/0002
+    item: ev:shipments-db/profile/0005
