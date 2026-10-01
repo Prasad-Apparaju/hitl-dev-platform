@@ -24,7 +24,7 @@ Orchestrate the Red → Green → Refactor cycle where tests drive the design be
 
 **Input:** $ARGUMENTS (description of what to implement — should reference an LLD or issue)
 
-If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD or issue."
+If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD or issue." With a `change_id_prefix` in `.hitl/config.yaml` a change is named by its full id (`SVC-3`); refuse a bare number and name the form (#145).
 
 **Refusal rule — design not approved:** Read `.hitl/current-change.yaml`. If the file exists and `status` is not `implementation-approved`, stop:
 

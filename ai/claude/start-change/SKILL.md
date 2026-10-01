@@ -44,7 +44,7 @@ Only proceed when there is **no** active, branch-matched change.
 
 ## Step 2 — Choose the issue (insist)
 
-If `$ARGUMENTS` names an issue, use it. With a `change_id_prefix` in `.hitl/config.yaml` the form is `<PREFIX>-<n>` (`SVC-3`); a bare number is ambiguous across linked repositories, so refuse it and say which form to use ("Use SVC-3, or DOCS-3 for the docs repository"). An id with another repository's prefix is that repository's issue, not a change to start here: resolve it with `python3 "$LINKED" resolve <id>` and say so. Without a prefix configured, a bare number is fine as before. Otherwise ask first: **"What's the goal, in one
+If `$ARGUMENTS` names an issue, use it. With a `change_id_prefix` in `.hitl/config.yaml` the form is `<PREFIX>-<n>` (`SVC-3`); a bare number is ambiguous across linked repositories, so refuse it and say which form to use ("Use SVC-3, or DOCS-3 for the docs repository"). An id with another repository's prefix is that repository's issue, not a change to start here: resolve it with `ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"; LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"; python3 "$LINKED" resolve <id>` and say so. Without a prefix configured, a bare number is fine as before. Otherwise ask first: **"What's the goal, in one
 sentence, and what does done look like?"** Then list open issues and see whether one already covers it:
 
 ```bash
@@ -281,7 +281,7 @@ was never in the plan, so the sizer records it `not_applicable` (#102). The gate
 record, not the ledger: it must name this change and workflow, its `rule_outcomes` must match the
 rules run on its own findings (#124) and show `applies: false`, and the security steps need
 `security_sensitive` answered (silence is not a no); else `COND_UNCONFIRMED`, `RECORD_UNIDENTIFIED`
-or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step. One floor pair is pre-filled rather than asked for twice: when the impact record says `reaches_production: false`, offer `deploy` and `promote` under Leave out as `decline`, reason "does not reach production (impact record)", `ack_by` the person confirming the plan, so the one confirmation records the accepted risk (#146).
+or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step. One floor pair is pre-filled rather than asked for twice: when the impact record says `reaches_production: false`, offer `deploy` and `promote` under Leave out as `decline`, reason "does not reach production (impact record)", `ack_by` the person confirming the plan (the validator needs a named person; for these two Ops floor steps the confirmer is that person), so the one confirmation records the accepted risk (#146).
 
 Pre-selected is not pre-recorded. **Nothing is written until the human confirms**; doing nothing runs
 the full plan (`keep` is the default, CR-1), and the actor on every record is the person who confirmed.

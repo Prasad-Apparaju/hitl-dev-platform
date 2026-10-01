@@ -134,10 +134,11 @@ deployments:                     # every deploy of this change, appended, one pe
 
 The `deployments` list is what a consumer change in another repository reads through `linked.py need provider-deployed` when this change is its provider; the record is read from this branch, or from the merge commit once the branch is gone, so write it before the PR merges. A deploy run by CI that never runs this skill must append the same line to the record, or post the comment below, or the consumer waits.
 
-Post a comment on the GitHub issue, then report to the team:
+Post a comment on the GitHub issue (the issue number is the digits at the end of the change id, whatever its prefix), then report to the team:
 
 ```bash
-gh issue comment <issue-number> \
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/^\(.*[^0-9]\)\{0,1\}\([0-9][0-9]*\)$/\2/p')
+gh issue comment "$ISSUE_NUM" \
   --body "## 🚀 Deployed to <environment>
 
 **Artifact:** <artifact-reference>

@@ -49,7 +49,7 @@ PHASE=$(echo "$CS_BLOCK" | awk -F'"' '/phase:/{print $2}')
 
 # The issue number is the digits at the end of the change id, whatever the prefix (GH-12, SVC-3):
 # a repository with its own change_id_prefix (FR-30) posts progress like any other (#146).
-ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/.*[^0-9]\([0-9][0-9]*\)$/\1/p')
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/^\(.*[^0-9]\)\{0,1\}\([0-9][0-9]*\)$/\2/p')
 [[ -z "$ISSUE_NUM" ]] && exit 0  # no issue number in the change id
 
 # Step advancement check — only post when the step number actually increases
