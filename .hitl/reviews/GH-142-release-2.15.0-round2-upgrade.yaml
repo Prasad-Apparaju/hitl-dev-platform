@@ -1,0 +1,58 @@
+schema_version: "2.0"
+change_id: GH-142-release-2.15.0
+round: 2
+reviewed_sha: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+reviewed_tree: 08945035e591922e45fa495fcd5ebcce2ceaa01d
+lens: upgrade
+scope: "Narrow round after the round-1 fixes: a clean build from de692d0 in a scratch copy of the plugin repo, the two files that changed in de692d0 against the hash manifest, the changelog count, fresh onboarding through init-project.sh including the symlink list, stale-test cleanup, plugin validate and the build file list. Report: .hitl/reviews/incoming/GH-142-upgrade-round2.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: five checks with the command and the passing output for each, round-1 claim strings copied verbatim, evidence rule, one page, at most three points, verdict instruction
+checks:
+- check: "the build from de692d0 completes with the guard and reachability clean at 2.15.0; the built check_data_layer.py and data-layer.schema.yaml hash to 2.15.0 manifest lines; --check passes; the two schema copies are identical"
+  command: cp -R hitl-claude-plugin <scratch>; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform > build.log; shasum -a 256; grep shared/ci/shipped-validators.sha256; python3 tools/scripts/shipped-validators-hashes.py --check; diff
+  result: pass
+  output: "Build complete, 2.15.0; both hashes listed at 2.15.0; manifest current; schemas identical"
+- check: "F1 re-verified: the changelog count equals the data-layer suites"
+  command: grep CHANGELOG.md; python3 -m pytest ci/data-layer tools/data-layer -q
+  result: pass
+  output: "104 tests by mutation; 104 passed"
+- check: "F2 re-verified: fresh onboarding creates .claude/commands/map-data-layer.md, prints the data-layer install line, and the installed validator reports absent"
+  command: bash tools/scripts/init-project.sh <tmp> --tool claude --name fresh; ls .claude/commands; python3 ci/data-layer/check_data_layer.py
+  result: pass
+  output: "symlink present; install line printed; data layer: absent, exit 0"
+- check: "stale-test cleanup: the de692d0 hash of test_check_data_layer.py is in retired-tests by basename"
+  command: git show de692d0:ci/data-layer/test_check_data_layer.py | shasum -a 256; grep shared/ci/retired-tests.sha256
+  result: pass
+  output: "listed"
+- check: "claude plugin validate passes; the build file list is only the release's files"
+  command: claude plugin validate <scratch>; git -C <scratch> status --short
+  result: pass
+  output: "Validation passed; only the release's files"
+findings:
+- id: F1
+  class: minor
+  check: "F1 re-verified: the changelog count equals the data-layer suites"
+  claim: "CHANGELOG 2.15.0 says \"101 tests by mutation\"; pytest over ci/data-layer and tools/data-layer at d6a37fe prints \"102 passed\". Source-only claim, off by one."
+  evidence: "CHANGELOG reads 104; pytest prints 104 passed"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "this record, check 2"
+- id: F2
+  class: minor
+  check: "F2 re-verified: fresh onboarding creates .claude/commands/map-data-layer.md, prints the data-layer install line, and the installed validator reports absent"
+  claim: "init-project.sh's hard-coded .claude/commands symlink list (lines 348-350) omits map-data-layer: 47 symlinks against 60 shipped skills."
+  evidence: "init-project.sh:350 includes map-data-layer; the fresh target has the symlink"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "this record, check 3"
+- id: F3
+  class: minor
+  check: "F2 re-verified: fresh onboarding creates .claude/commands/map-data-layer.md, prints the data-layer install line, and the installed validator reports absent"
+  claim: "init-project.sh \"Next steps\" prints items 1 and 3 with no 2."
+  evidence: "unchanged since v2.14.0; still prints 1 then 3"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-30): pre-existing cosmetic text outside this release's scope; left for the next onboarding change"
+verdict: verified

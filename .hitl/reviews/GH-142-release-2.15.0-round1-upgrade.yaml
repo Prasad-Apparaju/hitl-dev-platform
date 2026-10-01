@@ -1,0 +1,78 @@
+schema_version: "2.0"
+change_id: GH-142-release-2.15.0
+round: 1
+reviewed_sha: d6a37fe071755b59df90408a4c729a055b004cb7
+reviewed_tree: 3a753c32cf3f26c057504f6c7f9a59df5826ef82
+lens: upgrade
+scope: "Copied the plugin repo (release/2.x plus the uncommitted build.sh data-layer blocks) to scratch and built it against source d6a37fe; ten checks: build and source-path guard, the data layer at the skill's paths (no second prefix, adapters and templates present, no tests riding along, both --help), every shared/ and skills/ reference resolves and no bare plugin root in the built skill, the shipped-validators manifest against built hashes, the 2.14.0 upgrade path through the built migrator (install, update, keep a local edit, absent-layer exit), stale-test cleanup, claude plugin validate, the notes against the built files, the build commit file list, fresh onboarding through init-project.sh. Report: .hitl/reviews/incoming/GH-142-upgrade-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of ten items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict instruction, claim strings copied verbatim
+checks:
+- check: "the plugin builds from d6a37fe with the source-path guard clean and version 2.15.0"
+  command: cp -R hitl-claude-plugin <scratch>; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform; grep version .claude-plugin/plugin.json
+  result: pass
+  output: "no mangled paths found; all shared/ references resolve; Build complete; exit 0; version 2.15.0"
+- check: "the data layer ships where the built skill looks: skills/dev-map-data-layer, shared/ci/data-layer (validator, scorecard, schema, waivers), shared/tools/data-layer (7 adapters, no tests), shared/templates/data-layer (8), shared/ci-workflows/data-layer-check.yml, shared/data-layer.md; both --help run"
+  command: test -e each path; ls; find shared -name 'test_*' -o -name conftest.py; python3 shared/tools/data-layer/code_adapter.py --help; python3 shared/ci/data-layer/check_data_layer.py --help
+  result: pass
+  output: "all paths present; no second prefix; no tests or conftest; both --help exit 0"
+- check: "every shared/ reference in built skills, agents and commands resolves; every skills/<name>/ reference resolves; no bare ${CLAUDE_PLUGIN_ROOT} in the built dev-map-data-layer bash blocks"
+  command: grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents commands | sed 's/[.,:;)]*$//' | sort -u; test -e each; awk over the bash fences
+  result: pass
+  output: "69 unique shared/ refs, 0 missing; 0 missing skills/ refs; the only root use is the ROOT fallback line"
+- check: "the shipped-validators manifest lists the built hash of every shared/ci/data-layer/*.py, the schema and every shared/tools/data-layer/*.py at 2.15.0; --check passes"
+  command: shasum -a 256 each; grep in shared/ci/shipped-validators.sha256; python3 tools/scripts/shipped-validators-hashes.py --check
+  result: pass
+  output: "10/10 listed, each labelled 2.15.0; manifest current, exit 0"
+- check: "the 2.14.0 upgrade path: a scratch repo with hitl--v2.14.0 copies of ci/first-pass, ci/manifest-agentic, tools/manifest-agentic gets ci/data-layer, tools/data-layer and the workflow installed, older copies updated, a local edit kept on rerun; the installed validator with no layer prints absent and exits 0"
+  command: python3 <built>/shared/ci/first-pass/migrate_project.py --root . --sync-validators <built> --apply (twice, editing scorecard.py between); python3 ci/data-layer/check_data_layer.py
+  result: pass
+  output: "13 installed, 1 updated from an older release, 12 identical; rerun: scorecard.py differs from the shipped version, KEPT yours, with the --overwrite command; data layer: absent, exit 0"
+- check: "stale-test cleanup: the d6a37fe hashes of the three data-layer test files are in retired-tests by basename and dev-update's removal list names all three paths"
+  command: git show d6a37fe:<path> | shasum -a 256; grep shared/ci/retired-tests.sha256; grep skills/dev-update/SKILL.md
+  result: pass
+  output: "8828cb60 test_check_data_layer.py, 31add3cd test_scorecard.py, 3b89dc82 test_adapters.py listed; SKILL.md:277 names all three"
+- check: "claude plugin validate"
+  command: claude plugin validate <scratch>
+  result: pass
+  output: "Validation passed, exit 0"
+- check: "every bold changelog claim under 2.15.0 has a carrier in the built package or is source-repo-only"
+  command: awk the section; grep rule codes in the built validator and scorecard; git cat-file -e for source-only paths; pytest in source
+  result: pass
+  output: "Data layer, slice 1: skill, eight rule codes, scorecard metrics, blocking read by the CI template and dev-check-conventions, manifest_tie.py, shared/data-layer.md all in the package; docs/data-layer.md and docs/examples/data-layer/ source-only and present; '101 tests by mutation' is source-only and the source run prints 102 (F1). Docs: five design files, requirements v1.1, FR-35 at prd.md:141. Getting-started counts: built shared/getting-started.md says 60 and 54; built skills/ has 60 directories"
+- check: "the build commit file list is exactly the release's files, nothing stale"
+  command: git -C <scratch> status --short; git diff --stat v2.14.0 d6a37fe -- ai/ ci/ tools/ docs/getting-started.md docs/usage-guide.md CHANGELOG.md; --diff-filter=D
+  result: pass
+  output: "12 modified and 6 untracked; every entry maps to a source change since v2.14.0; nothing deleted in source, nothing stale"
+- check: "fresh onboarding through init-project.sh installs the data layer and the validator reports absent"
+  command: bash tools/scripts/init-project.sh <tmp> --tool claude --name fresh; python3 ci/data-layer/check_data_layer.py
+  result: pass
+  output: "ci/data-layer/ + tools/data-layer/ + .github/workflows/data-layer-check.yml installed (4+7+1 files); data layer: absent, exit 0; the dev-mode .claude/commands symlink list omits map-data-layer (F2); Next steps numbering skips 2 (F3)"
+findings:
+- id: F1
+  class: minor
+  check: "every bold changelog claim under 2.15.0 has a carrier in the built package or is source-repo-only"
+  claim: "CHANGELOG 2.15.0 says \"101 tests by mutation\"; pytest over ci/data-layer and tools/data-layer at d6a37fe prints \"102 passed\". Source-only claim, off by one."
+  evidence: "python3 -m pytest ci/data-layer tools/data-layer -q at d6a37fe: 102 passed in 11.78s"
+  status: fixed
+  resolved_by: "de692d023ec23d580fe54a9b34988bbc9dbfa26b"
+  verified_by: "round 2 upgrade record re-reads the section against the test count"
+- id: F2
+  class: minor
+  check: "fresh onboarding through init-project.sh installs the data layer and the validator reports absent"
+  claim: "init-project.sh's hard-coded .claude/commands symlink list (lines 348-350) omits map-data-layer: 47 symlinks against 60 shipped skills."
+  evidence: "ls .claude/commands | grep -i data is empty on the fresh target; the script header says skills load from the plugin, so plugin users are unaffected; 12 other skills are also absent"
+  status: fixed
+  resolved_by: "de692d023ec23d580fe54a9b34988bbc9dbfa26b"
+  verified_by: "round 2 upgrade record re-runs init-project.sh and greps the symlink"
+- id: F3
+  class: minor
+  check: "fresh onboarding through init-project.sh installs the data layer and the validator reports absent"
+  claim: "init-project.sh \"Next steps\" prints items 1 and 3 with no 2."
+  evidence: "the script's closing echo block; cosmetic, not from this release"
+  status: accepted
+  accepted_by: "release owner (this session, 2026-09-30): pre-existing cosmetic text outside this release's scope; left for the next onboarding change"
+verdict: verified

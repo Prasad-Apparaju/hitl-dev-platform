@@ -1,0 +1,59 @@
+schema_version: "2.0"
+change_id: GH-142-release-2.15.0
+round: 2
+reviewed_sha: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+reviewed_tree: 08945035e591922e45fa495fcd5ebcce2ceaa01d
+lens: correctness
+scope: "Narrow round after the round-1 fixes: the three round-1 findings re-verified by running (the Conventions block in blocking mode on the worked example, the service-name and manifest-domain mutations, the changelog test count), the three gates at de692d0, and the d6a37fe..de692d0 diff accounted for. Report: .hitl/reviews/incoming/GH-142-correctness-round2.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: five checks with the command and the passing output for each, round-1 claim strings copied verbatim, evidence rule, one page, at most three points, verdict instruction
+checks:
+- check: "F1 re-verified: the Conventions validator call carries no --strict, the scorecard call does; blocking mode on the worked example exits 0 for both; the prose states warn lines are Warnings in both modes; the CI template fails only on validator exit 2 or a scorecard regression"
+  command: "read ai/claude/check-conventions/SKILL.md Data layer block; run its bash on a scratch fixture copy with data_layer blocking true; read ci/workflows/data-layer-check.yml"
+  result: pass
+  output: "validator 0 blocking, 1 warning, exit 0; scorecard --baseline --strict exit 0; prose present; template fails only on exit 2 or regression"
+- check: "F2 re-verified: a service-shaped definition and a manifest-domain synonym are rejected; the clean fixture still passes; NEG-1b and NEG-1c exist; LLD §4 and the test plan name the rule; both schema copies identical"
+  command: mutate a scratch fixture copy twice; python3 ci/data-layer/check_data_layer.py --data-dir docs/02-design/data --manifest docs/system-manifest.yaml; grep the tests and docs; diff the two schema files
+  result: pass
+  output: "ONTOLOGY_NAMES_IMPLEMENTATION exit 2 for both mutations; untouched fixture 0 blocking (Order keeps the synonym orders); NEG-1b and NEG-1c present; docs name the rule; schemas identical"
+- check: "F3 re-verified: the changelog count equals the data-layer suites"
+  command: grep CHANGELOG.md; python3 -m pytest ci/data-layer tools/data-layer -q
+  result: pass
+  output: "104 tests by mutation; 104 passed"
+- check: "gates at de692d0"
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1267 passed; 65/65 pass all hard gates; VERIFY OK"
+- check: "the d6a37fe..de692d0 diff is only the three fixes, the onboarding symlink list and the two hash manifests"
+  command: git diff --stat d6a37fe de692d0
+  result: pass
+  output: "11 files, all accounted for; the 2.15.0 hash lines match the files on disk"
+findings:
+- id: F1
+  class: decide
+  check: "F1 re-verified: the Conventions validator call carries no --strict, the scorecard call does; blocking mode on the worked example exits 0 for both; the prose states warn lines are Warnings in both modes; the CI template fails only on validator exit 2 or a scorecard regression"
+  claim: "Conventions prose and the CI template disagree on what blocking mode does with a warning."
+  evidence: "round 2 ran the block in blocking mode on the worked example: both exits 0; the prose and the template agree"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "this record, check 1"
+- id: F2
+  class: decide
+  check: "F2 re-verified: a service-shaped definition and a manifest-domain synonym are rejected; the clean fixture still passes; NEG-1b and NEG-1c exist; LLD §4 and the test plan name the rule; both schema copies identical"
+  claim: "§8.2 row 4 \"an ontology entry naming a service\" is not what the validator catches."
+  evidence: "round 2 mutations: 'served by the orders-service over gRPC' and synonym 'fulfilment' both exit 2 with ONTOLOGY_NAMES_IMPLEMENTATION"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "this record, check 2"
+- id: F3
+  class: minor
+  check: "F3 re-verified: the changelog count equals the data-layer suites"
+  claim: "\"101 tests by mutation\" is 102."
+  evidence: "CHANGELOG says 104; pytest ci/data-layer tools/data-layer prints 104 passed"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "this record, check 3"
+verdict: verified

@@ -1,0 +1,75 @@
+schema_version: "2.0"
+change_id: GH-142-release-2.15.0
+round: 1
+reviewed_sha: d6a37fe071755b59df90408a4c729a055b004cb7
+reviewed_tree: 3a753c32cf3f26c057504f6c7f9a59df5826ef82
+lens: correctness
+scope: "The CHANGELOG 2.15.0 section as the claim list; nine checks: the three gates, the data-layer suites mapped to requirements §8.2 rows 1 to 6, the whole pipeline end to end on a scratch copy of the fixture with a diff against the committed files, every skill flag against the scripts' --help, the Conventions block under four configurations, claim carriers, PRD placement of FR-31 and FR-35, plain English, the getting-started counts against the built skill directories. Report: .hitl/reviews/incoming/GH-142-correctness-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of nine items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about eighteen calls, verdict instruction, claim strings copied verbatim
+checks:
+- check: "gates"
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1265 passed; Skill lint: 65/65 files pass all hard gates; VERIFY OK"
+- check: "the data-layer suites map to requirements §8.2 rows 1 to 6"
+  command: read ci/data-layer/test_check_data_layer.py, test_scorecard.py, tools/data-layer/test_adapters.py against requirements.md §8.2
+  result: pass
+  output: "row 1: fix2, NEG-16 family, scan1; row 2: score1, score2; row 3: fix4, neg11, neg11b, neg10; row 4: NEG-1 to NEG-5 and neg21, a bare service name not caught (F2); row 5: score3, base1 to base4, mode line; row 6: auth1 to auth3, write-method refusal, src2, NEG-19"
+- check: "the pipeline end to end on a scratch copy of the fixture, diffed against the committed files"
+  command: intake_scan.py; code_adapter.py --taken-at 2026-09-30T09:00:00Z; profile_adapter.py x3; slice_evidence.py --taken-at 2026-09-30T10:00:00Z; assign_ids.py; manifest_tie.py; check_data_layer.py; scorecard.py --baseline --run-at 2026-09-30T12:00:00Z --no-write --strict; diff -r
+  result: pass
+  output: "every step exit 0; validator 0 blocking, 1 warning (q:5); scorecard strict exit 0, every Before equals After; diff shows only four appended run.log lines"
+- check: "every flag the skill passes exists in the owning script's --help"
+  command: grep -o -- '--[a-z-]*' ai/claude/map-data-layer/SKILL.md; --help of the eight scripts
+  result: pass
+  output: "all 17 flags present; ci/data-layer/data-layer-waivers.yaml named by the skill exists"
+- check: "the Conventions data-layer block under no config, blocking true, an empty data_layer key, and no data dir"
+  command: bash of check-conventions/SKILL.md Data layer block on the fixture copy
+  result: pass
+  output: "no traceback in any case; advisory and blocking mode lines as the prose says; SKIPPED line verbatim without the dir; the prose did not cover a warning-only exit 1 in blocking mode (F1)"
+- check: "every bold changelog claim under 2.15.0 has a carrier"
+  command: ls and grep per claim
+  result: pass
+  output: "skill, validator with every named rejection under test, scorecard diff, blocking in Conventions and the CI template, manifest_tie.py, shared/data-layer.md, docs/data-layer.md, the 39-file example, five design files with 13 ADR headings, requirements v1.1 row, FR-35 at prd.md:141, the getting-started fix and its test; '101 tests' has no exact carrier (F3)"
+- check: "PRD: FR-31 Backlog with the requirements link, FR-35 present pointing at #131, no duplicate FR ids"
+  command: grep docs/01-product/prd.md; uniq -d over FR ids
+  result: pass
+  output: "FR-31 at :138 Backlog; FR-35 at :141; 35 FR ids, no duplicates"
+- check: "plain English"
+  command: python3 -m pytest ci/wiring/test_plain_english.py -q; grep -c em dash in docs/data-layer.md, ai/shared/data-layer.md, the scorecard output
+  result: pass
+  output: "16 passed; 0 em dashes"
+- check: "getting-started counts equal the built skill directories"
+  command: grep docs/getting-started.md; ls -d ../hitl-claude-plugin/skills/*/ | wc -l; count table rows
+  result: pass
+  output: "60 and 54; 60 built skill dirs; 6 table rows"
+findings:
+- id: F1
+  class: decide
+  check: "the Conventions data-layer block under no config, blocking true, an empty data_layer key, and no data dir"
+  claim: "Conventions prose and the CI template disagree on what blocking mode does with a warning."
+  evidence: "check-conventions/SKILL.md:125-126 passed --strict to the validator in blocking mode; --strict is exit 1 on an unwaived warning (check_data_layer.py:741); the prose at :132 named only exit 2 and a scorecard regression; the shipped worked example exits 1 under --strict because of its q:5 warning"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "release owner's decision (this session, 2026-09-30): a warning never fails blocking mode; --strict removed from the validator call in Conventions, kept on the scorecard; the prose states that warn lines are Warnings in both modes; the CI template already failed only on exit 2. Round 2 correctness record re-runs the block in blocking mode on the worked example"
+- id: F2
+  class: decide
+  check: "the data-layer suites map to requirements §8.2 rows 1 to 6"
+  claim: "§8.2 row 4 \"an ontology entry naming a service\" is not what the validator catches."
+  evidence: "mutation on a scratch copy: definition 'A customer purchase, served by the orders-service over gRPC' gave 0 blocking, exit 0; the rule caught paths, URLs, extensions, other entities' store names, activity, source and file names only"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "release owner's decision (this session, 2026-09-30): the code widened to the requirement, not the requirement narrowed to the code. Service-shaped tokens (-service, _service, -svc, grpc, endpoint) joined the schema's implementation markers, and a name or synonym equal to a manifest domain or service name fires unless it is the entity's own store or name; NEG-1b and NEG-1c prove both by mutation; LLD §4 and the test plan updated. Round 2 correctness record re-runs the reviewer's mutation"
+- id: F3
+  class: minor
+  check: "every bold changelog claim under 2.15.0 has a carrier"
+  claim: "\"101 tests by mutation\" is 102."
+  evidence: "pytest per file: 61, 16, 25"
+  status: fixed
+  resolved_by: de692d023ec23d580fe54a9b34988bbc9dbfa26b
+  verified_by: "the section now says 104, the count after NEG-1b and NEG-1c; round 2 records re-read it against the suites"
+verdict: verified
