@@ -471,7 +471,7 @@ the project, not just this one.
 
 ## Step 6c — Partners in other repositories (FR-30 slice 0)
 
-Ask once: "Does this change have a partner in another repository: its design approved there, a provider that must ship first, or code that implements this design?" On a yes append `linked_changes: [{ repo: owner/name, change_id: <theirs>, role: docs|provider|consumer|code }]` to the change file, link a slice under its epic with `LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"; python3 "$LINKED" link-sub owner/docs#<epic> <this repo>#<N>`, and say which steps now wait on which partner (`shared/linked-changes.md`).
+Ask once: "Does this change have a partner in another repository: its design approved there, a provider that must ship first, or code that implements this design?" On a yes append `linked_changes: [{ repo: owner/name, change_id: <theirs>, role: docs|provider|consumer|code }]` to the change file, link a slice under its epic with `ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"; LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"; python3 "$LINKED" link-sub owner/docs#<epic> <this repo>#<N>`, and say which steps now wait on which partner (`shared/linked-changes.md`).
 
 ## Step 7 — Commit and push the change file
 
