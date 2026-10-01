@@ -88,13 +88,13 @@ downstream derives from this text and a wrong plan is harder to argue with than 
 
 Then write the stub (change id, branch and version; not the workflow):
 ```bash
-PREFIX=$("$PY" -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print((d or {}).get('change_id_prefix') or 'GH')" 2>/dev/null || echo GH); CHANGE_ID="${PREFIX}-${N}"   # shared/linked-changes.md
+PREFIX=$("$PY" -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print((d or {}).get('change_id_prefix') or 'GH')" 2>/dev/null || echo GH)
+CHANGE_ID="${PREFIX}-${N}"
 GEN="ci/first-pass/gen_change.py"; [[ -f "$GEN" ]] || GEN="$ROOT/shared/ci/first-pass/gen_change.py"
 "$PY" "$GEN" --stub "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" > .hitl/current-change.yaml
 ```
 
 Fill in the `requirement` block with the confirmed text, `agreed_by` and `agreed_at`.
-
 The stub carries a **provisional tier of 3** and `status: intake`. It does not satisfy the
 active-change gate, so source edits stay blocked — correct, since no plan has authorised one yet.
 What it does is keep the agreed text if the session dies, feed the analysis, and name the record.

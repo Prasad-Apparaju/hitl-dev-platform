@@ -18,8 +18,9 @@ PACKET = {"issue": 40, "domains": ["orders"], "source_docs": {"lld": "docs/02-de
 
 
 class Host:
-    def __init__(self, files=(), packet=PACKET, fail=()):
+    def __init__(self, files=(), packet=PACKET, fail=(), title="GH-40 design", ref="issue/40-design"):
         self.files, self.packet, self.fail, self.calls = list(files), packet, set(fail), []
+        self.title, self.ref = title, ref
 
     def __call__(self, args):
         self.calls.append(args)
@@ -27,11 +28,11 @@ class Host:
         if any(path.startswith(f) for f in self.fail):
             return 1, ""
         if path.startswith("search/issues"):
-            return 0, json.dumps({"items": [{"number": 7}]})
+            return 0, json.dumps({"items": [{"number": 7, "title": self.title, "body": ""}]})
         if path.startswith("repos/org/docs/pulls/7/files"):
             return 0, json.dumps([[{"filename": f} for f in self.files]])
         if path.startswith("repos/org/docs/pulls/7"):
-            return 0, json.dumps({"head": {"sha": "abc1234"}})
+            return 0, json.dumps({"head": {"sha": "abc1234", "ref": self.ref}, "title": self.title, "body": ""})
         if path.startswith("repos/org/docs/contents/"):
             body = base64.b64encode(yaml.safe_dump(self.packet).encode()).decode()
             return 0, json.dumps({"content": body, "encoding": "base64"})
@@ -101,3 +102,27 @@ def test_gate5_host_read_failure_is_a_failed_check(tmp_path, monkeypatch):
     monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], fail=("repos/org/docs/contents",)))
     r = cc.check_decision_packet(["app/orders/api.py"], "12")
     assert not r.passed and "could not be read" in r.message
+
+
+def test_gate6_a_loose_search_hit_is_ignored_and_a_pull_read_failure_is_an_error(tmp_path, monkeypatch):
+    """Round 1 S1 and D2: a PR that neither sits on the partner's issue branch nor names the change id
+    as a whole word carries nothing; a pull read that fails is a failed check, never read at HEAD."""
+    setup(tmp_path, monkeypatch)
+    monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], title="first pass wiring", ref="issue/56-first-pass"))
+    r = cc.check_decision_packet(["app/orders/api.py"], "12")
+    assert not r.passed and "No decision packet" in r.message
+    monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], title="GH-142 release", ref="issue/142-x"))
+    assert not cc.check_decision_packet(["app/orders/api.py"], "12").passed
+    monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], title="wiring (GH-40)", ref="other"))
+    assert cc.check_decision_packet(["app/orders/api.py"], "12").passed
+    monkeypatch.setattr(cc, "GH_RUN", Host(files=["docs/decisions/issue-40.yaml"], fail=("repos/org/docs/pulls/7\n",)))
+    h = Host(files=["docs/decisions/issue-40.yaml"])
+    orig = h.__call__
+
+    def failing_pull(args):
+        if args[1].startswith("repos/org/docs/pulls/7") and "files" not in args[1]:
+            return 1, ""
+        return orig(args)
+    monkeypatch.setattr(cc, "GH_RUN", failing_pull)
+    r = cc.check_decision_packet(["app/orders/api.py"], "12")
+    assert not r.passed and "could not read org/docs#7" in r.message

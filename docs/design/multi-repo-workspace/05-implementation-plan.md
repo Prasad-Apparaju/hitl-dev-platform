@@ -20,11 +20,11 @@
 
 | Phase | Deliverable | Depends | Requirements | Key tests |
 |---|---|---|---|---|
-| **A** | Schema: `linked_changes` and `fold_before_partners` in `change-context.schema.yaml`; config keys documented in `shared/linked-changes.md` | design | LC-1, LC-5, LC-6 | WIRE-2 |
-| **B** | `ci/linked/linked.py` with `state`, `need`, `fetch`, `issue-repo`, `link-sub`; tests with a fake host | A | LC-2, LC-3, LC-4, LC-6, LC-7 | NEG-1 to NEG-9, CHK-1 to CHK-10 |
-| **C** | `check_change.py` partner source; `pulse.py` prefix fallback | B | LC-2, LC-5 | GATE-1 to GATE-5, PFX-2 |
-| **D** | Skill edits: `start-change` (prefix, partner question, issue repo, sub-issue link), `tdd`, `apply-change`, `review-lld-adherence`, `ops-deploy`, `conclude`, `retro`, the three filing skills, `issue-hygiene.md`, `workflow-steps.md`; user doc `docs/linked-changes.md` | B | LC-2 to LC-7 | WIRE-1, FIL-1, PFX-1, skill lint |
-| **E** | Integration: copy blocks, sync sets, hash manifest, retired tests, `dev-update` lists, `.gitignore` entry, plugin build, help, usage guide, CHANGELOG | D | all | WIRE-4, WIRE-5, full suite |
+| **A** (DONE 2026-10-01: schema and conventions) | Schema: `linked_changes` and `fold_before_partners` in `change-context.schema.yaml`; config keys documented in `shared/linked-changes.md` | design | LC-1, LC-5, LC-6 | WIRE-2 |
+| **B** (DONE 2026-10-01: `ci/linked/linked.py`, 28 tests against a fake host) | `ci/linked/linked.py` with `state`, `need`, `fetch`, `issue-repo`, `link-sub`; tests with a fake host | A | LC-2, LC-3, LC-4, LC-6, LC-7 | NEG-1 to NEG-9, CHK-1 to CHK-10 |
+| **C** (DONE 2026-10-01: gate partner source (6 tests), Team Pulse prefix fallback (1 test)) | `check_change.py` partner source; `pulse.py` prefix fallback | B | LC-2, LC-5 | GATE-1 to GATE-5, PFX-2 |
+| **D** (DONE 2026-10-01: skill edits, user doc) | Skill edits: `start-change` (prefix, partner question, issue repo, sub-issue link), `tdd`, `apply-change`, `review-lld-adherence`, `ops-deploy`, `conclude`, `retro`, the three filing skills, `issue-hygiene.md`, `workflow-steps.md`; user doc `docs/linked-changes.md` | B | LC-2 to LC-7 | WIRE-1, FIL-1, PFX-1, skill lint |
+| **E** (DONE 2026-10-01: sync sets, hash manifest, onboarding, update, build, changelog, four wiring tests) | Integration: copy blocks, sync sets, hash manifest, retired tests, `dev-update` lists, `.gitignore` entry, plugin build, help, usage guide, CHANGELOG | D | all | WIRE-4, WIRE-5, full suite |
 | **F** | Validation review on the real host (this repository and the plugin repository as partners), then release as a minor on 2.x | E | all | the five acceptance items |
 
 ## 3. Decisions

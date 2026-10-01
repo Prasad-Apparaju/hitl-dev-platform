@@ -117,7 +117,7 @@ def test_chk6_branch_absent_falls_back_to_comments(tmp_path, capsys):
     p = change(tmp_path / "c.yaml", [{"repo": DOCS, "change_id": "GH-40", "role": "docs"}])
     h = Host(docs_partner(branch=False, comments=["## ✅ Ready for Development"]))
     assert L.main(["state", "--change", p], run=h) == 0
-    assert "status=none approved=yes" in capsys.readouterr().out
+    assert "record=none (no issue/40- branch) approved=yes" in capsys.readouterr().out
 
 
 def test_chk2_state_shows_backlink(tmp_path, capsys):
@@ -273,3 +273,59 @@ def test_chk10_hostile_host_bodies_never_traceback(tmp_path):
 
 def test_missing_change_file_means_no_linked_changes(tmp_path):
     assert L.main(["need", "docs-approved", "--change", str(tmp_path / "none.yaml")], run=Host()) == 0
+
+
+# ---------------------------------------------------------------------------
+# Round 1 review: the PR search matches loosely; a 404 is a wrong link, not an unreadable host
+# ---------------------------------------------------------------------------
+
+def test_neg10_a_search_hit_that_never_names_the_change_id_does_not_approve(tmp_path, capsys):
+    """S1: GH-14's search found PR #57 (head issue/56-first-pass-wiring) with no GH- id in it at all."""
+    p = change(tmp_path / "c.yaml", [{"repo": DOCS, "change_id": "GH-14", "role": "docs"}])
+    routes = {
+        "repos/%s/branches" % DOCS: [{"name": "main"}],
+        "repos/%s/issues/14/comments" % DOCS: [],
+        "repos/%s/issues/14" % DOCS: {"state": "closed"},
+        "search/issues": {"items": [{"number": 57, "title": "first pass wiring", "body": "closes the gap", "pull_request": {"merged_at": "2026-08-01T00:00:00Z"}}]},
+    }
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 2
+    assert "approved=no merged=no" in capsys.readouterr().out
+    # the same PR naming the id as a whole word counts; GH-142 does not count for GH-14
+    routes["search/issues"] = {"items": [{"number": 57, "title": "GH-142 release", "body": "", "pull_request": {"merged_at": "2026-08-01T00:00:00Z"}}]}
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 2
+    routes["search/issues"] = {"items": [{"number": 57, "title": "wiring (GH-14)", "body": "", "pull_request": {"merged_at": "2026-08-01T00:00:00Z"}}]}
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes)) == 0
+
+
+def test_mentions_is_a_whole_word_match():
+    assert L.mentions("fixes GH-14 today", "GH-14") and L.mentions("(GH-14)", "GH-14") and L.mentions("GH-14", "GH-14")
+    assert not L.mentions("GH-142", "GH-14") and not L.mentions("GH-14a", "GH-14") and not L.mentions("", "GH-14")
+
+
+def test_d1_a_missing_partner_issue_is_exit_2_not_found(tmp_path, capsys):
+    p = change(tmp_path / "c.yaml", [{"repo": DOCS, "change_id": "GH-999", "role": "docs"}])
+    routes = {"repos/%s/branches" % DOCS: [], "repos/%s" % DOCS: {"name": "docs"}}   # the repo exists, the issue does not
+    assert L.main(["need", "docs-approved", "--change", p], run=Host(routes, fail=("repos/%s/issues/999" % DOCS,))) == 2
+    assert "not found: org/docs has no issue 999" in capsys.readouterr().out
+    # the repo itself unreadable: still exit 3
+    assert L.main(["need", "docs-approved", "--change", p], run=Host({"repos/%s/branches" % DOCS: []})) == 3
+
+
+def test_m2_reference_commit_is_lowercase_hex(tmp_path):
+    assert L.main(["fetch", "org/docs@ABCDEF1:docs/x.md", "--out-dir", str(tmp_path)], run=Host()) == 2
+
+
+def test_pfx1_a_prefixed_change_id_still_yields_its_issue_number(tmp_path):
+    """PFX-1: gen_change --stub SCM-12 writes change_id SCM-12, and the branch reconcile matches issue/12-x."""
+    import subprocess
+    root = os.path.abspath(os.path.join(HERE, "..", ".."))
+    gen = os.path.join(root, "ci", "first-pass", "gen_change.py")
+    r = subprocess.run([sys.executable, gen, "--stub", "SCM-12", "issue/12-x", "2.15.0"], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    rec = yaml.safe_load(r.stdout)
+    assert rec["change_id"] == "SCM-12"
+    f = tmp_path / "c.yaml"
+    f.write_text('change_id: "SCM-12"\nworkflow:\n  id: development\n  steps:\n    - { n: 1, key: issue, label: "Issue", status: current }\n')
+    steps = os.path.join(root, "ai", "claude", "hooks", "_steps.sh")
+    r = subprocess.run(["bash", "-c", "source '%s'; hitl_branch_reconcile '%s' issue/12-x; hitl_branch_reconcile '%s' issue/13-x" % (steps, f, f)], capture_output=True, text=True)
+    assert r.stdout.split() == ["match", "mismatch"], r.stdout + r.stderr

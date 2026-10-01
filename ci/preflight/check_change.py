@@ -90,16 +90,28 @@ def _partner_pr_files(partner: dict) -> tuple[list[tuple[str, str]], str | None]
     except _json.JSONDecodeError:
         return [], "unreadable pull request list for %s" % repo
     files: list[tuple[str, str]] = []
+    word = re.compile(r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(partner["change_id"]))
     for it in items:
         n = it.get("number") if isinstance(it, dict) else None
         if not n:
             continue
         code, out = GH_RUN(["api", "repos/%s/pulls/%d" % (repo, n)])
-        head = ""
+        if code != 0:
+            return [], "could not read %s#%d (gh exit %d)" % (repo, n, code)
         try:
-            head = (_json.loads(out or "{}") or {}).get("head", {}).get("sha", "") if code == 0 else ""
+            pr = _json.loads(out or "{}") or {}
         except _json.JSONDecodeError:
-            head = ""
+            return [], "unreadable pull request %s#%d" % (repo, n)
+        head = (pr.get("head") or {}).get("sha", "")
+        head_ref = (pr.get("head") or {}).get("ref", "")
+        # the search matches loosely: keep a PR only when its branch is the partner's issue branch or
+        # its title or body names the change id as a whole word
+        named = word.search(str(it.get("title") or "")) or word.search(str(it.get("body") or "")) \
+            or word.search(str(pr.get("title") or "")) or word.search(str(pr.get("body") or ""))
+        if not (head_ref.startswith("issue/%d-" % partner["issue"]) or named):
+            continue
+        if not head:
+            return [], "%s#%d has no head sha" % (repo, n)
         code, out = GH_RUN(["api", "repos/%s/pulls/%d/files?per_page=100" % (repo, n), "--paginate", "--slurp"])
         if code != 0:
             return [], "could not read the files of %s#%d (gh exit %d)" % (repo, n, code)

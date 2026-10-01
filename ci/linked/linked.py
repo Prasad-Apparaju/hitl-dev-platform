@@ -33,7 +33,7 @@ except ImportError:  # pragma: no cover
 
 ROLES = ("docs", "provider", "consumer", "code")
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-REF_RE = re.compile(r"^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([0-9a-fA-F]{7,40}):(.+)$")
+REF_RE = re.compile(r"^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([0-9a-f]{7,40}):(.+)$")
 APPROVED_MARKERS = ("## ✅ Ready for Development", "## ✅ Gate Approved")
 DEPLOYED_MARKER = "## 🚀 Deployed to "
 EXIT_OK, EXIT_NO, EXIT_HOST = 0, 2, 3
@@ -41,6 +41,15 @@ EXIT_OK, EXIT_NO, EXIT_HOST = 0, 2, 3
 
 class HostError(Exception):
     """A read the host refused or that could not run. Carries the read that failed."""
+
+
+class NotFound(Exception):
+    """The partner's issue does not exist on the host: a wrong link, not an unreadable host."""
+
+
+def mentions(text, change_id: str) -> bool:
+    """The change id as a whole word (GH-14 must not match GH-142 or a PR that never names it)."""
+    return re.search(r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(str(change_id)), str(text or "")) is not None
 
 
 class Malformed(Exception):
@@ -159,7 +168,16 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
                                    for x in (rec.get("linked_changes") or []) if isinstance(rec.get("linked_changes"), list))
         except (HostError, yaml.YAMLError, ValueError):
             record = None
-    issue = gh_json(run, "repos/%s/issues/%d" % (repo, n))
+    code, out = run(["api", "repos/%s/issues/%d" % (repo, n)])
+    if code != 0:
+        probe, _ = run(["api", "repos/%s" % repo])
+        if probe == 0:
+            raise NotFound("%s has no issue %d (the link names a wrong change id or issue)" % (repo, n))
+        raise HostError("gh api repos/%s/issues/%d failed (exit %d)" % (repo, n, code))
+    try:
+        issue = json.loads(out or "null")
+    except json.JSONDecodeError:
+        raise HostError("gh api repos/%s/issues/%d returned something that is not JSON" % (repo, n))
     comments = gh_json(run, "repos/%s/issues/%d/comments?per_page=100" % (repo, n), paginate=True) or []
     firsts = [_first_line(c.get("body")) for c in comments if isinstance(c, dict)]
     approved_by = None
@@ -175,7 +193,11 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
             pass
     try:
         found = gh_json(run, "search/issues?q=repo:%s+is:pr+%s" % (repo, p["change_id"]))
-        prs += (found or {}).get("items", []) if isinstance(found, dict) else []
+        # the search matches loosely (GH-14 found a PR that never names it): keep a hit only when the
+        # change id is a whole word in its title or body
+        for x in (found or {}).get("items", []) if isinstance(found, dict) else []:
+            if isinstance(x, dict) and (mentions(x.get("title"), p["change_id"]) or mentions(x.get("body"), p["change_id"])):
+                prs.append(x)
     except HostError as e:
         if not prs:
             raise e
@@ -193,8 +215,9 @@ def read_partner(run, p: dict, own_repo: str | None = None, own_change_id: str |
 
 
 def fmt(s: dict) -> str:
-    return "%-8s %-10s %-28s status=%s approved=%s merged=%s deployed=%s%s" % (
-        s["role"], s["change_id"], s["repo"], s["status"] or "none",
+    rec = s["status"] or ("none (no issue/%d- branch)" % s["issue"] if not s.get("branch") else "none")
+    return "%-8s %-10s %-28s issue=%s record=%s approved=%s merged=%s deployed=%s%s" % (
+        s["role"], s["change_id"], s["repo"], s.get("issue_state") or "?", rec,
         "yes" if s["approved"] else "no", "yes" if s["merged"] else "no",
         "[%s]" % ",".join(s["deployed"]), "" if s["backlink"] is None else " backlink=%s" % ("yes" if s["backlink"] else "no"))
 
@@ -231,7 +254,7 @@ def cmd_need(run, what: str, env: str | None, change_path: str, own_repo: str | 
         s = read_partner(run, p, own_repo, change.get("change_id"))
         print(fmt(s))
         if what == "docs-approved" and not s["approved"]:
-            waiting.append("%s %s is not approved (record status %s, no approval comment, no merged PR)" % (s["repo"], s["change_id"], s["status"] or "unreadable"))
+            waiting.append("%s %s is not approved (%s, no approval comment, no merged PR)" % (s["repo"], s["change_id"], ("record status %s" % s["status"]) if s["status"] else ("no record: no issue/%d- branch" % s["issue"] if not s.get("branch") else "record unreadable")))
         elif what == "provider-deployed":
             if not s["merged"]:
                 waiting.append("%s %s has no merged PR" % (s["repo"], s["change_id"]))
@@ -332,6 +355,9 @@ def main(argv=None, run=gh_run) -> int:
             return cmd_link_sub(run, a.epic, a.child)
     except Malformed as e:
         print("MALFORMED: %s" % e)
+        return EXIT_NO
+    except NotFound as e:
+        print("not found: %s" % e)
         return EXIT_NO
     except HostError as e:
         print("host unreadable: %s" % e)
