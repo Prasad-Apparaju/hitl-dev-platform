@@ -1,0 +1,28 @@
+# GH-143 release 2.16.0, upgrade lens, round 2
+
+Reviewer: clean-context validation reviewer (Fable 5.1), 2026-10-01.
+Source: hitl-dev-platform at b3bf007e34ad872b5056e56537bba6798e1af1a9 ("fix(release 2.16.0): round 1 findings"). Round 1 reviewed 36f85f1.
+Plugin: hitl-claude-plugin release/2.x (HEAD 057b25a, build v2.15.0) copied to a scratch directory with the uncommitted scripts/build.sh edit (the ci/linked block) kept; built there.
+
+## Verdict
+
+**Pass.** All three round-1 findings are fixed in the built plugin, the build is clean, the shipped checker runs from the plugin fallback, hashes and plugin validation pass. Two advisory notes below; neither blocks the release.
+
+## Round-1 findings
+
+- F1: "dev-tdd and ops-deploy never set ROOT, so their plugin fallback is dead." **Fixed.** Built `skills/dev-tdd/SKILL.md` lines 43-47 and `skills/ops-deploy/SKILL.md` lines 82-84 each carry, in one fence, the `ROOT="${CLAUDE_PLUGIN_ROOT:-...installed_plugins.json...}"` resolution, the `LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"` assignment, then `python3 "$LINKED" need ...`.
+- F2: "dev-start-change Step 6c and dev-apply-change run python3 \"$LINKED\" with LINKED set nowhere." **Fixed.** Built `skills/dev-apply-change/SKILL.md` lines 53-58: ROOT resolution, LINKED assignment, then `need docs-approved` and `fetch` in one fence. Built `skills/dev-start-change/SKILL.md` line 474 (Step 6c): the inline command now reads `LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"; python3 "$LINKED" link-sub ...`. See advisory 1 on where its `$ROOT` comes from.
+- F3: "The traceability-gate claim is source-only but shipped as a product-repo gate." **Fixed.** Built CHANGELOG 2.16.0: "where a repository runs `ci/preflight/check_change.py`, the traceability gate finds the decision packet and the LLD in the docs partner's pull request". Built `shared/linked-changes.md` line 26: "the CI traceability gate, where a repository runs `ci/preflight/check_change.py` (the platform's own gate; not installed by onboarding)".
+
+## Checks
+
+1. Build. `cp -R /Users/Prasad_1/Projects/hitl-claude-plugin <scratch>; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform > build.log 2>&1` exit 0. build.log: "no mangled paths found", "Packaging check: no test/conftest/bytecode under shared/", "all shared/ references resolve", "Build complete". `python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])"` prints 2.16.0. `shared/ci/linked/linked.py` present (17769 bytes); `python3 shared/ci/linked/linked.py --help` prints the usage (state, need, fetch, issue-repo, link-sub) and exits 0. Pass.
+2. F1/F2 wiring. `grep -rn LINKED skills/` shows every `python3 "$LINKED"` call in dev-tdd, ops-deploy and dev-apply-change inside a fence that also sets ROOT and LINKED (lines quoted above). A fence-only scan of `skills/**/*.md` for `CLAUDE_PLUGIN_ROOT` outside a `${CLAUDE_PLUGIN_ROOT:-` fallback returned nothing (the bare `${CLAUDE_PLUGIN_ROOT}` hits are all prose path references, not commands). Runtime: in an empty temp dir with `CLAUDE_PLUGIN_ROOT=<scratch>`, `eval` of the tdd fence's ROOT and LINKED lines gave `LINKED=<scratch>/shared/ci/linked/linked.py`; `python3 "$LINKED" need docs-approved --change /dev/null/none` printed "no linked changes" and exited 0. With the variable unset the same lines resolved ROOT through installed_plugins.json to the 2.12.1 cache (the fallback path works). Pass.
+3. F3 wording. `grep -niE 'traceab|check_change' CHANGELOG.md shared/linked-changes.md` in the scratch build: both scope the gate to repositories that run `ci/preflight/check_change.py` (quoted above). Pass.
+4. Hashes. `python3 /Users/Prasad_1/Projects/hitl-dev-platform/tools/scripts/shipped-validators-hashes.py --check` prints "manifest current: every synced validator in the tree is listed", exit 0. `shasum -a 256 shared/ci/linked/linked.py` = f21651d6...7414, and `shared/ci/shipped-validators.sha256` line 77 lists that hash for `ci/linked/linked.py  # 2.16.0`. `git diff --stat 36f85f1 b3bf007` touches CHANGELOG, four SKILL.md files and ai/shared/linked-changes.md only; linked.py unchanged. Pass.
+5. Plugin validate and status. `claude plugin validate <scratch>` prints "Validation passed". `git -C <scratch> status --short` lists plugin.json (version 2.15.0 to 2.16.0 only), CHANGELOG.md, scripts/build.sh, the synced shared/ and skills/ files, plus untracked `shared/ci/linked/` and `shared/linked-changes.md`; the set matches `git diff --stat v2.15.0 b3bf007` in the source (plus the regenerated usage-guide.md and my build.log). Pass.
+
+## New findings (advisory, not blocking)
+
+1. **Step 6c and the tdd fetch line borrow `$ROOT` from an earlier fence.** `skills/dev-start-change/SKILL.md` line 474 assigns LINKED with the `$ROOT/shared/...` fallback inline, but the only ROOT resolution in that skill is the Step 6b fence at line 447. `skills/dev-tdd/SKILL.md` line 49 runs `python3 "$LINKED" fetch <ref>` in prose after the fence at lines 43-47. If the model runs the later command in a fresh shell and `ci/linked/linked.py` is absent, LINKED becomes `/shared/ci/linked/linked.py`. Low impact: init-project.sh now installs ci/linked, and the Bash tool's shell usually persists. A one-line "re-run the ROOT line from Step 6b if this is a new shell" or repeating the resolution would close it.
+2. **`skills/dev-review-lld-adherence/SKILL.md` step 5** offers `$ROOT/shared/ci/linked/linked.py` as the alternative to `python3 ci/linked/linked.py fetch <ref>` with no ROOT resolution anywhere in that skill. Same class as finding 1; the primary path (repo-local ci/linked) works.

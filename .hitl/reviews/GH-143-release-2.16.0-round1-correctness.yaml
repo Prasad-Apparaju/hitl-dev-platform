@@ -1,0 +1,55 @@
+schema_version: "2.0"
+change_id: GH-143-release-2.16.0
+round: 1
+reviewed_sha: 36f85f11d2c2a53cc60dc50b93e852fa60f10d07
+reviewed_tree: 553539fae359ffedc8a5a65917b639171481eed5
+lens: correctness
+scope: "The CHANGELOG 2.16.0 section as the claim list; eight checks: the three gates, the five acceptance items from the #105 comment each reproduced by command on the real host (no partner, an unapproved docs partner, a merged partner on a deleted branch, a missing provider issue, a pinned fetch against git show, the prefix), claim carriers, skill wiring and exit-3 wording, the gate's host-failure paths, PRD rows, plain English, the getting-started counts. Report: .hitl/reviews/incoming/GH-143-correctness-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eight items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about eighteen calls, verdict instruction, claim strings copied verbatim
+checks:
+- check: "gates"
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1314 passed; 65/65 pass all hard gates; VERIFY OK"
+- check: "the five acceptance items from the #105 comment, each by command on the real host"
+  command: linked.py need docs-approved with gh stubbed; state and need for GH-131 and GH-60 docs partners; need provider-deployed --env prod for plugin GH-36; fetch @de692d0 against git show and @main refused; gen_change --stub SCM-12; pytest -k pfx2; grep start-change
+  result: pass
+  output: "no linked changes exit 0 and the stub never called; GH-131 waiting line exit 2; GH-60 approved=yes merged=yes; not found exit 2; fetch byte-identical, @main refused with no host call; change_id SCM-12; pfx2 passes; ${PREFIX}-${N} at SKILL.md:91-92; exit 3 path also probed"
+- check: "every bold changelog claim under 2.16.0 has a carrier"
+  command: grep and read per claim
+  result: pass
+  output: "every claim carried; the test count wording did not reproduce (F1)"
+- check: "skill wiring and exit-3 wording"
+  command: python3 -m pytest ci/wiring -q -k linked; read tdd, ops/deploy, apply-change
+  result: pass
+  output: "5 passed; exit-3 wording at tdd:45, ops/deploy:83, apply-change:51"
+- check: "the gate's host-failure paths never pass"
+  command: python3 -m pytest ci/preflight -q; read _partner_pr_files, _partner_file, _check_packet_in_partner
+  result: pass
+  output: "20 passed; every failure path returns a failing CheckResult"
+- check: "PRD rows"
+  command: grep docs/01-product/prd.md
+  result: pass
+  output: "FR-30 at :137 Backlog with the requirements link; FR-31 and FR-35 present; no duplicate ids"
+- check: "plain English"
+  command: python3 -m pytest ci/wiring/test_plain_english.py -q; grep em dash
+  result: pass
+  output: "16 passed; 0 em dashes in both linked-changes docs"
+- check: "getting-started counts equal the built skill directories"
+  command: ls ../hitl-claude-plugin/skills; grep docs/getting-started.md
+  result: pass
+  output: "60 built (the 2.15.0 build), 60 in source, 60 in the guide; no command added"
+findings:
+- id: F1
+  class: minor
+  check: "every bold changelog claim under 2.16.0 has a carrier"
+  claim: "\"40 tests against a fake host plus 7 gate tests\" does not reproduce: ci/linked collects 34; 40 is only reached by adding the 5 ci/wiring linked tests and 1 Team Pulse pfx2 test, which do not use a fake host."
+  evidence: "pytest ci/linked collects 34; ci/wiring -k linked 5; test_pulse pfx2 1; ci/preflight linked 7"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "the section now says 34 checker tests against a fake host, 7 gate tests and 6 wiring tests; round 2 correctness record re-reads it"
+verdict: verified

@@ -1,0 +1,79 @@
+schema_version: "2.0"
+change_id: GH-143-release-2.16.0
+round: 1
+reviewed_sha: 36f85f11d2c2a53cc60dc50b93e852fa60f10d07
+reviewed_tree: 553539fae359ffedc8a5a65917b639171481eed5
+lens: upgrade
+scope: "Copied the plugin repo (release/2.x plus the uncommitted build.sh ci/linked block) to scratch and built it against source 36f85f1; ten checks: build and source-path guard, linked changes at the skills' paths and the built skills' references, every shared/ reference resolves, the shipped-validators manifest, the 2.15.0 upgrade path through the built migrator, stale-test cleanup, claude plugin validate, the notes against the built files, the build commit file list, fresh onboarding. Report: .hitl/reviews/incoming/GH-143-upgrade-round1.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of ten items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict instruction, claim strings copied verbatim
+checks:
+- check: "the plugin builds from 36f85f1 with the guard and reachability clean at 2.16.0"
+  command: cp -R hitl-claude-plugin <scratch>; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform > build.log
+  result: pass
+  output: "Build complete; plugin.json 2.16.0"
+- check: "linked changes ship where the skills look, and the built skills resolve the checker"
+  command: test -e shared/ci/linked/linked.py shared/linked-changes.md; python3 shared/ci/linked/linked.py --help; grep the built skills
+  result: fail
+  output: "linked.py and linked-changes.md present, --help runs; dev-tdd and ops-deploy never set ROOT so their fallback is /shared/ci/linked/linked.py (F1); dev-apply-change and dev-start-change call $LINKED with it set nowhere (F2)"
+- check: "every shared/ reference in built skills, agents and commands resolves"
+  command: grep -rhoE 'shared/[A-Za-z0-9_./-]+' skills agents commands | sed | sort -u; test -e each
+  result: pass
+  output: "0 missing"
+- check: "the shipped-validators manifest lists the built linked.py at 2.16.0; --check passes"
+  command: shasum -a 256 shared/ci/linked/linked.py; grep; shipped-validators-hashes.py --check
+  result: pass
+  output: "listed at 2.16.0; manifest current"
+- check: "the 2.15.0 upgrade path installs ci/linked and keeps a local edit on rerun"
+  command: python3 <built>/shared/ci/first-pass/migrate_project.py --root . --sync-validators <built> --apply, twice
+  result: pass
+  output: "ci/linked/linked.py installed; 2.15.0 copies identical; the edited linked.py KEPT with the diff and the --overwrite hint"
+- check: "stale-test cleanup"
+  command: git show 36f85f1:ci/linked/test_linked.py | shasum -a 256; grep retired-tests; grep dev-update
+  result: pass
+  output: "hash listed by basename; removal list and git add loop name ci/linked"
+- check: "claude plugin validate"
+  command: claude plugin validate <scratch>
+  result: pass
+  output: "Validation passed"
+- check: "every bold changelog claim has a carrier in the built package or is source-only"
+  command: awk the section; grep the built tree
+  result: fail
+  output: "the traceability-gate claim is shipped as a product-repo gate but check_change.py is not in the package and onboarding does not copy it (F3); the other source-only items are the docs, the design package and the test counts"
+- check: "the build commit file list is exactly the release's files"
+  command: git -C <scratch> status --short
+  result: pass
+  output: "24 modified and 2 untracked, all mapping to the v2.15.0..36f85f1 source diff or the build.sh edit"
+- check: "fresh onboarding installs ci/linked and ignores .hitl/linked/"
+  command: bash tools/scripts/init-project.sh <tmp> --tool claude --name fresh
+  result: pass
+  output: "ci/linked/linked.py installed; .hitl/linked/ in .gitignore; command count unchanged"
+findings:
+- id: F1
+  class: stops
+  check: "linked changes ship where the skills look, and the built skills resolve the checker"
+  claim: "dev-tdd and ops-deploy never set ROOT, so their plugin fallback is dead."
+  evidence: "both fences read LINKED=\"ci/linked/linked.py\"; [[ -f \"$LINKED\" ]] || LINKED=\"$ROOT/shared/ci/linked/linked.py\" with no ROOT= line; observed python3: can't open file '/shared/ci/linked/linked.py', exit 2, which the skill reads as waiting on a partner"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "both skills now carry the ROOT resolution line before LINKED; round 2 upgrade record runs the built fences with no ci/linked present"
+- id: F2
+  class: stops
+  check: "linked changes ship where the skills look, and the built skills resolve the checker"
+  claim: "dev-start-change Step 6c and dev-apply-change run python3 \"$LINKED\" with LINKED set nowhere."
+  evidence: "dev-apply-change:51 points at prose in linked-changes.md that holds no assignment; dev-start-change:474 calls link-sub; observed unset: python3: can't find '__main__' module, exit 1"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "apply-change carries a fenced block with ROOT and LINKED; intake's Step 6c inlines the LINKED assignment before link-sub; round 2 upgrade record greps the built skills"
+- id: F3
+  class: decide
+  check: "every bold changelog claim has a carrier in the built package or is source-only"
+  claim: "The traceability-gate claim is source-only but shipped as a product-repo gate."
+  evidence: "check_change.py lives at ci/preflight/ in the platform repo and is not in the package; init-project.sh does not copy it; shipped shared/linked-changes.md row 26 presented it as a gate every repo has"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "release owner's decision (this session, 2026-10-01): ci/preflight stays the platform's own gate, as before this release; the changelog and shared/linked-changes.md now scope the claim to repositories that run check_change.py. Round 2 upgrade record re-reads both"
+verdict: verified

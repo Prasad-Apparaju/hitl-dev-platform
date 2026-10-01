@@ -1,0 +1,47 @@
+schema_version: "2.0"
+change_id: GH-143-release-2.16.0
+round: 2
+reviewed_sha: b3bf007e34ad872b5056e56537bba6798e1af1a9
+reviewed_tree: 9e949b584cb8e2a35fb3aa213834d18f3faf4058
+lens: correctness
+scope: "Narrow round after the round-1 fixes: the changelog test counts against the suites, the three gates at b3bf007, the four skills' checker resolution read and the tdd lines run in an empty directory, the 36f85f1..b3bf007 diff accounted for. Report: .hitl/reviews/incoming/GH-143-correctness-round2.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: four checks with the command and the passing output for each, the round-1 claim copied verbatim, evidence rule, one page, at most three points, verdict instruction
+checks:
+- check: "F1 re-verified: the changelog counts equal the suites"
+  command: grep CHANGELOG.md; python3 -m pytest ci/linked -q; ci/preflint test_check_change_linked.py; ci/wiring -k linked; test_pulse -k pfx2
+  result: pass
+  output: "34 checker, 7 gate, 6 wiring; all three reproduce"
+- check: "gates at b3bf007"
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: "1314 passed; skill lint exit 0; VERIFY OK"
+- check: "the round-1 upgrade fixes resolve ROOT then LINKED in tdd, ops-deploy, apply-change; the tdd lines run in an empty directory resolve under the plugin root"
+  command: read the four skills; run the tdd fence's two lines in an empty directory
+  result: fail
+  output: "tdd, ops/deploy and apply-change resolve both in one fence and the live run resolves LINKED under the plugin cache root; start-change Step 6c set LINKED inline without resolving ROOT in that command (N1)"
+- check: "the 36f85f1..b3bf007 diff is the five skills, CHANGELOG.md and linked-changes.md"
+  command: git diff --stat 36f85f1 b3bf007
+  result: pass
+  output: "exactly those files"
+findings:
+- id: F1
+  class: minor
+  check: "F1 re-verified: the changelog counts equal the suites"
+  claim: "\"40 tests against a fake host plus 7 gate tests\" does not reproduce: ci/linked collects 34; 40 is only reached by adding the 5 ci/wiring linked tests and 1 Team Pulse pfx2 test, which do not use a fake host."
+  evidence: "CHANGELOG now says 34 checker, 7 gate, 6 wiring; the three counts reproduce"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "this record, check 1"
+- id: N1
+  class: stops
+  check: "the round-1 upgrade fixes resolve ROOT then LINKED in tdd, ops-deploy, apply-change; the tdd lines run in an empty directory resolve under the plugin root"
+  claim: "ai/claude/start-change/SKILL.md:474 Step 6c sets LINKED inline but never resolves ROOT in that command; ROOT only exists in the Step 6b fence at line 447."
+  evidence: "reproduced in a fresh shell: LINKED=/shared/ci/linked/linked.py, python3 cannot open it; only bites in product repos without ci/linked; the upgrade round-2 reviewer listed the same as an advisory note"
+  status: fixed
+  resolved_by: 39c3e2871b272505e9e71498c8844fe4496629ca
+  verified_by: "Step 6c now resolves ROOT inline before LINKED; round 3 records run the Step 6c command in a fresh shell"
+verdict: verified

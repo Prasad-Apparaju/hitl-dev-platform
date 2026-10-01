@@ -1,0 +1,36 @@
+schema_version: '2.0'
+change_id: GH-143-release-2.16.0
+round: 3
+reviewed_sha: 39c3e2871b272505e9e71498c8844fe4496629ca
+reviewed_tree: f056121770fbf4079b72cbc1b231de6397c9169a
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand; one reviewer covered both lenses in this narrow round)
+  brief: four checks with the command and the passing output for each, the round-2 claim copied verbatim, evidence rule, one page, at most two points, verdict instruction
+lens: upgrade
+scope: 'Narrow round after the round-2 fix: a clean scratch build from 39c3e28, the Step 6c command run verbatim from the built skill in a fresh shell, the hash manifest, plugin validate and the build file
+  list. Report: .hitl/reviews/incoming/GH-143-round3.md'
+checks:
+- check: 'N1 re-verified: the Step 6c inline command resolves ROOT then LINKED; run verbatim from the built skill in a fresh shell against the scratch build; no bare plugin root in any built fence or inline
+    command'
+  command: same as the correctness record
+  result: pass
+  output: LINKED resolves under the scratch build; --help exit 0; zero bare plugin roots
+- check: the scratch build completes clean at 2.16.0; the hash manifest is current and byte-equal to the source; plugin validate passes; the build file list is the release's files
+  command: cp -R hitl-claude-plugin <scratch>; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform > build.log; shipped-validators-hashes.py --check; claude plugin validate <scratch>; git -C
+    <scratch> status --short
+  result: pass
+  output: Build complete, no error lines; 2.16.0; manifest current, built copy byte-equal; Validation passed; only the release's files plus the pre-existing build.sh edit
+findings:
+- id: N1
+  class: stops
+  check: 'N1 re-verified: the Step 6c inline command resolves ROOT then LINKED; run verbatim from the built skill in a fresh shell against the scratch build; no bare plugin root in any built fence or inline
+    command'
+  claim: ai/claude/start-change/SKILL.md:474 Step 6c sets LINKED inline but never resolves ROOT in that command; ROOT only exists in the Step 6b fence at line 447.
+  evidence: 'env -i fresh shell with CLAUDE_PLUGIN_ROOT=<scratch>: LINKED=<scratch>/shared/ci/linked/linked.py; python3 "$LINKED" --help exit 0; zero bare plugin-root references in the built skills/ and
+    shared/ trees'
+  status: fixed
+  resolved_by: 39c3e2871b272505e9e71498c8844fe4496629ca
+  verified_by: this record, check 1
+verdict: verified

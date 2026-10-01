@@ -1,0 +1,67 @@
+schema_version: "2.0"
+change_id: GH-143-release-2.16.0
+round: 2
+reviewed_sha: b3bf007e34ad872b5056e56537bba6798e1af1a9
+reviewed_tree: 9e949b584cb8e2a35fb3aa213834d18f3faf4058
+lens: upgrade
+scope: "Narrow round after the round-1 fixes: a clean build from b3bf007 in a scratch copy of the plugin repo; the built fences of dev-tdd, ops-deploy, dev-apply-change and dev-start-change resolve the checker; the tdd resolution lines run in an empty directory against the scratch build; the gate claim scoped in the built changelog and conventions; the hash manifest; plugin validate and the build file list. Report: .hitl/reviews/incoming/GH-143-upgrade-round2.md"
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: five checks with the command and the passing output for each, round-1 claim strings copied verbatim, evidence rule, one page, at most three points, verdict instruction
+checks:
+- check: "the build from b3bf007 completes clean at 2.16.0; shared/ci/linked/linked.py present and --help runs"
+  command: cp -R hitl-claude-plugin <scratch>; bash scripts/build.sh /Users/Prasad_1/Projects/hitl-dev-platform > build.log; python3 shared/ci/linked/linked.py --help
+  result: pass
+  output: "Build complete; plugin.json 2.16.0; --help runs"
+- check: "F1 and F2 re-verified: every built call of the checker is preceded by ROOT and LINKED; the tdd resolution lines in an empty directory with CLAUDE_PLUGIN_ROOT=<scratch> give the scratch path and need docs-approved on a missing change file exits 0; no bare plugin root in any built fence"
+  command: grep the built skills; run the tdd fence's resolution lines; python3 "$LINKED" need docs-approved --change /dev/null/none
+  result: pass
+  output: "all four skills resolve ROOT then LINKED; LINKED=<scratch>/shared/ci/linked/linked.py; no linked changes, exit 0; no bare ${CLAUDE_PLUGIN_ROOT}"
+- check: "F3 re-verified: the built changelog and shared/linked-changes.md scope the gate claim to repositories that run ci/preflight/check_change.py"
+  command: grep the built CHANGELOG.md and shared/linked-changes.md
+  result: pass
+  output: "both scoped"
+- check: "the hash manifest lists the built linked.py at 2.16.0 and --check passes; linked.py unchanged in b3bf007"
+  command: shasum -a 256; grep; python3 tools/scripts/shipped-validators-hashes.py --check; git diff --stat 36f85f1 b3bf007
+  result: pass
+  output: "f21651d6 listed at 2.16.0; manifest current; the diff is the five skills, CHANGELOG.md and linked-changes.md"
+- check: "claude plugin validate passes; the build file list is the release's files"
+  command: claude plugin validate <scratch>; git -C <scratch> status --short
+  result: pass
+  output: "Validation passed; matches the source diff since v2.15.0"
+findings:
+- id: F1
+  class: stops
+  check: "F1 and F2 re-verified: every built call of the checker is preceded by ROOT and LINKED; the tdd resolution lines in an empty directory with CLAUDE_PLUGIN_ROOT=<scratch> give the scratch path and need docs-approved on a missing change file exits 0; no bare plugin root in any built fence"
+  claim: "dev-tdd and ops-deploy never set ROOT, so their plugin fallback is dead."
+  evidence: "both built fences resolve ROOT, assign LINKED with the fallback, then call the checker; the tdd lines ran in an empty directory and resolved to the scratch build"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "this record, check 2"
+- id: F2
+  class: stops
+  check: "F1 and F2 re-verified: every built call of the checker is preceded by ROOT and LINKED; the tdd resolution lines in an empty directory with CLAUDE_PLUGIN_ROOT=<scratch> give the scratch path and need docs-approved on a missing change file exits 0; no bare plugin root in any built fence"
+  claim: "dev-start-change Step 6c and dev-apply-change run python3 \"$LINKED\" with LINKED set nowhere."
+  evidence: "dev-apply-change carries the full fence; Step 6c assigns LINKED inline with the fallback, its ROOT from the skill's earlier fence"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "this record, check 2"
+- id: F3
+  class: decide
+  check: "F3 re-verified: the built changelog and shared/linked-changes.md scope the gate claim to repositories that run ci/preflight/check_change.py"
+  claim: "The traceability-gate claim is source-only but shipped as a product-repo gate."
+  evidence: "both built files scope the claim"
+  status: fixed
+  resolved_by: b3bf007e34ad872b5056e56537bba6798e1af1a9
+  verified_by: "this record, check 3"
+- id: N1
+  class: minor
+  check: "F1 and F2 re-verified: every built call of the checker is preceded by ROOT and LINKED; the tdd resolution lines in an empty directory with CLAUDE_PLUGIN_ROOT=<scratch> give the scratch path and need docs-approved on a missing change file exits 0; no bare plugin root in any built fence"
+  claim: "Step 6c and the tdd inline fetch line borrow $ROOT from an earlier fence; dev-review-lld-adherence step 5 names $ROOT/shared/... with no ROOT resolution in that skill."
+  evidence: "advisory from the reviewer; each is in a skill whose earlier step or sibling line resolves ROOT the same way every other skill does, and the repo-local path is tried first"
+  status: fixed
+  resolved_by: 39c3e2871b272505e9e71498c8844fe4496629ca
+  verified_by: "the correctness round-2 reviewer raised the same Step 6c gap as a stop; Step 6c now resolves ROOT inline; dev-review-lld-adherence step 5 is prose that names the repo-local path first and the plugin fallback second, the pattern every skill uses, left as is. Round 3 records run the Step 6c command in a fresh shell"
+verdict: verified

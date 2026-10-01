@@ -1,0 +1,38 @@
+schema_version: '2.0'
+change_id: GH-143-release-2.16.0
+round: 3
+reviewed_sha: 39c3e2871b272505e9e71498c8844fe4496629ca
+reviewed_tree: f056121770fbf4079b72cbc1b231de6397c9169a
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand; one reviewer covered both lenses in this narrow round)
+  brief: four checks with the command and the passing output for each, the round-2 claim copied verbatim, evidence rule, one page, at most two points, verdict instruction
+lens: correctness
+scope: 'Narrow round after the round-2 fix: the Step 6c command run verbatim in a fresh shell against a scratch build, the three gates at 39c3e28, the b3bf007..39c3e28 diff accounted for. Report: .hitl/reviews/incoming/GH-143-round3.md'
+checks:
+- check: 'N1 re-verified: the Step 6c inline command resolves ROOT then LINKED; run verbatim from the built skill in a fresh shell against the scratch build; no bare plugin root in any built fence or inline
+    command'
+  command: read source and built Step 6c; env -i ... bash --noprofile --norc with CLAUDE_PLUGIN_ROOT=<scratch>; python3 "$LINKED" --help; fence scan of the built trees
+  result: pass
+  output: LINKED resolves under the scratch build; --help exit 0; zero bare plugin roots
+- check: gates at 39c3e28
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: 1314 passed; 65/65 pass all hard gates; VERIFY OK for all eight workflows
+- check: the b3bf007..39c3e28 diff is exactly ai/claude/start-change/SKILL.md
+  command: git diff --stat b3bf007 39c3e28
+  result: pass
+  output: one file, one line changed
+findings:
+- id: N1
+  class: stops
+  check: 'N1 re-verified: the Step 6c inline command resolves ROOT then LINKED; run verbatim from the built skill in a fresh shell against the scratch build; no bare plugin root in any built fence or inline
+    command'
+  claim: ai/claude/start-change/SKILL.md:474 Step 6c sets LINKED inline but never resolves ROOT in that command; ROOT only exists in the Step 6b fence at line 447.
+  evidence: 'env -i fresh shell with CLAUDE_PLUGIN_ROOT=<scratch>: LINKED=<scratch>/shared/ci/linked/linked.py; python3 "$LINKED" --help exit 0; zero bare plugin-root references in the built skills/ and
+    shared/ trees'
+  status: fixed
+  resolved_by: 39c3e2871b272505e9e71498c8844fe4496629ca
+  verified_by: this record, check 1
+verdict: verified
