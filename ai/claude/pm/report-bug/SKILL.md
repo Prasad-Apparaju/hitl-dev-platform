@@ -42,7 +42,7 @@ If `$ARGUMENTS` is empty, ask: "What went wrong? Describe what you did, what you
 
 3. **Create the GitHub issue:**
    ```bash
-   gh issue create --title "fix: <short description>" --body "<structured body>"
+   gh issue create $(python3 ci/linked/linked.py issue-repo bug 2>/dev/null) --title "fix: <short description>" --body "<structured body>"
    ```
 
    Issue body format:

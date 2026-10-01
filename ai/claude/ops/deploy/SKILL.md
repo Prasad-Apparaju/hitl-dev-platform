@@ -77,6 +77,12 @@ Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
    ```
    Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the graph is unavailable. If no incidents exist, say so explicitly — do not skip the check.
 
+4. **Linked provider (FR-30 slice 0).** If `.hitl/current-change.yaml` has a `linked_changes` entry with `role: provider`, the provider must be merged and deployed to this environment first:
+   ```bash
+   LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"
+   python3 "$LINKED" need provider-deployed --env <environment>   # 2: quote the waiting line and stop; 3: the host could not be read, stop
+   ```
+
 If any pre-check fails, list all failures and stop. Do not deploy into an active incident.
 
 ---

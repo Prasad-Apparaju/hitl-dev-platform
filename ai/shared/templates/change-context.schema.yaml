@@ -414,3 +414,33 @@ skips:
       type: boolean
       description: "True once the follow-up/enhancement has landed. Flips the breadcrumb glyph to ✓."
       example: false
+
+# --- Linked changes (FR-30 slice 0, EPIC #105) ---
+
+linked_changes:
+  type: list[object]
+  required: false
+  description: |
+    Partners of this change in other repositories, each one change with its own record on its own
+    branch. Optional; a single-repository change never has it. `ci/linked/linked.py` reads a
+    partner's state from the host (its record on its branch where readable, else its issue's HITL
+    comments, else a merged PR), never from its code. Roles are from this change's point of view:
+    `docs` holds this change's design (dev-tdd and the traceability gate wait for its approval);
+    `provider` must be merged and deployed before this change deploys (ops-deploy waits);
+    `consumer` ships after this change; `code` implements this docs change (conclude waits for it to
+    merge before folding the PRD delta, LC-7).
+  item:
+    repo:      { type: string, description: "owner/name on the host", example: "org/docs" }
+    change_id: { type: string, description: "the partner's change id as its own repository writes it", example: "GH-40" }
+    role:      { type: string, enum: [docs, provider, consumer, code] }
+    issue:     { type: integer, description: "optional; default is the digits at the end of change_id", example: 40 }
+
+fold_before_partners:
+  type: object
+  required: false
+  description: |
+    Written by dev-conclude when a docs change folds its PRD delta while a `code` partner has not
+    merged (LC-7). Never silent: who, when, why.
+  by:     { type: string, example: "pm@team" }
+  at:     { type: string, example: "2026-09-30T12:00:00Z" }
+  reason: { type: string }

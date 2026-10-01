@@ -32,6 +32,14 @@ open follow-up this change's reviews filed and checks each against what merged: 
 change discharged, comment on the ones whose premise moved, leave the rest. An issue nobody
 re-reads becomes wrong without anyone changing it.
 
+## 4. Which repository
+
+A product split across repositories files epics in one place and slices beside the code
+(`issues:` in `.hitl/config.yaml`, see `shared/linked-changes.md`). Every `gh issue create` passes
+`$(python3 ci/linked/linked.py issue-repo <epic|slice|bug|followup> 2>/dev/null)`, which prints
+`-R owner/repo` when the config names one and nothing otherwise, so a single-repository project is
+unchanged. Search (rule 1) runs in the same repository.
+
 ## Where this is checked
 
 The wiring suite requires every skill that runs `gh issue create` to search first or to follow this

@@ -95,9 +95,8 @@ Check whether `.hitl/hooks/` already exists.
 4. Update `.gitignore` so session logs don't end up in the product repo — add the entry if not already present:
    ```bash
    grep -q "docs/session-logs" .gitignore 2>/dev/null || printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> .gitignore
-   # `.hitl/` itself is COMMITTED — current-change.yaml is the handoff record and the first-pass CI
-   # gate reads it from the checkout. Only transient working files are ignored (note `.hitl/backups/`
-   # is where ops-backup-database writes database dumps).
+   grep -q "^\.hitl/linked/" .gitignore 2>/dev/null || printf '.hitl/linked/\n' >> .gitignore   # pinned designs from other repositories (FR-30)
+   # `.hitl/` itself is COMMITTED (current-change.yaml is the handoff record the CI gate reads); only transient working files are ignored.
    grep -q "first-pass-choices" .gitignore 2>/dev/null || printf '\n# HITL transient working state — the change file and skip ledger ARE committed\n.hitl/*.tmp\n.hitl/*.migrated\n.hitl/first-pass-choices.json\n.hitl/backups/\n' >> .gitignore
    ```
 
@@ -216,7 +215,8 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
   [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
   cp "$PLUGIN_ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
 fi
-# Data layer (FR-31): validator, scorecard, schema, adapters; the waiver file and the CI template once.
+# Linked changes (FR-30): the partner-state checker. Data layer (FR-31): validator, scorecard, schema, adapters; the waiver file and the CI template once.
+[[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/linked" ]] && { mkdir -p ci/linked && cp "$PLUGIN_ROOT/shared/ci/linked/"*.py ci/linked/ 2>/dev/null; }
 if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/data-layer" ]]; then
   mkdir -p ci/data-layer tools/data-layer .github/workflows
   cp "$PLUGIN_ROOT/shared/ci/data-layer/"*.py "$PLUGIN_ROOT/shared/ci/data-layer/data-layer.schema.yaml" ci/data-layer/ 2>/dev/null

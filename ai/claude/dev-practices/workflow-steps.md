@@ -91,7 +91,7 @@ Using the LLD at `docs/02-design/technical/lld/<component>.md` (Update Docs), in
 If the change introduces a new architectural pattern, external system, framework, ML/AI technique, or significant mental-model-changing refactor: draft a stub at `docs/03-engineering/training/<capability>.md`. Triggers: new architectural pattern, new external system, new framework, new ML/AI technique, or a significant mental-model-changing refactor. New endpoints, bug fixes, and preserving-the-model refactors do not require a training plan.
 
 **8. Package Decision Packet** — use `/hitl:architect-design-feature`
-Architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `ai/shared/templates/decision-packet-template.yaml`. Fields: issue number, affected domain from `system-manifest.yaml`, LLD path from Update Docs, IaC plan from Update IaC, test plan from Test Case Planning, training stub path from Training Plan Stub if applicable. Constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain, they are sequential, not parallel. Architect reviews each packet, sets `approvals.architecture: approved` in `.hitl/current-change.yaml`, then hands one packet per slice to each assigned developer. `/architect/design-feature` runs the Impact Analysis through Package Decision Packet steps as a single guided session including slice decomposition and packet generation.
+Architect assembles `docs/decisions/issue-<N>.yaml` (one per slice) using `ai/shared/templates/decision-packet-template.yaml`. Fields: issue number, affected domain from `system-manifest.yaml`, LLD path from Update Docs, IaC plan from Update IaC, test plan from Test Case Planning, training stub path from Training Plan Stub if applicable. Constraint: each packet must touch exactly one manifest domain — if two slices would modify the same domain, they are sequential, not parallel. Architect reviews each packet, sets `approvals.architecture: approved` in `.hitl/current-change.yaml`, then hands one packet per slice to each assigned developer. `/architect/design-feature` runs the Impact Analysis through Package Decision Packet steps as a single guided session including slice decomposition and packet generation. When the code lives in another repository, that repository's change names this one as its `docs` partner (`linked_changes`, see `shared/linked-changes.md`) and its build waits for this packet's approval.
 
 ---
 
@@ -122,7 +122,7 @@ An independent reviewer in a clean context is given a checklist built from the r
 > Use the `/hitl:dev-tdd` skill for the AI Generates Tests (RED), Tests Improve the Design, and Generate Code (GREEN) steps. See `tdd-design.md` for the conceptual background.
 
 **9. AI Generates Tests (RED)** — use `/hitl:dev-tdd`
-Developer passes the LLD path from the decision packet to `/hitl:dev-tdd`. The skill reads `docs/02-design/technical/lld/<component>.md` (Update Docs) and `system-manifest.yaml` directly — it does not read the decision packet file itself. Generates maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance from manifest facade APIs. Writes test files to `tests/`. Registers each test in `docs/03-engineering/testing/test-registry.yaml`. No implementation code exists at this point.
+Developer passes the LLD path from the decision packet to `/hitl:dev-tdd`; an LLD approved in another repository is a pinned reference `owner/repo@<commit>:<path>`, and a `docs` partner that is not yet approved stops the step (`shared/linked-changes.md`). The skill reads `docs/02-design/technical/lld/<component>.md` (Update Docs) and `system-manifest.yaml` directly — it does not read the decision packet file itself. Generates maximum test coverage: happy paths, error paths, edge cases, preconditions, boundary entities, contract compliance from manifest facade APIs. Writes test files to `tests/`. Registers each test in `docs/03-engineering/testing/test-registry.yaml`. No implementation code exists at this point.
 
 **10. Human Reviews Tests** — use `/hitl:qa-review-tests`
 QA (or developer on small teams) reads the same LLD (`docs/02-design/technical/lld/<component>.md`, Update Docs) and queries the incident registry to identify gaps in the generated tests. Adds edge cases AI missed, adds integration scenarios from domain knowledge, removes trivial or wrong tests. Updates `docs/03-engineering/testing/test-registry.yaml` for every test added or removed. If QA ran `/hitl:qa-plan-tests` at design time, verify those scenarios are present before approving.
@@ -188,7 +188,7 @@ The architect approves or requests changes on GitHub. Revisions are classified b
 Confirm no regressions from review fixes. All tests must pass.
 
 **20. Reconcile Docs**
-Compare implementation against the LLD at `docs/02-design/technical/lld/<component>.md`. If they diverge, make the decision explicit:
+Compare implementation against the LLD at `docs/02-design/technical/lld/<component>.md`. If they diverge, make the decision explicit. A docs change with `code` partners folds its PRD delta only when `python3 ci/linked/linked.py need code-merged` is satisfied; folding earlier is asked and recorded as `fold_before_partners` (`shared/linked-changes.md`).
 - **Implementation reveals a better design** → update the LLD using `/hitl:dev-generate-docs`, have architect confirm, document decision in PR description or ADR
 - **Implementation drifted from the intended design** → fix the code, rerun the Code Review Round 1 through Rerun Tests steps
 Never silently normalize drift.
@@ -228,7 +228,7 @@ Lead runs each slice E2E and verifies cross-slice composition: do the slices int
 If Figma design exists, lead compares running implementation to the Figma spec from Figma Review screen by screen. Lists and resolves all differences. Exit criterion: zero unresolved differences before merge.
 
 **27. Build, Migrate, Apply, Deploy**
-Build, migrate, apply IaC, configure observability and deploy. Ops executes this sequence — each step gates the next:
+Build, migrate, apply IaC, configure observability and deploy. Ops executes this sequence — each step gates the next. A `provider` partner in another repository must be merged and deployed to the target environment first (`shared/linked-changes.md`):
 
 1. **Database backup** (`/hitl:ops-backup-database backup <change-ID>`) — required before any migration; always creates a labeled, verified snapshot recorded in `.hitl/current-change.yaml`. Skip if no migrations exist.
 2. **Database migrations** (`/hitl:ops-migrate-database`) — conditional; only when the change includes migrations. Delegates backup verification to Step 1, runs dry-run, requires explicit `MIGRATE` confirmation, applies, verifies schema. Must complete before app deploy.

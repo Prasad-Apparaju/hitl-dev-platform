@@ -84,20 +84,17 @@ Length comes from the change. A one-line fix has a one-line definition of done. 
 confirmation or a correction; this is the cheapest moment to catch a misread, because everything
 downstream derives from this text and a wrong plan is harder to argue with than a wrong sentence.
 
-**Flag a line you cannot check, do not block it.** "The system should be fast" cannot be shown to be
-met. Say so, offer a sharper version, take whatever answer comes back, and if the vague line stays,
-record that it was flagged as unverifiable and accepted anyway, with a name and a date. That record
-does not require you to have been right about the wording, only to have asked.
+**Flag a line you cannot check, do not block it.** "The system should be fast" cannot be shown to be met. Say so, offer a sharper version, and if the vague line stays, record that it was flagged as unverifiable and accepted anyway, with a name and a date.
 
-Then write the stub. It needs the change id, branch and version, not the workflow:
-
+Then write the stub (change id, branch and version; not the workflow):
 ```bash
+PREFIX=$("$PY" -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print((d or {}).get('change_id_prefix') or 'GH')" 2>/dev/null || echo GH)
+CHANGE_ID="${PREFIX}-${N}"
 GEN="ci/first-pass/gen_change.py"; [[ -f "$GEN" ]] || GEN="$ROOT/shared/ci/first-pass/gen_change.py"
 "$PY" "$GEN" --stub "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" > .hitl/current-change.yaml
 ```
 
 Fill in the `requirement` block with the confirmed text, `agreed_by` and `agreed_at`.
-
 The stub carries a **provisional tier of 3** and `status: intake`. It does not satisfy the
 active-change gate, so source edits stay blocked — correct, since no plan has authorised one yet.
 What it does is keep the agreed text if the session dies, feed the analysis, and name the record.
@@ -382,7 +379,7 @@ first step `current` and the rest `open`, and stamps the versions:
 
 ```bash
 WF=<development|brownfield|migration|migration_review|prd|release|docs>
-CHANGE_ID="GH-<N>"
+CHANGE_ID="${PREFIX}-${N}"   # as formed at Step 3
 BRANCH=$(git branch --show-current)
 # Resolve a working Python (Windows-safe: python3 is the MS Store stub there). See issue #14.
 PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
@@ -471,6 +468,10 @@ user to run `/hitl:dev-update` — that state means the skip ledger is uncertifi
 the project, not just this one.
 
 ---
+
+## Step 6c — Partners in other repositories (FR-30 slice 0)
+
+Ask once: "Does this change have a partner in another repository: its design approved there, a provider that must ship first, or code that implements this design?" On a yes append `linked_changes: [{ repo: owner/name, change_id: <theirs>, role: docs|provider|consumer|code }]` to the change file, link a slice under its epic with `python3 "$LINKED" link-sub owner/docs#<epic> <this repo>#<N>`, and say which steps now wait on which partner (`shared/linked-changes.md`).
 
 ## Step 7 — Commit and push the change file
 

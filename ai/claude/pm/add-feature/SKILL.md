@@ -100,7 +100,7 @@ At the start of each milestone — before questions or content — output a bann
 Before filing, follow `shared/issue-hygiene.md`: search open and closed issues and comment on a match instead; more than one issue in a run is listed and confirmed once.
 
 ```bash
-gh issue create \
+gh issue create $(python3 ci/linked/linked.py issue-repo epic 2>/dev/null) \
   --title "feat: <feature description>" \
   --body "## Status: Requirements in progress\n\n**Problem:** <problem from evidence question>\n**Success looks like:** <from success metric question>\n\n*PRD reference will be added at Step 5. Acceptance criteria live in the PRD, not this issue.*" \
   --label "requirements"

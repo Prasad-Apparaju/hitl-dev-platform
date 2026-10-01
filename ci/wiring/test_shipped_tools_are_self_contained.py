@@ -30,7 +30,7 @@ UPDATE_SKILL = os.path.join(ROOT, "ai", "claude", "update", "SKILL.md")
 
 # Every directory whose Python is copied into a product repo, by onboarding or by dev-update.
 SYNCED_DIRS = ["ci/first-pass", "ci/manifest-agentic", "tools/manifest-agentic",
-               "ci/manifest-drift", "ci/agentic-advisor", "ci/data-layer", "tools/data-layer"]
+               "ci/manifest-drift", "ci/agentic-advisor", "ci/data-layer", "tools/data-layer", "ci/linked"]
 
 # Files that must never reach a consumer: pytest imports conftest.py at collection, so a
 # platform-only one blocks collection exactly as a test file does.
@@ -105,7 +105,7 @@ def test_onboarding_routes_every_tool_directory_through_the_filter(tmp_path):
     assert 'cp -r "$PLATFORM_ROOT/ci/manifest-drift"' not in text, (
         "manifest-drift is copied wholesale, bypassing the test filter")
     for rel in ("ci/first-pass", "ci/manifest-agentic", "tools/manifest-agentic", "ci/manifest-drift",
-                "ci/data-layer", "tools/data-layer"):
+                "ci/data-layer", "tools/data-layer", "ci/linked"):
         assert 'hitl_copy_tools "$PLATFORM_ROOT/%s"' % rel in text, (
             "%s does not go through hitl_copy_tools" % rel)
 

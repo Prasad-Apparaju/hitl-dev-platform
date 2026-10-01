@@ -156,6 +156,7 @@ SYNC_SETS = (
     {"src": "shared/ci/data-layer/data-layer-waivers.yaml", "dst": "ci/data-layer/data-layer-waivers.yaml", "mode": "install-only"},
     {"src": "shared/ci-workflows/data-layer-check.yml", "dst": ".github/workflows/data-layer-check.yml", "mode": "install-only"},
     {"src": "shared/tools/data-layer",       "dst": "tools/data-layer",       "mode": "co-owned",   "glob": "*.py"},
+    {"src": "shared/ci/linked",              "dst": "ci/linked",              "mode": "co-owned",   "glob": "*.py"},
 )
 OPTOUT_NAME = ".hitl-optout"
 SHIPPED_HASHES = "shared/ci/shipped-validators.sha256"   # every version HITL ever shipped, per path

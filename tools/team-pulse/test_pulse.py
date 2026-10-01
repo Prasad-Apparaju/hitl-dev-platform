@@ -265,3 +265,15 @@ def test_gh_failure_is_reported_not_swallowed(tmp_path, capsys):
         raise RuntimeError("gh api: HTTP 401")
     rc = P.main(["collect", "--out", str(tmp_path / "d.json"), "--repo", REPO, "--config", str(tmp_path / "none.yaml")], run=bad)
     assert rc == 3 and "HTTP 401" in capsys.readouterr().err
+
+
+def test_pfx2_change_id_prefix_falls_back_to_the_repository_setting(tmp_path):
+    """FR-30 slice 0: a top-level change_id_prefix in .hitl/config.yaml is Team Pulse's default."""
+    import pulse as P
+    cfg = tmp_path / "config.yaml"
+    cfg.write_text("change_id_prefix: SCM\nteam_pulse:\n  window_days: 7\n")
+    assert P.load_config(str(cfg))["change_id_prefix"] == "SCM"
+    cfg.write_text("change_id_prefix: SCM\nteam_pulse:\n  change_id_prefix: EMAIL\n")
+    assert P.load_config(str(cfg))["change_id_prefix"] == "EMAIL"
+    cfg.write_text("team_pulse:\n  window_days: 7\n")
+    assert P.load_config(str(cfg))["change_id_prefix"] == "GH"

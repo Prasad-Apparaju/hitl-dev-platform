@@ -24,6 +24,7 @@ SOURCES = (
     ("ci/data-layer", "ci/data-layer", True),
     ("ci/data-layer/data-layer.schema.yaml", "ci/data-layer/data-layer.schema.yaml", False),
     ("tools/data-layer", "tools/data-layer", True),
+    ("ci/linked", "ci/linked", True),
 )
 
 

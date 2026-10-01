@@ -26,7 +26,7 @@ cross_cutting:
 domains:
   api_controllers:
     description: "REST API endpoints"
-    lld: docs/02-design/technical/lld/controllers/api-controllers.md  # path to governing LLD
+    lld: docs/02-design/technical/lld/controllers/api-controllers.md  # path to governing LLD, or owner/repo@<commit>:<path> when it lives in another repository
     files:
       - app/controllers/auth.py
       - app/controllers/users.py

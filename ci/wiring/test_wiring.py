@@ -955,3 +955,56 @@ def test_data_layer_adds_no_workflow_step_in_slice_one():
     assert "data_layer" not in cat
     conv = _read(os.path.join(AI, "claude", "check-conventions", "SKILL.md"))
     assert "check_data_layer.py" in conv and "SKIPPED" in conv and "advisory mode" in conv
+
+
+# ── Linked changes (FR-30 slice 0, #105): the checker is wired where the design says, and nothing else moved ──
+
+def test_linked_changes_checker_is_run_where_the_design_says():
+    """WIRE-1: tdd, apply-change and ops-deploy run `need`; conclude and retro are pointed at it; the
+    fallback path is the shared one; the refusal skills say what an unreadable host means."""
+    sk = {n: _read(os.path.join(AI, "claude", *n.split("/"), "SKILL.md")) for n in ("tdd", "apply-change", "ops/deploy", "retro")}
+    assert "need docs-approved" in sk["tdd"] and "need docs-approved" in sk["apply-change"]
+    assert "need provider-deployed --env" in sk["ops/deploy"]
+    for n in ("tdd", "ops/deploy"):
+        assert '$ROOT/shared/ci/linked/linked.py' in sk[n], "%s lacks the shared fallback" % n
+        assert "could not be read" in sk[n], "%s does not say what exit 3 means" % n
+    assert "the host could not be read" in sk["apply-change"]
+    assert "linked.py state" in sk["retro"]
+    assert "need code-merged" in _read(os.path.join(AI, "claude", "dev-practices", "workflow-steps.md"))
+    assert os.path.isfile(os.path.join(ROOT, "ci", "linked", "linked.py")) and os.path.isfile(os.path.join(ROOT, "ci", "linked", "test_linked.py"))
+    assert os.path.isfile(os.path.join(AI, "shared", "linked-changes.md"))
+
+
+def test_linked_changes_schema_and_intake_agree_on_the_roles():
+    """WIRE-2: the schema lists linked_changes with the four roles and fold_before_partners; intake asks for them."""
+    schema = _read(os.path.join(AI, "shared", "templates", "change-context.schema.yaml"))
+    assert "linked_changes:" in schema and "enum: [docs, provider, consumer, code]" in schema and "fold_before_partners:" in schema
+    sc = _read(os.path.join(AI, "claude", "start-change", "SKILL.md"))
+    assert "linked_changes" in sc and "docs|provider|consumer|code" in sc and "link-sub" in sc
+    assert 'CHANGE_ID="${PREFIX}-${N}"' in sc and "change_id_prefix" in sc, "intake does not form the id from the repository prefix"
+    assert 'CHANGE_ID="GH-' not in sc
+
+
+def test_every_filing_skill_passes_the_issue_repo():
+    """FIL-1: the skills that file issues (minus onboarding and the ADR-thread conclude's prose) pass issue-repo."""
+    for n in ("pm/add-feature", "pm/report-bug", "qa/report-defect", "conclude"):
+        txt = _read(os.path.join(AI, "claude", *n.split("/"), "SKILL.md"))
+        assert "linked.py issue-repo" in txt, "%s files issues without the issue-repo flag" % n
+    assert "## 4. Which repository" in _read(os.path.join(AI, "shared", "issue-hygiene.md"))
+
+
+def test_linked_changes_add_no_workflow_step_and_ship_everywhere():
+    """WIRE-3, WIRE-4, WIRE-5."""
+    assert "linked" not in _read(os.path.join(AI, "shared", "workflows.yaml"))
+    for path, needle in (("ci/first-pass/migrate_project.py", '"shared/ci/linked"'),
+                         ("tools/scripts/shipped-validators-hashes.py", '"ci/linked"'),
+                         ("tools/scripts/init-project.sh", 'hitl_copy_tools "$PLATFORM_ROOT/ci/linked"'),
+                         ("tools/scripts/init-project.sh", ".hitl/linked/"),
+                         ("ai/claude/start-brownfield/SKILL.md", "shared/ci/linked"),
+                         ("ai/claude/start-brownfield/SKILL.md", ".hitl/linked/"),
+                         ("ai/claude/update/SKILL.md", "ci/linked/test_linked.py")):
+        assert needle in _read(os.path.join(ROOT, path)), "%s lacks %s" % (path, needle)
+    build = os.path.join(ROOT, "..", "hitl-claude-plugin", "scripts", "build.sh")
+    if os.path.isfile(build):
+        b = _read(build)
+        assert "ci/linked" in b and "linked-changes.md" in b

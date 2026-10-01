@@ -84,6 +84,13 @@ not
 The generator redacts blame vocabulary from anything it echoes. Do not reintroduce it in the
 sentences you add.
 
+## Step 3b — Linked changes (FR-30 slice 0)
+
+If the change file has `linked_changes`, run `python3 ci/linked/linked.py state` (or
+`$ROOT/shared/ci/linked/linked.py`) and append its lines under a `## Linked changes` heading in the
+retro, one per partner, as printed. A partner's retro lives in its own repository; link it by
+change id, never copy it.
+
 ## Step 4 — Show it, do not publish it
 
 Show the person where it landed and the one line worth their attention — usually an item in *What
