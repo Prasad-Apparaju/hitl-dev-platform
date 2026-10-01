@@ -13,15 +13,15 @@ All notable changes to the HITL plugin are documented here.
   `change_id`, `role` of `docs`, `provider`, `consumer` or `code`). `ci/linked/linked.py` reads a
   partner's state from the host through `gh`, never from its code: `dev-tdd` and `dev-apply-change`
   refuse while a `docs` partner is unapproved; `ops-deploy` refuses while a `provider` is not merged
-  and deployed to the target environment; the traceability gate finds the decision packet and the
-  LLD in the docs partner's pull request; a docs change folds its PRD delta when its `code` partners
+  and deployed to the target environment; where a repository runs `ci/preflight/check_change.py`, the traceability gate finds
+  the decision packet and the LLD in the docs partner's pull request; a docs change folds its PRD delta when its `code` partners
   have merged. An LLD approved in another repository is accepted by pinned reference
   `owner/repo@<commit>:<path>`. The change-id prefix is a repository setting (`change_id_prefix` in
   `.hitl/config.yaml`, default `GH`) and shows in the breadcrumb, Team Pulse and the retro; `issues:`
   names where epics and slices are filed and intake links a slice under its epic as a sub-issue.
   Single-repository projects are unchanged. Conventions in `shared/linked-changes.md`, user doc
-  `docs/linked-changes.md`, design package `docs/design/multi-repo-workspace/`, 40 tests against a
-  fake host plus 7 gate tests, two validation rounds on the real host.
+  `docs/linked-changes.md`, design package `docs/design/multi-repo-workspace/`, 34 checker tests against a
+  fake host, 7 gate tests and 6 wiring tests, two validation rounds on the real host.
 
 ## [2.15.0] — 2026-09-30
 

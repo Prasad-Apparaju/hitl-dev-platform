@@ -79,6 +79,7 @@ Format: `---` line, `**Deploy — Step N / 4: [Name]**`, trail, `---`.
 
 4. **Linked provider (FR-30 slice 0).** If `.hitl/current-change.yaml` has a `linked_changes` entry with `role: provider`, the provider must be merged and deployed to this environment first:
    ```bash
+   ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
    LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"
    python3 "$LINKED" need provider-deployed --env <environment>   # 2: quote the waiting line and stop; 3: the host could not be read, stop
    ```

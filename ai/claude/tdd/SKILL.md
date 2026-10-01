@@ -41,6 +41,7 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 **Refusal rule — linked docs partner unapproved (FR-30 slice 0):** If `.hitl/current-change.yaml` has a `linked_changes` entry with `role: docs`, run the checker before anything else and stop on a non-zero exit, quoting its verdict line:
 
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"
 python3 "$LINKED" need docs-approved     # 0 approved; 2 waiting (quote the line); 3 the host could not be read: stop, say which read failed
 ```

@@ -48,7 +48,14 @@ Before any analysis, locate and confirm these exist:
 
 If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first."
 
-An LLD approved in another repository is a pinned reference, `owner/repo@<commit>:<path>`: run `python3 "$LINKED" fetch <ref>` (`LINKED` resolves as in `shared/linked-changes.md`) and record the reference, not the path. With a `linked_changes` entry of `role: docs` in `.hitl/current-change.yaml`, run `python3 "$LINKED" need docs-approved` first and stop on exit 2 (quote its verdict line) or exit 3 (the host could not be read; say which read failed).
+An LLD approved in another repository is a pinned reference, `owner/repo@<commit>:<path>`. Resolve the checker, then fetch it and record the reference, not the path; with a `linked_changes` entry of `role: docs` in `.hitl/current-change.yaml`, run the approval check first and stop on exit 2 (quote its verdict line) or exit 3 (the host could not be read; say which read failed):
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"
+python3 "$LINKED" need docs-approved      # only when a docs partner is declared
+python3 "$LINKED" fetch <owner/repo@commit:path>   # prints the cached path to read
+```
 
 ### Step 2a: (removed — the branch belongs to intake)
 
