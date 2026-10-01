@@ -4,7 +4,7 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [Unreleased]
+## [2.15.0] — 2026-09-30
 
 ### Added
 
@@ -24,6 +24,17 @@ All notable changes to the HITL plugin are documented here.
   `.hitl/config.yaml` makes Conventions and the CI template fail. The manifest's boundary entities
   are derived from mappings. Conventions in `shared/data-layer.md`, user doc `docs/data-layer.md`,
   a synthetic worked example at `docs/examples/data-layer/`, 101 tests by mutation.
+
+### Changed
+
+- **Docs**: the data-layer design package (`docs/design/data-layer/`: HLD, 13 ADRs, LLD, test plan,
+  plan), requirements v1.1 with the adoption model, FR-35 registered in PRD §5.7 to the business-rule
+  layer (Part B of #131).
+
+### Fixed
+
+- **Getting-started command counts** said 58 commands after 2.14.0 shipped the 59th; a wiring test had
+  been failing on `main` since. Now 60 and 54 with this release's skill.
 
 ## [2.14.0] — 2026-09-22
 
