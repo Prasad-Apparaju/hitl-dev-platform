@@ -1,0 +1,75 @@
+schema_version: '2.0'
+change_id: GH-147-release-2.16.1
+round: 1
+reviewed_sha: 40a6b56921e3834c206252d6b0890c0db733dd81
+reviewed_tree: 0c4ed3fd7be5ba4f84ca7a0f21c9a733ba0f3faf
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eight items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict instruction, claim strings
+    copied verbatim
+lens: correctness
+scope: 'The CHANGELOG 2.16.1 section as the claim list, answering #144, #145 and #146; eight checks: the three gates, #144 by command on a fake host and the real host (GH-60 read at its merge commit), approver
+  permission, trailing-digit issue numbers and resolve, the packet skip and pinned packet in tdd and apply-change, the pre-filled deploy and promote with the floor rule intact, claim carriers, plain English.
+  Report: .hitl/reviews/incoming/GH-147-correctness-round1.md'
+checks:
+- check: gates
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: 1319 passed; 65/65; VERIFY OK
+- check: '#144: deployments from the record and the merge commit, on the fake host and the real host; ops-deploy writes deployments; the schema lists it'
+  command: pytest ci/linked -q (test_chk11, test_chk12); linked.py state and need provider-deployed --env prod with GH-60 as provider; read ops/deploy Step 4 and the schema
+  result: pass
+  output: '38 passed; real host: record=implementation-approved@8d45f0f (the merge commit of PR #64 from the deleted branch), verdict ''no deployment recorded'', exit 2; Step 4 writes deployments and says
+    a CI deploy must mirror it; schema lists deployments'
+- check: '#146 item 2: a marker counts only from a writer'
+  command: pytest -k neg12; read _approver
+  result: pass
+  output: a failed permission read or read permission is ignored; ignored-markers=N on the state line
+- check: '#146 item 4 and #145: trailing digits everywhere; resolve; intake refuses a bare number; hints'
+  command: grep -rn '#GH-}' ai/claude; run the sed on SVC-3, GH-12, EMAIL-14, nodigits; linked.py resolve DOCS-7 / SVC-3 / 7; read start-change Step 2 and the four hints
+  result: pass
+  output: no literal strip remains; 3, 12, 14, empty; -R org/docs 7, 3, ambiguous exit 2; Step 2 refuses and names the form; hints mention a change id; apply-change and tdd carried only the hint (F1)
+- check: '#146 items 1 and 6: tdd and apply-change honour a certified packet skip and a pinned packet'
+  command: read the two skills
+  result: pass
+  output: both carry the rule
+- check: '#146 item 11: deploy and promote pre-filled as decline with ack_by; the floor rule intact'
+  command: read start-change Step 4b; grep test_check_skips for the deploy cond assertion
+  result: pass
+  output: pre-filled as decline; deploy stays crit floor with no cond; check_skips still refuses a floor skip without ack_by
+- check: every bold changelog claim has a carrier
+  command: grep per claim
+  result: pass
+  output: all carried; the prefix-refusal sentence carried by two of the four skills it implies (F1)
+- check: plain English
+  command: pytest ci/wiring/test_plain_english.py -q; grep em dash
+  result: pass
+  output: 16 passed; 0 em dashes
+findings:
+- id: F1
+  class: decide
+  check: '#146 item 4 and #145: trailing digits everywhere; resolve; intake refuses a bare number; hints'
+  claim: The changelog sentence "Skills take `<PREFIX>-<n>`, refuse a bare number when a prefix is configured" is carried only by start-change/SKILL.md:47 and switch-context/SKILL.md:49.
+  evidence: apply-change:25 and :45 said issue number with no refusal rule; tdd had only the hint
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: 'release owner''s decision (this session, 2026-10-01): the rule was added to apply-change Step 2 and tdd''s input paragraph rather than narrowing the claim; round 2 re-reads both'
+- id: F2
+  class: minor
+  check: '#146 item 11: deploy and promote pre-filled as decline with ack_by; the floor rule intact'
+  claim: start-change/SKILL.md:284 pre-fills ack_by as "the person confirming the plan", while rule 1 at line 330 says a floor skip needs "the accountable role's" ack_by.
+  evidence: the validator needs a named person; the text did not say which rule wins
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: Step 4b now says the confirmer is that named person for these two Ops floor steps; round 2 re-reads it
+- id: F3
+  class: minor
+  check: '#146 item 4 and #145: trailing digits everywhere; resolve; intake refuses a bare number; hints'
+  claim: ops/deploy/SKILL.md:140 posts the Deployed comment to `<issue-number>` with no derivation line, unlike ta-approve and the hook.
+  evidence: the comment is the fallback signal; the number was left to the reader
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: ops-deploy now derives ISSUE_NUM with the same sed; round 2 runs it
+verdict: verified

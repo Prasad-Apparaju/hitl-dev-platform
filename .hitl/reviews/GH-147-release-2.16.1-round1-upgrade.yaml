@@ -1,0 +1,74 @@
+schema_version: '2.0'
+change_id: GH-147-release-2.16.1
+round: 1
+reviewed_sha: 40a6b56921e3834c206252d6b0890c0db733dd81
+reviewed_tree: 0c4ed3fd7be5ba4f84ca7a0f21c9a733ba0f3faf
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eight items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict instruction, claim strings
+    copied verbatim
+lens: upgrade
+scope: 'Copied the plugin repo to scratch and built it against source 40a6b56; eight checks: build and version, the manifest and resolve --help from the built tree, the 2.16.0 upgrade path through the built
+  migrator, stale-test cleanup, the built hook and ta-approve derive the issue number from the trailing digits, the built skills carry the 2.16.1 text with self-contained fences, plugin validate and the
+  build file list, the notes against the built files. Report: .hitl/reviews/incoming/GH-147-upgrade-round1.md'
+checks:
+- check: the build completes at 2.16.1
+  command: cp -R; bash scripts/build.sh ... > build.log
+  result: pass
+  output: exit 0; no mangled paths; packaging and reachability clean; plugin.json 2.16.1
+- check: the built linked.py hashes to a 2.16.1 manifest line; --check passes; resolve --help runs
+  command: shasum; grep; shipped-validators-hashes.py --check; python3 shared/ci/linked/linked.py resolve --help
+  result: pass
+  output: listed; manifest current; --help runs; the 2.16.0 line had been relabelled 2.16.1 (F1)
+- check: the 2.16.0 upgrade path updates linked.py and keeps a local edit
+  command: migrate_project.py --sync-validators <built> --apply, twice
+  result: pass
+  output: linked.py updated from an older release, 25 identical; local edit kept on run 2
+- check: stale-test cleanup
+  command: git show 40a6b56:ci/linked/test_linked.py | shasum; grep retired-tests
+  result: pass
+  output: 187e6478 test_linked.py listed
+- check: the built hook and ta-approve derive the number from the trailing digits; no literal strip in the built tree
+  command: run the sed on SVC-3 and GH-12; grep '#GH-}' and 'CHANGE_ID#'
+  result: pass
+  output: 3 and 12; none; a bare numeric id yielded nothing (F3)
+- check: the built skills carry the 2.16.1 text with self-contained checker fences; no bare plugin root in fences
+  command: grep the built skills; fence scan
+  result: pass
+  output: all present; Step 2 prose called resolve before LINKED existed (F2)
+- check: claude plugin validate; the build file list
+  command: claude plugin validate <scratch>; git status --short; git diff --stat v2.16.0 40a6b56
+  result: pass
+  output: Validation passed; exactly the 14 shipped files
+- check: every changelog claim has a carrier in the built package or is source-only
+  command: table in the report
+  result: pass
+  output: all carried
+findings:
+- id: F1
+  class: minor
+  check: the built linked.py hashes to a 2.16.1 manifest line; --check passes; resolve --help runs
+  claim: shipped-validators.sha256 relabels the 2.16.0 line.
+  evidence: lines 77-78 both read 2.16.1; f21651d6 is exactly what hitl--v2.16.0 shipped
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: the f21651d6 line reads 2.16.0 again; round 2 greps it
+- id: F2
+  class: minor
+  check: the built skills carry the 2.16.1 text with self-contained checker fences; no bare plugin root in fences
+  claim: dev-start-change Step 1 prose calls resolve before $LINKED exists.
+  evidence: skills/dev-start-change/SKILL.md:47 ran python3 "$LINKED" resolve with the first LINKED= at line 341
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: Step 2 resolves ROOT and LINKED inline before resolve; round 2 runs the inline command in a fresh shell
+- id: F3
+  class: minor
+  check: the built hook and ta-approve derive the number from the trailing digits; no literal strip in the built tree
+  claim: 'bare-number change ids: the hook/ta-approve sed requires a non-digit before the trailing digits, so "12" and "GH-12-foo" yield empty and the hook exits silently.'
+  evidence: 2.16.0's strip turned 12 into 12; linked.py accepts 12
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: the sed now yields 12 for 12, 12 for GH-12, 3 for SVC-3 and nothing for GH-12-foo; round 2 runs it
+verdict: verified

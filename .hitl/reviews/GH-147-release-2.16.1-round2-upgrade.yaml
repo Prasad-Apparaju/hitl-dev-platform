@@ -1,0 +1,51 @@
+schema_version: '2.0'
+change_id: GH-147-release-2.16.1
+round: 2
+reviewed_sha: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+reviewed_tree: 6ba2ce21d028ec4990570c1a1a9c72a38b284325
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand; one reviewer covered both lenses in this narrow round)
+  brief: five checks with the command and the passing output for each, the six round-1 claims copied verbatim, evidence rule, one page, at most two points, verdict instruction
+lens: upgrade
+scope: 'Narrow round after the round-1 fixes: the three upgrade claims re-verified against a scratch build and a fresh shell, the build whole. Report: .hitl/reviews/incoming/GH-147-round2.md'
+checks:
+- check: 'U1 to U3 re-verified: the f21651d6 line reads 2.16.0 and the new line 2.16.1 with --check passing; the built Step 2 inline command run in a fresh shell against the scratch build resolves LINKED
+    and resolve --help runs; the built hook''s sed gives 12, 12, 3, empty, empty'
+  command: grep ci/shipped-validators.sha256; shipped-validators-hashes.py --check; extract and run the built inline command with CLAUDE_PLUGIN_ROOT=<scratch>; run the built hook's sed on five inputs
+  result: pass
+  output: labels right, manifest current; LINKED under the scratch build, --help runs; 12, 12, 3, empty, empty
+- check: the scratch build completes at 2.16.1, validates, has no bare plugin root in fences, and its file list is the release's
+  command: bash scripts/build.sh ... > build.log; claude plugin validate; fence scan; git status --short
+  result: pass
+  output: 2.16.1; Validation passed; 0 bare roots in fences; only the release's files
+findings:
+- id: F1
+  class: minor
+  check: 'U1 to U3 re-verified: the f21651d6 line reads 2.16.0 and the new line 2.16.1 with --check passing; the built Step 2 inline command run in a fresh shell against the scratch build resolves LINKED
+    and resolve --help runs; the built hook''s sed gives 12, 12, 3, empty, empty'
+  claim: shipped-validators.sha256 relabels the 2.16.0 line.
+  evidence: the f21651d6 line reads 2.16.0 again; the new line 2.16.1
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: this record
+- id: F2
+  class: minor
+  check: 'U1 to U3 re-verified: the f21651d6 line reads 2.16.0 and the new line 2.16.1 with --check passing; the built Step 2 inline command run in a fresh shell against the scratch build resolves LINKED
+    and resolve --help runs; the built hook''s sed gives 12, 12, 3, empty, empty'
+  claim: dev-start-change Step 1 prose calls resolve before $LINKED exists.
+  evidence: the built inline command resolves ROOT and LINKED before resolve; ran in a fresh shell
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: this record
+- id: F3
+  class: minor
+  check: 'U1 to U3 re-verified: the f21651d6 line reads 2.16.0 and the new line 2.16.1 with --check passing; the built Step 2 inline command run in a fresh shell against the scratch build resolves LINKED
+    and resolve --help runs; the built hook''s sed gives 12, 12, 3, empty, empty'
+  claim: 'bare-number change ids: the hook/ta-approve sed requires a non-digit before the trailing digits, so "12" and "GH-12-foo" yield empty and the hook exits silently.'
+  evidence: the built sed gives 12 for 12, 12 for GH-12, 3 for SVC-3, nothing for GH-12-foo
+  status: fixed
+  resolved_by: 096c1f005b7ada50a0c354c4d771f01df19c1f88
+  verified_by: this record
+verdict: verified
