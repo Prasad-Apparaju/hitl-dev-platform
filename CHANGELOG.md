@@ -30,7 +30,10 @@ All notable changes to the HITL plugin are documented here.
 - A change that passed the test plan step on 2.16.x has no scenarios file. At test review or QA
   verify, the skill writes one from the change's tests (marked added by dev, review recorded as
   skipped with the reason "change started before 2.17.0") and continues; nothing in flight is
-  blocked on a file that could not have existed. New changes get the file at the test plan step.
+  blocked on a file that could not have existed. The new CI check runs in report-only mode on a
+  change record from before 2.17.0 that names no scenarios file, so an open pull request does not
+  go red; run test review once and the normal check applies. New changes get the file at the
+  test plan step. `/hitl:dev-update` installs and stages the validator and the CI template.
 
 ## [2.16.1] — 2026-10-01
 

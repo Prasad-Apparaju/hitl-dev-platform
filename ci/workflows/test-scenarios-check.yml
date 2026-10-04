@@ -25,7 +25,11 @@ jobs:
       - name: Check the scenarios file against the tests (fail-closed)
         run: |
           if [ -f .hitl/current-change.yaml ]; then
-            python3 ci/test-scenarios/check_scenarios.py --change .hitl/current-change.yaml --stage review
+            # A change record written before 2.17.0 predates scenarios files. Report only (draft
+            # stage) until test review or QA verify writes the file; then the review stage applies.
+            stage=$(python3 -c "import yaml,sys;r=yaml.safe_load(open('.hitl/current-change.yaml')) or {};v=str(r.get('hitl_version','0')).split('.');v=[int(x) if x.isdigit() else 0 for x in v]+[0,0];print('draft' if 'scenarios_file' not in (r.get('tests') or {}) and v[:2]<[2,17] else 'review')")
+            [ "$stage" = draft ] && echo "Change record predates 2.17.0 and names no scenarios file: reporting only (draft stage) until test review writes it."
+            python3 ci/test-scenarios/check_scenarios.py --change .hitl/current-change.yaml --stage "$stage"
           else
             echo "No .hitl/current-change.yaml: nothing to check."
           fi

@@ -285,7 +285,7 @@ else
 
   # stage ONLY the paths that exist — a single `git add` over an absent optional path errors on the whole
   # pathspec and (with `|| true`) would silently stage NOTHING (codex-7).
-  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift ci/adversarial ci/data-layer tools/data-layer ci/linked .github/workflows/first-pass-check.yml .github/workflows/data-layer-check.yml; do
+  for p in ci/first-pass ci/manifest-agentic tools/manifest-agentic ci/manifest-drift ci/adversarial ci/data-layer tools/data-layer ci/linked ci/test-scenarios .github/workflows/first-pass-check.yml .github/workflows/data-layer-check.yml .github/workflows/test-scenarios-check.yml; do
     [[ -e "$p" ]] && git add "$p"
   done
 fi
