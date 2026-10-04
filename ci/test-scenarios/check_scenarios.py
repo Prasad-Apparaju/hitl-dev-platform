@@ -488,7 +488,7 @@ def analyze(change_path=DEFAULT_CHANGE, file=None, stage="review", tests_roots=N
         findings += check_scenario(sc, rel, change_id)
     hdr = parsed["header_review"]
     hdr_status = (hdr.split(":", 1)[1] if hdr and ":" in hdr else hdr or "").strip().lower()
-    hdr_status = re.split(r"[\s,(]", hdr_status, 1)[0] if hdr_status else hdr_status   # "done, 2026-10-05" is done
+    hdr_status = re.split(r"[\s,(]", hdr_status, maxsplit=1)[0] if hdr_status else hdr_status   # "done, 2026-10-05" is done
     if hdr_status != status:
         findings.append(_f("REVIEW_HEADER_STALE", "the file's Review line says '%s', the record says '%s'"
                            % (hdr or "nothing", status), rel))
