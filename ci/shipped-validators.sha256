@@ -76,3 +76,6 @@ e32e8b507eec23efaf81ff44bdbc0b3442a6041dabeb271dd56226f1d15591bd  ci/data-layer/
 7e8506688b1f59e45d0610bc66cd92ca53ce6d9d63d3c58accd35203139e6899  ci/first-pass/migrate_project.py  # 2.15.0
 f21651d66bab53b5dc857928162513962a2dba07be3949d32da0ae7aa817d414  ci/linked/linked.py  # 2.16.0
 192889a627028c4d26f6eaca17684aab2c407c960ff2b35a5ae8477139136c3f  ci/linked/linked.py  # 2.16.1
+1ca423306ed63b064d2a3f834328bfa9a0333303c9e74c8f629a4d5b91637ebf  ci/first-pass/migrate_project.py  # 2.16.1
+4a629a57bf07a0fd0e13bd09680a7a66f44e7780f158a5ab48fb81659cd804fe  ci/test-scenarios/check_scenarios.py  # 2.16.1
+d9d4a0cec86e099463e4d8906b0d2cd614bc52d27bb733d271348570b7bb8833  ci/test-scenarios/check_scenarios.py  # 2.16.1

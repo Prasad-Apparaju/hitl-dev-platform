@@ -82,7 +82,7 @@ Pick the path that matches where you are:
 | **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 7 more (10 in all), plus `/hitl:agentic-intake` for agentic designs | [PM guide](docs/roles/pm.md) |
 | **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code`, `/hitl:architect-review-existing` | [Architect guide](docs/roles/architect.md) |
 | **Technical Advisor** | `/hitl:ta-approve` | Approve/reject design gates (scope, HLD, LLD, decision packet) |
-| **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
+| **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-scenarios` (any role: add or review test scenarios by chat, or on a shared page), `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
 | **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-plan-platform`, `/hitl:ops-apply-iac`, `/hitl:ops-rollback`, + 10 more (15 in all) | [Ops guide](docs/roles/ops.md) |
 | **Any role** | `/hitl:help` (find the right command), `/hitl:team-pulse` (who is on what, who can unblock whom) | [Team Pulse](docs/team-pulse.md) |
 

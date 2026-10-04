@@ -44,6 +44,7 @@
     "ai/claude/qa/plan-tests",
     "ai/claude/qa/report-defect",
     "ai/claude/qa/review-tests",
+    "ai/claude/qa/scenarios",
     "ai/claude/qa/verify-quality",
     "ai/claude/retro",
     "ai/claude/review-lld-adherence",

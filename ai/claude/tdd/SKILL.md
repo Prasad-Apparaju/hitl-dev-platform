@@ -58,6 +58,10 @@ Rules in `shared/linked-changes.md`. A design in another repository is given as 
 >
 > Run `/hitl:architect-design-feature` first. Once the architect approves the packet, resume here.
 
+**Refusal rule — PM scenario review pending (FR-36):** Read `scenario_review_gate` from `.hitl/config.yaml`; absent means off. When it is `true` and `.hitl/current-change.yaml` has `tests.scenario_review.status: pending`, stop with one line:
+
+> The PM review of the test scenarios is still pending, and this project gates RED on it. Ask the PM to read `<tests.scenarios_file>` and say they are done, or to run `/hitl:qa-scenarios review`; then re-run this command.
+
 **Graphify pre-flight:** Before the first step, run:
 ```bash
 [ -f graphify-out/graph.json ] && echo "Graphify: available" || echo "Graphify: unavailable"
@@ -188,7 +192,12 @@ Generate three categories of tests. All are written now (RED phase), but they ru
    - Store the created customer's credentials in a fixture file for the journey tests to consume
    - Be idempotent (safe to run repeatedly; tears down previous test customer first)
 
-7. **Register each new test** in `docs/03-engineering/testing/test-registry.yaml`. Required fields: `id`, `name`, `domain`, `risk`, `type` (`unit` / `integration` / `e2e` / `smoke`), `origin` (`tdd`), `file`. For incident regression tests, also set `incident_ref`.
+6. **Read the scenarios file** at `tests.scenarios_file` in `.hitl/current-change.yaml` (rules: `shared/test-scenarios.md`).
+   - **If it exists:** every acceptance and integration test (B, C and D above) cites the ID of the scenario it serves, in its name where the language allows (`test_blank_code_leaves_total_SC_GH_123_01`) or in its docstring or first comment. One test may cite several IDs. A test that serves no scenario in the file means a scenario is missing: add it with the next ID, `Added by: dev`, in plain words. Set each cited scenario's `Test:` line to the test's path.
+   - **If it does not exist** (the test plan step was skipped): write it from the plugin's `shared/templates/test-scenarios-template.md`, one scenario per acceptance or integration test, titles in the user's words, `Added by: dev`, `Test: <path>`, IDs `SC-<change-id>-01` upward. Set `tests.scenarios_file`, and set `tests.scenario_review` to `status: skipped` with `actor` (you, the developer), `pm` (the PM named on the issue, or `"PM"`), `reason: "test plan step skipped"`, `disposition: defer` and `ts`. Set the file's `Review` line to `PM: skipped (test plan step skipped)`. This is not an FR-29 step skip; it goes in no `skips[]` entry.
+   - Then show the acceptance scenarios by title in one short list and say one line: "These are the acceptance scenarios the tests cover. Add one with `/hitl:qa-scenarios` if you can think of a behaviour that is missing." That is the developer's one invitation for this change. Say it once; do not repeat it; do not wait for an answer.
+
+7. **Register each new test** in `docs/03-engineering/testing/test-registry.yaml`. Required fields: `id`, `name`, `domain`, `risk`, `type` (`unit` / `integration` / `e2e` / `smoke`), `origin` (`tdd`), `file`, `scenarios` (the scenario IDs the test cites; `[]` when a unit test cites none). For incident regression tests, also set `incident_ref`. Then write `tests.files[]` in `.hitl/current-change.yaml`: the path of every test file this change wrote or changed. The scenario check reads it at test review.
 
 8. **Present all generated tests** to the user. Do NOT proceed to Phase 2 until the user reviews.
 
@@ -203,6 +212,7 @@ Generate three categories of tests. All are written now (RED phase), but they ru
    > 5. **Incident registry**: Are past failure modes in this domain covered by a regression test?
    > 6. **Security edge cases**: Unauthenticated access rejected? User A cannot access User B's data? Input at max/empty/null?
    > 7. **Mobile coverage**: Are the Playwright tests running against both `iPhone 15` and `Pixel 7` device profiles?
+   > 8. **Scenarios**: Does every acceptance and integration test cite the scenario it serves? Is any scenario in the file still `none yet` without a test?
    >
    > Remove tests that only verify implementation details (mock called once, internal method invoked).
    >

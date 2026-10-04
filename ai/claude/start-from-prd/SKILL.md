@@ -221,6 +221,15 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
   echo "Skip-record validator installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
 fi
 
+# Test scenarios (FR-36): the two-way scenario check that qa-review-tests and qa-verify-quality run,
+# plus its CI template once. Idempotent; skips if the plugin copy is absent.
+if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/test-scenarios" ]]; then
+  mkdir -p ci/test-scenarios .github/workflows
+  cp "$PLUGIN_ROOT/shared/ci/test-scenarios/"*.py ci/test-scenarios/ 2>/dev/null
+  [[ ! -f .github/workflows/test-scenarios-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/test-scenarios-check.yml" .github/workflows/ 2>/dev/null
+  echo "Scenario check installed: ci/test-scenarios/ + .github/workflows/test-scenarios-check.yml."
+fi
+
 # Compound-agentic surface (#10): the fail-closed system-manifest validator + posture-view generator,
 # invoked repo-relative by pm-design-feature. Self-contained (FIELD_SPEC lives in the .py). Preserve the
 # repo's own manifest-waivers.yaml (copy it only when absent).

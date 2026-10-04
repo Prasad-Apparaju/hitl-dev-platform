@@ -43,11 +43,17 @@ original transaction total instead of 422. Steps: POST /refunds
 with amount: 9999 on a $10 order. Severity: high — blocks issue #42.
 ```
 
+**`/hitl:qa-scenarios`** — Any role runs it. Add, change or review the test scenarios for a change by describing the behaviour in your own words; HITL writes the Given, When, Then, gives it an ID and marks who added it. `publish` turns the file into a private shared page for people without a Claude Code session; `pull` brings their comments and additions back into the file. The file is `docs/03-engineering/testing/scenarios/<change-id>.md`, written by `/hitl:qa-plan-tests`.
+```
+/hitl:qa-scenarios GH-123 add
+what if the discount code has expired?
+```
+
 ## Your Role in the Workflow
 
-**At design time (non-blocking):** Run `/hitl:qa-plan-tests` when the LLD is shared. Query the incident registry for the domain, identify edge cases and failure modes the developer may miss, and produce a prioritized list of test scenarios. Regression-required scenarios (from past incidents) must be in the test plan before the TDD cycle starts. This is input, not a gate — but the developer must acknowledge each scenario.
+**At design time (non-blocking):** Run `/hitl:qa-plan-tests` when the LLD is shared. Query the incident registry for the domain, identify edge cases and failure modes the developer may miss, and write the scenarios file: one Given, When, Then per behaviour, each with an ID the developer's test will cite. Regression-required scenarios (from past incidents) must be in the test plan before the TDD cycle starts. This is input, not a gate — but the developer must acknowledge each scenario. The PM is invited once to review the acceptance scenarios; the review runs alongside the build and never holds up RED unless the team sets `scenario_review_gate: true` in `.hitl/config.yaml`.
 
-**After RED test generation (gate):** Run `/hitl:qa-review-tests` after AI Generates Tests (RED) generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The test registry must be updated. Do not approve implementation until coverage is complete.
+**After RED test generation (gate):** Run `/hitl:qa-review-tests` after AI Generates Tests (RED) generates the test suite — before implementation begins. Verify every acceptance criterion has a test, every LLD error mode is exercised, and all relevant incident regressions from the registry are present. The scenario check (`ci/test-scenarios/check_scenarios.py`) must pass: every scenario has a test or a recorded reason, every acceptance and integration test cites a scenario. The test registry must be updated. Do not approve implementation until coverage is complete.
 
 **After handoff (gate):** Run `/hitl:qa-verify-quality`. The developer has delivered a stable build. You run independent verification — verify each AC against the running build, run exploratory testing beyond the happy path, and probe failure modes from the incident registry. If anything fails, run `/hitl:qa-report-defect` and block promotion.
 

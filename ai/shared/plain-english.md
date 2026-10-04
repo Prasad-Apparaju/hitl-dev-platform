@@ -59,6 +59,7 @@ Targets. These are ceilings for the prose; diagrams, signatures and tables are e
 | Review report | one page |
 | Release note | what changes for the reader first, then the list |
 | Chat reply | the answer, then what the reader must decide or do |
+| Test scenarios file | two pages (1,000 words) for a change with five acceptance criteria |
 
 Going over a ceiling is allowed when the content needs it. Say so in one line at the top, so the
 reader knows the length is deliberate and not the default.

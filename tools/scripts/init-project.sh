@@ -243,6 +243,17 @@ setup_tools() {
     (( copied++ )) || true
   fi
 
+  # Test scenarios (FR-36): the two-way scenario check run at test review and QA verify; the CI template once.
+  if [[ -d "$PLATFORM_ROOT/ci/test-scenarios" ]]; then
+    hitl_copy_tools "$PLATFORM_ROOT/ci/test-scenarios" "$TARGET_DIR/ci/test-scenarios"
+    if [[ -f "$PLATFORM_ROOT/ci/workflows/test-scenarios-check.yml" ]]; then
+      mkdir -p "$TARGET_DIR/.github/workflows"
+      [[ ! -f "$TARGET_DIR/.github/workflows/test-scenarios-check.yml" ]] && cp "$PLATFORM_ROOT/ci/workflows/test-scenarios-check.yml" "$TARGET_DIR/.github/workflows/"
+    fi
+    echo "✓ ci/test-scenarios/ (scenario check) + .github/workflows/test-scenarios-check.yml"
+    (( copied++ )) || true
+  fi
+
   # Data layer (FR-31): validator, scorecard, schema and adapters; the waiver file and the CI template once.
   if [[ -d "$PLATFORM_ROOT/ci/data-layer" ]]; then
     mkdir -p "$TARGET_DIR/ci/data-layer" "$TARGET_DIR/tools/data-layer"

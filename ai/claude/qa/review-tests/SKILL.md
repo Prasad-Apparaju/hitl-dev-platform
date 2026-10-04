@@ -53,7 +53,8 @@ State the result once — "✅ Graphify available, using graph queries" or "⚠�
 1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` at that requirement for the acceptance criteria. The PRD is the source of truth — the issue is a pointer. If the PRD has no `FR-` entries, the acceptance criteria on the issue are the source.
 2. Read the LLD at the path in `.hitl/current-change.yaml` (`source_artifacts.lld`) — note every method signature, error mode, precondition, and boundary entity
 3. Read the test plan from `.hitl/current-change.yaml` under `tests.plan` — this is what the developer committed to covering
-4. List the test files in `tests/` — read them
+4. Read the scenarios file at `tests.scenarios_file` (rules: `shared/test-scenarios.md`). Every acceptance and integration test should cite one of its IDs
+5. List the test files in `tests/` — read them
 
 ---
 
@@ -72,11 +73,13 @@ Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the
 
 For each item in the spec, confirm test coverage:
 
-| Spec item | Source | Test(s) | Status |
-|-----------|--------|---------|--------|
-| `<AC from PRD>` | PRD (FR-<ID>) | `<test name>` | ✅ / ❌ |
-| `<method + error mode from LLD>` | LLD | `<test name>` | ✅ / ❌ |
-| `<incident regression>` | Incident registry | `<test name>` | ✅ / ❌ |
+| Spec item | Source | Scenario | Test(s) | Status |
+|-----------|--------|----------|---------|--------|
+| `<AC from PRD>` | PRD (FR-<ID>) | `SC-<change-id>-<nn>` | `<test name>` | ✅ / ❌ |
+| `<method + error mode from LLD>` | LLD | `<ID or none>` | `<test name>` | ✅ / ❌ |
+| `<incident regression>` | Incident registry | `SC-<change-id>-<nn>` | `<test name>` | ✅ / ❌ |
+
+The `Scenario` column is the ID the test cites. An acceptance or integration test with none is a gap; a unit test may have none.
 
 Flag every ❌ as a gap that must be resolved before implementation starts.
 
@@ -108,15 +111,31 @@ Check `.hitl/current-change.yaml` under `required_evidence.coverage_pct`.
 **If `coverage_pct` is missing or below 90%:** Block immediately.
 > "Coverage gate not met. The TDD cycle must produce ≥90% line coverage before QA review proceeds. Ask the developer to run the coverage check from Phase 6 of `/hitl:dev-tdd` and record the result in `.hitl/current-change.yaml` under `required_evidence.coverage_pct`."
 
-**If `coverage_pct` ≥ 90%:** note it in the approval report and proceed to Step 6.
+**If `coverage_pct` ≥ 90%:** note it in the approval report and proceed to Step 5b.
+
+---
+
+## Step 5b — Run the scenario check
+
+Prove the link between scenarios and tests in both directions (FR-36):
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+CHK="ci/test-scenarios/check_scenarios.py"; [[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/test-scenarios/check_scenarios.py"
+python3 "$CHK" --change .hitl/current-change.yaml --stage review
+```
+
+Exit 2 blocks: quote every `[BLOCK]` finding in the report and treat each as a gap for Step 6. Warnings (`[warn]`) are listed in the report and do not block; `REVIEW_PENDING` is a warning here, since the PM review is due by QA verify, not by now. Quote the validator's one-line verdict.
+
+Then say QE's one invitation, one line: "Add a scenario you can think of with `/hitl:qa-scenarios`." Say it once; do not repeat it; do not wait for an answer.
 
 ---
 
 ## Step 6 — Approve or block
 
-**If no gaps, E2E stubs present for all ACs, smoke journey file exists, and coverage ≥ 90%:** Update the test registry at `docs/03-engineering/testing/test-registry.yaml` to record the reviewed tests. Report: "Test coverage approved. `<N>` tests cover `<M>` acceptance criteria, `<K>` LLD error modes, and `<J>` incident regressions. E2E stubs: `<P>` ACs covered. Smoke suite: journey file present. Line coverage: `<coverage_pct>`%. Implementation may proceed."
+**If no gaps, E2E stubs present for all ACs, smoke journey file exists, coverage ≥ 90%, and the scenario check exited 0 or 1:** Update the test registry at `docs/03-engineering/testing/test-registry.yaml` to record the reviewed tests. Report: "Test coverage approved. `<N>` tests cover `<M>` acceptance criteria, `<K>` LLD error modes, and `<J>` incident regressions. E2E stubs: `<P>` ACs covered. Smoke suite: journey file present. Line coverage: `<coverage_pct>`%. Scenarios: `<S>`, all cited or deferred. Implementation may proceed."
 
-**If any gap exists (unit coverage, E2E stubs missing, smoke journey missing, coverage < 90%):** List every gap with the specific spec item it fails to cover. Do not approve. Report: "Test coverage blocked. `<N>` gap(s) found — implementation must not start until these are resolved."
+**If any gap exists (unit coverage, E2E stubs missing, smoke journey missing, coverage < 90%, scenario check exit 2):** List every gap with the specific spec item it fails to cover. Do not approve. Report: "Test coverage blocked. `<N>` gap(s) found — implementation must not start until these are resolved."
 
 
 ## Closing this step

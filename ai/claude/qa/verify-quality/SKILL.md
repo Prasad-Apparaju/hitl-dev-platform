@@ -72,6 +72,7 @@ Format: `---` line, `**Verify Quality — Step N / 5: [Name]**`, trail, `---`.
 1. Read the GitHub issue to get the PRD reference (FR-<ID>), then read `docs/01-product/prd.md` for the acceptance criteria. The PRD is the source of truth — the issue is a pointer. If the PRD has no `FR-` entries, the acceptance criteria on the issue are the source.
 2. Read `.hitl/current-change.yaml` — review the impact brief (Section 3: manual verification scenarios) and rollout plan
 3. Read the test registry entry for this change — understand what was tested automatically
+4. Read the scenarios file at `tests.scenarios_file` in `.hitl/current-change.yaml` (rules: `shared/test-scenarios.md`). The acceptance scenarios are what you verify in Step 3; note who added each and the `Review` line
 
 ---
 
@@ -88,11 +89,13 @@ Fall back to reading `docs/04-operations/incident-registry.yaml` directly if the
 
 ## Step 3 — Verify acceptance criteria
 
-For each AC from the GitHub issue, verify against the running build:
+For each AC from the GitHub issue, verify against the running build through the acceptance scenarios that serve it, one row per scenario:
 
-| AC | Verification steps | Result |
-|----|-------------------|--------|
-| `<criterion>` | `<what you did>` | ✅ Pass / ❌ Fail — `<defect description>` |
+| AC | Scenario | Verification steps | Result |
+|----|----------|-------------------|--------|
+| `<criterion>` | `SC-<change-id>-<nn> <title>` | `<what you did>` | ✅ Pass / ❌ Fail — `<defect description>` |
+
+An AC with no scenario is a gap: add the scenario (`Added by: qa`) and verify it, so the file matches what was checked.
 
 Go beyond the happy path — test boundary values, empty states, concurrent use, and failure injection where relevant.
 
@@ -144,6 +147,19 @@ required_evidence:
 ```
 
 ---
+## Step 5b — Run the scenario check
+
+```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+CHK="ci/test-scenarios/check_scenarios.py"; [[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/test-scenarios/check_scenarios.py"
+python3 "$CHK" --change .hitl/current-change.yaml --stage verify
+```
+
+**If the only blocker is `REVIEW_PENDING`:** the PM never said the review was done. Ask the person running this step, once, whether to record it as skipped, and who the PM is and why it did not happen. On yes, write `tests.scenario_review` in `.hitl/current-change.yaml` as `status: skipped` with `actor` (the person running this step), `pm`, `reason`, `disposition: defer` and `ts`; rewrite the file's `Review` line to `PM: skipped (<reason>)`; re-run the fence. On no, stop here: the review is due before this step closes. A skipped review is not an FR-29 step skip and goes in no `skips[]` entry.
+
+**Any other `[BLOCK]` finding** is a QA defect: file it with `/hitl:qa-report-defect` as in Step 5 and block in Step 6. Warnings go in the report. Quote the validator's one-line verdict.
+
+---
 
 ## Step 6 — Block or approve
 
@@ -157,17 +173,20 @@ Also verify Step 5 evidence before approving:
 If either is missing or `false`, block:
 > "QA blocked: E2E tests or smoke suite did not pass. Resolve open defects from Step 5 before approving."
 
-**If all criteria pass, no regressions reproduced, coverage ≥ 90%, E2E pass, and smoke suite pass:**
+**If all criteria pass, no regressions reproduced, coverage ≥ 90%, E2E pass, smoke suite pass, and the scenario check exited 0 or 1:**
 Update `.hitl/current-change.yaml`:
 ```yaml
 approvals:
   qa: approved
   qa_notes: "All <N> ACs verified. <M> exploratory scenarios passed. E2E: <P> tests pass (desktop + iPhone 15 + Pixel 7). Smoke suite: all journeys pass. No incident regressions reproduced."
 ```
-Post a comment on the GitHub issue, then report to the team:
+Post a comment on the GitHub issue, then report to the team. After the first line, one line per scenario from the file, failures first, with who added it; then the existing text:
 ```bash
 gh issue comment <issue-number> \
   --body "## ✅ QA Approved
+
+- <scenario title> (added by <who>): pass
+- <scenario title> (added by <who>): pass
 
 All <N> acceptance criteria verified. <M> exploratory scenarios passed. E2E tests pass on desktop + iPhone 15 + Pixel 7. Smoke suite green. No incident regressions reproduced.
 
@@ -179,6 +198,9 @@ Follow `/hitl:qa-report-defect` from its file (`skills/qa-report-defect/SKILL.md
 ```bash
 gh issue comment <issue-number> \
   --body "## 🚫 QA Blocked
+
+- <scenario title> (added by <who>): fail, #<defect-number>
+- <scenario title> (added by <who>): pass
 
 <N> blocking defect(s) filed. Promotion is blocked until all are resolved and re-verified.
 

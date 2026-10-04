@@ -275,7 +275,7 @@ else
       ci/agentic-advisor/test_compose.py ci/agentic-advisor/test_records.py \
       ci/agentic-advisor/test_render_map.py \
       ci/data-layer/test_check_data_layer.py ci/data-layer/test_scorecard.py tools/data-layer/test_adapters.py \
-      ci/linked/test_linked.py)
+      ci/linked/test_linked.py ci/test-scenarios/test_check_scenarios.py)
     for f in ${removed[@]+"${removed[@]}"}; do echo "  ✓ removed $f (HITL test that cannot run in this repo)"; done
     for f in ${kept[@]+"${kept[@]}"}; do
       echo "  • kept $f: same name as a HITL test but different content, so it is yours or you edited it." >&2

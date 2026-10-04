@@ -30,7 +30,8 @@ UPDATE_SKILL = os.path.join(ROOT, "ai", "claude", "update", "SKILL.md")
 
 # Every directory whose Python is copied into a product repo, by onboarding or by dev-update.
 SYNCED_DIRS = ["ci/first-pass", "ci/manifest-agentic", "tools/manifest-agentic",
-               "ci/manifest-drift", "ci/agentic-advisor", "ci/data-layer", "tools/data-layer", "ci/linked"]
+               "ci/manifest-drift", "ci/agentic-advisor", "ci/data-layer", "tools/data-layer", "ci/linked",
+               "ci/test-scenarios"]
 
 # Files that must never reach a consumer: pytest imports conftest.py at collection, so a
 # platform-only one blocks collection exactly as a test file does.

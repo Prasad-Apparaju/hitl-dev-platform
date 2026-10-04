@@ -169,6 +169,47 @@ required_evidence:
       - ops_review             # ops-release-reviewer has approved (Tier 3+)
   description: "Evidence items that must be completed before PR creation"
 
+# --- Tests and scenarios (FR-36) ---
+
+tests:
+  type: object
+  description: "What the change will be tested against. plan and qa_scenarios predate FR-36 and stay; the scenarios file is the readable record."
+  properties:
+    plan:
+      type: array
+      description: "The developer's test plan, one line per item (dev-tdd, qa-plan-tests read it)."
+    qa_scenarios:
+      type: object
+      description: "Scenario names by priority, written by qa-plan-tests for the breadcrumb; the full scenarios live in scenarios_file."
+    scenarios_file:
+      type: string
+      description: "docs/03-engineering/testing/scenarios/<change-id>.md, written by qa-plan-tests (or dev-tdd under Fast Track). Read by ci/test-scenarios/check_scenarios.py."
+      example: "docs/03-engineering/testing/scenarios/GH-123.md"
+    scenario_review:
+      type: object
+      description: >
+        The PM review of the acceptance scenarios. Authoritative; the file's Review line mirrors it.
+        Not an FR-29 step skip (the review is not a catalog step) and never an entry in skips[].
+      properties:
+        status: { type: string, enum: [pending, done, skipped] }
+        by:     { type: string, description: "done: who reviewed" }
+        actor:  { type: string, description: "skipped: who recorded the skip (skip-record dialect)" }
+        pm:     { type: string, description: "skipped: the PM who was named" }
+        reason: { type: string, description: "skipped: why, in neutral language" }
+        disposition: { type: string, enum: [defer, decline], description: "skipped" }
+        ts:     { type: string, format: date-time }
+    files:
+      type: array
+      items: { type: string }
+      description: "The change's own test files, written by dev-tdd at RED; the validator's test set for the test-to-scenario direction."
+    scenarios_page:
+      type: object
+      description: "Optional. The shared page published from the file (qa-scenarios publish); the file is the record, the page a view."
+      properties:
+        url: { type: string }
+        published_at: { type: string, format: date-time }
+        last_pull: { type: string, format: date-time }
+
 # --- Approvals ---
 
 approvals:

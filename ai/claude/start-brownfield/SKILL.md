@@ -215,8 +215,9 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
   [[ ! -f ci/manifest-agentic/manifest-waivers.yaml && -f "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ]] && cp "$PLUGIN_ROOT/shared/ci/manifest-agentic/manifest-waivers.yaml" ci/manifest-agentic/
   cp "$PLUGIN_ROOT/shared/tools/manifest-agentic/"*.py tools/manifest-agentic/ 2>/dev/null
 fi
-# Linked changes (FR-30): the partner-state checker. Data layer (FR-31): validator, scorecard, schema, adapters; the waiver file and the CI template once.
+# Linked changes (FR-30): the partner-state checker. Data layer (FR-31): validator, scorecard, schema, adapters; the waiver file and the CI template once. Test scenarios (FR-36): the two-way scenario check; its CI template once.
 [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/linked" ]] && { mkdir -p ci/linked && cp "$PLUGIN_ROOT/shared/ci/linked/"*.py ci/linked/ 2>/dev/null; }
+[[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/test-scenarios" ]] && { mkdir -p ci/test-scenarios .github/workflows && cp "$PLUGIN_ROOT/shared/ci/test-scenarios/"*.py ci/test-scenarios/ 2>/dev/null; [[ ! -f .github/workflows/test-scenarios-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/test-scenarios-check.yml" .github/workflows/ 2>/dev/null; }
 if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/data-layer" ]]; then
   mkdir -p ci/data-layer tools/data-layer .github/workflows
   cp "$PLUGIN_ROOT/shared/ci/data-layer/"*.py "$PLUGIN_ROOT/shared/ci/data-layer/data-layer.schema.yaml" ci/data-layer/ 2>/dev/null

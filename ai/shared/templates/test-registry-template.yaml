@@ -24,6 +24,7 @@ test_cases:
     origin: tdd            # tdd | qa-review | incident-regression | design-pr
     incident_ref: null     # INC-NNN if added after an incident, else null
     file: "tests/test_auth.py::test_login_valid_credentials"
+    scenarios: [SC-GH-12-01]  # scenario IDs this test cites (docs/03-engineering/testing/scenarios/); [] for a unit test that cites none
 
   - id: TC-002
     name: "Example: duplicate publish returns cached result"
@@ -33,5 +34,6 @@ test_cases:
     origin: incident-regression
     incident_ref: INC-001
     file: "tests/test_publishing.py::test_idempotent_publish"
+    scenarios: [SC-GH-7-03]
 
   # Add entries as tests are created. Keep in sync with actual test files.

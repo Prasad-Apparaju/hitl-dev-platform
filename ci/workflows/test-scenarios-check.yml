@@ -1,0 +1,31 @@
+name: Test scenarios
+
+# Readable test scenarios (FR-36): on any PR that carries a change record, run the two-way scenario
+# check at stage review. It exits 0 when clean, 2 on a blocker (a scenario with no test and no
+# recorded reason, an acceptance or integration test with no scenario, a malformed or missing file),
+# failing the build. A repo with no change record passes unchanged.
+#
+# Copy to .github/workflows/ in your product repo (init-project.sh does this). Requires
+# ci/test-scenarios/check_scenarios.py (copied by onboarding, like ci/first-pass).
+
+on:
+  pull_request:
+
+jobs:
+  test-scenarios:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyyaml
+      - name: Check the scenarios file against the tests (fail-closed)
+        run: |
+          if [ -f .hitl/current-change.yaml ]; then
+            python3 ci/test-scenarios/check_scenarios.py --change .hitl/current-change.yaml --stage review
+          else
+            echo "No .hitl/current-change.yaml: nothing to check."
+          fi

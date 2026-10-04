@@ -59,7 +59,7 @@ Identity has three tiers, so granularity is earned rather than assumed (locked 2
 
 The human's profile/tag choice only proposes; impact analysis decides the actual steps and required evidence, and a floor of never-skippable steps is enforced regardless. The harness is a force-multiplier, not a rulebook: the owner supplies judgment, the harness supplies legwork, context, and rigor.
 
-The product surface delivering this: 59 role skills, 5 lightweight commands, 6 subagent role definitions, 11 hook scripts (9 wired into each opted-in project), CI workflow templates, 38 document templates, and a numberless workflow catalog from which the runtime process, the command map, and the breadcrumb are all derived. Counts as of 2.16.1; the skill directories under `ai/claude/` are the source.
+The product surface delivering this: 60 role skills, 5 lightweight commands, 6 subagent role definitions, 11 hook scripts (9 wired into each opted-in project), CI workflow templates, 38 document templates, and a numberless workflow catalog from which the runtime process, the command map, and the breadcrumb are all derived. Counts as of 2.16.1; the skill directories under `ai/claude/` are the source.
 
 ---
 
@@ -78,7 +78,7 @@ The product surface delivering this: 59 role skills, 5 lightweight commands, 6 s
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|------------|:--------:|---------------------|
-| FR-5 | Each role has skills covering its full journey (PM: 10 skills; Architect: design-system, design-feature, review-code, review-existing, review-design, verify-traceability; Dev: practices, TDD, generate-docs, apply-change, reviews; QA: plan/review/verify; Ops: build, deploy, IaC, rollback, monitor) | Must Have | Every step in the command map with a non-manual executor resolves to an existing skill, command, or agent; skill-lint CI gate passes |
+| FR-5 | Each role has skills covering its full journey (PM: 10 skills; Architect: design-system, design-feature, review-code, review-existing, review-design, verify-traceability; Dev: practices, TDD, generate-docs, apply-change, reviews; QA: plan, scenarios, review, verify; Ops: build, deploy, IaC, rollback, monitor) | Must Have | Every step in the command map with a non-manual executor resolves to an existing skill, command, or agent; skill-lint CI gate passes |
 | FR-6 | Skills consume the previous step's outputs (issue, PRD entry, HLD, LLD) so no step starts from a blank page | Must Have | Architect design-feature reads the issue; dev-tdd reads the approved LLD; qa-plan-tests reads acceptance criteria from the PRD |
 | FR-7 | Independent review runs in a separate context from generation (reviewer subagents: architect, PM, QA, ops-release, spec-conformance) | Must Have | Spec-conformance review runs in a different context window from the implementer |
 | FR-8 | A Codex CLI surface mirrors the Claude Code skill surface for OpenAI Codex users. **Not maintained since 2.10.0 (2026-09-04)**: `ai/codex/` stays in the repo for reference, no release validates it, and new capabilities are not mirrored | Deferred | `ai/codex/` install script wires AGENTS.md and hooks in a product repo (last verified on 2.9.x) |

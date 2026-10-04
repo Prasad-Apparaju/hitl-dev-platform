@@ -51,6 +51,11 @@ You define what gets built and why. You review AI-drafted PRDs, accept or reques
 /hitl:pm-answer-questions
 ```
 
+**`/hitl:qa-scenarios`** — Review the test scenarios for a change before or while it is built, and add the ones you can think of. HITL reads the acceptance scenarios back to you in plain words, grouped by the criterion each one serves, asks what else could go wrong, and writes what you say with your name on it. Nothing waits for this review; it is due before QA verify closes. If you do not use Claude Code, ask for the shared page (`publish`) and comment or add there.
+```
+/hitl:qa-scenarios GH-123 review
+```
+
 ## Your Role in the Workflow
 
 - **Before design starts:** Write or review the PRD. Use `/hitl:pm-add-feature` or `/hitl:pm-design-feature`.

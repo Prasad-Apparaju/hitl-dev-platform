@@ -90,13 +90,20 @@ Read the test plan in `.hitl/current-change.yaml` under `tests.plan` if it exist
 Write concrete test scenarios for each gap found. Format each scenario clearly enough that the developer can write a test directly from it:
 
 ```
-Scenario: <name>
+Scenario: <name, in the user's words: what is true when this passes>
+  Kind:   acceptance | integration | regression
   Layer:  unit | integration | e2e | smoke
-  Given: <precondition>
-  When:  <action>
-  Then:  <expected outcome>
+  Serves: <acceptance criterion or incident, for example FR-12 AC-2 or INC-004>
+  Given: <one precondition>
+  When:  <one action>
+  Then:  <one visible outcome>
   Why:   <incident reference or domain rationale>
 ```
+
+Write every scenario the way a manual tester would, so a PM can read it in a minute (FR-36): one
+behaviour per scenario; one line each for Given, When and Then where the behaviour allows; the user's
+words for the thing ("the total", not `cart.total_cents`); no code identifiers, file paths or HTTP
+codes unless the user sees them. The rules are in `shared/test-scenarios.md`; do not restate them.
 
 Group scenarios by:
 - **Regression required** — from past incidents, must be covered
@@ -109,9 +116,17 @@ Produce one **smoke suite scenario** for the feature's primary happy-path user j
 
 ---
 
-## Step 5 — Record and hand off
+## Step 5 — Write the file and hand off
 
-Update `.hitl/current-change.yaml` under `tests.qa_scenarios`:
+1. **Write the scenarios file** at `docs/03-engineering/testing/scenarios/<change-id>.md` from the
+   plugin's `shared/templates/test-scenarios-template.md`, with every scenario from Step 4. IDs run
+   `SC-<change-id>-01` upward in the order listed, regression-required first; each scenario carries
+   its `Kind`, `Priority` (the Step 4 group), `Serves`, `Added by: qa` and `Test: none yet`. The
+   `## What this change does` section is at most five sentences and ends with where the acceptance
+   criteria are. If a file already exists, append new scenarios with the next IDs; never renumber.
+
+2. **Update `.hitl/current-change.yaml`.** Keep `tests.qa_scenarios` for the breadcrumb, and add
+   the file and the review state:
 
 ```yaml
 tests:
@@ -123,15 +138,32 @@ tests:
       - <scenario name>: <brief description>
     optional:
       - <scenario name>: <brief description>
+  scenarios_file: docs/03-engineering/testing/scenarios/<change-id>.md
+  scenario_review:
+    status: pending
 ```
 
-Report the scenario list to the developer. Confirm: "Review these scenarios — regression-required ones must be in the test plan before the TDD cycle starts."
+3. **Invite the PM, once.** Post one line on the issue: the path, and that they can add any they
+   can think of. This is the PM's one invitation for this change (`shared/test-scenarios.md`): post
+   it once, never post a reminder, and do not wait for an answer. It is non-blocking.
+
+```bash
+CHANGE_ID=$(python3 -c "import yaml;print(yaml.safe_load(open('.hitl/current-change.yaml'))['change_id'])")
+ISSUE_NUM=$(printf '%s' "$CHANGE_ID" | sed -n 's/^\(.*[^0-9]\)\{0,1\}\([0-9][0-9]*\)$/\2/p')   # the digits at the end: GH-12, SVC-3
+gh issue comment "$ISSUE_NUM" --body "Test scenarios for this change are in \`docs/03-engineering/testing/scenarios/${CHANGE_ID}.md\`. Read the acceptance scenarios when you have a minute and add any you can think of: \`/hitl:qa-scenarios\`, or edit the file."
+```
+
+4. **Report the scenario list to the developer.** Confirm: "Review these scenarios. The
+   regression-required ones must be in the test plan before the TDD cycle starts. Every acceptance
+   and integration test will cite the ID of the scenario it serves."
 
 ---
 
 ## Important Rules
 
 - If the LLD is too vague to generate concrete scenarios, flag it as a design gap before TDD starts
+- The scenarios file is the record QA owns; the rules for its shape, IDs, citations and the one
+  invitation per role are in `shared/test-scenarios.md`
 
 ## Closing this step
 
