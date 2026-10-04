@@ -125,6 +125,8 @@ CHK="ci/test-scenarios/check_scenarios.py"; [[ -f "$CHK" ]] || CHK="$ROOT/shared
 python3 "$CHK" --change .hitl/current-change.yaml --stage review
 ```
 
+**If the only blocker is `FILE_MISSING` and the change started before 2.17.0** (the record's `hitl_version` is older, or `tests.scenarios_file` is absent while the test plan step is already done): the change is in flight from before scenarios files existed. Write the file now from the change's tests, the way `dev-tdd` does when the test plan step was skipped (`shared/test-scenarios.md`): one scenario per acceptance or integration test, `Added by: dev`, `tests.scenarios_file` set, `tests.scenario_review` recorded `skipped` with `actor` (the person running this step), `pm` from the issue or "PM", reason "change started before 2.17.0", `disposition: defer`, `ts`. Say so in one line, re-run the fence, and continue. Do not block an in-flight change on a file that could not have existed.
+
 Exit 2 blocks: quote every `[BLOCK]` finding in the report and treat each as a gap for Step 6. Warnings (`[warn]`) are listed in the report and do not block; `REVIEW_PENDING` is a warning here, since the PM review is due by QA verify, not by now. Quote the validator's one-line verdict.
 
 Then say QE's one invitation, one line: "Add a scenario you can think of with `/hitl:qa-scenarios`." Say it once; do not repeat it; do not wait for an answer.

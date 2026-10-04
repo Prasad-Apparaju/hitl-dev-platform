@@ -25,6 +25,13 @@ All notable changes to the HITL plugin are documented here.
   change, where they already are, and never reminded twice. The QA verify comment lists pass or fail
   per scenario, in the scenario's words, failures first.
 
+### Upgrading
+
+- A change that passed the test plan step on 2.16.x has no scenarios file. At test review or QA
+  verify, the skill writes one from the change's tests (marked added by dev, review recorded as
+  skipped with the reason "change started before 2.17.0") and continues; nothing in flight is
+  blocked on a file that could not have existed. New changes get the file at the test plan step.
+
 ## [2.16.1] — 2026-10-01
 
 ### Fixed

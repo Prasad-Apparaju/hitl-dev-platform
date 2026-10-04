@@ -155,6 +155,8 @@ CHK="ci/test-scenarios/check_scenarios.py"; [[ -f "$CHK" ]] || CHK="$ROOT/shared
 python3 "$CHK" --change .hitl/current-change.yaml --stage verify
 ```
 
+**If the only blocker is `FILE_MISSING` and the change started before 2.17.0** (the record's `hitl_version` is older, or `tests.scenarios_file` is absent while the test plan step is already done): the change is in flight from before scenarios files existed. Write the file now from the change's tests, the way `dev-tdd` does when the test plan step was skipped (`shared/test-scenarios.md`): one scenario per acceptance or integration test, `Added by: dev`, `tests.scenarios_file` set, `tests.scenario_review` recorded `skipped` with `actor` (the person running this step), `pm` from the issue or "PM", reason "change started before 2.17.0", `disposition: defer`, `ts`. Say so in one line, re-run the fence, and continue. Do not block an in-flight change on a file that could not have existed.
+
 **If the only blocker is `REVIEW_PENDING`:** the PM never said the review was done. Ask the person running this step, once, whether to record it as skipped, and who the PM is and why it did not happen. On yes, write `tests.scenario_review` in `.hitl/current-change.yaml` as `status: skipped` with `actor` (the person running this step), `pm`, `reason`, `disposition: defer` and `ts`; rewrite the file's `Review` line to `PM: skipped (<reason>)`; re-run the fence. On no, stop here: the review is due before this step closes. A skipped review is not an FR-29 step skip and goes in no `skips[]` entry.
 
 **Any other `[BLOCK]` finding** is a QA defect: file it with `/hitl:qa-report-defect` as in Step 5 and block in Step 6. Warnings go in the report. Quote the validator's one-line verdict.
