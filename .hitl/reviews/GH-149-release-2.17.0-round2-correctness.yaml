@@ -1,0 +1,49 @@
+schema_version: '2.0'
+change_id: GH-149-release-2.17.0
+round: 2
+reviewed_sha: 5e298a68d4d9102b1f4d3d645d1fdd545de9aefb
+reviewed_tree: ffaad69d01ce0d60a09a7c464001d0aea5be59e3
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand; one reviewer covered both lenses in this narrow round)
+  brief: five checks with the command and the passing output for each, the round-1 claims copied verbatim (first sentence of each finding), evidence rule, one page, verdict instruction
+lens: correctness
+scope: 'Narrow round after the round-1 fixes: the correctness claims re-read and re-run, the gates, the diff. Report: .hitl/reviews/incoming/GH-149-round2.md'
+checks:
+- check: 'the four round-1 claims re-verified: the dev-update staging loop; the CI template report-only guard on four records; build.sh committed in the plugin repo (ae25853, clean against HEAD); maxsplit
+    as a keyword with no warnings'
+  command: grep update/SKILL.md; extract and run the CI run block against four records; git log and git diff in ../hitl-claude-plugin; grep maxsplit; pytest ci/test-scenarios -q; python3 -W error::DeprecationWarning
+    check_scenarios.py --help
+  result: pass
+  output: 'loop lists both paths; (a) pre-2.17.0 no file: notice and exit 0, (b) 2.17.0 no file: FILE_MISSING exit 2, (c) absent named file: exit 2, (d) real file: 1 cited, exit 0; ae25853, diff clean;
+    maxsplit=1, 54 passed with no warnings, help exits 0'
+- check: gates at 5e298a6
+  command: python3 -m pytest ci/wiring -q; python3 ci/skill-lint/check_skills.py
+  result: pass
+  output: 435 passed; 66/66
+- check: the df217b2..5e298a6 diff is the update skill, the CI template, CHANGELOG, the validator and the hash manifest; the validator hash is a 2.17.0 manifest line
+  command: git diff --stat df217b2 5e298a6; shasum -a 256 ci/test-scenarios/check_scenarios.py
+  result: pass
+  output: exactly those five files; ce2a5c6e listed as 2.17.0
+findings:
+- id: F1
+  class: decide
+  check: 'the four round-1 claims re-verified: the dev-update staging loop; the CI template report-only guard on four records; build.sh committed in the plugin repo (ae25853, clean against HEAD); maxsplit
+    as a keyword with no warnings'
+  claim: The changelog says the check "is installed and kept current the same way as the First Pass checker" and every skill resolves it at `$ROOT/shared/ci/test-scenarios/check_scenarios.py` and reads
+    `shared/test-scenarios.md`.
+  evidence: re-checked in round 2; see the report
+  status: fixed
+  resolved_by: 'hitl-claude-plugin ae25853 (release/2.x): build: ship ci/test-scenarios, test-scenarios.md and test-scenarios-check.yml'
+  verified_by: round 2 by command at 5e298a6
+- id: F2
+  class: minor
+  check: 'the four round-1 claims re-verified: the dev-update staging loop; the CI template report-only guard on four records; build.sh committed in the plugin repo (ae25853, clean against HEAD); maxsplit
+    as a keyword with no warnings'
+  claim: '`ci/test-scenarios/check_scenarios.py:491` calls `re.split(r"[\s,(]", hdr_status, 1)`.'
+  evidence: re-checked in round 2; see the report
+  status: fixed
+  resolved_by: 5e298a68d4d9102b1f4d3d645d1fdd545de9aefb
+  verified_by: round 2 by command at 5e298a6
+verdict: verified

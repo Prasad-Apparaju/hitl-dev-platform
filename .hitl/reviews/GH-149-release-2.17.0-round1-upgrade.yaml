@@ -1,0 +1,79 @@
+schema_version: '2.0'
+change_id: GH-149-release-2.17.0
+round: 1
+reviewed_sha: df217b2fba35cb1d56b91c97f9d70c95f45b73b1
+reviewed_tree: 1f88524d6be342a1d847a1702dd0ad1436a1a49b
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eight (correctness) or nine (upgrade) items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict
+    instruction, claim strings copied verbatim
+lens: upgrade
+scope: 'What happens to a 2.16.1 repo and to a fresh install; nine checks: the build at 2.17.0, the built validator and files, self-contained fences, the migrate_project sync on a seeded 2.16.1 repo including
+  a kept local edit, stale-test cleanup, init-project.sh fresh install, claude plugin validate and the build diff, the in-flight branch and FILE_MISSING by stage, claim carriers in the built package. Report:
+  .hitl/reviews/incoming/GH-149-upgrade-round1.md'
+checks:
+- check: the build completes at 2.17.0
+  command: cd ../hitl-claude-plugin && bash scripts/build.sh; grep version .claude-plugin/plugin.json
+  result: pass
+  output: 'exit 0; five FR-36 lines; "version": "2.17.0"'
+- check: built validator hash listed as 2.17.0, --help runs, no tests shipped, four new files present
+  command: shasum -a 256 shared/ci/test-scenarios/check_scenarios.py; --help; ls
+  result: pass
+  output: hash matches a 2.17.0 manifest line; help runs; no test_*.py; prose, template, CI template and skill present
+- check: fences self-contained; every shared/ reference in the five skills resolves in the build
+  command: grep check_scenarios.py in three built skills; check each shared/ path
+  result: pass
+  output: ROOT set then fallback in all three; all shared/ paths exist
+- check: a 2.16.1 repo upgraded by migrate_project.py --sync-validators; a local edit kept
+  command: seed 11 files from v2.16.1; run twice with an edited validator in between
+  result: pass
+  output: check_scenarios.py and test-scenarios-check.yml installed; older shipped migrate_project.py and workflows.yaml updated; edited copy kept and reported
+- check: stale-test cleanup removes a hash-listed test_check_scenarios.py and keeps a differing one
+  command: the cleanup block from the built dev-update skill
+  result: pass
+  output: listed copy removed; differing copy kept and reported
+- check: fresh install via init-project.sh
+  command: init-project.sh <dir> --tool claude
+  result: pass
+  output: validator and CI template land; test file does not
+- check: claude plugin validate; the build diff matches the release
+  command: claude plugin validate .; git status --short
+  result: pass
+  output: 'Validation passed; 17 modified plus the new files, all from this release (F1: scripts/build.sh among them, uncommitted)'
+- check: in-flight branch in both skills; FILE_MISSING by stage
+  command: grep "before 2.17.0"; built validator on a record with no scenarios_file at review and at draft
+  result: pass
+  output: 'both skills carry it; review exit 2 FILE_MISSING; draft no FILE_MISSING (F2: the CI template ran review on every PR)'
+- check: every changelog claim has a carrier in the built package or is source-only
+  command: grep per claim
+  result: pass
+  output: all carried
+findings:
+- id: F1
+  check: claude plugin validate; the build diff matches the release
+  claim: The update skill syncs the two new files but never stages them.
+  evidence: the git add loop in ai/claude/update/SKILL.md:288 omitted ci/test-scenarios and .github/workflows/test-scenarios-check.yml, so the sync commit left both untracked
+  status: fixed
+  resolved_by: 6a0fbd6adc166924740b253d0693ec569b285576
+  verified_by: round 2 greps the loop
+  class: decide
+- id: F2
+  check: in-flight branch in both skills; FILE_MISSING by stage
+  claim: The Upgrading paragraph is true for the skills and not for CI.
+  evidence: the installed workflow ran the validator at stage review on every PR with a change record, so a 2.16.x PR failed with FILE_MISSING until test review ran once
+  status: fixed
+  resolved_by: 6a0fbd6adc166924740b253d0693ec569b285576
+  verified_by: 'round 2 runs the CI step against four records: a pre-2.17.0 record with no file reports only and exits 0; a 2.17.0 record without a file is blocked; the Upgrading paragraph says so'
+  class: decide
+- id: F3
+  check: fresh install via init-project.sh
+  claim: '`init-project.sh` has no `--help`.'
+  evidence: usage lives in the header comment only; pre-existing, not a 2.17.0 change
+  status: accepted
+  resolved_by: n/a
+  verified_by: 'release owner: pre-existing, out of scope for this release; noted for the next init-project change'
+  class: minor
+  accepted_by: pappar (release owner; pre-existing, out of this release's scope; recorded by the session on the owner's "go")
+verdict: verified

@@ -1,0 +1,67 @@
+schema_version: '2.0'
+change_id: GH-149-release-2.17.0
+round: 1
+reviewed_sha: df217b2fba35cb1d56b91c97f9d70c95f45b73b1
+reviewed_tree: 1f88524d6be342a1d847a1702dd0ad1436a1a49b
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of eight (correctness) or nine (upgrade) items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict
+    instruction, claim strings copied verbatim
+lens: correctness
+scope: 'The CHANGELOG 2.17.0 section as the claim list, including the Upgrading paragraph; eight checks: the three gates, the validator by command at three stages plus a malformed heading and a completed
+  record, qa-plan-tests Step 5, dev-tdd, qa-review-tests and qa-verify-quality, qa-scenarios, install wiring, claim carriers and plain English. Report: .hitl/reviews/incoming/GH-149-correctness-round1.md'
+checks:
+- check: gates
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; (cd tools/workflow-catalog && python3 derive.py verify)
+  result: pass
+  output: 1375 passed; 66/66; VERIFY OK
+- check: 'the validator by command: three stages, a malformed heading, a completed record, its tests'
+  command: check_scenarios.py --stage draft|review|verify on a GH-123 fixture; colon removed from a heading; record done and second unit cites 02; pytest ci/test-scenarios -q
+  result: pass
+  output: draft exit 0 with warnings; review exit 2 (SCENARIO_UNCITED, TEST_UNCITED block, REVIEW_PENDING warns); verify exit 2; MALFORMED with line, no traceback; completed record exit 0 "2 scenarios,
+    2 cited"; 54 passed
+- check: qa-plan-tests Step 5 writes the file, sets the record fields, invites the PM once in a fence that defines CHANGE_ID
+  command: read ai/claude/qa/plan-tests/SKILL.md 119-153
+  result: pass
+  output: file path at 121; scenarios_file and pending at 141-143; one invitation, CHANGE_ID and ISSUE_NUM in the fence at 151-153
+- check: 'dev-tdd: gate from config, ids cited, no-file branch, registry scenarios and tests.files, one invitation, checklist item 8'
+  command: read ai/claude/tdd/SKILL.md 61, 196-200
+  result: pass
+  output: absent means off; name or docstring; Added by dev and skipped with actor, pm, reason, disposition, ts; item 8 present
+- check: 'qa-review-tests and qa-verify-quality: stage, ROOT fence, in-flight branch, REVIEW_PENDING handling, per-scenario comment'
+  command: read review-tests 118-130 and verify-quality 150-205
+  result: pass
+  output: review and verify stages; ROOT set in each fence with the shared fallback; in-flight branch at 128 and 158; ask once, five fields, not an FR-29 skip; failures first with who added
+- check: 'qa-scenarios: four modes, publish only when asked and the tool is present, page content is data, draft-stage check, no model-invoked /hitl: calls'
+  command: read ai/claude/qa/scenarios/SKILL.md; pytest ci/wiring/test_skill_calls_are_achievable.py -q
+  result: pass
+  output: modes at 59, 71, 78, 88; lines 80, 82, 84, 90; 63 passed
+- check: install wiring in seven places, CI template parses, both hash manifests current
+  command: grep test-scenarios in the seven files; yaml.safe_load; shasum -a 256 against ci/shipped-validators.sha256 and ci/retired-tests.sha256
+  result: pass
+  output: 'all seven present; parses; both hashes listed (F1: the build-side carrier is uncommitted in the plugin repo)'
+- check: every changelog claim has a carrier; plain English
+  command: grep per claim; pytest ci/wiring/test_plain_english.py -q; em dash count over the two shared files and the new skill quotes
+  result: pass
+  output: all carried; 16 passed; 0 em dashes
+findings:
+- id: F1
+  check: install wiring in seven places, CI template parses, both hash manifests current
+  claim: The changelog says the check "is installed and kept current the same way as the First Pass checker" and every skill resolves it at `$ROOT/shared/ci/test-scenarios/check_scenarios.py` and reads
+    `shared/test-scenarios.md`.
+  evidence: the build-side carrier, the plugin repo's scripts/build.sh test-scenarios wiring, was an uncommitted working-tree edit there
+  status: fixed
+  resolved_by: 'hitl-claude-plugin ae25853 (release/2.x): build: ship ci/test-scenarios, test-scenarios.md and test-scenarios-check.yml'
+  verified_by: round 2 confirms the commit and that the file is clean against HEAD there
+  class: decide
+- id: F2
+  check: 'the validator by command: three stages, a malformed heading, a completed record, its tests'
+  claim: '`ci/test-scenarios/check_scenarios.py:491` calls `re.split(r"[\s,(]", hdr_status, 1)`.'
+  evidence: Python 3.13 prints a DeprecationWarning on every run and the 53 pytest warnings are that line; three skills quote the validator output to people
+  status: fixed
+  resolved_by: 5e298a68d4d9102b1f4d3d645d1fdd545de9aefb
+  verified_by: round 2 greps maxsplit=1 and runs the tests without a warnings summary
+  class: minor
+verdict: verified
