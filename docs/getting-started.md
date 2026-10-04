@@ -103,7 +103,7 @@ If it guesses wrong, say so. You can set the tier yourself, and HITL records tha
 
 ### 3. Pick Fast Track or Full Scale
 
-The development workflow has 34 steps across 7 phases, plus 4 that appear only when a change needs them (security design, dependency audit, penetration test, performance baseline):
+The development workflow has 31 numbered steps across 7 phases, plus 3 review substeps and 4 steps that appear only when a change needs them (performance baseline, security design, dependency audit, penetration test):
 
 ```
 Requirements → Design → Build → Verify → Assess → Ship → Post-Ship

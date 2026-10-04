@@ -12,7 +12,7 @@
 
 ## 1. Executive Summary
 
-HITL is a document-driven delivery model for teams that use AI heavily in non-trivial software work, packaged as a Claude Code plugin with a parallel Codex CLI surface. AI produces code faster than teams can review it, and does so confidently even when wrong. HITL makes that speed safe by organizing the team around documentation as the shared source of truth: AI generates; humans shape, review, and decide.
+HITL is a document-driven delivery model for teams that use AI heavily in non-trivial software work, packaged as a Claude Code plugin. AI produces code faster than teams can review it, and does so confidently even when wrong. HITL makes that speed safe by organizing the team around documentation as the shared source of truth: AI generates; humans shape, review, and decide.
 
 The product gives each role (PM, Architect, Technical Advisor, Developer, QA, Ops) AI-powered skills that do the legwork of their step in the delivery process, enforcement hooks and CI gates that keep the process honest without relying on memory or discipline, and a traceability chain from requirement to production (issue → PRD → HLD/LLD → code → tests → deployment) that can be audited after the fact.
 
@@ -53,13 +53,13 @@ HITL encodes one contract: a **workflow** is a repeatable abstraction for one wh
 
 Identity has three tiers, so granularity is earned rather than assumed (locked 2026-06-23, see `docs/design/workflow-model/01-design.md` §4):
 
-- **7 workflows** own their step sequence: Greenfield, Brownfield, Migration (establishment), Incident (fix-first), Migration Slice, Docs (documentation-only, its own short spine), Platform Bootstrap (onboarded → delivery-ready, long-lived, register-driven; FR-25).
+- **8 workflows** own their step sequence (`ai/shared/workflows.yaml` is the source): Development (the delivery spine every change runs on), Brownfield, Migration (establishment), Migration Review (evaluate external migration docs), PRD (stand up a greenfield project), Docs (documentation-only, its own short spine), Platform Bootstrap (onboarded → delivery-ready, long-lived, register-driven; FR-25), Release (publish a version). An incident is Tier 4 of the Development workflow (fix first, docs within 48 hours), not a workflow of its own.
 - **6 profiles** are named presets over the shared delivery spine: Feature, Enhancement, Fix, Tech Change, Upgrade, Security.
 - **5 tags** tune required evidence within a profile: `refactor`, `perf`, `chore`, `tooling`, `infra`.
 
 The human's profile/tag choice only proposes; impact analysis decides the actual steps and required evidence, and a floor of never-skippable steps is enforced regardless. The harness is a force-multiplier, not a rulebook: the owner supplies judgment, the harness supplies legwork, context, and rigor.
 
-The product surface delivering this: 51 role skills, 32 commands, 7 subagent role definitions, 9 enforcement hooks, CI workflow templates, document templates, and a numberless workflow catalog from which the runtime process, the command map, and the breadcrumb are all derived.
+The product surface delivering this: 59 role skills, 5 lightweight commands, 6 subagent role definitions, 11 hook scripts (9 wired into each opted-in project), CI workflow templates, 38 document templates, and a numberless workflow catalog from which the runtime process, the command map, and the breadcrumb are all derived. Counts as of 2.16.1; the skill directories under `ai/claude/` are the source.
 
 ---
 
@@ -72,16 +72,16 @@ The product surface delivering this: 51 role skills, 32 commands, 7 subagent rol
 | FR-1 | The process is defined once in a numberless catalog (steps identified by stable key + name + phase, never by global position) | Must Have | Inserting or reordering a catalog step requires zero edits to other docs; `tools/workflow-catalog/` derivation reproduces the runtime `workflows.yaml` losslessly, verified in CI |
 | FR-2 | Profiles and tags resolve to a concrete step plan via impact analysis, with the floor enforced regardless of what the human selected | Must Have | Resolution engine tests pass; a change tagged `chore` still hits impact-analysis and docs-reconciled floors |
 | FR-3 | Each catalog step declares its executing command and accountable role; the human-readable command map is generated, not hand-maintained | Must Have | `docs/command-map.generated.md` regenerates without drift in CI |
-| FR-4 | Every session shows a phase-ribbon breadcrumb of where the change stands (phases + named steps, no global numbering) | Must Have | Breadcrumb matrix (`ci/breadcrumb/`, 238 assertions across 24 cases) passes, including the no-phase fallback |
+| FR-4 | Every session shows a phase-ribbon breadcrumb of where the change stands (phases + named steps, no global numbering) | Must Have | Breadcrumb matrix (`ci/breadcrumb/run_matrix.sh`) passes, including the no-phase fallback; its RESULT line is the assertion count |
 
 ### 5.2 Role Skills and Commands
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|------------|:--------:|---------------------|
-| FR-5 | Each role has skills covering its full journey (PM: 10 skills; Architect: design-system, design-feature, review-code, review-design, verify-traceability; Dev: practices, TDD, generate-docs, apply-change, reviews; QA: plan/review/verify; Ops: build, deploy, IaC, rollback, monitor) | Must Have | Every step in the command map with a non-manual executor resolves to an existing skill, command, or agent; skill-lint CI gate passes |
+| FR-5 | Each role has skills covering its full journey (PM: 10 skills; Architect: design-system, design-feature, review-code, review-existing, review-design, verify-traceability; Dev: practices, TDD, generate-docs, apply-change, reviews; QA: plan/review/verify; Ops: build, deploy, IaC, rollback, monitor) | Must Have | Every step in the command map with a non-manual executor resolves to an existing skill, command, or agent; skill-lint CI gate passes |
 | FR-6 | Skills consume the previous step's outputs (issue, PRD entry, HLD, LLD) so no step starts from a blank page | Must Have | Architect design-feature reads the issue; dev-tdd reads the approved LLD; qa-plan-tests reads acceptance criteria from the PRD |
 | FR-7 | Independent review runs in a separate context from generation (reviewer subagents: architect, PM, QA, ops-release, spec-conformance) | Must Have | Spec-conformance review runs in a different context window from the implementer |
-| FR-8 | A Codex CLI surface mirrors the Claude Code skill surface for OpenAI Codex users | Should Have | `ai/codex/` install script wires AGENTS.md and hooks in a product repo |
+| FR-8 | A Codex CLI surface mirrors the Claude Code skill surface for OpenAI Codex users. **Not maintained since 2.10.0 (2026-09-04)**: `ai/codex/` stays in the repo for reference, no release validates it, and new capabilities are not mirrored | Deferred | `ai/codex/` install script wires AGENTS.md and hooks in a product repo (last verified on 2.9.x) |
 
 ### 5.3 Enforcement and Gates
 
@@ -139,6 +139,7 @@ acceptance criteria. Detail lives in each feature's requirements doc.
 | FR-33 | **Single developer mode**: team shape as a plan input, no handoffs to oneself, clean-context substitution recorded where a second reader is lost, questions for the architect and PM batched with assumption-and-proceed, floor unchanged | Backlog | [#135](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/135) | [single-developer-mode/requirements.md](single-developer-mode/requirements.md) |
 | FR-34 | **Branch context**: writes that belong to no active change (a new issue's PRD entry, backlog, design docs) go to main, never to another change's branch; one check at the writing command, park or sibling worktree, one way back, issue creation alone never moves a branch | Backlog | [#136](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/136) | [branch-context/requirements.md](branch-context/requirements.md) |
 | FR-35 | **Business-rule layer**: rules and workflow steps with evidence, owner, source and status, built in reverse from code and config, forward from the PRD delta and tests, observed where logging exists; reports the gaps between intended, implemented and observed; shares FR-31's evidence model and scorecard; off by default | Backlog | [#131](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/131) | in the epic (Part B); design core in [`../design/data-layer/`](../design/data-layer/) |
+| FR-36 | **Readable test scenarios**: one Given/When/Then file per change under the engineering testing directory, QA-owned, PM reviews and adds alongside the build (never a gate in front of coding by default), every scenario has an ID its test cites, a fail-closed check proves the link both ways, a scenario without a test is a recorded gap; plain markdown, not Gherkin | Backlog | [#148](https://github.com/Prasad-Apparaju/hitl-dev-platform/issues/148) | [readable-test-scenarios/requirements.md](readable-test-scenarios/requirements.md) |
 
 ---
 
@@ -149,8 +150,8 @@ acceptance criteria. Detail lives in each feature's requirements doc.
 | NFR-1 | Portability | Hard dependencies limited to bash, python3, PyYAML, git | Hooks run on macOS and Linux with stock tooling; optional deps (`gh`, `graphify`) degrade silently |
 | NFR-2 | Compatibility | Runtime schema changes are additive only | The `phase` field was added without breaking the v1.0.29/30 change-file surface; `n` retained |
 | NFR-3 | Correctness | Catalog derivation is lossless | CI proves derived `workflows.yaml` is byte-equivalent to the runtime file |
-| NFR-4 | Regression safety | Breadcrumb rendering is matrix-locked | 238 assertions across 24 cases must pass before any hook change merges |
-| NFR-5 | Tool independence | Process and docs are tool-agnostic; only enforcement hooks are tool-specific | Claude Code primary, Codex CLI surface maintained in parallel |
+| NFR-4 | Regression safety | Breadcrumb rendering is matrix-locked | Every assertion in `ci/breadcrumb/run_matrix.sh` must pass before any hook change merges (271 across 29 cases as of 2.16.1; the script's RESULT line is authoritative) |
+| NFR-5 | Tool independence | Process and docs are tool-agnostic; only enforcement hooks are tool-specific | Claude Code primary; the Codex CLI surface exists but is not maintained (FR-8) |
 | NFR-6 | Language scope | Process is language-agnostic; automated enforcement checks are Python-first | Non-Python repos get the full process, docs, and gates minus language-specific checks |
 | NFR-7 | Overhead | Setup cost is bounded and stated honestly | New project: 1-2 hours; existing project: about 1 day (per README) |
 

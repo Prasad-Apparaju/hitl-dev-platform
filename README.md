@@ -35,8 +35,8 @@ hitl-dev-platform/
 │   ├── commands/         Lightweight single-purpose prompts (review-design, verify-traceability, etc.)
 │   └── hooks/            Enforcement hooks — fire at PreToolUse/PostToolUse during every Claude session
 │
-│  ── Codex CLI (parallel surface for OpenAI Codex users) ──────────────────────
-├── ai/codex/                AGENTS.md, hooks, install script — mirrors the Claude Code skill surface
+│  ── Codex CLI (not maintained since 2.10; kept for reference) ────────────────
+├── ai/codex/                AGENTS.md, hooks, install script — a 2.9-era mirror of the skill surface
 │
 │  ── CI enforcement (workflows + scripts they invoke) ──────────────────────────
 ├── ci/
@@ -78,12 +78,13 @@ Pick the path that matches where you are:
 
 | Role | Commands | Guide |
 |------|----------|-------|
-| **Developer** | `/hitl:dev-practices`, `/hitl:dev-generate-docs`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-conclude`, `/hitl:dev-review-lld-adherence`, `/hitl:dev-review-security`, `/hitl:dev-preferences`, `/hitl:dev-draft-for` | [Developer guide](docs/roles/developer.md) |
-| **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 6 more | [PM guide](docs/roles/pm.md) |
-| **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code` | [Architect guide](docs/roles/architect.md) |
+| **Developer** | `/hitl:dev-start-change`, `/hitl:dev-practices`, `/hitl:dev-tdd`, `/hitl:dev-apply-change`, `/hitl:dev-verification-review`, `/hitl:dev-generate-docs`, `/hitl:dev-check-conventions`, `/hitl:dev-impact-brief`, `/hitl:dev-retro`, `/hitl:dev-switch-context`, `/hitl:dev-preferences`, `/hitl:dev-draft-for`, + 10 more (22 in all; see the [command map](docs/command-map.generated.md)) | [Developer guide](docs/roles/developer.md) |
+| **Product Manager** | `/hitl:pm-add-feature`, `/hitl:pm-design-feature`, `/hitl:pm-prioritize`, + 7 more (10 in all), plus `/hitl:agentic-intake` for agentic designs | [PM guide](docs/roles/pm.md) |
+| **Architect** | `/hitl:architect-design-system`, `/hitl:architect-design-feature`, `/hitl:architect-review-code`, `/hitl:architect-review-existing` | [Architect guide](docs/roles/architect.md) |
 | **Technical Advisor** | `/hitl:ta-approve` | Approve/reject design gates (scope, HLD, LLD, decision packet) |
 | **QA Engineer** | `/hitl:qa-plan-tests`, `/hitl:qa-review-tests`, `/hitl:qa-verify-quality`, `/hitl:qa-report-defect` | [QA guide](docs/roles/qa.md) |
-| **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-plan-platform`, `/hitl:ops-apply-iac`, `/hitl:ops-rollback`, + 10 more | [Ops guide](docs/roles/ops.md) |
+| **Ops Engineer** | `/hitl:ops-build`, `/hitl:ops-deploy`, `/hitl:ops-plan-platform`, `/hitl:ops-apply-iac`, `/hitl:ops-rollback`, + 10 more (15 in all) | [Ops guide](docs/roles/ops.md) |
+| **Any role** | `/hitl:help` (find the right command), `/hitl:team-pulse` (who is on what, who can unblock whom) | [Team Pulse](docs/team-pulse.md) |
 
 ---
 
