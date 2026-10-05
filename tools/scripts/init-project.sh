@@ -168,6 +168,11 @@ if ! grep -q "__pycache__" "$GITIGNORE" 2>/dev/null; then
   printf '\n# Python bytecode\n__pycache__/\n*.pyc\n' >> "$GITIGNORE"
   echo "✓ .gitignore — __pycache__/ excluded"
 fi
+# The breadcrumb band (FR-37) reads a cache the renderer rewrites on every prompt; never commit it.
+if ! grep -q "^\.hitl/breadcrumb\.txt" "$GITIGNORE" 2>/dev/null; then
+  printf '.hitl/breadcrumb.txt\n' >> "$GITIGNORE"
+  echo "✓ .gitignore — .hitl/breadcrumb.txt excluded (breadcrumb band cache)"
+fi
 
 if [[ ! -f "$TARGET_DIR/docs/system-manifest.yaml" ]]; then
   MANIFEST_TMPL="$PLATFORM_ROOT/ai/shared/templates/system-manifest-template.yaml"

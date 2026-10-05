@@ -440,6 +440,10 @@ if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
   printf '\n# HITL persona profiles — descriptions of people. Local unless your team decides otherwise.\n.hitl/people/\n' >> "$GITIGNORE"
   git add "$GITIGNORE" 2>/dev/null || true
 fi
+if ! grep -q "^\.hitl/breadcrumb\.txt" "$GITIGNORE" 2>/dev/null; then
+  printf '.hitl/breadcrumb.txt\n' >> "$GITIGNORE"   # breadcrumb band cache (FR-37), rewritten every prompt
+  git add "$GITIGNORE" 2>/dev/null || true
+fi
 # Verify, do not assert. .gitignore has no effect on a file git already tracks, and outside a repo
 # check-ignore fails in a way that reads as "not ignored".
 if git check-ignore -q .hitl/people/ 2>/dev/null; then

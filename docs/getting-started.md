@@ -145,6 +145,12 @@ The glyphs:
 | `⊘` | Skipped, and recorded |
 | `◐` | Started thin, needs enhancement later |
 
+**Prefer it as a band above the prompt?** On Claude Code 2.1.287 or later, add `breadcrumb: band`
+to `.hitl/config.yaml` and the same breadcrumb stays in view above the prompt instead of scrolling
+by in the transcript; `breadcrumb: both` keeps the transcript line too, which is what to pick when
+some of the team work in the VS Code panel or `claude -p`, where a mod cannot draw. Leave the key
+out and nothing changes.
+
 ### 5. Work
 
 Just work. Ask Claude to write the test, fix the bug, run the suite — normally. HITL advances the breadcrumb as steps complete and tells you when something needs to happen before you go further.

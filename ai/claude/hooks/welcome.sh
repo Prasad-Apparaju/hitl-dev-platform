@@ -51,6 +51,25 @@ fi
 # that parses to zero steps (malformed/legacy) would otherwise print "Step ? / N" silently —
 # instead fall through to the migrate hint (issue #15).
 cur=$(hitl_current_n "$HITL_FILE")
+# Breadcrumb band (FR-37): the renderer writes its line to .hitl/breadcrumb.txt for the band mod to
+# draw. Mode `band` draws only there, so the transcript stays quiet for an active change; `both`
+# does both; `text` (the default, and anything unset) is unchanged.
+mode=$(hitl_breadcrumb_mode ".hitl/config.yaml")
+if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then
+  _wf=$(hitl_workflow_field "$HITL_FILE" id)
+  _ribbon=$(hitl_render_ribbon "$HITL_FILE")
+  _step="$step_name"; [[ -z "$_step" ]] && _step=$(hitl_current_label "$HITL_FILE")
+  hitl_write_breadcrumb_cache "$HITL_FILE" \
+    "HITL ${_wf} ▸ ${change_id} ▸ ${_ribbon:-${phase:-$_wf}}" \
+    "▸ ${phase:-$_wf}: ${_step}   ·   tier ${tier:-?}" \
+    "$(hitl_next_hint_plain "$HITL_FILE")" \
+    "${warn#   }"
+  if [[ "$mode" == "band" ]]; then
+    # The band carries the breadcrumb; the one line kept is a directive to the model, not breadcrumb.
+    echo "  Plain English, short: shared/plain-english.md applies to every reply and document."
+    exit 0
+  fi
+fi
 echo "$SEP"
 if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then
   wf=$(hitl_workflow_field "$HITL_FILE" id)
