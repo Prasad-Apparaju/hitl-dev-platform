@@ -138,7 +138,7 @@ def test_dev_update_has_no_share_line():
 
 def test_the_share_line_is_in_no_hook():
     bad = []
-    for f in sorted(os.listdir(HOOKS)):
+    for f in sorted(x for x in os.listdir(HOOKS) if os.path.isfile(os.path.join(HOOKS, x))):
         text = _read(os.path.relpath(os.path.join(HOOKS, f), ROOT))
         for needle in (INSTALL_LINE, SHARE_SENTENCE, rn.WALKTHROUGH_URL, "release_notice"):
             if needle in text:
@@ -155,7 +155,7 @@ def test_the_named_surfaces_exist_and_carry_nothing(hook):
 
 
 def test_no_hook_talks_to_the_discussion_thread():
-    for f in sorted(os.listdir(HOOKS)):
+    for f in sorted(x for x in os.listdir(HOOKS) if os.path.isfile(os.path.join(HOOKS, x))):
         text = _read(os.path.relpath(os.path.join(HOOKS, f), ROOT))
         assert "addDiscussionComment" not in text and rn.THREAD_URL not in text, f
 

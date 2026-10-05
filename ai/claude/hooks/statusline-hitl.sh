@@ -86,6 +86,9 @@ if hitl_change_active "$YAML_FILE"; then
     wf=$(hitl_workflow_field "$YAML_FILE" id)
     [ -z "$step_name" ] && step_name=$(hitl_current_label "$YAML_FILE")
     trail=$(hitl_render_trail "$YAML_FILE" color "$step_name")
+    # Breadcrumb band (FR-37): keep the band's source fresh between prompts (the status line runs
+    # often; the welcome hook only on a prompt). Plain text, no colour.
+    hitl_write_breadcrumb_cache "$YAML_FILE" "HITL ${wf} ▸ ${change_id} ▸ $(hitl_render_ribbon "$YAML_FILE")" "$(hitl_next_hint_plain "$YAML_FILE")" "$( [ -n "$warn" ] && printf '⚠ branch≠%s' "$change_id" )"
     # Phase 2: compact "change ▸ phase ▸ step name" + numberless trail. No global counter.
     hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL ▸ ${change_id} ▸ ${phase:-$wf} ▸ ${step_name} [T${tier}]${next_hint}${warn}\n     ${trail}"
   else

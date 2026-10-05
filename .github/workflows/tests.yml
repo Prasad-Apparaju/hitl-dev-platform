@@ -38,6 +38,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pyyaml semgrep
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install the Claude Code CLI
+        # ci/breadcrumb-mod runs `claude plugin validate` and `claude plugin test` on the breadcrumb
+        # band mod (FR-37). Neither needs a login or the network once installed. Without the CLI
+        # that test skips, and the skip guard below fails the run.
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+
       - name: Test suite
         run: python -m pytest ci/ tools/ -q -rs
 

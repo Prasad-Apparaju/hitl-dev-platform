@@ -499,6 +499,41 @@ assert_contains    "merged/inactive: statusline no-active-change" "$status" "no 
 assert_not_contains "merged/inactive: no stale trail"            "$banner" "▶ Generate Code"
 assert_no_error_leak "merged/inactive"                           "$combined"
 
+echo "── case: breadcrumb band cache (FR-37) ──"
+# The renderer writes .hitl/breadcrumb.txt for the band mod: line 1 is the banner's ribbon line
+# without its indent, line 2 the next-step hint, line 3 the warning. Mode text (default) leaves the
+# banner unchanged; mode band prints nothing for an active change; mode both prints and writes.
+dir="$(new_case_dir "band_cache" "issue/000-x")"
+emit_change_yaml development 13 "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
+banner="$(run_welcome "$dir")"
+cache_line1="$(sed -n 1p "$dir/.hitl/breadcrumb.txt" 2>/dev/null)"
+cache_line2="$(sed -n 2p "$dir/.hitl/breadcrumb.txt" 2>/dev/null)"
+banner_line="$(printf '%s\n' "$banner" | grep -m1 '^  HITL ' | sed 's/^  //')"
+[[ -n "$cache_line1" ]] && _ok "band/cache: file written" || _bad "band/cache: file written"
+[[ "$cache_line1" == "$banner_line" ]] && _ok "band/cache: line 1 equals the banner ribbon line" || _bad "band/cache: line 1 equals the banner ribbon line (cache='$cache_line1' banner='$banner_line')"
+# The matrix fixtures carry no `command:` on their steps, so the hint is empty here; the hint text
+# itself is covered by the statusline assertions. Assert the shape: exactly three lines.
+[[ "$(wc -l < "$dir/.hitl/breadcrumb.txt" | tr -d ' ')" == "3" ]] && _ok "band/cache: three lines" || _bad "band/cache: three lines"
+[[ -z "$cache_line2" ]] && _ok "band/cache: line 2 empty when the step has no command" || _bad "band/cache: line 2 empty when the step has no command"
+assert_contains  "band/text: banner still prints the ribbon" "$banner" "HITL development ▸"
+printf 'breadcrumb: band\n' > "$dir/.hitl/config.yaml"
+rm -f "$dir/.hitl/breadcrumb.txt"
+banner="$(run_welcome "$dir")"
+[[ -z "$banner" ]] && _ok "band/band: banner prints nothing for an active change" || _bad "band/band: banner prints nothing for an active change"
+[[ -s "$dir/.hitl/breadcrumb.txt" ]] && _ok "band/band: cache still written" || _bad "band/band: cache still written"
+printf 'breadcrumb: both\n' > "$dir/.hitl/config.yaml"
+banner="$(run_welcome "$dir")"
+assert_contains  "band/both: banner prints the ribbon" "$banner" "HITL development ▸"
+status="$(run_statusline "$dir")"
+assert_contains  "band/both: statusline unchanged" "$status" "HITL ▸"
+[[ -s "$dir/.hitl/breadcrumb.txt" ]] && _ok "band/both: statusline wrote the cache" || _bad "band/both: statusline wrote the cache"
+# no active change: no cache is written and the intake directive still prints in band mode
+dir2="$(new_case_dir "band_nochange" "main")"
+printf 'breadcrumb: band\n' > "$dir2/.hitl/config.yaml"
+banner="$(run_welcome "$dir2")"
+assert_contains  "band/nochange: intake directive prints in band mode" "$banner" "NO ACTIVE CHANGE"
+[[ ! -e "$dir2/.hitl/breadcrumb.txt" ]] && _ok "band/nochange: no cache written" || _bad "band/nochange: no cache written"
+
 # ── summary ─────────────────────────────────────────────────────────────────────────────────────
 echo "================================================================"
 echo " RESULT: $PASS passed, $FAIL failed (of $((PASS+FAIL)) assertions)"

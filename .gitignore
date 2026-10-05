@@ -14,6 +14,7 @@ docs/session-logs/
 .hitl/*.migrated
 .hitl/first-pass-choices.json
 .hitl/backups/
+.hitl/breadcrumb.txt
 
 # Internal / confidential — never publish to the public repo
 docs/business/

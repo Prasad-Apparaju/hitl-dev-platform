@@ -376,3 +376,41 @@ hitl_render_ribbon() {
   local cp; cp=$(hitl_cs_field "$f" phase)
   [[ -n "$cp" ]] && printf "%s ◐" "$cp"
 }
+
+# ── Breadcrumb band (FR-37) ───────────────────────────────────────────────────────────────────
+# hitl_breadcrumb_mode <config.yaml> → text | band | both. Reads the team setting `breadcrumb:`
+# from .hitl/config.yaml; absent, unreadable or anything else → text (today's behaviour).
+hitl_breadcrumb_mode() {
+  local cfg="$1" mode=""
+  [[ -f "$cfg" ]] && mode=$(hitl_scalar "$cfg" breadcrumb)
+  case "$mode" in band|both) echo "$mode" ;; *) echo "text" ;; esac
+}
+
+# hitl_write_breadcrumb_cache <yaml> <ribbon-line> <hint> <warn> → write .hitl/breadcrumb.txt beside
+# the change file: line 1 the ribbon line as the banner prints it (no leading spaces, no ANSI),
+# line 2 the next-step hint, line 3 the warning; each may be empty. Written to a temp file and
+# moved, so a reader never sees a half-written file. This is the ONLY thing the breadcrumb band
+# mod (hooks/breadcrumb-band.js) draws from: the mod never parses the change file and never
+# renders the ribbon itself, so the band and the banner cannot drift (requirements BM-3).
+hitl_write_breadcrumb_cache() {
+  local yaml="$1" line="$2" hint="$3" warn="$4" dir tmp
+  dir="$(dirname "$yaml")"
+  [[ -d "$dir" ]] || return 0
+  tmp="$dir/.breadcrumb.txt.tmp.$$"
+  printf '%s\n%s\n%s\n' "$line" "$hint" "$warn" > "$tmp" 2>/dev/null && mv -f "$tmp" "$dir/breadcrumb.txt" 2>/dev/null
+  return 0
+}
+
+# hitl_next_hint_plain <yaml> → the next-step hint without colour: "→ /hitl:<cmd>",
+# "→ yours to do, no command", "→ say go, Claude walks it", or empty.
+hitl_next_hint_plain() {
+  local yaml="$1" cmd
+  cmd=$(hitl_current_command "$yaml")
+  [[ -z "$cmd" ]] && cmd=$(hitl_cs_field "$yaml" command)
+  case "$cmd" in
+    ""|null)  echo "" ;;
+    manual)   echo "→ yours to do, no command" ;;
+    guided)   echo "→ say go, Claude walks it" ;;
+    *)        echo "→ /hitl:${cmd}" ;;
+  esac
+}

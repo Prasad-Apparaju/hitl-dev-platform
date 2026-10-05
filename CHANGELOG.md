@@ -4,6 +4,22 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Breadcrumb as a band above the prompt** (FR-37, #150). On Claude Code 2.1.287 or later the
+  HITL plugin carries a small mod that draws the breadcrumb as a persistent band above the prompt,
+  with the current step in bold and the next-step hint under it. It is off by default: set
+  `breadcrumb: band` in `.hitl/config.yaml` to draw the band and quiet the transcript ribbon, or
+  `breadcrumb: both` to have both (the right choice for a team with people in the VS Code panel or
+  on `claude -p`, where a mod cannot draw). The mod is draw-only: it handles the band's render event
+  and the turn-end event, reads two files in the project, and approves, rewrites and spawns
+  nothing; `claude plugin validate` shows exactly that, and a test in `ci/breadcrumb-mod/` fails if
+  it ever changes. The shell renderer stays the only renderer: it now writes its line to
+  `.hitl/breadcrumb.txt` (ignored by git; onboarding and `/hitl:dev-update` add the ignore line) and
+  the band draws that text, so the band and the transcript cannot disagree.
+
 ## [2.17.0] — 2026-10-04
 
 ### Added
