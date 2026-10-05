@@ -61,5 +61,7 @@ def test_renderer_writes_the_cache_from_both_callers():
     assert "hitl_write_breadcrumb_cache()" in steps and "hitl_breadcrumb_mode()" in steps
     for rel in ("ai/claude/hooks/welcome.sh", "ai/claude/hooks/statusline-hitl.sh"):
         assert "hitl_write_breadcrumb_cache" in _read(rel), rel
-    assert 'exit 0' in _read("ai/claude/hooks/welcome.sh").split('hitl_breadcrumb_mode')[1][:600], \
-        "welcome.sh does not quiet the transcript in band mode"
+    welcome = _read("ai/claude/hooks/welcome.sh")
+    band_block = welcome[welcome.index('"$mode" == "band"'):][:400]
+    assert 'exit 0' in band_block, "welcome.sh does not quiet the transcript in band mode"
+    assert 'Plain English, short' in band_block, "band mode must keep the plain-English directive line"

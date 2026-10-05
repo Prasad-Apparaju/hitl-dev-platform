@@ -28,7 +28,7 @@ FORBIDDEN_NAMESPACES = ("process.", "http.", "model.", "store.", "clock.", "comm
 CLAUDE = shutil.which("claude")
 pytestmark = pytest.mark.skipif(
     CLAUDE is None,
-    reason="the `claude` CLI is not on PATH; `claude plugin validate` and `claude plugin test` "
+    reason="the `claude` CLI is not installed (not on PATH); `claude plugin validate` and `claude plugin test` "
            "need Claude Code 2.1.287 or later (install it in CI before this job)")
 
 _spec = importlib.util.spec_from_file_location("assemble_plugin", os.path.join(HERE, "assemble_plugin.py"))

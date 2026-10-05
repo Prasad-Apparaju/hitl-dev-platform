@@ -9,9 +9,9 @@
 ## 1. The idea in one paragraph
 
 The shell renderer already draws the breadcrumb twice: into the transcript on every prompt and into
-the status line. It now also writes the rendered line to a three-line cache file next to the
+the status line. It now also writes the rendered lines to a four-line cache file next to the
 change file. A mod inside the HITL plugin reads that file when Claude Code draws the band above
-the prompt, and draws it there with the current step in bold. The mod handles two events, calls
+the prompt, and draws it there with the current phase in bold and the step line under it. The mod handles two events, calls
 four methods, and parses nothing but a one-key setting. A team turns it on with one line in
 `.hitl/config.yaml`; with the line absent nothing changes. Where a mod cannot draw, the transcript
 line and the status line carry on as the setting says.
@@ -46,12 +46,12 @@ flowchart LR
 ```
 
 1. **The cache file** `.hitl/breadcrumb.txt`: line 1 the ribbon line as the banner prints it, line 2
-   the next-step hint, line 3 the branch warning; written to a temp name and moved.
+   the step line, line 3 the next-step hint, line 4 the branch warning; written to a temp name and moved.
 2. **The renderer** writes it from both callers. The welcome hook reads the mode and, for `band`,
-   exits before printing when there is an active change; the intake directive for no active change
+   prints only the plain-English directive line when there is an active change; the intake directive for no active change
    still prints in every mode.
 3. **The mod** `hooks/breadcrumb-band.js`: on `ui.render` for the band, read the mode; unless
-   `band` or `both`, draw nothing of its own; else read the cache and draw three lines, keeping
+   `band` or `both`, draw nothing of its own; else read the cache and draw four lines, keeping
    whatever another mod drew in the band. On `turn.complete`, ask for a redraw.
 4. **The guard** `ci/breadcrumb-mod/test_breadcrumb_mod.py` assembles a plugin directory from
    the source, runs `claude plugin validate --json` and asserts the exact set of events and calls,
@@ -62,7 +62,7 @@ flowchart LR
 | Setting | Terminal or Desktop app, Claude Code 2.1.287 or later | Anywhere else |
 |---|---|---|
 | absent or `text` | Transcript ribbon each prompt, status line. Exactly 2.17.0. | Same |
-| `band` | Band above the prompt, status line. The transcript ribbon is gone; the intake directive still prints when no change is active. | Status line only, no ribbon. The docs say so and recommend `both` for a mixed team. |
+| `band` | Band above the prompt, status line. The transcript ribbon is gone (the one-line plain-English directive stays); the intake directive still prints when no change is active. | Status line only, no ribbon. The docs say so and recommend `both` for a mixed team. |
 | `both` | Band and transcript ribbon, status line. | Transcript ribbon, status line. |
 
 ## 5. Freshness

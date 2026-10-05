@@ -58,8 +58,17 @@ mode=$(hitl_breadcrumb_mode ".hitl/config.yaml")
 if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then
   _wf=$(hitl_workflow_field "$HITL_FILE" id)
   _ribbon=$(hitl_render_ribbon "$HITL_FILE")
-  hitl_write_breadcrumb_cache "$HITL_FILE" "HITL ${_wf} ▸ ${change_id} ▸ ${_ribbon:-${phase:-$_wf}}" "$(hitl_next_hint_plain "$HITL_FILE")" "${warn#   }"
-  [[ "$mode" == "band" ]] && exit 0
+  _step="$step_name"; [[ -z "$_step" ]] && _step=$(hitl_current_label "$HITL_FILE")
+  hitl_write_breadcrumb_cache "$HITL_FILE" \
+    "HITL ${_wf} ▸ ${change_id} ▸ ${_ribbon:-${phase:-$_wf}}" \
+    "▸ ${phase:-$_wf}: ${_step}   ·   tier ${tier:-?}" \
+    "$(hitl_next_hint_plain "$HITL_FILE")" \
+    "${warn#   }"
+  if [[ "$mode" == "band" ]]; then
+    # The band carries the breadcrumb; the one line kept is a directive to the model, not breadcrumb.
+    echo "  Plain English, short: shared/plain-english.md applies to every reply and document."
+    exit 0
+  fi
 fi
 echo "$SEP"
 if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then

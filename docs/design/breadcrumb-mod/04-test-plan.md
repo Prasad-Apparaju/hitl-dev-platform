@@ -6,11 +6,11 @@
 
 | Assertion | Expect |
 |---|---|
-| Default mode writes the cache | file exists, three lines |
+| Default mode writes the cache | file exists, four lines; line 1 marks the current phase with ◐; line 2 is the step line with the tier |
 | Line 1 equals the banner's ribbon line without indent | string equality |
-| Line 2 empty when the step has no command (the fixtures carry none) | empty |
+| Line 3 empty when the step has no command (the fixtures carry none) | empty |
 | Default mode banner unchanged | contains `HITL development ▸` |
-| `band`: banner prints nothing for an active change; cache still written | empty stdout; file non-empty |
+| `band`: banner prints no ribbon for an active change, only the plain-English directive; cache still written | no `HITL development ▸`; contains `Plain English, short`; file non-empty |
 | `both`: banner prints; status line unchanged; status line wrote the cache | contains the ribbon; contains `HITL ▸`; file non-empty |
 | `band` with no active change: intake directive prints; no cache written | contains `NO ACTIVE CHANGE`; no file |
 | Every pre-existing assertion | unchanged, 271 |
@@ -21,10 +21,10 @@
 |---|---|---|
 | config absent | `fs.exists` false for config | only the stub's text in the band, no ribbon |
 | `breadcrumb: text` | config present, text | same |
-| `breadcrumb: band`, cache present | both files | ribbon text found; the segment from `▶` is a bold Text; hint line dim; the stub's text still present |
+| `breadcrumb: band`, cache present | both files | ribbon text found; the current phase piece (`Build ◐`) is a bold Text; the step line present; hint line dim; the stub's text still present |
 | `breadcrumb: band`, cache missing | config present, cache absent | nothing of ours drawn |
 | `breadcrumb: both`, surface desktop | both files | ribbon found |
-| warning line | cache with a third line | a red Text with the warning |
+| warning line | cache with a fourth line | a red Text with the warning |
 | `turn.complete` | stub returns `{ text: '' }` | the hook calls next and does not throw |
 
 ## 3. Footprint guard: `ci/breadcrumb-mod/test_breadcrumb_mod.py`

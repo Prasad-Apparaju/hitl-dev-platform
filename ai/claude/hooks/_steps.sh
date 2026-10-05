@@ -386,18 +386,19 @@ hitl_breadcrumb_mode() {
   case "$mode" in band|both) echo "$mode" ;; *) echo "text" ;; esac
 }
 
-# hitl_write_breadcrumb_cache <yaml> <ribbon-line> <hint> <warn> → write .hitl/breadcrumb.txt beside
-# the change file: line 1 the ribbon line as the banner prints it (no leading spaces, no ANSI),
-# line 2 the next-step hint, line 3 the warning; each may be empty. Written to a temp file and
-# moved, so a reader never sees a half-written file. This is the ONLY thing the breadcrumb band
-# mod (hooks/breadcrumb-band.js) draws from: the mod never parses the change file and never
-# renders the ribbon itself, so the band and the banner cannot drift (requirements BM-3).
+# hitl_write_breadcrumb_cache <yaml> <ribbon-line> <step-line> <hint> <warn> → write .hitl/breadcrumb.txt
+# beside the change file, four lines, no indent, no ANSI: 1 the ribbon line as the banner prints it
+# (`HITL <wf> ▸ <id> ▸ Requirements ✓  Design ◐  ...`, the current phase marked ◐), 2 the step line
+# (`▸ <phase>: <step name>   ·   tier <n>`), 3 the next-step hint, 4 the branch warning; 3 and 4 may
+# be empty. Written to a temp file and moved, so a reader never sees a half-written file. This is
+# the ONLY thing the breadcrumb band mod (hooks/breadcrumb-band.js) draws from: the mod never parses
+# the change file and never renders the ribbon itself, so the band and the banner cannot drift (BM-3).
 hitl_write_breadcrumb_cache() {
-  local yaml="$1" line="$2" hint="$3" warn="$4" dir tmp
+  local yaml="$1" line="$2" step="$3" hint="$4" warn="$5" dir tmp
   dir="$(dirname "$yaml")"
   [[ -d "$dir" ]] || return 0
   tmp="$dir/.breadcrumb.txt.tmp.$$"
-  printf '%s\n%s\n%s\n' "$line" "$hint" "$warn" > "$tmp" 2>/dev/null && mv -f "$tmp" "$dir/breadcrumb.txt" 2>/dev/null
+  printf '%s\n%s\n%s\n%s\n' "$line" "$step" "$hint" "$warn" > "$tmp" 2>/dev/null && mv -f "$tmp" "$dir/breadcrumb.txt" 2>/dev/null
   return 0
 }
 

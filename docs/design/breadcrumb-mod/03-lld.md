@@ -11,15 +11,16 @@ the mod with `/^breadcrumb:\s*([a-z]+)/m` on the file's text; no YAML parser in 
 
 ## 2. The cache file
 
-`.hitl/breadcrumb.txt`, beside the change file, three lines, UTF-8, no colour codes:
+`.hitl/breadcrumb.txt`, beside the change file, four lines, UTF-8, no colour codes:
 
 | Line | Content | Example |
 |---|---|---|
-| 1 | The ribbon line as `welcome.sh` prints it, without the two-space indent | `HITL development ▸ GH-123 ▸ Requirements ✓ › Design ▶ Tests · Train · Packet › Build ·` |
-| 2 | The next-step hint, or empty | `→ /hitl:qa-plan-tests`, `→ yours to do, no command`, `→ say go, Claude walks it` |
-| 3 | The branch warning, or empty | `⚠ branch=main ≠ GH-123. Context may be stale; run /hitl:dev-switch-context` |
+| 1 | The ribbon line as `welcome.sh` prints it, without the two-space indent. The current phase is marked `◐`, phases are two spaces apart. | `HITL development ▸ GH-123 ▸ Requirements ✓  Design ✓  Build ◐  Verify ·  Assess ·  Ship ·  Post-Ship ·` |
+| 2 | The step line as the banner prints it | `▸ Build: Generate Code (GREEN)   ·   tier 2` |
+| 3 | The next-step hint, or empty | `→ /hitl:qa-plan-tests`, `→ yours to do, no command`, `→ say go, Claude walks it` |
+| 4 | The branch warning, or empty; one form from both writers | `⚠ branch=main ≠ GH-123. Context may be stale; run /hitl:dev-switch-context` |
 
-Written by `hitl_write_breadcrumb_cache <yaml> <line1> <line2> <line3>`: to `.breadcrumb.txt.tmp.<pid>`
+Written by `hitl_write_breadcrumb_cache <yaml> <ribbon> <step> <hint> <warn>`: to `.breadcrumb.txt.tmp.<pid>`
 then `mv -f`, so a reader never sees a partial file. Never fails the caller (returns 0). Not written
 when there is no active change or the workflow block does not render; a stale file from an earlier
 change is harmless because the mod reads it only when a change is active in the renderer's terms,
@@ -38,7 +39,7 @@ Step 4.9 each append `.hitl/breadcrumb.txt` when absent, the way `.hitl/people/`
 mode = hitl_breadcrumb_mode .hitl/config.yaml
 if active change and the workflow block renders:
     write the cache
-    if mode == band: exit 0          # nothing printed for an active change
+    if mode == band: print the plain-English directive line only; exit 0
 print the banner as today            # text and both
 ```
 
@@ -63,13 +64,14 @@ export function register(on) {
     const mode = await readMode($)
     if (mode !== 'band' && mode !== 'both') return next(e)
     if (!(await $.fs.exists('.hitl/breadcrumb.txt'))) return next(e)
-    const [line1, line2, line3] = (await $.fs.read('.hitl/breadcrumb.txt')).split('\n')
+    const [ribbon, step, hint, warn] = (await $.fs.read('.hitl/breadcrumb.txt')).split('\n')
     const { Box, Text } = $.ui.resolve(e)
     const theirs = await next(e)
     return Box({ flexDirection: 'column', children: [
-      /* line1 as a row: plain before ▶, bold from ▶ to the next ' ·' or ' ›' or end, plain after; wrap truncate-end */
-      /* line2 dimColor when non-empty */
-      /* line3 color red when non-empty */
+      /* ribbon: plain before the current phase, bold from the phase name to its ◐, plain after; wrap truncate-end */
+      /* step line plain when non-empty */
+      /* hint dimColor when non-empty */
+      /* warn color red when non-empty */
       /* theirs when truthy */
     ] })
   })
@@ -88,9 +90,9 @@ As built (verified against the runtime with a probe, 2.1.289):
 - `$.fs.read` resolves to a plain string and `$.fs.exists` to a boolean in the mod; the
   `{ value }` envelope is only the test stub's return shape.
 - The ribbon line is one outer `Text({ wrap: 'truncate-end' })` holding three nested Text pieces
-  (before, bold current step, after), not a Box row: truncation of a row Box does not cut as one
+  (before, bold current phase up to its `◐`, after), not a Box row: truncation of a row Box does not cut as one
   line, nested Text does.
-- A blank ribbon line draws nothing of ours (returns `next(e)`); a ribbon with no `▶` is drawn
+- A blank ribbon line draws nothing of ours (returns `next(e)`); a ribbon with no `◐` is drawn
   plain; an empty cache file draws nothing and does not throw.
 - In tests, `ui.find({ text: /re/ })` matches the outer element first (its text is the
   concatenation), so the tests use anchored expressions to reach the bold piece and assert on

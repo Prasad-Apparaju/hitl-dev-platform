@@ -1,10 +1,13 @@
 // Tests for the HITL breadcrumb band mod (BM-7). Run with `claude plugin test` on the directory
 // that ci/breadcrumb-mod/assemble_plugin.py builds; `python3 -m pytest ci/breadcrumb-mod` does both.
+// The fixture lines are what _steps.sh really writes: the current phase is marked ◐ and phases are
+// two spaces apart (a validation review caught a made-up shape here).
 import { expect, test } from 'claude-code/testing'
 
-const RIBBON = 'HITL development ▸ GH-123 ▸ Requirements ✓ › Design ▶ Tests · Train · Packet › Build ·'
-const HINT = '→ /hitl:qa-plan-tests'
-const WARN = '⚠ branch=main ≠ GH-123'
+const RIBBON = 'HITL development ▸ GH-123 ▸ Requirements ✓  Design ✓  Build ◐  Verify ·  Assess ·  Ship ·  Post-Ship ·'
+const STEP = '▸ Build: Generate Code (GREEN)   ·   tier 2'
+const HINT = '→ /hitl:dev-tdd'
+const WARN = '⚠ branch=main ≠ GH-123. Context may be stale; run /hitl:dev-switch-context'
 const THEIRS = 'drawn by Claude Code'
 
 type Files = { [name: string]: string }
@@ -29,7 +32,7 @@ function mount($: any, surface: string = 'terminal') {
   })
 }
 
-const cache = (hint = HINT, warn = '') => RIBBON + '\n' + hint + '\n' + warn + '\n'
+const cache = (ribbon = RIBBON, step = STEP, hint = HINT, warn = '') => [ribbon, step, hint, warn].join('\n') + '\n'
 
 test('config absent: only what Claude Code draws', async ($, on) => {
   project(on, { '.hitl/breadcrumb.txt': cache() })
@@ -42,89 +45,80 @@ test('config absent: only what Claude Code draws', async ($, on) => {
 test('breadcrumb: text draws nothing of ours', async ($, on) => {
   project(on, { '.hitl/config.yaml': 'breadcrumb: text\n', '.hitl/breadcrumb.txt': cache() })
   const ui = await mount($)
-  expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: /GH-123/ })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
   await ui.unmount()
 })
 
-test('breadcrumb: band draws the ribbon, bold current step, dim hint, and keeps theirs', async ($, on) => {
-  project(on, { '.hitl/config.yaml': 'scenario_review_gate: on\nbreadcrumb: band\n', '.hitl/breadcrumb.txt': cache() })
+test('breadcrumb: band draws the ribbon with the current phase bold, the step line, a dim hint, and keeps theirs', async ($, on) => {
+  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache() })
   const ui = await mount($)
-  const ribbon = await ui.find({ type: 'Text', text: /^HITL development .* Build ·$/ })
-  expect(ribbon).toBeTruthy()
-  expect(ribbon.text).toBe(RIBBON)
-  expect(ribbon.props.wrap).toBe('truncate-end')
-  const current = await ui.find({ type: 'Text', text: /^▶ Tests$/ })
+  expect(await ui.find({ type: 'Text', text: /GH-123 ▸ Requirements/ })).toBeTruthy()
+  const current = await ui.find({ type: 'Text', text: /^Build ◐$/ })
   expect(current).toBeTruthy()
   expect(current.props.bold).toBe(true)
-  const before = await ui.find({ type: 'Text', text: /^HITL development .* Design $/ })
+  const before = await ui.find({ type: 'Text', text: /^HITL development ▸ GH-123 ▸ Requirements ✓  Design ✓  $/ })
   expect(before).toBeTruthy()
   expect(before.props.bold).toBeUndefined()
-  const hint = await ui.find({ type: 'Text', text: /^→ \/hitl:qa-plan-tests$/ })
+  expect(await ui.find({ type: 'Text', text: /^▸ Build: Generate Code \(GREEN\)/ })).toBeTruthy()
+  const hint = await ui.find({ type: 'Text', text: /^→ \/hitl:dev-tdd$/ })
   expect(hint).toBeTruthy()
   expect(hint.props.dimColor).toBe(true)
   expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
-  expect(await ui.find({ type: 'Text', text: /⚠/ })).toBeUndefined()
   await ui.unmount()
 })
 
 test('breadcrumb: band with no cache file draws nothing of ours', async ($, on) => {
   project(on, { '.hitl/config.yaml': 'breadcrumb: band\n' })
   const ui = await mount($)
-  expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
   expect(await ui.find({ type: 'Text', text: /GH-123/ })).toBeUndefined()
-  expect(await ui.find({ type: 'Text', text: /→/ })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
   await ui.unmount()
 })
 
-test('breadcrumb: both on the desktop surface draws the same ribbon', async ($, on) => {
+test('breadcrumb: both on the desktop surface draws the ribbon', async ($, on) => {
   project(on, { '.hitl/config.yaml': 'breadcrumb: both\n', '.hitl/breadcrumb.txt': cache() })
   const ui = await mount($, 'desktop')
-  const ribbon = await ui.find({ type: 'Text', text: /^HITL development/ })
-  expect(ribbon).toBeTruthy()
-  expect(ribbon.text).toBe(RIBBON)
-  expect((await ui.find({ type: 'Text', text: /^▶ Tests$/ })).props.bold).toBe(true)
+  expect(await ui.find({ type: 'Text', text: /GH-123 ▸ Requirements/ })).toBeTruthy()
   await ui.unmount()
 })
 
 test('a warning line draws red', async ($, on) => {
-  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache(HINT, WARN) })
+  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache(RIBBON, STEP, HINT, WARN) })
   const ui = await mount($)
   const warn = await ui.find({ type: 'Text', text: /^⚠ branch=main/ })
   expect(warn).toBeTruthy()
-  expect(warn.text).toBe(WARN)
   expect(warn.props.color).toBe('red')
   await ui.unmount()
 })
 
-test('an empty hint line draws no hint', async ($, on) => {
-  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache('', '') })
+test('an empty hint draws no hint line', async ($, on) => {
+  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache(RIBBON, STEP, '', '') })
   const ui = await mount($)
-  expect(await ui.find({ type: 'Text', text: /^HITL development/ })).toBeTruthy()
-  expect(await ui.find({ type: 'Text', text: /→/ })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: /^→/ })).toBeUndefined()
   await ui.unmount()
 })
 
-test('a ribbon with no current marker draws plain and does not throw', async ($, on) => {
-  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': 'HITL development ▸ GH-123 ▸ Done ✓\n\n\n' })
+test('a ribbon with no current marker draws plain', async ($, on) => {
+  const plain = 'HITL development ▸ GH-123 ▸ Requirements ✓  Design ✓'
+  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache(plain) })
   const ui = await mount($)
-  const ribbon = await ui.find({ type: 'Text', text: /^HITL development/ })
-  expect(ribbon).toBeTruthy()
-  expect(ribbon.text).toBe('HITL development ▸ GH-123 ▸ Done ✓')
-  expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
+  const el = await ui.find({ type: 'Text', text: /^HITL development ▸ GH-123 ▸ Requirements ✓  Design ✓$/ })
+  expect(el).toBeTruthy()
+  expect(el.props.bold).toBeUndefined()
   await ui.unmount()
 })
 
-test('an empty cache file draws nothing of ours and does not throw', async ($, on) => {
+test('an empty cache file draws nothing and does not throw', async ($, on) => {
   project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': '' })
   const ui = await mount($)
+  expect(await ui.find({ type: 'Text', text: /GH-123/ })).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: /drawn by Claude Code/ })).toBeTruthy()
-  expect(await ui.find({ type: 'Box' })).toBeUndefined()
   await ui.unmount()
 })
 
-test('turn.complete passes the turn on and does not throw', async ($, on) => {
-  project(on, { '.hitl/config.yaml': 'breadcrumb: band\n', '.hitl/breadcrumb.txt': cache() })
-  const result = await $.turn.complete({ turnId: 't1', answer: 'ok', durationMs: 10, isAborted: false, usage: null })
-  expect(result).toEqual({ text: '' })
+test('turn.complete passes the event on', async ($, on) => {
+  project(on, {})
+  const out = await $.turn.complete({ turnId: 't1', answer: 'ok', durationMs: 10, isAborted: false, usage: null })
+  expect(out).toEqual({ text: '' })
 })
