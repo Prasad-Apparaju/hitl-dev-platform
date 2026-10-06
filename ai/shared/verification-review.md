@@ -7,6 +7,21 @@ and it reports what it verified by running, one page, then stops. "It is right" 
 It is offered at two points where work is genuinely finished and still cheap to correct
 (`adv_design`, `adv_code`), and required once at `release`, where the blast radius is real.
 
+## Contents
+
+- What it replaced, and why
+- Why it is offered early rather than only at the end
+- What to say when offering
+- The brief, in one paragraph
+- Presenting what came back
+- The lens catalog
+- When to encourage more strongly
+- When it is required rather than offered
+- Where the gate actually binds
+- Declining is recorded, not resisted
+- Running one
+- Recording the result
+
 ## What it replaced, and why
 
 Until 2.10 this was an adversarial review: the reviewer was told to assume the work was broken and

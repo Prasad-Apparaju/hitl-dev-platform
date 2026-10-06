@@ -73,6 +73,12 @@ Ensure the `.hitl/` directory exists: `mkdir -p .hitl`
 
 ---
 
+## Rules that hold throughout
+
+- Open ADRs on the foundational decision list (tech stack, data storage, auth, API style, deployment model) must be resolved before HLDs are generated.
+
+---
+
 ## Phase 1 — PRD Analysis
 
 ### 1a. Read the PRD
@@ -134,22 +140,7 @@ This is the most consequential decision in the session. Domain boundary errors c
 
 ### 2a. Propose candidate domains
 
-From the PRD use cases and functional requirements, identify candidate domains using these heuristics:
-
-- **Group by business capability**, not technical layer. "Billing" is a domain; "database" is not.
-- **Separate by rate of change.** Capabilities that evolve independently belong in separate domains.
-- **Separate by data ownership.** Each domain should own its data and be the authoritative source for it.
-- **Respect transaction boundaries.** If two operations must succeed or fail together, keep them in the same domain. Avoid distributed transactions between domains.
-- **Identify the core domain.** Which capability is the primary competitive differentiator? It deserves the most careful design. Supporting and generic capabilities can be simpler.
-
-For each candidate domain, specify:
-```
-Domain: <name>
-Purpose: <one sentence>
-Owns: <what data/state this domain is the authority for>
-Key responsibilities: <3-5 bullet points from the PRD>
-Does NOT own: <explicit exclusions to prevent creep>
-```
+From the PRD use cases and functional requirements, identify candidate domains with the heuristics in [phase-detail.md](phase-detail.md), section "Phase 2a": group by business capability, not technical layer; separate by rate of change; separate by data ownership; respect transaction boundaries; identify the core domain. Write the domain record given there for each candidate: name, purpose, what it owns, key responsibilities, what it does NOT own.
 
 ### 2b. Map the interaction structure
 
@@ -168,13 +159,7 @@ Flag any circular dependencies — they indicate a boundary is in the wrong plac
 
 ### 2c. Challenge the decomposition
 
-Before presenting to the architect, challenge it yourself:
-
-- Is any domain doing too many unrelated things? (should be split)
-- Are two domains always deployed or changed together? (may belong together)
-- Does any interaction require tight coupling (shared mutable state, synchronous chains of 3+)? (boundary may be wrong)
-- Is there a domain with no facade APIs that other domains call? (may not be a domain — may be a library)
-- Would a single developer be able to implement one of these domains without understanding the internals of the others? (if no, boundary is leaking)
+Before presenting to the architect, challenge it yourself with the five questions in [phase-detail.md](phase-detail.md), section "Phase 2c": a domain doing unrelated things, two domains always deployed or changed together, an interaction that needs tight coupling, a domain with no facade APIs anyone calls, a domain one developer could not build without the others' internals.
 
 ### 2d. Gate — architect confirms domain breakdown
 
@@ -264,43 +249,11 @@ On confirmation, update `.hitl/design-system.yaml`: set `status: manifest-confir
 ## Phase 5 — System-Level HLDs
 
 Generate the following HLDs using `shared/templates/hld-template.md`. Each must read from the confirmed manifest and ADRs — not from memory or general reasoning.
+What each HLD contains is in [phase-detail.md](phase-detail.md), section "Phase 5".
 
-**Always generate:**
+**Always generate:** system architecture (`docs/02-design/technical/hld/system-architecture.md`), data architecture (`docs/02-design/technical/hld/data-architecture.md`) and security architecture (`docs/02-design/technical/hld/security-architecture.md`).
 
-1. **System architecture** (`docs/02-design/technical/hld/system-architecture.md`)
-   - Overall component topology and deployment model (from ADR)
-   - Domain map as Mermaid `graph LR` or `graph TD`
-   - External integration points (every external system named)
-   - Data flows across domain boundaries (from interaction matrix)
-   - Sequence diagrams for the 2–3 most critical use cases from Phase 1
-
-2. **Data architecture** (`docs/02-design/technical/hld/data-architecture.md`)
-   - Storage technology choices (from ADRs)
-   - Data ownership map — which domain owns which tables/collections
-   - Cross-domain data access patterns
-   - Migration and backup strategy at high level
-   - Data retention and compliance requirements from NFRs
-
-3. **Security architecture** (`docs/02-design/technical/hld/security-architecture.md`)
-   - Authentication and authorization approach (from ADR)
-   - Data isolation between tenants or users (if applicable from PRD)
-   - Secrets management approach
-   - Network security model (what is public, what is internal)
-   - Compliance requirements from PRD NFRs
-
-**Generate if applicable:**
-
-4. **API architecture** (`docs/02-design/technical/hld/api-architecture.md`) — if the system has an external-facing API
-   - API style (from ADR)
-   - Endpoint surface overview — one row per domain's external API
-   - Auth flow sequence diagram
-   - Versioning and backwards compatibility approach
-
-5. **Observability architecture** (`docs/02-design/technical/hld/observability-architecture.md`) — if NFRs specify SLA, availability, or incident response requirements
-   - Logging structure (format, levels, what to always include)
-   - Distributed tracing approach
-   - Key metrics per domain
-   - Alerting thresholds from NFRs
+**Generate if applicable:** API architecture (`docs/02-design/technical/hld/api-architecture.md`) if the system has an external-facing API; observability architecture (`docs/02-design/technical/hld/observability-architecture.md`) if NFRs specify SLA, availability, or incident response requirements.
 
 Update `docs/02-design/technical/hld/index.md` after all HLDs.
 
@@ -473,9 +426,3 @@ Present a completion summary:
 │     first sprint to reconcile design vs. built      │
 └─────────────────────────────────────────────────────┘
 ```
-
----
-
-## Important Rules
-
-- Open ADRs on the foundational decision list (tech stack, data storage, auth, API style, deployment model) must be resolved before HLDs are generated.

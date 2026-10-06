@@ -4,6 +4,16 @@ Reference this document from the Important Rules section of any design-phase ski
 
 ---
 
+## Contents
+
+- When it applies
+- TODO Deferral
+- Challenge Levels
+- Core Principle
+- Challenge Rules
+- Minimum NFR Checklist (Architecture Phases)
+- Language
+
 ## When it applies
 
 Apply the challenge stance in:

@@ -8,6 +8,16 @@ All notable changes to the HITL plugin are documented here.
 
 ### Added
 
+- **Skills aligned with Anthropic's skill authoring guide** (#151). The three longest skills
+  (`dev-start-change`, `dev-start-brownfield`, `dev-update`) are now a contents page plus reference
+  files beside them, with the rules that hold throughout placed before the steps, so what matters
+  survives the 5,000-token re-attach after compaction. Issue numbers and version lessons are gone
+  from skill bodies; the rules stayed, the stories live in the changelog and the design docs.
+  Shared reference files over 100 lines open with a contents list. A `claude plugin eval` suite
+  under `evals/` exercises the setup gate, the prefixed-id refusal at intake, the TDD approval
+  refusal, help routing and adding a scenario by chat; it runs at release on the default model and
+  on Sonnet 5.5. A wiring test holds all of it in place.
+
 - **Breadcrumb as a band above the prompt** (FR-37, #150). On Claude Code 2.1.287 or later the
   HITL plugin carries a small mod that draws the breadcrumb as a persistent band above the prompt,
   with the current phase in bold, the step line and the next-step hint under it. It is off by default: set

@@ -11,6 +11,14 @@ config on its own initiative.
 
 ---
 
+## Contents
+
+- The floor — read this before anything else
+- Offering it
+- Where they live, and who can undo them
+- Whose profile is it
+- Outbound
+
 ## The floor — read this before anything else
 
 **A persona shapes form. It never changes substance.**
