@@ -8,9 +8,11 @@ disable-model-invocation: true
 
 Setting up a migration project for HITL AI-Driven Development.
 
-**Migration is not brownfield.** In brownfield you work *inside* the existing codebase — it is the live product. In migration the source codebase is being *replaced*: it is read-only reference. Only behaviors transfer to the target, never code. The behavioral inventory (`docs/00-migration/source-behavioral-inventory.md`) is the only bridge between the two systems.
+## Rules that hold throughout
 
-Work through these steps in order — pause after each and wait for confirmation before proceeding.
+- **Migration is not brownfield.** In brownfield you work *inside* the existing codebase — it is the live product. In migration the source codebase is being *replaced*: it is read-only reference. Only behaviors transfer to the target, never code. The behavioral inventory (`docs/00-migration/source-behavioral-inventory.md`) is the only bridge between the two systems.
+- **One step at a time.** Pause after each and wait for confirmation before proceeding.
+- **The source is read-only reference.** Nothing in the source codebase is edited; the target is where work happens.
 
 ---
 
@@ -46,62 +48,9 @@ If not:
 2. Create `.hitl/hooks/` and write a wrapper for each of these nine hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — surviving plugin updates, reinstalls and version bumps. **Use the wrapper body from Step 0 of [`/hitl:dev-start-from-prd`](../start-from-prd/SKILL.md) verbatim; it is the single definition.** It resolves a working interpreter before use (on Windows `python3` is the Microsoft Store stub — on PATH, runs nothing), exports `HITL_PY`/`PYTHONUTF8` so hooks do not re-probe or crash on the breadcrumb glyphs, then execs the real hook from the plugin. Copying it into this skill is how it drifted before: three copies, two of them stale, shipping hooks that silently no-op.
    Replace `<name>` with the hook name for each file. Run `chmod 750` on each file.
 
-3. Create `.claude/settings.json` only if it does not already exist:
-   ```json
-   {
-     "statusLine": { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/statusline-hitl.sh\"" },
-     "hooks": {
-       "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/hitl-gate.sh\"" }] }],
-       "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/welcome.sh\"" }] }],
-       "PreToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-hitl-context.sh\"" }, { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/first-pass-permissions.sh\"" }] }, { "matcher": "Read|Grep|Glob", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/first-pass-permissions.sh\"" }] }],
-       "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [
-         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/check-domain-boundary.sh\"" },
-         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/rebuild-graph.sh\"" },
-         { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/sync-step-to-issue.sh\"" }
-       ]}],
-       "Stop": [{ "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.hitl/hooks/write-session-summary.sh\"" }] }]
-     },
-     "permissions": { "allow": ["Bash(git add *)"],
-       "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./**/.env)", "Read(./secrets/**)"] }
-   }
-   ```
+3. Run sub-steps 3 to 7 from the **Step 0** section of [setup-detail.md](setup-detail.md) beside this skill, in order: `.claude/settings.json` (only if absent), the `.gitignore` entries, the ADR stubs (never overwriting one that exists), the First Pass validator with its catalog and CI gate, and the semgrep rules `/hitl:dev-check-conventions` scans with.
 
-4. Update `.gitignore` so session logs don't end up in the product repo — add the entry if not already present:
-   ```bash
-   grep -q "docs/session-logs" .gitignore 2>/dev/null || printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> .gitignore
-   grep -q "first-pass-choices" .gitignore 2>/dev/null || printf '\n# HITL transient working state — the change file and skip ledger ARE committed\n.hitl/*.tmp\n.hitl/*.migrated\n.hitl/first-pass-choices.json\n.hitl/backups/\n' >> .gitignore
-   ```
-
-5. Copy default ADR stubs into `docs/02-design/technical/adrs/` — skip any file that already exists (never overwrite existing ADRs):
-   ```bash
-   mkdir -p docs/02-design/technical/adrs
-   for f in "$PLUGIN_ROOT/shared/templates"/adr-000*.md; do
-     dest="docs/02-design/technical/adrs/$(basename "$f")"
-     [[ -f "$dest" ]] || cp "$f" "$dest"
-   done
-   ```
-   Then fill in today's date in `adr-0001-hitl-adoption.md` and `adr-0002-documentation-first.md` (replace `[fill in: project start date]` with today's ISO date).
-
-6. Install the First Pass validator (FR-29): the fail-closed skip-ledger validator + its criticality catalog (co-located = the trusted CI source) + the CI gate. Without this the skip ledger is **unenforced** — skips can be recorded on every change and nothing certifies them, which is the exact failure the ledger exists to prevent (plugin issue #27). Idempotent; skips if the plugin copy is absent.
-   ```bash
-   if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/first-pass" ]]; then
-     mkdir -p ci/first-pass
-     cp "$PLUGIN_ROOT/shared/ci/first-pass/"*.py ci/first-pass/ 2>/dev/null
-     [[ -f "$PLUGIN_ROOT/shared/workflows.yaml" ]] && cp "$PLUGIN_ROOT/shared/workflows.yaml" ci/first-pass/workflows.yaml
-     if [[ -f "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" ]]; then
-       mkdir -p .github/workflows
-       [[ ! -f .github/workflows/first-pass-check.yml ]] && cp "$PLUGIN_ROOT/shared/ci-workflows/first-pass-check.yml" .github/workflows/
-     fi
-     echo "Skip-record validator installed: ci/first-pass/ (validator + catalog) + .github/workflows/first-pass-check.yml."
-   fi
-   ```
-
-7. Install the semgrep convention rules (issue #47) — the rule set `/hitl:dev-check-conventions` scans with. Without them that command fails outright (`unable to find a config; path .semgrep does not exist`). Only absent files are copied; `/hitl:dev-update` updates installed rules with a diff.
-   ```bash
-   [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/semgrep/install.sh" ]] && bash "$PLUGIN_ROOT/shared/semgrep/install.sh"
-   ```
-
-8. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, the skip-record validator in `ci/first-pass/`, and the semgrep rules in `.semgrep/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
+4. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, 8 baseline ADRs in `docs/02-design/technical/adrs/`, the skip-record validator in `ci/first-pass/`, and the semgrep rules in `.semgrep/` created. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
 ---
 
@@ -261,40 +210,16 @@ Ask: "Where is the source system's code?"
 - **(B)** A separate local repository at path: ___
 - **(C)** Remote-only or inaccessible — I'll describe its behavior from memory or docs
 
-**If A or B — read the source code:**
-
-1. Read the top-level structure to orient, then focus on:
-
-   | What to extract | Where to look |
-   |---|---|
-   | Exposed APIs | REST routes, GraphQL schema, gRPC `.proto` files, event topics published |
-   | Core domain logic | Services, use cases, domain objects, business rule implementations |
-   | Data contracts | DB schema, migration files, ORM models, key data shapes |
-   | Integration points | Outbound HTTP clients, queue consumers, webhook handlers, third-party SDKs |
-   | Auth and access control | Who can call what — roles, scopes, ownership rules |
-   | Background jobs | Scheduled tasks, workers, async processors |
-
-2. Use Graphify if available on the source repo:
-   ```
-   /graphify query "API endpoints domain services data models integrations auth"
-   ```
-
-3. Produce `docs/00-migration/source-behavioral-inventory.md` from the template in
-   [behavioral-inventory-template.md](behavioral-inventory-template.md): one `BI-NNN` row per
-   API, core behavior, data contract, integration, background job and access rule, and a
-   *Known gaps* section for what the code alone could not settle.
+**If A or B — read the source code:** orient on the top-level structure, then extract exposed APIs, core domain logic, data contracts, integration points, auth and access control, and background jobs. The where-to-look table and the Graphify query are in [setup-detail.md](setup-detail.md), section "Step 5 — reading the source code". Then produce `docs/00-migration/source-behavioral-inventory.md` from the template in
+[behavioral-inventory-template.md](behavioral-inventory-template.md): one `BI-NNN` row per
+API, core behavior, data contract, integration, background job and access rule, and a
+*Known gaps* section for what the code alone could not settle.
 
 Ask: "Does this inventory capture everything the source system does? Anything I missed or got wrong?"
 
 Incorporate feedback and finalize. This file is the migration's definition of done — the target must implement every BI entry.
 
-**If C — source is inaccessible:**
-
-Ask: "Describe the source system's key APIs, core business behaviors, data contracts, and integration points. I'll structure them as the behavioral inventory."
-
-Record what the user provides. Mark every entry `confidence: low — from description only`. Say: "The behavioral inventory is based on your description since the source code isn't available. Treat it as a starting point — expand it whenever a gap is discovered during development."
-
-Write `docs/00-migration/source-behavioral-inventory.md` with entries marked `confidence: low`.
+**If C — source is inaccessible:** follow the section "Step 5 — source inaccessible" of [setup-detail.md](setup-detail.md): structure the person's description as the inventory, mark every entry `confidence: low — from description only`, and say it is a starting point to expand whenever a gap is found.
 
 ---
 
@@ -307,31 +232,7 @@ Update `.hitl/current-change.yaml` — set `current_step`:
   phase: "Migration Setup"
 ```
 
-Present the following choice to the user:
-
----
-**Step 6 is optional — choose one:**
-
-**A — Copy docs into this repo** (`docs/00-migration/external-reference/`)
-> Best when: the reference repo is private, may become unavailable, or team members lack access.
-> What happens: you provide file paths or paste content; I copy them as-is. No editing.
-> Downside: files can drift from the source of truth over time.
-
-**B — Link only (skip copy)**
-> Best when: the reference repo is public and key decisions are already captured in `system-manifest.yaml` and `migration-context.yaml` (which Steps 3–4 produce).
-> What happens: I verify the `poc_reference` links in `migration-context.yaml` are live and confirm key architectural decisions are reflected in the manifest. No file copy.
-> Downside: future sessions need network access to the reference repo.
-
-**C — No external docs**
-> The architect will design from scratch using the migration context collected in Step 1.
-
----
-
-**If A:** For each external document, ask the user to provide the file path or paste the content. Copy or save to `docs/00-migration/external-reference/<doc-name>.<ext>`. Do NOT edit the external docs — preserve them exactly as received. Then print the staged file list.
-
-**If B:** Verify `poc_reference.repo` in `migration-context.yaml` is reachable (`curl -sI <url> | head -1` or `gh repo view <repo>`). Confirm key decisions are present in `system-manifest.yaml` (check `key_decisions` block or `robustness_primitives`). Report: "Reference links verified. Key decisions captured in manifest. No file copy needed." and move on.
-
-**If C:** Say "No external docs to ingest — the architect will design from scratch." and move on.
+Step 6 is optional. Put the three choices to the person word for word from the section "Step 6 — external documentation options" of [setup-detail.md](setup-detail.md), then follow the branch given there for the answer: **A** copies the external docs in unedited, **B** verifies the reference links and the manifest with no file copy, **C** leaves the architect to design from the Step 1 context.
 
 ---
 

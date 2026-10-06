@@ -79,7 +79,7 @@ If not:
    " 2>/dev/null)
    [[ -z "$PLUGIN_ROOT" ]] && exit 0
    # Pass the resolved interpreter + force UTF-8 stdout so hooks don't re-probe or crash on
-   # the breadcrumb glyphs (Windows Python defaults to cp1252). See issue #14.
+   # the breadcrumb glyphs (Windows Python defaults to cp1252).
    export HITL_PY="$PY" PYTHONUTF8=1 PYTHONIOENCODING=utf-8
    exec bash "$PLUGIN_ROOT/hooks/<name>.sh" "$@"
    ```
@@ -231,7 +231,7 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/test-scenarios" ]]; then
   echo "Scenario check installed: ci/test-scenarios/ + .github/workflows/test-scenarios-check.yml."
 fi
 
-# Compound-agentic surface (#10): the fail-closed system-manifest validator + posture-view generator,
+# Compound-agentic surface: the fail-closed system-manifest validator + posture-view generator,
 # invoked repo-relative by pm-design-feature. Self-contained (FIELD_SPEC lives in the .py). Preserve the
 # repo's own manifest-waivers.yaml (copy it only when absent).
 if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
@@ -242,7 +242,7 @@ if [[ -n "$PLUGIN_ROOT" && -d "$PLUGIN_ROOT/shared/ci/manifest-agentic" ]]; then
   echo "Compound-agentic validator installed: ci/manifest-agentic/ + tools/manifest-agentic/."
 fi
 
-# Semgrep convention rules (issue #47): the rule set /hitl:dev-check-conventions scans with.
+# Semgrep convention rules: the rule set /hitl:dev-check-conventions scans with.
 # Installs only what is absent — .semgrep/ is co-owned; /hitl:dev-update updates it with a diff.
 [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/semgrep/install.sh" ]] && bash "$PLUGIN_ROOT/shared/semgrep/install.sh"
 ```

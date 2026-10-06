@@ -15,19 +15,42 @@ To get started, run one of these commands in your project directory:
   /hitl:dev-start-migration     migrate a system
 ```
 
----
-
 # Start a Change
 
 **Input:** $ARGUMENTS (optional issue number or short description)
 
-This skill is the **enforced front door**. The HITL hooks (`hitl-gate.sh` on session start,
-`welcome.sh` on every prompt) inject a directive that no real work may happen until a change is
-active for the current branch, and `check-hitl-context.sh` hard-blocks edits until then. This
-skill is how that gate is satisfied: it selects the issue, picks the workflow, and writes the
-change file.
+This skill is the **enforced front door**: the hooks block real work until a change is active for
+the current branch. This skill selects the issue, picks the workflow, and writes the change file.
 
----
+## Rules that hold throughout
+
+- A change must trace to a GitHub issue. Never proceed without one; never invent an issue number.
+- One active change per branch. Don't clobber an existing active change; switch context instead.
+- Never hand-write the `workflow.steps` block; always seed it from the bundled `workflows.yaml`
+  catalog (`$CLAUDE_PLUGIN_ROOT/shared/workflows.yaml`) via the Step 6 generator.
+- The goal comes first: restate it before anything is read or planned and before the workflow
+  question. No tier question at intake; the tier is proposed at Step 4 from what the analysis found.
+- The `docs` workflow is only for docs-only changes; docs *and* code is `development`.
+- The tier is a human's call. Propose one, say which finding drives it, wait for a person to confirm
+  or correct it. A `tier_provisional` left set is a blocking error: nobody confirmed.
+- People see **Fast Track** and **Full Scale**, written exactly so, capitalized. First Pass is the
+  internal name for the skip record and its validator; never say it to people. It is not opt-in.
+  The recommendation is advice; taking Full Scale is not recorded.
+- A locked step (`floor`, `no_omit`) is never dropped by a rule or a tick: only by a named person
+  accepting the risk, with `ack_by`, a reason and, for a hard-gate step, a linked `waiver_ref`.
+  A skip is **not** a waiver.
+- Pre-selected is not pre-recorded. Nothing is written until the human confirms; doing nothing runs
+  the full plan (`keep` is the default), and the actor on every record is the person who confirmed.
+- Run under **brief mode** ([`brief.md`](../../shared/first-pass/brief.md): say less, ask less, never
+  re-ask what intake settled), the **reduced-friction permission policy**
+  ([`permissions.md`](../../shared/first-pass/permissions.md)) and the neutral language in
+  [`language.md`](../../shared/first-pass/language.md), all under `shared/first-pass/`.
+
+> **Resurfacing does not happen here.** `resurface.surface()` matches unresolved skips against the new
+> change's domains and `allowed_paths`, and neither is known until the workflow's own impact step fills
+> them. Called at change start it always matches nothing. It belongs at the impact step, where scope
+> exists. See the worked example at
+> [`docs/examples/first-pass/`](https://github.com/Prasad-Apparaju/hitl-dev-platform/tree/main/docs/examples/first-pass).
 
 ## Step 1 — Don't clobber an active change
 
@@ -38,22 +61,17 @@ branch** (it has a `workflow` or `current_step` block and `expected_branch` matc
 > A change is already active on this branch: **<change_id>** (workflow `<id>`, step `<n>/<total>`).
 > Continue it, or run `/hitl:dev-switch-context` to move to a different issue.
 
-Only proceed when there is **no** active, branch-matched change.
-
----
-
 ## Step 2 — Choose the issue (insist)
 
-If `$ARGUMENTS` names an issue, use it. With a `change_id_prefix` in `.hitl/config.yaml` the form is `<PREFIX>-<n>` (`SVC-3`); a bare number is ambiguous across linked repositories, so refuse it and say which form to use ("Use SVC-3, or DOCS-3 for the docs repository"). An id with another repository's prefix is that repository's issue, not a change to start here: resolve it with `ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"; LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"; python3 "$LINKED" resolve <id>` and say so. Without a prefix configured, a bare number is fine as before. Otherwise ask first: **"What's the goal, in one
+If `$ARGUMENTS` names an issue, use it. With a `change_id_prefix` in `.hitl/config.yaml` the form is `<PREFIX>-<n>` (`SVC-3`); a bare number is ambiguous across linked repositories, so refuse it and say which form to use ("Use SVC-3, or DOCS-3 for the docs repository"). An id with another repository's prefix is that repository's issue, not a change to start here: resolve it with the `linked.py resolve` fence in `intake-detail.md` beside this skill, and say so. Without a prefix configured, a bare number is fine as before. Otherwise ask first: **"What's the goal, in one
 sentence, and what does done look like?"** Then list open issues and see whether one already covers it:
 
 ```bash
 gh issue list --state open --limit 30
 ```
 
-- If the work has **no issue**, shape one from that sentence; do not proceed to planning without it.
-  Offer `/hitl:pm-add-feature` (feature) or `/hitl:pm-report-bug` (bug). A change must trace to an issue.
-- Do not invent an issue number. Require an explicit choice.
+- If the work has **no issue**, shape one from that sentence before any planning: offer
+  `/hitl:pm-add-feature` (feature) or `/hitl:pm-report-bug` (bug). Require an explicit choice.
 
 Read the chosen issue in full:
 
@@ -61,16 +79,11 @@ Read the chosen issue in full:
 gh issue view <N> --json number,title,body,labels
 ```
 
-If the user says "Fast Track" here or at any later point in intake, note it as their preference and
-offer it at Step 4. After intake, switching means restarting intake. It does not skip the restatement or the analysis: those are what tell Fast Track which
-steps to leave out.
-
----
+If the user says "Fast Track" during intake, note it and offer it at Step 4 (details in `intake-detail.md`).
 
 ## Step 3 — Restate what you understood, and write the stub
 
-**Before anything is read or planned, and before the workflow question.** The goal comes first
-because everything downstream, the workflow included, derives from it. Write back what you
+**Before anything is read or planned, and before the workflow question**, write back what you
 understood, in a fixed shape:
 
 | | |
@@ -80,30 +93,27 @@ understood, in a fixed shape:
 | out of scope | what it explicitly does not, so it can be pointed at later |
 | definition of done | what counts as delivered, in the requester's terms |
 
-Length comes from the change. A one-line fix has a one-line definition of done. Wait for a
-confirmation or a correction; this is the cheapest moment to catch a misread, because everything
-downstream derives from this text and a wrong plan is harder to argue with than a wrong sentence.
-
-**Flag a line you cannot check, do not block it.** "The system should be fast" cannot be shown to be met. Say so, offer a sharper version, and if the vague line stays, record that it was flagged as unverifiable and accepted anyway, with a name and a date.
+Length comes from the change. Wait for a confirmation or a correction: this is the cheapest moment
+to catch a misread. **Flag a line you cannot check, do not block it.** "The system should be fast"
+cannot be shown to be met: say so, offer a sharper version, and if the vague line stays, record it
+as flagged unverifiable and accepted anyway, with a name and a date.
 
 Then write the stub (change id, branch and version; not the workflow):
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
+[[ -n "$PY" ]] || { echo "No usable Python found (need python3, python, or py on PATH)."; exit 1; }
+N=<issue-number>; TITLE=<short-kebab-slug>; BRANCH="issue/${N}-${TITLE}"   # the branch Step 5 creates
+HITL_VERSION=$(cat "$ROOT/.claude-plugin/plugin.json" 2>/dev/null | "$PY" -c "import json,sys; print(json.load(sys.stdin).get('version','0.0.0'))" 2>/dev/null || echo "0.0.0")
 PREFIX=$("$PY" -c "import yaml,os;d=yaml.safe_load(open('.hitl/config.yaml')) if os.path.exists('.hitl/config.yaml') else {};print((d or {}).get('change_id_prefix') or 'GH')" 2>/dev/null || echo GH)
 CHANGE_ID="${PREFIX}-${N}"
 GEN="ci/first-pass/gen_change.py"; [[ -f "$GEN" ]] || GEN="$ROOT/shared/ci/first-pass/gen_change.py"
 "$PY" "$GEN" --stub "$CHANGE_ID" "$BRANCH" "$HITL_VERSION" > .hitl/current-change.yaml
 ```
 
-Fill in the `requirement` block with the confirmed text, `agreed_by` and `agreed_at`.
-The stub carries a **provisional tier of 3** and `status: intake`. It does not satisfy the
-active-change gate, so source edits stay blocked — correct, since no plan has authorised one yet.
-What it does is keep the agreed text if the session dies, feed the analysis, and name the record.
-
-**No tier question here.** The tier is proposed at Step 4 from what the analysis found. Asking now
-means asking before the evidence exists, which is what tiered a one-line shell script change up to a
-three and a half hour path (#97).
-
----
+Fill in the `requirement` block with the confirmed text, `agreed_by` and `agreed_at`. The stub
+carries a **provisional tier of 3** and `status: intake`; it does not satisfy the active-change
+gate. It keeps the agreed text if the session dies and names the record. **No tier question here.**
 
 ## Step 3b — Determine the workflow (read the issue, then confirm)
 
@@ -119,198 +129,82 @@ before writing anything:
 | `docs`       | The change touches **nothing but documentation** — no source, tests, or IaC | `/hitl:dev-generate-docs` |
 | `release`    | Publishing a version to users — the change *is* shipping, not building | **follow the 12-step release table in `dev-practices/workflow-steps.md`**; `/hitl:dev-verification-review` at step 5 |
 
-Heuristics from the issue: labels (`bug`/`enhancement` → development; `documentation`/`docs` → docs), wording ("migrate",
-"port", "consolidate" → migration; "onboard", "adopt HITL", "no docs yet" → brownfield), and
-whether `docs/system-manifest.yaml` exists (absent on a real project → prd/brownfield).
+Heuristics for the choice are in `intake-detail.md` beside this skill. A `docs` change has two extra duties, in `intake-detail.md` beside this skill.
 
-**The `docs` workflow is only for changes that touch nothing but docs.** Docs *and* code is a `development` change (the spine already reconciles docs), which stops `docs` becoming a way to skip the gates on real code. Its `doc_review` gate is domain-routed: Architect for design docs, PM for product, Ops for runbooks. At its final `merge` step set top-level `status: merged` in `.hitl/current-change.yaml`, so the file does not linger and satisfy the gate for the next change.
-
-State: "This looks like a **<workflow>** change because …. Proceed with the <workflow> workflow?"
-Wait for confirmation (or correction) before Step 3c.
-
----
+State: "This looks like a **<workflow>** change because …. Proceed with the <workflow> workflow?" Wait for the answer.
 
 ## Step 3c — Run the impact analysis, inside this intake
 
 Follow `dev-apply-change` Steps 2 and 3 from its file (`skills/dev-apply-change/SKILL.md` under the
-plugin root; `ai/claude/apply-change/SKILL.md` in source). Do not invoke the command: its frontmatter
-forbids model invocation, and handing it to the person splits intake in two (#130). Step 3 reads the
+plugin root). Do not invoke the command: its frontmatter forbids model invocation. Step 3 reads the
 stub, asks the one security question, writes `.hitl/impact/<change_id>.yaml` with the acceptance
 criteria, and resurfaces overlapping skips. **It is not a step in the plan**; it produces the plan.
-
-Do not continue until the record exists and is non-empty: a change file naming a record that is not
-there is a blocking error, because a second artifact is only safe when something notices its absence.
-
----
+Do not continue until the record exists and is non-empty: a missing record is a blocking error.
 
 ## Step 4 — Propose the tier, then offer two options
 
-### The tier, from what the analysis found
+Read `intake-detail.md` beside this skill now.
 
-Propose one, say which finding drives it, and **wait for a human to confirm or correct it**. Keep the
-proposal: `export HITL_TIER_PROPOSED=<n>` for Step 6, which writes it as `tier_proposed`. Record
-`tier_set_by` and `tier_reason`, and clear `tier_provisional`. Leaving it set is a blocking error:
-it means nobody confirmed.
+**The tier, from what the analysis found.** Propose one, citing the finding that drives it, and
+**wait for a human to confirm or correct it**. Keep the proposal: `export HITL_TIER_PROPOSED=<n>`
+for Step 6, which writes it as `tier_proposed`. Record `tier_set_by` and `tier_reason`, and clear
+`tier_provisional`.
 
-The evidence is in the record now, so the proposal cites it rather than the issue's wording: three
-dependent areas and a data migration is a different change from one flagged file with no callers.
-
-Where protection actually changes, from the catalog: **3 → 2** takes `packet`, `arch_review`,
-`qa_verify` and `rollout` off `floor`; **2 → 1** moves only `integration_verify`. `deploy`,
-`promote`, the test-first cycle and the retrospective never demote. So **declaring 2 instead of 3 is
-the consequential call.**
-
-### Two options
-
-Size the plan from the record, passing the tier the human just confirmed. The sizer requires it
-and will not read one from the record: the impact analysis is not allowed to set a tier, and two
-sources for that field disagree.
+**Two options.** Size the plan from the record, passing the confirmed tier (the sizer will not read
+one from the record), then append its `outcomes` to `.hitl/impact/<change_id>.yaml` as
+`rule_outcomes`, or the retrospective cannot ask whether a rule was right:
 
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
+PY=""; for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import sys" >/dev/null 2>&1 && { PY="$c"; break; }; done
+[[ -n "$PY" ]] || { echo "No usable Python found (need python3, python, or py on PATH)."; exit 1; }
+CHANGE_ID=<change-id as formed at Step 3>; TIER=<the confirmed tier>
 SZ="ci/first-pass/size_plan.py"; [[ -f "$SZ" ]] || SZ="$ROOT/shared/ci/first-pass/size_plan.py"
 "$PY" "$SZ" ".hitl/impact/$CHANGE_ID.yaml" "$TIER" fast
 ```
 
-**Write the outcomes back into the record.** `size_plan` returns `outcomes` — what each rule decided
-and why. Append it to `.hitl/impact/<change_id>.yaml` as `rule_outcomes`; without it the retrospective
-cannot ask whether a rule was right. It is written here, not by the analysis, because sizing needs the
-tier and the tier does not exist until this step.
-
 Show both, and **list what Fast Track leaves out, one step per line, every time.** Do not wait to
-be asked: two counts and a comma list read as a summary, not a choice (a 2.12.1 session never showed
-a checkbox until the person asked).
+be asked. Heading `Fast Track leaves out (most consequential first):`, one line per step, an "Always
+stays" line, then the recommendation; exact shape in the reference file. If the two options come
+out the same, say so and do not offer a choice.
 
-```
-This change reaches: 1 area, no dependents, no interface or data change.
+**Ask with checkboxes**, with the `AskUserQuestion` tool; never "which do you want?" in prose.
+First, the plan: one single-select question, header `Plan`, options `Fast Track (Recommended)`,
+`Full Scale`, `Pick steps myself` (recommended first), with a `preview` of each option's step list.
 
-  Fast Track   16 steps   what this change needs before it ships
-  Full Scale   26 steps   everything that applies to a change of this shape
+**Then, for Fast Track and for Pick steps myself, the checkboxes.** One `multiSelect` call over every
+step Full Scale has and Fast Track does not: header `Add back`, question `Fast Track leaves these
+out. Tick any you want to keep.`, one option per step in list order. Four options per question, four
+questions per call: sixteen boxes; a question needs at least two options; number the questions when
+there is more than one, since the tool rejects question texts that repeat. Nothing ticked is Fast
+Track as proposed; a ticked step is kept.
 
-  Fast Track leaves out (most consequential first):
-    Baseline measurement        a before-number, so "faster" is measured
-    Decision packet             the decision and alternatives, recorded
-    Design verification         someone tries to break the design early
-    Design update               the design catches up with what building taught
-    Code verification           someone tries to break the implementation
-    ROI estimate                a stated reason this is worth building
-    Test review                 a person checks the tests assert the right thing
-    Refactor                    code left in shape for the next person
-    30-day ROI check            whether it was worth building
-    90-day ROI check            the longer-term effect, looked at
+**For Pick steps myself, a second checkbox screen** after the "Add back" one: `Leave out any of
+these?` (header `Leave out`), over every step that is not `locked`, not `no_omit` and not `issue`,
+lowest `forgo_cost` first. Offer it after Fast Track too when someone wants it lighter still. Full
+Scale asks nothing more.
 
-  Always stays: the failing test and making it pass, the integration check, deploy,
-  promote and the retrospective.
+**Steps that always stay are never checkboxes.** List them, and say how to ask for a risk-accepted
+skip. Without the `AskUserQuestion` tool, print the same lists numbered and take the numbers typed
+back. Print the full ordered plan on request, and always for a workflow of 10 steps or fewer.
 
-Recommended: Fast Track. Nothing it drops is protecting something this change touches.
-```
+## Step 4b — Record the choice
 
-Each line is the step's name as a person would say it, not the catalog label (`VfyDsn`), and a
-short form of its `protects` line, ordered by `forgo_cost` then catalog order. "Always stays" is every
-`locked` step from the sizer. One line on which is recommended and why; **the recommendation is
-advice**, and taking Full Scale is not recorded. Write the two names exactly as shown, capitalized:
-a different spelling each time is how a name stops being findable (#125).
+**First Pass is how the choice at Step 4 is recorded.** The pre-selection comes from the rules, not
+the tier: steps the rules excluded are pre-selected `not_applicable`, each carrying the finding that
+decided it; an active conditional step Fast Track leaves out (`proposed`) is pre-selected `defer`,
+never `not_applicable`. When the impact record says `reaches_production: false`, pre-fill `deploy`
+and `promote` as `decline`, `ack_by` the confirming person. Let one confirmation record the lot.
 
-If the two options come out the same, say so and do not offer a choice.
+**The checkboxes in Step 4 are the menu.** Ask once. A step ticked under "Leave out" becomes its
+starter when it has one, otherwise `decline` for a ceremony step and `defer` for a standard one
+(table in the reference file); say which in one line per step, and ask only if the person wants a
+different one. Then say once: **"N steps left out. No issues opened. One line at the top of #N lists
+them; they come back at the next change in this area."** A ticket is filed only when the person
+says "file this one" (one, for that step).
 
-### Ask with checkboxes
-
-Then ask with the `AskUserQuestion` tool. It draws the options as a menu the person moves through
-with the arrow keys, and `multiSelect` draws checkboxes. Do not ask "which do you want?" in prose.
-
-**First, the plan.** One single-select question:
-
-| field | value |
-|---|---|
-| `header` | `Plan` |
-| `question` | `Which plan for <change_id>?` |
-| options | `Fast Track (Recommended)`, `Full Scale`, `Pick steps myself`, with the recommended one first and carrying "(Recommended)" |
-| `description` | Fast Track: "16 steps: what this change needs before it ships. You can tick any step back in next." Full Scale: "26 steps: everything that applies." Pick steps myself: "Start from Fast Track, then choose what to add back and what to leave out." |
-| `preview` | on Fast Track and Full Scale, that option's ordered step list with the left-out steps under it, so moving between the two shows the difference |
-
-**Then, for Fast Track and for Pick steps myself, the checkboxes.** One `multiSelect` call over every step Full Scale has and
-Fast Track does not:
-
-- `question`: `Fast Track leaves these out. Tick any you want to keep.` With more than one question,
-  number them (`... leaves these out (1 of 3). ...`): the tool rejects a call whose question texts
-  repeat, or whose option labels repeat within a question.
-- `header`: `Add back`, or `Add back 1` to `Add back 4` when there is more than one question.
-- One option per step, in the same order as the list. `label` is the step's name (five words at
-  most); `description` is its `protects` line and what leaving it out costs ("Leaving it out costs:
-  medium").
-- Four options per question, four questions per call: sixteen boxes. A question needs at least two
-  options, so split five as three and two, not four and one. Past sixteen, box the sixteen most
-  consequential, name the rest in the last question's text, and take names typed into the "Other"
-  box the tool adds.
-- Nothing ticked is Fast Track as proposed. A ticked step is kept. An unticked one is recorded in
-  Step 4b: `not_applicable` with the rule's reason, or `defer` when the sizer lists it under `proposed`.
-
-**For Pick steps myself, a second checkbox screen** after the "Add back" one: `Leave out any of these?`
-(header `Leave out`), over the steps in the plan a person may lighten. That is every step that is
-not `locked`, not `no_omit` and not `issue` (intake has already done it), lowest `forgo_cost` first, so the cheapest to drop comes first. A
-ticked step goes through the Step 4b menu below, which says what it becomes. Offer the same screen
-after Fast Track when someone says they want it lighter still. Full Scale asks nothing more.
-
-**Steps that always stay are never checkboxes.** Dropping one needs a named person to accept the
-risk, not a tick. List them, and say how to ask for a risk-accepted skip. Without the
-`AskUserQuestion` tool (a host without it, a non-interactive run), print the same lists numbered and
-take the numbers typed back; never drop the list.
-
-**Print the full ordered plan on request** ("show me every step"), and always in full for a workflow
-of 10 steps or fewer.
-
----
-
-## Step 4b — Record the choice (First Pass, FR-29)
-
-**First Pass is how the choice at Step 4 is recorded**: the internal name for the skip record and its
-validator. People see Fast Track and Full Scale; never say "First Pass" to them. Not opt-in (#97).
-
-**The pre-selection comes from the rules, not from the tier.** `size_plan.py` has already decided
-what applies and what is needed now, from what this change reaches. Present the steps outside the
-chosen option pre-selected, each carrying the finding that decided it as its reason: "no interface
-files in this change", "3 dependents". Let **one confirmation record the lot.**
-
-Those entries take the `not_applicable` disposition — the rules determined the step does not apply,
-which is a different fact from a person choosing to skip it; otherwise Fast Track would record a named
-human declining twenty-odd steps they never looked at.
-
-A rule may never retire a load-bearing step. `not_applicable` on a `floor` or `no_omit` step is a
-non-waivable block (`RULE_OVER_FLOOR`); those are dropped by a named person accepting the risk, or
-not at all. The one exception is a **conditional** step (`cond:`) whose activator did not fire: it
-was never in the plan, so the sizer records it `not_applicable` (#102). The gate reads the impact
-record, not the ledger: it must name this change and workflow, its `rule_outcomes` must match the
-rules run on its own findings (#124) and show `applies: false`, and the security steps need
-`security_sensitive` answered (silence is not a no); else `COND_UNCONFIRMED`, `RECORD_UNIDENTIFIED`
-or `RECORD_CONTRADICTED`, all non-waivable. Active, it is protected like any other step. One floor pair is pre-filled rather than asked for twice: when the impact record says `reaches_production: false`, offer `deploy` and `promote` under Leave out as `decline`, reason "does not reach production (impact record)", `ack_by` the person confirming the plan (the validator needs a named person; for these two Ops floor steps the confirmer is that person), so the one confirmation records the accepted risk (#146).
-
-Pre-selected is not pre-recorded. **Nothing is written until the human confirms**; doing nothing runs
-the full plan (`keep` is the default, CR-1), and the actor on every record is the person who confirmed.
-
-**The checkboxes in Step 4 are the menu.** Ask once (brief mode, not a step-by-step interview).
-Steps the RULES excluded (`excluded`) are pre-selected `not_applicable`; an active conditional step
-Fast Track leaves out (`proposed`, e.g. baseline on an API change) is pre-selected `defer` by the
-confirming person, never `not_applicable` (#129). Both are "Add back" boxes only. A step ticked under
-"Leave out" is a person lightening beyond that; its `crit` (catalog, resolved against the `tier`) says
-what it can become:
-
-| step type | options offered |
-|---|---|
-| `ceremony` | keep · starter\* · skip (defer / decline) |
-| `standard` | keep · starter\* · defer · decline |
-| `standard` + `no_omit` (TDD RED/GREEN) | keep · starter — *never defer/decline* |
-| `floor` | keep · *request risk-accepted skip* |
-
-\*starter offered only for steps in the registry (`ci/first-pass/starters.py`); `keep` is the default.
-
-For a ticked step, use its starter when it has one, otherwise `decline` for a ceremony step and
-`defer` for a standard one. Say which in one line per step ("Test plan: a thin version now, marked
-to enhance later"), and ask only if the person wants a different one. Then say once: **"N steps
-left out. No issues opened. One line at the top of #N lists them; they come back at the next change
-in this area."** A ticket is filed only when the person says "file this one" (one, for that step).
-
-**This step elicits choices; it does not write the ledger.** The change file does not exist yet — Step 6
-creates it — so recording here would write to a stale or absent file that Step 6 then overwrites. Capture
-the choices and let the generator apply them:
+**This step elicits choices; it does not write the ledger.** The change file does not exist yet.
+Capture the choices and let the Step 6 generator apply them (entry rules in the reference file):
 
 ```bash
 # Only NON-keep steps go in. An absent step means keep. `actor` is the accountable human, not the agent.
@@ -326,16 +220,7 @@ cat > .hitl/first-pass-choices.json <<'JSON'
 JSON
 ```
 
-Rules that still apply when collecting the choices:
-1. **Floor** — a `floor` skip requires the accountable role's risk-accepted `ack_by` + reason, and (for a
-   step mapping to a hard gate) a linked `waiver_ref`. A skip is **not** a waiver. Put both in the entry.
-2. **Starter** — write the honest-minimal artifact from `starters.py` (e.g. acceptance criteria = "a working
-   version of the system"), mark it `needs-enhancement`, record its path. Listed on the issue's skipped
-   line like a defer; no ticket unless asked for.
-3. **Defer** — leave `followup_ref` out; the generator sets `issue:<N>` (the change's own issue, where
-   Step 6b writes the notice). A ticket ref goes there only when the person asked for one.
-
-If the validator is missing, say so **before** collecting any choices — the ledger is unenforced without it:
+If the validator is missing, say so **before** collecting any choices; the ledger is unenforced without it:
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
@@ -343,19 +228,6 @@ CHK="ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || CHK="$ROOT/shared/ci/first-pass/check_skips.py"
 [[ -f "$CHK" ]] || echo "⚠ Skip-record validator not found: run /hitl:dev-update to install it. Do NOT record skips until it is present: the ledger is unenforced without it."
 ```
-
-Run the change under **brief mode** ([`shared/first-pass/brief.md`](../../shared/first-pass/brief.md) —
-say less, ask less, never re-ask what intake already settled) and the **reduced-friction permission policy**
-([`shared/first-pass/permissions.md`](../../shared/first-pass/permissions.md)); use the neutral /
-respectful language in [`shared/first-pass/language.md`](../../shared/first-pass/language.md).
-
-> **Resurfacing does not happen here.** `resurface.surface()` matches unresolved skips against the new
-> change's domains and `allowed_paths`, and neither is known until the workflow's own impact step fills
-> them. Called at change start it always matches nothing. It belongs at the impact step, where scope
-> exists. See the worked example at
-> [`docs/examples/first-pass/`](https://github.com/Prasad-Apparaju/hitl-dev-platform/tree/main/docs/examples/first-pass).
-
----
 
 ## Step 5 — Create the branch
 
@@ -369,15 +241,12 @@ BRANCH="issue/${N}-${TITLE}"
 git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
 ```
 
----
-
 ## Step 6 — Seed and write `.hitl/current-change.yaml`
 
-Generate the embedded `workflow` block **from the catalog** (do not hand-write the steps — that
-is how drift starts). Run this generator, which copies the chosen workflow's steps, marks the
-first step `current` and the rest `open`, and stamps the versions:
+Generate the `workflow` block **from the catalog**; the generator marks the first step `current`, the rest `open`:
 
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 WF=<development|brownfield|migration|migration_review|prd|release|docs>
 CHANGE_ID="${PREFIX}-${N}"   # as formed at Step 3
 BRANCH=$(git branch --show-current)
@@ -416,31 +285,19 @@ else
 fi
 ```
 
-Show the resulting file to the user. Then complete the remaining required fields for the change
-(`source_artifacts.issue`, `manifest.domain`, `allowed_paths`, approvals) per the
-`ai/shared/templates/change-context.schema.yaml`, or note they will be filled by the
-workflow's own steps.
+Show the file to the user, then fill the remaining required fields per
+`ai/shared/templates/change-context.schema.yaml`, or note that the workflow's own steps will.
 
 > **The roll-up is written at Step 6b, below**, not here: the change file has to exist first. Entries
 > recorded before the workflow declares its area are marked project-wide; the `development` route
 > narrows them at its impact step.
 
----
-
 ## Step 6b — Certify the ledger
 
-Only meaningful once the change file exists. Run it **before** the Step 7 commit, so nothing
-uncertified is ever pushed:
-
-**Certify without `--rollup`.** The roll-up is appended after the check, below, so a check that read
-it first would warn on every intake, and a check that always warns gets ignored.
-
-It must exit 0. A silent skip, an unauthorized floor skip, a TDD omission, or a lightened step with no
-`first_pass` flag exits 2 and is non-waivable.
-
-Then fold the skips into the durable roll-up so they survive the next intake replacing this file.
-**Every workflow does this** (CR-10 is project-wide, and the onboarding and docs routes never declare
-a manifest domain at all):
+Run it **before** the Step 7 commit, **without `--rollup`** (the roll-up is appended after the
+check). It must exit 0; exit 2 (a silent skip, an unauthorized floor skip, a TDD omission, a
+lightened step with no `first_pass` flag) is non-waivable. Then fold the skips into the durable,
+project-wide roll-up; **every workflow does this**:
 
 ```bash
 # CLAUDE_PLUGIN_ROOT is unset in the Bash tool; a bare "$CLAUDE_PLUGIN_ROOT/..." becomes "/...".
@@ -455,27 +312,15 @@ SL="ci/first-pass/skipped_line.py"
 python3 "$SL" --change .hitl/current-change.yaml --apply
 ```
 
-The last line is the Step 4b notice: one line between markers at the top of the issue body naming every
-step left out, regenerated from the ledger, idempotent; nothing else is posted or filed for a skip. Exit
-3: `gh` could not edit the issue; say so and carry on, the ledger is the record. Exit 2: no issue number
-(id not `GH-N`, so `followup_ref` is empty and certify warned `DEFER_NO_FOLLOWUP`); say the left-out
-steps are in the ledger only, and re-run with `--issue N` if there is an issue.
+The last line writes the Step 4b notice on the issue; nothing else is posted or filed for a skip.
+What its exit 2 and exit 3 mean is in the reference file. If `ci/first-pass/` is absent, say so and
+tell the user to run `/hitl:dev-update`: the ledger is then uncertified for **every** change.
 
-With no area declared yet, entries record as **project-wide** and resurface at any later change until
-resolved; the impact step reads them and does not append (`dev-apply-change` Step 3). The append is
-idempotent on `(change_id, step)`. If `ci/first-pass/` is absent, say so plainly and tell the
-user to run `/hitl:dev-update` — that state means the skip ledger is uncertified for **every** change on
-the project, not just this one.
-
----
-
-## Step 6c — Partners in other repositories (FR-30 slice 0)
+## Step 6c — Partners in other repositories
 
 Ask once: "Does this change have a partner in another repository: its design approved there, a provider that must ship first, or code that implements this design?" On a yes append `linked_changes: [{ repo: owner/name, change_id: <theirs>, role: docs|provider|consumer|code }]` to the change file, link a slice under its epic with `ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"; LINKED="ci/linked/linked.py"; [[ -f "$LINKED" ]] || LINKED="$ROOT/shared/ci/linked/linked.py"; python3 "$LINKED" link-sub owner/docs#<epic> <this repo>#<N>`, and say which steps now wait on which partner (`shared/linked-changes.md`).
 
 ## Step 7 — Commit and push the change file
-
-Anchor the change to this branch so anyone who picks it up resumes from the right context:
 
 ```bash
 git add .hitl/current-change.yaml
@@ -483,23 +328,12 @@ git commit -m "chore(hitl): start <change_id> (<workflow>) — seed change conte
 git push -u origin "$BRANCH" 2>/dev/null || true   # push if a remote exists
 ```
 
----
-
 ## Step 8 — Route into the workflow
 
-Hand off to the workflow's own skill and follow the breadcrumb from there:
-
-- `development` → **`/hitl:dev-apply-change <CHANGE_ID>`** (its Steps 4 to 8: doc plan, test plan, IaC review, summary; the impact analysis already ran at Step 3c)
+- `development` → **`/hitl:dev-apply-change <CHANGE_ID>`** (its Steps 4 to 8; the impact analysis already ran at Step 3c)
 - `brownfield`  → **`/hitl:dev-start-brownfield`**
 - `migration`   → **`/hitl:dev-start-migration`**
 - `prd`         → **`/hitl:dev-start-from-prd`**
 
-As each step completes, update the matching step's `status` to `done` and the next step's to
-`current` in `.hitl/current-change.yaml` (set `current_step` to match) so the breadcrumb advances.
-
-## Important Rules
-
-- A change must trace to a GitHub issue — never proceed without one.
-- Never hand-write the `workflow.steps` block; always seed it from the bundled `workflows.yaml`
-  catalog (`$CLAUDE_PLUGIN_ROOT/shared/workflows.yaml`) via the Step 6 generator.
-- One active change per branch. Don't clobber an existing active change — switch context instead.
+As each step completes, set that step's `status` to `done` and the next step's to `current` in
+`.hitl/current-change.yaml` (and `current_step` to match) so the breadcrumb advances.

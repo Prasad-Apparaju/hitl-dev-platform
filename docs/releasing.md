@@ -60,6 +60,19 @@ python3 ci/skill-lint/check_skills.py
 bash ci/breadcrumb/run_matrix.sh          # a bash harness outside pytest; it has caught what pytest could not
 ```
 
+Then the plugin evals, from the built plugin, on the default model and on Sonnet 5.5. They are real
+model calls, so they run here at release and not in CI; `evals/README.md` has the commands:
+
+```bash
+cd ../hitl-claude-plugin && bash scripts/build.sh >/dev/null
+claude plugin eval . --ablation none --runs 1 --scaffold --trust-plugin --no-publish --allow-tools Write Edit --max-cost-usd 5
+claude plugin eval . --ablation none --runs 1 --scaffold --trust-plugin --no-publish --allow-tools Write Edit --max-cost-usd 5 --model claude-sonnet-5-5
+cd ../hitl-dev-platform
+```
+
+A case below threshold is a gate finding like any other: fix the skill or the case, never lower the
+threshold to ship.
+
 ### 5. Verification review, or its waiver
 
 Run `/hitl:dev-verification-review` against the exact commit being shipped. It writes the record

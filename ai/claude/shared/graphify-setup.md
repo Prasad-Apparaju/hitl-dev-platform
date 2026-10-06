@@ -7,6 +7,16 @@ Graphify turns your project's code, docs, and schemas into a queryable knowledge
 
 ---
 
+## Contents
+
+- One-time install (per machine)
+- Per-project setup (run once per repo)
+- Keeping the graph current
+- Querying the graph
+- Excluding files
+- Availability check
+- When Graphify is not required
+
 ## One-time install (per machine)
 
 ```bash

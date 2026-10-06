@@ -24,7 +24,7 @@ Orchestrate the Red → Green → Refactor cycle where tests drive the design be
 
 **Input:** $ARGUMENTS (description of what to implement — should reference an LLD or issue)
 
-If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD or issue." With a `change_id_prefix` in `.hitl/config.yaml` a change is named by its full id (`SVC-3`); refuse a bare number and name the form (#145).
+If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD or issue." With a `change_id_prefix` in `.hitl/config.yaml` a change is named by its full id (`SVC-3`); refuse a bare number and name the form.
 
 **Refusal rule — design not approved:** Read `.hitl/current-change.yaml`. If the file exists and `status` is not `implementation-approved`, stop:
 
@@ -38,7 +38,7 @@ If `$ARGUMENTS` is empty, ask: "What are you implementing? Point me to the LLD o
 >
 > Do not start the TDD cycle until status is `implementation-approved`.
 
-**Refusal rule — linked docs partner unapproved (FR-30 slice 0):** If `.hitl/current-change.yaml` has a `linked_changes` entry with `role: docs`, run the checker before anything else and stop on a non-zero exit, quoting its verdict line:
+**Refusal rule — linked docs partner unapproved (FR-30):** If `.hitl/current-change.yaml` has a `linked_changes` entry with `role: docs`, run the checker before anything else and stop on a non-zero exit, quoting its verdict line:
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
@@ -50,7 +50,7 @@ Rules in `shared/linked-changes.md`. A design in another repository is given as 
 
 **Refusal rule — no LLD:** If no LLD path is provided or found, stop: "No LLD found. Write the LLD first using `/hitl:dev-generate-docs` — this skill generates tests FROM the spec, not without one."
 
-**Refusal rule — no decision packet:** Before generating any tests, check `.hitl/current-change.yaml` for `source_artifacts.decision_packet`. Two cases pass without a local file: the ledger carries a certified skip of the packet step (`skips:` has an entry with `step: packet`, or `workflow.steps[]` shows `packet` as `skipped` or `not_applicable`), which Fast Track records at intake (#146); or the value is a pinned reference `owner/repo@<commit>:<path>` to a packet approved in another repository, which you fetch with `python3 "$LINKED" fetch <ref>` and read from the printed path. Otherwise, if the field is missing or the file at that path does not exist on disk, stop:
+**Refusal rule — no decision packet:** Before generating any tests, check `.hitl/current-change.yaml` for `source_artifacts.decision_packet`. Two cases pass without a local file: the ledger carries a certified skip of the packet step (`skips:` has an entry with `step: packet`, or `workflow.steps[]` shows `packet` as `skipped` or `not_applicable`), which Fast Track records at intake; or the value is a pinned reference `owner/repo@<commit>:<path>` to a packet approved in another repository, which you fetch with `python3 "$LINKED" fetch <ref>` and read from the printed path. Otherwise, if the field is missing or the file at that path does not exist on disk, stop:
 
 > No decision packet found for this change.
 >
@@ -67,6 +67,12 @@ Rules in `shared/linked-changes.md`. A design in another repository is given as 
 [ -f graphify-out/graph.json ] && echo "Graphify: available" || echo "Graphify: unavailable"
 ```
 State the result once — "✅ Graphify available, using graph queries" or "⚠️ Graphify unavailable — using direct doc reads throughout." Apply that result for every step; do not rediscover availability mid-task.
+
+---
+
+## Rules that hold throughout
+
+- Never skip the human review step (Phase 2) — this is where domain expertise enters
 
 ---
 
@@ -143,54 +149,9 @@ Generate three categories of tests. All are written now (RED phase), but they ru
    - Verify cross-domain boundary entities have the correct shape at the wire level
    - Mark with `@pytest.mark.integration` / `describe('integration', ...)` so they can be run separately
 
-**C. Playwright E2E tests** — written now as stubs (`test.skip`), unskipped by QA at Step 22.
-   Write one Playwright test file per PRD acceptance criterion for this feature. Each test:
-   - Simulates a real user in a browser — no direct API calls, no mocks
-   - Runs against both desktop Chrome and a mobile device (`devices['iPhone 15']` and `devices['Pixel 7']`)
-   - Follows the user journey end-to-end: navigate → interact → assert visible outcome
-   - Is marked `test.skip('pending environment', ...)` so it does not break RED phase
-   - Lives in `tests/e2e/features/<feature-name>.spec.ts`
+**C. Playwright E2E tests** — written now as stubs (`test.skip('pending environment', ...)` so they do not break RED), unskipped by QA at Step 22. One file per PRD acceptance criterion at `tests/e2e/features/<feature-name>.spec.ts`. Each test simulates a real user in a browser (no direct API calls, no mocks), follows the journey end-to-end (navigate → interact → assert visible outcome), and runs against desktop Chrome and a mobile device (`devices['iPhone 15']` and `devices['Pixel 7']`). The file structure, and the note on native mobile apps (Appium or Detox, flagged in the test plan), are in [test-categories.md](test-categories.md).
 
-   File structure:
-   ```typescript
-   import { test, devices } from '@playwright/test';
-   const iphone = devices['iPhone 15'];
-   const android = devices['Pixel 7'];
-
-   test.skip('pending environment');
-
-   test.describe('<feature-name>', () => {
-     test.use({ ...iphone }); // repeat block with android
-     test('<AC description — desktop>', async ({ page }) => { /* ... */ });
-   });
-   ```
-
-   > **Note on native mobile apps:** Playwright covers web browsers and mobile web (responsive/PWA). If the feature includes a native iOS or Android app, those require Appium or Detox: flag that in the test plan.
-
-**D. Smoke suite contribution** — add this feature's happy-path user journey to `tests/e2e/smoke/journeys/<feature-name>.spec.ts`. The smoke suite runs a fresh new-customer flow on every build.
-
-   Structure:
-   ```
-   tests/e2e/smoke/
-     setup.ts          ← creates a brand-new test customer (signup → onboard)
-     teardown.ts       ← deletes test customer and all associated data
-     journeys/
-       <existing>.spec.ts
-       <feature-name>.spec.ts   ← ADD THIS for the current feature
-   ```
-
-   The journey file must:
-   - Assume a fresh customer created in `setup.ts` — no pre-existing data
-   - Exercise the feature's primary user action end-to-end via browser
-   - Assert the visible outcome the PM would verify
-   - Run on desktop Chrome + `devices['iPhone 15']` + `devices['Pixel 7']`
-   - NOT be skipped — smoke suite always runs
-
-   If `tests/e2e/smoke/setup.ts` does not exist yet, create it now. It must:
-   - Hit the app's signup flow via Playwright (real browser, not API)
-   - Complete onboarding
-   - Store the created customer's credentials in a fixture file for the journey tests to consume
-   - Be idempotent (safe to run repeatedly; tears down previous test customer first)
+**D. Smoke suite contribution** — add this feature's happy-path user journey to `tests/e2e/smoke/journeys/<feature-name>.spec.ts`. The smoke suite runs a fresh new-customer flow on every build and is never skipped: the journey assumes the customer `setup.ts` creates, exercises the primary user action via browser on desktop Chrome plus both device profiles, and asserts the outcome the PM would verify. The directory layout, the journey file's requirements, and what `setup.ts` must do if it does not exist yet, are in [test-categories.md](test-categories.md).
 
 6. **Read the scenarios file** at `tests.scenarios_file` in `.hitl/current-change.yaml` (rules: `shared/test-scenarios.md`).
    - **If it exists:** every acceptance and integration test (B, C and D above) cites the ID of the scenario it serves, in its name where the language allows (`test_blank_code_leaves_total_SC_GH_123_01`) or in its docstring or first comment. One test may cite several IDs. A test that serves no scenario in the file means a scenario is missing: add it with the next ID, `Added by: dev`, in plain words. Set each cited scenario's `Test:` line to the test's path.
@@ -330,10 +291,6 @@ Update `.hitl/current-change.yaml`: set `current_step: {number: 16, name: "Refac
 5. **Say:** "TDD cycle complete. Tests: [count passing]. Code ready for code review (steps 18-19 of the workflow)."
 
 ---
-
-## Important Rules
-
-- Never skip the human review step (Phase 2) — this is where domain expertise enters
 
 ## Closing this step
 

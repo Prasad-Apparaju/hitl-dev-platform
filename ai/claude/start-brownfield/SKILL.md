@@ -10,38 +10,22 @@ Bringing an existing codebase into HITL AI-Driven Development. Work through thes
 
 **Quick sanity check:** If this is a brand-new project with no source code, use `/hitl:dev-start-from-prd` instead. If you are migrating from one system to another (not just onboarding what exists), use `/hitl:dev-start-migration`.
 
----
+## Rules that hold throughout
+
+- **Breadcrumb.** Step 1 writes `.hitl/current-change.yaml`. At the start of every later step, set the previous step's `status: done`, the new step's `status: current`, and `current_step` to the step's `number` and `name` with `phase: "Brownfield Setup"`.
+- **Install only what is absent**: never overwrite an existing ADR, `.claude/settings.json`, a waiver file or a CI workflow file. The `.gitignore` edits always run.
+- **One wrapper definition**, in Step 0 of `/hitl:dev-start-from-prd`, used verbatim; never copy it into this skill.
+- **Shell state does not persist between tool calls.** A fence that needs `$PLUGIN_ROOT` resolves it itself; if it is empty, skip that copy and say so.
+- **A verdict not written to `docs/04-operations/platform-readiness.yaml` does not exist.**
+- **Reference files** carry the full procedure for Steps 5, 6, 8 and 9; read the one a step names and perform every part of it.
 
 ## Step 0 — Wire up HITL hooks (once per project)
 
 Check whether `.hitl/hooks/` already exists.
 
-**If it does — hooks are already wired. Skip sub-steps 1–3, but still run sub-steps 4–5** (gitignore and ADR stubs are idempotent and must always be present):
+**If it does:** run sub-step 1 (the ADR copy needs the plugin root), then 4 and 5, then say "Hooks already wired — skipped hook creation, ensured ADR stubs present." and proceed to Step 1.
 
-1. Find the plugin root (needed for the ADR copy):
-   ```bash
-   python3 -c "
-   import json, os, sys
-   try:
-       d = json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))
-       for inst in d.get('plugins', {}).get('hitl@hitl', []):
-           p = inst.get('installPath', '')
-           if os.path.isfile(os.path.join(p, '.claude-plugin/plugin.json')):
-               print(p); sys.exit(0)
-   except: pass
-   try:
-       d = json.load(open(os.path.expanduser('~/.claude/settings.json')))
-       for p in d.get('plugins', []):
-           path = p if isinstance(p, str) else p.get('path', '')
-           if os.path.isfile(os.path.join(path, '.claude-plugin/plugin.json')):
-               print(path); sys.exit(0)
-   except: pass
-   print('NOT_FOUND')
-   "
-   ```
-2. Run sub-steps 4 and 5 below (gitignore + ADR stubs), then say "Hooks already wired — skipped hook creation, ensured ADR stubs present." and proceed to Step 1.
-
-**If it does not exist — run all sub-steps:**
+**If it does not exist, run all sub-steps:**
 
 1. Find the HITL plugin path:
    ```bash
@@ -66,7 +50,7 @@ Check whether `.hitl/hooks/` already exists.
    ```
    If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found in your Claude Code settings. Install it with: `claude plugin marketplace add pappar/hitl-claude-plugin && claude plugin install hitl@hitl`"
 
-2. Create `.hitl/hooks/` and write a wrapper for each of these nine hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) Each wrapper discovers the plugin path at runtime — surviving plugin updates, reinstalls and version bumps. **Use the wrapper body from Step 0 of [`/hitl:dev-start-from-prd`](../start-from-prd/SKILL.md) verbatim; it is the single definition.** It resolves a working interpreter before use (on Windows `python3` is the Microsoft Store stub — on PATH, runs nothing), exports `HITL_PY`/`PYTHONUTF8` so hooks do not re-probe or crash on the breadcrumb glyphs, then execs the real hook from the plugin. Copying it into this skill is how it drifted before: three copies, two of them stale, shipping hooks that silently no-op.
+2. Create `.hitl/hooks/` and write a wrapper for each of these nine hooks: `welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`. (The shared `_steps.sh` library is sourced by the renderers from the plugin directly — it does not need a wrapper.) **Use the wrapper body from Step 0 of [`/hitl:dev-start-from-prd`](../start-from-prd/SKILL.md) verbatim; it is the single definition.**
    Replace `<name>` with the hook name for each file. Run `chmod 750` on each file.
 
 3. Create `.claude/settings.json` only if it does not already exist:
@@ -112,12 +96,9 @@ Check whether `.hitl/hooks/` already exists.
 
 6. Say: "Hooks wired. `.hitl/hooks/`, `.claude/settings.json`, `.gitignore`, and 8 baseline ADRs created in `docs/02-design/technical/adrs/`. **Restart Claude Code now** so the hooks load, then re-run this command to continue setup."
 
----
-
 ## Step 1 — Map the codebase
 
-**Write `.hitl/current-change.yaml` now** (enables breadcrumbs immediately) with the embedded
-`brownfield` workflow block — copied from the catalog at `ai/shared/workflows.yaml`:
+**Write `.hitl/current-change.yaml` now** (enables breadcrumbs immediately) with the embedded `brownfield` workflow block — copied from the catalog at `ai/shared/workflows.yaml`:
 ```yaml
 schema_version: "2.0"
 change_id: brownfield-setup
@@ -144,24 +125,13 @@ current_step:
   phase: "Brownfield Setup"
 ```
 
-> **Breadcrumb advancement:** at the start of each step below, edit `.hitl/current-change.yaml`
-> to set the previous step's `status: done` and the current step's `status: current`, and update
-> `current_step` to match.
-
 List the top-level directories and identify source code locations.
 - Ask: "Are these the right source directories? Anything to exclude?"
 - Confirm the language and framework.
 
----
-
 ## Step 2 — Customize CLAUDE.md
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 2
-  name: "Customize CLAUDE.md"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 2`, `name: "Customize CLAUDE.md"`.
 
 If `CLAUDE.md` has template placeholders (`{{coding_standards}}`, `{{#conventions}}`):
 - Ask: "What are this project's naming conventions, test framework, and any standards AI should follow?"
@@ -171,16 +141,9 @@ If `CLAUDE.md` has template placeholders (`{{coding_standards}}`, `{{#convention
 
 If `CLAUDE.md` already has real content, say: "`CLAUDE.md` looks customized — skipping." and move on.
 
----
-
 ## Step 3 — Generate the system manifest baseline
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 3
-  name: "Generate manifest"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 3`, `name: "Generate manifest"`.
 
 If `docs/system-manifest.yaml` is missing or template-only:
 - Run: `python tools/generate-manifest/generator.py --source [confirmed source dirs] --output docs/system-manifest.yaml`
@@ -190,7 +153,7 @@ If `docs/system-manifest.yaml` is missing or template-only:
 
 If a real manifest already exists, read it, summarize the domains, and ask: "Is this manifest still accurate? Anything outdated?"
 
-**Install the manifest drift checker.** The manifest is only load-bearing if something keeps it honest. Resolve the plugin root once (reused in later steps), then copy the checker into the repo so `/hitl:dev-check-conventions` and the `ci/workflows/*.yml` templates (which reference it by repo path) can run it:
+**Install the shipped validators**, which `/hitl:dev-check-conventions` and the `ci/workflows/*.yml` templates run by repo path:
 
 ```bash
 PLUGIN_ROOT=$(python3 -c "import json,os,sys;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) or sys.exit(0) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null)
@@ -231,18 +194,11 @@ fi
 [[ -n "$PLUGIN_ROOT" && -f "$PLUGIN_ROOT/shared/semgrep/install.sh" ]] && bash "$PLUGIN_ROOT/shared/semgrep/install.sh"
 ```
 
-The checker derives its scan roots from the manifest's listed files, so it needs no per-project configuration. If `$PLUGIN_ROOT` is empty, skip; `/hitl:dev-check-conventions` reports the checker as absent rather than passing.
-
----
+The drift checker needs no per-project configuration. If `$PLUGIN_ROOT` is empty, skip; `/hitl:dev-check-conventions` reports the checker as absent rather than passing.
 
 ## Step 4 — Review existing architecture
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 4
-  name: "Arch review"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 4`, `name: "Arch review"`.
 
 Follow `/hitl:architect-review-existing` from its file (`skills/architect-review-existing/SKILL.md` under the plugin root) to reconstruct the architectural decisions already in the codebase, interview the architect to confirm rationale and constraints, and document them as real ADRs before any incremental work begins.
 
@@ -253,80 +209,17 @@ This step produces:
 
 Do not proceed to Step 7 until the architect has confirmed the ADRs are accurate.
 
----
-
 ## Step 5 — Verify build and deployment pipeline
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 5
-  name: "Verify pipeline"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 5`, `name: "Verify pipeline"`.
 
 The deployment view generated in Step 4 (Phase 4c of `/hitl:architect-review-existing`) describes the CI/CD pipeline. This step confirms it actually works before feature development begins.
 
-**1. Identify the CI/CD system:**
-
-Check which CI/CD configuration files exist:
-
-| File | System |
-|---|---|
-| `.github/workflows/*.yml` | GitHub Actions |
-| `Jenkinsfile` | Jenkins |
-| `.gitlab-ci.yml` | GitLab CI |
-| `.circleci/config.yml` | CircleCI |
-| `.buildkite/pipeline.yml` | Buildkite |
-
-If none found: skip to "Pipeline missing" below.
-
-**2. Verify the build:**
-
-Run the project's build command (infer from the tech stack confirmed in Step 2 — `npm run build`, `mvn package`, `go build ./...`, `./gradlew build`, etc.).
-
-- ✅ Build passes → continue
-- 🔴 Build fails → record the error and say: "Build is broken — fix this before feature work begins. Run `/hitl:ops-build` for a structured diagnosis."
-
-**3. Verify the deployment path:**
-
-Check whether the CI/CD config includes:
-- A job that deploys to at least one non-production environment (staging, dev, test)
-- A job or manual gate for production deploy
-
-The 31-step workflow (`/hitl:dev-practices`) gates every PR on a passing staging deploy — if no staging job exists, that gate cannot function.
-
-- ✅ Staging deploy job exists → proceed
-- 🟡 No staging deploy job → note it: "The HITL staging gate will need a manual workaround until a staging deploy job is added."
-- 🔴 No deploy jobs at all → treat same as pipeline missing below
-
-**Pipeline missing or broken:**
-
-If no CI/CD config exists, or the build fails and cannot be quickly fixed, say:
-
-> "No working build pipeline found. This is a 🔴 concern: the 31-step workflow requires a passing build and a staging deploy path before a PR can be closed. Options:
-> - Scaffold a CI/CD config now: describe your hosting target (GitHub Actions → AWS/GCP/Azure/Railway/Fly.io) and I'll generate a starter pipeline
-> - Set it up manually and re-run this step when ready
-> - Proceed and accept that the build and deploy steps of the 31-step workflow will need manual execution until the pipeline exists"
-
-If they want a scaffold, generate a minimal CI/CD config (build → test → deploy-to-staging) using the tech stack from Step 2 and the deployment target from the deployment view. Do not include a production deploy job without an explicit approval gate.
-
-**Persist the verdicts (required):** copy `"$PLUGIN_ROOT/shared/templates/platform-readiness-template.yaml"`
-to `docs/04-operations/platform-readiness.yaml` if missing, set `project_kind: brownfield`,
-and record this step's verdicts there: `E1` (build reproducible), `E3` (staging deploy from
-CI), `D1` (suites run in CI and can fail) — evidence rules are in the template header. The
-register feeds `/hitl:ops-plan-platform` (Step 11) and the production-deploy gate; a verdict
-not written here does not exist.
-
----
+**Read [pipeline-verification.md](pipeline-verification.md) and perform every part of it**: identify the CI/CD system, run the build, check the deploy path, put the three options to the user when the pipeline is missing or broken, and record the `E1`, `E3` and `D1` verdicts in `docs/04-operations/platform-readiness.yaml`.
 
 ## Step 6 — Set up observability
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 6
-  name: "Set up observability"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 6`, `name: "Set up observability"`.
 
 HITL requires two observability layers: **application observability** (logs, metrics, tracing,
 alerting) and **agentic observability** (session logs, token cost). Both must be in place before
@@ -336,17 +229,9 @@ the first Tier 2 change is deployed.
 signal-by-signal survey, the severity table, and the required `F1` record in the readiness
 register. An unrecorded gap is invisible to the roadmap and the deploy gate.
 
-
----
-
 ## Step 7 — Identify priority components for documentation
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 7
-  name: "Priority docs"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 7`, `name: "Priority docs"`.
 
 Ask: "Which components are most critical and most likely to change in the near term? List up to three."
 
@@ -355,96 +240,33 @@ For each component:
 - If they want it now, run `/hitl:dev-generate-docs` for that component.
 - Note: this is incremental — you do not need to document everything before starting work.
 
-**The data layer.** Nothing above records what the data means, where it lives or how it is derived.
-Once the manifest is confirmed, `/hitl:dev-map-data-layer` builds that from evidence into
-`docs/02-design/data/`. Optional, off until run; say this once here and never ask again.
-
----
+**The data layer.** Nothing above records what the data means or where it lives; once the manifest is confirmed, `/hitl:dev-map-data-layer` builds that from evidence into `docs/02-design/data/`. Optional, off until run; say this once here and never ask again.
 
 ## Step 8 — Seed the registries
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 8
-  name: "Seed registries"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 8`, `name: "Seed registries"`.
 
-The 31-step workflow queries these two registries at multiple points. They must exist before `/hitl:dev-practices` is run for the first time.
-
-**Test registry** (`docs/03-engineering/testing/test-registry.yaml`):
-- Ask: "Do you have existing tests? If so, I'll create a registry stub from your test files."
-- If yes: scan `tests/`, `spec/`, or equivalent; generate one entry per test file with `domain` and `path`. Leave `risk` and `covers` as DRAFT.
-- If no: create an empty stub.
-
-**Incident registry** (`docs/04-operations/incident-registry.yaml`):
-- Ask: "What broke in production in the last 6 months? Describe each incident in one sentence."
-- For each answer, add one entry with `description`, `domain` (best guess), and `date`.
-- If they have nothing: create an empty stub and say: "You can add entries later — after each production incident, run `/hitl:ops-incident`."
-
-**Product baseline** (`docs/01-product/prd.md`): the PM and QA skills read the PRD for personas and requirements, so a brownfield project with no PRD leaves them nowhere to land. Initialize the PRD *shell*, not a retroactive spec of existing behaviour (that lives in the reverse-engineered technical docs), only personas and format so the next requirement has a home. If `docs/01-product/prd.md` is missing and `$PLUGIN_ROOT` (Step 3) is set, run `mkdir -p docs/01-product && cp "$PLUGIN_ROOT/shared/templates/prd-template.md" docs/01-product/prd.md`. Then ask "Who are the primary users of this system, and what does each need?" and fill §3 (Target Users and Personas); leave §5 (Functional Requirements) empty, noted "No requirements yet — added via `/hitl:pm-add-feature`." Say: "Product baseline initialized; PM and QA skills are now active."
-
----
+Both registries and the PRD shell must exist before `/hitl:dev-practices` first runs. **Read [seed-registries.md](seed-registries.md) and perform every part of it**: the test registry, the incident registry and the product baseline (`docs/01-product/prd.md`, personas only, never a retroactive spec of existing behaviour).
 
 ## Step 9 — Build Graphify knowledge graph (optional)
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 9
-  name: "Graphify"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 9`, `name: "Graphify"`.
 
-Graphify builds a queryable knowledge graph from your docs and code. HITL skills use it to look up domains, incidents, and test coverage without exhausting the context window.
-
-Run `graphify --version` to check if it is installed.
-
-**If installed:** run the per-project commands now:
-```bash
-graphify .              # build the graph from existing code and docs
-graphify hook install   # auto-rebuild on every git commit
-```
-
-Then commit so teammates get it immediately:
-```bash
-echo "graphify-out/manifest.json" >> .gitignore
-echo "graphify-out/cost.json" >> .gitignore
-git add graphify-out/ .gitignore
-git commit -m "chore: add graphify knowledge graph"
-```
-
-**If not installed:** say "Graphify not found — skipping. Install it when convenient with `uv tool install graphifyy && graphify claude install`, then run `graphify .` in this repo. HITL skills fall back gracefully without it." and continue to Step 8.
-
----
+Run `graphify --version`. **If installed, read [graphify.md](graphify.md) and run its commands** (build the graph, install the commit hook, commit the output). If not installed, say "Graphify not found — skipping. Install it when convenient with `uv tool install graphifyy && graphify claude install`, then run `graphify .` in this repo. HITL skills fall back gracefully without it." and continue to Step 10.
 
 ## Step 10 — Create your first change issue
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 10
-  name: "Create issue"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 10`, `name: "Create issue"`.
 
 Ask: "What's the first change you want to make now that this project is onboarded?"
 - Run: `gh issue create --title "[change description]" --body "First tracked change after HITL brownfield onboarding."`
 - Show the issue URL.
 
----
-
 ## Step 11 — Confirm ready
 
-Update `.hitl/current-change.yaml` — set `current_step`:
-```yaml
-  number: 11
-  name: "Confirm ready"
-  phase: "Brownfield Setup"
-```
+Breadcrumb: `number: 11`, `name: "Confirm ready"`.
 
-**Before the closing message, exclude persona profiles from git.** `.hitl/people/` holds
-descriptions of named colleagues. Committed, they land in PR diffs and stay in history after
-deletion. `init-project.sh` adds this rule and a plugin-installed team never runs that script, so
-it has to happen here.
+**Before the closing message, exclude persona profiles from git.** `.hitl/people/` holds descriptions of named colleagues; committed, they land in PR diffs and stay in history. A plugin-installed team never runs `init-project.sh`, so the rule is added here.
 
 ```bash
 GITIGNORE=".gitignore"
@@ -456,8 +278,7 @@ git check-ignore -q .hitl/people/ 2>/dev/null \
   || echo "COULD NOT exclude .hitl/people/: say so before any profile is written here."
 ```
 
-**Release notice and star, once per person, default no.** HITL has no other way to tell anyone a
-new version exists. The script decides whether to ask; nothing is posted without a yes.
+**Release notice and star, once per person, default no.** HITL has no other way to tell anyone a new version exists. The script decides whether to ask; nothing is posted without a yes.
 
 ```bash
 PLUGIN_ROOT=$(python3 -c "import json,os,sys;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) or sys.exit(0) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null)
@@ -465,12 +286,7 @@ RN="$PLUGIN_ROOT/shared/tools/hitl-onboarding/release_notice.py"
 if [[ -f "$RN" ]]; then python3 "$RN" state; else echo "release_notice.py is not in this build: skipping."; fi
 ```
 
-The first line of the output is the verdict. On `already-answered` or `gh-logged-out`, say the
-second line to the person and move on. On `ask`, put question 1 in front of the person word for
-word and wait; then question 2 and wait. An empty answer is no. Then record both answers:
-`python3 "$RN" record --notice <yes|no> --star <yes|no|skipped>`. If the first answer was yes,
-show the output of `python3 "$RN" body` (the exact comment) and only then run
-`python3 "$RN" post --confirmed`. If the second was yes, run `python3 "$RN" star --confirmed`.
+The first line of the output is the verdict. On `already-answered` or `gh-logged-out`, say the second line to the person and move on. On `ask`, put question 1 in front of the person word for word and wait; then question 2 and wait. An empty answer is no. Then record both answers: `python3 "$RN" record --notice <yes|no> --star <yes|no|skipped>`. If the first answer was yes, show the output of `python3 "$RN" body` (the exact comment) and only then run `python3 "$RN" post --confirmed`. If the second was yes, run `python3 "$RN" star --confirmed`.
 
 Output this exactly:
 

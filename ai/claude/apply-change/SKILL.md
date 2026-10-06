@@ -48,7 +48,7 @@ Before any analysis, locate and confirm these exist:
 
 If the LLD does not exist for a Tier 2+ change, stop: "LLD is required before implementation. Run `/hitl:dev-generate-docs` first." A decision packet the ledger shows as skipped or not applicable (Fast Track) is not required here either; a packet given as a pinned reference is fetched like an LLD.
 
-With a `change_id_prefix` in `.hitl/config.yaml` the argument is the full id (`SVC-3`); refuse a bare number and name the form (#145). An LLD approved in another repository is a pinned reference, `owner/repo@<commit>:<path>`. Resolve the checker, then fetch it and record the reference, not the path; with a `linked_changes` entry of `role: docs` in `.hitl/current-change.yaml`, run the approval check first and stop on exit 2 (quote its verdict line) or exit 3 (the host could not be read; say which read failed):
+With a `change_id_prefix` in `.hitl/config.yaml` the argument is the full id (`SVC-3`); refuse a bare number and name the form. An LLD approved in another repository is a pinned reference, `owner/repo@<commit>:<path>`. Resolve the checker, then fetch it and record the reference, not the path; with a `linked_changes` entry of `role: docs` in `.hitl/current-change.yaml`, run the approval check first and stop on exit 2 (quote its verdict line) or exit 3 (the host could not be read; say which read failed):
 
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
@@ -90,7 +90,7 @@ longest plan and documenting an area would tax every future change to it.
 manifests the change touches. `security_sensitive`: ask the human **one** question — does this change
 touch authentication, authorization, secrets, personal or payment data? Record the answer with
 provenance `human`. A yes activates the security design review, the dependency + CVE audit and the
-penetration test whatever else was found (#102); they are conditional steps and appear in no plan
+penetration test whatever else was found; they are conditional steps and appear in no plan
 otherwise. Do not infer a no from silence, and do not answer it yourself.
 
 **Write the record** to `.hitl/impact/<change_id>.yaml`, against

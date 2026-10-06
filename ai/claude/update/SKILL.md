@@ -6,11 +6,18 @@ disable-model-invocation: true
 
 # Update HITL Plugin
 
----
+Steps 1 to 3 update the installed plugin. Steps 3b to 4.10 reconcile this repo with it; every one is idempotent and runs whether or not the version changed.
+
+## Rules that hold throughout
+
+- **The installed skill wins.** After Step 2 the newly installed `SKILL.md` replaces the copy in your context (Step 2.5); where they differ, the file wins.
+- **Shell state does not persist between tool calls.** Every fence resolves `ROOT` itself; a step never inherits `$ROOT` from an earlier one. Fences probe `python3`, `python` and `py`, because a bare `python3` may be the Microsoft Store stub on Windows.
+- **Never stop at "already on the latest version".** The reconcile steps repair this repo, not the plugin.
+- **Co-owned files** (validators under `ci/` and `tools/`, `.semgrep/`, `.claude/settings.json`, `CLAUDE.md`) are never blind-copied or deleted: install what is absent, show a diff for anything modified and ask per file; only an explicit yes overwrites. A file is removed only when tracked here and hashing to a version HITL shipped.
+- **Reference files** beside this skill are read in full when a step names one; each step links its own.
 
 ## Step 1 — Read the current version
 
-Run:
 ```bash
 python3 -c "
 import json, os, sys
@@ -35,75 +42,28 @@ print('NOT_FOUND')
 "
 ```
 
-If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found. Confirm it was installed with `claude plugin install hitl@hitl`."
-
-Record the version shown as the **old version**.
-
----
+If the result is `NOT_FOUND`, stop and say: "The HITL plugin was not found. Confirm it was installed with `claude plugin install hitl@hitl`." Record the version shown as the **old version**.
 
 ## Step 2 — Update the plugin
 
-Run:
 ```bash
 claude plugin marketplace update hitl
 claude plugin update hitl@hitl
 ```
-
 `marketplace update` refreshes the cached manifest so the latest release is visible. `plugin update` installs it.
-
----
 
 ## Step 2.5 — Re-read this skill from the version you just installed
 
-**Do this before anything else, unconditionally.** You are executing the `SKILL.md` that was loaded
-when the command started — the version you are updating *from*. Step 2 has just installed a
-different one, whose `dev-update` may fix or change every step below. If you continue from the copy
-in your context, a fix that ships **inside** `dev-update` never runs on the update that delivers it;
-it waits for the next release. Worse, a step that was later found to be *unsafe* still runs.
-
-This step is deliberately placed before the version comparison, because both of its outcomes jump
-onward and would skip anything after them.
-
+**Do this before anything else, unconditionally.** You are executing the `SKILL.md` you are updating *from*; a fix that ships inside `dev-update` must run on the update that delivers it. This step sits before the version comparison because both of that step's outcomes jump onward.
 ```bash
 NEW_SKILL=$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(os.path.join(i['installPath'],'skills/dev-update/SKILL.md')) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)
 echo "$NEW_SKILL"
 ```
-
-**Read that file now, and execute its steps from Step 3 onward instead of the ones in your
-context.** Where the two differ, the file wins — it is the version the user just chose to install.
-If the path is empty or unreadable, say so and continue with the steps you have.
-
----
+**Read that file now, and execute its steps from Step 3 onward instead of the ones in your context.** Where the two differ, the file wins — it is the version the user just chose to install. If the path is empty or unreadable, say so and continue with the steps you have.
 
 ## Step 3 — Read the new version
 
-Run:
-```bash
-python3 -c "
-import json, os, sys
-try:
-    p = os.path.expanduser('~/.claude/plugins/installed_plugins.json')
-    data = json.load(open(p))
-    entry = data['plugins']['hitl@hitl'][0]
-    print(entry['version']); sys.exit(0)
-except Exception: pass
-try:
-    cfg = os.path.expanduser('~/.claude/settings.json')
-    data = json.load(open(cfg))
-    for p in data.get('plugins', []):
-        path = p if isinstance(p, str) else p.get('path', '')
-        pj = os.path.join(path, '.claude-plugin/plugin.json')
-        if os.path.isfile(pj):
-            print(json.load(open(pj))['version']); sys.exit(0)
-except Exception: pass
-print('NOT_FOUND')
-"
-```
-
-If the version **changed**, continue to Step 4.
-
-If the version is **the same as before**, the plugin catalog cache is stale — run a cache-bust update:
-
+Run the Step 1 block again. If the version **changed**, continue to Step 3b. If it is **the same as before**, the plugin catalog cache is stale — run a cache-bust update:
 ```bash
 # Delete the catalog cache so Claude Code fetches a fresh copy
 rm -f ~/.claude/plugins/plugin-catalog-cache.json
@@ -112,22 +72,11 @@ rm -f ~/.claude/plugins/plugin-catalog-cache.json
 claude plugin marketplace update hitl
 claude plugin update hitl@hitl
 ```
-
-Then re-read the version (repeat the python3 block above). If it still hasn't changed, the installed commit SHA already matches what the marketplace advertises — the user is genuinely on the latest. Say: "Already on the latest version." Then **continue to Step 3b anyway — do not stop.**
-
-Stopping here was a real defect. Steps 3b and 4.x do not update the plugin; they reconcile *this repo* with the installed plugin — hooks, validators, `CLAUDE.md`, and the cleanup of files an earlier version installed. Every one is idempotent. Skipping them on "already latest" meant a repo could never be repaired once its version matched, which is exactly the state a user is in when they run the command a second time to fix something.
-
-If it changed after the cache bust, continue to Step 4.
-
-
----
+Then re-read the version. If it still hasn't changed, the user is genuinely on the latest. Say: "Already on the latest version." Then **continue to Step 3b anyway — do not stop.** If it changed after the cache bust, continue to Step 3b.
 
 ## Step 3b — Migrate settings and audit the active change
 
-Onboarding writes `.claude/settings.json` **only if absent**, so a repo onboarded before a release
-keeps its old file and misses what shipped since. Dry-run the migrator, show what it proposes, then
-apply. Prefer the migrator the plugin ships: the repo's copy may be the version being fixed.
-
+Onboarding writes `.claude/settings.json` **only if absent**, so an older repo misses what shipped since. Dry-run the migrator, show what it proposes, then apply; prefer the plugin's migrator, the repo's copy may be the version being fixed.
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 MIG="$ROOT/shared/ci/first-pass/migrate_project.py"; [[ -f "$MIG" ]] || MIG="ci/first-pass/migrate_project.py"
@@ -139,90 +88,39 @@ else
   "$PY" "$MIG" --root . --apply
 fi
 ```
-
-Permissions merge additively. The migrator also reports any active change lightened without
-declaring `first_pass`: those certified clean before because enforcement never engaged and will now
-fail — intended, say so. A non-zero exit means the audit could not read the change file at all (no
-PyYAML, invalid YAML, not a mapping): say that plainly and never report the change as verified.
-
----
+Permissions merge additively. The migrator also reports any active change lightened without declaring `first_pass`: those certified clean before because enforcement never engaged and will now fail — intended, say so. A non-zero exit means the audit could not read the change file at all (no PyYAML, invalid YAML, not a mapping): say that plainly and never report the change as verified.
 
 ## Step 4 — Re-wire hooks if needed
 
-Check whether `.hitl/hooks/` exists in the current project.
+Check whether `.hitl/hooks/` exists in the current project. If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:dev-start-from-prd`: create the wrapper scripts and `.claude/settings.json`.
 
-If it does not exist, follow the same hook-wiring steps as Step 0 in `/hitl:dev-start-from-prd`: create the wrapper scripts and `.claude/settings.json`.
-
-If it already exists, check **every** marker the current template carries, not just plugin discovery — a wrapper can have current discovery and still be stale, and testing one marker is how that goes unnoticed:
-
+If it already exists, check **every** marker the current template carries; a wrapper can have current discovery and still be stale:
 ```bash
 for m in installed_plugins.json "command -v" HITL_PY; do grep -q "$m" .hitl/hooks/welcome.sh || echo "STALE: missing $m"; done
 [[ -f .hitl/hooks/first-pass-permissions.sh ]] || echo "STALE: first-pass-permissions.sh absent"
 ```
+On any `STALE` line, delete `.hitl/hooks/` and re-create all **nine** wrappers from the template in Step 0 of `/hitl:dev-start-from-prd` (**sub-steps 1-3 only**: create the wrappers, then come straight back here to Step 4.5. Ignore its closing "restart and re-run this command" instruction; following it here skips Steps 4.5 through 4.10 and the completion message). What each marker protects is in [rewire-hooks.md](rewire-hooks.md).
 
-No `installed_plugins.json` = pre-v1.0.9 discovery, broken on current Claude Code. No `command -v` probe or `HITL_PY` = pre-issue-#14: a bare `python3` is the Microsoft Store stub on Windows, on PATH but running nothing, so every hook silently no-ops — and a lone `installed_plugins.json` grep passes straight over it. No `first-pass-permissions.sh` = pre-CR-15, so the permission policy never engages. On any of those, delete `.hitl/hooks/` and re-create all **nine** wrappers (`welcome`, `hitl-gate`, `check-hitl-context`, `first-pass-permissions`, `check-domain-boundary`, `rebuild-graph`, `write-session-summary`, `sync-step-to-issue`, `statusline-hitl`) from the template in Step 0 of `/hitl:dev-start-from-prd` (**sub-steps 1-3 only**: create the wrappers, then come straight back here to Step 4.5. Ignore its closing "restart and re-run this command" instruction — that is written for onboarding, and following it here skips Steps 4.5 through 4.9 and the completion message, with no sign anything was missed), which is the single source of truth for wrapper contents.
-
-Also check `.claude/settings.json` for the `$CLAUDE_PROJECT_DIR` fix, the `statusLine` entry, and the `SessionStart` → `hitl-gate.sh` hook. Assert what `statusLine` **points at** and what **shape** it has, not merely that the key is present. The migrator run in Step 3b reports both: it wraps a bare-string `statusLine` into the object form (#96: the v2.6.3 re-wire wrote a string, and a grep for the script name passed it for four releases) and reports a missing or re-pointed one for you to fix:
+Also check `.claude/settings.json`: `$CLAUDE_PROJECT_DIR`, the `statusLine` entry (what it **points at** and its **shape**, not merely that the key is present) and the `SessionStart` → `hitl-gate.sh` hook. The Step 3b migrator wraps a bare-string `statusLine` and reports a missing or re-pointed one:
 ```bash
 grep "CLAUDE_PROJECT_DIR" .claude/settings.json
 grep -q 'hooks/statusline-hitl.sh' .claude/settings.json \
   || echo "statusLine missing or pointing at a stale script: re-create settings.json"
 grep "hitl-gate" .claude/settings.json
 ```
-
-A repo onboarded before the `.hitl/hooks/` layout has a `statusLine` that runs a **pre-plugin standalone script**, which a `grep "statusLine"` passes and which renders the wrong workflow (plugin issue #23 item 1). Read [legacy-statusline.md](legacy-statusline.md): it shows the stale entry and removes the script during re-sync so nothing can be re-pointed at it.
-
-If `CLAUDE_PROJECT_DIR` is absent, the hook commands use relative paths and fail when Claude Code's cwd differs from the project root. If `statusLine` is absent **or points anywhere other than `hooks/statusline-hitl.sh`**, the persistent HITL breadcrumb is missing or wrong. If `hitl-gate` is absent, the session-start change-intake gate won't fire. In any of these cases the file needs repair — but **do not delete it**. That template is a
-complete file, not a merge: deleting takes the team's `permissions`, `env`, MCP wiring and every
-non-HITL hook with it, and the trigger is common (any project with its own `statusLine` matches on
-first upgrade).
-
-Back it up, then add or correct only the specific keys that are wrong:
-
+A `statusLine` that runs a **pre-plugin standalone script** passes a grep: read [legacy-statusline.md](legacy-statusline.md), which shows the stale entry and removes the script. If anything is wrong, repair the file; **do not delete it** (the template is a complete file, not a merge, and deleting takes the team's `permissions`, `env`, MCP wiring and every non-HITL hook with it; see [rewire-hooks.md](rewire-hooks.md)). Back it up, then correct only the wrong keys:
 ```bash
 cp .claude/settings.json .claude/settings.json.bak && echo "backed up to .claude/settings.json.bak"
 ```
-
-Show the user the diff of what you propose to change before writing. Only if the file is absent or
-unparseable should you write the template wholesale — and say so when you do.
-
-Say:
-
-"Hook wrappers and settings.json re-created with current patterns. Wrappers now check `~/.claude/plugins/installed_plugins.json` first (current Claude Code) with fallback to legacy `settings.json`. Hook commands now use `$CLAUDE_PROJECT_DIR` for reliable path resolution. `statusLine` and the `SessionStart` change-intake gate are wired."
-
----
+Show the user the diff of what you propose to change before writing. Only if the file is absent or unparseable should you write the template wholesale — and say so when you do. Say: "Hook wrappers and settings.json re-created with current patterns. Wrappers now check `~/.claude/plugins/installed_plugins.json` first (current Claude Code) with fallback to legacy `settings.json`. Hook commands now use `$CLAUDE_PROJECT_DIR` for reliable path resolution. `statusLine` and the `SessionStart` change-intake gate are wired."
 
 ## Step 4.5 — Migrate the change file to the current workflow schema
 
-If `.hitl/current-change.yaml` exists, migrate its content to the current workflow definition.
-This is what keeps the breadcrumb correct after a workflow's steps change between versions
-(e.g. brownfield growing 8 → 11 steps). It shows a diff and **requires confirmation** before
-writing — it never overwrites silently, and it preserves comments and project-authored
-per-step fields by remapping on each step's stable `key`.
-
-**Follow the full procedure in [change-file-migration.md](change-file-migration.md).** Run it
-in full — the generator, the diff, the confirmation prompt, and the promote/cleanup steps.
+If `.hitl/current-change.yaml` exists, migrate it to the current workflow definition so the breadcrumb stays correct after a workflow's steps change. It shows a diff and **requires confirmation** before writing. **Follow the full procedure in [change-file-migration.md](change-file-migration.md).** Run it in full — the generator, the diff, the confirmation prompt, and the promote/cleanup steps.
 
 ## Step 4.6 — Re-sync the copied-in CI validators
 
-Some validators run via **project-relative paths**, so the repo carries its own copy of the plugin's CI
-tools (the plugin isn't present in CI). On upgrade, refresh them so an existing repo picks up new or fixed
-validators without re-onboarding — and **install** ones added after this repo was first onboarded.
-
-These copies are **co-owned**, exactly like `.semgrep/` in Step 4.7. A repo that fixed a validator bug
-ahead of upstream is a co-owner, and a blind `cp` reverted such fixes five times in one downstream repo,
-including on runs with no version change (#104). So the migrator applies the 4.7 protocol per file:
-
-| Case | Action |
-|---|---|
-| Shipped file the repo does **not** have | install it |
-| Shipped file, byte-identical | leave alone, say nothing |
-| Shipped file the repo has, byte-identical to an **older release** | update it; an older version is not an edit (plugin #35) |
-| Shipped file the repo has **modified** | show the diff, **keep the repo's**, and ask |
-| File the repo added itself | never touched, never reported |
-| File listed in that directory's `.hitl-optout` | never installed — a deliberate removal stays removed |
-| `first-pass-check.yml`, `manifest-waivers.yaml`, `data-layer-check.yml`, `data-layer-waivers.yaml` | installed once if absent, then the repo's outright |
-
+The repo carries its own copy of the plugin's CI tools (they run by **project-relative path**); refresh them and **install** ones added since onboarding. They are **co-owned**: the per-file protocol, and why HITL's own test suites are removed rather than fixed, are in [resync-validators.md](resync-validators.md); read it before acting on anything the migrator reports.
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 if [[ -z "$ROOT" ]]; then
@@ -290,91 +188,16 @@ else
   done
 fi
 ```
-
-**Why removal and not a fix:** these suites test HITL's own internals against the platform's source
-layout. One of them (`test_driver_e2e.py`) extracts the Step 6 generator from `start-change/SKILL.md`,
-a file no product repo has or should have — so it cannot be made to pass outside this repo. CI in a
-product repo runs the **validators**; the validators' tests belong with the validators' source.
-
 **If any file is listed as differing, STOP and ask**, per file, using the command the migrator printed:
 
 > `<path>` differs from the version shipped with v$NEW_VER. Overwrite it with the shipped copy, or keep
 > yours? (Your edits are lost if you overwrite; keeping yours means you miss any upstream fix.)
 
-Only on an explicit yes for that file run the printed `--overwrite <path>` command. Never overwrite a
-file nobody said yes to, and never "resolve" a difference by deleting the repo's copy.
-
-If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`.
-Say which tools were installed, which differ and were kept, or "CI validators already current".
-
----
+Only on an explicit yes for that file run the printed `--overwrite <path>` command. Never overwrite a file nobody said yes to, and never "resolve" a difference by deleting the repo's copy. If any tool was installed or updated, commit it: `git commit -m "chore(hitl): sync CI validators to v$NEW_VER"`. Say which tools were installed, which differ and were kept, or "CI validators already current".
 
 ## Step 4.7 — Re-sync the semgrep convention rules
 
-`.semgrep/` is what `/hitl:dev-check-conventions` scans with. `init-project.sh` copies it once at
-onboarding, so without this step a rule fix never reaches an already-onboarded project (issue #47).
-
-Unlike `ci/` validators, a product repo's rule set is **co-owned** — teams add and tune rules — so
-this never blind-copies:
-
-| Case | Action |
-|---|---|
-| Shipped rule the repo does **not** have | install it |
-| Shipped rule, byte-identical | leave alone, say nothing |
-| Shipped rule the repo has **modified** | show the diff and **ask** before overwriting |
-| Rule the repo added itself | never touched, never reported as drift |
-| Rule listed in `.semgrep/.hitl-optout` | never installed — a deliberate removal stays removed |
-
-Without the opt-out file, "install anything absent" would resurrect a deliberately deleted rule on
-every update. One path per line, `#` comments allowed (e.g. `best-practices/tenant-isolation.yaml`).
-
-```bash
-ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
-if [[ -z "$ROOT" || ! -d "$ROOT/shared/semgrep" ]]; then
-  echo "No shipped rule set found: skipping semgrep re-sync."
-else
-  new=(); changed=(); skipped=()
-  while IFS= read -r src; do
-    rel="${src#"$ROOT"/shared/semgrep/}"
-    [[ "$rel" == "install.sh" ]] && continue
-    # Honour a deliberate removal — otherwise every update resurrects the deleted rule.
-    if [[ -f .semgrep/.hitl-optout ]] && grep -qxF "$rel" <(grep -v '^[[:space:]]*#' .semgrep/.hitl-optout); then
-      skipped+=("$rel"); continue
-    fi
-    if [[ ! -f ".semgrep/$rel" ]]; then
-      new+=("$rel")
-    elif ! cmp -s "$src" ".semgrep/$rel"; then
-      changed+=("$rel")
-    fi
-  done < <(find "$ROOT/shared/semgrep" -type f \( -name "*.yaml" -o -name "*.yml" -o -name ".semgrepignore" \))
-  [[ ${#skipped[@]} -gt 0 ]] && echo "  · opted out (.semgrep/.hitl-optout): ${skipped[*]}"
-
-  # Install everything absent — nothing to lose, nothing to confirm.
-  for rel in "${new[@]}"; do
-    mkdir -p ".semgrep/$(dirname "$rel")"
-    cp "$ROOT/shared/semgrep/$rel" ".semgrep/$rel"
-    echo "  + installed .semgrep/$rel"
-  done
-
-  # Locally modified files are reported with a diff and left untouched for now.
-  for rel in "${changed[@]}"; do
-    echo "  ~ .semgrep/$rel differs from the shipped version:"
-    diff -u ".semgrep/$rel" "$ROOT/shared/semgrep/$rel" | sed 's/^/      /'
-  done
-  [[ ${#changed[@]} -eq 0 && ${#new[@]} -eq 0 ]] && echo "  ✓ semgrep rules already current"
-
-  # Superseded files: a rule that was RENAMED upstream leaves its old file behind, and the
-  # loop above cannot tell that apart from a rule the project wrote itself, so it would sit
-  # there forever as dead config. Report, never auto-delete — the project may have edited it.
-  for old in best-practices/pydantic-validation.yaml; do
-    if [[ -f ".semgrep/$old" ]]; then
-      echo "  ! .semgrep/$old is superseded: it was renamed upstream and made framework-neutral."
-      echo "    Its rule could never fire: delete it once you are happy with the replacement."
-    fi
-  done
-fi
-```
-
+`.semgrep/` is what `/hitl:dev-check-conventions` scans with; onboarding copies it once, so this step is how a rule fix reaches an onboarded project. The rule set is **co-owned**, so this never blind-copies. **Read [resync-semgrep.md](resync-semgrep.md) and run its block**: it installs absent rules, prints a diff for modified ones, honours `.semgrep/.hitl-optout`, and reports superseded files.
 **If any file is listed as differing, STOP and ask** — show the diff above and ask, per file:
 
 > `.semgrep/<rel>` differs from the version shipped with v$NEW_VER. Overwrite it with the shipped rule, or
@@ -382,9 +205,9 @@ fi
 
 Only on an explicit yes, copy that one file:
 ```bash
+ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 cp "$ROOT/shared/semgrep/<rel>" ".semgrep/<rel>"
 ```
-
 Then stage what changed and verify the rule set still loads:
 ```bash
 [[ -d .semgrep ]] && git add .semgrep
@@ -392,20 +215,11 @@ command -v semgrep >/dev/null 2>&1 && semgrep scan --config .semgrep/ --error . 
   && echo "  ✓ rule set loads and the repo is clean" \
   || echo "  (semgrep not installed, or findings exist: run /hitl:dev-check-conventions)"
 ```
-
 Commit with `git commit -m "chore(hitl): sync semgrep rules to v$NEW_VER"`.
-
----
 
 ## Step 4.8 — Ensure CLAUDE.md announces HITL
 
-`CLAUDE.md` is the only thing that can tell a developer this project uses HITL **when they have not
-installed the plugin** — no hook runs and no skill exists, so nothing else in the repo speaks.
-Onboarding used to skip it whenever one already existed, which is every real project.
-
-Never overwrites the team's file: it maintains one marker-delimited block. Creates, appends,
-refreshes, or stays silent if current; a truncated `HITL:BEGIN` leaves the file untouched (exit 3).
-
+`CLAUDE.md` is the only thing that tells a developer **without the plugin** that this project uses HITL. This maintains one marker-delimited block and never overwrites the team's file; a truncated `HITL:BEGIN` leaves it untouched (exit 3).
 ```bash
 # Resolve here: shell state does not persist between tool calls, and inheriting $ROOT from an
 # earlier step left it empty, so this printed a false "not in this build — skipping".
@@ -426,14 +240,9 @@ else
 fi
 ```
 
----
-
 ## Step 4.9 — Ensure persona profiles are gitignored
 
-`.hitl/people/` holds descriptions of named colleagues, and `shared/personas.md` promises they are
-**local by default** — onboarding is what makes that true, so an upgrading project gets the
-commands and none of the protection. Same idempotent check; running it twice adds nothing.
-
+`.hitl/people/` holds descriptions of named colleagues, and `shared/personas.md` promises they are **local by default**. Onboarding adds the rule; an older project gets it here. Idempotent.
 ```bash
 GITIGNORE=".gitignore"
 if ! grep -q "^\.hitl/people/" "$GITIGNORE" 2>/dev/null; then
@@ -452,9 +261,7 @@ else
   echo "COULD NOT exclude .hitl/people/. Do not tell anyone a profile written here is local."
 fi
 ```
-
 **If a profile is already tracked**, the rule does not untrack it. Say so and let them decide:
-
 ```bash
 TRACKED=$(git ls-files '.hitl/people/' 2>/dev/null)
 if [[ -n "$TRACKED" ]]; then
@@ -465,27 +272,15 @@ if [[ -n "$TRACKED" ]]; then
 fi
 ```
 
----
-
 ## Step 4.10 — Ask about release notices, once per person
 
-Projects onboarded before this step existed were never asked. Same script as onboarding; it asks
-nobody twice, and there is no share line here.
-
+Same script as onboarding; it asks nobody twice, and there is no share line here.
 ```bash
 ROOT="${CLAUDE_PLUGIN_ROOT:-$(python3 -c "import json,os;d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')));[print(i['installPath']) for i in d.get('plugins',{}).get('hitl@hitl',[]) if os.path.isfile(os.path.join(i.get('installPath',''),'.claude-plugin/plugin.json'))]" 2>/dev/null | head -1)}"
 RN="$ROOT/shared/tools/hitl-onboarding/release_notice.py"
 if [[ -f "$RN" ]]; then python3 "$RN" state; else echo "release_notice.py is not in this build: skipping."; fi
 ```
-
-The first line of the output is the verdict. On `already-answered` or `gh-logged-out`, say the
-second line to the person and move on. On `ask`, put question 1 in front of the person word for
-word and wait; then question 2 and wait. An empty answer is no. Then record both answers:
-`python3 "$RN" record --notice <yes|no> --star <yes|no|skipped>`. If the first answer was yes,
-show the output of `python3 "$RN" body` (the exact comment) and only then run
-`python3 "$RN" post --confirmed`. If the second was yes, run `python3 "$RN" star --confirmed`.
-
----
+The first line of the output is the verdict. On `already-answered` or `gh-logged-out`, say the second line to the person and move on. On `ask`, put question 1 in front of the person word for word and wait; then question 2 and wait. An empty answer is no. Then record both answers: `python3 "$RN" record --notice <yes|no> --star <yes|no|skipped>`. If the first answer was yes, show the output of `python3 "$RN" body` (the exact comment) and only then run `python3 "$RN" post --confirmed`. If the second was yes, run `python3 "$RN" star --confirmed`.
 
 ## Step 5 — Confirm
 
