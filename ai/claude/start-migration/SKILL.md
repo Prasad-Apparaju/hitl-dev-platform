@@ -8,9 +8,11 @@ disable-model-invocation: true
 
 Setting up a migration project for HITL AI-Driven Development.
 
-**Migration is not brownfield.** In brownfield you work *inside* the existing codebase — it is the live product. In migration the source codebase is being *replaced*: it is read-only reference. Only behaviors transfer to the target, never code. The behavioral inventory (`docs/00-migration/source-behavioral-inventory.md`) is the only bridge between the two systems.
+## Rules that hold throughout
 
-Work through these steps in order — pause after each and wait for confirmation before proceeding.
+- **Migration is not brownfield.** In brownfield you work *inside* the existing codebase — it is the live product. In migration the source codebase is being *replaced*: it is read-only reference. Only behaviors transfer to the target, never code. The behavioral inventory (`docs/00-migration/source-behavioral-inventory.md`) is the only bridge between the two systems.
+- **One step at a time.** Pause after each and wait for confirmation before proceeding.
+- **The source is read-only reference.** Nothing in the source codebase is edited; the target is where work happens.
 
 ---
 
