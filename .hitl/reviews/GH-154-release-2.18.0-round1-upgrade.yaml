@@ -1,0 +1,83 @@
+schema_version: '2.0'
+change_id: GH-154-release-2.18.0
+round: 1
+reviewed_sha: 4b36df40de68768fdcc4db72cfe02f1243b1b9e0
+reviewed_tree: d923d6849e26664137f48d864aa2ba893b423fd4
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of six (correctness) or seven (upgrade) items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict
+    instruction, claim strings copied verbatim
+lens: upgrade
+scope: 'What happens to a 2.17.0 repo and to a fresh install; seven checks: the build at 2.18.0 with the mod validated and the stale-file sweep, the migrate_project sync plus the dev-update 4.9 fence run
+  twice, init-project.sh, in-flight output byte-identical to 2.17.0, split skills shipped whole with shared references resolving, the mod loaded in a live run, claim carriers. Report: .hitl/reviews/incoming/GH-154-upgrade-round1.md'
+checks:
+- check: Build at 2.18.0, hooks tree, evals, status, stale sweep
+  command: see the report
+  result: pass
+  output: '`grep version .claude-plugin/plugin.json` gives `"version": "2.18.0"`; `ls hooks/` lists `hooks.json` and `breadcrumb-band.js` and no `tests/`; `ls evals/` lists `help-routes-incident`, `intake-refuses-bare-number`,
+    `scenarios-add-by-chat`, `setup-gate`, `tdd-refuses-unapproved`, `README.md` (plus t'
+- check: 2.17.0 repo upgraded, then the Step 4.9 fence twice
+  command: see the report
+  result: pass
+  output: 'Seeded 11 validator files from `v2.17.0` (ci/first-pass/*.py, check_scenarios.py, linked.py) plus the four-line .gitignore, committed. `migrate_project.py --root . --sync-validators <plugin>
+    --apply` exit 0: "= 11 identical, 20 installed, 0 updated from an older release, 0 modified here and kept, 0 '
+- check: Fresh install lands the ignore line and the wrappers
+  command: see the report
+  result: pass
+  output: '`bash tools/scripts/init-project.sh <tmp> --tool claude` exit 0, log line "✓ .gitignore" then ".hitl/breadcrumb.txt excluded (breadcrumb band cache)" (the script prints a dash between them);
+    `grep -n breadcrumb <tmp>/.gitignore` gives `12:.hitl/breadcrumb.txt`; `.hitl/hooks/` holds the nine wrappers'
+- check: In-flight 2.17.0 session, no `breadcrumb` key
+  command: see the report
+  result: pass
+  output: 'Fixture from the matrix''s own `emit_change_yaml development 13 "" "issue/000-x"` (53 lines, GH-000, tier 2, step 13 current) in a git repo on branch issue/000-x, config.yaml with only `tier_default:
+    2`. `cmp` of v2.17.0 and built welcome.sh stdout: identical, 643 bytes; stderr identical, empty. Same'
+- check: Split skills reach the installed tree whole
+  command: see the report
+  result: pass
+  output: '`diff <(ls ai/claude/<src>) <(ls skills/<built>)` empty for all six: dev-start-change (SKILL.md, intake-detail.md), dev-start-brownfield (SKILL.md, graphify.md, observability-survey.md, pipeline-verification.md,
+    seed-registries.md), dev-update (SKILL.md, change-file-migration.md, legacy-statusline.m'
+- check: Mod loads in a real run
+  command: see the report
+  result: pass
+  output: 'In the fixture repo with `breadcrumb: band`: built welcome.sh prints only the plain-English line (ribbon quiet) and writes the cache. `claude -p "reply with the single word ok" --plugin-dir <plugin>
+    --max-turns 1 < /dev/null` on Claude Code 2.1.289: exit 0, stdout `ok`, stderr empty (0 lines), 6 sec'
+- check: Changelog claims have carriers
+  command: see the report
+  result: pass
+  output: see list below and Minor 3
+findings:
+- id: F1
+  class: decide
+  check: Build at 2.18.0, hooks tree, evals, status, stale sweep
+  claim: A stray `tsconfig.json` at the plugin root will ship with the release.
+  evidence: see the report
+  status: fixed
+  resolved_by: 'hitl-claude-plugin 5862e42 (release/2.x): ignore tsconfig.json and .claude-plugin/types/'
+  verified_by: round 2 confirms the ignore and a clean git status for the file
+- id: F2
+  class: decide
+  check: Build at 2.18.0, hooks tree, evals, status, stale sweep
+  claim: No Upgrading sentence for a 2.17.0 repo, which sees a new untracked file on every prompt.
+  evidence: see the report
+  status: fixed
+  resolved_by: cd9e847f1c5af7c3b010f975ba0f568671261190
+  verified_by: round 2 reads the Upgrading paragraph
+- id: F3
+  class: minor
+  check: Build at 2.18.0, hooks tree, evals, status, stale sweep
+  claim: 'Two #151 claims in the changelog are broader than the package.'
+  evidence: see the report
+  status: fixed
+  resolved_by: cd9e847f1c5af7c3b010f975ba0f568671261190
+  verified_by: round 2 reads the narrowed sentences
+- id: F4
+  class: minor
+  check: Build at 2.18.0, hooks tree, evals, status, stale sweep
+  claim: Step 4.9 verifies the people/ line and not the breadcrumb line.
+  evidence: see the report
+  status: fixed
+  resolved_by: cd9e847f1c5af7c3b010f975ba0f568671261190
+  verified_by: round 2 greps the Step 4.9 verify block
+verdict: verified

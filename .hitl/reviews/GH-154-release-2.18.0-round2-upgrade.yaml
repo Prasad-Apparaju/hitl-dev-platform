@@ -1,0 +1,64 @@
+schema_version: '2.0'
+change_id: GH-154-release-2.18.0
+round: 2
+reviewed_sha: f3bdb486ce83a7079ca2fcf7555c0f3cca06be51
+reviewed_tree: 9e5b9466a7f366ce05f05a8c65fc3294d7c3b864
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand; one reviewer covered both lenses in this narrow round)
+  brief: nine checks with the command and the passing output for each, the round-1 claims copied verbatim (first sentence of each finding), evidence rule, one page, verdict instruction
+lens: upgrade
+scope: 'Narrow round after the round-1 fixes: the upgrade findings re-checked by command, the gates with no build running, the diff. Report: .hitl/reviews/incoming/GH-154-round2.md'
+checks:
+- check: 'the eight round-1 findings re-checked by command: brownfield Step 0 fence adds the ignore line (run twice in a fresh repo); em dashes 0 in the two reference files; plugin ignores tsconfig.json
+    and the types scaffold; Upgrading paragraph present; two narrowed claims hold; Step 4.9 fence run twice prints both verify lines'
+  command: grep and fence runs in scratch repos; git check-ignore; pytest ci/wiring/test_skill_guide.py
+  result: pass
+  output: six fixed, one resolved by rerun, one accepted
+- check: gates at f3bdb48 with no plugin build running
+  command: python3 -m pytest ci/ tools/ -q; python3 ci/skill-lint/check_skills.py; python3 -m pytest ci/wiring -q
+  result: pass
+  output: 1515 passed; 66/66; 571 passed
+- check: the 4b36df4..f3bdb48 diff is the five expected files
+  command: git diff --stat 4b36df4 f3bdb48
+  result: pass
+  output: CHANGELOG, update SKILL, brownfield SKILL and two reference files; +22/-8
+findings:
+- id: F1
+  class: decide
+  check: 'the eight round-1 findings re-checked by command: brownfield Step 0 fence adds the ignore line (run twice in a fresh repo); em dashes 0 in the two reference files; plugin ignores tsconfig.json
+    and the types scaffold; Upgrading paragraph present; two narrowed claims hold; Step 4.9 fence run twice prints both verify lines'
+  claim: A stray `tsconfig.json` at the plugin root will ship with the release.
+  evidence: re-checked in round 2; see the report
+  status: fixed
+  resolved_by: 'hitl-claude-plugin 5862e42 (release/2.x): ignore tsconfig.json and .claude-plugin/types/'
+  verified_by: round 2 by command at f3bdb48
+- id: F2
+  class: decide
+  check: 'the eight round-1 findings re-checked by command: brownfield Step 0 fence adds the ignore line (run twice in a fresh repo); em dashes 0 in the two reference files; plugin ignores tsconfig.json
+    and the types scaffold; Upgrading paragraph present; two narrowed claims hold; Step 4.9 fence run twice prints both verify lines'
+  claim: No Upgrading sentence for a 2.17.0 repo, which sees a new untracked file on every prompt.
+  evidence: re-checked in round 2; see the report
+  status: fixed
+  resolved_by: cd9e847f1c5af7c3b010f975ba0f568671261190
+  verified_by: round 2 by command at f3bdb48
+- id: F3
+  class: minor
+  check: 'the eight round-1 findings re-checked by command: brownfield Step 0 fence adds the ignore line (run twice in a fresh repo); em dashes 0 in the two reference files; plugin ignores tsconfig.json
+    and the types scaffold; Upgrading paragraph present; two narrowed claims hold; Step 4.9 fence run twice prints both verify lines'
+  claim: 'Two #151 claims in the changelog are broader than the package.'
+  evidence: re-checked in round 2; see the report
+  status: fixed
+  resolved_by: cd9e847f1c5af7c3b010f975ba0f568671261190
+  verified_by: round 2 by command at f3bdb48
+- id: F4
+  class: minor
+  check: 'the eight round-1 findings re-checked by command: brownfield Step 0 fence adds the ignore line (run twice in a fresh repo); em dashes 0 in the two reference files; plugin ignores tsconfig.json
+    and the types scaffold; Upgrading paragraph present; two narrowed claims hold; Step 4.9 fence run twice prints both verify lines'
+  claim: Step 4.9 verifies the people/ line and not the breadcrumb line.
+  evidence: re-checked in round 2; see the report
+  status: fixed
+  resolved_by: cd9e847f1c5af7c3b010f975ba0f568671261190
+  verified_by: round 2 by command at f3bdb48
+verdict: verified

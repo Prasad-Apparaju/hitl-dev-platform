@@ -1,0 +1,92 @@
+schema_version: '2.0'
+change_id: GH-154-release-2.18.0
+round: 1
+reviewed_sha: 4b36df40de68768fdcc4db72cfe02f1243b1b9e0
+reviewed_tree: d923d6849e26664137f48d864aa2ba893b423fd4
+reviewer:
+  model: claude (general-purpose subagent)
+  context: clean
+  spawned_by: hitl:verification-review brief (run by hand, one reviewer per lens)
+  brief: checklist of six (correctness) or seven (upgrade) items with the command and the passing output for each, evidence rule, one page, at most five points in three classes, about twenty calls, verdict
+    instruction, claim strings copied verbatim
+lens: correctness
+scope: 'The CHANGELOG 2.18.0 section as the claim list (the breadcrumb band and the skills-guide alignment); six checks: the four gates, the band by command in three modes plus the mod footprint and its
+  tests, the split skills and the eval suite, claim carriers, version stamps, plain English. Report: .hitl/reviews/incoming/GH-154-correctness-round1.md'
+checks:
+- check: Gates
+  command: see the report
+  result: pass
+  output: '`python3 -m pytest ci/ tools/ -q`: first run `1 failed, 1514 passed, 53 skipped in 91.07s`, the failure being `ci/adversarial/test_check_review.py::test_built_plugin_resolves_the_skill_references`,
+    which reads the sibling plugin repo''s working tree; rerun of that test alone: `1 passed in 0.04s` (fin'
+- check: Band by command
+  command: see the report
+  result: pass
+  output: 'Temp git repo on `main` with this repo''s `.hitl/current-change.yaml` (workflow `release`, steps with `status: done` and `current_step`). No config: `echo ''{}'' \| bash ai/claude/hooks/welcome.sh`
+    prints the ribbon `HITL release ▸ GH-154-release-2.18.0 ▸ Prepare ✓  Verify ✓  Gate ◐  Publish ·  Confirm'
+- check: Assembled mod validates
+  command: see the report
+  result: pass
+  output: '`python3 ci/breadcrumb-mod/assemble_plugin.py <tmp>` then `claude plugin validate <tmp>`: `./breadcrumb-band.js hooks: ui.render{component=AbovePrompt}, turn.complete` and `./breadcrumb-band.js
+    calls: $.fs.exists (via readCache, readMode), $.fs.read (via readCache, readMode), $.ui.invalidate, $.ui.r'
+- check: Mod test
+  command: see the report
+  result: pass
+  output: '`python3 -m pytest ci/breadcrumb-mod -q`: `4 passed in 2.36s`. `ci/breadcrumb-mod/test_breadcrumb_mod.py:23-24` pins `ALLOWED_HOOKS` and `ALLOWED_CALLS` to the same two hooks and four calls;
+    line 32 names `2.1.287 or later`.'
+- check: Skills-guide claims
+  command: see the report
+  result: pass
+  output: '`python3 -m pytest ci/wiring/test_skill_guide.py -q`: `131 passed, 53 skipped in 0.17s`. Six skills gained reference files in #151 (`git diff --name-status 98e3538^1 98e3538`): start-change `intake-detail.md`;
+    start-brownfield `graphify.md`, `pipeline-verification.md`, `seed-registries.md`; update `'
+- check: Carriers
+  command: see the report
+  result: pass
+  output: 'Skills entry: "Rules that hold throughout" before Step 1 at `start-change/SKILL.md:25`, `start-brownfield/SKILL.md:13`, `update/SKILL.md:11`; 5,000-token re-attach at `ci/wiring/test_skill_guide.py:28,48-52`;
+    history out of bodies at lines 56-63 (`HISTORY` regex, ceiling 3); contents list over 100 l'
+- check: Version stamps
+  command: see the report
+  result: pass
+  output: '`ai/claude/plugin/plugin.json:3` `"version": "2.18.0"`. `grep -L "v2.18.0" site/*.html` prints `fast-track.html`, `getting-started.html`, `journey-2x.html`, `journey-1x.html`; each carries no
+    version string at all (`grep -oE ''v2\.[0-9]+\.[0-9]+''` empty), and the other pages carry only `v2.18.0` (5 h'
+- check: Plain English
+  command: see the report
+  result: pass
+  output: '`python3 -m pytest ci/wiring/test_plain_english.py -q`: `16 passed`. Em dash (U+2014) counts: `ai/shared/test-scenarios.md` 0, `start-change/intake-detail.md` 1, `start-brownfield/graphify.md`
+    0, `start-brownfield/pipeline-verification.md` 4, `start-brownfield/seed-registries.md` 2, `update/resync-s'
+findings:
+- id: F1
+  class: decide
+  check: Gates
+  claim: The changelog says the cache file is "ignored by git; onboarding and `/hitl:dev-update` add the ignore line".
+  evidence: see the report
+  status: fixed
+  resolved_by: f3bdb486ce83a7079ca2fcf7555c0f3cca06be51
+  verified_by: round 2 greps the brownfield Step 0 fence
+- id: F2
+  class: minor
+  check: Gates
+  claim: '`ci/adversarial/test_check_review.py:353` (`test_built_plugin_resolves_the_skill_references`) failed once in the full gate and passed on rerun.'
+  evidence: see the report
+  status: fixed
+  resolved_by: f3bdb486ce83a7079ca2fcf7555c0f3cca06be51
+  verified_by: round 2 re-runs the gate after the plugin build settled
+- id: F3
+  class: minor
+  check: Gates
+  claim: 'Two of the em dashes in the new reference files are inside replies the model is told to say verbatim, which reach people: `ai/claude/start-brownfield/seed-registries.md:15` (the reply beginning
+    "You can add entries later", dash after "later") and `ai/claude/start-brownfield/pipeline-verification.md:26` (the reply beginning "Build is broken", dash after "broken").'
+  evidence: see the report
+  status: fixed
+  resolved_by: f3bdb486ce83a7079ca2fcf7555c0f3cca06be51
+  verified_by: round 2 counts em dashes in the two reference files
+- id: F4
+  class: minor
+  check: Gates
+  claim: 'Headroom on the regrowth guard: `start-change/SKILL.md` body measures 5,487 tokens against the 5,500 ceiling at `ci/wiring/test_skill_guide.py:28` (13 tokens, about 52 characters), and `architect/design-feature/SKILL.md`
+    is 490 lines against the 500-line skill-lint ceiling.'
+  evidence: see the report
+  status: accepted
+  resolved_by: n/a
+  verified_by: pre-existing headroom; the guard working as intended; no change
+  accepted_by: pappar (release owner; the guard tripping on the next edit is its purpose; recorded by the session on the owner's "go")
+verdict: verified
