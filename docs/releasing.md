@@ -51,6 +51,12 @@ python3 tools/scripts/generate-catalog-page.py       # site/catalog.html is gene
 python3 tools/scripts/shipped-validators-hashes.py   # ci/shipped-validators.sha256: every synced validator this version ships (plugin #35)
 ```
 
+Then the portal prose. `ci/wiring/test_portal_counts.py` holds the skill, hook, template and step
+counts on `site/architecture.html`, `compare.html`, `going-ai-native.html` and `index.html` to the
+tree, and requires a What's new card on the home page and a mention on the compare page for the
+version being cut, so the gates in step 4 fail until the pages say what ships. Write the card in the
+page's voice: what changes for the person, then the mechanism line.
+
 ### 4. Gates
 
 ```bash
