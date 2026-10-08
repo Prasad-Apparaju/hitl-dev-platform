@@ -11,7 +11,7 @@
       .label { font: 700 21px Arial, Helvetica, sans-serif; fill: #111827; }
       .body { font: 400 18px Arial, Helvetica, sans-serif; fill: #374151; }
       .small { font: 400 15px Arial, Helvetica, sans-serif; fill: #4b5563; }
-      .micro { font: 700 13px Arial, Helvetica, sans-serif; fill: #ffffff; }
+      .micro { font: 700 13px Arial, Helvetica, sans-serif; fill: #a5b4fc; letter-spacing: 0.12em; }
       .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 8; }
       .blue { fill: #dbeafe; stroke: #2563eb; }
       .green { fill: #dcfce7; stroke: #16a34a; }
@@ -45,7 +45,7 @@
 
   <rect class="dark" x="80" y="155" width="1440" height="78" rx="8"/>
   <text class="micro" x="110" y="185">CORE IDEA</text>
-  <text class="subtitle" x="110" y="215" fill="#ffffff">AI makes code cheap. The process makes decisions durable, reviewable, and portable across people and AI harnesses.</text>
+  <text class="subtitle" x="110" y="215" style="fill:#f8fafc">AI makes code cheap. The process makes decisions durable, reviewable, and portable across people and AI harnesses.</text>
 
   <!-- Left: iterative design loop -->
   <rect class="card violet" x="80" y="285" width="640" height="500"/>
