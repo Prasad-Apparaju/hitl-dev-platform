@@ -199,6 +199,41 @@
     <p>The principles above have been in place since 2.0. These are the capabilities added since, newest first. Full notes for every release are on <a href="https://github.com/Prasad-Apparaju/hitl-dev-platform/releases" target="_blank" rel="noopener">the releases page</a>.</p>
     <div class="prin-grid">
       <div class="prin">
+        <h3>The breadcrumb as a band above the prompt <span class="pill live">2.18</span></h3>
+        <p>On Claude Code 2.1.287 or later the breadcrumb can stay in view above the prompt instead of scrolling by in the transcript: the phase ribbon with the current phase in bold, the step line, and what to run next. It is off until a team sets one key, and the mod that draws it is deliberately small: two events, four calls, no approvals, no network. The shell renderer stays the only renderer; the band draws what it wrote, so the two can never disagree.</p>
+        <span class="mech">breadcrumb: text | band | both · hooks/breadcrumb-band.js · claude plugin validate shows the footprint</span>
+      </div>
+      <div class="prin">
+        <h3>Skills built the way the authoring guide says <span class="pill live">2.18</span></h3>
+        <p>The six longest skills are now short contents pages with the rules that hold throughout placed first and the step detail in reference files beside them, so what matters survives compaction mid-workflow. Issue numbers and version lessons left the skill prose; the rules stayed. Five plugin evals exercise the gates that matter most and run at release on two models. A test holds it in place so none of it regrows.</p>
+        <span class="mech">reference files one level deep · evals/ · test_skill_guide.py</span>
+      </div>
+      <div class="prin">
+        <h3>Test scenarios a PM can read and add to <span class="pill live">2.17</span></h3>
+        <p>Every change gets one file of test scenarios written the way a manual tester writes them: a five-sentence context block, then one Given, When, Then per behaviour with an ID its test cites and a note of who added it. Anyone adds one by describing the behaviour to HITL, or on a shared page HITL pulls back into the file. A fail-closed check at test review and QA verify proves every scenario has a test or a recorded reason, and every acceptance test has a scenario. The PM review runs alongside the build and never holds up coding unless the team asks it to.</p>
+        <span class="mech">scenarios/&lt;change&gt;.md · SC- ids · ci/test-scenarios · qa-scenarios</span>
+      </div>
+      <div class="prin">
+        <h3>One change across repositories <span class="pill live">2.16</span></h3>
+        <p>A change that spans a code repository and a docs or provider repository stays one change per repository, each record naming its partners. The TDD, deploy and conclude steps wait on what they depend on: a design approved there, a provider deployed first. A design in another repository is cited as a pinned reference, never a cached copy. The first two-repository run found and fixed the rough edges.</p>
+        <span class="mech">linked_changes · ci/linked/linked.py · pinned references</span>
+      </div>
+      <div class="prin">
+        <h3>The data layer, written down <span class="pill live">2.15</span></h3>
+        <p>An existing system's data is mapped next to its manifest: an ontology of the business things, where each one lives, how one dataset is made from another, and what is wrong or unconfirmed. Scripts gather evidence, a model interprets it one entity at a time, and a validator rejects anything that cites no evidence or claims more confidence than it has. A scorecard says whether the layer can answer the questions the team wrote down at the start.</p>
+        <span class="mech">dev-map-data-layer · ci/data-layer · evidence-cited only</span>
+      </div>
+      <div class="prin">
+        <h3>Team Pulse <span class="pill live">2.14</span></h3>
+        <p>One page from GitHub that shows, per person and per epic, what is moving, what is waiting on someone else, and who can unblock whom. A skipped step is one line at the top of the change's issue, not a ticket each.</p>
+        <span class="mech">team-pulse · tools/team-pulse/pulse.py · the skipped line</span>
+      </div>
+      <div class="prin">
+        <h3>Fast Track, from your goal <span class="pill live">2.13</span></h3>
+        <p>Intake starts from the goal in one sentence and what done looks like, not from a tier. The light path is called Fast Track; it shows what it leaves out as checkboxes, most consequential first, so a developer never has to ask. Onboarding asks once whether you want a note when a new version ships.</p>
+        <span class="mech">dev-start-change · AskUserQuestion checkboxes · release notices</span>
+      </div>
+      <div class="prin">
         <h3>Plain English, and short <span class="pill live">2.12</span></h3>
         <p>One rule for everything HITL says or writes: no filler, numbers in a table, a document as long as what it has to say. Generated documents have ceilings: an executive summary is three sentences, an HLD two pages of prose, an ADR one page. A section with nothing to say reads "None." A lint checks the text that reaches people, and around three hundred shipped lines were reworded to pass it.</p>
         <span class="mech">shared/plain-english.md · length ceilings · test_plain_english.py</span>
@@ -279,7 +314,7 @@
     </a>
     <a class="pagecard" href="catalog.html">
       <h2>The full catalog <span class="pill aud">EVERY STEP</span></h2>
-      <p>All 8 workflows, their phases, 96 steps and 3 substeps, in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
+      <p>All 8 workflows, their phases, 96 numbered steps and 7 lettered substeps (3 review, 4 conditional), in one collapsible tree — generated from the catalog file the running system executes, with each step's executor and owner.</p>
       <span class="go">open the catalog &rarr;</span>
     </a>
   </div>
