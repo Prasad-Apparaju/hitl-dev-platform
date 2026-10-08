@@ -179,15 +179,15 @@
       <span class="eg">shared/workflows.yaml</span>
     </div>
     <div class="pillar">
-      <span class="count">52 skills</span>
+      <span class="count">61 skills</span>
       <h3>Skills</h3>
       <p>Step-by-step instruction sets for one job each: onboard a codebase, plan tests, review a release, deploy. Exposed as <code>/hitl:*</code> commands; Claude executes them, humans invoke them and hold their gates.</p>
       <span class="eg">/hitl:dev-tdd · /hitl:ops-plan-platform</span>
     </div>
     <div class="pillar">
-      <span class="count">8 wired + 1 deploy gate</span>
+      <span class="count">9 wired + 1 deploy gate + 1 mod</span>
       <h3>Hooks</h3>
-      <p>Small deterministic scripts the harness runs on events: block edits without an active change, check domain boundaries, render progress, write session summaries. The deploy gate script fails closed on anything it cannot verify.</p>
+      <p>Small deterministic scripts the harness runs on events: block edits without an active change, check domain boundaries, render progress, write session summaries. The deploy gate script fails closed on anything it cannot verify. Since 2.18 one hook is a mod that runs inside Claude Code: it draws the breadcrumb as a band above the prompt when a team turns it on, and does nothing else.</p>
       <span class="eg">check-hitl-context.sh · check-platform-ready.sh</span>
     </div>
     <div class="pillar">
@@ -197,7 +197,7 @@
       <span class="eg">architect-reviewer · spec-conformance-reviewer</span>
     </div>
     <div class="pillar">
-      <span class="count">25 templates + 8 ADR stubs</span>
+      <span class="count">40 templates + 8 ADR stubs</span>
       <h3>Templates</h3>
       <p>The molds for every artifact the process produces: PRD, decision packet, ADRs, the four registries, the readiness register. A template is a contract — the deploy gate literally validates registers against it.</p>
       <span class="eg">platform-readiness-template.yaml</span>
