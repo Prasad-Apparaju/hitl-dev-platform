@@ -20,10 +20,10 @@ If none found: skip to "Pipeline missing" below.
 
 **2. Verify the build:**
 
-Run the project's build command (infer from the tech stack confirmed in Step 2 — `npm run build`, `mvn package`, `go build ./...`, `./gradlew build`, etc.).
+Run the project's build command (infer from the tech stack confirmed in Step 2: `npm run build`, `mvn package`, `go build ./...`, `./gradlew build`, etc.).
 
 - ✅ Build passes → continue
-- 🔴 Build fails → record the error and say: "Build is broken — fix this before feature work begins. Run `/hitl:ops-build` for a structured diagnosis."
+- 🔴 Build fails → record the error and say: "Build is broken: fix this before feature work begins. Run `/hitl:ops-build` for a structured diagnosis."
 
 **3. Verify the deployment path:**
 
@@ -31,7 +31,7 @@ Check whether the CI/CD config includes:
 - A job that deploys to at least one non-production environment (staging, dev, test)
 - A job or manual gate for production deploy
 
-The 31-step workflow (`/hitl:dev-practices`) gates every PR on a passing staging deploy — if no staging job exists, that gate cannot function.
+The 31-step workflow (`/hitl:dev-practices`) gates every PR on a passing staging deploy: if no staging job exists, that gate cannot function.
 
 - ✅ Staging deploy job exists → proceed
 - 🟡 No staging deploy job → note it: "The HITL staging gate will need a manual workaround until a staging deploy job is added."
@@ -51,6 +51,6 @@ If they want a scaffold, generate a minimal CI/CD config (build → test → dep
 **Persist the verdicts (required):** copy `"$PLUGIN_ROOT/shared/templates/platform-readiness-template.yaml"`
 to `docs/04-operations/platform-readiness.yaml` if missing, set `project_kind: brownfield`,
 and record this step's verdicts there: `E1` (build reproducible), `E3` (staging deploy from
-CI), `D1` (suites run in CI and can fail) — evidence rules are in the template header. The
+CI), `D1` (suites run in CI and can fail): evidence rules are in the template header. The
 register feeds `/hitl:ops-plan-platform` (Step 11) and the production-deploy gate; a verdict
 not written here does not exist.

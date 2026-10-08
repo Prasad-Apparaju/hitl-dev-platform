@@ -80,6 +80,7 @@ Check whether `.hitl/hooks/` already exists.
    ```bash
    grep -q "docs/session-logs" .gitignore 2>/dev/null || printf '\n# HITL session logs — operational artifacts, not product code\ndocs/session-logs/\n' >> .gitignore
    grep -q "^\.hitl/linked/" .gitignore 2>/dev/null || printf '.hitl/linked/\n' >> .gitignore   # pinned designs from other repositories (FR-30)
+   grep -q "breadcrumb.txt" .gitignore 2>/dev/null || printf '.hitl/breadcrumb.txt\n' >> .gitignore   # the breadcrumb band cache, rewritten every prompt
    # `.hitl/` itself is COMMITTED (current-change.yaml is the handoff record the CI gate reads); only transient working files are ignored.
    grep -q "first-pass-choices" .gitignore 2>/dev/null || printf '\n# HITL transient working state — the change file and skip ledger ARE committed\n.hitl/*.tmp\n.hitl/*.migrated\n.hitl/first-pass-choices.json\n.hitl/backups/\n' >> .gitignore
    ```
