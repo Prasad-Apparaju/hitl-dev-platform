@@ -12,8 +12,9 @@ All notable changes to the HITL plugin are documented here.
   (`dev-start-change`, `dev-start-brownfield`, `dev-update`) are now a contents page plus reference
   files beside them, with the rules that hold throughout placed before the steps, so what matters
   survives the 5,000-token re-attach after compaction. Issue numbers and version lessons are gone
-  from skill bodies; the rules stayed, the stories live in the changelog and the design docs.
-  Shared reference files over 100 lines open with a contents list. A `claude plugin eval` suite
+  from skill prose (a few remain inside bash fences, where they are comments); the rules stayed,
+  the stories live in the changelog and the design docs. The four shared rules files over 100
+  lines that had no contents list now open with one. A `claude plugin eval` suite
   under `evals/` exercises the setup gate, the prefixed-id refusal at intake, the TDD approval
   refusal, help routing and adding a scenario by chat; it runs at release on the default model and
   on Sonnet 5.5. A wiring test holds all of it in place.
@@ -29,6 +30,13 @@ All notable changes to the HITL plugin are documented here.
   it ever changes. The shell renderer stays the only renderer: it now writes its line to
   `.hitl/breadcrumb.txt` (ignored by git; onboarding and `/hitl:dev-update` add the ignore line) and
   the band draws that text, so the band and the transcript cannot disagree.
+
+### Upgrading
+
+- From 2.18.0 the breadcrumb renderer writes `.hitl/breadcrumb.txt` on every prompt and status-line
+  refresh, whether or not the band is on. A repo onboarded on 2.17.0 or earlier shows it as an
+  untracked file until the ignore line lands: run `/hitl:dev-update` once (it adds the line), or add
+  `.hitl/breadcrumb.txt` to `.gitignore` by hand. Nothing else changes until you set `breadcrumb:`.
 
 ## [2.17.0] — 2026-10-04
 

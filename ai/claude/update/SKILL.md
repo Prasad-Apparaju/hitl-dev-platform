@@ -260,6 +260,11 @@ if git check-ignore -q .hitl/people/ 2>/dev/null; then
 else
   echo "COULD NOT exclude .hitl/people/. Do not tell anyone a profile written here is local."
 fi
+if git check-ignore -q .hitl/breadcrumb.txt 2>/dev/null; then
+  echo "✓ .gitignore: .hitl/breadcrumb.txt excluded"
+else
+  echo "COULD NOT exclude .hitl/breadcrumb.txt; the breadcrumb band cache will show as untracked until it is."
+fi
 ```
 **If a profile is already tracked**, the rule does not untrack it. Say so and let them decide:
 ```bash
