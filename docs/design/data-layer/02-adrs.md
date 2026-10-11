@@ -171,7 +171,9 @@ replaces the previous file for the same source and type, so the folder holds one
 
 ---
 
-## ADR-9: Off by default, advisory by default, blocking per repo (for the owner to confirm)
+## ADR-9: Off by default, advisory by default, blocking per repo (superseded by ADR-19 for change-level checks)
+
+> Superseded in part by ADR-19 (2026-10-10): the change-level blocking row and the `data_layer: { blocking: true }` switch are replaced by levels derived per id from shipped consumers. The first row, malformed files fail the layer's own CI, stands.
 
 **Context.** The 2026-09-25 edit of #131 adds an adoption model: nothing in HITL depends on the layer,
 every check comments by default and blocks only when a team sets blocking on per repo. Requirements
@@ -264,3 +266,122 @@ designed (the data layer then ships a schema FR-35 must adopt unchanged or fork)
 
 **Consequences.** (+) Part B does not re-decide confidence, evidence or isolation. (−) The core is
 designed before its second user exists; the rule table keeps family-specific rules out of it.
+
+---
+
+## ADR-14: Reasoning runs in pure Python by default; a Java reasoner only widens the check
+
+**Context.** Requirements v2.0 (DL-21) asks for a reasoning stage. NFR-1 limits hard dependencies to
+bash, python3, PyYAML and git, and optional tools must degrade silently (Graphify is the precedent).
+pySHACL (Apache 2.0) validates SHACL and runs SHACL-AF rules, and performs OWL 2 RL expansion through
+owlrl; both are pure Python. Full OWL 2 DL consistency and classification need HermiT or Pellet, which
+Owlready2 bundles and which need a JVM.
+
+**Decision.** The stage always runs the OWL 2 RL closure and SHACL validation with `rdflib`, `owlrl` and
+`pyshacl` as optional extras. When a JVM is present it also runs HermiT through Owlready2 for full DL
+consistency, unsatisfiable classes and the inferred hierarchy, and records that access the way an adapter
+records a driver. HITL calls HermiT only; the bundled Pellet is AGPL and is never invoked. Without the Python extras the stage reports SKIPPED; without a JVM it reports the DL
+check as not run. Owner's pick, 2026-10-10.
+
+**Alternatives.** Java required (stronger checks always, breaks degrade-silently and NFR-1). Pure Python
+only (no DL consistency ever; the RL profile cannot find every contradiction).
+
+**Consequences.** (+) The layer stays installable with pip and runs on a laptop without Java. (−) Two
+machines can report differently; the finding records which checks ran.
+
+---
+
+## ADR-15: Rules are SHACL-AF, not SWRL
+
+**Context.** DL-19 needs a formal body for each rule. SWRL rules run inside the DL reasoner (Java,
+open-world). SHACL-AF rules run in pySHACL (pure Python, closed-world) and can validate sampled data.
+
+**Decision.** The formal body of a rule is a SHACL-AF SPARQL rule or triple rule. Rules compile to
+`rules.ttl` and run in the same pass as shape validation (DL-21, DL-22). Owner's pick, 2026-10-10.
+
+**Alternatives.** SWRL (ties every rule to the Java path; open-world semantics cannot say "this field is
+never populated"). Datalog through a separate engine (a fourth dependency and a second syntax).
+
+**Consequences.** (+) Rules and shapes share one engine, one run and one finding shape. (−) Pure DL
+inference rules that need the open world are expressed as OWL axioms (DL-18) instead.
+
+---
+
+## ADR-16: The YAML is the source of truth; OWL, SHACL and rules are compiled from it
+
+**Context.** Ontology tools work in Turtle. The data layer's distinguishing parts, evidence and
+confidence per assertion, plain English and the shipped validator, live in the YAML.
+
+**Decision.** `compile_ontology.py` writes `ontology.ttl`, `shapes.ttl` and `rules.ttl` from the YAML,
+deterministically, with annotation properties for confidence, evidence references and `confirmed_by`,
+and a pin of the source YAML. The compiled files are never edited by hand; a mismatched pin is a
+validator failure (DL-20). Studio-style tools that import OWL are consumers. Owner's pick, 2026-10-10.
+
+**Alternatives.** Turtle as the source (evidence and confidence rebuilt as RDF annotations; the existing
+validator, templates and plain-English rules rewritten). Both editable with a merge (two sources of truth).
+
+**Consequences.** (+) One source, one validator, one review surface. (−) A change made in an ontology
+tool has to come back as a YAML edit; the compiler is a one-way door by design.
+
+---
+
+## ADR-17: Reasoning over confirmed assertions is strict; over inferred is exploratory; never over needs-review
+
+**Context.** A reasoner treats every axiom as true. The field project's first pass showed what happens
+when inference is traversed as fact. The layer's three confidence words exist to stop that.
+
+**Decision.** The reasoning stage runs twice: a strict run over `confirmed` assertions only, whose
+findings may block for a Depended-on id (DL-27), and an exploratory run over `confirmed` plus `inferred`, whose
+findings are advisory. A run that includes a `needs-review` assertion is refused. Every inferred axiom, inconsistency or violation is a finding at `inferred` with evidence type
+`inference`, and only a person or a verification promotes it (DL-9). An agent (FR-38) may act on
+`confirmed` rules only.
+
+**Alternatives.** One run over everything (fast, and inference from guesses looks like fact). Strict only
+(loses the exploratory value of seeing what the inferred layer entails).
+
+**Consequences.** (+) The scorecard can say what is entailed by what is known against what is guessed.
+(−) Two runs, two reports; the scorecard header names the run.
+
+---
+
+## ADR-18: Every ontology carries the decision-trace module by default
+
+**Context.** FR-38 will convert flows of the governed system to agents. An agent handling an exception
+needs how the last exceptions were decided, by whom, under which rule. That record is written by the
+running system, not by HITL, and cannot be back-filled once needed.
+
+**Decision.** The module (Decision, Policy, Exception, Approval, Precedent in PROV-O terms with a fixed
+minimum of properties) is part of every greenfield ontology from the first compile and is added to a
+brownfield ontology on the first run. HITL ships the module, its shapes and a read-only conformance
+check; it never writes a trace record. Removing the module is a recorded decision (DL-23). Owner's pick,
+2026-10-10.
+
+**Alternatives.** Add it when a conversion is planned (the first conversion then waits a release cycle
+for precedent to exist). Make HITL write trace records (puts HITL in the runtime, against §7).
+
+**Consequences.** (+) Precedent accumulates from day one. (−) Every system carries five entity types it
+may never use; the conformance check reports an empty trace as a fact, not a failure.
+
+---
+
+## ADR-19: Compliance is derived from shipped consumers and their exposure, never from a configuration flag
+
+**Context.** The owner's direction of 2026-10-10: the layer must never slow feature delivery, must allow
+an opt-out per change even when a project has it on, and must become mandatory once a feature delivered
+to customers depends on it. ADR-9's per-repo `blocking` switch is a flag someone sets; it cannot tell
+which ids a customer-facing agent is acting on.
+
+**Decision.** A consumer registry (DL-27) records what reads the layer, with the ids read, the exposure
+and the release. The level of each id is derived: Advisory until a promoted consumer with public or
+partner exposure reads it, Depended-on after. Only Depended-on ids can hold Reconcile, and only on a
+stale entry; the opt-out at that level is FR-29's floor skip. Internal consumers never raise the level.
+A team's single configuration choice is to declare every id Depended-on. ADR-9's first row (malformed
+files fail the layer's own CI) stands; its change-level blocking row is superseded.
+
+**Alternatives.** Keep the per-repo flag (blocks everything or nothing, and is forgotten). Mandatory from
+the first consumer regardless of exposure (an internal tool would slow every change). Never mandatory
+(an agent in production acts on an ontology nobody is required to keep true).
+
+**Consequences.** (+) A developer is slowed only when touching what a customer-facing agent depends on,
+and the reason is on the record. (−) A consumer built outside HITL may be unregistered; the conformance
+check names unknown trace writers, and the limit is stated in DL-27.
