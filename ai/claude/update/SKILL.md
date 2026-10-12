@@ -172,7 +172,7 @@ else
       ci/agentic-advisor/test_advisor_e2e.py ci/agentic-advisor/test_catalog_lint.py \
       ci/agentic-advisor/test_compose.py ci/agentic-advisor/test_records.py \
       ci/agentic-advisor/test_render_map.py \
-      ci/data-layer/test_check_data_layer.py ci/data-layer/test_scorecard.py tools/data-layer/test_adapters.py \
+      ci/data-layer/test_check_data_layer.py ci/data-layer/test_scorecard.py ci/data-layer/test_compile_reason.py tools/data-layer/test_adapters.py \
       ci/linked/test_linked.py ci/test-scenarios/test_check_scenarios.py)
     for f in ${removed[@]+"${removed[@]}"}; do echo "  ✓ removed $f (HITL test that cannot run in this repo)"; done
     for f in ${kept[@]+"${kept[@]}"}; do

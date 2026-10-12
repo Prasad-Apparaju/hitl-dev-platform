@@ -149,6 +149,26 @@ Rides the 2.9.0 and 2.10.0 precedent: a catalog change with a migration for open
   target; `export_schema.py` emits the extraction schema pinned to the release, validated against one named
   open-source extractor's schema input (open question 4 in #131).
 
+## 6a. Slices 6 to 8: the formal ontology (built on `feature/context-graph`, 2026-10-12)
+
+Requirements v2.2, ADR-14 to ADR-19. Built as one vertical slice first so the owner can test the
+theory on the fixture before anything merges.
+
+| Phase | Deliverable | Requirements | State |
+|---|---|---|---|
+| **G** | Schema 1.1 in both copies: evidence type `inference`, `written_at` on every assertion, axioms on entities and relationships, the `rules.yaml` family, the optional `actions.yaml` family, the reasoning finding kinds, the compiled pin. Fixture gains a disjointness axiom, an inverse, a functional characteristic and two rules. | DL-18, DL-19, DL-29 | DONE |
+| **H** | `tools/data-layer/compile_ontology.py`: OWL 2 classes, properties, axioms, keys from natural keys, the decision-trace module, SHACL shapes from mappings and relationships, SHACL-AF rules, Action Catalog conditions, annotation properties for confidence and evidence, `pin.yaml`. | DL-20, DL-23, DL-29 | DONE |
+| **I** | `tools/data-layer/reason.py`: strict and exploratory runs, needs-review refused, OWL 2 RL closure, direct key check, rules fired with counts, SHACL on sampled rows, HermiT when a JVM exists, evidence file plus proposed findings with no ids. | DL-21, DL-22 | DONE |
+| **J** | Validator: axioms, rules, actions, `COMPILED_STALE`, `REASONING_LOADED_NEEDS_REVIEW`, `RULE_TARGET_UNKNOWN`, `AXIOM_TARGET_UNKNOWN`, `ACTION_REF_UNKNOWN`; the scorecard's age metric leaves inference evidence out; 16 tests by mutation in `test_compile_reason.py`. | DL-18 to DL-22, DL-29 | DONE |
+| **K** | Skill Stage 6, user doc, this section, ADR-14 note, hash manifest, dev-update lists, CHANGELOG. | | DONE |
+| **L** | Review page (DL-26), background derivation at Reconcile (DL-25), opt-out (DL-24), consumer registry and levels (DL-27), question-bound candidates (DL-2), dead-code signals (DL-28), decision-trace conformance check, `written_at` written by the stages, HermiT exercised on a machine with a JVM, a validation review, the field-project run. | DL-24 to DL-28 | not started |
+
+Judgement calls made while building, each reversible: the base IRI defaults to a HITL namespace and is
+set per repo in `.hitl/config.yaml`; field properties are `entity.field` under that base; a field
+observed present on every sampled row becomes `sh:minCount 1` only in the run that loads its
+confidence; instance nodes are one per export row; inference evidence names a pseudo-source
+`src:reasoning` that needs no `sources.yaml` row.
+
 ## 7. The Phase 0 ADRs (written; see `02-adrs.md`)
 
 | ADR | Decision | Was |

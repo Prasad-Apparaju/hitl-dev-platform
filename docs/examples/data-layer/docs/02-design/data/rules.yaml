@@ -1,0 +1,53 @@
+schema_version: '1.1'
+rules:
+- id: rule:late-order
+  statement: An order is late when the ETA cached for its order number is after its promised date.
+  formal:
+    language: shacl-af
+    kind: sparql
+    target: ent:order
+    body: |
+      CONSTRUCT { $this :order.late true . }
+      WHERE {
+        $this :order.order_no ?no ; :order.promised_date ?promised .
+        ?e a :eta ; :eta.order_no ?no ; :eta.eta ?eta .
+        FILTER (?eta > ?promised)
+      }
+  owner: orders-team
+  why: Ops escalates late orders every morning; the nightly job computes the ETA this rule compares.
+  status: confirmed
+  source: recovered
+  applies_to:
+  - ent:order
+  - ent:eta
+  confidence: confirmed
+  evidence:
+  - file: evidence/app/code-20260930T0900.yaml
+    item: ev:app/code/0011
+  - file: evidence/shipments-db/profile-20260930T0945.yaml
+    item: ev:shipments-db/profile/0002
+  confirmed_by:
+    who: ta@team
+    at: '2026-10-12T09:00:00Z'
+    how: human
+- id: rule:open-order-has-promise
+  statement: An open order carries a promised date.
+  formal:
+    language: shacl-af
+    kind: triple
+    target: ent:order
+    condition: |
+      SELECT $this WHERE { $this :order.status "open" . FILTER NOT EXISTS { $this :order.promised_date ?p } }
+    body:
+      predicate: ':order.missing_promise'
+      object: true
+  owner: orders-team
+  why: A promise is what the ETA is measured against; an open order without one cannot be late or on time.
+  status: draft
+  source: intended
+  applies_to:
+  - ent:order
+  confidence: inferred
+  evidence:
+  - file: evidence/orders-db/profile-20260930T0940.yaml
+    item: ev:orders-db/profile/0005

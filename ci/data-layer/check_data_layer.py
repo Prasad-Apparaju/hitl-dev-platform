@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import datetime as dt
 import json
 import os
@@ -34,6 +35,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MAX_BYTES = 50 * 1024 * 1024
 FOUR = ("ontology.yaml", "mappings.yaml", "lineage.yaml", "findings.yaml")
 SIX = ("sources.yaml", "questions.yaml") + FOUR
+# Optional families (schema 1.1): validated whenever present, never FILE_MISSING when absent.
+OPTIONAL = ("rules.yaml", "actions.yaml")
 
 # Waivable codes. Everything else is the framework's guarantee and fails closed.
 WAIVABLE = {
@@ -142,6 +145,8 @@ class Checker:
         self.activities: dict[str, dict] = {}
         self.edges: dict[str, dict] = {}
         self.fnds: dict[str, dict] = {}
+        self.rules: dict[str, dict] = {}
+        self.actions: dict[str, dict] = {}
 
     # -- findings -----------------------------------------------------------
     def add(self, code: str, locus: str, msg: str):
@@ -302,6 +307,123 @@ class Checker:
                     if re.search(r"read_only=false", line):
                         self.add("WRITE_ACCESS_RECORDED", "run.log:%d" % n, "a run recorded read_only=false")
 
+    # -- optional families (schema 1.1) -----------------------------------------
+    def check_rules(self):
+        path = os.path.join(self.d, "rules.yaml")
+        if not os.path.exists(path) or "rules.yaml" not in self.files:
+            return
+        doc = self._load("rules.yaml")
+        if doc is None:
+            return
+        spec = self.files["rules.yaml"]
+        self.keys_ok(doc, spec["top"], spec["required"], "rules.yaml", "rules.yaml")
+        for i, r in enumerate(self.list_of_dicts(doc.get("rules"), "rules.yaml", "rules")):
+            loc = "rules.yaml rules[%d]" % i
+            if not self.keys_ok(r, spec["entry"]["keys"], spec["entry"]["required"], loc, loc):
+                continue
+            if not self.register_id(r.get("id"), "rule", loc):
+                continue
+            rid = r["id"]
+            self.rules[rid] = r
+            self.assertion(r, rid)
+            if not isinstance(r.get("statement"), str) or not r["statement"].strip():
+                self.add("MALFORMED", rid, "a rule has a plain-English statement with exact values")
+            if r.get("status") not in self.core.get("rule_status", []):
+                self.add("MALFORMED", rid, "status %r is not one of %s" % (r.get("status"), self.core.get("rule_status")))
+            if r.get("source") not in self.core.get("rule_source", []):
+                self.add("MALFORMED", rid, "source %r is not one of %s" % (r.get("source"), self.core.get("rule_source")))
+            fm = r.get("formal")
+            if not self.keys_ok(fm, spec["entry"]["formal"]["keys"], spec["entry"]["formal"]["required"], rid, rid + " formal"):
+                continue
+            if fm.get("language") not in self.core.get("rule_languages", []):
+                self.add("MALFORMED", rid, "formal.language %r is not one of %s" % (fm.get("language"), self.core.get("rule_languages")))
+            if fm.get("kind") not in self.core.get("rule_kinds", []):
+                self.add("MALFORMED", rid, "formal.kind %r is not one of %s" % (fm.get("kind"), self.core.get("rule_kinds")))
+            body = fm.get("body")
+            if fm.get("kind") == "sparql" and (not isinstance(body, str) or "CONSTRUCT" not in body.upper()):
+                self.add("MALFORMED", rid, "a sparql rule body is a CONSTRUCT query")
+            if fm.get("kind") == "triple" and (not isinstance(body, dict) or not body.get("predicate")):
+                self.add("MALFORMED", rid, "a triple rule body names predicate and object")
+            if fm.get("target") not in self.entities:
+                self.add("RULE_TARGET_UNKNOWN", rid, "formal.target %r is not in the ontology" % fm.get("target"))
+            for v in r.get("applies_to") or []:
+                if v not in self.ids:
+                    self.add("RULE_TARGET_UNKNOWN", rid, "applies_to %r exists nowhere" % (v,))
+
+    def check_actions(self):
+        """DL-29, the Action Catalog: present only when a team turned it on."""
+        path = os.path.join(self.d, "actions.yaml")
+        if not os.path.exists(path) or "actions.yaml" not in self.files:
+            return
+        doc = self._load("actions.yaml")
+        if doc is None:
+            return
+        spec = self.files["actions.yaml"]
+        self.keys_ok(doc, spec["top"], spec["required"], "actions.yaml", "actions.yaml")
+        for i, a in enumerate(self.list_of_dicts(doc.get("actions"), "actions.yaml", "actions")):
+            loc = "actions.yaml actions[%d]" % i
+            if not self.keys_ok(a, spec["entry"]["keys"], spec["entry"]["required"], loc, loc):
+                continue
+            if not self.register_id(a.get("id"), "axn", loc):
+                continue
+            aid = a["id"]
+            self.actions[aid] = a
+            self.assertion(a, aid)
+            for k in ("reads", "writes"):
+                for v in a.get(k) or []:
+                    base = str(v).split("/")[0] if str(v).startswith("map:") else str(v).split(".")[0]
+                    if v not in self.ids and base not in self.ids:
+                        self.add("ACTION_REF_UNKNOWN", aid, "%s %r exists nowhere" % (k, v))
+            for v in a.get("rules") or []:
+                if v not in self.rules:
+                    self.add("ACTION_REF_UNKNOWN", aid, "rules %r is not in rules.yaml" % (v,))
+            if not isinstance(a.get("roles"), list) or not a["roles"]:
+                self.add("MALFORMED", aid, "an action names the roles allowed to invoke it")
+            if not isinstance(a.get("emits"), str) or not a["emits"].strip():
+                self.add("MALFORMED", aid, "an action names the trace record it emits (DL-23)")
+            for k in ("preconditions", "postconditions"):
+                for j, c in enumerate(self.list_of_dicts(a.get(k), aid, k)):
+                    if not c.get("target") or not c.get("sparql"):
+                        self.add("MALFORMED", "%s %s[%d]" % (aid, k, j), "a condition names a target entity and a sparql SELECT")
+                    elif c.get("target") not in self.entities:
+                        self.add("ACTION_REF_UNKNOWN", "%s %s[%d]" % (aid, k, j), "target %r is not in the ontology" % c.get("target"))
+
+    def check_compiled(self):
+        """DL-20, DL-21: a compiled file whose pin does not match the YAML is stale; a reasoning run that
+        loaded a needs-review assertion is rejected."""
+        comp = os.path.join(self.d, "compiled")
+        if not os.path.isdir(comp):
+            return
+        pin_path = os.path.join(comp, "pin.yaml")
+        if os.path.exists(pin_path):
+            pin = self._load("compiled/pin.yaml")
+            if isinstance(pin, dict):
+                for name, digest in (pin.get("inputs") or {}).items():
+                    src = os.path.join(self.d, str(name))
+                    if not os.path.exists(src):
+                        self.add("COMPILED_STALE", "compiled/pin.yaml", "pinned input %s no longer exists; recompile" % name)
+                        continue
+                    h = hashlib.sha256()
+                    with open(src, "rb") as f:
+                        h.update(f.read())
+                    if h.hexdigest() != digest:
+                        self.add("COMPILED_STALE", "compiled/pin.yaml", "%s changed since the last compile; run compile_ontology.py" % name)
+                for name in FOUR[:3] + OPTIONAL:
+                    if os.path.exists(os.path.join(self.d, name)) and name not in (pin.get("inputs") or {}) and name != "findings.yaml":
+                        self.add("COMPILED_STALE", "compiled/pin.yaml", "%s exists but was not an input of the last compile" % name)
+                for out in (pin.get("outputs") or {}):
+                    if not os.path.exists(os.path.join(comp, str(out))):
+                        self.add("COMPILED_STALE", "compiled/pin.yaml", "output %s is missing" % out)
+        run_path = os.path.join(comp, "reasoning-run.yaml")
+        if os.path.exists(run_path):
+            run = self._load("compiled/reasoning-run.yaml")
+            if isinstance(run, dict):
+                loaded = run.get("loaded") or {}
+                if isinstance(loaded, dict) and loaded.get("needs-review"):
+                    self.add("REASONING_LOADED_NEEDS_REVIEW", "compiled/reasoning-run.yaml", "a reasoning run loaded %s needs-review assertions; never (DL-21)" % loaded.get("needs-review"))
+                if run.get("mode") not in ("strict", "exploratory"):
+                    self.add("MALFORMED", "compiled/reasoning-run.yaml", "mode %r is not strict or exploratory" % run.get("mode"))
+
     # -- the six files ---------------------------------------------------------
     def load_six(self):
         for name in SIX:
@@ -373,6 +495,27 @@ class Checker:
                 if not self.keys_ok(r, spec["relationship"]["keys"], spec["relationship"]["required"], rl, rl):
                     continue
                 self.assertion(r, rl)
+                for ch in r.get("characteristics") or []:
+                    if ch not in self.core.get("relationship_characteristics", []):
+                        self.add("MALFORMED", rl, "characteristic %r is not one of %s" % (ch, self.core.get("relationship_characteristics")))
+                for k in ("min_count", "max_count"):
+                    v = r.get(k)
+                    if v is not None and (not isinstance(v, int) or isinstance(v, bool) or v < 0):
+                        self.add("MALFORMED", rl, "%s must be a non-negative integer" % k)
+            for j, a in enumerate(self.list_of_dicts(e.get("axioms"), e["id"], "axioms")):
+                al = "%s axioms[%d]" % (e["id"], j)
+                if not self.keys_ok(a, spec["axiom"]["keys"], spec["axiom"]["required"], al, al):
+                    continue
+                self.assertion(a, al)
+                kind = a.get("kind")
+                if kind not in self.core.get("axiom_kinds", []):
+                    self.add("MALFORMED", al, "axiom kind %r is not one of %s" % (kind, self.core.get("axiom_kinds")))
+                    continue
+                if kind == "key":
+                    if not isinstance(a.get("fields"), list) or not a["fields"]:
+                        self.add("MALFORMED", al, "a key axiom names the fields that make the key")
+                elif not a.get("target"):
+                    self.add("MALFORMED", al, "a %s axiom names a target entity" % kind)
 
     def check_mappings(self):
         doc = self.docs.get("mappings.yaml")
@@ -524,6 +667,12 @@ class Checker:
             for j, r in enumerate(e.get("relationships") or []):
                 if isinstance(r, dict) and r.get("target") not in self.entities:
                     self.add("EDGE_ENTITY_UNKNOWN", "%s relationships[%d]" % (eid, j), "target %r is not in the ontology" % r.get("target"))
+            for j, a in enumerate(e.get("axioms") or []):
+                if isinstance(a, dict) and a.get("kind") in ("subclass_of", "disjoint_with", "equivalent_to"):
+                    if a.get("target") not in self.entities:
+                        self.add("AXIOM_TARGET_UNKNOWN", "%s axioms[%d]" % (eid, j), "target %r is not in the ontology" % a.get("target"))
+                    elif a.get("target") == eid:
+                        self.add("MALFORMED", "%s axioms[%d]" % (eid, j), "an entity cannot be %s itself" % a.get("kind"))
         # unextracted sources taint mappings, fields and entities
         unext = {sid for sid, s in self.sources.items() if s.get("status") == "declared-not-extracted"}
         by_entity: dict[str, list] = {}
@@ -724,8 +873,11 @@ class Checker:
         self.check_mappings()
         self.check_lineage()
         self.check_findings()
+        self.check_rules()
+        self.check_actions()
         self.check_questions()
         self.cross()
+        self.check_compiled()
         self.check_interpretations()
         self.check_manifest()
         self.apply_waivers()

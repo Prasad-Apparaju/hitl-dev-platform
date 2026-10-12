@@ -32,6 +32,7 @@ entities:
       item: ev:app/code/0005
     - file: evidence/shipments-db/profile-20260930T0945.yaml
       item: ev:shipments-db/profile/0007
+    inverse: fulfils
   confidence: confirmed
   evidence:
   - file: evidence/app/code-20260930T0900.yaml
@@ -44,6 +45,19 @@ entities:
     who: ta@team
     at: '2026-09-30T11:00:00Z'
     how: human
+  axioms:
+  - kind: disjoint_with
+    target: ent:shipment
+    confidence: confirmed
+    evidence:
+    - file: evidence/app/code-20260930T0900.yaml
+      item: ev:app/code/0001
+    - file: evidence/app/code-20260930T0900.yaml
+      item: ev:app/code/0003
+    confirmed_by:
+      who: ta@team
+      at: '2026-10-12T09:00:00Z'
+      how: human
 - id: ent:order-line
   name: Order line
   definition: One part and quantity requested on an order.
@@ -72,6 +86,8 @@ entities:
     evidence:
     - file: evidence/app/code-20260930T0900.yaml
       item: ev:app/code/0004
+    characteristics:
+    - functional
   confidence: inferred
   evidence:
   - file: evidence/app/code-20260930T0900.yaml

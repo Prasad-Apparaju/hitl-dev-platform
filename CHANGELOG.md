@@ -4,6 +4,21 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased] — feature/context-graph
+
+### Added
+
+- **Data layer, the formal ontology** (#131, FR-31 slices 6 to 8, requirements v2.2). Schema 1.1
+  adds axioms on entities and relationships, a `rules.yaml` family, the optional Action Catalog
+  (`actions.yaml`), evidence type `inference` and `written_at`. `compile_ontology.py` writes OWL 2,
+  SHACL and SHACL-AF files with a pin to the YAML; every compile carries the decision-trace module
+  unless a recorded decision turns it off. `reason.py` runs strict (confirmed only) and exploratory
+  (confirmed and inferred), never over needs-review, through the OWL 2 RL closure, a direct key
+  check, the rules and SHACL on sampled rows, HermiT when a JVM exists, and proposes findings at
+  inferred with the inference recorded as evidence. The validator rejects a stale compile, a run
+  that loaded needs-review, and unknown targets in axioms, rules and actions. Optional libraries;
+  SKIPPED without them. Skill Stage 6; 16 tests by mutation.
+
 ## [2.18.0] — 2026-10-08
 
 ### Added

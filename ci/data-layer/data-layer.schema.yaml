@@ -5,12 +5,17 @@
 #
 # The shared core (ADR-13): every assertion in every family carries `confidence`, `evidence` and, when
 # confirmed, `confirmed_by`. The business-rule layer (FR-35) reuses this core unchanged.
+#
+# 1.1 (requirements v2.2, slices 6 to 8): evidence type `inference`; `written_at` on every assertion;
+# axioms on entities and relationships (DL-18); the `rules.yaml` family (DL-19); the optional Action
+# Catalog family `actions.yaml` (DL-29); finding kinds the reasoning stage writes (DL-21); the compiled
+# pin (DL-20). Existing 1.0 files stay valid: every new key is optional.
 
-schema_version: "1.0"
+schema_version: "1.1"
 
 core:
   confidence: [confirmed, inferred, needs-review]
-  evidence_types: [schema, query_history, catalog, dbt_manifest, code, profile, document, design, human, slice]
+  evidence_types: [schema, query_history, catalog, dbt_manifest, code, profile, document, design, human, slice, inference]
   prov_relations: [used, wasGeneratedBy, wasDerivedFrom]
   # subject and object ID prefixes allowed per relation (LLD §2.5)
   edge_types:
@@ -24,19 +29,27 @@ core:
   negative_rule_words: [never, not, "no ", missing, empty]
   code_rule_markers: ["```", "SELECT ", "select ", "def ", "{"]
   implementation_markers: ["/", "://", ".py", ".js", ".ts", ".sql", ".yaml", ".yml", ".json", "-service", "_service", "-svc", "grpc", "endpoint"]
-  id_prefixes: [src, ent, map, act, lin, fnd, q, ev]
-  source_kinds: [relational, document, warehouse, dbt, orchestrator, catalog, bi, saas, code, documents]
+  id_prefixes: [src, ent, map, act, lin, fnd, q, ev, rule, axn]
+  source_kinds: [relational, document, warehouse, dbt, orchestrator, catalog, bi, saas, code, documents, reasoning]
   environments: [dev, staging, prod, offline-export]
   access_granted: [read_only, none]
   access_modes: [offline, live]
   source_status: [proposed, declared, extracted, declared-not-extracted]
-  finding_kinds: [negative, disagreement, collision, unextracted, dead-code, stale]
+  finding_kinds: [negative, disagreement, collision, unextracted, dead-code, stale, inconsistency, unsatisfiable, violation, inferred-axiom]
   severities: [high, medium, low]
   activity_kinds: [job, pipeline-step, handler, view, manual]
   confirmed_how: [human, verification]
   read_only_calls: [stores, count, sample, schema]
   evidence_ref: { keys: [file, item], required: [file, item] }
   confirmed_by: { keys: [who, at, how], required: [who, at, how] }
+  # DL-18: the axiom kinds an entity may declare, and the characteristics a relationship may declare
+  axiom_kinds: [subclass_of, disjoint_with, equivalent_to, key]
+  relationship_characteristics: [functional, inverse-functional, transitive, symmetric]
+  # DL-19: a rule's formal body
+  rule_languages: [shacl-af]
+  rule_kinds: [sparql, triple]
+  rule_status: [draft, confirmed, rejected, discrepancy]
+  rule_source: [recovered, intended, both]
 
 files:
   sources.yaml:
@@ -44,7 +57,7 @@ files:
     required: [schema_version, sources]
     entries: sources
     entry:
-      keys: [id, kind, declared_from, environment, in_scope, access, status, authorization, notes]
+      keys: [id, kind, declared_from, environment, in_scope, access, status, authorization, notes, entrypoints]
       required: [id, kind, environment, in_scope, access, status]
       id_prefix: src
       access: { keys: [granted, mode], required: [granted, mode] }
@@ -58,31 +71,34 @@ files:
       keys: [id, text, asked_by, from, needs, confirmed_by]
       required: [id, text, needs]
       id_prefix: q
-      needs: { keys: [entities, mappings, edges] }
+      needs: { keys: [entities, mappings, edges, nouns] }
 
   ontology.yaml:
     top: [schema_version, entities]
     required: [schema_version, entities]
     entries: entities
     entry:
-      keys: [id, name, definition, synonyms, catalog_term, relationships, confidence, evidence, confirmed_by]
+      keys: [id, name, definition, synonyms, catalog_term, relationships, axioms, confidence, evidence, confirmed_by, written_at]
       required: [id, name, definition, confidence, evidence]
       id_prefix: ent
       relationship:
-        keys: [name, target, cardinality, confidence, evidence, confirmed_by]
+        keys: [name, target, cardinality, inverse, characteristics, min_count, max_count, confidence, evidence, confirmed_by, written_at]
         required: [name, target, confidence, evidence]
+      axiom:
+        keys: [kind, target, fields, confidence, evidence, confirmed_by, written_at]
+        required: [kind, confidence, evidence]
 
   mappings.yaml:
     top: [schema_version, mappings]
     required: [schema_version, mappings]
     entries: mappings
     entry:
-      keys: [id, entity, store, fields, natural_key, scope, owner, counts, written_by, read_by, verified_at, confidence, evidence, confirmed_by]
+      keys: [id, entity, store, fields, natural_key, scope, owner, counts, written_by, read_by, verified_at, confidence, evidence, confirmed_by, written_at]
       required: [id, entity, store, fields, confidence, evidence]
       id_prefix: map
       store: { keys: [source, kind, name, naming_template], required: [source, kind, name] }
       field:
-        keys: [name, type, present_pct, confidence, evidence, confirmed_by]
+        keys: [name, type, present_pct, confidence, evidence, confirmed_by, written_at]
         required: [name, confidence, evidence]
       counts: { keys: [rows, taken_at, sampled] }
 
@@ -94,7 +110,7 @@ files:
       required: [id, kind, files]
       id_prefix: act
     edge:
-      keys: [id, relation, subject, object, rule, freshness, consumers, confidence, evidence, confirmed_by]
+      keys: [id, relation, subject, object, rule, freshness, consumers, confidence, evidence, confirmed_by, written_at]
       required: [id, relation, subject, object, rule, confidence, evidence]
       id_prefix: lin
       freshness: { keys: [cadence, observed_max_age_hours] }
@@ -104,9 +120,30 @@ files:
     required: [schema_version, findings]
     entries: findings
     entry:
-      keys: [id, kind, severity, about, statement, confidence, evidence, confirmed_by, status]
+      keys: [id, kind, severity, about, statement, confidence, evidence, confirmed_by, status, written_at]
       required: [id, kind, severity, about, statement, confidence, evidence, status]
       id_prefix: fnd
+
+  # DL-19. Optional until Part B writes it; validated whenever present.
+  rules.yaml:
+    top: [schema_version, rules]
+    required: [schema_version, rules]
+    entries: rules
+    entry:
+      keys: [id, statement, formal, owner, why, status, source, applies_to, confidence, evidence, confirmed_by, written_at]
+      required: [id, statement, formal, status, source, confidence, evidence]
+      id_prefix: rule
+      formal: { keys: [language, kind, target, body, condition], required: [language, kind, target, body] }
+
+  # DL-29, the Action Catalog. Optional; exists only when a team turns it on.
+  actions.yaml:
+    top: [schema_version, actions]
+    required: [schema_version, actions]
+    entries: actions
+    entry:
+      keys: [id, name, reads, writes, preconditions, postconditions, rules, roles, emits, files, confidence, evidence, confirmed_by, written_at]
+      required: [id, name, reads, writes, roles, emits, confidence, evidence]
+      id_prefix: axn
 
   interpretation:
     top: [schema_version, entity, inputs, written_by, proposed, open_questions]
@@ -127,3 +164,8 @@ files:
   scorecard.yaml:
     top: [schema_version, run_at, mode, metrics]
     required: [schema_version, run_at, mode, metrics]
+
+  # DL-20. Written by compile_ontology.py beside the compiled files; checked against the YAML.
+  compiled/pin.yaml:
+    top: [schema_version, compiled_at, compiler, base_iri, inputs, outputs, decision_trace]
+    required: [schema_version, compiled_at, compiler, base_iri, inputs, outputs]

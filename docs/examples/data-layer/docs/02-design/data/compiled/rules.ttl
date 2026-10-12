@@ -1,0 +1,55 @@
+@prefix : <https://hitl.dev/ns/system#> .
+@prefix hitl: <https://hitl.dev/ns/data-layer#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:rule.late-orderShape a sh:NodeShape ;
+    rdfs:label "An order is late when the ETA cached for its order number is after its promised date." ;
+    sh:rule [ a sh:SPARQLRule ;
+            sh:construct """PREFIX : <https://hitl.dev/ns/system#>
+PREFIX hitl: <https://hitl.dev/ns/data-layer#>
+PREFIX dt: <https://hitl.dev/ns/decision-trace#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT { $this :order.late true . }
+WHERE {
+  $this :order.order_no ?no ; :order.promised_date ?promised .
+  ?e a :eta ; :eta.order_no ?no ; :eta.eta ?eta .
+  FILTER (?eta > ?promised)
+}
+""" ] ;
+    sh:targetClass :order ;
+    hitl:confidence "confirmed" ;
+    hitl:confirmedBy "human ta@team 2026-10-12T09:00:00Z" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0011",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0002" ;
+    hitl:id "rule:late-order" ;
+    hitl:owner "orders-team" ;
+    hitl:status "confirmed" ;
+    hitl:why "Ops escalates late orders every morning; the nightly job computes the ETA this rule compares." .
+
+:rule.open-order-has-promiseShape a sh:NodeShape ;
+    rdfs:label "An open order carries a promised date." ;
+    sh:rule [ a sh:TripleRule ;
+            sh:condition [ a sh:NodeShape ;
+                    sh:sparql [ sh:select """PREFIX : <https://hitl.dev/ns/system#>
+PREFIX hitl: <https://hitl.dev/ns/data-layer#>
+PREFIX dt: <https://hitl.dev/ns/decision-trace#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT $this WHERE { $this :order.status "open" . FILTER NOT EXISTS { $this :order.promised_date ?p } }
+""" ] ] ;
+            sh:object true ;
+            sh:predicate :order.missing_promise ;
+            sh:subject sh:this ] ;
+    sh:targetClass :order ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0005" ;
+    hitl:id "rule:open-order-has-promise" ;
+    hitl:owner "orders-team" ;
+    hitl:status "draft" ;
+    hitl:why "A promise is what the ETA is measured against; an open order without one cannot be late or on time." .
+

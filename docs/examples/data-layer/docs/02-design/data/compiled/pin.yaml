@@ -1,0 +1,23 @@
+schema_version: '1.1'
+compiled_at: '2026-10-12T16:39:44Z'
+compiler:
+  name: compile_ontology.py
+  version: 1.1.0
+base_iri: https://hitl.dev/ns/system#
+inputs:
+  ontology.yaml: 95c985227ae68222e0000ecc8a5e8eb2d3d325a82fc2222a880861d893d1f94c
+  mappings.yaml: 6ce5a1eea9fd39c9aaaca7bc863108dbe6523979bd4d522144c8599fc0437601
+  lineage.yaml: d877b8b89449c67ac74b84023698042a11c91633c44c0a64835133bf5d1b82a9
+  findings.yaml: 4d55801552c6e1c7942f6f77db43970828af6e8f48f8f62191fe37de2efe97cc
+  rules.yaml: a2d48d806e3e681ab1ec367009b9ec779dae930bd2e22ad32eaf72b550aecec4
+outputs:
+  ontology.ttl:
+    triples: 239
+    sha256: 3744e55bfa3790fb7b047bae10cd3f0ffd99d573cefbe21fa8840c6d1965bcb6
+  shapes.ttl:
+    triples: 243
+    sha256: 29a99bd46bba6ad047e87d0dc30dbc1b78ddd11a487311fae6ffa536ca4fd73c
+  rules.ttl:
+    triples: 32
+    sha256: fcbcb703fc4b9bb611c16277b24de95933ca3cd191a1d9a4d812ced528aa363a
+decision_trace: 'on'

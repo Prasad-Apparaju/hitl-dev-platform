@@ -206,6 +206,33 @@ Mark `validate: done`. Report, in plain English and nothing else: the scorecard'
 the validator's one-line summary, the tickets filed, and the stage to run next time (`validate` after
 promotions, `interpret ent:<id>` after new evidence, `extract` after a schema change).
 
+## Stage 6 — Compile and reason (DL-18 to DL-23), optional
+
+Runs only when the person asks for it, or when `compiled/` already exists. Needs the optional
+libraries; without them each script prints one SKIPPED line and nothing else changes.
+
+```bash
+python3 "$TOOLS/compile_ontology.py" --data-dir "$DATA" --root .
+python3 "$TOOLS/reason.py" --data-dir "$DATA" --root . --mode strict
+python3 "$TOOLS/reason.py" --data-dir "$DATA" --root . --mode exploratory
+python3 "$CK/check_data_layer.py" --data-dir "$DATA" --manifest docs/system-manifest.yaml --waivers "$CK/data-layer-waivers.yaml"
+```
+
+The compiler writes `compiled/ontology.ttl`, `shapes.ttl`, `rules.ttl` and `pin.yaml` from the YAML;
+the YAML stays the source of truth and the compiled files are never edited. The decision-trace
+module is in every compile unless `.hitl/config.yaml` says `data_layer: { decision_trace: off,
+decision_trace_reason: "..." }`. The strict run loads `confirmed` assertions only; the exploratory run
+adds `inferred`; neither loads `needs-review`, and a request to is refused.
+
+Each run writes an evidence file under `evidence/reasoning/` and proposes findings in
+`compiled/reasoning-findings.yaml` at `inferred` with no ids: inconsistencies, unsatisfiable classes,
+shape violations on sampled rows, duplicate natural keys, and the rules that fired with their counts.
+Offer the proposed findings to Stage 4's fold the way interpretations are offered; never copy them
+into `findings.yaml` by hand. Say, in plain English: what was loaded and dropped by confidence, which
+checks ran and which did not (HermiT needs a JVM), what the rules derived, and the findings proposed.
+
+Mark `reason: done`.
+
 ## Never
 
 - Never read a live store before the AUTHORIZED reply is in `sources.yaml`; never write to any source.
@@ -214,3 +241,4 @@ promotions, `interpret ent:<id>` after new evidence, `extract` after a schema ch
 - Never write `confirmed`, never invent an `id`, never cite evidence that is not in a file.
 - Never file a ticket without the person's confirmation of the list; never post to an issue.
 - Never edit the four files by hand to make the validator pass; re-run the stage.
+- Never edit a compiled file; never run reasoning over `needs-review`; never promote a proposed finding yourself.

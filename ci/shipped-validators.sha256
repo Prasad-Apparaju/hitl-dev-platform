@@ -78,3 +78,10 @@ f21651d66bab53b5dc857928162513962a2dba07be3949d32da0ae7aa817d414  ci/linked/link
 192889a627028c4d26f6eaca17684aab2c407c960ff2b35a5ae8477139136c3f  ci/linked/linked.py  # 2.16.1
 1ca423306ed63b064d2a3f834328bfa9a0333303c9e74c8f629a4d5b91637ebf  ci/first-pass/migrate_project.py  # 2.17.0
 ce2a5c6eae5404c22b0fb913e063b054395fe0094c8eca9806d8b13e9f642e4e  ci/test-scenarios/check_scenarios.py  # 2.17.0
+f8872572351e26ea52c4e4f34a7f6d052c5fdc2fa642e1343965ac20589270fb  ci/data-layer/check_data_layer.py  # 2.18.0
+1dff1eeb580451d8a401ce3ed1bb68e5be580fef2efc486b3cd1f78efdc8575f  ci/data-layer/data-layer.schema.yaml  # 2.18.0
+738d94c78e93ad55d1c3cf9eb7f9299eec6c2a14c29ee83f800f0205ea050aec  tools/data-layer/compile_ontology.py  # 2.18.0
+a3d394fbc030ea3d5cf1d2e97be29e717bfad0379c00b7d15db7c0a30c6f4ea0  tools/data-layer/reason.py  # 2.18.0
+e75d9bdac88a9b455cd86f1c845c1fdd77482a1e0e5093df63061d6609de2b95  ci/data-layer/data-layer.schema.yaml  # 2.18.0
+9ee91c1aae2b3ba74b0e98b92f6e4653682d8cbe1c08e30c26801894e4d7585c  ci/data-layer/scorecard.py  # 2.18.0
+c5a2d97467c3efc212536aafbe0b5aa2dc42b4451949a71266a8cb358cb48f66  tools/data-layer/reason.py  # 2.18.0

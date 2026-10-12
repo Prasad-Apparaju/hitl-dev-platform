@@ -289,6 +289,12 @@ only (no DL consistency ever; the RL profile cannot find every contradiction).
 **Consequences.** (+) The layer stays installable with pip and runs on a laptop without Java. (−) Two
 machines can report differently; the finding records which checks ran.
 
+**Found while building (2026-10-12).** `owlrl` 7.6.2 applies `owl:hasKey` wrongly: two individuals
+with different key values are merged with `owl:sameAs`, so every order became one order. The
+reasoning stage therefore keeps `owl:hasKey` out of the OWL 2 RL closure and checks keys directly, and
+a shared natural key is reported as a duplicate-row violation rather than treated as one individual,
+which is the right reading of instance data anyway. Instance nodes are one per row, never per key value.
+
 ---
 
 ## ADR-15: Rules are SHACL-AF, not SWRL

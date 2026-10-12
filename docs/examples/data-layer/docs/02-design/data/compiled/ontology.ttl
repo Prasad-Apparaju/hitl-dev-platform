@@ -1,0 +1,292 @@
+@prefix : <https://hitl.dev/ns/system#> .
+@prefix dt: <https://hitl.dev/ns/decision-trace#> .
+@prefix hitl: <https://hitl.dev/ns/data-layer#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+hitl:confidence a owl:AnnotationProperty ;
+    rdfs:label "confidence of the assertion: confirmed, inferred or needs-review" .
+
+hitl:confirmedBy a owl:AnnotationProperty ;
+    rdfs:label "how who at" .
+
+hitl:evidence a owl:AnnotationProperty ;
+    rdfs:label "an evidence reference file#item" .
+
+hitl:id a owl:AnnotationProperty ;
+    rdfs:label "the YAML id" .
+
+hitl:writtenAt a owl:AnnotationProperty ;
+    rdfs:label "when the assertion was written" .
+
+dt:approvedAt a owl:DatatypeProperty ;
+    rdfs:label "approvedAt" ;
+    rdfs:comment "when the approval was given" ;
+    rdfs:domain dt:Approval ;
+    rdfs:range xsd:dateTime .
+
+dt:approvedBy a owl:ObjectProperty ;
+    rdfs:label "approvedBy" ;
+    rdfs:comment "the approval that accepted this decision" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range dt:Approval .
+
+dt:approvedByRole a owl:DatatypeProperty ;
+    rdfs:label "approvedByRole" ;
+    rdfs:comment "the role that approved" ;
+    rdfs:domain dt:Approval ;
+    rdfs:range xsd:string .
+
+dt:citesPrecedent a owl:ObjectProperty ;
+    rdfs:label "citesPrecedent" ;
+    rdfs:comment "an earlier decision this one relied on" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range dt:Precedent ;
+    rdfs:subPropertyOf prov:wasInformedBy .
+
+dt:concerns a owl:ObjectProperty ;
+    rdfs:label "concerns" ;
+    rdfs:comment "the entity instance the decision is about" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range owl:Thing .
+
+dt:decidedAt a owl:DatatypeProperty ;
+    rdfs:label "decidedAt" ;
+    rdfs:comment "when" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range xsd:dateTime ;
+    rdfs:subPropertyOf prov:endedAtTime .
+
+dt:decidedBy a owl:DatatypeProperty ;
+    rdfs:label "decidedBy" ;
+    rdfs:comment "who or which component decided" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range xsd:string .
+
+dt:outcome a owl:DatatypeProperty ;
+    rdfs:label "outcome" ;
+    rdfs:comment "what was decided, in the vocabulary of the action taken" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range xsd:string .
+
+dt:raisedBy a owl:ObjectProperty ;
+    rdfs:label "raisedBy" ;
+    rdfs:comment "the exception that needed this decision, if any" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range dt:Exception .
+
+dt:ruleId a owl:DatatypeProperty ;
+    rdfs:label "ruleId" ;
+    rdfs:comment "the rules.yaml id the policy names" ;
+    rdfs:domain dt:Policy ;
+    rdfs:range xsd:string .
+
+dt:underPolicy a owl:ObjectProperty ;
+    rdfs:label "underPolicy" ;
+    rdfs:comment "the policy the decision was taken under" ;
+    rdfs:domain dt:Decision ;
+    rdfs:range dt:Policy .
+
+<https://hitl.dev/ns/system> a owl:Ontology ;
+    rdfs:comment "Compiled by HITL compile_ontology.py 1.1.0 from the data layer YAML; do not edit." .
+
+:delivery-slot a owl:Class ;
+    rdfs:label "Delivery slot" ;
+    rdfs:comment "A booked time window for handing a shipment to the customer." ;
+    skos:altLabel "delivery",
+        "slot" ;
+    hitl:confidence "needs-review" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0006" ;
+    hitl:id "ent:delivery-slot" .
+
+:order.fulfilled-by a owl:ObjectProperty ;
+    rdfs:label "fulfilled by" ;
+    rdfs:domain :order ;
+    rdfs:range :shipment ;
+    owl:inverseOf :shipment.fulfils ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0005",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0007" .
+
+:order.has a owl:ObjectProperty ;
+    rdfs:label "has" ;
+    rdfs:domain :order ;
+    rdfs:range :order-line ;
+    hitl:confidence "confirmed" ;
+    hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
+        "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" .
+
+dt:Exception a owl:Class ;
+    rdfs:label "Exception" ;
+    rdfs:comment "A case a policy did not cover, or a departure from it, that needed a decision." ;
+    rdfs:subClassOf prov:Entity ;
+    hitl:confidence "confirmed" ;
+    hitl:evidence "module#decision-trace" .
+
+dt:Precedent a owl:Class ;
+    rdfs:label "Precedent" ;
+    rdfs:comment "An earlier decision cited when deciding the current one." ;
+    rdfs:subClassOf prov:Entity ;
+    hitl:confidence "confirmed" ;
+    hitl:evidence "module#decision-trace" .
+
+:carrier a owl:Class ;
+    rdfs:label "Carrier" ;
+    rdfs:comment "The company moving a shipment. Referenced by code; no store holds it." ;
+    skos:altLabel "courier" ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" ;
+    hitl:id "ent:carrier" .
+
+:eta a owl:Class ;
+    rdfs:label "Estimated arrival" ;
+    rdfs:comment "The date the business expects an open order to arrive, recomputed nightly from the promised date and recent carrier lag." ;
+    owl:hasKey _:N83d9e1a48a5e4e069a9669d94105ffda ;
+    skos:altLabel "ETA" ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0011",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0001" ;
+    hitl:id "ent:eta" .
+
+:shipment.carried-by a owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:label "carried by" ;
+    rdfs:domain :shipment ;
+    rdfs:range :carrier ;
+    hitl:confidence "needs-review" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" .
+
+:shipment.fulfils a owl:ObjectProperty ;
+    rdfs:label "fulfils" ;
+    rdfs:domain :shipment ;
+    rdfs:range :order .
+
+dt:Policy a owl:Class ;
+    rdfs:label "Policy" ;
+    rdfs:comment "A rule or policy a decision is taken under; names a rule id from rules.yaml." ;
+    rdfs:subClassOf prov:Entity ;
+    hitl:confidence "confirmed" ;
+    hitl:evidence "module#decision-trace" .
+
+:order-line a owl:Class ;
+    rdfs:label "Order line" ;
+    rdfs:comment "One part and quantity requested on an order." ;
+    owl:hasKey _:N6a4d120f75374503822aeee1fc5fa35b ;
+    skos:altLabel "line item" ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0002",
+        "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" ;
+    hitl:id "ent:order-line" .
+
+dt:Approval a owl:Class ;
+    rdfs:label "Approval" ;
+    rdfs:comment "A person or role accepting a decision; who, when, in what capacity." ;
+    rdfs:subClassOf prov:Activity ;
+    hitl:confidence "confirmed" ;
+    hitl:evidence "module#decision-trace" .
+
+:order a owl:Class ;
+    rdfs:label "Order" ;
+    rdfs:comment "A customer's request to buy, from placement until it is fulfilled or cancelled. One per order number within a tenant." ;
+    owl:disjointWith :shipment ;
+    owl:hasKey _:N51c5d607bb5c4a1aae00e78e050cf314 ;
+    skos:altLabel "PO",
+        "orders",
+        "purchase order" ;
+    hitl:confidence "confirmed" ;
+    hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
+        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0004",
+        "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ;
+    hitl:id "ent:order" .
+
+:shipment a owl:Class ;
+    rdfs:label "Shipment" ;
+    rdfs:comment "A consignment a carrier moves against an order; may be partial." ;
+    rdfs:subClassOf _:N459d809fcf4144db8633e89173410be6 ;
+    owl:hasKey _:N5f74cd40fc8d40cc8031f7dfcc6f41c4 ;
+    skos:altLabel "consignment",
+        "delivery" ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0003",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0004" ;
+    hitl:id "ent:shipment" .
+
+dt:Decision a owl:Class ;
+    rdfs:label "Decision" ;
+    rdfs:comment "A decision the running system or a person made about an entity, under a policy." ;
+    rdfs:subClassOf prov:Activity ;
+    hitl:confidence "confirmed" ;
+    hitl:evidence "module#decision-trace" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :order-line ;
+    owl:annotatedTarget _:N6a4d120f75374503822aeee1fc5fa35b ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0002",
+        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0001" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty rdfs:subClassOf ;
+    owl:annotatedSource :shipment ;
+    owl:annotatedTarget _:N459d809fcf4144db8633e89173410be6 ;
+    hitl:confidence "needs-review" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :eta ;
+    owl:annotatedTarget _:N83d9e1a48a5e4e069a9669d94105ffda ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0010",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0001" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :order ;
+    owl:annotatedTarget _:N51c5d607bb5c4a1aae00e78e050cf314 ;
+    hitl:confidence "confirmed" ;
+    hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
+        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0004",
+        "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :shipment ;
+    owl:annotatedTarget _:N5f74cd40fc8d40cc8031f7dfcc6f41c4 ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0003",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0004" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:disjointWith ;
+    owl:annotatedSource :order ;
+    owl:annotatedTarget :shipment ;
+    hitl:confidence "confirmed" ;
+    hitl:confirmedBy "human ta@team 2026-10-12T09:00:00Z" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
+        "evidence/app/code-20260930T0900.yaml#ev:app/code/0003" .
+
+_:N459d809fcf4144db8633e89173410be6 a owl:Restriction ;
+    owl:maxCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onProperty :shipment.carried-by .
+
+_:N51c5d607bb5c4a1aae00e78e050cf314 rdf:first :order.order_no ;
+    rdf:rest () .
+
+_:N5f74cd40fc8d40cc8031f7dfcc6f41c4 rdf:first :shipment.order_no ;
+    rdf:rest () .
+
+_:N6a4d120f75374503822aeee1fc5fa35b rdf:first :order-line.id ;
+    rdf:rest () .
+
+_:N83d9e1a48a5e4e069a9669d94105ffda rdf:first :eta.order_no ;
+    rdf:rest () .
+

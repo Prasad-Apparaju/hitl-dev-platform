@@ -27,6 +27,10 @@ def fx(tmp_path):
     """A private copy of the fixture: (repo root, data dir)."""
     dst = tmp_path / "repo"
     shutil.copytree(FIXTURE, dst)
+    # these tests mutate the YAML; the compiled files and the reasoning evidence belong to
+    # test_compile_reason.py, and a mutation would otherwise read as COMPILED_STALE
+    shutil.rmtree(dst / "docs" / "02-design" / "data" / "compiled", ignore_errors=True)
+    shutil.rmtree(dst / "docs" / "02-design" / "data" / "evidence" / "reasoning", ignore_errors=True)
     return str(dst), str(dst / "docs" / "02-design" / "data")
 
 
@@ -374,7 +378,7 @@ def test_every_code_has_a_mutation():
     """Every code the validator can emit is exercised somewhere in this file (test plan §0)."""
     src = open(os.path.join(HERE, "check_data_layer.py")).read()
     emitted = set(re.findall(r'self\.add\("([A-Z_]+)"', src))
-    tests = open(__file__).read()
+    tests = open(__file__).read() + open(os.path.join(HERE, "test_compile_reason.py")).read()
     missing = sorted(c for c in emitted if c not in tests)
     assert not missing, "codes with no test: %s" % missing
 

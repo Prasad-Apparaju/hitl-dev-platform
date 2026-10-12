@@ -97,8 +97,8 @@ def compute(data_dir: str, run_at: dt.datetime) -> dict:
     root = os.path.join(data_dir, "evidence")
     if os.path.isdir(root):
         for dp, _, names in os.walk(root):
-            if os.path.basename(dp) == "slices":
-                continue
+            if os.path.basename(dp) in ("slices", "reasoning"):
+                continue   # slices are cuts of other files; inference evidence is derived, not a snapshot
             for n in names:
                 if n.endswith((".yaml", ".yml")):
                     t = _parse_ts(_load(os.path.join(dp, n)).get("taken_at"))

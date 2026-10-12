@@ -23,6 +23,8 @@ tickets). Output under `docs/02-design/data/`.
 | `lineage.yaml` | How was it made? Jobs and the PROV edges between datasets, with the rule as prose |
 | `findings.yaml` | What is wrong? A field the code reads that is empty on every row, two entities sharing a name, a source nobody could reach |
 | `scorecard.md` | How good is the layer, and can it answer the questions you wrote at intake |
+| `rules.yaml` | What the system enforces: each rule as a plain sentence with exact values, its formal body, owner, why and status |
+| `compiled/` | The same layer as a formal ontology: OWL 2 classes and axioms, SHACL shapes, SHACL-AF rules, a pin to the YAML they came from. Outputs, never edited |
 
 Every assertion carries one of three confidences (`confirmed`, `inferred`, `needs-review`) and cites
 the evidence it was read from. A model never writes `confirmed`; a person or a verification run does.
@@ -68,6 +70,22 @@ data_layer:
   tier: 3                    # the tier a waiver's tier_limit is compared with
 ```
 
+## The formal ontology, if you want it
+
+With `rdflib`, `pyshacl` and `owlrl` installed (`pip install rdflib pyshacl owlrl`), Stage 6 compiles
+the YAML into a formal ontology and reasons over it. Without them the stage prints one SKIPPED line.
+Two runs: strict loads only what a person confirmed, exploratory adds what the model inferred, and
+neither ever loads a needs-review entry. What comes back is proposed findings, at inferred, with the
+inference recorded as evidence: a contradiction between axioms, a class nothing can belong to, a
+sampled row that breaks a shape, two rows sharing a natural key, and the count each rule derived.
+A person promotes or rejects each one. Reasoning checks coherence, not truth: a consistent ontology
+can still be wrong about the system, and only evidence says otherwise.
+
+Every compile carries the decision-trace module: Decision, Policy, Exception, Approval and Precedent
+in PROV terms, so the running system has a place to record its own decisions. Removing it is a
+recorded decision in `.hitl/config.yaml`. The Action Catalog (`actions.yaml`) is off unless a team
+turns it on, and then each action's preconditions and postconditions compile to shapes too.
+
 ## Limits in this version
 
 - The code adapter reads Python. Other languages are counted and never guessed from.
@@ -75,6 +93,11 @@ data_layer:
   through exports.
 - Catalogs, dbt, orchestrators, BI tools, greenfield authoring, deploy-time verification and the
   extraction schema for document graphs are later slices of the same epic.
+- Reasoning: full OWL 2 DL consistency through HermiT needs a JVM and Owlready2 and is recorded as
+  not run otherwise. `owlrl` 7.6 merges individuals with different key values, so the compiler's
+  `owl:hasKey` axioms are kept out of the closure and keys are checked directly. Instances come from
+  offline exports only. The review page, the per-change background derivation and the compliance
+  levels are not built yet.
 
 The conventions the validator enforces are in the plugin's `shared/data-layer.md`. A worked example
 with a synthetic app, exports, evidence, interpretations, the four files and a baseline scorecard is

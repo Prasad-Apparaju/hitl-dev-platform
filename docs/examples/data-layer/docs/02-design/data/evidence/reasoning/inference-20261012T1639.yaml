@@ -1,0 +1,32 @@
+schema_version: '1.0'
+evidence_type: inference
+source: src:reasoning
+taken_at: '2026-10-12T16:39:46Z'
+adapter:
+  name: reason.py
+  version: 1.0.0
+access:
+  mode: offline
+  environment: offline-export
+  read_only: true
+coverage:
+  mode: exploratory
+  loaded:
+    confirmed: 15
+    inferred: 28
+    needs-review: 0
+  seen:
+    confirmed: 15
+    inferred: 28
+    needs-review: 8
+  checks:
+    instances:orders: 'ran: 20 rows from exports/orders.jsonl'
+    instances:order_lines: 'ran: 46 rows from exports/order_lines.jsonl'
+    instances:shipments: 'ran: 18 rows from exports/shipments.jsonl'
+    instances:eta_cache: 'ran: 18 rows from exports/eta_cache.jsonl'
+    owl-rl: 'ran: 813 triples before, 1778 after'
+    keys: 'ran: 0 duplicate key groups'
+    rules: 'ran: rule:late-order derived 17, rule:open-order-has-promise derived 1'
+    shacl: 'ran: conforms, 0 results'
+    hermit: 'not-run: not requested'
+items: []
