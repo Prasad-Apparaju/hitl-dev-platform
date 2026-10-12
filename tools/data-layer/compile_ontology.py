@@ -36,7 +36,6 @@ except ImportError:  # pragma: no cover
 
 try:
     from rdflib import BNode, Graph, Literal, Namespace, URIRef
-    from rdflib.collection import Collection
     from rdflib.namespace import OWL, RDF, RDFS, SH, SKOS, XSD
     HAVE_RDFLIB = True
 except ImportError:  # pragma: no cover
@@ -110,6 +109,23 @@ class Compiler:
         self.prop_iri: dict[tuple[str, str], URIRef] = {}
         self.notes: list[str] = []
 
+    # -- stable blank nodes (DL-20: the compile is deterministic) ---------------
+    def bnode(self, *parts) -> BNode:
+        """A blank node whose label is a hash of what it stands for, so two compiles of the same YAML
+        serialize byte for byte the same."""
+        return BNode("b" + hashlib.sha1("|".join(str(x) for x in parts).encode("utf-8")).hexdigest()[:20])
+
+    def rdf_list(self, g: Graph, items: list, key: str) -> BNode:
+        """An RDF list with stable node labels (rdflib's Collection mints fresh ones)."""
+        head = self.bnode("list", key, 0)
+        node = head
+        for i, item in enumerate(items):
+            g.add((node, RDF.first, item))
+            nxt = self.bnode("list", key, i + 1) if i + 1 < len(items) else RDF.nil
+            g.add((node, RDF.rest, nxt))
+            node = nxt
+        return head
+
     # -- annotations ---------------------------------------------------------
     def annotate(self, g: Graph, node, obj: dict, yaml_id: str | None = None):
         g.add((node, self.H.confidence, Literal(obj.get("confidence", "needs-review"))))
@@ -127,7 +143,7 @@ class Compiler:
     def annotated_axiom(self, g: Graph, s, p, o, obj: dict):
         """An OWL axiom annotation: the triple plus a reified owl:Axiom carrying confidence and evidence."""
         g.add((s, p, o))
-        ax = BNode()
+        ax = self.bnode("axiom", s, p, o)
         g.add((ax, RDF.type, OWL.Axiom))
         g.add((ax, OWL.annotatedSource, s))
         g.add((ax, OWL.annotatedProperty, p))
@@ -182,8 +198,7 @@ class Compiler:
                 continue
             c = self.entity_node(m["entity"])
             props = [self.field_prop(m["entity"], f) for f in m["natural_key"]]
-            lst = BNode()
-            Collection(g, lst, props)
+            lst = self.rdf_list(g, props, "key:%s" % m.get("id"))
             self.annotated_axiom(g, c, OWL.hasKey, lst, m)
         if self.decision_trace:
             self.compile_decision_trace()
@@ -226,7 +241,7 @@ class Compiler:
         for val, kind in ((mn, OWL.minCardinality), (mx, OWL.maxCardinality)):
             if val is None:
                 continue
-            rest = BNode()
+            rest = self.bnode("restriction", c, p, kind, val)
             g.add((rest, RDF.type, OWL.Restriction))
             g.add((rest, OWL.onProperty, p))
             g.add((rest, kind, Literal(int(val), datatype=XSD.nonNegativeInteger)))
@@ -247,8 +262,7 @@ class Compiler:
             if not fields:
                 self.notes.append("%s: key axiom has no fields" % eid)
                 return
-            lst = BNode()
-            Collection(g, lst, [self.field_prop(eid, f) for f in fields])
+            lst = self.rdf_list(g, [self.field_prop(eid, f) for f in fields], "keyaxiom:%s:%s" % (eid, ",".join(map(str, fields))))
             self.annotated_axiom(g, c, OWL.hasKey, lst, a)
         else:
             self.notes.append("%s: unknown axiom kind %r" % (eid, kind))
@@ -301,13 +315,13 @@ class Compiler:
         s.add((shape, SH.targetClass, D.Decision))
         s.add((shape, self.H.confidence, Literal("confirmed")))
         for prop, dtype in (("decidedAt", XSD.dateTime), ("decidedBy", XSD.string), ("outcome", XSD.string)):
-            ps = BNode()
+            ps = self.bnode("dtshape", prop)
             s.add((shape, SH.property, ps))
             s.add((ps, SH.path, D[prop]))
             s.add((ps, SH.minCount, Literal(1)))
             s.add((ps, SH.datatype, dtype))
         for prop, cls in (("underPolicy", D.Policy),):
-            ps = BNode()
+            ps = self.bnode("dtshape", prop)
             s.add((shape, SH.property, ps))
             s.add((ps, SH.path, D[prop]))
             s.add((ps, SH.minCount, Literal(1)))
@@ -332,9 +346,9 @@ class Compiler:
                 for f in m.get("fields") or []:
                     if not isinstance(f, dict) or not f.get("name"):
                         continue
-                    ps = BNode()
-                    s.add((shape, SH.property, ps))
                     p = self.field_prop(eid, f["name"])
+                    ps = self.bnode("fieldshape", m.get("id"), f["name"])
+                    s.add((shape, SH.property, ps))
                     s.add((ps, SH.path, p))
                     s.add((ps, SH.name, Literal(f["name"])))
                     s.add((ps, SH.description, Literal("%s.%s from %s" % (m.get("store", {}).get("name"), f["name"], m.get("id")))))
@@ -352,7 +366,7 @@ class Compiler:
             for r in e.get("relationships") or []:
                 if not isinstance(r, dict) or not r.get("name") or not r.get("target"):
                     continue
-                ps = BNode()
+                ps = self.bnode("relshape", eid, r["name"])
                 s.add((shape, SH.property, ps))
                 s.add((ps, SH.path, self.rel_prop(eid, r["name"])))
                 s.add((ps, SH.name, Literal(r["name"])))
@@ -399,7 +413,7 @@ class Compiler:
                     s.add((shape, SH.targetClass, self.entity_node(cond["target"])))
                     s.add((shape, self.H.action, node))
                     s.add((node, pred, shape))
-                    c = BNode()
+                    c = self.bnode("actioncond", shape)
                     s.add((shape, SH.sparql, c))
                     s.add((c, SH.message, Literal(cond.get("message", "%s %s %d" % (a["id"], key[:-1], i + 1)))))
                     s.add((c, SH.select, Literal(self.with_prefixes(cond["sparql"]))))
@@ -435,7 +449,7 @@ class Compiler:
                 g.add((shape, self.H.owner, Literal(str(r["owner"]))))
             if r.get("why"):
                 g.add((shape, self.H.why, Literal(str(r["why"]))))
-            rule = BNode()
+            rule = self.bnode("rule", r["id"])
             g.add((shape, SH.rule, rule))
             body = fm.get("body")
             if fm.get("kind") == "sparql":
@@ -450,10 +464,10 @@ class Compiler:
                 self.notes.append("%s: formal.kind %r needs a body" % (r["id"], fm.get("kind")))
             # a rule may carry a condition: only instances passing this shape fire it
             if fm.get("condition"):
-                cond = BNode()
+                cond = self.bnode("rulecond", r["id"])
                 g.add((rule, SH.condition, cond))
                 g.add((cond, RDF.type, SH.NodeShape))
-                c = BNode()
+                c = self.bnode("rulecondsparql", r["id"])
                 g.add((cond, SH.sparql, c))
                 g.add((c, SH.select, Literal(self.with_prefixes(str(fm["condition"])))))
 
@@ -520,7 +534,9 @@ def main(argv=None) -> int:
         return 0
     cfg = read_config(a.root)
     base = a.base or cfg.get("base_iri") or DEFAULT_BASE
-    dtrace = str(cfg.get("decision_trace", "on")).lower() != "off"
+    raw = cfg.get("decision_trace", "on")
+    # YAML reads a bare `off` as False; accept False, "off" and "false" as the recorded switch
+    dtrace = not (raw is False or str(raw).strip().lower() in ("off", "false", "no"))
     if not dtrace and not cfg.get("decision_trace_reason"):
         print("ERROR: data_layer.decision_trace is off with no decision_trace_reason in .hitl/config.yaml (DL-23: removing the module is a recorded decision)")
         return 2

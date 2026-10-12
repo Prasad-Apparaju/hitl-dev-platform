@@ -338,7 +338,7 @@ when inference is traversed as fact. The layer's three confidence words exist to
 
 **Decision.** The reasoning stage runs twice: a strict run over `confirmed` assertions only, whose
 findings may block for a Depended-on id (DL-27), and an exploratory run over `confirmed` plus `inferred`, whose
-findings are advisory. A run that includes a `needs-review` assertion is refused. Every inferred axiom, inconsistency or violation is a finding at `inferred` with evidence type
+findings are advisory. A `needs-review` assertion is never loaded: the run drops it, records the count under `seen`, and refuses an explicit request to include one. Every inferred axiom, inconsistency or violation is a finding at `inferred` with evidence type
 `inference`, and only a person or a verification promotes it (DL-9). An agent (FR-38) may act on
 `confirmed` rules only.
 

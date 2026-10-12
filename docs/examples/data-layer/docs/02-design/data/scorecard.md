@@ -21,6 +21,16 @@ Mode: advisory. No baseline given; nothing to diff.
 | answerable.unconfirmed |  | 1 |
 | answerable.total |  | 5 |
 | collisions |  | 2 |
+| reasoning.mode |  | exploratory |
+| reasoning.loaded_confirmed |  | 15 |
+| reasoning.loaded_inferred |  | 28 |
+| reasoning.dropped |  | 8 |
+| reasoning.inconsistency |  | 0 |
+| reasoning.unsatisfiable |  | 0 |
+| reasoning.violation |  | 0 |
+| reasoning.inferred_axiom |  | 0 |
+| reasoning.rules_fired |  | 18 |
+| reasoning.proposed_findings |  | 0 |
 
 ## Questions not answerable
 
@@ -38,4 +48,6 @@ Mode: advisory. No baseline given; nothing to diff.
 - fnd:1
 
 Declared and not extracted: src:warehouse.
+
+Reasoning (exploratory run): loaded 15 confirmed and 28 inferred, dropped 8; rules derived 18 facts; 0 inconsistencies, 0 unsatisfiable, 0 violations, 0 inferred axioms; 0 findings proposed at inferred.
 

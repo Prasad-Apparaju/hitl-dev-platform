@@ -1,5 +1,5 @@
 schema_version: '1.1'
-compiled_at: '2026-10-12T16:39:44Z'
+compiled_at: '2026-10-12T23:44:39Z'
 compiler:
   name: compile_ontology.py
   version: 1.1.0
@@ -13,10 +13,10 @@ inputs:
 outputs:
   ontology.ttl:
     triples: 239
-    sha256: 3744e55bfa3790fb7b047bae10cd3f0ffd99d573cefbe21fa8840c6d1965bcb6
+    sha256: 9a4c89b6d66ab61752c112c60b3ef7d20c4481bbdfc0f087783ea24419a65904
   shapes.ttl:
     triples: 243
-    sha256: 29a99bd46bba6ad047e87d0dc30dbc1b78ddd11a487311fae6ffa536ca4fd73c
+    sha256: fd5ed110f0788b047aaad7c93b1270ac180a962eba9c02c026530b72251d6cf2
   rules.ttl:
     triples: 32
     sha256: fcbcb703fc4b9bb611c16277b24de95933ca3cd191a1d9a4d812ced528aa363a

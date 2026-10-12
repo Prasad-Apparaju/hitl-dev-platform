@@ -33,6 +33,7 @@ REGRESSES = {
     "verification_rate.entities": "down", "verification_rate.fields": "down", "verification_rate.edges": "down",
     "entities_without_mapping": "up", "sources_not_extracted": "up", "evidence_age_days.oldest": "stale",
     "open_high_findings": "up", "negative_edges": "up", "answerable.yes": "down", "collisions": "up",
+    "reasoning.inconsistency": "up", "reasoning.unsatisfiable": "up", "reasoning.violation": "up",
 }
 
 
@@ -159,6 +160,21 @@ def compute(data_dir: str, run_at: dt.datetime) -> dict:
                     coll.append([o[i], o[j], "natural key %s in %s" % (list(nk), src)])
     coll.sort()
 
+    # DL-21, ADR-17: what the last reasoning run entailed from what is known against what is guessed
+    reasoning = None
+    run_path = os.path.join(data_dir, "compiled", "reasoning-run.yaml")
+    if os.path.exists(run_path):
+        rr = _load(run_path)
+        res = rr.get("results") or {}
+        loaded = rr.get("loaded") or {}
+        proposed_path = os.path.join(data_dir, "compiled", "reasoning-findings.yaml")
+        proposed = len((_load(proposed_path).get("findings") or [])) if os.path.exists(proposed_path) else 0
+        reasoning = {"mode": rr.get("mode"), "loaded_confirmed": loaded.get("confirmed", 0),
+                     "loaded_inferred": loaded.get("inferred", 0), "dropped": rr.get("dropped", 0),
+                     "inconsistency": res.get("inconsistency", 0), "unsatisfiable": res.get("unsatisfiable", 0),
+                     "violation": res.get("violation", 0), "inferred_axiom": res.get("inferred-axiom", 0),
+                     "rules_fired": sum((rr.get("rules_fired") or {}).values()), "proposed_findings": proposed}
+
     return {
         "verification_rate": {"entities": _rate(e.get("confidence") for e in ont),
                               "fields": _rate(fields),
@@ -170,6 +186,7 @@ def compute(data_dir: str, run_at: dt.datetime) -> dict:
         "negative_edges": neg_edges,
         "answerable": ans,
         "collisions": coll,
+        "reasoning": reasoning if reasoning is not None else {},
         "_waiting": waiting,
         "_open_high": sorted(f["id"] for f in fnds if f.get("severity") == "high" and f.get("status") == "open" and f.get("id")),
     }
@@ -238,6 +255,13 @@ def report(metrics: dict, rows: list[dict], mode: str, baseline_note: str) -> st
         lines.append("")
     if metrics["sources_not_extracted"]:
         lines += ["Declared and not extracted: %s." % ", ".join(metrics["sources_not_extracted"]), ""]
+    rz = metrics.get("reasoning") or {}
+    if rz:
+        lines += ["Reasoning (%s run): loaded %d confirmed and %d inferred, dropped %d; rules derived %d facts; "
+                  "%d inconsistencies, %d unsatisfiable, %d violations, %d inferred axioms; %d findings proposed at inferred." % (
+                      rz.get("mode"), rz.get("loaded_confirmed", 0), rz.get("loaded_inferred", 0), rz.get("dropped", 0),
+                      rz.get("rules_fired", 0), rz.get("inconsistency", 0), rz.get("unsatisfiable", 0),
+                      rz.get("violation", 0), rz.get("inferred_axiom", 0), rz.get("proposed_findings", 0)), ""]
     return "\n".join(lines)
 
 

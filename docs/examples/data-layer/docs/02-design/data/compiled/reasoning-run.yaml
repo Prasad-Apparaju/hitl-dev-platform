@@ -1,5 +1,5 @@
 schema_version: '1.1'
-run_at: '2026-10-12T16:39:46Z'
+run_at: '2026-10-12T23:44:46Z'
 mode: exploratory
 loaded:
   confirmed: 15
@@ -17,13 +17,13 @@ checks:
   instances:eta_cache: 'ran: 18 rows from exports/eta_cache.jsonl'
   owl-rl: 'ran: 813 triples before, 1778 after'
   keys: 'ran: 0 duplicate key groups'
-  rules: 'ran: rule:late-order derived 17, rule:open-order-has-promise derived 1'
+  rules: 'ran: rule:open-order-has-promise derived 1, rule:late-order derived 17'
   shacl: 'ran: conforms, 0 results'
   hermit: 'not-run: not requested'
-pin: '2026-10-12T16:39:44Z'
+pin: '2026-10-12T23:44:39Z'
 rules_fired:
-  rule:late-order: 17
   rule:open-order-has-promise: 1
+  rule:late-order: 17
 results:
   inconsistency: 0
   unsatisfiable: 0

@@ -26,10 +26,10 @@ dt:DecisionShape a sh:NodeShape ;
     hitl:id "ent:carrier" .
 
 :delivery-slotShape a sh:NodeShape ;
-    sh:property [ sh:description "delivery_slots.slot_id from map:delivery-slot/warehouse.delivery_slots" ;
+    sh:property [ sh:description "delivery_slots.window_start from map:delivery-slot/warehouse.delivery_slots" ;
             sh:maxCount 1 ;
-            sh:name "slot_id" ;
-            sh:path :delivery-slot.slot_id ;
+            sh:name "window_start" ;
+            sh:path :delivery-slot.window_start ;
             hitl:confidence "needs-review" ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0007" ],
         [ sh:description "delivery_slots.order_no from map:delivery-slot/warehouse.delivery_slots" ;
@@ -38,10 +38,10 @@ dt:DecisionShape a sh:NodeShape ;
             sh:path :delivery-slot.order_no ;
             hitl:confidence "needs-review" ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0007" ],
-        [ sh:description "delivery_slots.window_start from map:delivery-slot/warehouse.delivery_slots" ;
+        [ sh:description "delivery_slots.slot_id from map:delivery-slot/warehouse.delivery_slots" ;
             sh:maxCount 1 ;
-            sh:name "window_start" ;
-            sh:path :delivery-slot.window_start ;
+            sh:name "slot_id" ;
+            sh:path :delivery-slot.slot_id ;
             hitl:confidence "needs-review" ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0007" ] ;
     sh:targetClass :delivery-slot ;
@@ -49,16 +49,7 @@ dt:DecisionShape a sh:NodeShape ;
     hitl:id "ent:delivery-slot" .
 
 :etaShape a sh:NodeShape ;
-    sh:property [ sh:datatype xsd:dateTime ;
-            sh:description "eta_cache.computed_at from map:eta/shipments-db.eta_cache" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:name "computed_at" ;
-            sh:path :eta.computed_at ;
-            hitl:confidence "inferred" ;
-            hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0011",
-                "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0002" ],
-        [ sh:datatype xsd:string ;
+    sh:property [ sh:datatype xsd:string ;
             sh:description "eta_cache.order_no from map:eta/shipments-db.eta_cache" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
@@ -67,6 +58,15 @@ dt:DecisionShape a sh:NodeShape ;
             sh:path :eta.order_no ;
             hitl:confidence "inferred" ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0012",
+                "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0002" ],
+        [ sh:datatype xsd:dateTime ;
+            sh:description "eta_cache.computed_at from map:eta/shipments-db.eta_cache" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:name "computed_at" ;
+            sh:path :eta.computed_at ;
+            hitl:confidence "inferred" ;
+            hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0011",
                 "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0002" ],
         [ sh:datatype xsd:date ;
             sh:description "eta_cache.eta from map:eta/shipments-db.eta_cache" ;
@@ -83,6 +83,23 @@ dt:DecisionShape a sh:NodeShape ;
 
 :order-lineShape a sh:NodeShape ;
     sh:property [ sh:datatype xsd:integer ;
+            sh:description "order_lines.id from map:order-line/orders-db.order_lines" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:minLength 1 ;
+            sh:name "id" ;
+            sh:path :order-line.id ;
+            hitl:confidence "inferred" ;
+            hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" ],
+        [ sh:datatype xsd:string ;
+            sh:description "order_lines.part_id from map:order-line/orders-db.order_lines" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:name "part_id" ;
+            sh:path :order-line.part_id ;
+            hitl:confidence "inferred" ;
+            hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" ],
+        [ sh:datatype xsd:integer ;
             sh:description "order_lines.order_id from map:order-line/orders-db.order_lines" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
@@ -98,30 +115,27 @@ dt:DecisionShape a sh:NodeShape ;
             sh:name "qty" ;
             sh:path :order-line.qty ;
             hitl:confidence "inferred" ;
-            hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" ],
-        [ sh:datatype xsd:string ;
-            sh:description "order_lines.part_id from map:order-line/orders-db.order_lines" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:name "part_id" ;
-            sh:path :order-line.part_id ;
-            hitl:confidence "inferred" ;
-            hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" ],
-        [ sh:datatype xsd:integer ;
-            sh:description "order_lines.id from map:order-line/orders-db.order_lines" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:minLength 1 ;
-            sh:name "id" ;
-            sh:path :order-line.id ;
-            hitl:confidence "inferred" ;
             hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0002" ] ;
     sh:targetClass :order-line ;
     hitl:confidence "inferred" ;
     hitl:id "ent:order-line" .
 
 :orderShape a sh:NodeShape ;
-    sh:property [ sh:datatype xsd:date ;
+    sh:property [ sh:class :shipment ;
+            sh:name "fulfilled by" ;
+            sh:path :order.fulfilled-by ;
+            hitl:confidence "inferred" ;
+            hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0005",
+                "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0007" ],
+        [ sh:datatype xsd:string ;
+            sh:description "orders.tenant_id from map:order/orders-db.orders" ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:name "tenant_id" ;
+            sh:path :order.tenant_id ;
+            hitl:confidence "inferred" ;
+            hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ],
+        [ sh:datatype xsd:date ;
             sh:description "orders.promised_date from map:order/orders-db.orders" ;
             sh:maxCount 1 ;
             sh:name "promised_date" ;
@@ -129,22 +143,6 @@ dt:DecisionShape a sh:NodeShape ;
             hitl:confidence "inferred" ;
             hitl:evidence "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0005",
                 "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ],
-        [ sh:datatype xsd:integer ;
-            sh:description "orders.id from map:order/orders-db.orders" ;
-            sh:maxCount 1 ;
-            sh:minCount 1 ;
-            sh:name "id" ;
-            sh:path :order.id ;
-            hitl:confidence "confirmed" ;
-            hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
-            hitl:evidence "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0005",
-                "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ],
-        [ sh:class :shipment ;
-            sh:name "fulfilled by" ;
-            sh:path :order.fulfilled-by ;
-            hitl:confidence "inferred" ;
-            hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0005",
-                "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0007" ],
         [ sh:datatype xsd:string ;
             sh:description "orders.order_no from map:order/orders-db.orders" ;
             sh:maxCount 1 ;
@@ -156,14 +154,16 @@ dt:DecisionShape a sh:NodeShape ;
             hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
             hitl:evidence "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0006",
                 "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ],
-        [ sh:datatype xsd:string ;
-            sh:description "orders.tenant_id from map:order/orders-db.orders" ;
+        [ sh:datatype xsd:integer ;
+            sh:description "orders.id from map:order/orders-db.orders" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
-            sh:name "tenant_id" ;
-            sh:path :order.tenant_id ;
-            hitl:confidence "inferred" ;
-            hitl:evidence "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ],
+            sh:name "id" ;
+            sh:path :order.id ;
+            hitl:confidence "confirmed" ;
+            hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
+            hitl:evidence "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0005",
+                "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" ],
         [ sh:datatype xsd:string ;
             sh:description "orders.status from map:order/orders-db.orders" ;
             sh:maxCount 1 ;
@@ -184,14 +184,7 @@ dt:DecisionShape a sh:NodeShape ;
     hitl:id "ent:order" .
 
 :shipmentShape a sh:NodeShape ;
-    sh:property [ sh:datatype xsd:date ;
-            sh:description "shipments.eta from map:shipment/shipments-db.shipments" ;
-            sh:maxCount 1 ;
-            sh:name "eta" ;
-            sh:path :shipment.eta ;
-            hitl:confidence "inferred" ;
-            hitl:evidence "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0005" ],
-        [ sh:datatype xsd:string ;
+    sh:property [ sh:datatype xsd:string ;
             sh:description "shipments.carrier_ref from map:shipment/shipments-db.shipments" ;
             sh:maxCount 1 ;
             sh:name "carrier_ref" ;
@@ -199,12 +192,6 @@ dt:DecisionShape a sh:NodeShape ;
             hitl:confidence "inferred" ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004",
                 "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0005" ],
-        [ sh:class :carrier ;
-            sh:maxCount 1 ;
-            sh:name "carried by" ;
-            sh:path :shipment.carried-by ;
-            hitl:confidence "needs-review" ;
-            hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" ],
         [ sh:datatype xsd:string ;
             sh:description "shipments.order_no from map:shipment/shipments-db.shipments" ;
             sh:maxCount 1 ;
@@ -216,6 +203,13 @@ dt:DecisionShape a sh:NodeShape ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004",
                 "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0005" ],
         [ sh:datatype xsd:date ;
+            sh:description "shipments.eta from map:shipment/shipments-db.shipments" ;
+            sh:maxCount 1 ;
+            sh:name "eta" ;
+            sh:path :shipment.eta ;
+            hitl:confidence "inferred" ;
+            hitl:evidence "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0005" ],
+        [ sh:datatype xsd:date ;
             sh:description "shipments.shipped_at from map:shipment/shipments-db.shipments" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
@@ -223,7 +217,13 @@ dt:DecisionShape a sh:NodeShape ;
             sh:path :shipment.shipped_at ;
             hitl:confidence "inferred" ;
             hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0009",
-                "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0005" ] ;
+                "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0005" ],
+        [ sh:class :carrier ;
+            sh:maxCount 1 ;
+            sh:name "carried by" ;
+            sh:path :shipment.carried-by ;
+            hitl:confidence "needs-review" ;
+            hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" ] ;
     sh:targetClass :shipment ;
     hitl:confidence "inferred" ;
     hitl:id "ent:shipment" .

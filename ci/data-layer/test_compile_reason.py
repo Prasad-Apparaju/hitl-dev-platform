@@ -300,3 +300,20 @@ def test_val6_inference_evidence_type_is_accepted_by_the_core(fx):
     findings, code = validate(root, data)
     assert not [f for f in findings if f["code"] == "EVIDENCE_TYPE_UNKNOWN"]
     assert code == 0
+
+
+def test_rsn7_hermit_runs_when_a_jvm_and_owlready2_exist(fx):
+    """ADR-14: the DL check runs only where it can; the run record says which it was."""
+    root, data = fx
+    compile_(root, data)
+    reason(root, data, "exploratory", extra=["--hermit"])
+    rec = run_record(data)["checks"]["hermit"]
+    have = shutil.which("java") is not None
+    try:
+        import owlready2  # noqa: F401
+    except ImportError:
+        have = False
+    if have:
+        assert rec.startswith("ran:"), rec
+    else:
+        assert rec.startswith("not-run:"), rec

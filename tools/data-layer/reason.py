@@ -347,8 +347,14 @@ class Reasoner:
             return
         try:
             import owlready2
+            import tempfile
+            # Owlready2 reads RDF/XML, OWL/XML or N-Triples, never Turtle: convert first
+            g = Graph().parse(onto_path, format="turtle")
+            tmp = tempfile.NamedTemporaryFile(suffix=".owl", delete=False)
+            tmp.close()
+            g.serialize(destination=tmp.name, format="xml")
             world = owlready2.World()
-            onto = world.get_ontology("file://" + os.path.abspath(onto_path)).load()
+            onto = world.get_ontology("file://" + tmp.name).load()
             with onto:
                 owlready2.sync_reasoner_hermit(world, infer_property_values=False, debug=0)
             bad = list(world.inconsistent_classes())
@@ -391,7 +397,8 @@ class Reasoner:
             about = [a for a in self.about(r)]
             findings.append({"kind": r["kind"], "severity": sev[r["kind"]], "about": about or ["ent:unknown"],
                              "statement": self.statement(r), "confidence": "inferred",
-                             "evidence": [{"file": ev_rel, "item": ev["items"][i]["id"]}], "status": "open"})
+                             "evidence": [{"file": ev_rel, "item": ev["items"][i]["id"]}], "status": "open",
+                             "written_at": stamp(ts)})
         run = {"schema_version": "1.1", "run_at": stamp(ts), "mode": self.mode, "loaded": self.loaded, "seen": self.seen,
                "dropped": len(self.dropped), "checks": self.checks, "pin": pin.get("compiled_at"), "rules_fired": fired,
                "results": {k: sum(1 for r in self.results if r["kind"] == k) for k in sev}}

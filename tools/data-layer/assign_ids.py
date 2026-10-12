@@ -17,7 +17,9 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from dl_common import dump_yaml, load_yaml  # noqa: E402
+from dl_common import dump_yaml, load_yaml, now_utc, stamp  # noqa: E402
+
+_NOW = stamp(now_utc())
 
 
 def _num(ident) -> int:
@@ -55,6 +57,8 @@ def assign(new: list[dict], previous: list[dict], prefix: str, key) -> tuple[lis
             used.add(n["id"])
             nxt += 1
             assigned += 1
+        # a new assertion gets its written_at here (DL-26: review latency is measured from it)
+        n.setdefault("written_at", _NOW)
         # put id first so the file reads like the template
         n_copy = {"id": n.pop("id")}
         n_copy.update(n)

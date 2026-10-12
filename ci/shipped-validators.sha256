@@ -85,3 +85,8 @@ a3d394fbc030ea3d5cf1d2e97be29e717bfad0379c00b7d15db7c0a30c6f4ea0  tools/data-lay
 e75d9bdac88a9b455cd86f1c845c1fdd77482a1e0e5093df63061d6609de2b95  ci/data-layer/data-layer.schema.yaml  # 2.18.0
 9ee91c1aae2b3ba74b0e98b92f6e4653682d8cbe1c08e30c26801894e4d7585c  ci/data-layer/scorecard.py  # 2.18.0
 c5a2d97467c3efc212536aafbe0b5aa2dc42b4451949a71266a8cb358cb48f66  tools/data-layer/reason.py  # 2.18.0
+0b39e197fe42188cef58bc55c87810d69a7a120129b3e04aa73db492d2b72d55  ci/data-layer/scorecard.py  # 2.18.0
+f364927df212ad3bd1e6b2c7b296fc5e10e50eb12adb490377f2bf2b81f1a0e3  tools/data-layer/assign_ids.py  # 2.18.0
+8a761c35d65d506bb0c1d62e18d815cedfda3e5bd6eab2b6fa80438b795aad04  tools/data-layer/compile_ontology.py  # 2.18.0
+90c7d04c57ea09278b189efe014e7e07ec428bf184c28efbe601d922578e0cac  tools/data-layer/reason.py  # 2.18.0
+9a5feb21b39d11666de98138910ae7050daee297c1bea6033b0c7c709522a0c1  ci/data-layer/scorecard.py  # 2.18.0

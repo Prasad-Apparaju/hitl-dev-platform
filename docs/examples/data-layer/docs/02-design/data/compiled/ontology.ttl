@@ -146,7 +146,7 @@ dt:Precedent a owl:Class ;
 :eta a owl:Class ;
     rdfs:label "Estimated arrival" ;
     rdfs:comment "The date the business expects an open order to arrive, recomputed nightly from the promised date and recent carrier lag." ;
-    owl:hasKey _:N83d9e1a48a5e4e069a9669d94105ffda ;
+    owl:hasKey _:b12d9cdcc3c9d62b4f0b5 ;
     skos:altLabel "ETA" ;
     hitl:confidence "inferred" ;
     hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0011",
@@ -176,7 +176,7 @@ dt:Policy a owl:Class ;
 :order-line a owl:Class ;
     rdfs:label "Order line" ;
     rdfs:comment "One part and quantity requested on an order." ;
-    owl:hasKey _:N6a4d120f75374503822aeee1fc5fa35b ;
+    owl:hasKey _:bcbe91bb7417d9f79ce71 ;
     skos:altLabel "line item" ;
     hitl:confidence "inferred" ;
     hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0002",
@@ -194,7 +194,7 @@ dt:Approval a owl:Class ;
     rdfs:label "Order" ;
     rdfs:comment "A customer's request to buy, from placement until it is fulfilled or cancelled. One per order number within a tenant." ;
     owl:disjointWith :shipment ;
-    owl:hasKey _:N51c5d607bb5c4a1aae00e78e050cf314 ;
+    owl:hasKey _:b6a2e48c095753bfdb234 ;
     skos:altLabel "PO",
         "orders",
         "purchase order" ;
@@ -208,8 +208,8 @@ dt:Approval a owl:Class ;
 :shipment a owl:Class ;
     rdfs:label "Shipment" ;
     rdfs:comment "A consignment a carrier moves against an order; may be partial." ;
-    rdfs:subClassOf _:N459d809fcf4144db8633e89173410be6 ;
-    owl:hasKey _:N5f74cd40fc8d40cc8031f7dfcc6f41c4 ;
+    rdfs:subClassOf _:bf6d0ece817d058b8c789 ;
+    owl:hasKey _:bd7aa37114851cdad61cd ;
     skos:altLabel "consignment",
         "delivery" ;
     hitl:confidence "inferred" ;
@@ -226,44 +226,11 @@ dt:Decision a owl:Class ;
 
 [] a owl:Axiom ;
     owl:annotatedProperty owl:hasKey ;
-    owl:annotatedSource :order-line ;
-    owl:annotatedTarget _:N6a4d120f75374503822aeee1fc5fa35b ;
-    hitl:confidence "inferred" ;
-    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0002",
-        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0001" .
-
-[] a owl:Axiom ;
-    owl:annotatedProperty rdfs:subClassOf ;
-    owl:annotatedSource :shipment ;
-    owl:annotatedTarget _:N459d809fcf4144db8633e89173410be6 ;
-    hitl:confidence "needs-review" ;
-    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" .
-
-[] a owl:Axiom ;
-    owl:annotatedProperty owl:hasKey ;
     owl:annotatedSource :eta ;
-    owl:annotatedTarget _:N83d9e1a48a5e4e069a9669d94105ffda ;
+    owl:annotatedTarget _:b12d9cdcc3c9d62b4f0b5 ;
     hitl:confidence "inferred" ;
     hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0010",
         "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0001" .
-
-[] a owl:Axiom ;
-    owl:annotatedProperty owl:hasKey ;
-    owl:annotatedSource :order ;
-    owl:annotatedTarget _:N51c5d607bb5c4a1aae00e78e050cf314 ;
-    hitl:confidence "confirmed" ;
-    hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
-    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
-        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0004",
-        "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" .
-
-[] a owl:Axiom ;
-    owl:annotatedProperty owl:hasKey ;
-    owl:annotatedSource :shipment ;
-    owl:annotatedTarget _:N5f74cd40fc8d40cc8031f7dfcc6f41c4 ;
-    hitl:confidence "inferred" ;
-    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0003",
-        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0004" .
 
 [] a owl:Axiom ;
     owl:annotatedProperty owl:disjointWith ;
@@ -274,19 +241,52 @@ dt:Decision a owl:Class ;
     hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
         "evidence/app/code-20260930T0900.yaml#ev:app/code/0003" .
 
-_:N459d809fcf4144db8633e89173410be6 a owl:Restriction ;
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :order ;
+    owl:annotatedTarget _:b6a2e48c095753bfdb234 ;
+    hitl:confidence "confirmed" ;
+    hitl:confirmedBy "human ta@team 2026-09-30T11:00:00Z" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0001",
+        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0004",
+        "evidence/orders-db/schema-20260930T0930.yaml#ev:orders-db/schema/0001" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :order-line ;
+    owl:annotatedTarget _:bcbe91bb7417d9f79ce71 ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0002",
+        "evidence/orders-db/profile-20260930T0940.yaml#ev:orders-db/profile/0001" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty owl:hasKey ;
+    owl:annotatedSource :shipment ;
+    owl:annotatedTarget _:bd7aa37114851cdad61cd ;
+    hitl:confidence "inferred" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0003",
+        "evidence/shipments-db/profile-20260930T0945.yaml#ev:shipments-db/profile/0004" .
+
+[] a owl:Axiom ;
+    owl:annotatedProperty rdfs:subClassOf ;
+    owl:annotatedSource :shipment ;
+    owl:annotatedTarget _:bf6d0ece817d058b8c789 ;
+    hitl:confidence "needs-review" ;
+    hitl:evidence "evidence/app/code-20260930T0900.yaml#ev:app/code/0004" .
+
+_:b12d9cdcc3c9d62b4f0b5 rdf:first :eta.order_no ;
+    rdf:rest () .
+
+_:b6a2e48c095753bfdb234 rdf:first :order.order_no ;
+    rdf:rest () .
+
+_:bcbe91bb7417d9f79ce71 rdf:first :order-line.id ;
+    rdf:rest () .
+
+_:bd7aa37114851cdad61cd rdf:first :shipment.order_no ;
+    rdf:rest () .
+
+_:bf6d0ece817d058b8c789 a owl:Restriction ;
     owl:maxCardinality "1"^^xsd:nonNegativeInteger ;
     owl:onProperty :shipment.carried-by .
-
-_:N51c5d607bb5c4a1aae00e78e050cf314 rdf:first :order.order_no ;
-    rdf:rest () .
-
-_:N5f74cd40fc8d40cc8031f7dfcc6f41c4 rdf:first :shipment.order_no ;
-    rdf:rest () .
-
-_:N6a4d120f75374503822aeee1fc5fa35b rdf:first :order-line.id ;
-    rdf:rest () .
-
-_:N83d9e1a48a5e4e069a9669d94105ffda rdf:first :eta.order_no ;
-    rdf:rest () .
 

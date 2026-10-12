@@ -28,3 +28,14 @@ metrics:
   - - ent:eta
     - ent:shipment
     - natural key ['order_no'] in src:shipments-db
+  reasoning:
+    mode: exploratory
+    loaded_confirmed: 15
+    loaded_inferred: 28
+    dropped: 8
+    inconsistency: 0
+    unsatisfiable: 0
+    violation: 0
+    inferred_axiom: 0
+    rules_fired: 18
+    proposed_findings: 0
