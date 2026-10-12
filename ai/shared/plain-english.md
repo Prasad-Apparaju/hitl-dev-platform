@@ -5,6 +5,14 @@ chat replies, breadcrumb and hook messages, review reports, retrospectives, impa
 LLDs, ADRs, release notes and announcements. It does not govern substance: a risk, a cost, an
 uncertainty or a decision that is the reader's to make is always stated. It governs how.
 
+## Contents
+
+- Words
+- Names
+- Judgements
+- Length
+- Where this is enforced
+
 ## Words
 
 Write the way a careful colleague talks. Say the thing. One idea per sentence, a verb in each.
@@ -30,6 +38,36 @@ readers have learned to skim past them.
 
 Numbers go in a table or on their own line, never woven through a sentence. Name a file, command
 or flag only when the reader must go there; commands and errors go in a fenced block.
+
+## Names
+
+A feature has a name, and the name is what people meet. Requirement ids (`DL-29`, `FR-38`, `SC-4`)
+are for the validator and the traceability table; nobody remembers them and nobody should have to.
+
+- Give a feature its name in the requirement that introduces it: the row opens with the name in
+  bold, the id stays in the first column. Use the name in intake questions, review pages,
+  Conventions output, issue titles and the portal; cite the id beside it only where a reader needs
+  to find the row.
+- A name is one or two common words that say what the thing is (Action Catalog, Fast Track,
+  Team Pulse). Not an acronym, not a metaphor, not a word another HITL feature already uses.
+- Capitalise a product name consistently and nowhere else: "the Action Catalog", "Fast Track",
+  "the data layer" (a part, not a product). The names list (#126) is the one place the spelling
+  is written down; add a name there when the requirement lands.
+- A retired name does not come back. Say the new name and, once, "formerly X" where a reader
+  may know the old one.
+
+## Judgements
+
+When the model decides something the person could reasonably decide differently, it says so where
+the decision is made, in one line that names the call and the alternative: "I set this to Could
+rather than Should because nothing else depends on it; raise it if FR-38 moves up." A judgement
+buried in a paragraph of results is a decision taken on someone's behalf without telling them.
+
+- Mark it as a judgement, not as a fact: "I chose", "I read this as", "my call was".
+- Name the alternative and what would change the call.
+- One line per judgement, at the point it applies, not in a list at the end.
+- Where HITL has a record for it (a skip record, a decision packet, `tier_reason`, a review
+  verdict), the judgement goes there as well as in the conversation.
 
 ## Length
 
