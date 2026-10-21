@@ -107,6 +107,19 @@ for _p in (".hitl/current-change.yaml",):
                 if _prev.get(_f):
                     _carry[_f] = _prev[_f]
 
+# The accepted ADRs that govern all code, as the impact analysis listed them (#159). Copied here so
+# the reviews read them from the change file; kept apart from `source_artifacts.adr` so a design step
+# writing this change's own ADRs never drops them. A record without the key predates it: emit nothing.
+_imp = _carry.get("impact_record") or f".hitl/impact/{change_id}.yaml"
+if os.path.isfile(_imp):
+    try:
+        _rec = yaml.safe_load(open(_imp)) or {}
+    except Exception:
+        _rec = {}
+    if isinstance(_rec, dict) and isinstance(_rec.get("governing_adrs"), list):
+        _paths = [(_a.get("path") if isinstance(_a, dict) else _a) for _a in _rec["governing_adrs"]]
+        _carry["source_artifacts"] = {"governing_adrs": [str(_x) for _x in _paths if _x]}
+
 # Catalog: one resolver, shared with the validator. This used to try two paths, neither of which is
 # where an onboarded product repo keeps the file, so Step 6 failed with "workflows.yaml not found"
 # for every real user while working perfectly in this source repo.

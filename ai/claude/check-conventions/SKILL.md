@@ -38,7 +38,7 @@ This skill shells out to external CLIs. If a check's tool is not installed, repo
 
 ## Step 1 — Run the checks
 
-Run all five checks (or a subset if `--only` is specified):
+Run all six checks (or a subset if `--only` is specified):
 
 ### Semgrep (code conventions)
 
@@ -134,6 +134,27 @@ under **Warnings** with the words "data layer: advisory mode" otherwise. The val
 lines (a question with an unconfirmed needs list, an edge whose rule reads as code) are Warnings in
 both modes; only its `BLOCK` lines are violations.
 
+### Log fields against the observability ADR
+
+Runs when `source_artifacts.governing_adrs` in `.hitl/current-change.yaml` names an accepted
+observability ADR; otherwise report SKIPPED with the reason ("no accepted observability ADR"), never
+passed. List every log call the change adds:
+
+```bash
+BASE=$(git merge-base HEAD origin/main 2>/dev/null || git merge-base HEAD main)
+git diff -U0 "$BASE"...HEAD | awk '
+  /^\+\+\+ b\// { file = substr($0, 7) }
+  /^@@/ { split($3, a, ","); line = substr(a[1], 2) - 1 }
+  /^\+[^+]/ || /^\+$/ { line++; if ($0 ~ /(^|[^A-Za-z0-9_])(log|logger|logging|console|slog|LOG|LOGGER|Log)\.(debug|info|warn|warning|error|exception|critical|fatal|log|Debug|Info|Warn|Error|Printf|Println)[ \t]*\(/) print file ":" line ": " substr($0, 2) }'
+```
+
+Read the ADR's **Required log fields** (or its prose, saying so) and check each listed call: a call
+that cannot carry a required field, or a call in a format the ADR rules out, is a violation citing
+the ADR id. So is logging set up with no structured configuration (a bare `logging.basicConfig`, or
+none at all) when the ADR asks for JSON. The pattern finds the common logger names; a project
+logging through a wrapper of its own adds that name to the pattern. This check reads the change's
+diff, so it says nothing about code the change did not touch.
+
 ---
 
 ## Step 2 — Report results
@@ -153,7 +174,7 @@ Present the results grouped by status:
 
 Then close with the boundary, every time, so a green result is never read as "CI will pass":
 
-> This ran five checks: semgrep, secrets, manifest drift, Mermaid, data layer. It did not run this project's CI. Gates that live only there (formatters, type checks, migrations, dependency audits, anything under `.github/workflows/`) were not checked.
+> This ran six checks: semgrep, secrets, manifest drift, Mermaid, data layer, log fields. It did not run this project's CI. Gates that live only there (formatters, type checks, migrations, dependency audits, anything under `.github/workflows/`) were not checked.
 
 ---
 

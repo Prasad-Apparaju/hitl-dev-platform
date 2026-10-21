@@ -6,6 +6,7 @@
 | **Date** | [fill in] |
 | **Deciders** | [fill in: architect, security lead or dev lead] |
 | **Supersedes** | none |
+| **Applies to** | all-code: every change that touches code is reviewed against this ADR once it is accepted |
 | **Related** | ADR-0001 (HITL adoption), ADR-0004 (change tier policy), ADR-0005 (observability) |
 
 ---

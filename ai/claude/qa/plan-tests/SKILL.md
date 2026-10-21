@@ -112,6 +112,13 @@ Group scenarios by:
 
 For each acceptance criterion in the PRD, produce at least one **E2E Playwright scenario** that exercises the criterion as a real user would — browser-driven, desktop + mobile (iPhone 15, Pixel 7). Flag any criterion that cannot be exercised via browser (native mobile app only) — those require Appium or Detox and must be noted in the test plan.
 
+When `source_artifacts.governing_adrs` names an accepted observability ADR with a correlation key
+per flow, add one **end-to-end scenario per flow this change touches** that follows a single request
+from where it enters to its last side effect using only that key, as an operator would during an
+incident. Kind `acceptance`, layer `e2e`, serves the ADR id. Written for a person: "Given a customer
+message arrives, When we search the logs for its trace id, Then every step from receipt to the
+outbound reply shows up, in order."
+
 Produce one **smoke suite scenario** for the feature's primary happy-path user journey. The scenario must assume a brand-new customer (created by the smoke suite setup step) and assert the visible outcome a PM would verify.
 
 ---

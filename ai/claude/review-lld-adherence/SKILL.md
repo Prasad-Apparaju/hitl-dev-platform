@@ -86,6 +86,21 @@ Read the `cross_cutting` section of `docs/system-manifest.yaml`. Verify each con
 
 ---
 
+## Step 5a — Check the governing ADRs
+
+Read `source_artifacts.governing_adrs` in `.hitl/current-change.yaml`. A change file written before
+the field existed has none: list them with the snippet in `dev-apply-change` Step 3 ("Which accepted
+decisions govern this change"). The LLD rarely restates these ADRs, and when it does not, this is the
+only check before deploy.
+
+For each ADR, pull out the rules a diff can break, then check every added or changed line against
+them. For an observability ADR that means each log call the change adds: the format, every field the
+ADR requires on every line, and the correlation key carried across each hop the change adds (queue
+messages, outbound calls). When the ADR has no **Required log fields** table, take the fields from its
+prose and say that you did. A success path that logs nothing is a gap when the ADR asks for a line per
+step. A gap is a ❌ finding that names the ADR id and the rule, like a missing LLD element. The fix is
+the code, or an amended ADR the architect accepts; there is no third option.
+
 ## Step 5b — Check the prose the change added
 
 Every factual assertion this change adds to a doc, skill, ADR or comment must be verifiable against
@@ -123,13 +138,17 @@ All LLD-specified elements found and matching.
 ### ❌ Not Specified ([N] elements — must fix before merge)
 - [element] in [file:line]: public interface not in LLD. Either add to LLD (architect approval required) or remove from code.
 
+### ADR Violations ([N] — must fix before merge)
+- [file:line]: ADR-[id] [rule] not followed. [what's missing, e.g. log line has no trace_id]
+- Governing ADRs checked: [ids, or "none listed"]
+
 ### Convention Violations ([N] — must fix before merge)
 - [file:line]: [convention name] violated. [what's wrong and how to fix]
 
 ### Verdict
 [ ] PASS — all elements match, no violations. PR may proceed.
 [ ] PASS WITH NOTES — diverged items logged, architect notified. PR may proceed after architect acknowledges.
-[ ] BLOCK — missing elements or unspecified public interfaces. Fix before PR.
+[ ] BLOCK — missing elements, unspecified public interfaces, or a governing ADR not followed. Fix before PR.
 ```
 
 ---
