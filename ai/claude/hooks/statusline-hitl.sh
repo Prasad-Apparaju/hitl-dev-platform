@@ -92,7 +92,8 @@ if hitl_change_active "$YAML_FILE"; then
       "HITL ${wf} ▸ ${change_id} ▸ $(hitl_render_ribbon "$YAML_FILE")" \
       "▸ ${phase:-$wf}: ${step_name}   ·   tier ${tier:-?}" \
       "$(hitl_next_hint_plain "$YAML_FILE")" \
-      "$( [ -n "$warn" ] && printf '⚠ branch=%s ≠ %s. Context may be stale; run /hitl:dev-switch-context' "$branch" "$change_id" )"
+      "$( [ -n "$warn" ] && printf '⚠ branch=%s ≠ %s. Context may be stale; run /hitl:dev-switch-context' "$branch" "$change_id" )" \
+      "HITL ${wf} ▸ ${change_id}"
     # Phase 2: compact "change ▸ phase ▸ step name" + numberless trail. No global counter.
     hitl_segment="  ${COLOR_MAGENTA}|${COLOR_RESET}  HITL ▸ ${change_id} ▸ ${phase:-$wf} ▸ ${step_name} [T${tier}]${next_hint}${warn}\n     ${trail}"
   else

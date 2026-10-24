@@ -4,6 +4,25 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **The breadcrumb band shows every step as a tag** (FR-37, BM-9). With `breadcrumb: band` or
+  `both`, the band now draws each step of the plan as a small tag under its phase name, marked as
+  the status line's trail marks it: ✓ done in green, ▶ current in orange, · still ahead in gray,
+  ⊘ skipped and ◐ started thin as outlines. Phase names are bold capitals, orange for the phase you
+  are in. The Desktop app draws rounded tags; a terminal draws square ones in your theme's colours.
+  The shell renderer stays the only renderer: it now also writes a header line and the step list,
+  exactly as `hitl_steps` prints it, to `.hitl/breadcrumb.txt`, and the band only draws that. The
+  mod's footprint is unchanged, and a cache written by an older renderer draws the ribbon as before.
+
+### Fixed
+
+- **The band's plugin tests failed on Windows.** Their fake file system matched paths by a
+  forward-slash ending, and Windows hands the mod backslash paths, so four of the ten cases never
+  found the config file. They pass on Linux, which is why CI never saw it.
+
 ## [2.18.0] — 2026-10-08
 
 ### Added

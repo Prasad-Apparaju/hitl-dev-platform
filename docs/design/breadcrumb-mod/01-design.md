@@ -51,8 +51,9 @@ flowchart LR
    prints only the plain-English directive line when there is an active change; the intake directive for no active change
    still prints in every mode.
 3. **The mod** `hooks/breadcrumb-band.js`: on `ui.render` for the band, read the mode; unless
-   `band` or `both`, draw nothing of its own; else read the cache and draw four lines, keeping
-   whatever another mod drew in the band. On `turn.complete`, ask for a redraw.
+   `band` or `both`, draw nothing of its own; else read the cache and draw its lines, keeping
+   whatever another mod drew in the band. With step lines (BM-9) it draws the header and every
+   step as a tag under its phase instead of the ribbon text; see the LLD, section 4.1. On `turn.complete`, ask for a redraw.
 4. **The guard** `ci/breadcrumb-mod/test_breadcrumb_mod.py` assembles a plugin directory from
    the source, runs `claude plugin validate --json` and asserts the exact set of events and calls,
    then runs `claude plugin test`. CI installs the `claude` CLI so the guard does not skip there.

@@ -1,12 +1,15 @@
 # Breadcrumb as a Mod: Test Plan
 
-> Status: **draft v1 (2026-10-05)**. What must fail for FR-37.
+> Status: **draft v2 (2026-10-23)**. What must fail for FR-37, with BM-9 (step tags) added.
 
 ## 1. Renderer: `ci/breadcrumb/run_matrix.sh`, case "breadcrumb band cache"
 
 | Assertion | Expect |
 |---|---|
-| Default mode writes the cache | file exists, four lines; line 1 marks the current phase with ◐; line 2 is the step line with the tier |
+| Default mode writes the cache | file exists; line 1 marks the current phase with ◐; line 2 is the step line with the tier |
+| BM-9: the cache's shape | four lines, the header, then one line per step: line count is 5 plus the step count |
+| BM-9: line 5 is the header | equals the ribbon line up to the change id (`HITL development ▸ <id>`) |
+| BM-9: the step lines | equal `hitl_steps` output exactly; one of them is the current step. Shown to fail when the writer drops the header |
 | Line 1 equals the banner's ribbon line without indent | string equality |
 | Line 3 empty when the step has no command (the fixtures carry none) | empty |
 | Default mode banner unchanged | contains `HITL development ▸` |
@@ -14,6 +17,7 @@
 | `both`: banner prints; status line unchanged; status line wrote the cache | contains the ribbon; contains `HITL ▸`; file non-empty |
 | `band` with no active change: intake directive prints; no cache written | contains `NO ACTIVE CHANGE`; no file |
 | Every pre-existing assertion | unchanged, 271 |
+| The whole matrix after BM-9 | 290 assertions (287 on `main` before it), all pass |
 
 ## 2. Mod: `ai/claude/hooks/tests/breadcrumb-band.test.ts`, run by `claude plugin test`
 
@@ -26,6 +30,18 @@
 | `breadcrumb: both`, surface desktop | both files | ribbon found |
 | warning line | cache with a fourth line | a red Text with the warning |
 | `turn.complete` | stub returns `{ text: '' }` | the hook calls next and does not throw |
+| BM-9: step lines, terminal and desktop | cache with header and five steps (done, skipped, starter, current, open) | header bold; step line present; no ribbon text; a wrapping Box `steps` holding, in order, `phase-Requirements`, `step-1`, `step-2`, `phase-Design`, `step-4`, `phase-Build`, `step-9`, `step-13`; hint dim |
+| BM-9: phase names | same | bold capitals with no mark; `text` colour, `claude` for the current step's phase |
+| BM-9: terminal tags | same | each tag a Box with the status's theme fill and ink, its words the trail mark and label; current bold; starter has no fill |
+| BM-9: desktop tags | same | each tag one `Svg`, height 20, `rx="9.5"`, the status's fill, stroke and text colours, `alt` the tag's words |
+| BM-9: escaping | a label `A<B&C\|D` | `alt` keeps it whole; the SVG text is `A&lt;B&amp;C\|D` |
+| BM-9: fallback | malformed step lines only; or step lines with no header | no `steps` Box; the ribbon text as before |
+| BM-9: warning, and `text` mode | step lines plus a warning; config `text` | warning red under the tags; nothing of ours in `text` mode |
+
+The fake file system matches paths on their tail after turning backslashes into slashes: on
+Windows the paths arrive with backslashes, and four of the original ten cases failed there before
+this (they pass on Linux CI). Each BM-9 case was shown to fail when the band ignores the step
+lines, and the terminal colour case when a fill is swapped.
 
 ## 3. Footprint guard: `ci/breadcrumb-mod/test_breadcrumb_mod.py`
 

@@ -11,7 +11,8 @@ the mod with `/^breadcrumb:\s*([a-z]+)/m` on the file's text; no YAML parser in 
 
 ## 2. The cache file
 
-`.hitl/breadcrumb.txt`, beside the change file, four lines, UTF-8, no colour codes:
+`.hitl/breadcrumb.txt`, beside the change file, UTF-8, no colour codes: four lines, then (BM-9) a
+header and one line per step:
 
 | Line | Content | Example |
 |---|---|---|
@@ -19,8 +20,12 @@ the mod with `/^breadcrumb:\s*([a-z]+)/m` on the file's text; no YAML parser in 
 | 2 | The step line as the banner prints it | `▸ Build: Generate Code (GREEN)   ·   tier 2` |
 | 3 | The next-step hint, or empty | `→ /hitl:qa-plan-tests`, `→ yours to do, no command`, `→ say go, Claude walks it` |
 | 4 | The branch warning, or empty; one form from both writers | `⚠ branch=main ≠ GH-123. Context may be stale; run /hitl:dev-switch-context` |
+| 5 | The header: the ribbon line up to the change id (BM-9) | `HITL development ▸ GH-123` |
+| 6 on | One line per step, exactly as `hitl_steps` prints it: `n\|label\|status\|phase\|command` (BM-9) | `9\|RED\|current\|Build\|dev-tdd` |
 
-Written by `hitl_write_breadcrumb_cache <yaml> <ribbon> <step> <hint> <warn>`: to `.breadcrumb.txt.tmp.<pid>`
+Written by `hitl_write_breadcrumb_cache <yaml> <ribbon> <step> <hint> <warn> [<header>]`: lines 5 on
+only when a header is given, which both callers do; the steps come from `hitl_steps <yaml>`, so the
+writer adds no parsing. To `.breadcrumb.txt.tmp.<pid>`
 then `mv -f`, so a reader never sees a partial file. Never fails the caller (returns 0). Not written
 when there is no active change or the workflow block does not render; a stale file from an earlier
 change is harmless because the mod reads it only when a change is active in the renderer's terms,
@@ -101,6 +106,36 @@ clock, no process, no network, no `$.state`.
 
 Paths are relative to the project directory; the mods API resolves them against the session's
 cwd (verified on 2.1.289 with a throwaway mod).
+
+### 4.1 Step tags (BM-9)
+
+`readCache` also returns `header` (line 5) and `steps` (lines 6 on). `stepRows` splits each line on
+`|`: the first field is the number, the last three are status, phase and command, and the label is
+everything between, so a `|` inside a label survives. A line without five fields, a number or a
+label is skipped. With a header and at least one step the band draws `tagRows`; otherwise
+`textRows`, the ribbon as section 4 describes, so a cache written before BM-9 draws as before.
+
+`tagRows` draws two rows:
+
+1. The header in bold and the step line after it, in one `Text({ wrap: 'truncate-end' })`.
+2. A Box keyed `steps`, `flexDirection: 'row'`, `flexWrap: 'wrap'`: for each phase in step order,
+   a Box keyed `phase-<Phase>` holding the phase name in bold capitals (`color: 'claude'` when it
+   holds the current step, else `'text'`), then that phase's tags. A step with no phase gets no
+   heading.
+
+Each tag is a Box keyed `step-<n>`; its words are the trail's mark for the status
+(`hitl_render_trail`: ✓ done, ▶ current, · open, ⊘ skipped, ◐ starter; unknown reads as open) and
+the step's label.
+
+| Surface | Tag | Colours |
+|---|---|---|
+| `terminal` | Square: the Box's `backgroundColor`, `paddingX: 1`, a Text inside | Theme keys. done `success` / `inverseText`; current `claude` / `inverseText`, bold; open `inactive` / `inverseText`; skipped `subtle` / `text`; starter no fill / `success` |
+| any other with `Svg` (the desktop) | A rounded pill: one `Svg`, 20 px high, `rx` 9.5, width `7.2 × characters + 18`, `alt` the tag's words, text escaped for XML | Fixed, since an image cannot read the theme; checked on a light and a dark background. done `#2e7d32` / white; current `#c15f3c` / white, bold; open `#6b6b6b` / white; skipped outline `#8a8a8a`; starter outline `#388e3c` |
+
+The surface is chosen by `e.surface`, not by whether the table has `Svg`: the terminal's table
+answers `Svg` too (checked in the test kit on 2.1.307), so a table check would send pills to a
+surface that cannot draw an image. The hint and warning rows follow as in
+section 4. Footprint unchanged: the tags use only what `$.ui.resolve(e)` returns.
 
 ## 5. The guard: `ci/breadcrumb-mod/`
 

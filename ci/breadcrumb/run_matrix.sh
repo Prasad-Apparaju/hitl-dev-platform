@@ -501,8 +501,9 @@ assert_no_error_leak "merged/inactive"                           "$combined"
 
 echo "── case: breadcrumb band cache (FR-37) ──"
 # The renderer writes .hitl/breadcrumb.txt for the band mod: line 1 is the banner's ribbon line
-# without its indent, line 2 the next-step hint, line 3 the warning. Mode text (default) leaves the
-# banner unchanged; mode band prints nothing for an active change; mode both prints and writes.
+# without its indent, line 2 the step line, line 3 the next-step hint, line 4 the warning; then
+# (BM-9) line 5 the header and one line per step as hitl_steps prints it. Mode text (default) leaves
+# the banner unchanged; mode band prints nothing for an active change; mode both prints and writes.
 dir="$(new_case_dir "band_cache" "issue/000-x")"
 emit_change_yaml development 13 "" "issue/000-x" > "$dir/.hitl/current-change.yaml"
 banner="$(run_welcome "$dir")"
@@ -512,8 +513,19 @@ banner_line="$(printf '%s\n' "$banner" | grep -m1 '^  HITL ' | sed 's/^  //')"
 [[ -n "$cache_line1" ]] && _ok "band/cache: file written" || _bad "band/cache: file written"
 [[ "$cache_line1" == "$banner_line" ]] && _ok "band/cache: line 1 equals the banner ribbon line" || _bad "band/cache: line 1 equals the banner ribbon line (cache='$cache_line1' banner='$banner_line')"
 # The matrix fixtures carry no `command:` on their steps, so the hint is empty here; the hint text
-# itself is covered by the statusline assertions. Assert the shape: exactly four lines.
-[[ "$(wc -l < "$dir/.hitl/breadcrumb.txt" | tr -d ' ')" == "4" ]] && _ok "band/cache: four lines" || _bad "band/cache: four lines"
+# itself is covered by the statusline assertions. Assert the shape (BM-9): the four lines, the
+# header, then one line per step exactly as hitl_steps prints it, so the band's tags come from the
+# one renderer and never from a second reading of the change file.
+cache_steps="$(sed -n '6,$p' "$dir/.hitl/breadcrumb.txt" 2>/dev/null)"
+want_steps="$(hitl_steps "$dir/.hitl/current-change.yaml")"
+n_steps="$(printf '%s\n' "$want_steps" | grep -c .)"
+_after_wf="${banner_line#* ▸ }"
+want_header="${banner_line%% ▸ *} ▸ ${_after_wf%% ▸ *}"
+cache_line5="$(sed -n 5p "$dir/.hitl/breadcrumb.txt" 2>/dev/null)"
+[[ "$(wc -l < "$dir/.hitl/breadcrumb.txt" | tr -d ' ')" == "$((5 + n_steps))" ]] && _ok "band/cache: four lines, the header, then one line per step ($n_steps)" || _bad "band/cache: four lines, the header, then one line per step ($n_steps)"
+[[ "$cache_line5" == "$want_header" ]] && _ok "band/cache: line 5 is the header, the ribbon line up to the change id" || _bad "band/cache: line 5 is the header (cache='$cache_line5' want='$want_header')"
+[[ -n "$want_steps" && "$cache_steps" == "$want_steps" ]] && _ok "band/cache: the step lines equal hitl_steps output" || _bad "band/cache: the step lines equal hitl_steps output"
+assert_contains  "band/cache: one step line is the current step" "$cache_steps" "|current|"
 assert_contains  "band/cache: line 2 is the step line" "$cache_line2" "▸ "
 assert_contains  "band/cache: line 2 names the tier" "$cache_line2" "tier"
 assert_contains  "band/cache: line 1 marks the current phase" "$cache_line1" "◐"

@@ -63,7 +63,8 @@ if hitl_has_workflow "$HITL_FILE" && [[ -n "$cur" ]]; then
     "HITL ${_wf} ▸ ${change_id} ▸ ${_ribbon:-${phase:-$_wf}}" \
     "▸ ${phase:-$_wf}: ${_step}   ·   tier ${tier:-?}" \
     "$(hitl_next_hint_plain "$HITL_FILE")" \
-    "${warn#   }"
+    "${warn#   }" \
+    "HITL ${_wf} ▸ ${change_id}"
   if [[ "$mode" == "band" ]]; then
     # The band carries the breadcrumb; the one line kept is a directive to the model, not breadcrumb.
     echo "  Plain English, short: shared/plain-english.md applies to every reply and document."

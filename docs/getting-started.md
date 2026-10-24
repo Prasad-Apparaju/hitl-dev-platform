@@ -149,7 +149,9 @@ The glyphs:
 to `.hitl/config.yaml` and the same breadcrumb stays in view above the prompt instead of scrolling
 by in the transcript; `breadcrumb: both` keeps the transcript line too, which is what to pick when
 some of the team work in the VS Code panel or `claude -p`, where a mod cannot draw. Leave the key
-out and nothing changes.
+out and nothing changes. The band shows every step of the plan as a tag under its phase, marked
+with the glyphs above: green for done, orange for where you are, gray for still ahead, an outline
+for skipped or started thin. In the Desktop app the tags are rounded; in a terminal they are square.
 
 ### 5. Work
 
