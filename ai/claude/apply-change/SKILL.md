@@ -93,6 +93,56 @@ provenance `human`. A yes activates the security design review, the dependency +
 penetration test whatever else was found; they are conditional steps and appear in no plan
 otherwise. Do not infer a no from silence, and do not answer it yourself.
 
+**Which accepted decisions govern this change.** An ADR that rules on all code (logging, the
+security baseline) applies to every slice, but the LLD sections a change touches rarely restate it,
+and the reviews downstream only see what is listed here. Six slices once passed every review with
+none of an accepted observability ADR built, because nothing listed it. List them:
+
+```bash
+python3 - <<'EOF'
+import glob, os, re
+try:
+    import yaml
+except ImportError:
+    yaml = None
+BASELINE = re.compile(r"^#\s*ADR-\d+:\s*(Observability Strategy|Security Baseline)\b", re.I | re.M)
+APPLIES = re.compile(r"\*\*Applies to\*\*\s*\|\s*all-code", re.I)
+STATUS = re.compile(r"\*\*Status\*\*\s*\|\s*([^|\n]*)|^\s*Status:\s*(.*)$", re.I | re.M)
+governing, drafts = [], []
+for p in sorted(glob.glob("docs/**/*.md", recursive=True)):
+    name = os.path.basename(p).lower()
+    if not (re.search(r"adrs?/", p, re.I) or name.startswith("adr-")) or name in ("readme.md", "index.md"):
+        continue
+    head = open(p, encoding="utf-8", errors="replace").read()[:3000]
+    if not (APPLIES.search(head) or BASELINE.search(head)):
+        continue
+    m = STATUS.search(head)  # the header's Status row; a later "## Status" section is not read
+    status = ((m.group(1) or m.group(2)) if m else "").strip().lower()
+    (governing if status.startswith("accepted") else drafts).append(p)
+print("governing_adrs:", *(f"  - {p}" for p in governing), sep="\n")
+print("draft_governing_adrs:", *(f"  - {p}" for p in drafts), sep="\n")
+reg = "docs/04-operations/platform-readiness.yaml"
+print("readiness_red_gaps:")
+if os.path.exists(reg) and yaml:
+    for layer in ((yaml.safe_load(open(reg)) or {}).get("layers") or {}).values():
+        for it in (layer or {}).get("items") or []:
+            if it.get("status") == "gap" and it.get("severity") == "red":
+                print(f"  - {it.get('id')}: {it.get('name')}")
+elif os.path.exists(reg):
+    print("  # PyYAML missing: read the register by hand for status: gap with severity: red")
+EOF
+```
+
+An ADR governs all code when its header table has `| **Applies to** | all-code |`, or when it is one
+of HITL's baseline ADRs (Observability Strategy, Security Baseline) from a project onboarded before
+that row existed. Read each accepted one and record it under `governing_adrs` with whether this
+change touches what it rules on and how, in one line. Draft ones go under `draft_governing_adrs`,
+and you say so: "ADR-0007 security baseline is still a draft, so nothing checks this change against
+it." Each open red readiness gap goes under `readiness_red_gaps` with one line on whether this change
+widens it ("F1 application observability is a red gap; this change adds 3 endpoints"). Show the
+governing ADRs and the red gaps to the person before the tier proposal, not only in the file. The
+change file gets the paths as `source_artifacts.governing_adrs` when intake generates it.
+
 **Write the record** to `.hitl/impact/<change_id>.yaml`, against
 `ai/shared/templates/impact-record.schema.yaml`: the findings, the provenance of each one, and what
 the rules concluded. Provenance matters because a finding resting on a hand-written manifest field

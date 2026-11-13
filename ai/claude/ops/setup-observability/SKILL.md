@@ -136,7 +136,17 @@ Present the created/updated instruments with their URLs or config paths before p
    ```
    Skip if the stack does not support test alerts — note it explicitly.
 
-3. **Update `.hitl/current-change.yaml`**:
+3. **Check a sample request's log lines against the observability ADR.** Dashboards and alerts are
+   wiring; this step checks what the code writes. Send one request through each flow the change
+   touches (staging, or a local run), pull its log lines, and confirm every line carries the fields
+   the ADR's **Required log fields** table names and that the correlation key is the same on every
+   line from entry to the last side effect. The ADR is the observability one in
+   `source_artifacts.governing_adrs`. Name the request and paste two or three lines as
+   evidence. Any missing field or broken key: stop, report which lines and which fields, and leave
+   `observability.status` unset. Do not set `configured` over it. No accepted observability
+   ADR: say so in the report and continue.
+
+4. **Update `.hitl/current-change.yaml`**:
 
 ```yaml
 observability:
@@ -149,7 +159,7 @@ observability:
       routing: "<on-call rotation name>"
 ```
 
-4. Report to the team:
+5. Report to the team:
 
 ```bash
 gh issue comment <issue-number> \

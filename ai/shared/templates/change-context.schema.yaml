@@ -121,6 +121,15 @@ source_artifacts:
     description: "Path to relevant ADR(s), comma-separated"
     example: "docs/02-design/technical/adrs/ADR-004-refunds.md"
 
+  governing_adrs:
+    type: list[string]
+    description: |
+      Paths of the accepted ADRs that govern all code (logging, security baseline), copied from
+      the impact record's `governing_adrs` at intake. Kept apart from `adr` so a design step
+      writing this change's own ADRs never drops them. The LLD adherence review and the
+      architect code review check the diff against each.
+    example: ["docs/02-design/technical/adrs/ADR-0005-observability-strategy.md"]
+
   decision_packet:
     type: string
     description: "Path to decision packet YAML"

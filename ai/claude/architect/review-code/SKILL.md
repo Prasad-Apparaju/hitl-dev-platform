@@ -54,6 +54,9 @@ Read `.hitl/current-change.yaml`. Extract:
 - `change_id`, `manifest.domain`, `allowed_paths`
 - `source_artifacts.lld` — path to the approved LLD
 - `source_artifacts.decision_packet` — path to the decision packet
+- `source_artifacts.governing_adrs` — the accepted ADRs that govern all code (missing on an older
+  change file: list them with `dev-apply-change` Step 3's snippet)
+- The open red readiness gaps, from the same snippet
 - Any AI review findings recorded from rounds 1 and 2
 
 ### 1b. Pre-flight checks
@@ -91,6 +94,8 @@ Closes #<issue-number>
 ## Artifacts
 - **LLD:** <source_artifacts.lld>
 - **Decision packet:** <source_artifacts.decision_packet>
+- **Governing ADRs:** <source_artifacts.governing_adrs, or "none found">
+- **Open red readiness gaps:** <id: name, and whether this change widens it; or "none">
 - **Test plan:** `.hitl/current-change.yaml` — `test_plan` section
 
 ## AI Review Summary
@@ -108,6 +113,7 @@ Closes #<issue-number>
 - [ ] Complexity — could this be simpler without losing correctness?
 - [ ] Naming — names communicate intent to a future reader
 - [ ] Error handling — failures are diagnosable from logs; errors are surfaced correctly to callers
+- [ ] Accepted decisions — the diff follows every governing ADR listed above (log fields, correlation key, security baseline)
 EOF
 )"
 ```
@@ -153,6 +159,10 @@ The architect receives a GitHub review request notification and reviews the PR o
 **6. Naming** — Do names communicate intent to a future reader? Are any names misleading in a broader reading?
 
 **7. Error handling** — Will failures be diagnosable from logs alone? Are errors surfaced to callers in a way that lets them make correct decisions?
+
+**8. Accepted decisions** — Does the diff follow every governing ADR in the PR's Artifacts list? The
+LLD adherence review checked them line by line; confirm the ADR violations it found are fixed and that
+a request through this change can be followed in the logs by its correlation key.
 
 **GitHub review outcome:**
 - **Approve** the PR → proceed to recording approval below

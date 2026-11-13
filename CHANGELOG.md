@@ -4,7 +4,7 @@ All notable changes to the HITL plugin are documented here.
 
 ---
 
-## [Unreleased] — feature/context-graph
+## [Unreleased]
 
 ### Added
 
@@ -18,6 +18,24 @@ All notable changes to the HITL plugin are documented here.
   inferred with the inference recorded as evidence. The validator rejects a stale compile, a run
   that loaded needs-review, and unknown targets in axioms, rules and actions. Optional libraries;
   SKIPPED without them. Skill Stage 6; 16 tests by mutation.
+
+### Fixed
+
+- **Accepted ADRs are checked while code is built, not only at a production deploy** (#159). Six
+  slices once passed every review with none of an accepted observability ADR built: intake never
+  listed it and the reviews read only the LLD. Intake's impact analysis now lists every accepted ADR
+  that governs all code (a header row `| **Applies to** | all-code |`, or HITL's baseline
+  Observability Strategy and Security Baseline ADRs from older projects), names the ones still in
+  draft, and shows the open red items in the platform readiness register. The change file carries
+  the list as `source_artifacts.governing_adrs`. The LLD adherence review checks the diff against
+  each ADR and blocks on a gap that cites it; the architect code review puts the ADRs and the red
+  gaps on the PR and adds them to its checklist; `dev-check-conventions` gains a sixth check that
+  lists every log call a change adds for checking against the ADR's required fields;
+  `ops-setup-observability` checks a sample request's log lines before it marks observability
+  configured; and `qa-plan-tests` adds one end-to-end case per correlation flow. The ADR-0005 and
+  ADR-0007 templates gain the `Applies to` row, and ADR-0005 a **Required log fields** table with a
+  correlation key per flow. Not in this fix: a deterministic log-field rule (Semgrep or a script);
+  the conventions check lists the calls and the review judges them.
 
 ## [2.18.0] — 2026-10-08
 

@@ -90,3 +90,4 @@ f364927df212ad3bd1e6b2c7b296fc5e10e50eb12adb490377f2bf2b81f1a0e3  tools/data-lay
 8a761c35d65d506bb0c1d62e18d815cedfda3e5bd6eab2b6fa80438b795aad04  tools/data-layer/compile_ontology.py  # 2.18.0
 90c7d04c57ea09278b189efe014e7e07ec428bf184c28efbe601d922578e0cac  tools/data-layer/reason.py  # 2.18.0
 9a5feb21b39d11666de98138910ae7050daee297c1bea6033b0c7c709522a0c1  ci/data-layer/scorecard.py  # 2.18.0
+74c582991de27ff4c71b07d16f2e350321ccc7ddc0a4da9ad4869b9c1e6d32ee  ci/first-pass/gen_change.py  # 2.18.0

@@ -6,6 +6,7 @@
 | **Date** | [fill in] |
 | **Deciders** | [fill in: architect, platform/ops lead] |
 | **Supersedes** | none |
+| **Applies to** | all-code: every change that touches code is reviewed against this ADR once it is accepted |
 | **Related** | ADR-0001 (HITL adoption), ADR-0003 (test strategy), ADR-0004 (change tier policy) |
 
 ---
@@ -28,6 +29,25 @@ Additionally, AI-assisted development introduces a second observability layer: *
 | Error tracking | [fill in: e.g., Sentry / Rollbar / Datadog / none] | [fill in] | |
 | Primary dashboard | [fill in: URL or path] | | |
 | Alerting | [fill in: tool + on-call routing approach] | [fill in] | |
+
+### Required log fields
+
+The LLD adherence review and the architect code review check every log call a change adds against
+this table, and `/hitl:ops-setup-observability` checks a sample request's log lines before it marks
+observability configured. Leave a row out and nothing checks it.
+
+| | |
+|---|---|
+| Format | [fill in: e.g., one JSON object per line to stdout] |
+| Required on every line | [fill in: e.g., `tenant_id`, `message_id`, `entity_key`, `rule_id`, `trace_id`] |
+| Success path | [fill in: e.g., one info line per step, not only warnings and errors] |
+
+**Correlation key per flow.** The id that follows one request from where it enters to its last side
+effect, across queues and service calls. QA plans one end-to-end case per flow that follows it.
+
+| Flow | Enters at | Correlation key | Carried across |
+|---|---|---|---|
+| [fill in] | [fill in: e.g., inbound webhook] | [fill in: e.g., `trace_id`] | [fill in: e.g., task queue headers, outbound HTTP calls] |
 
 ### Agentic observability
 

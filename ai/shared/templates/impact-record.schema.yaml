@@ -127,6 +127,56 @@ findings:
       True when the declared picture (manifest, design docs) was too thin to answer and source
       had to be read. A signal about the project's documentation, and the retrospective reads it.
 
+# ── Accepted decisions and open readiness gaps (#159) ──────────────────────────────────────
+
+governing_adrs:
+  type: list[object]
+  description: |
+    Every accepted ADR that governs all code, found by dev-apply-change Step 3: an ADR whose
+    header table has `| **Applies to** | all-code |`, or one of HITL's baseline ADRs (Observability
+    Strategy, Security Baseline) from a project onboarded before that row existed. They apply to
+    every change that touches code, so they are listed even when the LLD does not restate them.
+    The reviews at the LLD adherence step and the architect code review check the diff against
+    each one. An empty list means none was found, not that none was looked for.
+  fields:
+    id:
+      type: string
+      example: "ADR-0005"
+    path:
+      type: string
+      example: "docs/02-design/technical/adrs/ADR-0005-observability-strategy.md"
+    touched:
+      type: boolean
+      description: "Whether this change adds or alters code the ADR rules on (log calls, auth, input handling)."
+    how:
+      type: string
+      description: "One line, in the words shown to a person."
+      example: "adds 3 endpoints and their log lines; each line must carry the five fields in §2"
+
+draft_governing_adrs:
+  type: list[string]
+  description: |
+    Baseline ADRs that exist but are not accepted yet. Nothing checks code against a draft, so
+    intake says so out loud rather than letting the gap pass silently.
+  example: ["docs/02-design/technical/adrs/ADR-0007-security-baseline.md"]
+
+readiness_red_gaps:
+  type: list[object]
+  description: |
+    Items in docs/04-operations/platform-readiness.yaml with `status: gap` and `severity: red`,
+    shown at intake and on the PR so a known red gap is seen while the code is being built, not
+    first at a production deploy. Absent register means an empty list.
+  fields:
+    id:
+      type: string
+      example: "F1"
+    name:
+      type: string
+    this_change:
+      type: string
+      description: "One line on whether this change widens the gap, or \"not related\"."
+      example: "adds 3 endpoints with no structured logging"
+
 # ── Provenance ─────────────────────────────────────────────────────────────────────────────
 
 provenance:
