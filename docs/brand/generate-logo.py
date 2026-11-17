@@ -181,4 +181,7 @@ out.joinpath("hitl-icon.svg").write_text(icon(P))
 out.joinpath("hitl-icon-dark.svg").write_text(icon(D, bg=D["bg"]))
 out.joinpath("hitl-logo.svg").write_text(lockup(P))
 out.joinpath("hitl-logo-dark.svg").write_text(lockup(D, bg=D["bg"]))
+# Plugin directory icon: no wordmark (the listing shows the name beside it), solid paper
+# background so it reads on light and dark pages. The directory takes it once, on first save.
+out.joinpath("hitl-plugin-icon.svg").write_text(icon(P, bg=P["paper"], size=1024, name=False))
 print("wrote temple-scene finals")

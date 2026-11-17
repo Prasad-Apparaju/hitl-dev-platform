@@ -14,16 +14,19 @@ Palette ("evergreen"): ink #26242E · emerald #1E8E6E · paper #FAF7F0 · roles:
 | `hitl-logo-dark.svg` / `.png` | Lockup for dark backgrounds (ink bg baked) |
 | `hitl-icon.svg` + `hitl-icon-{512,256,64,32}.png` | Badge (name below mark): avatars, favicon |
 | `hitl-icon-dark.svg` / `-512.png` | Badge on dark |
+| `hitl-plugin-icon.svg` / `.png` | Plugin directory icon: 1024 px, no name, paper background. The build copies the PNG to `.claude-plugin/icon.png`. The directory reads it once, on first save, so don't change it after submitting. |
 | `generate-logo.py` | The parameterized source. Edit palette/geometry here, never the SVGs. |
 
 Regenerate:
 
 ```bash
-python3 docs/brand/generate-logo.py   # writes the 4 SVGs
+python3 docs/brand/generate-logo.py   # writes the 5 SVGs
 # rasterize (macOS, headless Chrome):
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 cd docs/brand
 "$CHROME" --headless --disable-gpu --screenshot=hitl-icon-512.png --window-size=512,512 \
   --default-background-color=00000000 "file://$PWD/hitl-icon.svg"
 for s in 256 64 32; do sips -Z $s hitl-icon-512.png --out hitl-icon-$s.png; done
+"$CHROME" --headless --disable-gpu --hide-scrollbars --screenshot=hitl-plugin-icon.png \
+  --window-size=1024,1024 "file://$PWD/hitl-plugin-icon.svg"
 ```
